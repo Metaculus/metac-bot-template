@@ -136,7 +136,7 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=1
         "order_by": "-activity",
         "forecast_type": "binary",
         "project": tournament_id,
-        "status": "active",
+        "status": "open",
         "type": "forecast",
         "include_description": "true",
     }
