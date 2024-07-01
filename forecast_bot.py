@@ -184,7 +184,7 @@ def get_model(model_name: str):
             return OpenAI(
                 api_key=config("OPENAI_API_KEY", default=""), model=model_name
             )
-        case "gpt-3.5":
+        case "gpt-3.5-turbo":
             return OpenAI(
                 api_key=config("OPENAI_API_KEY", default=""), model=model_name
             )
