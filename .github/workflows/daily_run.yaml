@@ -31,7 +31,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run the script
         if: always()
-        run: poetry run python forecast_bot.py
+        run: echo "poetry run python forecast_bot.py"
         env: # Or as an environment variable
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
