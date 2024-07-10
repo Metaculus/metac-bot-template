@@ -118,7 +118,7 @@ def get_question_details(api_info: MetacApiInfo, question_id):
     return json.loads(response.content)
 
 
-def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=2, count=15):
+def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=15):
     """
     List (all details) {count} questions from the {tournament_id}
     """
@@ -140,8 +140,6 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=2, count=1
     )
     response.raise_for_status()
     return json.loads(response.content)
-    data = json.loads(response.content)
-    return data["results"]
 
 def get_asknews_context(query):
   """
@@ -329,13 +327,6 @@ def main():
         type=int,
         default=1,
         help="The number of LLM forecasts to average per question",
-    )
-    parser.add_argument(
-        "--llm_model",
-        type=str,
-        choices=["gpt-4o", "gpt-3.5", "ollama:llama3"],
-        default="gpt-4o",
-        help="The model to use, one of the options listed",
     )
     parser.add_argument(
         "--tournament_id",
