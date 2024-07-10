@@ -2,7 +2,7 @@ name: run daily
 
 on:
   schedule:
-    - cron: "0 14 * * *" # every day
+    - cron: "0 15 * * *" # every day
   workflow_dispatch:
 
 jobs:

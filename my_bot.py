@@ -332,16 +332,6 @@ def get_gpt_prediction(question_details):
 
     return probability, (news_articles, formatted_articles), summary_report, gpt_text
 
-async def llm_predict_once(chat_model, prompt):
-
-    response = await chat_model.achat(
-        messages=[ChatMessage(role=MessageRole.USER, content=prompt)]
-    )
-
-    probability_match = find_number_before_percent(response.message.content)
-    return probability_match, response.message.content
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="A simple forecasting bot based on LLMs"
@@ -349,7 +339,7 @@ def main():
     parser.add_argument(
         "--submit_predictions",
         help="Submit the predictions to Metaculus",
-        default=False,
+        default=True,
         action="store_true",
     )
     parser.add_argument(
@@ -402,12 +392,6 @@ def main():
         token=config(args.metac_token_env_name, default="-"),
         base_url=args.metac_base_url,
     )
-
-    # llm_model = get_model(args.llm_model)
-
-    offset = 0
-
-    # SUBMIT_PREDICTION = True
 
 # Use the following code to predict on all open questions for the day:
 
