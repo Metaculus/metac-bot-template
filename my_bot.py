@@ -7,20 +7,9 @@ import requests
 from decouple import config
 import datetime
 import re
-# import openai
 from openai import OpenAI
-
-# from llama_index.llms.openai import OpenAI
-
-# from llama_index.core.llms import ChatMessage, MessageRole
-# from llama_index.llms.ollama import Ollama
-from asknews import AskNewsSDK
+from asknews_sdk import AskNewsSDK
 import argparse
-import logging
-logging.basicConfig(filename='output.log', 
-                    level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 @dataclass
 class MetacApiInfo:
@@ -129,7 +118,7 @@ def get_question_details(api_info: MetacApiInfo, question_id):
     return json.loads(response.content)
 
 
-def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=2):
+def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=2, count=15):
     """
     List (all details) {count} questions from the {tournament_id}
     """
@@ -145,10 +134,12 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=2
         "include_description": "true",
     }
     url = f"{api_info.base_url}/questions/"
+    print(f"Token {api_info.token}")
     response = requests.get(
         url, headers={"Authorization": f"Token {api_info.token}"}, params=url_qparams
     )
     response.raise_for_status()
+    return json.loads(response.content)
     data = json.loads(response.content)
     return data["results"]
 
@@ -157,8 +148,8 @@ def get_asknews_context(query):
   Use the AskNews `news` endpoint to get news context for your query.
   The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
   """
-  asknews_client_id = config("ASKNEWS_CLIENT_ID", default="-")
-  asknews_secret = config("ASKNEWS_SECRET", default="-")
+  asknews_client_id = config("ASKNEWS_CLIENT_ID", default="-", cast=str)
+  asknews_secret = config("ASKNEWS_SECRET", default="-", cast=str)
   ask = AskNewsSDK(
       client_id=asknews_client_id,
       client_secret=asknews_secret,
@@ -168,7 +159,7 @@ def get_asknews_context(query):
   # # get the latest news related to the query (within the past 48 hours)
   hot_response = ask.news.search_news(
       query=query, # your natural language query
-      n_articles=5, # control the number of articles to include in the context
+      n_articles=10, # control the number of articles to include in the context
       return_type="both",
       strategy="latest news" # enforces looking at the latest news only
   )
@@ -234,7 +225,7 @@ def format_asknews_context(hot_articles, historical_articles):
 
 def call_perplexity(query):
     url = "https://api.perplexity.ai/chat/completions"
-    api_key = config("PERPLEXITY_API_KEY", default="-")
+    api_key = config("PERPLEXITY_API_KEY", default="-", cast=str)
     headers = {
         "accept": "application/json",
         "authorization": f"Bearer {api_key}",
@@ -260,23 +251,9 @@ You do not produce forecasts yourself.
     content = response.json()["choices"][0]["message"]["content"]
     return content
 
-
-def get_model(model_name: str):
-    match model_name:
-        case "gpt-4o":
-            return OpenAI(
-                api_key=config("OPENAI_API_KEY", default=""), model=model_name
-            )
-        case "gpt-3.5-turbo":
-            return OpenAI(
-                api_key=config("OPENAI_API_KEY", default=""), model=model_name
-            )
-    return None
-
-
 def get_gpt_prediction(question_details):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
-    client = OpenAI(api_key=config("OPENAI_API_KEY", default=""))
+    client = OpenAI(api_key=config("OPENAI_API_KEY", default="", cast=str))
 
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
@@ -321,7 +298,6 @@ def get_gpt_prediction(question_details):
     if probability_match:
         probability = int(probability_match) # int(match.group(1))
         print(f"The extracted probability is: {probability}%")
-        logger.info(f"The extracted probability is: {probability}%")
         probability = min(max(probability, 1), 99) # To prevent extreme forecasts
 
     return probability, (news_articles, formatted_articles), summary_report, gpt_text
@@ -355,23 +331,11 @@ def main():
         help="The number of LLM forecasts to average per question",
     )
     parser.add_argument(
-        "--metac_token_env_name",
-        type=str,
-        help="The name of the env variable where to read the metaculus token from",
-        default="METACULUS_TOKEN",
-    )
-    parser.add_argument(
         "--llm_model",
         type=str,
         choices=["gpt-4o", "gpt-3.5", "ollama:llama3"],
         default="gpt-4o",
         help="The model to use, one of the options listed",
-    )
-    parser.add_argument(
-        "--metac_base_url",
-        type=str,
-        help="The base URL for the metaculus API",
-        default=config("API_BASE_URL", default="https://www.metaculus.com/api2", cast=str),
     )
     parser.add_argument(
         "--tournament_id",
@@ -383,29 +347,26 @@ def main():
     args = parser.parse_args()
 
     metac_api_info = MetacApiInfo(
-        token=config(args.metac_token_env_name, default="-"),
-        base_url=args.metac_base_url,
+        token=config("METACULUS_TOKEN", default="-"),
+        base_url="https://www.metaculus.com/api2",
     )
 
 # Use the following code to predict on all open questions for the day:
 
-    data = list_questions()['results']
+    data = list_questions(metac_api_info, args.tournament_id)['results']
     # print(data)
     for question_details in data:
         question_id = question_details['id']
         print(question_id)
-        logger.info(question_id)
 
         prediction, asknews_result, perplexity_result, gpt_result = get_gpt_prediction(question_details)
         print("GPT predicted: ", prediction, asknews_result, perplexity_result, gpt_result)
-        logger.info("GPT predicted: ", prediction, asknews_result, perplexity_result, gpt_result)
         #  perplexity_result, gpt_result
 
         if prediction is not None and args.submit_predictions:
             post_question_prediction(metac_api_info, question_id, prediction)
             comment = "\n\nAskNews sources\n\n" + asknews_result[1] + "\n\n#########\n\n" + "PERPLEXITY\n\n" + perplexity_result + "\n\n#########\n\n" + "GPT\n\n" + gpt_result
             post_question_comment(metac_api_info, question_id, comment)
-     
 
 
 if __name__ == "__main__":
