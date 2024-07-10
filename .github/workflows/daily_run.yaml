@@ -2,7 +2,7 @@ name: run daily
 
 on:
   schedule:
-    - cron: "0 0 * * *" # every day
+    - cron: "0 14 * * *" # every day
   workflow_dispatch:
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run the script
         if: always()
-        run: echo "poetry run python forecast_bot.py"
+        run: echo "poetry run python my_bot.py"
         env: # Or as an environment variable
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
