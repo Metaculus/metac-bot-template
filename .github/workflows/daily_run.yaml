@@ -32,7 +32,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run the script
         if: always()
-        run: echo "poetry run python my_bot.py" > output.txt
+        run: poetry run python my_bot.py
         env: # Or as an environment variable
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
