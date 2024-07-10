@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import asyncio
 import json
 
 from attr import dataclass
@@ -8,14 +7,20 @@ import requests
 from decouple import config
 import datetime
 import re
-from jinja2 import Template
+# import openai
+from openai import OpenAI
 
-from llama_index.llms.openai import OpenAI
-from llama_index.core.llms import ChatMessage, MessageRole
-from llama_index.llms.ollama import Ollama
+# from llama_index.llms.openai import OpenAI
+
+# from llama_index.core.llms import ChatMessage, MessageRole
+# from llama_index.llms.ollama import Ollama
 from asknews import AskNewsSDK
 import argparse
-
+import logging
+logging.basicConfig(filename='output.log', 
+                    level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 @dataclass
 class MetacApiInfo:
@@ -42,7 +47,7 @@ Remember that not everything your research assistant says will be accurate. Alwa
 trust the news articles over the summary of your research assistant.
 You know that rookie forecasters sometimes tend to give "safe" forecasts that are 
 close to 50%. You also know that great forecasters instead, give their forecasts 
-as far away from 50% as they can justify.
+as far away from 50%, as they can justify.
 You also know that great forecasters round their forecasts to the nearest whole
 number.
 
@@ -66,18 +71,6 @@ Today is {today}.
 
 You write your rationale and give your final answer as: "Probability: ZZ%", 0-100
 """
-
-
-def build_prompt(question_details, news_articles=None, summary_report=None):
-    prompt_jinja = Template(PROMPT_TEMPLATE)
-    params = {
-        "today": datetime.datetime.now().strftime("%Y-%m-%d"),
-        "summary_report": summary_report,
-        "news_articles": news_articles,
-        **question_details,
-    }
-    return prompt_jinja.render(params)
-
 
 def find_number_before_percent(s):
     # Use a regular expression to find all numbers followed by a '%'
@@ -328,6 +321,7 @@ def get_gpt_prediction(question_details):
     if probability_match:
         probability = int(probability_match) # int(match.group(1))
         print(f"The extracted probability is: {probability}%")
+        logger.info(f"The extracted probability is: {probability}%")
         probability = min(max(probability, 1), 99) # To prevent extreme forecasts
 
     return probability, (news_articles, formatted_articles), summary_report, gpt_text
@@ -400,9 +394,11 @@ def main():
     for question_details in data:
         question_id = question_details['id']
         print(question_id)
+        logger.info(question_id)
 
         prediction, asknews_result, perplexity_result, gpt_result = get_gpt_prediction(question_details)
         print("GPT predicted: ", prediction, asknews_result, perplexity_result, gpt_result)
+        logger.info("GPT predicted: ", prediction, asknews_result, perplexity_result, gpt_result)
         #  perplexity_result, gpt_result
 
         if prediction is not None and args.submit_predictions:
