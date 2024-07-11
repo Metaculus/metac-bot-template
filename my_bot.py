@@ -17,6 +17,28 @@ class MetacApiInfo:
     base_url: str
 
 
+''' 
+
+You know that great forecasters don't
+just forecast according to the "vibe" of the question and the considerations.
+Instead, they think about the question in a structured way, recording their
+reasoning as they go, and they always consider multiple perspectives that
+usually give different conclusions, which they reason about together.
+
+You know that rookie forecasters sometimes tend to give "safe" forecasts that are 
+close to 50%. You also know that great forecasters instead, give their forecasts 
+as far away from 50%, as they can justify.
+You also know that great forecasters round their forecasts to the nearest whole
+number.
+
+Remember that not everything your research assistant says will be accurate. Always
+trust the news articles over the summary of your research assistant.
+
+Your research assistant says:
+{summary_report}
+
+'''
+
 PROMPT_TEMPLATE = """
 You are a professional forecaster interviewing for a job.
 The interviewer is also a professional forecaster, with a strong track record of
@@ -24,34 +46,44 @@ accurate forecasts of the future. They will ask you a question, and your task is
 to provide the most accurate forecast you can. To do this, you evaluate past data
 and trends carefully, make use of comparison classes of similar events, take into
 account base rates about how past events unfolded, and outline the best reasons
-for and against any particular outcome. You know that great forecasters don't
-just forecast according to the "vibe" of the question and the considerations.
-Instead, they think about the question in a structured way, recording their
-reasoning as they go, and they always consider multiple perspectives that
-usually give different conclusions, which they reason about together.
+for and against any particular outcome.
+
+This is what you know about great forecasters:
+- They don't just forecast according to the "vibe" of the question and the considerations.
+- Instead, they think about the question in a structured way, recording their
+reasoning as they go,
+- They always consider multiple perspectives that usually give different 
+conclusions, which they reason about together.
+- They don't give "safe" forecasts that are close to 50%.
+- Instead, they give their forecasts as far away from 50%, as they can justify.
+- They know that the timeline in which a question resolves plays an important role 
+in the forecast. They know that the likelihood of many events taking place in a short
+timeline is much lower. They know that the likelihood of many events taking place in a 
+longer timeline is slightly higher.
+- They round their forecasts to the nearest whole number. 
+
 You can't know the future, and the interviewer knows that, so you do not need
 to hedge your uncertainty, you are simply trying to give the most accurate numbers
 that will be evaluated when the events later unfold.
-Remember that not everything your research assistant says will be accurate. Always
-trust the news articles over the summary of your research assistant.
-You know that rookie forecasters sometimes tend to give "safe" forecasts that are 
-close to 50%. You also know that great forecasters instead, give their forecasts 
-as far away from 50%, as they can justify.
-You also know that great forecasters round their forecasts to the nearest whole
-number.
 
+The steps you take to build your rationale and give your forecast are:
+1. You get the keywords from the question and obtain the latest information about
+them to build a summary report for the question.
+2. You consider if there are events possible that are alternate to the one posed
+to you, and compare the likelihood of these other possibilities.
+3. You use all the information given to you to give your forecast.
 
 Your interview question is:
 {title}
-
-Your research assistant says:
-{summary_report}
 
 You found the following news articles related to the question:
 {news_articles}
 
 background:
 {background}
+
+resolution criteria:
+{resolution_criteria}
 
 fine_print:
 {fine_print}
@@ -159,6 +191,7 @@ def get_asknews_context(query):
       query=query, # your natural language query
       n_articles=10, # control the number of articles to include in the context
       return_type="both",
+      diversify_sources=True,
       strategy="latest news" # enforces looking at the latest news only
   )
 
@@ -167,7 +200,9 @@ def get_asknews_context(query):
       query=query,
       n_articles=20,
       return_type="both",
-      strategy="news knowledge" # looks for relevant news within the past 60 days
+      diversify_sources=True,
+      historical=True,
+    #   strategy="news knowledge" # looks for relevant news within the past 60 days
   )
 
   # you can also specify a time range for your historical search if you want to
@@ -259,13 +294,13 @@ def get_gpt_prediction(question_details):
     fine_print = question_details["fine_print"]
 
     news_articles = ""
-    summary_report = 0
+    # summary_report = 0
 
     # Comment this line to not use AskNews
     news_articles, formatted_articles = get_asknews_context(title)
 
     # Comment this line to not use perplexity
-    summary_report = call_perplexity(title)
+    # summary_report = call_perplexity(title)
 
     chat_completion = client.chat.completions.create(
         model="gpt-4o",
@@ -276,10 +311,11 @@ def get_gpt_prediction(question_details):
             "role": "user",
             "content": PROMPT_TEMPLATE.format(
                 title=title,
-                summary_report=summary_report,
+                # summary_report=summary_report,
                 news_articles=news_articles,
                 today=today,
                 background=background,
+                resolution_criteria=resolution_criteria,
                 fine_print=fine_print,
             )
         }
@@ -298,9 +334,43 @@ def get_gpt_prediction(question_details):
         print(f"The extracted probability is: {probability}%")
         probability = min(max(probability, 1), 99) # To prevent extreme forecasts
 
-    return probability, (news_articles, formatted_articles), summary_report, gpt_text
+    return probability, (news_articles, formatted_articles), gpt_text
 
-def main():
+def run_all(args, metac_api_info):
+
+# Use the following code to predict on all open questions for the day:
+
+    data = list_questions(metac_api_info, args.tournament_id)['results']
+    # print(data)
+    for question_details in data:
+        question_id = question_details['id']
+        print(question_id)
+
+        prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
+        print("GPT predicted: ", prediction, asknews_result, gpt_result)
+
+        if prediction is not None and args.submit_predictions:
+            post_question_prediction(metac_api_info, question_id, prediction)
+            comment = "\n\nAskNews sources\n\n" + asknews_result[1] + "\n\n#########\n\n" + "\n\n#########\n\n" + "GPT\n\n" + gpt_result
+            post_question_comment(metac_api_info, question_id, comment)
+
+def run_one(args, metac_api_info, question_id):
+
+# Use the following code to predict on one question:
+    question_details = get_question_details(metac_api_info, question_id)
+    # print(question_details)
+
+    prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
+    print("GPT predicted: ", prediction, asknews_result, gpt_result)
+
+    if prediction is not None and args.submit_predictions:
+        post_question_prediction(metac_api_info, question_id, prediction)
+        comment = "\n\nAskNews sources\n\n" + asknews_result[1] + "\n\n#########\n\n" + "\n\n#########\n\n" + "GPT\n\n" + gpt_result
+        post_question_comment(metac_api_info, question_id, comment)
+
+
+if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(
         description="A simple forecasting bot based on LLMs"
     )
@@ -313,7 +383,7 @@ def main():
     parser.add_argument(
         "--use_perplexity",
         help="Use perplexity.ai to search some up to date info about the forecasted question",
-        default=True,
+        default=False,
         action="store_true",
     )
     parser.add_argument(
@@ -342,24 +412,11 @@ def main():
         base_url="https://www.metaculus.com/api2",
     )
 
-# Use the following code to predict on all open questions for the day:
-
-    data = list_questions(metac_api_info, args.tournament_id)['results']
-    # print(data)
-    for question_details in data:
-        question_id = question_details['id']
-        print(question_id)
-
-        prediction, asknews_result, perplexity_result, gpt_result = get_gpt_prediction(question_details)
-        print("GPT predicted: ", prediction, asknews_result, perplexity_result, gpt_result)
-        #  perplexity_result, gpt_result
-
-        if prediction is not None and args.submit_predictions:
-            post_question_prediction(metac_api_info, question_id, prediction)
-            comment = "\n\nAskNews sources\n\n" + asknews_result[1] + "\n\n#########\n\n" + "PERPLEXITY\n\n" + perplexity_result + "\n\n#########\n\n" + "GPT\n\n" + gpt_result
-            post_question_comment(metac_api_info, question_id, comment)
-
-
-if __name__ == "__main__":
     # asyncio.run(main())
-    main()
+    run_all(args, metac_api_info)
+
+    question_id = 25767
+    # args.submit_predictions = False
+    # run_one(args, metac_api_info, question_id)
+
+
