@@ -383,6 +383,12 @@ def get_gpt_prediction(question_details):
         probability = int(probability_match) # int(match.group(1))
         print(f"The extracted probability is: {probability}%")
         probability = min(max(probability, 1), 99) # To prevent extreme forecasts
+    
+    if previous_predictions:
+        if probability > 50 and probability < max(previous_predictions):
+            probability = max(previous_predictions)
+        if probability < 50 and probability > min(previous_predictions):
+            probability = min(previous_predictions)
 
     return probability, (news_articles, formatted_articles), gpt_text
 
