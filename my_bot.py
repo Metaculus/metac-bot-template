@@ -36,6 +36,17 @@ trust the news articles over the summary of your research assistant.
 
 Your research assistant says:
 {summary_report}
+corresponding rationales for the previous predictions:
+{rationales}
+
+If your prediction is >50%, 
+    - and is greater than the previous predictions, stick with your prediction.
+    - and is smaller than any previous prediction, update your prediction to the largest
+    such value.
+If your prediction is <50%, 
+    - and is smaller than the previous predictions, stick with your prediction.
+    - and is greater than any previous prediction, update your prediction to the smallest
+    such value.
 
 '''
 
@@ -73,6 +84,9 @@ them to build a summary report for the question.
 to you, and compare the likelihood of these other possibilities.
 3. You use all the information given to you to give your forecast.
 
+If you are given with a set of previous predictions, work through your prediction first,
+and then compare with the earlier results.
+
 Your interview question is:
 {title}
 
@@ -87,6 +101,9 @@ resolution criteria:
 
 fine_print:
 {fine_print}
+
+previous predictions:
+{previous_predictions}
 
 Today is {today}.
 
@@ -149,6 +166,36 @@ def get_question_details(api_info: MetacApiInfo, question_id):
     response.raise_for_status()
     return json.loads(response.content)
 
+def get_previous_pred(api_info: MetacApiInfo, question_id):
+    """
+    List (all details) {count} comments from the {tournament_id}
+    """
+    url = f"{api_info.base_url}/predictions/"
+    # url_qparams = {
+    #     "username": "peacefulwarrior+bot",
+    # }
+    url_qparams = {
+        "question": question_id,
+        "username": "peacefulwarrior+bot"
+    }
+    response = requests.get(
+        url, headers={"Authorization": f"Token {api_info.token}"}, params=url_qparams
+    )
+    response.raise_for_status()
+    predictions_list = json.loads(response.content)['results']
+    # print(predictions_list)
+    preds = []
+
+    if predictions_list:
+        predictions_val = predictions_list[0]
+        preds = predictions_val['predictions']
+    
+    pred_vals = []
+    for item in preds:
+        val = item['x'] * 100
+        pred_vals.append(val)
+
+    return pred_vals
 
 def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=15):
     """
@@ -166,7 +213,6 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=1
         "include_description": "true",
     }
     url = f"{api_info.base_url}/questions/"
-    print(f"Token {api_info.token}")
     response = requests.get(
         url, headers={"Authorization": f"Token {api_info.token}"}, params=url_qparams
     )
@@ -292,6 +338,8 @@ def get_gpt_prediction(question_details):
     resolution_criteria = question_details["resolution_criteria"]
     background = question_details["description"]
     fine_print = question_details["fine_print"]
+    # rationales = question_details["rationales"]
+    previous_predictions = question_details["previous_predictions"]
 
     news_articles = ""
     # summary_report = 0
@@ -317,6 +365,8 @@ def get_gpt_prediction(question_details):
                 background=background,
                 resolution_criteria=resolution_criteria,
                 fine_print=fine_print,
+                # rationales=rationales,
+                previous_predictions=previous_predictions,
             )
         }
         ]
@@ -345,6 +395,8 @@ def run_all(args, metac_api_info):
     for question_details in data:
         question_id = question_details['id']
         print(question_id)
+        pred_val = get_previous_pred(metac_api_info, question_id)
+        question_details["previous_predictions"] = pred_val
 
         prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
         print("GPT predicted: ", prediction, asknews_result, gpt_result)
@@ -359,6 +411,10 @@ def run_one(args, metac_api_info, question_id):
 # Use the following code to predict on one question:
     question_details = get_question_details(metac_api_info, question_id)
     # print(question_details)
+    # rationales = ""
+    # pred_val = ""
+    pred_val = get_previous_pred(metac_api_info, question_id)
+    question_details["previous_predictions"] = pred_val
 
     prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
     print("GPT predicted: ", prediction, asknews_result, gpt_result)
@@ -415,7 +471,7 @@ if __name__ == "__main__":
     # asyncio.run(main())
     run_all(args, metac_api_info)
 
-    question_id = 25767
+    question_id = 20759
     # args.submit_predictions = False
     # run_one(args, metac_api_info, question_id)
 
