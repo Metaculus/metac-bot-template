@@ -539,7 +539,7 @@ def get_gpt_prediction(api_info: MetacApiInfo, question_details):
     # summary_report = 0
 
     # Comment this line to not use AskNews
-    # news_articles, formatted_articles = get_asknews_context(title)
+    news_articles, formatted_articles = get_asknews_context(title)
 
     payload = {"model": "gpt-4o",
         # model="gpt-3.5-turbo-16k",
@@ -561,14 +561,18 @@ def get_gpt_prediction(api_info: MetacApiInfo, question_details):
         }
         ]}
 
-    response = requests.get(
+    response = requests.post(
         url,
         headers={"Authorization": f"Token {api_info.token}", "Content-Type": "application/json"},
         json=payload,
     )
     response.raise_for_status()
-    gpt_text = json.loads(response.content)
-    # gpt_text = chat_completion.choices[0].message.content
+    # gpt_text = json.loads(response.content)
+    # print(response.json())
+    
+    gpt_text = response.json()['choices'][0]['message']['content']
+    # chat_completion.choices[0].message.content
+    # print(gpt_text)
 
     # Regular expression to find the number following 'Probability: '
     probability_match = find_number_before_percent(gpt_text)
@@ -601,8 +605,8 @@ def run_all(args, metac_api_info):
         pred_val = get_previous_pred(metac_api_info, question_id)
         question_details["previous_predictions"] = pred_val
 
-        # prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
-        prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
+        prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
+        # prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
         print("GPT predicted: ", prediction, asknews_result, gpt_result)
 
         if prediction is not None and args.submit_predictions:
@@ -620,8 +624,8 @@ def run_one(args, metac_api_info, question_id):
     pred_val = get_previous_pred(metac_api_info, question_id)
     question_details["previous_predictions"] = pred_val
 
-    # prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
-    prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
+    prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
+    # prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
     print("GPT predicted: ", prediction, asknews_result, gpt_result)
 
     if prediction is not None and args.submit_predictions:
