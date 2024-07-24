@@ -355,54 +355,47 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=1
     return json.loads(response.content)
 
 def get_asknews_context(query):
-  """
-  Use the AskNews `news` endpoint to get news context for your query.
-  The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
-  """
-  asknews_client_id = config("ASKNEWS_CLIENT_ID", default="-", cast=str)
-  asknews_secret = config("ASKNEWS_SECRET", default="-", cast=str)
-  ask = AskNewsSDK(
-      client_id=asknews_client_id,
-      client_secret=asknews_secret,
-      scopes=["news"]
-  )
+    """
+    Use the AskNews `news` endpoint to get news context for your query.
+    The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
+    """
+    asknews_client_id = config("ASKNEWS_CLIENT_ID", default="-", cast=str)
+    asknews_secret = config("ASKNEWS_SECRET", default="-", cast=str)
+    ask = AskNewsSDK(
+        client_id=asknews_client_id,
+        client_secret=asknews_secret,
+        scopes=["news"]
+    )
 
-  # # get the latest news related to the query (within the past 48 hours)
-  hot_response = ask.news.search_news(
-      query=query, # your natural language query
-      n_articles=5, # control the number of articles to include in the context
-      return_type="both",
-    #   diversify_sources=True,
-      strategy="latest news" # enforces looking at the latest news only
-  )
+    try:
 
-  # get context from the "historical" database that contains a news archive going back to 2023
-  historical_response = ask.news.search_news(
-      query=query,
-      n_articles=15,
-      return_type="both",
-      diversify_sources=True,
-      historical=True,
-    #   strategy="news knowledge" # looks for relevant news within the past 60 days
-  )
+        # # get the latest news related to the query (within the past 48 hours)
+        hot_response = ask.news.search_news(
+            query=query, # your natural language query
+            n_articles=5, # control the number of articles to include in the context
+            return_type="both",
+            #   diversify_sources=True,
+            strategy="latest news" # enforces looking at the latest news only
+        )
 
-  # you can also specify a time range for your historical search if you want to
-  # slice your search up periodically.
-  # now = datetime.datetime.now().timestamp()
-  # start = (datetime.datetime.now() - datetime.timedelta(days=100)).timestamp()
-  # historical_response = ask.news.search_news(
-  #     query=query,
-  #     n_articles=20,
-  #     return_type="both",
-  #     historical=True,
-  #     start_timestamp=int(start),
-  #     end_timestamp=int(now)
-  # )
-
-  llm_context = hot_response.as_string + historical_response.as_string
-  formatted_articles = format_asknews_context(
-      hot_response.as_dicts, historical_response.as_dicts)
-  return llm_context, formatted_articles
+        # get context from the "historical" database that contains a news archive going back to 2023
+        historical_response = ask.news.search_news(
+            query=query,
+            n_articles=15,
+            return_type="both",
+            diversify_sources=True,
+            historical=True,
+            #   strategy="news knowledge" # looks for relevant news within the past 60 days
+        )
+        llm_context = hot_response.as_string + historical_response.as_string
+        formatted_articles = format_asknews_context(
+        hot_response.as_dicts, historical_response.as_dicts)
+    
+    except:
+        llm_context = ""
+        formatted_articles = ""
+  
+    return llm_context, formatted_articles
 
 def format_asknews_context(hot_articles, historical_articles):
   """
