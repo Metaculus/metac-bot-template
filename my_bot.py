@@ -242,10 +242,6 @@ previous predictions:
 
 Today is {today}.
 
-Run the analysis 3 separate times for this question and give your final answer as the median
-of the 3 analyses. Make sure that you don't carry over biases or information from one
-analysis into the next.
-
 You write your rationale and give your final answer as: "Probability: ZZ%", 0-100
 """
 
@@ -469,7 +465,7 @@ You do not produce forecasts yourself.
     content = response.json()["choices"][0]["message"]["content"]
     return content
 
-def get_gpt_prediction(question_details):
+def get_gpt_prediction_old(question_details):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     client = OpenAI(api_key=config("OPENAI_API_KEY", default="", cast=str))
 
@@ -531,6 +527,75 @@ def get_gpt_prediction(question_details):
 
     return probability, (news_articles, formatted_articles), gpt_text
 
+# "Content-Type": "application/json"
+
+def get_gpt_prediction(api_info: MetacApiInfo, question_details):
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    # client = OpenAI(api_key=config("OPENAI_API_KEY", default="", cast=str))
+
+    # url = "https://www.metaculus.com/proxy/openai/v1/chat/completions"
+    url = "https://www.metaculus.com/proxy/openai/v1/chat/completions"
+    title = question_details["title"]
+    resolution_criteria = question_details["resolution_criteria"]
+    background = question_details["description"]
+    fine_print = question_details["fine_print"]
+    # rationales = question_details["rationales"]
+    previous_predictions = question_details["previous_predictions"]
+
+    news_articles = ""
+    # summary_report = 0
+
+    # Comment this line to not use AskNews
+    # news_articles, formatted_articles = get_asknews_context(title)
+
+    payload = {"model": "gpt-4o",
+        # model="gpt-3.5-turbo-16k",
+        # model="gpt-3.5-turbo",
+        "messages" : [
+        {
+            "role": "user",
+            "content": PROMPT_TEMPLATE.format(
+                title=title,
+                # summary_report=summary_report,
+                news_articles=news_articles,
+                today=today,
+                background=background,
+                resolution_criteria=resolution_criteria,
+                fine_print=fine_print,
+                # rationales=rationales,
+                previous_predictions=previous_predictions,
+            )
+        }
+        ]}
+
+    response = requests.get(
+        url,
+        headers={"Authorization": f"Token {api_info.token}", "Content-Type": "application/json"},
+        json=payload,
+    )
+    response.raise_for_status()
+    gpt_text = json.loads(response.content)
+    # gpt_text = chat_completion.choices[0].message.content
+
+    # Regular expression to find the number following 'Probability: '
+    probability_match = find_number_before_percent(gpt_text)
+
+    # Extract the number if a match is found
+    probability = None
+    if probability_match:
+        probability = int(probability_match) # int(match.group(1))
+        print(f"The extracted probability is: {probability}%")
+        probability = min(max(probability, 1), 99) # To prevent extreme forecasts
+    
+    if previous_predictions:
+        if probability > 50 and probability < max(previous_predictions):
+            probability = max(previous_predictions)
+        if probability < 50 and probability > min(previous_predictions):
+            probability = min(previous_predictions)
+
+    return probability, (news_articles, formatted_articles), gpt_text
+
+
 def run_all(args, metac_api_info):
 
 # Use the following code to predict on all open questions for the day:
@@ -543,7 +608,8 @@ def run_all(args, metac_api_info):
         pred_val = get_previous_pred(metac_api_info, question_id)
         question_details["previous_predictions"] = pred_val
 
-        prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
+        # prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
+        prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
         print("GPT predicted: ", prediction, asknews_result, gpt_result)
 
         if prediction is not None and args.submit_predictions:
@@ -561,7 +627,8 @@ def run_one(args, metac_api_info, question_id):
     pred_val = get_previous_pred(metac_api_info, question_id)
     question_details["previous_predictions"] = pred_val
 
-    prediction, asknews_result, gpt_result = get_gpt_prediction(question_details)
+    # prediction, asknews_result, gpt_result = get_gpt_prediction(metac_api_info, question_details)
+    prediction, asknews_result, gpt_result = get_gpt_prediction_old(question_details)
     print("GPT predicted: ", prediction, asknews_result, gpt_result)
 
     if prediction is not None and args.submit_predictions:
