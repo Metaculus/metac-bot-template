@@ -10,6 +10,7 @@ import re
 from openai import OpenAI
 from asknews_sdk import AskNewsSDK
 import argparse
+from statistics import median
 
 @dataclass
 class MetacApiInfo:
@@ -560,30 +561,38 @@ def get_gpt_prediction(api_info: MetacApiInfo, question_details):
             )
         }
         ]}
-
-    response = requests.post(
-        url,
-        headers={"Authorization": f"Token {api_info.token}", "Content-Type": "application/json"},
-        json=payload,
-    )
-    response.raise_for_status()
-    # gpt_text = json.loads(response.content)
-    # print(response.json())
     
-    gpt_text = response.json()['choices'][0]['message']['content']
-    # chat_completion.choices[0].message.content
-    # print(gpt_text)
+    probabilities = []
+    gpt_outputs = []
+    for _ in list(range(3)):
+        response = requests.post(
+            url,
+            headers={"Authorization": f"Token {api_info.token}", "Content-Type": "application/json"},
+            json=payload,
+        )
+        response.raise_for_status()
+        # gpt_text = json.loads(response.content)
+        # print(response.json())
+        
+        gpt_text = response.json()['choices'][0]['message']['content']
+        gpt_outputs.append(gpt_text)
+        # chat_completion.choices[0].message.content
+        # print(gpt_text)
 
-    # Regular expression to find the number following 'Probability: '
-    probability_match = find_number_before_percent(gpt_text)
+        # Regular expression to find the number following 'Probability: '
+        probability_match = find_number_before_percent(gpt_text)
 
-    # Extract the number if a match is found
-    probability = None
-    if probability_match:
-        probability = int(probability_match) # int(match.group(1))
-        print(f"The extracted probability is: {probability}%")
-        probability = min(max(probability, 1), 99) # To prevent extreme forecasts
+        # Extract the number if a match is found
+        probability = None
+        if probability_match:
+            probability = int(probability_match) # int(match.group(1))
+            print(f"The extracted probability is: {probability}%")
+            probability = min(max(probability, 1), 99) # To prevent extreme forecasts
+        probabilities.append(probability)
     
+    probability = median(probabilities)
+    gpt_text = gpt_outputs[probabilities.index(probability)]
+
     if previous_predictions:
         if probability > 50 and probability < max(previous_predictions):
             probability = max(previous_predictions)
@@ -680,7 +689,7 @@ if __name__ == "__main__":
     # asyncio.run(main())
     run_all(args, metac_api_info)
 
-    question_id = 26020
+    question_id = 25846
     # args.submit_predictions = False
     # run_one(args, metac_api_info, question_id)
 
