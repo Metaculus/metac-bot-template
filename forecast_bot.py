@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import logging
+import statistics
 
 from attr import dataclass
 import requests
@@ -13,6 +15,9 @@ from jinja2 import Template
 from llama_index.llms.openai import OpenAI
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.llms.ollama import Ollama
+from llama_index.llms.anthropic import Anthropic
+from llama_index.core import Settings
+
 import argparse
 
 
@@ -24,37 +29,33 @@ class MetacApiInfo:
 
 PROMPT_TEMPLATE = """
 You are a professional forecaster interviewing for a job.
-The interviewer is also a professional forecaster, with a strong track record of
-accurate forecasts of the future. They will ask you a question, and your task is
-to provide the most accurate forecast you can. To do this, you evaluate past data
-and trends carefully, make use of comparison classes of similar events, take into
-account base rates about how past events unfolded, and outline the best reasons
-for and against any particular outcome. You know that great forecasters don't
-just forecast according to the "vibe" of the question and the considerations.
-Instead, they think about the question in a structured way, recording their
-reasoning as they go, and they always consider multiple perspectives that
-usually give different conclusions, which they reason about together.
-You can't know the future, and the interviewer knows that, so you do not need
-to hedge your uncertainty, you are simply trying to give the most accurate numbers
-that will be evaluated when the events later unfold.
 
 Your interview question is:
 {{title}}
+
+background:
+{{description}}
+
+{{resolution_criteria}}
+
+{{fine_print}}
+
 
 {% if summary_report %}
 Your research assistant says:
 {{summary_report}}
 {% endif %}
 
-background:
-{{description}}
-
-fine_print:
-{{fine_print}}
 
 Today is {{today}}.
 
-You write your rationale and give your final answer as: "Probability: ZZ%", 0-100
+Before answering you write:
+(a) The time left until the outcome to the question is known.
+(b) What the outcome would be if nothing changed.
+(c) What you would forecast if there was only a quarter of the time left.
+(d) What you would forecast if there was 4x the time left.
+
+You write your rationale and then the last thing you write is your final answer as: "Probability: ZZ%", 0-100
 """
 
 
@@ -68,12 +69,16 @@ def build_prompt(question_details, summary_report=None):
     return prompt_jinja.render(params)
 
 
+def clamp(x, a, b):
+    return min(b, max(a, x))
+
+
 def find_number_before_percent(s):
     # Use a regular expression to find all numbers followed by a '%'
     matches = re.findall(r"(\d+)%", s)
     if matches:
         # Return the last number found before a '%'
-        return int(matches[-1])
+        return clamp(int(matches[-1]), 1, 99)
     else:
         # Return None if no number found
         return None
@@ -94,6 +99,10 @@ def post_question_comment(api_info: MetacApiInfo, question_id: int, comment_text
         },
         headers={"Authorization": f"Token {api_info.token}"},
     )
+    if not response.ok:
+        logging.error(
+            f"Failed posting a comment on question {question_id}: {response.text}"
+        )
     return response.json, response.ok
 
 
@@ -109,6 +118,11 @@ def post_question_prediction(
         json={"prediction": float(prediction_percentage) / 100},
         headers={"Authorization": f"Token {api_info.token}"},
     )
+    response.raise_for_status()
+    if not response.ok:
+        logging.error(
+            f"Failed posting a prediction on question {question_id}: {response.text}"
+        )
     return response.json, response.ok
 
 
@@ -137,6 +151,7 @@ def list_questions(api_info: MetacApiInfo, tournament_id: int, offset=0, count=1
         "forecast_type": "binary",
         "project": tournament_id,
         "status": "open",
+        "format": "json",
         "type": "forecast",
         "include_description": "true",
     }
@@ -158,7 +173,7 @@ def call_perplexity(query):
         "content-type": "application/json",
     }
     payload = {
-        "model": "llama-3-sonar-large-32k-chat",
+        "model": "llama-3.1-sonar-large-128k-chat",
         "messages": [
             {
                 "role": "system",
@@ -175,6 +190,10 @@ You do not produce forecasts yourself.
     response = requests.post(url=url, json=payload, headers=headers)
     response.raise_for_status()
     content = response.json()["choices"][0]["message"]["content"]
+    print(
+        f"\n\nCalled perplexity with:\n----\n{json.dumps(payload)}\n---\n, and got\n:",
+        content,
+    )
     return content
 
 
@@ -188,6 +207,18 @@ def get_model(model_name: str):
             return OpenAI(
                 api_key=config("OPENAI_API_KEY", default=""), model=model_name
             )
+        case "anthropic":
+            tokenizer = Anthropic().tokenizer
+            Settings.tokenizer = tokenizer
+            return Anthropic(
+                api_key=config("ANTHROPIC_API_KEY", default=""),
+                model="claude-3-5-sonnet-20240620",
+            )
+        case "o1-preview":
+            return OpenAI(
+                api_key=config("OPENAI_API_KEY", default=""), model=model_name
+            )
+
     return None
 
 
@@ -232,7 +263,7 @@ async def main():
     parser.add_argument(
         "--llm_model",
         type=str,
-        choices=["gpt-4o", "gpt-3.5", "ollama:llama3"],
+        choices=["gpt-4o", "gpt-3.5-turbo", "anthropic", "o1-preview"],
         default="gpt-4o",
         help="The model to use, one of the options listed",
     )
@@ -240,7 +271,7 @@ async def main():
         "--metac_base_url",
         type=str,
         help="The base URL for the metaculus API",
-        default=config("API_BASE_URL", default="https://www.metaculus.com/api2", cast=str),
+        default=config("API_BASE_URL", default="https://beta.metaculus.com/api2", cast=str),
     )
     parser.add_argument(
         "--tournament_id",
@@ -258,34 +289,83 @@ async def main():
 
     llm_model = get_model(args.llm_model)
 
+    if args.number_forecasts < 1:
+        print("number_forecasts must be larger than 0")
+        return
+
     offset = 0
     while True:
         questions = list_questions(
             metac_api_info, args.tournament_id, offset=offset, count=5
         )
+        print("Handling questions: ", [q["id"] for q in questions])
         if len(questions) < 1:
             break
 
         offset += len(questions)
 
-        print("Handling questions: ", [q["id"] for q in questions])
-
-        prompts = [
-            build_prompt(
+        pp_questions = [
+            (
                 question,
-                call_perplexity(question["title"]) if args.use_perplexity else None,
+                call_perplexity(question["question"]["title"]) if args.use_perplexity else None,
             )
             for question in questions
         ]
+        prompts = [
+            build_prompt(
+                {
+                    "title": question["question"]["title"],
+                    "description": question["question"]["description"],
+                    "resolution_criteria": question["question"].get("resolution_criteria", ""),
+                    "fine_print": question["question"].get("fine_print", ""),
+                },
+                pp_result,
+            )
+            for question, pp_result in pp_questions
+        ]
 
-        results = await asyncio.gather(
-            *[llm_predict_once(llm_model, prompt) for prompt in prompts],
-        )
+        for question, prompt in zip(questions, prompts):
+            print(
+                f"\n\n*****\nPrompt for question {question['id']}/{question['question']['title']}:\n{prompt} \n\n\n\n"
+            )
 
-        for (prediction, reasoning), question in zip(results, questions):
-            print(f"Question id {question['id']} prediction: {prediction}")
-            post_question_prediction(metac_api_info, question["id"], float(prediction))
-            post_question_comment(metac_api_info, question["id"], reasoning)
+        all_predictions = {q["id"]: [] for q in questions}
+        for round in range(args.number_forecasts):
+            results = await asyncio.gather(
+                *[llm_predict_once(llm_model, prompt) for prompt in prompts],
+            )
+
+            for (prediction, reasoning), question in zip(results, questions):
+                id = question["id"]
+                print(
+                    f"\n\n****\n(round {round})Forecast for {id}: {prediction}, Rationale:\n {reasoning}"
+                )
+                if prediction is not None:
+                    post_question_prediction(metac_api_info, id, float(prediction))
+                    post_question_comment(metac_api_info, id, reasoning)
+                    all_predictions[id].append(float(prediction))
+
+        if args.number_forecasts > 1:
+            for q in questions:
+                id = q["id"]
+                q_predictions = all_predictions[id]
+                if len(q_predictions) < 1:
+                    continue
+                median = statistics.median(q_predictions)
+                post_question_prediction(metac_api_info, id, median)
+                post_question_comment(
+                    metac_api_info,
+                    id,
+                    f"Computed the median of the last {len(q_predictions)} predictions: {median}",
+                )
+
+        for question, perplexity_result in pp_questions:
+            id = question["id"]
+            post_question_comment(
+                metac_api_info,
+                id,
+                f"##Used perplexity info:\n\n {perplexity_result}",
+            )
 
 
 if __name__ == "__main__":
