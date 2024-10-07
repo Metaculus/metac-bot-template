@@ -1,6 +1,6 @@
-# Metaculus forecasting bot
+# Simple Metaculus forecasting bot
 
-This repository contains the bots Metaculus uses as a baseline for the [AI Forecasting Tournament](https://www.metaculus.com/aib/). In addition, it contains a simple bot meant to get you started with creating your own bot.
+This repository contains a simple bot meant to get you started with creating your own bot for the [AI Forecasting Tournament](https://www.metaculus.com/aib/).
 
 
 ## Getting started
