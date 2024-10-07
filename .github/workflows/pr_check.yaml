@@ -27,19 +27,10 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
-      - name: Run forecast_bot.py
-        run: poetry run python forecast_bot.py
-        env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN_B1 }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          TOURNAMENT_ID: ${{ vars.TOURNAMENT_ID }}
-          API_BASE_URL: ${{ vars.API_BASE_URL }}
       - name: Run simple bot
         run: |
           poetry run python simple-forecast-bot.py
         env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN_B1 }}
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
