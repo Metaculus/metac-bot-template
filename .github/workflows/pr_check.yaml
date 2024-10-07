@@ -1,12 +1,11 @@
-name: run daily
+name: PR Check
 
 on:
-  schedule:
-    - cron: "0 0 * * *" # every day
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
 
 jobs:
-  build:
+  pr_check:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -27,14 +26,11 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
-      - name: Run the script
-        if: always()
-        run: echo "poetry run python forecast_bot.py"
-        env: # Or as an environment variable
+      - name: Run simple bot
+        run: |
+          poetry run python simple-forecast-bot.py
+        env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          TOURNAMENT_ID: ${{ vars.TOURNAMENT_ID }}
-          API_BASE_URL: ${{ vars.API_BASE_URL }}
