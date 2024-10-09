@@ -281,7 +281,7 @@ def main():
     submit_predictions = False
     metac_token = config("METACULUS_TOKEN")
     metac_base_url = "https://www.metaculus.com/api2"
-    tournament_id = 32506
+    tournament_id = 32506 # 32506 is the ID of the Q4 AI Benchmark tournament
     llm_model_name = "gpt-4o"
 
     all_questions = []
