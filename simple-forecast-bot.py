@@ -300,7 +300,7 @@ You do not produce forecasts yourself.
 def call_llm_model(model_name: str, prompt: str):
     extra_headers = {}
     extra_params = {}
-    proxy_base_url = "https://old.metaculus.com/"
+    proxy_base_url = "https://old.metaculus.com"
     #proxy_base_url = "http://localhost:3000"
 
     def get_content_openai(x):
@@ -310,13 +310,13 @@ def call_llm_model(model_name: str, prompt: str):
         return x["content"][0]["text"]
 
     if model_name in ["gpt-4o", "gpt-3.5-turbo"]:
-        url = f"{proxy_base_url}/proxy/openai/v1/chat/completions/"
+        url = f"{proxy_base_url}/proxy/openai/v1/chat/completions"
         get_content = get_content_openai
     elif model_name == "claude-3-5-sonnet-20240620":
         extra_headers = {"anthropic-version": "2023-06-01"}
         # modify this as you see fit
         extra_params = {"max_tokens": 4096}
-        url = f"{proxy_base_url}/proxy/anthropic/v1/messages/"
+        url = f"{proxy_base_url}/proxy/anthropic/v1/messages"
         get_content = get_content_anthropic
     else:
         raise ValueError(f"Model {model_name} not supported")
