@@ -43,8 +43,8 @@ def main():
     """
 
     # define bot parameters
-    use_perplexity = False
-    submit_predictions = False
+    use_perplexity = True
+    submit_predictions = True
     metac_token = config("METACULUS_TOKEN")
     metac_base_url = "https://www.metaculus.com/api2"
     tournament_id = 32506
@@ -300,7 +300,7 @@ You do not produce forecasts yourself.
 def call_llm_model(model_name: str, prompt: str):
     extra_headers = {}
     extra_params = {}
-    proxy_base_url = "https://www.metaculus.com"
+    proxy_base_url = "https://old.metaculus.com"
     #proxy_base_url = "http://localhost:3000"
 
     def get_content_openai(x):
