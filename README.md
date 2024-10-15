@@ -5,9 +5,7 @@ This repository contains a simple bot meant to get you started with creating you
 
 ## Getting started
 
-### Setting up the repository
-Fork this repository (click the "Fork" button in the top right corner). You don't have to fork this repository. But if you do, you can make use of the github actions to run your own bot automatically.
-
+### Run the bot locally
 Clone the repository. Find your terminal and run the following commands:
 ```bash
 git clone https://github.com/Metaculus/metac-bot
@@ -30,15 +28,11 @@ to install all required dependencies.
 Running the bot requires various environment variables. If you run the bot locally, the easiest way to set them is to create a file called `.env` in the root directory of the repository and add the variables in the following format:
 ```bash
 METACULUS_TOKEN=1234567890 # register your bot to get a here: https://www.metaculus.com/aib/
-OPENAI_API_KEY=1234567890
 PERPLEXITY_API_KEY=1234567890 # optional, if you want to use perplexity.ai
-ANTHROPIC_API_KEY=1234567890
 ```
 #### Github Actions
-If you want to automate running the bot using github actions, you have to set the environment variables in the github repository settings.
-Go to (Settings -> Secrets and variables -> Actions). Set API keys as secrets and the tournament id and API base URL as variables.
-
-For this simple bot, `TOURNAMENT_ID` and `API_BASE_URL` are simply hard-coded in the script and can be changed in the code itself.
+If you want to automate running the bot using github actions, you have to fork the repository and then set the environment variables in the github repository settings.
+Go to (Settings -> Secrets and variables -> Actions) and set API keys as secrets.
 
 ## Running the bot
 
@@ -53,7 +47,5 @@ Make sure to set the environment variables as described above and to set the par
 Github can automatically run code in a repository. To that end, you need to fork this repository. You also need to set the secrets and environment variables in the github repository settings as explained above.
 
 Automation is handled in the `.github/workflows/` folder.
-
-The `pr_check.yaml` file is responsible for triggering a test run every time a pull request is made to the main branch. This is useful for development and testing.
 
 The `daily_run_simple_bot.yaml` file runs the simple bot every day (note that since `submit_predictions` is set to `False` in the script by default, no predictions will actually be posted). The `daily_run_simple_bot.yaml` file contains various comments and explanations. You should be able to simply copy this file and modify it to run your own bot.
