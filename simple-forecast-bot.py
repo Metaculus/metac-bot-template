@@ -300,7 +300,7 @@ You do not produce forecasts yourself.
 def call_llm_model(model_name: str, prompt: str):
     extra_headers = {}
     extra_params = {}
-    proxy_base_url = "https://old.metaculus.com"
+    proxy_base_url = "https://old.metaculus.com/"
     #proxy_base_url = "http://localhost:3000"
 
     def get_content_openai(x):
