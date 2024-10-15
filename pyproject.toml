@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "metac-bot"
+name = "metac-bot-template"
 version = "0.1.0"
 description = ""
 authors = ["Vasile Popescu <elisescu@elisescu.com>"]
@@ -9,11 +9,8 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.11"
 python-decouple = "^3.8"
-guidance = "^0.1.15"
-openai = "^1.35.3"
-llama-index-llms-openai = "^0.1.23"
-llama-index = "^0.10.50"
-llama-index-llms-anthropic = "^0.1.14"
+requests = "^2.32.3"
+
 
 [build-system]
 requires = ["poetry-core"]

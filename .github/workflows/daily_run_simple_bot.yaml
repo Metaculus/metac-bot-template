@@ -1,6 +1,7 @@
 name: Daily Build Simple Bot
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 15 * * *" # every day, 11:00 EST
 
