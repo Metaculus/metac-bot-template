@@ -86,7 +86,10 @@ def main():
         llm_output = call_llm_model(llm_model_name, prompt)
 
         llm_prediction = process_forecast_probabilty(llm_output)
-        print(f"\n\n*****\nLLM prediction: {llm_prediction}\n*****\n")
+
+        print(
+            f"\n\n*****\nLLM prediction: {llm_prediction}\nLLM output:\n<{llm_output}>\n*****\n"
+        )
         rationale = llm_output
 
         if llm_prediction is not None and submit_predictions:
@@ -299,25 +302,38 @@ You do not produce forecasts yourself.
 
 def call_llm_model(model_name: str, prompt: str):
     extra_headers = {}
-    extra_params = {}
+    extra_params = {"stream": True}
     proxy_base_url = "https://www.metaculus.com"
-    #proxy_base_url = "http://localhost:3000"
 
-    def get_content_openai(x):
-        return x["choices"][0]["message"]["content"]
+    def get_content_chunk_openai(data):
+        # data has the format: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4o-mini", "system_fingerprint": "fp_44709d6fcb", "choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}
+        content = ""
+        if data.get("choices") and data["choices"] and data["choices"][0].get("delta"):
+            content = data["choices"][0]["delta"].get("content", "")
+        return content
 
-    def get_content_anthropic(x):
-        return x["content"][0]["text"]
+    def get_content_chunk_anthropic(data):
+        # lines of format:
+        # {'type': 'content_block_start', 'index': 0, 'content_block': {'type': 'text', 'text': ''}}
+        # or {'type': 'content_block_delta', 'index': 0, 'delta': {'type': 'text_delta', 'text': '(a) The time'}}
+        content = ""
+
+        if data.get("type", None) == "content_block_delta":
+            content = data["delta"]["text"]
+
+        if data.get("type", None) == "content_block_start":
+            content = data["content_block"]["text"]
+
+        return content
 
     if model_name in ["gpt-4o", "gpt-3.5-turbo"]:
         url = f"{proxy_base_url}/proxy/openai/v1/chat/completions/"
-        get_content = get_content_openai
+        get_content_chunk = get_content_chunk_openai
     elif model_name == "claude-3-5-sonnet-20240620":
         extra_headers = {"anthropic-version": "2023-06-01"}
-        # modify this as you see fit
-        extra_params = {"max_tokens": 4096}
+        extra_params["max_tokens"] = 4096
         url = f"{proxy_base_url}/proxy/anthropic/v1/messages/"
-        get_content = get_content_anthropic
+        get_content_chunk = get_content_chunk_anthropic
     else:
         raise ValueError(f"Model {model_name} not supported")
 
@@ -333,11 +349,19 @@ def call_llm_model(model_name: str, prompt: str):
         **extra_params,
     }
 
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data, stream=True)
+
     if not response.ok:
         raise Exception(response.text)
 
-    return get_content(response.json())
+    content = ""
+    for line in response.iter_lines():
+        line = line.decode("utf-8")
+        if line.startswith("data: {"):
+            data = json.loads(line.split("data: ")[1])
+            content += get_content_chunk(data)
+
+    return content
 
 
 if __name__ == "__main__":
