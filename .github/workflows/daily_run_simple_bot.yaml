@@ -3,12 +3,12 @@ name: Daily Build Simple Bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 15 * * *" # every day, 11:00 EST
+    - cron: "*/1 * * * *" # runs every 15 minutes. Make sure to skip already forecasted questions!
 
 # Daily job to run the simple forecast bot
 jobs:
   daily_build:
-    runs-on: ubuntu-latest #determines the machine that will run the job - keep as is
+    runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
       - name: Check out repository
@@ -29,14 +29,13 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root # note that this will install dependencies for the main bot, which is a bit more than what's needed for the simple bot. But that shouldn't matter much.
-      # run your bot
+        run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python simple-forecast-bot.py
+          poetry run python main.py
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }} # replace this with the name of the variable under which you stored your own Metaculus token
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
