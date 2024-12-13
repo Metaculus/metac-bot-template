@@ -3,15 +3,15 @@ This repository contains a simple bot meant to get you started with creating you
 
 
 ## Quick start -> Fork and use Github Actions
-The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every hour, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 15 min and will skip questions it has already forecasted on.
+The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 15min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 15 min and will skip questions it has already forecasted on.
 
 1) **Fork the repository**: Go to the [repository](https://github.com/Metaculus/metac-bot-template) and click 'fork'.
-2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys as secrets. You will want to set your METACULUS_TOKEN and make sure you've applied for some credits for our OpenAI proxy.
-3) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Regularly forecast new questions' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on.
+2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, so you can use our OpenAI proxy (you should automatically be given some credits, but please reach out to apply for more).
+3) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Regularly forecast new questions' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on.
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
 
-As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. If enabled, the default search provider is AskNews which requires 2 keys you'll need to get from their website. There is a function you can use to call Perplexity if you would rather use this. For more information on how to set up AskNews see the tournament page. Beyond this you can use the below instructions to edit the code and run it locally.
+As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. If enabled, the default search provider is AskNews which requires 2 keys (add them to your secrets). There is a function you can use to call Perplexity if you would rather use this. For more information on how to set up AskNews see the tournament page. Beyond this you can use the below instructions to edit the code and run it locally.
 
 ## Run the bot locally
 Clone the repository. Find your terminal and run the following commands:
@@ -32,7 +32,7 @@ to install all required dependencies.
 
 ### Setting environment variables
 
-Running the bot requires various environment variables. If you run the bot locally, the easiest way to set them is to create a file called `.env` in the root directory of the repository and add the variables in the following format of .env.template.
+Running the bot requires various environment variables. If you run the bot locally, the easiest way to set them is to create a file called `.env` in the root directory of the repository (copy the `.env.template`).
 
 ### Running the bot
 
