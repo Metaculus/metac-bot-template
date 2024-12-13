@@ -9,20 +9,20 @@ import numpy as np
 import requests
 from asknews_sdk import AskNewsSDK
 
+
+######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions
-NUM_RUNS_PER_QUESTION = 5  # The median is taken between NUM_RUNS_PER_QUESTION runs
+USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
-GET_NEWS = True  # set to True to enable AskNews after entering ASKNEWS secrets
+GET_NEWS = False  # set to True to enable AskNews after entering ASKNEWS secrets
 
 # Environment variables
-METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")  # userdata.get('METACULUS_TOKEN')
+METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
 if GET_NEWS == True:
-    ASKNEWS_CLIENT_ID = os.getenv(
-        "ASKNEWS_CLIENT_ID"
-    )  # userdata.get('ASKNEWS_CLIENT_ID')
-    ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")  # userdata.get('ASKNEWS_SECRET')
+    ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
+    ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 
 # The tournament IDs below can be used for testing your bot.
 TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
@@ -229,7 +229,7 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
 
 def call_perplexity(query: str) -> str:
-    PERPLEXITY_API_KEY = userdata.get("PERPLEXITY_API_KEY")
+    PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
     url = "https://api.perplexity.ai/chat/completions"
     api_key = PERPLEXITY_API_KEY
     headers = {
