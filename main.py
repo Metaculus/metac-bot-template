@@ -552,6 +552,15 @@ def generate_continuous_cdf(
     percentile_min = min(float(key) for key in percentile_values.keys())
     range_min = lower_bound
     range_max = upper_bound
+    range_size = range_max - range_min
+    buffer = 1 if range_size > 100 else 0.01 * range_size
+
+    # Adjust any values that are exactly at the bounds
+    for percentile, value in list(percentile_values.items()):
+        if not open_lower_bound and value <= range_min + buffer:
+            percentile_values[percentile] = range_min + buffer
+        if not open_upper_bound and value >= range_max - buffer:
+            percentile_values[percentile] = range_max - buffer
 
     # Set cdf values outside range
     if open_upper_bound:
