@@ -8,7 +8,9 @@ from openai import AsyncOpenAI
 import numpy as np
 import requests
 from asknews_sdk import AskNewsSDK
+import dotenv
 
+dotenv.load_dotenv()
 
 ######################### CONSTANTS #########################
 # Constants
@@ -203,7 +205,7 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
     """
 
     client = AsyncOpenAI(
-        base_url="https://www.metaculus.com/proxy/openai/v1",
+        base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
         default_headers={
             "Content-Type": "application/json",
             "Authorization": f"Token {METACULUS_TOKEN}",
@@ -467,6 +469,9 @@ Today is {today}.
 {lower_bound_message}
 {upper_bound_message}
 
+Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+Never use scientific notation.
+
 Before answering you write:
 (a) The time left until the outcome to the question is known.
 (b) The outcome if nothing changed.
@@ -493,31 +498,28 @@ def extract_percentiles_from_response(forecast_text: str) -> dict:
 
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_percentile_numbers(text) -> dict:
-        # Regular expression pattern
         pattern = r"^.*(?:P|p)ercentile.*$"
-
-        # Number extraction pattern
-        number_pattern = r"-?\d+(?:,\d{3})*(?:\.\d+)?"
-
+        number_pattern = r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
         results = []
 
-        # Iterate through each line in the text
         for line in text.split("\n"):
-            # Check if the line contains "Percentile" or "percentile"
             if re.match(pattern, line):
-                # Extract all numbers from the line
                 numbers = re.findall(number_pattern, line)
-                numbers_no_commas = [num.replace(",", "") for num in numbers]
-                # Convert strings to float or int
-                numbers = [
-                    float(num) if "." in num else int(num) for num in numbers_no_commas
+                numbers_no_commas = [
+                    next(num for num in match if num).replace(",", "")
+                    for match in numbers
                 ]
-                # Add the tuple of numbers to results
+                numbers = [
+                    float(num) if "." in num else int(num)
+                    for num in numbers_no_commas
+                ]
                 if len(numbers) > 1:
                     first_number = numbers[0]
                     last_number = numbers[-1]
-                    tup = [first_number, last_number]
-                    results.append(tuple(tup))
+                    # Check if the original line had a negative sign before the last number
+                    if "-" in line.split(":")[-1]:
+                        last_number = -abs(last_number)
+                    results.append((first_number, last_number))
 
         # Convert results to dictionary
         percentile_values = {}
