@@ -34,9 +34,12 @@ TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
 
 # The example questions can be used for testing your bot.
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (28571, 28571),  # SSE - Numeric - https://www.metaculus.com/questions/28571/
-    (30270, 30477),  # Executive Order - Multiple Choice - https://www.metaculus.com/questions/30477/
-    (30478, 30711),  # South Korea - Binary - https://www.metaculus.com/questions/30711/
+    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    # (28571, 28571),  # SSE - Numeric - https://www.metaculus.com/questions/28571/
+    # (30270, 30477),  # Executive Order - Multiple Choice - https://www.metaculus.com/questions/30477/
+    # (30478, 30711),  # South Korea - Binary - https://www.metaculus.com/questions/30711/
     # (28997, 29077), # brazil - Numeric - https://www.metaculus.com/questions/29077/
     # (29480, 29608), # elon - Numeric - https://www.metaculus.com/questions/29608/
     # (28953, 29028), # arms sales - Discrete Numeric -  https://www.metaculus.com/questions/29028/
@@ -192,8 +195,8 @@ def get_post_details(post_id: int) -> dict:
     )
     if not response.ok:
         raise Exception(response.text)
-    return json.loads(response.content)
-
+    details = json.loads(response.content)
+    return details
 
 CONCURRENT_REQUESTS_LIMIT = 5
 llm_semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
