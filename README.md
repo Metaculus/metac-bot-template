@@ -11,7 +11,28 @@ The easiest way to use this repo is to fork it, enable github workflow/actions, 
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
 
-As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. If enabled, the default search provider is AskNews which requires 2 keys (add them to your secrets). There is a function you can use to call Perplexity if you would rather use this. For more information on how to set up AskNews see the tournament page. Beyond this you can use the below instructions to edit the code and run it locally.
+As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. You will need a Perplexity.ai or Exa.ai API Key to enable searching.
+
+## Search Provider API Keys
+
+### Getting Perplexity Set Up
+Perplexity works as an internet powered LLM, and costs half a cent per search plus token costs. It is less customizable but generally cheaper.
+1. Create an account on the free tier at www.perplexity.ai
+2. Go to https://www.perplexity.ai/settings/account
+3. Click "API" in the top bar
+4. Click "Generate" in the "API Keys" section
+5. Add funds to your account with the 'Buy Credits' button
+6. Add it to the .env as 'PERPLEXITY_API_KEY=your-key-here'
+
+### Getting Exa Set Up
+Exa is a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site has scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the SmartSearcher of the forecasting-tools python package (though you will also need an OpenAI API key for this to work). Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' per site requested. Content items include: highlights from a source, summary of a source, or full text.
+1. Make an account with Exa at Exa.ai
+2. Go to https://dashboard.exa.ai/playground
+3. Click on "API Keys" in the left sidebar
+4. Create a new key
+5. Go to 'Billing' in the left sidebar and add funds to your acount with the 'Top Up Balance'
+6. Add it to the .env as 'EXA_API_Key=your-key-here'
+
 
 ## Run the bot locally
 Clone the repository. Find your terminal and run the following commands:
