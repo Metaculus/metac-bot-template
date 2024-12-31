@@ -25,7 +25,7 @@ Perplexity works as an internet powered LLM, and costs half a cent per search pl
 6. Add it to the .env as 'PERPLEXITY_API_KEY=your-key-here'
 
 ### Getting Exa Set Up
-Exa is a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site has scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the SmartSearcher of the forecasting-tools python package (though you will also need an OpenAI API key for this to work). Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' per site requested. Content items include: highlights from a source, summary of a source, or full text.
+Exa is closer to a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site returned can have scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the SmartSearcher of the forecasting-tools python package (though you will also need an OpenAI API key for this to work). Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' requested per site requested. Content items include: highlights from a source, summary of a source, or full text.
 1. Make an account with Exa at Exa.ai
 2. Go to https://dashboard.exa.ai/playground
 3. Click on "API Keys" in the left sidebar
