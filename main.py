@@ -3,14 +3,14 @@ import datetime
 import json
 import os
 import re
+import dotenv
+dotenv.load_dotenv()
 
 from openai import AsyncOpenAI
 import numpy as np
 import requests
-from asknews_sdk import AskNewsSDK
-import dotenv
+import forecasting_tools
 
-dotenv.load_dotenv()
 
 ######################### CONSTANTS #########################
 # Constants
@@ -18,13 +18,13 @@ SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
-GET_NEWS = False  # set to True to enable AskNews after entering ASKNEWS secrets
+GET_NEWS = False  # set to True to enable the bot to do online research
 
 # Environment variables
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
-if GET_NEWS == True:
-    ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
-    ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY") # You only need either Exa or Perplexity key for online research
+EXA_API_KEY = os.getenv("EXA_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
 TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
@@ -34,9 +34,12 @@ TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
 
 # The example questions can be used for testing your bot.
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (28571, 28571),  # SSE - Numeric - https://www.metaculus.com/questions/28571/
-    (30270, 30477),  # Executive Order - Multiple Choice - https://www.metaculus.com/questions/30477/
-    (30478, 30711),  # South Korea - Binary - https://www.metaculus.com/questions/30711/
+    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    # (28571, 28571),  # SSE - Numeric - https://www.metaculus.com/questions/28571/
+    # (30270, 30477),  # Executive Order - Multiple Choice - https://www.metaculus.com/questions/30477/
+    # (30478, 30711),  # South Korea - Binary - https://www.metaculus.com/questions/30711/
     # (28997, 29077), # brazil - Numeric - https://www.metaculus.com/questions/29077/
     # (29480, 29608), # elon - Numeric - https://www.metaculus.com/questions/29608/
     # (28953, 29028), # arms sales - Discrete Numeric -  https://www.metaculus.com/questions/29028/
@@ -192,8 +195,8 @@ def get_post_details(post_id: int) -> dict:
     )
     if not response.ok:
         raise Exception(response.text)
-    return json.loads(response.content)
-
+    details = json.loads(response.content)
+    return details
 
 CONCURRENT_REQUESTS_LIMIT = 5
 llm_semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
@@ -230,8 +233,23 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
     return "".join(collected_content)
 
 
-def call_perplexity(query: str) -> str:
-    PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+def run_research(question: str) -> str:
+    research = ""
+    if GET_NEWS == True:
+        if EXA_API_KEY:
+            research = call_exa_smart_searcher(question)
+        elif PERPLEXITY_API_KEY:
+            research = call_perplexity(question)
+        else:
+            raise ValueError("No API key provided")
+    else:
+        research = "No research done"
+
+    print(f"########################\nResearch Found:\n{research}\n########################")
+
+    return research
+
+def call_perplexity(question: str) -> str:
     url = "https://api.perplexity.ai/chat/completions"
     api_key = PERPLEXITY_API_KEY
     headers = {
@@ -240,20 +258,20 @@ def call_perplexity(query: str) -> str:
         "content-type": "application/json",
     }
     payload = {
-        "model": "llama-3.1-sonar-large-128k-chat",
+        "model": "llama-3.1-sonar-huge-128k-online",
         "messages": [
             {
                 "role": "system",  # this is a system prompt designed to guide the perplexity assistant
                 "content": """
-                  You are an assistant to a superforecaster.
-                  The superforecaster will give you a question they intend to forecast on.
-                  To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-                  You do not produce forecasts yourself.
-                  """,
+                You are an assistant to a superforecaster.
+                The superforecaster will give you a question they intend to forecast on.
+                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+                You do not produce forecasts yourself.
+                """,
             },
             {
                 "role": "user",  # this is the actual prompt we ask the perplexity assistant to answer
-                "content": query,
+                "content": question,
             },
         ],
     }
@@ -261,79 +279,36 @@ def call_perplexity(query: str) -> str:
     if not response.ok:
         raise Exception(response.text)
     content = response.json()["choices"][0]["message"]["content"]
-    print(
-        f"\n\nCalled perplexity with:\n----\n{json.dumps(payload)}\n---\n, and got\n:",
-        content,
-    )
     return content
 
-
-def get_asknews_context(query: str) -> tuple[str, str]:
-    """
-    Use the AskNews `news` endpoint to get news context for your query.
-    The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
-    """
-    ask = AskNewsSDK(
-        client_id=ASKNEWS_CLIENT_ID, client_secret=ASKNEWS_SECRET, scopes=["news"]
-    )
-
-    # get the latest news related to the query (within the past 48 hours)
-    hot_response = ask.news.search_news(
-        query=query,  # your natural language query
-        n_articles=6,  # control the number of articles to include in the context, originally 5
-        return_type="both",
-        strategy="latest news",  # enforces looking at the latest news only
-    )
-
-    # get context from the "historical" database that contains a news archive going back to 2023
-    historical_response = ask.news.search_news(
-        query=query,
-        n_articles=10,
-        return_type="both",
-        strategy="news knowledge",  # looks for relevant news within the past 60 days
-    )
-
-    news_articles_with_full_context = (
-        hot_response.as_string + historical_response.as_string
-    )
-    formatted_articles = format_asknews_context(
-        hot_response.as_dicts, historical_response.as_dicts
-    )
-    return news_articles_with_full_context, formatted_articles
-
-
-def format_asknews_context(
-    hot_articles: list[dict], historical_articles: list[dict]
-) -> str:
-    """
-    Format the articles for posting to Metaculus.
-    """
-
-    formatted_articles = "Here are the relevant news articles:\n\n"
-
-    if hot_articles:
-        hot_articles = [article.__dict__ for article in hot_articles]
-        hot_articles = sorted(hot_articles, key=lambda x: x["pub_date"], reverse=True)
-
-        for article in hot_articles:
-            pub_date = article["pub_date"].strftime("%B %d, %Y %I:%M %p")
-            formatted_articles += f"**{article['eng_title']}**\n{article['summary']}\nOriginal language: {article['language']}\nPublish date: {pub_date}\nSource:[{article['source_id']}]({article['article_url']})\n\n"
-
-    if historical_articles:
-        historical_articles = [article.__dict__ for article in historical_articles]
-        historical_articles = sorted(
-            historical_articles, key=lambda x: x["pub_date"], reverse=True
+def call_exa_smart_searcher(question: str) -> str:
+    if OPENAI_API_KEY is None:
+        searcher = forecasting_tools.ExaSearcher(
+            include_highlights=True,
+            num_results=10,
         )
+        highlights = asyncio.run(searcher.invoke_for_highlights_in_relevance_order(question))
+        prioritized_highlights = highlights[:10]
+        combined_highlights = ""
+        for i, highlight in enumerate(prioritized_highlights):
+            combined_highlights += f'[Highlight {i+1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
+        response = combined_highlights
+    else:
+        searcher = forecasting_tools.SmartSearcher(
+            temperature=0,
+            num_searches_to_run=2,
+            num_sites_per_search=10,
+        )
+        prompt = (
+            "You are an assistant to a superforecaster. The superforecaster will give"
+            "you a question they intend to forecast on. To be a great assistant, you generate"
+            "a concise but detailed rundown of the most relevant news, including if the question"
+            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
+            f"\n\nThe question is: {question}"
+        )
+        response = asyncio.run(searcher.invoke(prompt))
 
-        for article in historical_articles:
-            pub_date = article["pub_date"].strftime("%B %d, %Y %I:%M %p")
-            formatted_articles += f"**{article['eng_title']}**\n{article['summary']}\nOriginal language: {article['language']}\nPublish date: {pub_date}\nSource:[{article['source_id']}]({article['article_url']})\n\n"
-
-    if not hot_articles and not historical_articles:
-        formatted_articles += "No articles were found.\n\n"
-        return formatted_articles
-
-    return formatted_articles
+    return response
 
 
 ############### BINARY ###############
@@ -398,11 +373,7 @@ async def get_binary_gpt_prediction(
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
 
-    if GET_NEWS == True:
-        full_article_context, formatted_articles = get_asknews_context(title)
-        summary_report = formatted_articles
-    else:
-        summary_report = ""
+    summary_report = run_research(title)
 
     content = BINARY_PROMPT_TEMPLATE.format(
         title=title,
@@ -687,11 +658,7 @@ async def get_numeric_gpt_prediction(
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound}."
 
-    if GET_NEWS == True:
-        full_article_context, formatted_articles = get_asknews_context(title)
-        summary_report = formatted_articles
-    else:
-        summary_report = ""
+    summary_report = run_research(title)
 
     content = NUMERIC_PROMPT_TEMPLATE.format(
         title=title,
@@ -885,11 +852,7 @@ async def get_multiple_choice_gpt_prediction(
     question_type = question_details["type"]
     options = question_details["options"]
 
-    if GET_NEWS == True:
-        full_article_context, formatted_articles = get_asknews_context(title)
-        summary_report = formatted_articles
-    else:
-        summary_report = ""
+    summary_report = run_research(title)
 
     content = MULTIPLE_CHOICE_PROMPT_TEMPLATE.format(
         title=title,
