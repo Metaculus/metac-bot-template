@@ -10,6 +10,7 @@ from openai import AsyncOpenAI
 import numpy as np
 import requests
 import forecasting_tools
+from asknews_sdk import AskNewsSDK
 
 
 ######################### CONSTANTS #########################
@@ -21,14 +22,17 @@ SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = False  # set to True to enable the bot to do online research
 
 # Environment variables
+# You only need *either* Exa or Perplexity or AskNews keys for online research
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY") # You only need either Exa or Perplexity key for online research
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
+ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 EXA_API_KEY = os.getenv("EXA_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
-TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
-# TOURNAMENT_ID = 3672  # Quarterly Cup
+TOURNAMENT_ID = 32627 # Q1 AI Benchmarking
+# TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
 # TOURNAMENT_ID = 3600 # GiveWell
 # TOURNAMENT_ID = 3411 # Respiratory Outlook
 
@@ -37,16 +41,11 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
     (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
-    # (28571, 28571),  # SSE - Numeric - https://www.metaculus.com/questions/28571/
-    # (30270, 30477),  # Executive Order - Multiple Choice - https://www.metaculus.com/questions/30477/
-    # (30478, 30711),  # South Korea - Binary - https://www.metaculus.com/questions/30711/
-    # (28997, 29077), # brazil - Numeric - https://www.metaculus.com/questions/29077/
-    # (29480, 29608), # elon - Numeric - https://www.metaculus.com/questions/29608/
-    # (28953, 29028), # arms sales - Discrete Numeric -  https://www.metaculus.com/questions/29028/
-    # (29051, 29141),  # Influenza A - Numeric - https://www.metaculus.com/questions/29141/
-    # (8529, 8529), # Metaculus meetup - Discrete Numeric - https://www.metaculus.com/questions/8529/
-    # (29050, 29140), # covid hospitalization - Numeric - https://www.metaculus.com/questions/29140/
 ]
+
+# Also, we realize the below code could probably be cleaned up a bit in a few places
+# Though we are assuming most people will dissect it enough to make this not matter much
+# Hopefully this is a good starting point for people to build on and get a gist of whats involved
 
 ######################### HELPER FUNCTIONS #########################
 
@@ -199,7 +198,7 @@ def get_post_details(post_id: int) -> dict:
     return details
 
 CONCURRENT_REQUESTS_LIMIT = 5
-llm_semaphore = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
+llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
 
 async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3) -> str:
@@ -217,7 +216,7 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
         max_retries=2,
     )
 
-    async with llm_semaphore:
+    async with llm_rate_limiter:
         collected_content = []
         stream = await client.chat.completions.create(
             model=model,
@@ -236,7 +235,9 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 def run_research(question: str) -> str:
     research = ""
     if GET_NEWS == True:
-        if EXA_API_KEY:
+        if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
+            research = call_asknews(question)
+        elif EXA_API_KEY:
             research = call_exa_smart_searcher(question)
         elif PERPLEXITY_API_KEY:
             research = call_perplexity(question)
@@ -310,6 +311,58 @@ def call_exa_smart_searcher(question: str) -> str:
 
     return response
 
+def call_asknews(question: str) -> str:
+    """
+    Use the AskNews `news` endpoint to get news context for your query.
+    The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
+    """
+    ask = AskNewsSDK(
+        client_id=ASKNEWS_CLIENT_ID, client_secret=ASKNEWS_SECRET, scopes=set(["news"])
+    )
+
+    # get the latest news related to the query (within the past 48 hours)
+    hot_response = ask.news.search_news(
+        query=question,  # your natural language query
+        n_articles=6,  # control the number of articles to include in the context, originally 5
+        return_type="both",
+        strategy="latest news",  # enforces looking at the latest news only
+    )
+
+    # get context from the "historical" database that contains a news archive going back to 2023
+    historical_response = ask.news.search_news(
+        query=question,
+        n_articles=10,
+        return_type="both",
+        strategy="news knowledge",  # looks for relevant news within the past 60 days
+    )
+
+    hot_articles = hot_response.as_dicts
+    historical_articles = historical_response.as_dicts
+    formatted_articles = "Here are the relevant news articles:\n\n"
+
+    if hot_articles:
+        hot_articles = [article.__dict__ for article in hot_articles]
+        hot_articles = sorted(hot_articles, key=lambda x: x["pub_date"], reverse=True)
+
+        for article in hot_articles:
+            pub_date = article["pub_date"].strftime("%B %d, %Y %I:%M %p")
+            formatted_articles += f"**{article['eng_title']}**\n{article['summary']}\nOriginal language: {article['language']}\nPublish date: {pub_date}\nSource:[{article['source_id']}]({article['article_url']})\n\n"
+
+    if historical_articles:
+        historical_articles = [article.__dict__ for article in historical_articles]
+        historical_articles = sorted(
+            historical_articles, key=lambda x: x["pub_date"], reverse=True
+        )
+
+        for article in historical_articles:
+            pub_date = article["pub_date"].strftime("%B %d, %Y %I:%M %p")
+            formatted_articles += f"**{article['eng_title']}**\n{article['summary']}\nOriginal language: {article['language']}\nPublish date: {pub_date}\nSource:[{article['source_id']}]({article['article_url']})\n\n"
+
+    if not hot_articles and not historical_articles:
+        formatted_articles += "No articles were found.\n\n"
+        return formatted_articles
+
+    return formatted_articles
 
 ############### BINARY ###############
 # @title Binary prompt & functions
@@ -948,7 +1001,7 @@ async def forecast_individual_question(
     question_type = question_details["type"]
 
     summary_of_forecast = ""
-    summary_of_forecast += f"----------\nQuestion: {title}\n"
+    summary_of_forecast += f"-----------------------------------------------\nQuestion: {title}\n"
     summary_of_forecast += f"URL: https://www.metaculus.com/questions/{post_id}/\n"
 
     if question_type == "multiple_choice":
@@ -1010,14 +1063,14 @@ async def forecast_questions(
         for question_id, post_id in open_question_id_post_id
     ]
     forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
-    print("\n", "#" * 20, "\nForecast Summaries\n", "#" * 20)
+    print("\n", "#" * 100, "\nForecast Summaries\n", "#" * 100)
     for question_id_post_id, forecast_summary in zip(
         open_question_id_post_id, forecast_summaries
     ):
         question_id, post_id = question_id_post_id
         if isinstance(forecast_summary, Exception):
             print(
-                f"------------\nQuestion {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: https://www.metaculus.com/questions/{question_id}/\n"
+                f"-----------------------------------------------\nQuestion {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: https://www.metaculus.com/questions/{question_id}/\n"
             )
         else:
             print(forecast_summary)
