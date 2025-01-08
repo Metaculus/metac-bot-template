@@ -11,7 +11,7 @@ The easiest way to use this repo is to fork it, enable github workflow/actions, 
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
 
-As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. You will need a Perplexity.ai or Exa.ai API Key to enable searching.
+As a note `GET_NEWS` is disabled by default, and you will need to edit this in `main.py` to enable searching the web. You will need a Asknews, Perplexity.ai, or Exa.ai API Key to enable searching. AskNews usage is free in Q1.
 
 ## Search Provider API Keys
 
@@ -32,6 +32,14 @@ Exa is closer to a more traditional search provider. Exa takes in a search query
 4. Create a new key
 5. Go to 'Billing' in the left sidebar and add funds to your acount with the 'Top Up Balance'
 6. Add it to the .env as 'EXA_API_Key=your-key-here'
+
+### Getting AskNews Setup
+Metaculus is collaborating with AskNews to give free access to internet searches. Each registered bot builder gets 3k calls per month, 9k calls total for the entire tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls). Bots have access to the /news endpoint only. To sign up:
+1. make an account on AskNews (if you have not yet, https://my.asknews.app)
+2. send the email address associated with your AskNews account to the email `rob [at] asknews.app`
+3. in that email also send the name of your Metaculus Q1 bot
+4. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
+Your account will be active for the duration of the Q1 tournament. There is only one account allowed per participant.
 
 
 ## Run the bot locally
