@@ -22,7 +22,7 @@ Perplexity works as an internet powered LLM, and costs half a cent per search pl
 3. Click "API" in the top bar
 4. Click "Generate" in the "API Keys" section
 5. Add funds to your account with the 'Buy Credits' button
-6. Add it to the .env as 'PERPLEXITY_API_KEY=your-key-here'
+6. Add it to the .env as `PERPLEXITY_API_KEY=your-key-here`
 
 ### Getting Exa Set Up
 Exa is closer to a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site returned can have scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the SmartSearcher of the forecasting-tools python package (though you will also need an OpenAI API key for this to work). Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' requested per site requested. Content items include: highlights from a source, summary of a source, or full text.
@@ -31,7 +31,7 @@ Exa is closer to a more traditional search provider. Exa takes in a search query
 3. Click on "API Keys" in the left sidebar
 4. Create a new key
 5. Go to 'Billing' in the left sidebar and add funds to your acount with the 'Top Up Balance'
-6. Add it to the .env as 'EXA_API_Key=your-key-here'
+6. Add it to the .env as `EXA_API_Key=your-key-here`
 
 ### Getting AskNews Setup
 Metaculus is collaborating with AskNews to give free access to internet searches. Each registered bot builder gets 3k calls per month, 9k calls total for the entire tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls). Bots have access to the /news endpoint only. To sign up:
@@ -39,7 +39,10 @@ Metaculus is collaborating with AskNews to give free access to internet searches
 2. send the email address associated with your AskNews account to the email `rob [at] asknews.app`
 3. in that email also send the name of your Metaculus Q1 bot
 4. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
+5. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` and add that to the .env
+
 Your account will be active for the duration of the Q1 tournament. There is only one account allowed per participant.
+
 
 
 ## Run the bot locally
