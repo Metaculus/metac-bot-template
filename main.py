@@ -31,12 +31,17 @@ EXA_API_KEY = os.getenv("EXA_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
-TOURNAMENT_ID = 32627 # Q1 AI Benchmarking
-# TOURNAMENT_ID = 32506 # Q4 AI Benchmarking
-# TOURNAMENT_ID = 3600 # GiveWell
-# TOURNAMENT_ID = 3411 # Respiratory Outlook
+Q4_2024_AI_BENCHMARKING_ID = 32506
+Q1_2025_AI_BENCHMARKING_ID = 32627
+Q4_2024_QUARTERLY_CUP_ID = 3672
+Q1_2025_QUARTERLY_CUP_ID = 32630
+AXC_2025_TOURNAMENT_ID = 32564
+GIVEWELL_ID = 3600
+RESPIRATORY_OUTLOOK_ID = 3411
 
-# The example questions can be used for testing your bot.
+TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
+
+# The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
@@ -89,7 +94,7 @@ def post_question_prediction(question_id: int, forecast_payload: dict) -> None:
         ],
         **AUTH_HEADERS,  # type: ignore
     )
-    print(response)
+    print(f"Prediction Post status code: {response.status_code}")
     if not response.ok:
         raise RuntimeError(response.text)
 
@@ -161,12 +166,9 @@ def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
 
     post_dict = dict()
     for post in posts["results"]:
-        print(f'post_id: {post["id"]}.  question_id: {post["question"]["id"]}\n')
         if question := post.get("question"):
             # single question post
             post_dict[post["id"]] = [question]
-
-    print(f"post_dict: {post_dict}")
 
     open_question_id_post_id = []  # [(question_id, post_id)]
     for post_id, questions in post_dict.items():
@@ -178,7 +180,6 @@ def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
                 )
                 open_question_id_post_id.append((question["id"], post_id))
 
-    print(f"open_question_id_post_id: {open_question_id_post_id}")
     return open_question_id_post_id
 
 
@@ -206,6 +207,9 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
     Makes a streaming completion request to OpenAI's API with concurrent request limiting.
     """
 
+    # Remove the base_url parameter to call the OpenAI API directly
+    # Also checkout the package 'litellm' for one function that can call any model from any provider
+    # Email support@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
     client = AsyncOpenAI(
         base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
         default_headers={
@@ -462,9 +466,6 @@ async def get_binary_gpt_prediction(
     final_comment = f"Median Probability: {median_probability}\n\n" + "\n\n".join(
         final_comment_sections
     )
-    print(f"Comment: {final_comment}")
-    print(f"Extracted Probability (0.001 to 0.999): {median_probability}")
-
     return median_probability, final_comment
 
 
@@ -493,8 +494,11 @@ Today is {today}.
 {lower_bound_message}
 {upper_bound_message}
 
-Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
-Never use scientific notation.
+
+Formatting Instructions:
+- Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+- Never use scientific notation.
+- Always start with a smaller number (more negative if negative) and then increase from there
 
 Before answering you write:
 (a) The time left until the outcome to the question is known.
@@ -602,8 +606,6 @@ def generate_continuous_cdf(
     else:
         percentile_values[0] = range_min
 
-    print(f"Percentile_values {percentile_values.items()}")
-
     sorted_percentile_values = dict(sorted(percentile_values.items()))
 
     # Normalize percentile keys
@@ -612,13 +614,10 @@ def generate_continuous_cdf(
         percentile = float(key) / 100
         normalized_percentile_values[percentile] = value
 
-    print(f"normalized_percentile_values: {normalized_percentile_values}")
 
     value_percentiles = {
         value: key for key, value in normalized_percentile_values.items()
     }
-
-    print(f"value_percentiles: {value_percentiles}")
 
     # function for log scaled questions
     def generate_cdf_locations(range_min, range_max, zero_point):
@@ -632,11 +631,6 @@ def generate_continuous_cdf(
         return [scale(x) for x in np.linspace(0, 1, 201)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
-
-    print(f"range_min: {range_min}")
-    print(f"range_max: {range_max}")
-    print(f"zero_point: {zero_point}")
-    print(f"cdf_axis: {cdf_xaxis}\n")
 
     def linear_interpolation(x_values, xy_pairs):
         # Sort the xy_pairs by x-values
@@ -678,9 +672,6 @@ def generate_continuous_cdf(
         return y_values
 
     continuous_cdf = linear_interpolation(cdf_xaxis, value_percentiles)
-
-    print(f"continuous_cdf: {continuous_cdf}")
-
     return continuous_cdf
 
 
@@ -733,12 +724,6 @@ async def get_numeric_gpt_prediction(
             f"{rationale}\n\n\n"
         )
 
-        print(f"Comment: {comment}")
-        print(f"Extracted Percentile_values: {percentile_values}")
-        print(f"Scaling: {scaling}")
-        print(f"Open upper bound: {open_upper_bound}")
-        print(f"Open lower bound: {open_lower_bound}")
-
         cdf = generate_continuous_cdf(
             percentile_values,
             question_type,
@@ -765,9 +750,6 @@ async def get_numeric_gpt_prediction(
     final_comment = f"Median CDF: `{str(median_cdf)[:100]}...`\n\n" + "\n\n".join(
         final_comment_sections
     )
-    print(f"Comment: {final_comment}")
-    print(f"Extracted CDF: {median_cdf}")
-
     return median_cdf, final_comment
 
 
@@ -852,8 +834,6 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
     """
     Returns: dict corresponding to the probabilities of each option.
     """
-    print(f"options: {options}")
-    print(f"option_probabilities: {option_probabilities}")
 
     # confirm that there is a probability for each option
     if len(options) != len(option_probabilities):
@@ -886,8 +866,6 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
     probability_yes_per_category = {}
     for i in range(len(options)):
         probability_yes_per_category[options[i]] = normalized_option_probabilities[i]
-
-    print(f"probability_yes_per_category: {probability_yes_per_category}")
 
     return probability_yes_per_category
 
@@ -922,7 +900,6 @@ async def get_multiple_choice_gpt_prediction(
     ) -> tuple[dict[str, float], str]:
         rationale = await call_llm(content)
 
-        print(f"Rationale: {rationale}")
 
         option_probabilities = extract_option_probabilities_from_response(
             rationale, options
@@ -961,11 +938,6 @@ async def get_multiple_choice_gpt_prediction(
         f"Average Probability Yes Per Category: `{average_probability_yes_per_category}`\n\n"
         + "\n\n".join(final_comment_sections)
     )
-    print(f"Comment: {final_comment}")
-    print(
-        f"Extracted Probability Yes Per Category: {average_probability_yes_per_category}"
-    )
-
     return average_probability_yes_per_category, final_comment
 
 
@@ -1030,6 +1002,10 @@ async def forecast_individual_question(
     else:
         raise ValueError(f"Unknown question type: {question_type}")
 
+    print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
+    print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
+    print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
+
     if question_type == "numeric":
         summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
     else:
@@ -1064,16 +1040,27 @@ async def forecast_questions(
     ]
     forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
     print("\n", "#" * 100, "\nForecast Summaries\n", "#" * 100)
+
+    errors = []
     for question_id_post_id, forecast_summary in zip(
         open_question_id_post_id, forecast_summaries
     ):
         question_id, post_id = question_id_post_id
         if isinstance(forecast_summary, Exception):
             print(
-                f"-----------------------------------------------\nQuestion {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: https://www.metaculus.com/questions/{question_id}/\n"
+                f"-----------------------------------------------\nPost {post_id} Question {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: https://www.metaculus.com/questions/{post_id}/\n"
             )
+            errors.append(forecast_summary)
         else:
             print(forecast_summary)
+
+    if errors:
+        print("-----------------------------------------------\nErrors:\n")
+        error_message = f"Errors were encountered: {errors}"
+        print(error_message)
+        raise RuntimeError(error_message)
+
+
 
 
 ######################## FINAL RUN #########################

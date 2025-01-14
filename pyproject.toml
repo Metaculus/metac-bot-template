@@ -15,7 +15,11 @@ numpy = "^1.26.0"
 openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.5"
+matplotlib = "^3.10.0"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
