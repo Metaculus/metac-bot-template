@@ -1,9 +1,9 @@
 # Simple Metaculus forecasting bot
-This repository contains a simple bot meant to get you started with creating your own bot for the [AI Forecasting Tournament](https://www.metaculus.com/aib/).
+This repository contains a simple bot meant to get you started with creating your own bot for the [AI Forecasting Tournament](https://www.metaculus.com/aib/). If you are looking for a more robust (but more complex) bot template/framework see [forecasting-tools](https://github.com/Metaculus/forecasting-tools)
 
 
 ## Quick start -> Fork and use Github Actions
-The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 15min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
+The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 30min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
 
 1) **Fork the repository**: Go to the [repository](https://github.com/Metaculus/metac-bot-template) and click 'fork'.
 2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, and so you can use our OpenAI proxy (reach out to support@metaculus.com with your bot description to apply for credits. We are giving credits fairly generously to encourage participation).
