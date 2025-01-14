@@ -3,7 +3,7 @@ name: Regularly forecast new questions
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *" # runs every 15 minutes. Make sure to skip already forecasted questions!
+    - cron: "*/30 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
 
 # Daily job to run the simple forecast bot
 jobs:
