@@ -41,7 +41,7 @@ RESPIRATORY_OUTLOOK_ID = 3411
 
 TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 
-# The example questions can be used for testing your bot.
+# The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
