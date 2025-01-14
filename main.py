@@ -967,6 +967,7 @@ async def forecast_individual_question(
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
 ) -> str:
+    raise RuntimeError("Fake Error")
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
     title = question_details["title"]
