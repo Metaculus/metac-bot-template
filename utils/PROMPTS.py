@@ -13,7 +13,7 @@ SPECIFIC_EXPERTISE = (
     "Adjustments should adhere to the rules of logic (no probability under 0% or over 100%). \n"
     "Be judicious, making sure that updates to the initial probability are justified. \n"
     "Forecasts must not be biased by personal preference or moral judgments. Ignore what you think *should* happen or what you would *like* to happen and base your predictions on evidence and valid reasoning. \n\n"
-    "Output your Phase 1 response strictly as a JSON object with the following structure:\n\n"
+    "Output your Phase 1 response strictly as a JSON object with the following structure:\n"
     "{{\n"
     "    \"initial_reasoning\": str,\n"
     "    \"initial_probability\": int,\n"
@@ -74,6 +74,7 @@ Produce your answer strictly in the following JSON structure:
     // Add 2-3 distinct areas of professional expertise as needed to make a comprehensive but non-redundant list
   ]
 }
+Ensure the JSON is valid (no trailing commas, no single quotes). When reporting the final distribution, ensure the sum of probabilities equals 100%. 
 """)
 
 
@@ -141,32 +142,31 @@ Forecasts must not be biased by personal preference or moral judgments. Base you
 
 **Output Phase 1 Response in the Following JSON Structure**:
 
-{
+{{
   "initial_reasoning": "str",
-  "initial_distribution": {
+  "initial_distribution": {{
     "Option_A": int,
     "Option_B": int,
     "...": int
-  },
+  }},
   "perspective_derived_factors": [
-    {
+    {{
       "name": "str",
       "reasoning": "str",
-      "effects": {
+      "effects": {{
         "Option_A": "+int%" or "-int%",
         "Option_B": "+int%" or "-int%",
         "...": "+int%" or "-int%"
-      }
-    }
+      }}
+    }}
     // Add additional factor objects as needed
   ],
-  "final_distribution": {
+  "final_distribution": {{
     "Option_A": int,
     "Option_B": int,
     "...": int
-  }
-}
-
+  }}
+}}
 Ensure the JSON is valid (no trailing commas, no single quotes). When reporting the final distribution, ensure the sum of probabilities equals 100%. 
 """
 

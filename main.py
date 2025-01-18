@@ -3,9 +3,11 @@ import datetime
 import json
 import os
 import re
+from random import randint
+
 import dotenv
 
-from logic.forecase_single_question import forecast_single_binary_question
+from logic.forecase_single_question import forecast_single_binary_question, forecast_single_multiple_choice_question
 
 dotenv.load_dotenv()
 
@@ -42,13 +44,15 @@ AXC_2025_TOURNAMENT_ID = 32564
 GIVEWELL_ID = 3600
 RESPIRATORY_OUTLOOK_ID = 3411
 
+CACHE_SEED = 42
+
 TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    # (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -423,7 +427,8 @@ def extract_probability_from_response_as_percentage_not_decimal(
 
 
 async def get_binary_gpt_prediction(
-    question_details: dict, num_runs: int
+    question_details: dict, num_runs: int,
+cache_seed: int=42
 ) -> tuple[float, str]:
 
     today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -432,7 +437,7 @@ async def get_binary_gpt_prediction(
     background = question_details["description"]
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
-    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n"
+    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n"
 
     summary_report = run_research(title)
 
@@ -458,7 +463,7 @@ async def get_binary_gpt_prediction(
         return probability, comment
 
     probability_and_comment_pairs = await asyncio.gather(
-        *[forecast_single_binary_question(question_input_to_prompt,summary_report) for _ in range(num_runs)]
+        *[forecast_single_binary_question(question_input_to_prompt,summary_report,cache_seed=cache_seed) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_and_comment_pairs]
     final_comment_sections = [
@@ -877,6 +882,7 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
 async def get_multiple_choice_gpt_prediction(
     question_details: dict,
     num_runs: int,
+    cache_seed:int = 42
 ) -> tuple[dict[str, float], str]:
 
     today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -886,6 +892,7 @@ async def get_multiple_choice_gpt_prediction(
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
     options = question_details["options"]
+    question_input_to_prompt = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n"
 
     summary_report = run_research(title)
 
@@ -920,29 +927,19 @@ async def get_multiple_choice_gpt_prediction(
         return probability_yes_per_category, comment
 
     probability_yes_per_category_and_comment_pairs = await asyncio.gather(
-        *[ask_llm_for_multiple_choice_probabilities(content) for _ in range(num_runs)]
+        *[forecast_single_multiple_choice_question(question_input_to_prompt,options=options,news=summary_report,cache_seed=cache_seed) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_yes_per_category_and_comment_pairs]
     final_comment_sections = [
         f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)
     ]
-    probability_yes_per_category_dicts: list[dict[str, float]] = [
-        pair[0] for pair in probability_yes_per_category_and_comment_pairs
-    ]
-    average_probability_yes_per_category: dict[str, float] = {}
-    for option in options:
-        probabilities_for_current_option: list[float] = [
-            dict[option] for dict in probability_yes_per_category_dicts
-        ]
-        average_probability_yes_per_category[option] = sum(
-            probabilities_for_current_option
-        ) / len(probabilities_for_current_option)
+    probability_yes_per_category = [pair[0] for pair in probability_yes_per_category_and_comment_pairs]
 
     final_comment = (
-        f"Average Probability Yes Per Category: `{average_probability_yes_per_category}`\n\n"
+        f"Average Probability Yes Per Category: `{probability_yes_per_category}`\n\n"
         + "\n\n".join(final_comment_sections)
     )
-    return average_probability_yes_per_category, final_comment
+    return probability_yes_per_category[0], final_comment
 
 
 ################### FORECASTING ###################
@@ -970,6 +967,7 @@ async def forecast_individual_question(
     submit_prediction: bool,
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
+    cache_seed:int = 42
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -993,7 +991,7 @@ async def forecast_individual_question(
 
     if question_type == "binary":
         forecast, comment = await get_binary_gpt_prediction(
-            question_details, num_runs_per_question
+            question_details, num_runs_per_question,cache_seed
         )
     elif question_type == "numeric":
         # forecast, comment = await get_numeric_gpt_prediction(
@@ -1004,12 +1002,9 @@ async def forecast_individual_question(
         comment = "Skipped: Forecast already made"
 
     elif question_type == "multiple_choice":
-        # forecast, comment = await get_multiple_choice_gpt_prediction(
-        #     question_details, num_runs_per_question
-        # )
-        summary_of_forecast += f"Skipped: Forecast already made\n"
-        forecast = "Skipped: Forecast already made"
-        comment = "Skipped: Forecast already made"
+        forecast, comment = await get_multiple_choice_gpt_prediction(
+            question_details, num_runs_per_question,cache_seed
+        )
     else:
          print("skipping")
 
@@ -1024,7 +1019,7 @@ async def forecast_individual_question(
 
     summary_of_forecast += f"Comment:\n```\n{comment[:200]}...\n```\n\n"
 
-    if submit_prediction == True:
+    if submit_prediction == True and question_type != "numeric":
         forecast_payload = create_forecast_payload(forecast, question_type)
         post_question_prediction(question_id, forecast_payload)
         post_question_comment(post_id, comment)
@@ -1038,6 +1033,7 @@ async def forecast_questions(
     submit_prediction: bool,
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
+    cache_seed:int = 42
 ) -> None:
     forecast_tasks = [
         forecast_individual_question(
@@ -1046,6 +1042,7 @@ async def forecast_questions(
             submit_prediction,
             num_runs_per_question,
             skip_previously_forecasted_questions,
+            cache_seed
         )
         for question_id, post_id in open_question_id_post_id
     ]
@@ -1080,12 +1077,27 @@ if __name__ == "__main__":
         open_question_id_post_id = EXAMPLE_QUESTIONS
     else:
         open_question_id_post_id = get_open_question_ids_from_tournament()
-
-    asyncio.run(
-        forecast_questions(
-            open_question_id_post_id,
-            SUBMIT_PREDICTION,
-            NUM_RUNS_PER_QUESTION,
-            SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+    try:
+        asyncio.run(
+            forecast_questions(
+                open_question_id_post_id,
+                SUBMIT_PREDICTION,
+                NUM_RUNS_PER_QUESTION,
+                SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+                cache_seed=42
+            )
         )
-    )
+    except:
+        print("Error")
+        asyncio.sleep(60)
+        print("Retrying without cache")
+        asyncio.run(
+            forecast_questions(
+                open_question_id_post_id,
+                SUBMIT_PREDICTION,
+                NUM_RUNS_PER_QUESTION,
+                SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+                cache_seed=randint(0, 100000)
+            )
+        )
+

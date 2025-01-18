@@ -1,3 +1,4 @@
+import datetime
 import json
 from typing import List, Dict
 
@@ -9,7 +10,8 @@ from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
 
 def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str, prompt:str = "") -> Dict[str, dict]:
     analyses = {}
-    phase_one_introduction = f"Welcome to Phase 1. Your forecasting question is: '{question}'"
+    todays_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    phase_one_introduction = f"Welcome to Phase 1. Today's date is {todays_date} Your forecasting question is: '{question}'"
     for forecaster in forecasters:
         if prompt == "":
             prompt = forecaster.system_message
