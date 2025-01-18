@@ -7,7 +7,7 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python =  ">=3.11,<3.13"
 python-decouple = "^3.8"
 requests = "^2.32.3"
 asknews = "^0.7.54"
@@ -16,6 +16,7 @@ openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.5"
 matplotlib = "^3.10.0"
+autogen-agentchat = "0.2.40"
 
 
 [tool.poetry.group.dev.dependencies]

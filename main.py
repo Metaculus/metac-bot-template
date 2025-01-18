@@ -4,6 +4,9 @@ import json
 import os
 import re
 import dotenv
+
+from logic.forecase_single_question import forecast_single_binary_question
+
 dotenv.load_dotenv()
 
 from openai import AsyncOpenAI
@@ -16,10 +19,10 @@ from asknews_sdk import AskNewsSDK
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
-NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
-GET_NEWS = False  # set to True to enable the bot to do online research
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
+NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
+GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -44,8 +47,8 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -216,7 +219,7 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
             "Content-Type": "application/json",
             "Authorization": f"Token {METACULUS_TOKEN}",
         },
-        api_key="Fake API Key since openai requires this not to be NONE. This isn't used",
+        api_key=os.environ.get("OPENAI_API_KEY"),
         max_retries=2,
     )
 
@@ -327,7 +330,7 @@ def call_asknews(question: str) -> str:
     # get the latest news related to the query (within the past 48 hours)
     hot_response = ask.news.search_news(
         query=question,  # your natural language query
-        n_articles=6,  # control the number of articles to include in the context, originally 5
+        n_articles=10,  # control the number of articles to include in the context, originally 5
         return_type="both",
         strategy="latest news",  # enforces looking at the latest news only
     )
@@ -335,7 +338,7 @@ def call_asknews(question: str) -> str:
     # get context from the "historical" database that contains a news archive going back to 2023
     historical_response = ask.news.search_news(
         query=question,
-        n_articles=10,
+        n_articles=15,
         return_type="both",
         strategy="news knowledge",  # looks for relevant news within the past 60 days
     )
@@ -429,6 +432,7 @@ async def get_binary_gpt_prediction(
     background = question_details["description"]
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
+    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n"
 
     summary_report = run_research(title)
 
@@ -454,7 +458,7 @@ async def get_binary_gpt_prediction(
         return probability, comment
 
     probability_and_comment_pairs = await asyncio.gather(
-        *[get_rationale_and_probability(content) for _ in range(num_runs)]
+        *[forecast_single_binary_question(question_input_to_prompt,summary_report) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_and_comment_pairs]
     final_comment_sections = [
@@ -992,15 +996,22 @@ async def forecast_individual_question(
             question_details, num_runs_per_question
         )
     elif question_type == "numeric":
-        forecast, comment = await get_numeric_gpt_prediction(
-            question_details, num_runs_per_question
-        )
+        # forecast, comment = await get_numeric_gpt_prediction(
+        #     question_details, num_runs_per_question
+        # )
+        summary_of_forecast += f"Skipped: Forecast already made\n"
+        forecast = "Skipped: Forecast already made"
+        comment = "Skipped: Forecast already made"
+
     elif question_type == "multiple_choice":
-        forecast, comment = await get_multiple_choice_gpt_prediction(
-            question_details, num_runs_per_question
-        )
+        # forecast, comment = await get_multiple_choice_gpt_prediction(
+        #     question_details, num_runs_per_question
+        # )
+        summary_of_forecast += f"Skipped: Forecast already made\n"
+        forecast = "Skipped: Forecast already made"
+        comment = "Skipped: Forecast already made"
     else:
-        raise ValueError(f"Unknown question type: {question_type}")
+         print("skipping")
 
     print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
