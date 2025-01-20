@@ -19,7 +19,7 @@ def set_env_vars(path: str) -> None:
 
 
 
-def normalize_and_average(probability_dicts: list[dict],options = List[str]) -> dict:
+def normalize_and_average(probability_dicts: list[dict],options: List[str]) -> dict:
     # Initialize a dictionary to store cumulative probabilities
     cumulative_probabilities = defaultdict(int)
     num_dicts = len(probability_dicts)
@@ -44,6 +44,7 @@ def normalize_and_average(probability_dicts: list[dict],options = List[str]) -> 
         # Find the key with the largest fractional part and adjust its value
         largest_key = max(normalized_probabilities, key=lambda k: (average_probabilities[k] % 1))
         normalized_probabilities[largest_key] += rounding_error
+
 
 
 

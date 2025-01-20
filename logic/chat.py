@@ -8,10 +8,12 @@ from autogen import ConversableAgent
 from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
 import re
 
-def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str, prompt:str = "") -> Dict[str, dict]:
+def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str, prompt:str = "",options:List[str] = "") -> Dict[str, dict]:
     analyses = {}
     todays_date = datetime.datetime.now().strftime("%Y-%m-%d")
     phase_one_introduction = f"Welcome to Phase 1. Today's date is {todays_date} Your forecasting question is: '{question}'"
+    if options:
+        phase_one_introduction += f"\n\nOptions:\n\n{', '.join(options)}\n"
     for forecaster in forecasters:
         if prompt == "":
             prompt = forecaster.system_message
@@ -23,10 +25,12 @@ def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: s
             print(f"Skipping forecaster:\n{forecaster.name}")
     return analyses
 
-def run_second_stage_forecasters(forecasters: List[ConversableAgent], news: str, prompt:str = NEWS_STEP_INSTRUCTIONS, output_format:str = NEWS_OUTPUT_FORMAT) -> Dict[str, dict]:
+def run_second_stage_forecasters(forecasters: List[ConversableAgent], news: str, prompt:str = NEWS_STEP_INSTRUCTIONS, output_format:str = NEWS_OUTPUT_FORMAT, options:List[str] = "") -> Dict[str, dict]:
     analyses = {}
 
     phase_two_instruction_news_analysis = f"Welcome to Phase 2: News Analysis. Below are the news articles you'll need to take into consideration:\n\n{news}"
+    if options:
+        phase_two_instruction_news_analysis += f"\n\nOptions:\n\n{', '.join(options)}\n"
     for forecaster in forecasters:
         try:
             result = forecast(forecaster, prompt,phase_two_instruction_news_analysis+output_format)

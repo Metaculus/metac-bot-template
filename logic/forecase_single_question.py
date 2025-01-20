@@ -62,8 +62,7 @@ async def forecast_single_multiple_choice_question(question: str, options: List[
                                           question)
 
     news_analysis_results = run_second_stage_forecasters(all_experts, news,
-                                                         prompt=NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE.format(
-                                                             options=options),
+                                                         prompt=NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE,
                                                          output_format=NEWS_OUTPUT_FORMAT_MULTIPLE_CHOICE)
 
     summarization_assistant = create_summarization_assistant(config)
@@ -71,7 +70,8 @@ async def forecast_single_multiple_choice_question(question: str, options: List[
                                             question=question, summarization_assistant=summarization_assistant)
 
     result_probabilities = [result['revised_distribution'] for result in news_analysis_results.values()]
-    normalized_result_probabilities = normalize_and_average(result_probabilities)
+    normalized_result_probabilities = normalize_and_average(result_probabilities, options = options)
+    fractioned_result_probabilities = {key:value/100 for key, value in normalized_result_probabilities.items()}
 
 
-    return normalized_result_probabilities, summarization
+    return fractioned_result_probabilities, summarization

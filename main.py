@@ -24,7 +24,7 @@ from asknews_sdk import AskNewsSDK
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
@@ -51,7 +51,7 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    # (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
     (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
@@ -249,10 +249,6 @@ def run_research(question: str) -> str:
     if GET_NEWS == True:
         if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
             research = call_asknews(question)
-        elif EXA_API_KEY:
-            research = call_exa_smart_searcher(question)
-        elif PERPLEXITY_API_KEY:
-            research = call_perplexity(question)
         else:
             raise ValueError("No API key provided")
     else:
@@ -262,66 +258,7 @@ def run_research(question: str) -> str:
 
     return research
 
-def call_perplexity(question: str) -> str:
-    url = "https://api.perplexity.ai/chat/completions"
-    api_key = PERPLEXITY_API_KEY
-    headers = {
-        "accept": "application/json",
-        "authorization": f"Bearer {api_key}",
-        "content-type": "application/json",
-    }
-    payload = {
-        "model": "llama-3.1-sonar-huge-128k-online",
-        "messages": [
-            {
-                "role": "system",  # this is a system prompt designed to guide the perplexity assistant
-                "content": """
-                You are an assistant to a superforecaster.
-                The superforecaster will give you a question they intend to forecast on.
-                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-                You do not produce forecasts yourself.
-                """,
-            },
-            {
-                "role": "user",  # this is the actual prompt we ask the perplexity assistant to answer
-                "content": question,
-            },
-        ],
-    }
-    response = requests.post(url=url, json=payload, headers=headers)
-    if not response.ok:
-        raise Exception(response.text)
-    content = response.json()["choices"][0]["message"]["content"]
-    return content
 
-def call_exa_smart_searcher(question: str) -> str:
-    if OPENAI_API_KEY is None:
-        searcher = forecasting_tools.ExaSearcher(
-            include_highlights=True,
-            num_results=10,
-        )
-        highlights = asyncio.run(searcher.invoke_for_highlights_in_relevance_order(question))
-        prioritized_highlights = highlights[:10]
-        combined_highlights = ""
-        for i, highlight in enumerate(prioritized_highlights):
-            combined_highlights += f'[Highlight {i+1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
-        response = combined_highlights
-    else:
-        searcher = forecasting_tools.SmartSearcher(
-            temperature=0,
-            num_searches_to_run=2,
-            num_sites_per_search=10,
-        )
-        prompt = (
-            "You are an assistant to a superforecaster. The superforecaster will give"
-            "you a question they intend to forecast on. To be a great assistant, you generate"
-            "a concise but detailed rundown of the most relevant news, including if the question"
-            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
-            f"\n\nThe question is: {question}"
-        )
-        response = asyncio.run(searcher.invoke(prompt))
-
-    return response
 
 def call_asknews(question: str) -> str:
     """
@@ -438,7 +375,7 @@ cache_seed: int=42
     background = question_details["description"]
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
-    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n"
+    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n The Date is: {today}\n\n"
 
     summary_report = run_research(title)
 
@@ -893,7 +830,7 @@ async def get_multiple_choice_gpt_prediction(
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
     options = question_details["options"]
-    question_input_to_prompt = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n"
+    question_input_to_prompt = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n The Date is: {today}\n\n"
 
     summary_report = run_research(title)
 

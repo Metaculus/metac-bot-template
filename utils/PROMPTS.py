@@ -125,7 +125,7 @@ SPECIFIC_EXPERTISE_MULTIPLE_CHOICE = """
 You are a forecaster with expertise in the field of {expertise}.
 Your task will proceed in two phases.
 
-In Phase 1, you will be prompted to independently forecast a geopolitical event with multiple discrete outcomes. The possible outcomes are: {options}.
+In Phase 1, you will be prompted to independently forecast a geopolitical event with multiple discrete outcomes.
 
 Given your expertise in {expertise}, begin by estimating an initial distribution of probabilities across these outcomes. You should base this distribution on historical frequencies or base rates of similar events you consider relevant. Explain how you constructed your base rates and provide reasoning for each initial probability.
 
@@ -171,7 +171,7 @@ Ensure the JSON is valid (no trailing commas, no single quotes). When reporting 
 """
 
 NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE = """
-In Phase 2, you will be presented with news articles or additional information related to the multi‐outcome event. The possible outcomes are: {options}.
+In Phase 2, you will be presented with news articles or additional information related to the multi‐outcome event.
 
 Given the new information, you will have the opportunity to reconsider your Phase 1 analysis and revise your probability distribution accordingly (if necessary).
 
