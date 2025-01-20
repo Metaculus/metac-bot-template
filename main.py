@@ -35,6 +35,7 @@ ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 OPENAI_API_KEY = os.getenv(
     "OPENAI_API_KEY")  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
+print(os.environ)
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
