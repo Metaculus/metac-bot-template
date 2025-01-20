@@ -1,6 +1,8 @@
 import json
 import os
 from collections import defaultdict
+from typing import List
+
 
 def to_camel_case(expertise: str) -> str:
     # Split the string on whitespace and parentheses
@@ -17,7 +19,7 @@ def set_env_vars(path: str) -> None:
 
 
 
-def normalize_and_average(probability_dicts: list[dict]) -> dict:
+def normalize_and_average(probability_dicts: list[dict],options = List[str]) -> dict:
     # Initialize a dictionary to store cumulative probabilities
     cumulative_probabilities = defaultdict(int)
     num_dicts = len(probability_dicts)
@@ -25,6 +27,8 @@ def normalize_and_average(probability_dicts: list[dict]) -> dict:
     # Sum up all probabilities for each option
     for prob_dict in probability_dicts:
         for key, value in prob_dict.items():
+            if key not in options:
+                continue
             cumulative_probabilities[key] += value
 
     # Compute average probabilities
@@ -41,4 +45,6 @@ def normalize_and_average(probability_dicts: list[dict]) -> dict:
         largest_key = max(normalized_probabilities, key=lambda k: (average_probabilities[k] % 1))
         normalized_probabilities[largest_key] += rounding_error
 
-    return normalized_probabilities/100
+
+
+    return normalized_probabilities

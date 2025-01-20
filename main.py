@@ -4,6 +4,7 @@ import json
 import os
 import re
 from random import randint
+from time import sleep
 
 import dotenv
 
@@ -1090,7 +1091,7 @@ if __name__ == "__main__":
         )
     except:
         print("Error")
-        asyncio.sleep(60)
+        sleep(60)
         print("Retrying without cache")
         asyncio.run(
             forecast_questions(

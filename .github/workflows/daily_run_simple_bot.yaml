@@ -37,8 +37,6 @@ jobs:
         # Store under Settings --> Secrets and variables --> Actions
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }} # replace this with the name of the variable under which you stored your own Metaculus token
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ASK_NEWS_SECRET: ${{ secrets.ASK_NEWS_SECRET }}
           ASK_NEWS_CLIENT_ID: ${{ secrets.ASK_NEWS_CLIENT_ID }}

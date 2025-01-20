@@ -71,9 +71,7 @@ async def forecast_single_multiple_choice_question(question: str, options: List[
                                             question=question, summarization_assistant=summarization_assistant)
 
     result_probabilities = [result['revised_distribution'] for result in news_analysis_results.values()]
-
     normalized_result_probabilities = normalize_and_average(result_probabilities)
-    verified_result_probabilities = {valid_key:normalized_result_probabilities[valid_key] for valid_key in options}
 
 
-    return verified_result_probabilities, summarization
+    return normalized_result_probabilities, summarization
