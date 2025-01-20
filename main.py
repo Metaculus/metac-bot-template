@@ -20,9 +20,9 @@ from asknews_sdk import AskNewsSDK
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
@@ -35,7 +35,6 @@ ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 OPENAI_API_KEY = os.getenv(
     "OPENAI_API_KEY")  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
-print(os.environ)
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
