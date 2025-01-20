@@ -20,7 +20,7 @@ def create_gpt_assistant(config:Dict[str,Any], expertise: str, specialty_experti
 def create_gpt_assistant_multiple_choices(config:Dict[str,Any], expertise: str, specialty_expertise: str, options:List[str], prompt:str = SPECIFIC_EXPERTISE_MULTIPLE_CHOICE) -> GPTAssistantAgent:
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
-    system_message = prompt.format(expertise=expertise_and_specialty_framework)
+    system_message = prompt.format(expertise=expertise_and_specialty_framework, options=options)
     return GPTAssistantAgent(name=name, instructions=system_message, llm_config=config)
 
 
