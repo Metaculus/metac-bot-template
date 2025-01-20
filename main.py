@@ -15,9 +15,7 @@ dotenv.load_dotenv()
 from openai import AsyncOpenAI
 import numpy as np
 import requests
-import forecasting_tools
 from asknews_sdk import AskNewsSDK
-
 
 ######################### CONSTANTS #########################
 # Constants
@@ -34,7 +32,8 @@ METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 # EXA_API_KEY = os.getenv("EXA_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
+OPENAI_API_KEY = os.getenv(
+    "OPENAI_API_KEY")  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
@@ -53,7 +52,8 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (22427, 22427),
+    # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -108,8 +108,8 @@ def post_question_prediction(question_id: int, forecast_payload: dict) -> None:
 
 
 def create_forecast_payload(
-    forecast: float | dict[str, float] | list[float],
-    question_type: str,
+        forecast: float | dict[str, float] | list[float],
+        question_type: str,
 ) -> dict:
     """
     Accepts a forecast and generates the api payload in the correct format.
@@ -141,7 +141,7 @@ def create_forecast_payload(
 
 
 def list_posts_from_tournament(
-    tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
+        tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
 ) -> list[dict]:
     """
     List (all details) {count} posts from the {tournament_id}
@@ -206,6 +206,7 @@ def get_post_details(post_id: int) -> dict:
     details = json.loads(response.content)
     return details
 
+
 CONCURRENT_REQUESTS_LIMIT = 5
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
@@ -257,7 +258,6 @@ def run_research(question: str) -> str:
     print(f"########################\nResearch Found:\n{research}\n########################")
 
     return research
-
 
 
 def call_asknews(question: str) -> str:
@@ -313,6 +313,7 @@ def call_asknews(question: str) -> str:
 
     return formatted_articles
 
+
 ############### BINARY ###############
 # @title Binary prompt & functions
 
@@ -352,7 +353,7 @@ The last thing you write is your final answer as: "Probability: ZZ%", 0-100
 
 
 def extract_probability_from_response_as_percentage_not_decimal(
-    forecast_text: str,
+        forecast_text: str,
 ) -> float:
     matches = re.findall(r"(\d+)%", forecast_text)
     if matches:
@@ -365,17 +366,16 @@ def extract_probability_from_response_as_percentage_not_decimal(
 
 
 async def get_binary_gpt_prediction(
-    question_details: dict, num_runs: int,
-cache_seed: int=42
+        question_details: dict, num_runs: int,
+        cache_seed: int = 42
 ) -> tuple[float, str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
     background = question_details["description"]
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
-    question_input_to_prompt  = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n The Date is: {today}\n\n"
+    question_input_to_prompt = f"Question title: {title}\n\nQuestion description: {background}\n\nResolution criteria: {resolution_criteria}\n\n Fine print: {fine_print}\n\n The Date is: {today}\n\n"
 
     summary_report = run_research(title)
 
@@ -401,11 +401,12 @@ cache_seed: int=42
         return probability, comment
 
     probability_and_comment_pairs = await asyncio.gather(
-        *[forecast_single_binary_question(question_input_to_prompt,summary_report,cache_seed=cache_seed) for _ in range(num_runs)]
+        *[forecast_single_binary_question(question_input_to_prompt, summary_report, cache_seed=cache_seed) for _ in
+          range(num_runs)]
     )
     comments = [pair[1] for pair in probability_and_comment_pairs]
     final_comment_sections = [
-        f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)
+        f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)
     ]
     probabilities = [pair[0] for pair in probability_and_comment_pairs]
     median_probability = float(np.median(probabilities)) / 100
@@ -470,7 +471,6 @@ Percentile 90: XX
 
 
 def extract_percentiles_from_response(forecast_text: str) -> dict:
-
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_percentile_numbers(text) -> dict:
         pattern = r"^.*(?:P|p)ercentile.*$"
@@ -513,13 +513,13 @@ def extract_percentiles_from_response(forecast_text: str) -> dict:
 
 
 def generate_continuous_cdf(
-    percentile_values: dict,
-    question_type: str,
-    open_upper_bound: bool,
-    open_lower_bound: bool,
-    upper_bound: float,
-    lower_bound: float,
-    zero_point: float | None,
+        percentile_values: dict,
+        question_type: str,
+        open_upper_bound: bool,
+        open_lower_bound: bool,
+        upper_bound: float,
+        lower_bound: float,
+        zero_point: float | None,
 ) -> list[float]:
     """
     Returns: list[float]: A list of 201 float values representing the CDF.
@@ -561,7 +561,6 @@ def generate_continuous_cdf(
         percentile = float(key) / 100
         normalized_percentile_values[percentile] = value
 
-
     value_percentiles = {
         value: key for key, value in normalized_percentile_values.items()
     }
@@ -573,7 +572,7 @@ def generate_continuous_cdf(
         else:
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
             scale = lambda x: range_min + (range_max - range_min) * (
-                deriv_ratio**x - 1
+                    deriv_ratio ** x - 1
             ) / (deriv_ratio - 1)
         return [scale(x) for x in np.linspace(0, 1, 201)]
 
@@ -623,9 +622,8 @@ def generate_continuous_cdf(
 
 
 async def get_numeric_gpt_prediction(
-    question_details: dict, num_runs: int
+        question_details: dict, num_runs: int
 ) -> tuple[list[float], str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
@@ -688,7 +686,7 @@ async def get_numeric_gpt_prediction(
     )
     comments = [pair[1] for pair in cdf_and_comment_pairs]
     final_comment_sections = [
-        f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)
+        f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)
     ]
     cdfs: list[list[float]] = [pair[0] for pair in cdf_and_comment_pairs]
     all_cdfs = np.array(cdfs)
@@ -741,7 +739,6 @@ Option_N: Probability_N
 
 
 def extract_option_probabilities_from_response(forecast_text: str, options) -> float:
-
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_option_probabilities(text):
 
@@ -818,11 +815,10 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
 
 
 async def get_multiple_choice_gpt_prediction(
-    question_details: dict,
-    num_runs: int,
-    cache_seed:int = 42
+        question_details: dict,
+        num_runs: int,
+        cache_seed: int = 42
 ) -> tuple[dict[str, float], str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
@@ -845,10 +841,9 @@ async def get_multiple_choice_gpt_prediction(
     )
 
     async def ask_llm_for_multiple_choice_probabilities(
-        content: str,
+            content: str,
     ) -> tuple[dict[str, float], str]:
         rationale = await call_llm(content)
-
 
         option_probabilities = extract_option_probabilities_from_response(
             rationale, options
@@ -865,17 +860,18 @@ async def get_multiple_choice_gpt_prediction(
         return probability_yes_per_category, comment
 
     probability_yes_per_category_and_comment_pairs = await asyncio.gather(
-        *[forecast_single_multiple_choice_question(question_input_to_prompt,options=options,news=summary_report,cache_seed=cache_seed) for _ in range(num_runs)]
+        *[forecast_single_multiple_choice_question(question_input_to_prompt, options=options, news=summary_report,
+                                                   cache_seed=cache_seed) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_yes_per_category_and_comment_pairs]
     final_comment_sections = [
-        f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)
+        f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)
     ]
     probability_yes_per_category = [pair[0] for pair in probability_yes_per_category_and_comment_pairs]
 
     final_comment = (
-        f"Average Probability Yes Per Category: `{probability_yes_per_category}`\n\n"
-        + "\n\n".join(final_comment_sections)
+            f"Average Probability Yes Per Category: `{probability_yes_per_category}`\n\n"
+            + "\n\n".join(final_comment_sections)
     )
     return probability_yes_per_category[0], final_comment
 
@@ -900,12 +896,12 @@ def forecast_is_already_made(post_details: dict) -> bool:
 
 
 async def forecast_individual_question(
-    question_id: int,
-    post_id: int,
-    submit_prediction: bool,
-    num_runs_per_question: int,
-    skip_previously_forecasted_questions: bool,
-    cache_seed:int = 42
+        question_id: int,
+        post_id: int,
+        submit_prediction: bool,
+        num_runs_per_question: int,
+        skip_previously_forecasted_questions: bool,
+        cache_seed: int = 42
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -921,15 +917,15 @@ async def forecast_individual_question(
         summary_of_forecast += f"options: {options}\n"
 
     if (
-        forecast_is_already_made(post_details)
-        and skip_previously_forecasted_questions == True
+            forecast_is_already_made(post_details)
+            and skip_previously_forecasted_questions == True
     ):
         summary_of_forecast += f"Skipped: Forecast already made\n"
         return summary_of_forecast
 
     if question_type == "binary":
         forecast, comment = await get_binary_gpt_prediction(
-            question_details, num_runs_per_question,cache_seed
+            question_details, num_runs_per_question, cache_seed
         )
     elif question_type == "numeric":
         # forecast, comment = await get_numeric_gpt_prediction(
@@ -941,10 +937,10 @@ async def forecast_individual_question(
 
     elif question_type == "multiple_choice":
         forecast, comment = await get_multiple_choice_gpt_prediction(
-            question_details, num_runs_per_question,cache_seed
+            question_details, num_runs_per_question, cache_seed
         )
     else:
-         print("skipping")
+        print("skipping")
 
     print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
@@ -967,11 +963,11 @@ async def forecast_individual_question(
 
 
 async def forecast_questions(
-    open_question_id_post_id: list[tuple[int, int]],
-    submit_prediction: bool,
-    num_runs_per_question: int,
-    skip_previously_forecasted_questions: bool,
-    cache_seed:int = 42
+        open_question_id_post_id: list[tuple[int, int]],
+        submit_prediction: bool,
+        num_runs_per_question: int,
+        skip_previously_forecasted_questions: bool,
+        cache_seed: int = 42
 ) -> None:
     forecast_tasks = [
         forecast_individual_question(
@@ -989,7 +985,7 @@ async def forecast_questions(
 
     errors = []
     for question_id_post_id, forecast_summary in zip(
-        open_question_id_post_id, forecast_summaries
+            open_question_id_post_id, forecast_summaries
     ):
         question_id, post_id = question_id_post_id
         if isinstance(forecast_summary, Exception):
@@ -1005,9 +1001,6 @@ async def forecast_questions(
         error_message = f"Errors were encountered: {errors}"
         print(error_message)
         raise Exception(error_message)
-
-
-
 
 
 ######################## FINAL RUN #########################
@@ -1039,4 +1032,3 @@ if __name__ == "__main__":
                 cache_seed=randint(0, 100000)
             )
         )
-
