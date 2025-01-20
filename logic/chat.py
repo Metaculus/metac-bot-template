@@ -6,7 +6,7 @@ from asknews_sdk.dto import SearchResponse
 from autogen import ConversableAgent
 
 from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
-
+import re
 
 def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str, prompt:str = "") -> Dict[str, dict]:
     analyses = {}
@@ -15,8 +15,12 @@ def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: s
     for forecaster in forecasters:
         if prompt == "":
             prompt = forecaster.system_message
-        result = forecast(forecaster, forecaster.system_message,phase_one_introduction)
-        analyses[forecaster.name] = result
+        try:
+            result = forecast(forecaster, forecaster.system_message,phase_one_introduction)
+            analyses[forecaster.name] = result
+        except Exception as e:
+            print(f"Error with {forecaster.name}: {e}\n\n")
+            print(f"Skipping forecaster:\n{forecaster.name}")
     return analyses
 
 def run_second_stage_forecasters(forecasters: List[ConversableAgent], news: str, prompt:str = NEWS_STEP_INSTRUCTIONS, output_format:str = NEWS_OUTPUT_FORMAT) -> Dict[str, dict]:
@@ -24,8 +28,12 @@ def run_second_stage_forecasters(forecasters: List[ConversableAgent], news: str,
 
     phase_two_instruction_news_analysis = f"Welcome to Phase 2: News Analysis. Below are the news articles you'll need to take into consideration:\n\n{news}"
     for forecaster in forecasters:
-        result = forecast(forecaster, prompt,phase_two_instruction_news_analysis+output_format)
-        analyses[forecaster.name] = result
+        try:
+            result = forecast(forecaster, prompt,phase_two_instruction_news_analysis+output_format)
+            analyses[forecaster.name] = result
+        except Exception as e:
+            print(f"Error with {forecaster.name}: {e}\n\n")
+            print(f"Skipping forecaster:\n{forecaster.name}")
     return analyses
 
 
@@ -41,11 +49,25 @@ def forecast(forecaster: ConversableAgent, phase_instructions:str, phase_introdu
 
 def validate_and_parse_response(response):
     try:
-        response = response.replace("json","").replace("```","")
+        response = response.replace("json","").replace("```","").replace("\n","")
+        if not response.endswith("}"):
+            ind = find_last_curly_brace_position(response)
+            response = response[:ind+1]
+
         return json.loads(response)
 
     except json.JSONDecodeError:
         raise ValueError(f"Invalid JSON response: {response}")
+
+
+
+def find_last_curly_brace_position(text):
+        matches = list(re.finditer(r'}', text))  # Find all closing curly braces
+        if matches:
+            last_position = matches[-1].start()  # Get the start position of the last match
+            return last_position
+        else:
+            return -1  # Return -1 if no curly brace is found
 
 
 # def initiate_dialogue(forecasters: List[ConversableAgent], history: Dict[str, Any], news: SearchResponse, question: str,

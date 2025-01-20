@@ -23,16 +23,16 @@ from asknews_sdk import AskNewsSDK
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+# PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
-EXA_API_KEY = os.getenv("EXA_API_KEY")
+# EXA_API_KEY = os.getenv("EXA_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
@@ -1066,7 +1066,8 @@ async def forecast_questions(
         print("-----------------------------------------------\nErrors:\n")
         error_message = f"Errors were encountered: {errors}"
         print(error_message)
-        raise RuntimeError(error_message)
+        raise Exception(error_message)
+
 
 
 
@@ -1084,7 +1085,7 @@ if __name__ == "__main__":
                 SUBMIT_PREDICTION,
                 NUM_RUNS_PER_QUESTION,
                 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
-                cache_seed=42
+                cache_seed=33
             )
         )
     except:
