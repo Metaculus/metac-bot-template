@@ -4,6 +4,7 @@ from typing import List, Literal
 from asknews_sdk import AskNewsSDK
 
 
+
 class AskNewsScrapper:
     def __init__(self, scopes: List[Literal["news"]] = ["news"]):
         self._ask_news_engine = AskNewsSDK(client_id=os.getenv("ASKNEWS_CLIENT_ID"),
