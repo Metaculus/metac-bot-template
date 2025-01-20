@@ -7,7 +7,7 @@ from asknews_sdk import AskNewsSDK
 class AskNewsScrapper:
     def __init__(self, scopes: List[Literal["news"]] = ["news"]):
         self._ask_news_engine = AskNewsSDK(client_id=os.getenv("ASKNEWS_CLIENT_ID"),
-                                           client_secret=os.getenv("ASKNEWS_API_KEY"), scopes=scopes)
+                                           client_secret=os.getenv("ASKNEWS_SECRET"), scopes=scopes)
 
     def get_latest_news(self, query: str, n_articles: int):
         return self._ask_news_engine.news.search_news(
