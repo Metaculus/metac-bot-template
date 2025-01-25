@@ -1,18 +1,23 @@
-name: Regularly forecast new questions
+name: Regularly forecast new questions and save JSON
 
 on:
   workflow_dispatch:
   schedule:
     - cron: "*/30 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
 
-# Daily job to run the simple forecast bot
 jobs:
   daily_build:
-    runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
-    steps: # sets up the steps that will be run in order
-      # setup repository with all necessary dependencies - keep as is
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      # Step 1: Check out repository
       - name: Check out repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Set up Python environment
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
@@ -30,13 +35,13 @@ jobs:
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
+
+      # Step 3: Run bot
       - name: Run bot
         run: |
-          poetry run python main.py
-        # this reads the environment variables from the github repository.
-        # Store under Settings --> Secrets and variables --> Actions
+          poetry run python main_test.py
         env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }} # replace this with the name of the variable under which you stored your own Metaculus token
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
@@ -44,4 +49,24 @@ jobs:
           USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
           SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
+      # Step 4: Check if forecasts folder exists
+      - name: Check for changes in forecasts folder
+        id: changes_check
+        run: |
+          if git diff --quiet HEAD -- forecasts; then
+            echo "No changes detected in forecasts folder."
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in forecasts folder."
+            echo "changes=true" >> $GITHUB_ENV
+          fi
 
+      # Step 5: Commit and push changes if any
+      - name: Commit and push changes
+        if: env.changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add forecasts
+          git commit -m "Update forecasts files"
+          git push origin HEAD

@@ -19,19 +19,14 @@ from asknews_sdk import AskNewsSDK
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
-
-
-# SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")  # set to True to publish your predictions to Metaculus
-# USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")
-# SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
+SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")  # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
 # set to True to forecast example questions rather than the tournament questions
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
