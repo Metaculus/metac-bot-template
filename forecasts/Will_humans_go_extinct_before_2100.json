@@ -1,0 +1,622 @@
+{
+    "title": "Will humans go extinct before 2100?",
+    "description": "While the general feeling of most people, especially now that the cold war is (mostly) over, is that the risk of human extinction is extremely small, experts have assigned a significantly higher probability to the event.",
+    "fine_print": "The Date is: 2025-01-25",
+    "initial_predictions": [
+        2,
+        1,
+        1,
+        10,
+        1,
+        3,
+        5,
+        5,
+        1,
+        0,
+        5,
+        1,
+        5,
+        5
+    ],
+    "initial_mean": 3.2142857142857144,
+    "initial_std": 2.7506243047595693,
+    "final_predictions_phase1": [
+        17,
+        26,
+        16,
+        10,
+        1,
+        0,
+        0,
+        0,
+        11,
+        5,
+        15,
+        11,
+        10,
+        5
+    ],
+    "final_mean_phase1": 9.071428571428571,
+    "final_std_phase1": 7.78029350557979,
+    "phase_1_reasoning": {
+        "GlobalSecurityAndRiskAnalysisNuclearRiskAssessmentAgent": {
+            "initial_reasoning": "Estimating the probability of human extinction by 2100 requires considering both historical and scientific perspectives. Historically, humans have survived numerous existential threats, including world wars, pandemics, and natural disasters, over the last several centuries. The base rate of complete extinction-level events (i.e., total extinction) in recorded human history is effectively zero. However, given modern existential risks like nuclear war, climate change, biotechnology, and artificial intelligence, we must consider these factors when calculating the probability. The 2008 poll at the Global Catastrophic Risk Conference suggested a 19% probability by 2100, though this is likely skewed due to selection bias. Therefore, my base rate is lower, considering the resilience shown in human history to date, at an initial estimate of 2%.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Modern Nuclear Capabilities",
+                    "reasoning": "The existence and proliferation of nuclear weapons increase the risk of global conflict resulting in human extinction. However, the deterrence factor and diplomatic efforts have historically prevented such conflicts from escalating to global extinction events.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Climate Change",
+                    "reasoning": "Climate change poses a serious threat through potential ecological and societal collapse. However, while it could significantly disrupt life, it is less likely to result in total human extinction within the timeframe considered.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Biotechnological Risks",
+                    "reasoning": "Advancements in biotechnology could lead to engineered pandemics or other biological risks, potentially threatening human existence. The potential for accidental or malicious use of biotechnology is a risk factor.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Artificial Intelligence",
+                    "reasoning": "Advancements in AI pose risks, including the possibility of creating systems that could act contrary to human survival interests. Nonetheless, concrete incidents of AI causing extinction remain theoretical.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Space Colonization Efforts",
+                    "reasoning": "Efforts towards space colonization decrease the probability of human extinction by diversifying the locations of human populations beyond Earth.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 17
+        },
+        "GlobalSecurityAndRiskAnalysisPandemicRiskModelsAgent": {
+            "initial_reasoning": "Estimating the probability of human extinction before 2100 requires considering various existential risks, including nuclear war, pandemics, climate change, and emerging technologies. Historical analysis shows no human extinction for over a million years despite numerous challenges. The informal poll at the Global Catastrophic Risk Conference suggested a high probability, but this is likely an overestimate due to selection bias. Based on historical resilience, I start with a low base rate of 0.01%.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Nuclear Risks",
+                    "reasoning": "While nuclear risks remain significant, there has been considerable international effort towards arms control since the Cold War, reducing the likelihood of global nuclear war significantly.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Pandemic Risks",
+                    "reasoning": "Advancements in medical science and healthcare systems enhance our ability to manage pandemics. The COVID-19 pandemic has accelerated investment and preparedness in dealing with such threats.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Climate Change",
+                    "reasoning": "Climate change presents a significant risk to human survival. Despite international efforts to mitigate its effects, progress has been slow and impacts are escalating.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Emerging Technologies",
+                    "reasoning": "Emerging technologies like artificial intelligence and biotechnology pose unknown risks. Although they hold potential for significant benefits, they might introduce new existential threats.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Historical Resilience",
+                    "reasoning": "Throughout history, human societies have demonstrated significant resilience in overcoming large-scale challenges and disasters.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 26
+        },
+        "EcologyAndConservationExtinctionRiskAnalysisAgent": {
+            "initial_reasoning": "The historical base rate for human extinction events within a century is effectively zero, as humans have continued to exist through numerous potentially catastrophic events across history, such as world wars, pandemics, and natural disasters. Given this, the initial probability is set low. However, experts in catastrophic risk have suggested a non-negligible probability due to technological advancements that introduce new risks, such as nuclear war and biotechnology, which were not present in the distant past. Therefore, I will consider these risks and adjust accordingly.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Biodiversity Loss and Ecosystem Collapse",
+                    "reasoning": "Significant loss of biodiversity and ecosystem services could profoundly affect human life support systems, potentially leading to societal collapse if not addressed. While direct extinction from this cause by 2100 is unlikely, it remains a contributing risk factor, especially in conjunction with other stresses like climate change.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Climate Change Impact",
+                    "reasoning": "Climate change poses significant long-term risks to human survival through extreme weather events, sea level rise, and food and water scarcity. Although it is a gradual process, its compounding effects could exacerbate other extinction risks.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Technological Risks",
+                    "reasoning": "Advancements in technology, such as artificial intelligence and synthetic biology, while beneficial, also introduce unprecedented risks that could lead to human extinction if mismanaged.",
+                    "effect": "+5%"
+                }
+            ],
+            "final_probability": 16
+        },
+        "EcologyAndConservationClimateAdaptationStrategiesAgent": {
+            "initial_reasoning": "To estimate the initial probability of human extinction before 2100, I will refer to historical expert assessments and known catastrophic risks. In 2008, experts at the Global Catastrophic Risk Conference estimated a 19% probability of human extinction by 2100. However, acknowledging potential bias as per the original survey's disclaimer, it's prudent to halve this estimate initially for a more conservative probability, given that extreme views might have inflated the original figure. Thus, starting with a base rate of around 10%.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Climate Change and Its Impacts",
+                    "reasoning": "Climate change poses significant risks through extreme weather, sea level rise, and ecological disruptions, impacting food security, habitability of regions, and potentially leading to conflicts. This increases the probability of large-scale human impact events but not necessarily total extinction by 2100. Nevertheless, it does raise the baseline risk.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Biodiversity Loss",
+                    "reasoning": "Loss of biodiversity can destabilize ecosystems, impacting human survival. This factor increases the probability because humans rely on ecosystems for food, clean air, and water. However, it's more a risk multiplier for other factors (e.g., climate change), rather than a direct cause of extinction on its own.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Technological Resilience",
+                    "reasoning": "Advancements in technology provide tools to mitigate risks, from medical advancements to renewable energy. Such resilience-building efforts can decrease the likelihood of human extinction by enabling adaptation to changing conditions.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Risk Awareness and Preparation",
+                    "reasoning": "Increased global awareness and preparation for catastrophic risks, including climate change adaptations and disaster preparedness, reduce the likelihood of extinction as societies become better equipped to handle crises.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 10
+        },
+        "PublicHealthGlobalHealthThreatAssessmentsAgent": {
+            "initial_reasoning": "Human extinction is an extreme and unprecedented event without historical parallel. However, considering historical events involving significant human life loss (e.g., pandemics, world wars), extinction-level events have not occurred. The base rate for human extinction can be posited as extremely low, given the resilience of humanity in past catastrophic scenarios. Even so, factors such as nuclear war, climate change, global pandemics, and technological risks like artificial intelligence have been cited as potential threats. The 2008 informal poll cited a median probability of 19%, but this is likely higher due to selection bias among respondents.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Advancements in Global Health Monitoring and Disease Control",
+                    "reasoning": "Global health monitoring and improved disease control methods have significantly enhanced our ability to detect and mitigate pandemics, reducing the likelihood of a pandemic causing human extinction.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Technological Hazards (e.g., AI, biotechnology)",
+                    "reasoning": "Though advancements in AI and biotechnology present opportunities for human development, they also pose existential threats. Uncontrolled AI or hostile biotechnological developments could potentially lead to extinction scenarios.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Climate Change Resilience and Adaptation",
+                    "reasoning": "Improvements in renewable energy and environmental policies can slow climate change, reducing its potential to contribute to human extinction. However, current efforts may not be sufficient to entirely dismiss this threat.",
+                    "effect": "0%"
+                },
+                {
+                    "name": "Geopolitical Stability",
+                    "reasoning": "Although geopolitical tensions persist, historical data suggests a reduction in the likelihood of a global nuclear conflict compared to the Cold War era, lowering the risk of extinction from nuclear war.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 1
+        },
+        "PublicHealthEpidemiologicalModelingAgent": {
+            "initial_reasoning": "The base rate for species extinction over short periods like a century is generally low, especially for widespread and adaptable species like humans. Historically, natural extinction events, even catastrophic ones, have unfolded over geological timescales. However, human extinction risk might differ due to unique anthropogenic threats such as nuclear war, bioterrorism, and climate change. Based on informal estimates from conferences, the subjective probability has been reported around 19%. For a more historically grounded estimate, considering the absence of any successful large-scale human extinction events in recorded history, an initial probability might be more in the range of 1-3%. For our initial estimate, I'll consider 3%, incorporating low historical frequency but acknowledging non-zero anthropogenic risk.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Global Pandemics",
+                    "reasoning": "While global pandemics historically have caused significant loss of life, the probability of them causing total human extinction is low. However, advances in biotechnology could increase risks of engineered pathogens, but current epidemiological frameworks and rapid advances in disease response and management reduce this risk significantly.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Nuclear War",
+                    "reasoning": "The threat of nuclear war, while still extant, has been a known risk for a long time. Deterrence and international diplomacy efforts have reduced the likelihood of global nuclear catastrophe.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Climate Change",
+                    "reasoning": "Climate change poses significant risk to biodiversity and ecosystem stability, which can indirectly affect human societies. However, it is unlikely to lead to complete human extinction within given timescales due to adaptive capabilities and ongoing mitigation efforts.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Technological Advancements",
+                    "reasoning": "Advances in technology, medicine, and global communication are enhancing our ability to predict, prevent, and respond to potential extinction-level threats.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 0
+        },
+        "EnvironmentalScienceClimateChangeModelsAgent": {
+            "initial_reasoning": "Historically, human extinction due to various global risks (such as pandemics, nuclear war, or existential threats like asteroids) has not occurred. The most extreme risks, while possible, have a low historical occurrence. Considering the broad history of human survival through various existential threats, a base rate for such a rare and unprecedented event can be conservatively set at around 5%. This is slightly lower than certain expert estimations but aligns with the extreme rarity of similar events throughout history.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Climate Change",
+                    "reasoning": "Climate change poses significant risks in terms of sea level rise, extreme weather, and ecosystem disruptions that could lead to regional crises or societal pressures, but it is unlikely to lead to complete human extinction on its own, given adaptability and technological advancements.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Impacts of Accelerated Environmental Degradation",
+                    "reasoning": "Increased exploitation of resources and pollution can have severe impacts; however, extinction requires a globally uniform and extreme level of degradation, which is unlikely given current mitigation and resilience strategies.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Technological Advancement",
+                    "reasoning": "Advancements in technology, including those related to environmental models, monitoring, and mitigation can reduce risks associated with climate change and enhance survival capabilities, slightly reducing the probability of extinction.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Global Policy and International Cooperation",
+                    "reasoning": "Growing international policy efforts focusing on sustainability and climate initiatives may contribute to global stability and further reduce extinction risk.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 0
+        },
+        "EnvironmentalScienceBiodiversityAndEcosystemServicesAgent": {
+            "initial_reasoning": "Historically, human extinction events are extremely rare and have not occurred thus far. The risk of extinction before 2100 could be considered alongside historical existential threats such as pandemics, nuclear war, and environmental degradation, all of which have been increasing in potential impact but not yet resulted in human extinction. Given that no natural or anthropogenic events in recorded history have resulted in complete human extinction, I will start with a low base rate. An initial probability of 5% is chosen to reflect the cumulative risk of extreme scenarios occurring over the next 75 years.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Environmental Degradation",
+                    "reasoning": "Ongoing degradation of ecosystems and loss of biodiversity can have severe impacts on human civilization's ability to adapt to and survive in a changing environment. This increases the risk of cascading failures in ecological and agricultural systems essential for human survival.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Technological Advancements",
+                    "reasoning": "Advancements in technology could significantly mitigate or manage threats that might otherwise lead to extinction, such as through climate engineering, advancements in medicine, or early detection systems for existential risks. However, they might also introduce new risks such as AI or bioengineering threats.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Global Efforts on Climate Change",
+                    "reasoning": "Significant global efforts are being made to address climate change, which reduces the likelihood of climate-triggered collapse scenarios. These efforts include international agreements and progress in renewable energy.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 0
+        },
+        "PoliticalScienceInternationalRelationsTheoriesAgent": {
+            "initial_reasoning": "Historically, complete human extinction events are unprecedented. The historical frequency for catastrophic events leading to human extinction is virtually zero when considering events like plagues, wars, and other disasters. Considering events recorded in human history, such extinction-level events have never occurred, which suggests a base rate close to 0%. However, accounting for future potential risks such as nuclear war, biological warfare, climate change, artificial intelligence, and other unforeseen events, a more cautious base rate estimation might be around 1% by 2100.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Nuclear Threat",
+                    "reasoning": "Despite reductions in nuclear arsenals, the threat of nuclear war that could lead to extinction remains. Countries with nuclear capabilities continue to invest in and modernize their arsenals, which remain capable of causing global catastrophe. There is a non-zero chance these weapons could be used intentionally or accidentally.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Climate Change",
+                    "reasoning": "While climate change poses significant risks, it is unlikely to lead to complete human extinction before 2100. Adaptation measures, technological advancements, and global cooperation efforts reduce the likelihood of it causing total extinction, even if it causes widespread disruption.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Biological Risks",
+                    "reasoning": "Advancements in biotechnology increase the risk of engineered pandemics. However, global health measures and scientific advancements improve our ability to respond to pandemics, reducing the chance of them causing human extinction.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Artificial Intelligence",
+                    "reasoning": "There is ongoing debate about the risk of AI leading to human extinction. While it's often cited as a potential existential risk, there is currently insufficient evidence to quantify it as a significant immediate threat.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Global Catastrophic Risks Awareness",
+                    "reasoning": "Increased awareness and focus on global catastrophic risks may lead to enhanced preventive measures and international cooperation, reducing the probability of extinction.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 11
+        },
+        "PoliticalScienceConflictAndCooperationModelsAgent": {
+            "initial_reasoning": "The historical base rate of human extinction due to catastrophic events is extremely low. Despite multiple existential threats throughout history, humanity has not faced extinction. Given the vast timeline of human survival and resilience over tens of thousands of years, the base rate of human extinction occurring in the next 75 years is approximately 0.1%. This estimate reflects the rarity of past events where significant numbers of the human population faced existential threats yet survived, such as pandemics, natural disasters, or conflicts. This historical resilience forms the basis of the initial probability.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Nuclear War Potential",
+                    "reasoning": "Although the Cold War has ended, the presence of nuclear arsenals by major powers still poses a risk. The proliferation of nuclear technology and ongoing tensions in various regions increase the risk of a nuclear confrontation, which could potentially lead to human extinction.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Climate Change Acceleration",
+                    "reasoning": "Current trends in climate change present significant risks, including habitat destruction and severe weather events. However, while climate change introduces major challenges, it is unlikely to result in complete human extinction by 2100. Efforts in mitigation and adaptation offset some potential risks.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Advancements in Global Cooperation",
+                    "reasoning": "International collaboration on issues such as nuclear disarmament, climate change, and pandemic response improves global resilience to existential threats. The establishment of global governance frameworks mitigates risks associated with catastrophic events.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Technological Risks and Innovations",
+                    "reasoning": "Emerging technologies such as artificial intelligence and biotechnology carry both risks and potential solutions to existential threats. The dual-use nature of these technologies, if not managed well, can lead to novel risks.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Pandemic Preparedness",
+                    "reasoning": "The COVID-19 pandemic has increased global awareness and preparedness for future pandemics. Improvements in public health infrastructure can mitigate the risk of a pandemic leading to human extinction.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 5
+        },
+        "SociologySocialChangeTheoriesAgent": {
+            "initial_reasoning": "The initial probability will be based on historical instances of existential threats to humanity and expert surveys. Historically, humanity has not faced extinction despite multiple threats like nuclear war and pandemics. Given these considerations and considering expert opinions like those in the Global Catastrophic Risk Conference, an initial baseline probability of human extinction by 2100 is around 5%. This is derived from considering the rarity of extinction events in human history and the fact that humanity has overcome previous near-catastrophes.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Technological Advancement",
+                    "reasoning": "Rapid technological advancement increases both the risk of and protection against human extinction. On one hand, it creates new existential risks (e.g., advanced AI, biotechnological risks). On the other hand, it also improves our capacity to mitigate risks through advancements in science and technology for risk detection and prevention. Overall, this dual effect tends to neutralize in terms of altering the initial probability.",
+                    "effect": "+0%"
+                },
+                {
+                    "name": "Global Political Stability",
+                    "reasoning": "With the end of the Cold War, global political stability has somewhat increased, reducing the threat of nuclear catastrophe. However, ongoing geopolitical tensions could still pose risks of conflict involving large weapons of mass destruction. Given current geopolitical dynamics and nuclear arsenals, there's a minor net increase in risk.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Environmental Degradation",
+                    "reasoning": "Climate change and environmental degradation pose significant long-term threats that could lead to existential risks for humanity. Severe impacts on global ecosystems and resources can increase the probability of extinction due to habitat loss, food scarcity, and extreme weather events exacerbating societal tensions.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Global Cooperation and Awareness",
+                    "reasoning": "Increased global awareness and cooperation in mitigating global risks (e.g., international climate agreements and scientific collaborations) have enhanced humanity's ability to address existential threats, which slightly reduces the probability of human extinction.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 15
+        },
+        "SociologyRiskSocietyTheoryAgent": {
+            "initial_reasoning": "Historically, human extinction is an unprecedented event, and despite significant risks from both natural and anthropogenic sources, humanity has survived numerous potential threats previously. Therefore, a historical base rate for human extinction by 2100 would be extremely low, possibly under 1%. The 2008 poll suggests a 19% extinction risk, but this may be inflated due to selection bias among respondents at a conference dedicated to catastrophic risks.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Technological Risk",
+                    "reasoning": "Advancements in technology lead to existential risks such as artificial intelligence misalignment, biotechnology dangers, and nuclear threats. These technologies can exacerbate vulnerabilities inherent in risk society, where the distribution of control over technology and political decisions plays a pivotal role in managing risks.",
+                    "effect": "+15%"
+                },
+                {
+                    "name": "Environmental Degradation",
+                    "reasoning": "Climate change, biodiversity loss, and natural resource depletion represent significant risks to human survival by 2100. Risk society theory emphasizes the global and interconnected nature of such environmental risks and their potential to create systemic threats to human existence.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Global Cooperation and Response",
+                    "reasoning": "Modern risk societies are characterized by their reliance on global networks and cooperative efforts to manage risks. Improved international cooperation, such as treaties for nuclear disarmament or climate action, can significantly mitigate the probability of human extinction.",
+                    "effect": "-10%"
+                },
+                {
+                    "name": "Resilience and Adaptation",
+                    "reasoning": "Human societies have shown considerable resilience and adaptability in response to past crises. The ability to innovate, adapt social systems, and develop technologies to counter new threats is an important factor in reducing extinction risk.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 11
+        },
+        "Futurism/studiesOfFutureScenariosGlobalCatastrophicRiskFrameworksAgent": {
+            "initial_reasoning": "The risk of complete human extinction by 2100 is often estimated using historical data on existential threats. Historically, humans have overcome numerous existential challenges, such as pandemics, wars (including nuclear threats), and natural disasters. The 2008 informal poll at the Global Catastrophic Risk Conference assigned a 19% probability to human extinction by 2100. However, selection bias might mean this figure is inflated. Historically, no human-caused event has yet led to extinction, but rapid advancements in potentially risky technologies such as nuclear weapons (since the mid-20th century) and emerging biotechnologies, as well as climate change, demand caution. At a broad historical level, the base rate for human extinction is exceedingly low, but given the acceleration of high-risk technologies, I will start with a cautious non-zero initial probability of 5%.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Advancements in Technology",
+                    "reasoning": "Technological advancements can both mitigate and increase risks. On the one hand, they can improve global resilience through better prediction and management of global threats. On the other hand, they increase the potential for novel existential threats (e.g., artificial intelligence misalignment, uncontained biotechnological experiments, and improved destructive capabilities of weapons). The unknowns associated with future technology development and deployment tilt towards a risk increase.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Global Cooperation and Governance",
+                    "reasoning": "Increasing levels of global governance and cooperation (e.g., various treaties on nuclear disarmament, climate agreements) can mitigate existential risks effectively. Efforts in international collaboration help in addressing challenges that require coordinated global responses, thus reducing overall extinction probabilities. However, historical failures of agreements to fully eliminate major risks suggest only a modest decrease.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Environmental Changes and Climate Risks",
+                    "reasoning": "Ongoing climate changes pose an existential framework, mainly due to their impacts on habitats and resource availability. While unlikely to cause extinction on their own, they can exacerbate other risks (e.g., causing conflict or migration crises). The unpredictable nature of feedback loops in the climate system also suggests a modest risk increase.",
+                    "effect": "+5%"
+                },
+                {
+                    "name": "Pandemic Preparedness and Response",
+                    "reasoning": "The COVID-19 pandemic has highlighted vulnerabilities but also provided a huge impetus for improving global pandemic preparedness. Investments and advancements in vaccines and global health infrastructure suggest a tendency towards improved resilience to natural or artificial pandemics.",
+                    "effect": "-5%"
+                }
+            ],
+            "final_probability": 10
+        },
+        "Futurism/studiesOfFutureScenariosTechnologicalSingularityHypothesesAgent": {
+            "initial_reasoning": "The estimation of human extinction is highly speculative due to the unprecedented nature of such an event. Historically, there has not been a precedent of human extinction, which means that reliable base rates are hard to construct. However, examining historical global catastrophic risks, such as pandemics, nuclear wars, climate changes, and technological disruptions, gives limited insight but can serve as approximations. The 19% probability from the 2008 Global Catastrophic Risk Conference can be adjusted for selection bias. Assuming a more conservative base rate, given historical absence of species-wide extinction for humans, an initial probability of 5% is estimated.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Technological Accelerant",
+                    "reasoning": "Technological advancement, especially in AI, biotechnology, and nanotechnology, poses new existential risks not seen in historical base rates. These technologies increase capabilities for both harm and protection. However, the risk side can slightly elevate the probability due to potential mismanagement or use in conflict.",
+                    "effect": "+10%"
+                },
+                {
+                    "name": "Global Cooperation",
+                    "reasoning": "Efforts towards global agreements on climate, nuclear disarmament, and pandemic control can help mitigate certain extinction risks. Though cooperation is challenging, these efforts decrease the likelihood of global catastrophic risks.",
+                    "effect": "-5%"
+                },
+                {
+                    "name": "Resilience and Adaptation",
+                    "reasoning": "Humanity's demonstrated ability to adapt and develop resilience strategies through history (e.g. surviving past pandemics) offers a counterbalance to extinction risks.",
+                    "effect": "-10%"
+                },
+                {
+                    "name": "Ecological Strains",
+                    "reasoning": "Persistent environmental stresses, including biodiversity loss and climate change, exacerbate the conditions for potential disruptions. These risks can coalesce to present significant existential threats, counterbalancing adaptive capabilities.",
+                    "effect": "+5%"
+                }
+            ],
+            "final_probability": 5
+        }
+    },
+    "news": "Here are the relevant news articles:\n\n**Which Human Species Survived For The Longest? Spoiler: It's Not Us**\nHomo erectus, a human ancestor that walked upright, survived for nearly 2 million years, making it the most successful human species of all time. It spread across the planet, learning to make hand axes and possibly using fire and building boats. However, it eventually went extinct in Java due to climate change, as it was unable to adapt to the changing ecosystem. This raises questions about our own ability to survive and adapt to the current climate crisis, as we are not far off the terminal age reached by other human species. As Dr. [no expert is quoted in the article], said, 'H. erectus simply didn't have the smarts to adapt to this new habitat and wasn't capable of updating its toolkit to meet the challenges posed by such drastic ecosystem alterations.' \nOriginal language: en\nPublish date: January 24, 2025 04:51 PM\nSource:[IFLScience](https://www.iflscience.com/which-human-species-survived-for-the-longest-spoiler-its-not-us-77775)\n\n**The Blood that Killed the Neanderthals: How Genetic Incompatibility Contributed to Their Extinction**\nScientists have discovered that Neanderthals had a rare Rh-null antigen, which may have contributed to their extinction. When early modern humans left Africa, their red blood cells may have evolved quickly to adapt to new conditions, but this adaptation may have contributed to the extinction of Neanderthals. According to Stephan Mazure, the lead author and population geneticist, Neanderthals had a rare Rh-null antigen that was incompatible with early Homo sapiens and Denisovans. This incompatibility likely caused hemolytic disease in newborns during interbreeding, leading to severe anemia or death in Neanderthal offspring. Although modern medicine can treat Rh incompatibility, 100,000 years ago such conditions would have been fatal, which may have accelerated the extinction of Neanderthals. The study also found that modern human Rh variants originated from early Homo sapiens, who likely developed them shortly after migrating out of Africa. This adaptation may have occurred on the Iranian plateau, where environmental pressure and population growth led to rapid changes in red blood cell diversity. In contrast, Neanderthals and Denisovans showed limited diversity, likely due to isolation and inbreeding, which may have further contributed to their extinction.\nOriginal language: uk\nPublish date: January 24, 2025 04:44 PM\nSource:[focus.ua](https://focus.ua/uk/technologies/690197-krov-shcho-vbila-neandertalciv-yak-genetichna-nesumisnist-vplinula-na-rozvitok-lyudstva)\n\n**Homo erectus: The First Masters of Survival in Arid Environments**\nA new study published in the journal Communications Earth & Environment reveals how Homo erectus, one of the earliest human ancestors, learned to survive in arid environments. Researchers from an international group of anthropologists focused on the Engare Sero site in Tanzania, where 1.2-1 million years ago, semi-arid conditions prevailed. The study found that Homo erectus used water sources, created innovative tools, and demonstrated adaptability to extreme conditions. 'Homo erectus was able to adapt to various ecosystems, not just in Africa, but also in Eurasia,' said the researchers. This discovery challenges the previous theory that only Homo sapiens could adapt to extreme conditions. The study highlights the importance of Homo erectus in human evolution, showing that the ability to adapt to the environment is key to survival. 'This data helps us better understand the evolutionary processes that made it possible for modern humans to appear,' the researchers noted. According to the study, Homo erectus appeared around 2 million years ago in Eastern Africa and went extinct around 100-400 thousand years ago. It was the first species to master upright walking and adapt to harsh conditions.\nOriginal language: ru\nPublish date: January 24, 2025 03:09 PM\nSource:[pravda.ru](https://www.pravda.ru/news/science/2166061-homo-erectus-adaptation/)\n\n**Neanderthal Blood Group May Have Contributed to Their Extinction**\nResearchers have discovered that Neanderthals had a rare blood group that was incompatible with modern humans and Denisovans, which may have contributed to their extinction. The study, published in Scientific Reports, found that Neanderthals had a unique Rh blood group that was not compatible with the Rh blood group of modern humans and Denisovans. This incompatibility could have led to a high risk of hemolytic disease in newborns, which could have been fatal. The researchers suggest that this may have contributed to the decline and eventual extinction of the Neanderthal population. 'Neanderthals had a very rare Rh blood group that was not compatible with the Rh blood group of modern humans or Denisovans,' said St\u00e9phane Mazi\u00e8res, the lead author of the study. 'If a Neanderthal woman had a child with a modern human or Denisovan man, the risk of hemolytic disease in the newborn would have been very high.' Mazi\u00e8res added that this could have been a contributing factor to the extinction of the Neanderthal population. 'This could have been a factor in the decline and eventual extinction of the Neanderthal population,' he said.\nOriginal language: tr\nPublish date: January 24, 2025 02:20 PM\nSource:[arkeofili.com](https://arkeofili.com/neandertallerin-kan-grubu-yok-oluslarini-aciklayabilir/)\n\n**Climate Change May Have Contributed to the Extinction of the 'Hobbit' People**\nResearch suggests that climate change may have contributed to the extinction of the 'Hobbit' people, a species of small humans that lived on the island of Flores in the Pacific. The study, published in Earth arXiv, found that severe drought caused by climate change may have led to a decline in the population of the dwarf elephant and the 'Hobbit' people that hunted them. The 'Hobbit' people, also known as the Flores people, were thought to have gone extinct around 12,000 years ago due to volcanic eruptions and competition with larger humans. However, recent research suggests that they actually went extinct around 38,000 years ago, with modern humans appearing around 4,000 years later. Michael Gagan, a researcher from the University of Wollongong, said that there is a lack of evidence for catastrophic volcanic activity. Gagan and his team collected rock samples from a cave where the 'Hobbit' people once lived, and analyzed the ratio of magnesium and calcium, as well as different oxygen isotopes, to gain insights into the historical seasonal rainfall patterns. The results showed that the average annual rainfall in the region decreased by 38% between 76,000 and 55,000 years ago, and was 51% drier than it is today around 56,000 years ago. Gagan said that the reduction in summer rainfall may have led to conflicts over scarce water resources, and that the two species may have become more vulnerable once they left their native habitat and encountered modern humans. Michela Leonardi from the University of Cambridge said that the findings are reasonable, as water supply is the main driver of human and animal changes. 'We know that life would be very difficult without water,' she said. Leonardi added that while the 'Hobbit' people showed remarkable adaptability, the climate change event happened too quickly for any life-saving mutations to occur.\nOriginal language: zh\nPublish date: January 24, 2025 01:24 PM\nSource:[\u79d1\u5b66\u7f51](https://news.sciencenet.cn/htmlnews/2025/1/538027.shtm)\n\n**More than 40% of the world's languages may disappear, warn scientists**\nScientists from the Australian National University (ANU) have found that the world is facing a significant threat of language extinction. According to their research, more than 40% of the approximately 7,000 existing languages are at risk of disappearing. The researchers predict that the number of languages that have already stopped being used could increase fivefold in the next 80 years, leading to a complete loss of more than 20% of all languages by 2100. Language extinction can occur suddenly, due to natural disasters, or gradually, due to social and economic changes. As some languages become more prestigious and in demand, they displace others, leading to the loss of minority languages. This trend causes significant damage to cultural heritage, as languages carry traditions, historical memory, and unique worldviews. The researchers warn that even actively used languages today may disappear in the coming decades, resulting in not only linguistic loss but also the loss of knowledge and cultural wealth accumulated over generations.\nOriginal language: ru\nPublish date: January 24, 2025 01:04 PM\nSource:[\u0418\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043f\u043e\u0440\u0442\u0430\u043b Day.Az](https://news.day.az/unusual/1723257.html)\n\n**Giant Animals Lived Among Humans for Millennia in South America**\nA recent study, led by paleontologist F\u00e1bio Henrique Cortes Faria, has challenged the long-held belief that the megafauna of South America went extinct shortly after the end of the Pleistocene era, around 11,700 years ago. Through radiocarbon analysis of fossils from species such as Eremotherium laurillardi (a giant sloth), Notiomastodon platensis (a South American elephant), and Smilodon populator (a saber-toothed tiger), the team found that many of these animals survived for thousands of years longer than previously thought. Some species, like Palaeolama major and Xenorhinotherium bahiense, which are related to modern llamas, lived until around 3,500 years ago, during the Holocene era, long after the arrival of the first humans in the continent. Cortes Faria explained, 'Humans certainly had a role, but the extinction of the megafauna in South America seems to have been mainly driven by environmental changes.' The study suggests that the expansion of forests and the contraction of savannas, which reduced habitats for many species, was the main driver of extinction. However, the authors also acknowledge that humans likely contributed to the decline and extinction of the megafauna, particularly through hunting and habitat modification.\nOriginal language: it\nPublish date: January 24, 2025 11:11 AM\nSource:[Fanpage](https://www.fanpage.it/kodami/i-bradipi-giganti-e-altri-animali-estinti-della-megafauna-hanno-vissuto-accanto-agli-esseri-umani-per-millenni/)\n\n**Study Reveals Alarming Decline in Handwriting Skills Among Generation Z**\nA recent study from the University of Stavanger in Norway has revealed alarming results showing that approximately 40% of Generation Z, born between the late 1990s and early 2000s, are losing their handwriting skills, a fundamental ability that has been a crucial part of human interaction for over 5,500 years. The study highlights the rapid changes in individual behavior, which is believed to be primarily caused by the extensive use of social media and the internet. According to a report by news9live, the technology has left a deep mark on daily life, particularly in the way we communicate with others. However, for Generation Z, who grew up in a completely digital environment, the boundaries between the real and virtual worlds have become blurred, leading to significant and profound changes in their communication methods. The study found that handwriting, which was once a key part of human interaction, is now facing the risk of extinction, as the internet, particularly social media platforms, has changed the concept of writing. The study notes that the changes are not limited to informal communication, but also extend to educational institutions, where the increasing reliance on technology in education has replaced traditional handwriting with digital notes and electronic content, reducing the opportunities for practicing handwriting and leading to its gradual decline. Research suggests that handwriting plays a crucial role in developing fine motor skills and stimulating memory in children. However, the nature of social media, which prioritizes speed and brevity, does not allow for the development of these skills. While rapid communication through text messages or emoticons may seem suitable in some situations, these habits do not compensate for traditional communication skills. The study warns that continuing this trend may have negative consequences for future generations, leading to a decline in social and communication skills, and weakening education's ability to develop creativity and expression. The study urges educational institutions and internet platforms to take immediate action to address this issue before it becomes irreversible.\nOriginal language: ar\nPublish date: January 23, 2025 10:53 AM\nSource:[alsiasi.com](https://alsiasi.com/%D8%AF%D8%B1%D8%A7%D8%B3%D8%A9-%D8%AA%D9%83%D8%B4%D9%81-%D9%81%D9%82%D8%AF%D8%A7%D9%86-%D8%AC%D9%8A%D9%84-z-%D9%84%D9%85%D9%87%D8%A7%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D9%83%D8%AA%D8%A7%D8%A8%D8%A9/)\n\n**Early Humans May Have Coexisted with Giant Sloths for 10,000 Years**\nNew research suggests that early humans in America may have coexisted with giant sloths for at least 10,000 years, contrary to the previous theory that they rapidly hunted and wiped out these massive creatures. The findings, published in the journal Proceedings of the Royal Society B, include evidence of human-made tools and fire pits found near the remains of giant sloths in Brazil's Santa Elina archaeological site, which dates back to around 27,000 years ago. This discovery challenges the long-held narrative that early humans arrived in America around 15,000 years ago and quickly hunted and wiped out the megafauna. 'We used to think that humans came and everything was rapidly wiped out,' says Daniel Odess, an archaeologist at the White Sands National Park in New Mexico. 'But now we're seeing that humans and these giant sloths coexisted for at least 10,000 years and didn't wipe them out.' The research also suggests that early humans may have used the giant sloths' bones as tools or decorations, and that they may have even cooked their meat. 'We're finding evidence of humans making these tools and using them to process the sloth bones,' says M\u00edrian Pacheco, a researcher at the University of S\u00e3o Paulo. 'It's a very different story than we thought.' \nOriginal language: tr\nPublish date: January 21, 2025 06:44 AM\nSource:[arkeofili.com](https://arkeofili.com/dev-tembel-hayvan-binlerce-yil-insanlarla-birlikte-var-olmus/)\n\n**Population Collapse: Is (Western) Human Extinction Near?**\nItaly, a birthplace of Western civilization, is experiencing a decline in births, with a fertility rate of 1.2 children per woman. This is not unique to Italy, as many Western European countries are facing low fertility rates. According to Elon Musk, by 2100, Europe will have lost 117 million people. The decline in births is a worldwide phenomenon, with over three-quarters of countries expected to have low fertility rates by 2050 and 97% by 2100. This has negative consequences, including a shrinking workforce, economic instability, and a burden on pension systems. As Mark Steyn said, 'The future belongs to those who show up for it.' Westerners are showing up less than most other peoples, and this may lead to a mass extinction of Western culture. Remedies include the increasing prevalence of artificial intelligence and robotics, but this is uncharted territory.\nOriginal language: en\nPublish date: December 28, 2024 03:55 PM\nSource:[thenewamerican.com](https://thenewamerican.com/us/culture/population-collapse-is-western-human-extinction-near/)\n\n**Dr. Samir Hamamah: 'We are in the midst of a demographic winter and if we don't act, humanity may disappear'**\nAccording to Dr. Samir Hamamah, a leading expert in reproductive medicine, the world is experiencing a 'demographic winter' and if left unchecked, humanity may face extinction. He emphasizes that infertility affects 3.3 million people in France, and over 6 million when including partners, and that global fertility rates will continue to decline until 2100. Dr. Hamamah, who co-authored a report on the causes of infertility with Salom\u00e9 Berlioux, is pleased that awareness is growing, as evidenced by President Emmanuel Macron's announcement in January. He stresses that infertility is a major public health issue, and that urgent action is needed to address the problem.\nOriginal language: fr\nPublish date: December 23, 2024 05:08 AM\nSource:[Madame Figaro](https://madame.lefigaro.fr/bien-etre/pr-samir-hamamah-nous-sommes-en-plein-hiver-demographique-et-si-on-ne-fait-rien-on-va-vers-la-disparition-de-l-etre-humain-20241223)\n\n**Humans may not have survived without Neanderthals**\nNew DNA research has revealed that modern humans went extinct many times before populating the world. The study found that only humans who interbred with Neanderthals went on to thrive, while other bloodlines died out. According to Prof Johannes Krause, 'early on we were not [successful], we went extinct multiple times.' The research suggests that Neanderthal genes may have been crucial to our success by protecting us from new diseases. A short period 48,000 years ago, when Homo sapiens interbred with Neanderthals, marked a turning point in human history, allowing us to expand into the wider world.\nOriginal language: en\nPublish date: December 12, 2024 07:24 PM\nSource:[BBC](https://www.bbc.com/news/articles/cwydgyy8120o)\n\n**One-Third of All Species May Become Extinct by 2100 Due to Global Warming, Biologist Warns**\nA biologist from the University of Connecticut, Mark Urban, analyzed 485 studies on species' ability to adapt to climate change over the past 30 years. His findings are alarming, as he predicts that one-third of all living species may become extinct by 2100 if greenhouse gas emissions are not reduced. Urban's study shows that the current rate of climate change is putting immense pressure on species that cannot control their environment like humans do, making them vulnerable to extinction. According to Urban, if global temperatures rise by 5.4\u00b0C by the end of the century, it is likely that one-third of all species will become extinct. He also notes that some groups of species, such as amphibians, are more vulnerable to extinction than others. As Urban says, 'the extinction of a small species can lead to a chain reaction, ultimately resulting in the extinction of a larger species that depends on it for food.' \nOriginal language: uk\nPublish date: December 11, 2024 01:24 PM\nSource:[OBOZREVATEL](https://www.obozrevatel.com/ukr/nauka-oboz/tretina-vsih-zhivih-vidiv-mozhe-zniknuti-do-2100-roku-cherez-globalne-poteplinnya-biolog.htm)\n\n**Scientists Warn of Mass Extinction by 2100: 'One-Third of Species Will Be Gone'**\nA recent study suggests that one-third of the species living today may become extinct by 2100 if greenhouse gas emissions are not controlled. The study, conducted by researchers from the University of Connecticut, analyzed 485 different studies on species' ability to adapt to climate change over the past 30 years. According to biologists, Mark Urban, the analysis shows that human activities are increasing atmospheric and ocean temperatures, leading to extreme heat and weather events that disrupt ecosystems and threaten species' survival. The study found that species' ability to adapt and survive depends on their location and ability to adapt to environmental changes. The results suggest that if global temperatures rise by 5.4 degrees Celsius, one-third of species may become extinct. The study also found that certain groups of species, such as amphibians, are at a higher risk of extinction. Additionally, the study notes that the extinction of small species can have a ripple effect, putting larger species that depend on them at risk. As Urban said, 'The study highlights that climate change is not just affecting biodiversity, but also entire ecosystems.' \nOriginal language: tr\nPublish date: December 10, 2024 04:21 PM\nSource:[Milliyet](https://www.milliyet.com.tr/dunya/uzmanlar-2100-yilini-isaret-etti-yok-olacak-7255256)\n\n**Up to a Third of All Species Could Become Extinct by 2100 Due to Climate Change**\nA recent study published in the journal 'Science' warns that up to a third of all species could become extinct by 2100 if greenhouse gas emissions are not controlled. The study, led by biologist Mark Urban, analyzed data from 485 previous research studies and over five million projections, and found that species living in vulnerable regions, such as mountainous, island, and freshwater ecosystems, are among the most threatened. According to Urban, the study's conclusions 'reinforce with greater certainty' that extinctions will accelerate if global temperatures exceed 1.5\u00b0C, and that higher emission scenarios could have catastrophic consequences. The study not only highlights the magnitude of the problem, but also delves into its causes and projections. It found that species with limited dispersal capabilities or those living in restricted areas are at greater risk. 'This work synthesizes the advances made in the last decade in ecological modeling, allowing for a more realistic and detailed analysis of the threats,' explain the researchers. The study identifies certain critical points of biodiversity that face disproportionate risks, including South America, Australia, and New Zealand, which are particularly vulnerable. The study also warns that the impact of these losses will extend beyond individual species, affecting other species, including humans, and will have global repercussions, including chain extinctions that could destabilize entire ecosystems. 'The climate crisis is contributing increasingly to the proportion of global extinctions observed since 1970,' the report highlights. This phenomenon is not only a future problem; it is already happening and increasing 'at a worrying rate.' The study's conclusions underscore the need for drastic and urgent measures to reduce greenhouse gas emissions. Urban and his colleagues emphasize that limiting global temperature increase to 1.5\u00b0C is essential to keep extinction threats below 2%. However, even under more optimistic scenarios, biodiversity losses would be significant. A 5% reduction in global extinction, projected in a moderate emission scenario, would still be devastating for ecosystems and the people who depend on them. 'The impact of these losses will extend beyond individual species, affecting other species, including humans,' warn the scientists. The study also highlights the importance of prioritizing the conservation of highly threatened species, such as amphibians, island ecosystem species, and those already classified as critically endangered. According to the report, efforts should focus on the 'most immediate extinction debts'; that is, species facing an imminent loss of viability. The study also emphasizes that extinction represents only the final stage of a long process of decline. Even before reaching this point, many species experience significant reductions in population and area, weakening their ecological role and often putting other species they interact with at risk. To address this crisis, the study underscores the need to create more advanced predictive models, including biological factors, such as species interactions and demography. Because, although models have improved in the last decade, they still have limitations, especially when it comes to rare or poorly known species, which are often the most vulnerable. The study's findings not only reinforce the gravity of the climate crisis, but also pose a fundamental choice for humanity: act now to mitigate the impacts or face a future with irreversible consequences for biodiversity and the ecosystems that sustain life on Earth. 'The greatest certainty about the predicted extinctions due to climate change obliges us to act,' as each degree of warming avoided can 'make the difference between survival and extinction for thousands of species,' conclude the researchers.\nOriginal language: es\nPublish date: December 10, 2024 11:30 AM\nSource:[informacion.es](https://www.informacion.es/medio-ambiente/2024/12/10/alerta-cientifica-tercio-especies-extinguirse-112487072.html)\n\n**Scientists Warn of Mass Extinction: One-Third of Species at Risk by 2100**\nScientists have warned of the danger: up to 2100, one-third of species may become extinct. According to the study, the adaptability and survival ability of species were evaluated based on their location and their ability to adapt to environmental changes. The results show that if global temperatures rise to 5.4 degrees Celsius, one-third of species will be at risk of extinction. The study found that certain groups, such as amphibians, are at a higher risk. Additionally, it was stated that the extinction of small species can have a chain reaction, putting larger species that depend on them at risk. As one scientist said, 'the consequences of species extinction can be devastating'.\nOriginal language: tr\nPublish date: December 10, 2024 06:26 AM\nSource:[NTV](https://www.ntv.com.tr/galeri/dunya/bilim-insanlari-tehlikeyi-acikladi-2100e-kadar-yok-olabilir,uC_BohnDOUqmLpg_qrfzDA)\n\n**A third of Earth\u2019s species could become extinct by 2100**\nA new study warns that almost one-third of species worldwide could become extinct by 2100 if greenhouse gas emissions continue to rise. The study, published in the journal Science, analyzed over 30 years of biodiversity and climate change research and found that if global temperatures rise to 2.7 degrees Fahrenheit (1.5 degrees Celsius) above the pre-industrial average temperature, extinctions would rapidly accelerate, especially for amphibians, species in mountain, island and freshwater ecosystems, and species in South America, Australia and New Zealand. Study author Mark Urban said, 'The increase in the number of species at risk increases steeply beyond the 1.5 C warming target.' If greenhouse gas emissions are managed in accordance with the Paris Agreement, nearly 1 in 50 species worldwide would be at risk of extinction by 2100. However, under a 7.7 F (4.3 C) warming scenario, 14.9% of species would be at risk of extinction, and under a 9.7 F (5.4 C) warming scenario, 29.7% of all species would be at risk of extinction.\nOriginal language: en\nPublish date: December 10, 2024 05:49 AM\nSource:[weeklycuttingedge.com](https://weeklycuttingedge.com/a-third-of-earths-species-could-become-extinct-by-2100/)\n\n**Study: One-third of all living organisms on Earth could be extinct by 2100**\nA recent study published in the journal Science has found that up to 1 in 50 species on Earth (around 180,000 species) could be threatened with extinction by 2100 if greenhouse gas emissions are not managed according to the Paris Agreement. The study, which analyzed over 30 years of research on biodiversity and climate change, found that even if emissions are kept under 1.5\u00b0C, the risk of extinction is not significantly increased. However, if temperatures rise to 2.7\u00b0C, which is expected under current international emissions commitments, 1 in 20 species could be threatened with extinction. The study found that the risk of extinction increases sharply when temperatures exceed 4.3\u00b0C, with 14.9% of species threatened in this scenario. The study's lead author, Mark Urban, a biologist at the University of Connecticut, said, 'If we keep global warming below 1.5\u00b0C, according to the Paris Agreement, the risk of extinction from today to 1.5\u00b0C is not a big increase.' However, rising temperatures to 2.7\u00b0C 'speeds up the process.' The study found that species in South America, Australia, and New Zealand face the greatest threats, with amphibians being the most threatened due to their dependence on weather patterns and sensitivity to changes in rainfall and drought. The study also found that isolated ecosystems, such as mountain, island, and freshwater ecosystems, are home to the most threatened species, as they are often surrounded by unsuitable habitats, making it difficult or impossible for species to migrate to more suitable climates.\nOriginal language: ar\nPublish date: December 08, 2024 01:01 AM\nSource:[mn2ol.com](https://www.mn2ol.com/Mix/2261553)\n\n**Study Warns of Extinction of a Third of All Living Species by 2100**\nA new study warns that a third of all living species on Earth may face extinction by 2100 if greenhouse gas emissions continue at their current rate. The study, conducted by biologist Mark Urban from the University of Connecticut, analyzed 485 studies from the past 30 years on the ability of species to adapt to climate change. According to phys.org, Urban found that the warming of the planet will lead to unpredictable climate changes, including higher temperatures, increased rainfall in some areas, and drought in others, and expects more climate disasters such as droughts, hurricanes, and snowstorms. Urban stated that these changes will pose a significant challenge to species that cannot adapt quickly, threatening their extinction. If global temperatures rise by 5.4\u00b0C by the end of the century, the worst-case scenario, it is likely that a third of all living species will become extinct. Urban warned that some species may lead to the extinction of others in a chain reaction, and noted that some groups, such as amphibians, are more vulnerable than others. 'These changes will be a major challenge for species that cannot adapt quickly, and will threaten their extinction,' Urban said. 'Some species may lead to the extinction of others in a chain reaction, and some groups, such as amphibians, are more vulnerable than others.'\nOriginal language: ar\nPublish date: December 07, 2024 10:33 AM\nSource:[roayahnews.com](https://roayahnews.com/%D8%AF%D8%B1%D8%A7%D8%B3%D8%A9-%D8%AA%D8%AD%D8%B0%D8%B1-%D9%85%D9%86-%D8%A7%D9%86%D9%82%D8%B1%D8%A7%D8%B6-%D8%AB%D9%84%D8%AB-%D8%A7%D9%84%D9%83%D8%A7%D8%A6%D9%86%D8%A7%D8%AA-%D8%A7%D9%84%D8%AD%D9%8A/)\n\n**A third of Earth's species could vanish by 2100 unless climate change is stopped**\nA recent study published in Science.org warns that nearly one-third of all species could face extinction by 2100 if greenhouse gas emissions continue unchecked. The research analyzed 450 studies over 30 years of biodiversity and climate change data, finding that exceeding the Paris Agreement's goal of limiting global warming to 1.5 degrees Celsius (2.7 degrees Fahrenheit) above pre-industrial levels would sharply accelerate extinction rates. Species reliant on specific habitats, such as amphibians, are most vulnerable, with warming-induced changes in temperature and precipitation altering habitats and disrupting species interactions. If emissions align with the Paris Agreement, 1 in 50 species (approximately 180,000) could still be at risk by 2100, but under current international commitments, the risk increases to 1 in 20 species. The study emphasizes the importance of limiting emissions to reduce these risks and calls for targeted conservation efforts in the most vulnerable ecosystems.\nOriginal language: en\nPublish date: December 06, 2024 05:52 AM\nSource:[MoneyControl](https://www.moneycontrol.com/science/a-third-of-earth-s-species-could-vanish-by-2100-unless-climate-change-is-stopped-article-12884646.html)\n\n**One in 20 species at risk of extinction by 2100 due to climate change**\nA study published in the journal Science estimates that 1.8% of species on Earth are at risk of extinction, even if the Paris Agreement is met, which aims to limit global warming to 1.5\u00b0C. If we continue on our current emissions trajectory, one in 20 species will be at risk by 2100. The study found that species in South America, Australia, and New Zealand, particularly amphibians, are among the most threatened. The study's author, Mark Urban, warns that to avoid accelerating extinctions due to climate change, we must prevent global temperatures from rising above 1.5\u00b0C. Urban notes that the current global temperature increase (above 1.3\u00b0C) puts 1.6% of species at risk, which increases to 2.7% in a scenario where the global temperature increases by 2\u00b0C, and up to 30% in a worst-case scenario where the temperature increase is 5.4\u00b0C. The study highlights the importance of identifying priority species for conservation and protecting them until the global temperature trajectory can be reversed. 'Extinction is just the end of a species' existence. Even when extinction is avoided, the decline in abundance and reduction in distribution area can strongly affect many other species, including humans,' the study concludes.\nOriginal language: pt\nPublish date: December 05, 2024 07:50 PM\nSource:[Publico](https://www.publico.pt/2024/12/05/azul/noticia/accao-climatica-20-especies-terra-estar-risco-2100-2114420)\n\n**A third of Earth's species could become extinct by 2100 if climate change isn't curbed**\nA new study finds that almost a third of Earth's species could be at risk of extinction by 2100 if greenhouse gas emissions continue to rise. The study, published in the journal Science, analyzed over 30 years of biodiversity and climate change research and found that species in mountain, island, and freshwater ecosystems, as well as those in South America, Australia, and New Zealand, are most at risk. If global temperatures rise to 2.7 degrees Fahrenheit (1.5 degrees Celsius) above the pre-industrial average temperature, exceeding the target of the Paris Agreement, extinctions would rapidly accelerate. Study author Mark Urban said, 'If we keep global warming to below 1.5 C, in accordance with the Paris Agreement, then the [extinction] risk from today to 1.5 C is not a large increase.' However, at a 2.7 C rise, the trajectory accelerates, and species in South America, Australia, and New Zealand face the greatest threats. Limiting greenhouse gas emissions can slow warming and halt these growing extinction risks, but understanding which species and ecosystems are most affected by climate change can also help target conservation efforts where they're needed most.\nOriginal language: en\nPublish date: December 05, 2024 07:05 PM\nSource:[livescience.com](https://www.livescience.com/planet-earth/climate-change/a-third-of-earths-species-could-become-extinct-by-2100-if-climate-change-isnt-curbed)\n\n",
+    "revised_predictions": [
+        12,
+        26,
+        21,
+        20,
+        1,
+        0,
+        10,
+        5,
+        16,
+        10,
+        20,
+        26,
+        10,
+        10
+    ],
+    "revised_mean": 13.357142857142858,
+    "revised_std": 8.41799485403961,
+    "phase_2_reasoning": {
+        "GlobalSecurityAndRiskAnalysisNuclearRiskAssessmentAgent": {
+            "prior_probability": 17,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The articles highlight historical patterns of extinction across human and species survival, drawing parallels between Homo erectus' inability to adapt to climate changes and current existential risks facing Homo sapiens. This reinforces the notion that climate change can significantly challenge species' survival, contributing to a higher risk of extinction.",
+                    "points_challenging_prior_analysis": "Despite these parallels, the historical survival of Homo sapiens, including through potential past extinction events and interbreeding with Neanderthals, demonstrates human adaptability and resilience. Moreover, technological and societal advancements, such as climate action and conservation efforts, may counteract some threats. Modern medicine, unlike in the Neanderthal era, reduces risks from genetic incompatibilities and could mitigate existential risks.",
+                    "overall_effect_on_forecast": "-5%"
+                }
+            ],
+            "revised_probability": 12
+        },
+        "GlobalSecurityAndRiskAnalysisPandemicRiskModelsAgent": {
+            "prior_probability": 26,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Historical extinctions of species such as Homo erectus and Neanderthals show that significant species can become extinct due to climate change and other factors. The current climate crisis is already causing a decline in biodiversity, putting a variety of species at risk of extinction by 2100. Articles highlight the potential for large-scale extinctions under climate change conditions, reinforcing concerns about human adaptability to drastic changes.",
+                    "points_challenging_prior_analysis": "Unlike extinct species such as Homo erectus and Neanderthals, modern humans have advanced technology, global communication, and scientific knowledge to adapt more effectively to climate threats. Despite the potential for significant biodiversity loss, human-centric actions to mitigate risks such as climate change and technological applications in medicine provide resilience against extinction. The adaptability and resilience of early humans coexisting with changes further suggest human capabilities to survive.",
+                    "overall_effect_on_forecast": "+0%"
+                }
+            ],
+            "revised_probability": 26
+        },
+        "EcologyAndConservationExtinctionRiskAnalysisAgent": {
+            "prior_probability": 16,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The articles about Homo erectus and Neanderthals highlight that even successful human ancestors went extinct due to inability to adapt to environmental changes, suggesting that modern humans could face similar challenges with climate change and biodiversity loss. Additionally, the repeated emphasis on the potential for significant biodiversity loss and resulting chain reactions affecting ecosystems by 2100 reinforces concerns about environmental risks to human survival.",
+                    "points_challenging_prior_analysis": "The articles provide more context on historical extinctions but do not present new evidence of immediate existential threats unique to modern humans. Adaptations witnessed in ancestral species like Homo erectus show significant resilience over time, suggesting complexity in measuring direct human extinction risk from similar causes.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 21
+        },
+        "EcologyAndConservationClimateAdaptationStrategiesAgent": {
+            "prior_probability": 10,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles discuss the extinction of past human species (e.g., Neanderthals, Homo erectus) due to environmental changes and genetic incompatibility. This reinforces the idea that humans face risks from climate change and genetic challenges, highlighting our vulnerability.",
+                    "points_challenging_prior_analysis": "The articles also show Homo erectus' adaptability to arid conditions and genetic interbreeding among early humans that aided survival, suggesting humans might adapt similarly to future challenges.",
+                    "overall_effect_on_forecast": "+5%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "A study highlights that one-third of global species might risk extinction by 2100 due to climate change, paralleling potential threats to human existence if similar large-scale environmental disruptions occur.",
+                    "points_challenging_prior_analysis": "The emphasis on species extinction does not directly translate to human extinction, given technological advances in mitigating climate impacts and our unique resilience compared to other species.",
+                    "overall_effect_on_forecast": "+5%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "Declining birth rates and demographic challenges suggest potential societal collapse, reinforcing concerns about long-term human survival.",
+                    "points_challenging_prior_analysis": "However, technological solutions like AI and robotics could help mitigate demographic declines, challenging the inevitability of extinction.",
+                    "overall_effect_on_forecast": "+0%"
+                }
+            ],
+            "revised_probability": 20
+        },
+        "PublicHealthGlobalHealthThreatAssessmentsAgent": {
+            "prior_probability": 1,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The article 'Scientists Warn of Mass Extinction by 2100: \"One-Third of Species Will Be Gone\"' suggests a significant risk of species extinction due to climate change, emphasizing the interconnectedness of ecosystems and species survival, which could indirectly highlight vulnerabilities in human survival due to ecosystem collapse.",
+                    "points_challenging_prior_analysis": "Articles discussing the extinction of Neanderthals and Homo erectus highlight specific adaptation failures in those species, but they also underline human adaptability and evolution through past challenges. Currently, humans have advanced technologies and global cooperation capabilities that may mitigate similar adaptive failures.",
+                    "overall_effect_on_forecast": "0%"
+                }
+            ],
+            "revised_probability": 1
+        },
+        "PublicHealthEpidemiologicalModelingAgent": {
+            "prior_probability": 0,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles discuss how climate change, while significant, does not directly imply a pathway to total human extinction. Historically, even significant climate events have led to adaptation rather than extinction for adaptable species like humans.",
+                    "points_challenging_prior_analysis": "Multiple sources highlight historical perspectives on extinction events in other species, drawing parallels to potential vulnerabilities in humans to drastic climate changes, biodiversity loss, and genetic bottlenecks. These provide cautionary tales but remain speculative in terms of human extinction.",
+                    "overall_effect_on_forecast": "+0%"
+                }
+            ],
+            "revised_probability": 0
+        },
+        "EnvironmentalScienceClimateChangeModelsAgent": {
+            "prior_probability": 0,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles highlight that major extinction events for entire human species historically have been linked to unique genetic or environmental niches, such as the Rh-null antigen incompatibility or specific climate adaptability issues in isolated contexts. Homo sapiens have demonstrated remarkable adaptability in contrast to other human species, suggesting resilience rather than vulnerability to total extinction.",
+                    "points_challenging_prior_analysis": "Articles underscore past extinctions among human ancestors and highlight serious climate change predictions, including potential mass extinctions affecting up to one-third of all known species by 2100 due to greenhouse gas emissions. The interconnectivity of ecosystems suggests that human society could experience severe challenges, though not necessarily extinction.",
+                    "overall_effect_on_forecast": "+10%"
+                }
+            ],
+            "revised_probability": 10
+        },
+        "EnvironmentalScienceBiodiversityAndEcosystemServicesAgent": {
+            "prior_probability": 0,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The news articles reinforce that climate change has historically been a significant factor in the extinction of species, such as Homo erectus and the 'Hobbit' people due to inability to adapt to rapid environmental changes. The articles also highlight a projected mass extinction of species by 2100 if climate change continues unchecked, which emphasizes the potential risks to human survival if similar drastic conditions were to impact human ecosystems.",
+                    "points_challenging_prior_analysis": "While the articles indicate serious risks from climate change and demographic shifts, they also provide evidence of human adaptability and technological advancement. Historical precedents show humans have historically adapted to coexist with other species and survived past climate changes, with interbreeding with Neanderthals aiding survival. Additionally, current technology and global efforts could mitigate these risks, as suggested by rapid responses to other species\u2019 extinction risks.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 5
+        },
+        "PoliticalScienceInternationalRelationsTheoriesAgent": {
+            "prior_probability": 11,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several news articles discuss the potential for environmental changes (e.g., climate change) contributing to extinctions, drawing parallels to past species that went extinct due to similar pressures. The ongoing climate crisis and global warming are highlighted as significant drivers that could affect humanity's survival indirectly through ecosystem collapse.",
+                    "points_challenging_prior_analysis": "Many of the articles focus on extinction risks specific to non-human species or past human ancestors due to environmental changes and biological incompatibilities. However, they do not present new, direct evidence that humans, as a species, face imminent existential threats. Furthermore, modern technological and scientific advances are not addressed as counter-measures to these risks.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 16
+        },
+        "PoliticalScienceConflictAndCooperationModelsAgent": {
+            "prior_probability": 5,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The articles highlight historical examples of human ancestors going extinct due to environmental pressures such as climate change (H. erectus and the 'Hobbit' people) and genetic factors (Neanderthals). These show vulnerabilities in human adaptation to rapid changes, supporting the existing factors like climate risks leading to potential existential threats.",
+                    "points_challenging_prior_analysis": "While the news highlights historical extinctions of other hominid species, the articles also show the adaptability of early humankind and the importance of technological and social advances in modern humans. The coexistence of humans with challenging environments and species suggests that Homo sapiens may have better resilience than their predecessors.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 10
+        },
+        "SociologySocialChangeTheoriesAgent": {
+            "prior_probability": 15,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "The articles on the decline in biodiversity and mass extinction events due to climate change reinforce the increased extinction risks from environmental degradation. This aligns with previous analysis on climate change being a major threat to human survival.",
+                    "points_challenging_prior_analysis": "The articles discussing historical extinctions of species like Homo erectus and Neanderthals highlight adaptability challenges that did not affect Homo sapiens in the same way. However, these are not directly applicable to current human survival scenarios considering technological advancement and adaptability.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 20
+        },
+        "SociologyRiskSocietyTheoryAgent": {
+            "prior_probability": 11,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles highlight the historical extinctions of human-like species such as Neanderthals and Homo erectus, often due to environmental changes and genetic factors. These findings reinforce the perspective that similar vulnerabilities exist for Homo sapiens, particularly in terms of climate change impacts.",
+                    "points_challenging_prior_analysis": "The articles also emphasize human adaptability and success in coexistence with other species, like Neanderthals, and historical resilience despite previous challenges, suggesting that humans have an inherent ability to overcome significant threats.",
+                    "overall_effect_on_forecast": "+5%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "The potential for one-third of species to go extinct due to climate change highlights the environmental risks contributing to existential threats.",
+                    "points_challenging_prior_analysis": "However, the articles note advances in modern medicine and long-term human survival strategies as key factors that could mitigate these risks.",
+                    "overall_effect_on_forecast": "+5%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "The concept of a demographic crisis, with declining birth rates, supports the notion of serious challenges to human sustainability.",
+                    "points_challenging_prior_analysis": "The global nature of the demographic issues underscores the potential for international solutions and technological interventions, demonstrating humanity's persistent capability to innovate.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 26
+        },
+        "Futurism/studiesOfFutureScenariosGlobalCatastrophicRiskFrameworksAgent": {
+            "prior_probability": 10,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles highlight the historical instances of human extinction triggers, like climate change impacting predecessors such as Homo erectus and the 'Hobbit' people. These articles reinforce the potential vulnerability of humans to climate-driven changes, a factor considered in the initial probability assessment.",
+                    "points_challenging_prior_analysis": "The articles provide evidence of previous human resilience and adaptation, as seen in the coexistence with giant sloths and adaptation to environmental extremes by Homo erectus. Additionally, the decline of Neanderthals due to specific genetic factors, which are unlikely to be repeated given the advancements in genetic medicine, challenges assumptions about human fragility.",
+                    "overall_effect_on_forecast": "+0%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "Articles emphasize the potential significant impacts of climate change, with predictions of up to one-third of species potentially going extinct by 2100 if emissions are not curbed. This aligns with an increase in existential threats due to climate change, supporting the original assessment of heightened risk.",
+                    "points_challenging_prior_analysis": "Modern humans have survived past climate changes and scientific assessments suggest actionable strategies to mitigate these risks, potentially reducing the existential threat. The imminent potential for technological intervention, such as emissions control, provides a contravening balance to the risks stated.",
+                    "overall_effect_on_forecast": "+0%"
+                },
+                {
+                    "points_reinforcing_prior_analysis": "The concept of 'demographic winter' highlighted in some pieces, showcasing possible risks if global birth rates decline continuously, is another factor that might affect population stability.",
+                    "points_challenging_prior_analysis": "Articles discussing technological solutions like AI and improved genetic understanding present potential for managing future demographic and genetic issues, potentially decreasing the risk of human extinction as opposed to Neanderthal genetic incompatibility issues.",
+                    "overall_effect_on_forecast": "+0%"
+                }
+            ],
+            "revised_probability": 10
+        },
+        "Futurism/studiesOfFutureScenariosTechnologicalSingularityHypothesesAgent": {
+            "prior_probability": 5,
+            "analysis_updates": [
+                {
+                    "points_reinforcing_prior_analysis": "Several articles suggest climate change as a persistent and emerging threat to species, including humans, potentially leading to significant ecological disruptions. The existence of previous human and hominid extinctions due to climatic pressures echoes this risk.",
+                    "points_challenging_prior_analysis": "The adaptability of Homo erectus and the potential coexistence of early humans and megafauna indicate that human species have historically shown resilience. Moreover, human technological advancement and global cooperation have arguably increased adaptive capacities.",
+                    "overall_effect_on_forecast": "+5%"
+                }
+            ],
+            "revised_probability": 10
+        }
+    }
+}
