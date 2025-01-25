@@ -39,7 +39,7 @@ jobs:
       # Step 3: Run bot
       - name: Run bot
         run: |
-          poetry run python main.py
+          poetry run python main_test.py
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

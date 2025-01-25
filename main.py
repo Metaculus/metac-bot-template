@@ -29,9 +29,9 @@ GET_NEWS = True  # set to True to enable the bot to do online research
 # You only need *either* Exa or Perplexity or AskNews keys for online research
 
 
-SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
+# SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")  # set to True to publish your predictions to Metaculus
+# USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")
+# SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
 # set to True to forecast example questions rather than the tournament questions
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
