@@ -52,13 +52,23 @@ jobs:
           USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
           SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
-      - name: create forecasts zip
+      - name: Check if forecasts directory exists
         run: |
-            mkdir -p artifacts
-            zip -r artifacts/forecasts.zip forecasts
-      
+          echo "Checking if forecasts directory exists..."
+          ls -l forecasts || echo "forecasts directory does not exist"
 
-      - name: upload forecasts
+      - name: Create forecasts zip
+        run: |
+          mkdir -p artifacts
+          # Check if the forecasts directory exists before zipping
+          if [ -d "forecasts" ]; then
+            zip -r artifacts/forecasts.zip forecasts
+          else
+            echo "forecasts directory not found. Skipping zipping step."
+            exit 1  # Fail the step if forecasts does not exist
+          fi
+
+      - name: Upload forecasts
         uses: actions/upload-artifact@v3
         with:
           name: forecasts
