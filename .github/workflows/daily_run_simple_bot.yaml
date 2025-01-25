@@ -1,6 +1,7 @@
 name: Regularly forecast new questions
 
-
+on:
+  workflow_dispatch:
 
 # Daily job to run the simple forecast bot
 jobs:
