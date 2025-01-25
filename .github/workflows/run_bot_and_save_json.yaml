@@ -1,9 +1,8 @@
 name: Regularly forecast new questions and save JSON
 
-#on:
-#  workflow_dispatch:
-#  schedule:
-#    - cron: "*/30 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
+on:
+  workflow_dispatch:
+
 
 jobs:
   daily_build:
