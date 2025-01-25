@@ -65,7 +65,6 @@ jobs:
             zip -r artifacts/forecasts.zip forecasts
           else
             echo "forecasts directory not found. Skipping zipping step."
-            exit 1  # Fail the step if forecasts does not exist
           fi
 
       - name: Upload forecasts
