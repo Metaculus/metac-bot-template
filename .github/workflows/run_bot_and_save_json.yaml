@@ -89,5 +89,9 @@ jobs:
           git add forecasts
           git commit -m "Update forecasts files" || echo "No changes to commit"
           git config pull.rebase false
+          echo "Pulling changes from remote repository..."
           git pull origin HEAD --allow-unrelated-histories
+          echo "Merging changes..."
+          git merge -X ours FETCH_HEAD
+          echo "Pushing changes to remote repository..."
           git push origin HEAD
