@@ -44,6 +44,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+          SUBMIT_PREDICTION: ${{ secrets.SUBMIT_PREDICTION }}
+          USE_EXAMPLE_QUESTIONS: ${{ secrets.USE_EXAMPLE_QUESTIONS }}
+          SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ secrets.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
       # Step 4: Check if forecasts folder exists
       - name: Check for changes in forecasts folder
