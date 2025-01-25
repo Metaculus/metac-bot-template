@@ -134,6 +134,7 @@ async def forecast_single_binary_question(
     os.makedirs("forecasts", exist_ok=True)  # Ensure the directory exists
     filepath = os.path.join("forecasts", f"{filename}.json")
     with open(filepath, "w", encoding="utf-8") as f:
+        print("Saving detailed data to:", filepath)
         json.dump(detailed_data, f, indent=4)
 
     # Return original outputs for compatibility
@@ -290,6 +291,7 @@ async def forecast_single_multiple_choice_question(
     os.makedirs("forecasts", exist_ok=True)
     filepath = os.path.join("forecasts", f"{filename}.json")
     with open(filepath, "w", encoding="utf-8") as f:
+        print("Saving detailed data to:", filepath)
         json.dump(detailed_data, f, indent=4)
 
     # 9) Return the same values as before for backward compatibility

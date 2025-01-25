@@ -37,6 +37,10 @@ ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 OPENAI_API_KEY = os.getenv(
     "OPENAI_API_KEY")  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
+
+print(f"SUBMIT_PREDICTION: {SUBMIT_PREDICTION}")
+print(f"USE_EXAMPLE_QUESTIONS: {USE_EXAMPLE_QUESTIONS}")
+print(f"SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: {SKIP_PREVIOUSLY_FORECASTED_QUESTIONS}")
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
@@ -54,7 +58,7 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),
+    # (22427, 22427),
     # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
@@ -1013,6 +1017,7 @@ if __name__ == "__main__":
     else:
         open_question_id_post_id = get_open_question_ids_from_tournament()
     try:
+        print("Starting Forecasting")
         asyncio.run(
             forecast_questions(
                 open_question_id_post_id,

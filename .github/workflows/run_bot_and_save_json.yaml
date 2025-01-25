@@ -7,7 +7,11 @@ jobs:
   daily_build:
     runs-on: ubuntu-latest
     environment: dev
-
+    env:
+      SUBMIT_PREDICTION: ${{ vars.SUBMIT_PREDICTION }}
+      USE_EXAMPLE_QUESTIONS: ${{ vars.USE_EXAMPLE_QUESTIONS }}
+      SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ vars.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
+      
     steps:
       # Step 1: Check out repository
       - name: Check out repository
@@ -37,6 +41,7 @@ jobs:
       # Step 3: Run bot
       - name: Run bot
         run: |
+          printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
           poetry run python main_test.py
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
@@ -47,10 +52,26 @@ jobs:
           USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
           SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
+      - name: create forecasts zip
+        run: |
+            mkdir -p artifacts
+            zip -r artifacts/forecasts.zip forecasts
+      
+
+      - name: upload forecasts
+        uses: actions/upload-artifact@v3
+        with:
+          name: forecasts
+          path: artifacts/forecasts.zip
+
       # Step 4: Check if forecasts folder exists
       - name: Check for changes in forecasts folder
         id: changes_check
         run: |
+          echo "Checking for changes in forecasts folder..."
+          ls -l forecasts
+          git add forecasts
+          git add .cache
           if git diff --quiet HEAD -- forecasts; then
             echo "No changes detected in forecasts folder."
             echo "changes=false" >> $GITHUB_ENV
@@ -66,5 +87,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add forecasts
-          git commit -m "Update forecasts files"
+          git commit -m "Update forecasts files" || echo "No changes to commit"
+          git config pull.rebase false
+          git pull origin HEAD --allow-unrelated-histories
           git push origin HEAD
