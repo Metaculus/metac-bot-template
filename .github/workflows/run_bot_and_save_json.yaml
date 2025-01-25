@@ -8,6 +8,7 @@ on:
 jobs:
   daily_build:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       # Step 1: Check out repository
