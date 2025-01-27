@@ -1,0 +1,1152 @@
+{
+    "title": "What will be the return of the Egyptian stock market index, the EGX 30, in January 2025?",
+    "description": "Wikipedia: [Egyptian Exchange](https://en.wikipedia.org/wiki/Egyptian_Exchange)",
+    "fine_print": "The Date is: 2025-01-27",
+    "phase_1_reasoning": {
+        "InvestmentAnalysisTechnicalAnalysisAgent": {
+            "initial_reasoning": "To establish an initial probability distribution for the EGX 30 index return in January 2025, I will use historical data to identify the frequency of monthly returns falling within the specified ranges. Looking at the past performance of the EGX 30, historical data suggests that monthly index returns typically exhibit a high degree of volatility characteristic of emerging markets. For simplification, let's assume base rates are roughly as follows: negative returns (Less than -5% and \u2265-5% and <0%) occur 30% of the time, while positive returns (\u22650% and <5% and Greater than 5%) occur 70% of the time, with higher returns >=5% being less frequent.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Technical Indicators",
+                    "reasoning": "Using Moving Averages, we observe that if the short-term moving average is above the long-term average, it indicates bullish momentum, increasing the likelihood of positive returns. Additionally, if RSI is below 30, it could signal oversold conditions leading to a potential rebound.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Volume Trends",
+                    "reasoning": "Unseasonably high trading volumes can precede major market movements. Increased volume typically suggests confirmation of ongoing trends, which can heighten the probability of extreme returns, both negative and positive.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "0%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 25
+            }
+        },
+        "InvestmentAnalysisFundamentalAnalysisAgent": {
+            "initial_reasoning": "To estimate the probable range of returns for the EGX 30 in January 2025, the historical monthly performance of the index is analyzed. Historically, stock indices, including the EGX 30, have exhibited different degrees of volatility. Considering market dynamics and previous January performances, we assume a normal distribution around the average monthly change. Historical January returns for markets similar to EGX 30 tend to cluster within the range of -5% to 5%. Based on this historical base rate, a slight negative to modest positive return is typical. Thus, initially, we assign 20% probability to 'Less than -5%', 30% to '\u2265-5% and <0%', 30% to '\u22650% and <5%', and 20% to 'Greater than 5%'.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Economic Policy Stability",
+                    "reasoning": "The Egyptian government's current economic policies are focused on stabilizing the financial markets, including proactive measures to control inflation and support the local currency. This reduces uncertainty, decreasing the likelihood of large negative swings like 'Less than -5%'. This factor increases the probability of a neutral to positive return.",
+                    "effects": {
+                        "Less than -5%": "-10%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+0%"
+                    }
+                },
+                {
+                    "name": "Global Commodity Prices",
+                    "reasoning": "Egypt is significantly affected by global commodity prices, such as oil and food, due to its import reliance. Recently, commodity prices have seen stability which might support a stable or positively inclined market as input costs stabilize, thereby supporting business margins. This increases the probability of outcomes in the positive return range.",
+                    "effects": {
+                        "Less than -5%": "+0%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+0%"
+                    }
+                },
+                {
+                    "name": "Tourism Sector Recovery",
+                    "reasoning": "The tourism sector, a significant contributor to Egypt's economy, is experiencing a rebound post-pandemic. Increased tourism revenue boosts economic activity and investor confidence, potentially leading to more significant positive market returns.",
+                    "effects": {
+                        "Less than -5%": "+0%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+0%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 25
+            }
+        },
+        "InvestmentAnalysisRiskManagementAgent": {
+            "initial_reasoning": "To estimate the initial probabilities for the performance of the Egyptian stock market index, EGX 30, in January 2025, I will use historical data of monthly returns for emerging market indices, including the EGX 30. Emerging markets often show higher volatility compared to developed markets due to economic and political factors. Based on historical data, emerging market indices can experience significant swings in both positive and negative directions. Historically, emerging markets like Egypt have shown a roughly normal distribution of monthly returns, with approximately 15% experiencing large declines of more than -5%, 30% seeing moderate negative to no change (\u2265-5% and <0%), around 40% experiencing small to moderate positive gains (\u22650% and <5%), and roughly 15% experiencing large gains over 5%. This distribution reflects the often volatile but generally positive long-term growth trends seen in emerging markets.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Egypt's current political stability may influence investor confidence. A stable political environment can lead to a decrease in perceived risk, which often results in moderately positive market movements. This stability is expected to marginally increase the likelihood of moderate positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Inflation Rates",
+                    "reasoning": "High inflation rates can erode purchasing power and deter investment. However, if inflation rates are lower than expected, the effect could be the opposite, bolstering investor confidence and increasing the chance of positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "-5%"
+                    }
+                },
+                {
+                    "name": "Global Market Trends",
+                    "reasoning": "Global market trends influence investor sentiment and capital flows to emerging markets like Egypt. A positive trend in global markets generally leads to inflows of capital, increasing the probability of positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+10%",
+                        "Greater than 5%": "+0%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 65,
+                "Greater than 5%": 15
+            }
+        },
+        "RegionalExpertise-MiddleEastMiddleEasternEconomicPoliciesAgent": {
+            "initial_reasoning": "To forecast the return of the EGX 30 for January 2025, we begin by considering historical monthly returns of the EGX 30 and similar economic environments. Historically, emerging markets like Egypt's display higher volatility, with typical monthly returns often fluctuating between marginal positive and negative rates due to economic instability and sensitivity to external factors. Given that the global economic outlook and regional stability can heavily influence market performance, a distribution accounting for these variabilities is necessary. Initially, most months see returns within the range of -5% to +5%, with occasionally more pronounced shifts.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Currency Fluctuations",
+                    "reasoning": "The Egyptian pound's volatility can influence investor sentiment and market valuation. A recent stabilization or depreciation trend can affect returns negatively or positively. In January 2025, moderate currency stabilization trends continue due to IMF support, likely boosting investor confidence and maintaining returns closer to zero or positive.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Egypt\u2019s political context can impact economic conditions and the stock market. Currently, there are no major political upheavals expected, which tends to support a stable or slightly improving market environment.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+0%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "The global environment affects trade, investments, and financial markets. In early 2025, there are moderate positive trends in global trade and recovery post-COVID, which might enhance Egypt's market performance slightly.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+0%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 35
+            }
+        },
+        "RegionalExpertise-MiddleEastGeopoliticalRiskAssessmentAgent": {
+            "initial_reasoning": "To estimate the returns of the Egyptian stock market index, the EGX 30, for January 2025, I will first consider the historical performance of the index during similar periods. Historically, emerging market indices like EGX 30 can have volatile monthly returns, often swayed by regional and global economic conditions. Typically, monthly returns for such indices can range approximately from a sharp decline greater than -5% to a substantial rally exceeding 5%, but often tend to cluster around smaller movements unless impacted by significant news or macroeconomic shifts.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Political stability in Egypt can significantly impact investor confidence. In recent months, the political situation has been relatively stable, which tends to support the upper range of outcomes. Stable conditions often encourage investment, potentially leading to moderate positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Economic Indicators",
+                    "reasoning": "Current economic indicators such as inflation, currency strength, and foreign direct investment inflow can affect the EGX 30's performance. If economic indicators are generally positive, this supports the prospect of positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Market Trends",
+                    "reasoning": "Global market trends, particularly in developed markets, influence investor behavior in emerging markets like Egypt. If global markets are performing well, this can create a positive sentiment spillover effect, encouraging upward movements in the EGX 30.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 35
+            }
+        },
+        "RegionalExpertise-MiddleEastCulturalMarketDynamicsAgent": {
+            "initial_reasoning": "When forecasting the Egyptian stock market index, EGX 30, certain patterns can be discerned. Historically, stock market returns can be influenced by a combination of economic indicators, geopolitical factors, and investor sentiment. Typically, emerging markets like Egypt experience higher volatility compared to developed markets. Historically, monthly stock index returns in such volatile markets often tend to fall between -5% to +5% during typical periods unless significant macroeconomic events occur. Thus, establishing a base rate: 'Less than -5%' is around 15%, '\u2265-5% and <0%' is around 30%, '\u22650% and <5%' is 40%, and 'Greater than 5%' is 15%.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Economic Reform Policies",
+                    "reasoning": "Egypt has been implementing economic reforms with positive signs such as reduced inflation and increased foreign direct investment. This climate can bolster investor confidence and increase market returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Tourism Recovery",
+                    "reasoning": "The tourism sector in Egypt is vital for economic growth, and a recovery post-pandemic boosts the economy. Increased revenues from tourism may reflect positively on the stock market.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Geopolitical Stability",
+                    "reasoning": "Regional geopolitical stability is crucial for investor confidence. Any stability or resolution of regional conflicts has a positive impact on market sentiment.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-10%",
+                        "\u22650% and <5%": "+10%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 60,
+                "Greater than 5%": 30
+            }
+        },
+        "StockMarketAnalyticsQuantitativeModelingAgent": {
+            "initial_reasoning": "To estimate the distribution of outcomes for the EGX 30 in January 2025, I begin by considering historical monthly returns of the EGX 30. Typically, stock market indices have variable returns, with earnings reports, macroeconomic data, and geopolitical events influencing performance. I will assume a simplified normal distribution of past monthly returns to form an initial base rate. Historically, less than -5% monthly changes are less frequent compared to moderate performance changes in the range of \u00b15%. From the records, I believe a starting point can be: 10% chance for a significant drop (less than -5%), 30% for a small drop (\u2265-5% and <0%), 30% for a moderate gain (\u22650% and <5%), and 30% for a significant gain (greater than 5%).",
+            "perspective_derived_factors": [
+                {
+                    "name": "Current Economic Conditions in Egypt",
+                    "reasoning": "Egypt's economic growth, inflation rate, and fiscal policies directly impact investor sentiment and, consequently, the EGX 30's performance. If current reports suggest an economic slowdown or high inflation, it could dampen market returns.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "-5%"
+                    }
+                },
+                {
+                    "name": "Global Market Trends",
+                    "reasoning": "Global financial markets can heavily influence emerging markets like Egypt. A positive global market condition can enhance risk sentiment and lead to capital inflows, supporting the EGX 30.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Political stability in Egypt contributes to investor confidence. Recent stability can prevent adverse swings in the market, especially on the downside.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 35
+            }
+        },
+        "StockMarketAnalyticsMarketSentimentAnalysisAgent": {
+            "initial_reasoning": "In analyzing the historical patterns and tendencies of the EGX 30, it is crucial to consider typical monthly fluctuations in this equity market over similar periods. Historically, emerging markets like Egypt experience higher volatility due to economic, political, and social factors. Reviewing the past data for January in similar years, as well as overall monthly trends in emerging markets, we see moderate movements are more common, both upward and downward, generally concentrated around small percentage changes. With this background, we provide an initial distribution reflective of these tendencies.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Political events significantly impact investor sentiment in emerging markets. Recent stability in political landscapes can reduce risk perceptions, increasing investor confidence and potentially elevating stock prices. Conversely, instability might heighten risk and drive markets downward.",
+                    "effects": {
+                        "Less than -5%": "-10%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+10%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "Global economic trends such as interest rates, trade agreements, and foreign investment flow impacts emerging markets significantly. An improving global economy increases market activity, whereas downturns can create bearish sentiment.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Local Economic Indicators",
+                    "reasoning": "Factors like inflation rates, GDP growth, and currency stability directly impact stock market performance. Better economic indicators boost market sentiment, likely pushing prices upward, while negative data can exert downward pressure.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 35
+            }
+        },
+        "StockMarketAnalyticsAlgorithmicTradingAgent": {
+            "initial_reasoning": "To forecast the return of the Egyptian stock market index EGX 30 for January 2025, we start with historical monthly returns from similar emerging market indices. Historically, emerging market indices experience moderate fluctuations over short periods like a month. Typically, these indices show returns of -5% to 5% in a single month, with extreme returns less frequent. Statistically, 'Less than -5%' and 'Greater than 5%' outcomes are rarer, often accounting for 15% of monthly movements each in other emerging markets over similar periods. This leaves a 70% distribution for movements between '-5% and <0%' and '\u22650% and <5%', split evenly given no additional information (35% each).",
+            "perspective_derived_factors": [
+                {
+                    "name": "Recent Political Stability",
+                    "reasoning": "Political stability in Egypt has improved recently, which typically leads to more confidence in economic performance and equity markets. This stability reduces the likelihood of negative shocks and increases the likelihood of moderate positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-10%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+10%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "Strong global economic conditions boost investor sentiment and capital flow into emerging markets like Egypt. This enhances the likelihood of positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Currency Volatility",
+                    "reasoning": "The Egyptian pound has experienced volatility due to various economic policies. This can affect investor perceptions and potentially result in either negative or highly positive returns.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 25
+            }
+        },
+        "FinanceEfficientMarketHypothesisAgent": {
+            "initial_reasoning": "To establish a baseline probability distribution, I will consider historical monthly returns for similar emerging market indices such as the EGX 30. Historically, emerging markets, including Egypt, have displayed higher volatility compared to developed markets, often influenced by both domestic and global factors. Based on historical data, monthly returns for such indices often fall in the range of -5% to +5% given standard market conditions. However, significant economic or political events may push returns beyond this range.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Market Efficiency",
+                    "reasoning": "According to the Efficient Market Hypothesis, all known information should already be reflected in current market prices, making it unlikely for extreme movements without new information.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+0%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Recent Economic Data",
+                    "reasoning": "Recent positive economic indicators being published for Egypt may boost investor confidence, potentially increasing the likelihood of positive returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Egypt's political stability is often a factor influencing investor sentiment. Recently, stability has been relatively high, which might reduce the probability of negative returns and slightly increase positive outcomes.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 35
+            }
+        },
+        "FinanceBehavioralFinanceAgent": {
+            "initial_reasoning": "To establish an initial probability distribution for the EGX 30's performance in January 2025, we can refer to historical monthly return data for this index. Historically, emerging markets such as Egypt's can experience volatility due to external and internal economic factors. Typically, we observe that in a typical month, a stock market index might have a roughly normal distribution of returns centered around zero, with larger absolute moves being less common but not rare. As a starting point, we might assume a slight negative bias due to current economic challenges. Based on volatility and past performance, it is reasonable to assign 'Less than -5%' a 20% chance, '\u2265-5% and <0%' a 30% chance, '\u22650% and <5%' a 30% chance, and 'Greater than 5%' a 20% chance.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Macroeconomic Stability",
+                    "reasoning": "Macroeconomic stability, reflected in metrics such as inflation control and fiscal policy effectiveness, affects investor confidence and market performance. For the month of January, stable macroeconomic policies in Egypt could lead to flat to slightly positive returns. Conversely, instability may affect the market negatively.",
+                    "effects": {
+                        "Less than -5%": "+0%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+0%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Market Trends",
+                    "reasoning": "The global market trends and sentiment can influence the Egyptian market significantly due to investors reacting to global cues. In January 2025, if global markets are bullish, there will likely be an increase in positive returns. A bearish global market might have the opposite effect.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+0%"
+                    }
+                },
+                {
+                    "name": "Foreign Exchange Dynamics",
+                    "reasoning": "Foreign exchange rates affect the Egyptian stock market because a stronger Egyptian pound might mean less competitive exports, but also reduces input costs for import-heavy industries. Significant swings in January could affect stocks, potentially more negatively if any currency risk is perceived.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "+0%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 20,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 30,
+                "Greater than 5%": 25
+            }
+        },
+        "FinanceCapitalAssetPricingModelAgent": {
+            "initial_reasoning": "To estimate the initial distribution of probabilities for the EGX 30 index returns in January 2025, we consider the historical volatility and performance of the EGX 30 index. Historically, emerging markets like Egypt have shown greater volatility compared to developed markets. We will use this historical volatility to establish initial base rates. According to historical data, such indices in emerging markets experience monthly returns less than -5% around 15% of the time, between -5% and 0% around 25% of the time, between 0% and 5% around 35% of the time, and greater than 5% about 25% of the time.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "If global economic conditions are currently stable or improving, it would typically boost investor confidence in emerging markets, potentially leading to higher returns. Conversely, if conditions are deteriorating, it may reduce market returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Foreign Direct Investment Inflows",
+                    "reasoning": "An increase in foreign direct investment typically indicates confidence from international investors, which could positively impact market performance.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Domestic Political Stability",
+                    "reasoning": "Political stability in Egypt can significantly influence investor sentiment and market performance. Stability generally leads to positive or neutral returns, while instability might lead to negative ones.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 40
+            }
+        },
+        "EconomicsMacroeconomicTheoryAgent": {
+            "initial_reasoning": "To forecast the return on the EGX 30 for January 2025, we begin by considering historical monthly returns for the EGX 30. Historical data indicates that monthly index returns for stock markets generally fall within the range of -5% to +5%. Extreme returns, such as those less than -5% or greater than 5%, are less frequent. Based on these historical tendencies, we assume a base rate distribution as follows: 'Less than -5%': 10%, '\u2265-5% and <0%': 30%, '\u22650% and <5%': 40%, 'Greater than 5%': 20%. This distribution reflects a slight positive bias typical of stock markets, where moderate positive gains are more common.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Political events in Egypt can have significant impacts on investor confidence. Current political stability raises the likelihood of moderate gains for the stock market as investor risk perception remains manageable.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Inflation and Monetary Policy",
+                    "reasoning": "Egyptian inflation rates and monetary policy heavily influence stock market performance. Currently, if inflation is under control with a stable monetary environment, it supports a positive outlook for equities.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+0%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "The interconnected world economy means global factors affect local markets. Given current stable global economic conditions, there is an increased likelihood of market gains.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 55,
+                "Greater than 5%": 30
+            }
+        },
+        "EconomicsMonetaryPolicyTheoryAgent": {
+            "initial_reasoning": "To estimate the initial distribution of probabilities for the January 2025 return of the Egyptian stock market index, the EGX 30, I will consider past performance data of the EGX 30 and stock indices in emerging markets. Historical data suggests that monthly stock index returns tend to fluctuate within a reasonable range. The historical average monthly return for stock indices in emerging markets often falls within the -5% to 5% range, considering market volatility, economic news, and political factors. Stock indices rarely exhibit extreme monthly changes of greater than 5% unless there are significant economic shocks or major political events. Therefore, initially, I would assign about 25% probability to returns less than -5% or greater than 5%, as extreme conditions are less common. I will assign 30% each to the most common range outcomes of -5% to 0% and 0% to 5%, as these cover typical fluctuations for stock indices in stable conditions.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Current Economic Conditions",
+                    "reasoning": "The Egyptian economy's performance will directly impact the EGX 30. Currently, Egypt might be facing certain economic challenges such as inflation or fiscal deficits that could put downward pressure on the stock market. However, if there is a sentiment of economic recovery, it could boost investor confidence.",
+                    "effects": {
+                        "Less than -5%": "+10%",
+                        "\u2265-5% and <0%": "+0%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "-5%"
+                    }
+                },
+                {
+                    "name": "Exchange Rate Volatility",
+                    "reasoning": "Fluctuations in the Egyptian Pound can impact foreign investment in the EGX 30. A significant depreciation of the currency could deter foreign investors, impacting stock market performance negatively. Conversely, stability or appreciation could attract investment.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "-5%"
+                    }
+                },
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Political events or instability often correlate with stock market fluctuations. Higher political stability making economic reforms possible could result in a positive outlook for the market.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+0%",
+                        "Greater than 5%": "+10%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 35,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 15,
+                "Greater than 5%": 25
+            }
+        },
+        "EconomicsEmergingMarketsTheoryAgent": {
+            "initial_reasoning": "The EGX 30 index has historically exhibited volatility in line with many emerging markets, influenced by both domestic and international factors. Typically, emerging markets might experience fluctuations ranging from -5% to +5% in short term periods like a month due to economic sensitivities, political uncertainties, and global market trends. Historical analysis of the EGX 30 shows that, in many years, returns have generally fluctuated around the \u00b15% mark over a month, with less than -5% or greater than 5% being less common but not rare events. This provides a base rate estimation for probable outcomes.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Egyptian Economic Reform Efforts",
+                    "reasoning": "Recent economic reforms by the Egyptian government, aimed at stabilizing and stimulating economic growth, can create positive investor sentiment. Such sentiments can increase the likelihood of positive returns as reforms may boost various sectors, being reflected in the stock market performance.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "Fluctuations in global economic conditions, such as changes in commodity prices and interest rates, can impact emerging markets significantly. A decrease in global economic growth or rise in global interest rates can have an adverse effect, thereby increasing the chances of negative returns on the EGX 30.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "-5%"
+                    }
+                },
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Current political stability in Egypt, if maintained, can foster a conducive environment for economic activity and investment, which may favor moderately positive stock market returns over the short term.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 25
+            }
+        },
+        "PoliticalSciencePoliticalRiskAnalysisAgent": {
+            "initial_reasoning": "To estimate the initial probability distribution for the Egyptian stock market index, EGX 30, we consider its behavior over recent years. Historically, emerging markets often experience significant volatility and potential for both rapid gains and losses due to economic reforms, political instability, and external shocks. Data from similar months can help establish base rates: less often do indices fall by over 5% ('Less than -5%'), more frequently they have minor fluctuations ('\u2265-5% and <0%' and '\u22650% and <5%'), and occasionally they exhibit greater growth ('Greater than 5%'). Assuming a balanced economic environment with no extreme external shocks, initial probabilities might be set based on general emerging market behavior seen before: minor positive growth is frequently observed.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Egypt has been experiencing a period of relative political stability, which typically reduces the perceived risk and volatility in its financial markets. Stable governance can attract investment but also lead to moderate changes as growth remains steady without dramatic fluctuations.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Economic Conditions",
+                    "reasoning": "In early 2025, the global economic conditions have shown signs of recovery following various challenges in previous years, which could lead to increased investor confidence in emerging markets like Egypt. This environment favors positive stock market performances.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Inflation and Interest Rates",
+                    "reasoning": "Inflation rates in Egypt and any adjustments to interest rates by the central bank can influence market returns. Current trends indicate controlled inflation and stable interest rates, which promote moderate returns as investors anticipate consistent economic growth.",
+                    "effects": {
+                        "Less than -5%": "0%",
+                        "\u2265-5% and <0%": "0%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "-5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 55,
+                "Greater than 5%": 25
+            }
+        },
+        "PoliticalScienceInstitutionalTheoryAgent": {
+            "initial_reasoning": "To distribute initial probabilities, I will use historical data of stock market returns similar to the EGX 30, focusing particularly on emerging markets. Historically, stock markets in emerging economies have shown a pattern of high volatility, with frequent fluctuations due to political and economic instability. A reasonable base estimate might include a slight bias towards positive returns in a short time frame like one month due to the typical 'January effect' where stocks often perform well. However, considering potential political or economic issues typical in emerging markets, the distribution will reflect a significant probability for negative outcomes as well.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Political Stability",
+                    "reasoning": "Egypt's political landscape can impact investor confidence significantly. Political stability increases confidence, while instability decreases it. Assuming a stable political environment during this period would boost the likelihood of a positive stock market performance.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Macroeconomic Indicators",
+                    "reasoning": "Factors such as inflation, interest rates, and GDP growth directly impact market returns. Positive indicators (e.g., controlled inflation, stable GDP growth) would enhance market performance predictions.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Economic Environment",
+                    "reasoning": "The global economic climate, including oil prices (important for Egypt's economy), international trade dynamics, and investor sentiment globally, affects stock markets. A favorable global environment supports higher returns.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 40
+            }
+        },
+        "PoliticalScienceComparativePoliticsAgent": {
+            "initial_reasoning": "To estimate the initial distribution of probabilities for the EGX 30 return in January 2025, I examined historical data of stock market indices during similar economic and political conditions in Egypt. Historically, the Egyptian stock market has experienced volatility due to political instability, economic reforms, and external economic factors. For the purpose of this forecast, I consider the likelihood of each outcome based on common market behaviors observed over the past years. Typically, emerging markets like Egypt's sway between small positive or negative returns, with significant drops or spikes occurring less frequently. Based on past January performances and the current global and local economic context, I start with a slightly higher probability of modest returns compared to more extreme outcomes.",
+            "perspective_derived_factors": [
+                {
+                    "name": "Recent Political Stability",
+                    "reasoning": "Egypt has witnessed a phase of relative political stability in recent years. This stability encourages investor confidence, thus increasing the likelihood of positive market returns. Greater stability reduces the chances of significant negative fluctuations.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Economic Reforms and Growth",
+                    "reasoning": "Ongoing economic reforms and projected GDP growth can influence investor sentiment positively. These reforms, aimed at stimulating the economy, are likely to attract investment, potentially leading to positive market movements.",
+                    "effects": {
+                        "Less than -5%": "-5%",
+                        "\u2265-5% and <0%": "-5%",
+                        "\u22650% and <5%": "+5%",
+                        "Greater than 5%": "+5%"
+                    }
+                },
+                {
+                    "name": "Global Economic Uncertainty",
+                    "reasoning": "Uncertainty in global markets, including potential shifts in commodity prices and foreign investment flows, can impact emerging markets like Egypt. This factor increases volatility and the possibility of both negative and large positive returns.",
+                    "effects": {
+                        "Less than -5%": "+5%",
+                        "\u2265-5% and <0%": "+5%",
+                        "\u22650% and <5%": "-5%",
+                        "Greater than 5%": "-5%"
+                    }
+                }
+            ],
+            "final_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 25
+            }
+        }
+    },
+    "phase_1_aggregated_distribution": {
+        "Less than -5%": 9,
+        "\u2265-5% and <0%": 18,
+        "\u22650% and <5%": 44,
+        "Greater than 5%": 29
+    },
+    "phase_2_reasoning": {
+        "InvestmentAnalysisTechnicalAnalysisAgent": {
+            "prior_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The news shows mixed results for the Egyptian stock market over recent sessions. There is mention of both rises and declines in the indices. Notably, the EGX 30 index experienced several small gains such as 0.12% mentioned in multiple articles. This mixed performance reflects the initial forecast where moderate positive returns \u22650% and <5% were most probable.",
+            "points_challenging_prior_analysis": "The repeated mention of local sales-driven declines challenges the higher probability of significant positive returns. On January 27th, there was a mid-session decline driven by local sales of 0.47% for EGX 30, reflecting potential bearish sentiment in the market. This introduces some risk of negative returns that were initially underestimated.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-10%",
+                "Greater than 5%": "0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 20,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 25
+            }
+        },
+        "InvestmentAnalysisFundamentalAnalysisAgent": {
+            "prior_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The news indicates mixed but largely stable performance. The most recent articles mention rising trends at the start of trading sessions, suggesting underlying strength. Certain reports of increases in the EGX 30 and related indices reinforce optimism for a positive close to January.",
+            "points_challenging_prior_analysis": "However, several articles report mid-session declines driven by local sales pressures, indicating possible underlying volatility and bearish sentiments that could weigh on the market through the end of January.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-10%",
+                "Greater than 5%": "+0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 30,
+                "\u22650% and <5%": 30,
+                "Greater than 5%": 25
+            }
+        },
+        "InvestmentAnalysisRiskManagementAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 65,
+                "Greater than 5%": 15
+            },
+            "points_reinforcing_prior_analysis": "The Egyptian Stock Exchange has seen several sessions of small increases in the EGX 30 index, with indices closing higher on several occasions, such as a rise of 0.42% on Sunday and repeated minor rises of around 0.12% to 0.32% in consecutive sessions earlier. There is an overall upward trend since the start of January, with gains in market capitalization and some positive expectations expressed about future listings and economic conditions.",
+            "points_challenging_prior_analysis": "The EGX 30 has faced some volatility with mid-session declines reported, such as the 0.49% drop in the mid-session reported on January 27. This could point to potential vulnerability in maintaining positive trends, highlighting possible rapid reversals due to profit-taking or local sales pressure.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+0%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "+0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 60,
+                "Greater than 5%": 15
+            }
+        },
+        "RegionalExpertise-MiddleEastMiddleEasternEconomicPoliciesAgent": {
+            "prior_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 35
+            },
+            "points_reinforcing_prior_analysis": "Throughout January, the Egyptian Stock Exchange has experienced both gains and losses. Notably, there were significant gains driven by Egyptian local buying, as well as occasional upbeat starts to trading sessions reflecting positive sentiment. These indicate potential for overall weekly or monthly gains for the index.",
+            "points_challenging_prior_analysis": "Significant mid-session declines, particularly within the last few trading days of January, reflect challenges with local sales pressure leading to decreased indices. Instances of volatility, such as the suspension of shares exceeding 5% changes, highlight risks of downward pressure.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 30
+            }
+        },
+        "RegionalExpertise-MiddleEastGeopoliticalRiskAssessmentAgent": {
+            "prior_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 35
+            },
+            "points_reinforcing_prior_analysis": "The series of gains throughout early and mid-January, as reflected in indices like 'EGX 30' and the broader market indices, reinforce the expectation of a positive return for January. Multiple instances of the index rising, including significant gain days and general market sentiment, suggest likely positive monthly performance.",
+            "points_challenging_prior_analysis": "However, the recent session showing declines due to local sales introduces uncertainty, challenging the strong positive sentiment. The mixed result of index fluctuations during the month, including mid-session declines reported on January 27, suggests that some downside risk remains due to persistent volatility.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+0%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 35
+            }
+        },
+        "RegionalExpertise-MiddleEastCulturalMarketDynamicsAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 60,
+                "Greater than 5%": 30
+            },
+            "points_reinforcing_prior_analysis": "The beginning of January saw a strong rise in the EGX 30 index with market gains. The news reports mention significant gains at the start and throughout the month, suggesting overall positive sentiment and investor confidence, which supports the likelihood of a positive return for January, aligning with the probabilities assigned to the '\u22650% and <5%' and 'Greater than 5%' outcomes.",
+            "points_challenging_prior_analysis": "The stock market experienced declines mid-session, with local sales causing pressure on prices. This indicates some volatility and uncertainty in the market, which could impact the previously higher confidence in strong returns, particularly challenging the 30% probability previously assigned to 'Greater than 5%'.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+10%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-10%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 55,
+                "Greater than 5%": 20
+            }
+        },
+        "StockMarketAnalyticsQuantitativeModelingAgent": {
+            "prior_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 35
+            },
+            "points_reinforcing_prior_analysis": "The Egyptian stock market has shown fluctuations but generally maintains moderate increases in the indices, as evidenced by collective rises in certain sessions and a closing gain on recent trading days. This aligns with the prior expectation of moderate gains (\u22650% and <5%) having high probability.",
+            "points_challenging_prior_analysis": "Recent trading sessions saw significant volatility and mid-session declines, with local sales driving down the indices temporarily and trading suspensions indicating instability. These aspects introduce a higher risk of negative returns, challenging the lower probability assigned to the <0% outcomes in the prior analysis.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+10%",
+                "\u22650% and <5%": "-10%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 35,
+                "\u22650% and <5%": 25,
+                "Greater than 5%": 30
+            }
+        },
+        "StockMarketAnalyticsMarketSentimentAnalysisAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 35
+            },
+            "points_reinforcing_prior_analysis": "The recent news articles report modest gains and declines in the Egyptian Stock Market, reflecting typical short-term volatility rather than major shifts. Frequent minor fluctuations in indices, as seen in articles reporting collective rises followed by declines, support the probability distribution leaning towards minimal overall monthly net movement. Additionally, the discuss of sustained local investor buying and increased market capitalization are positive indicators reinforcing the possibility of gains.",
+            "points_challenging_prior_analysis": "The articles mention downward pressures due to local sales and sessional drops in indices that challenge the likelihood of a substantial upward shift. The suspension of trading on multiple shares for exceeding threshold indicates volatility with a potential downward bias if negative sentiment ensues.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+0%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "+0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 35
+            }
+        },
+        "StockMarketAnalyticsAlgorithmicTradingAgent": {
+            "prior_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The overall trend from the news articles indicates a mixed performance with both upward and downward movements but predominantly minor changes in the index values. These minor increases and decreases in the EGX 30 index suggest stability within the 0% to 5% range. This aligns with the prior probability for the '\u22650% and <5%' option, which was the most likely scenario as per the original analysis. Furthermore, the general improvement in market capitalization over multiple sessions supports a positive outlook.",
+            "points_challenging_prior_analysis": "Despite an overall positive outlook, there have been sessions marked by local sales leading to declines in the index. The volatility shown by the rapid shifts in performance across different days challenges the likelihood of consistently positive returns. Specific reports of institutional and foreign sales creating volatile mid-session declines challenge the high likelihood previously set for 'Greater than 5%', indicating potential instability.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 30,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 20
+            }
+        },
+        "FinanceEfficientMarketHypothesisAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 35
+            },
+            "points_reinforcing_prior_analysis": "Several reports indicate a recent rise in the Egyptian stock indices, including the EGX 30 index, suggesting a continuation of short-term upward trends. This supports the likelihood of modest positive returns as initially projected, with indices often closing with gains prior to the current date.",
+            "points_challenging_prior_analysis": "The occurrence of local sales and trading disruptions that led to temporary declines in mid-session trading suggests that market volatility may lower expectations of significant positive returns. These sales and index declines challenge the anticipation of strong growth and point toward potential risks causing corrections.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 30
+            }
+        },
+        "FinanceBehavioralFinanceAgent": {
+            "prior_distribution": {
+                "Less than -5%": 20,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 30,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The article titled 'Egyptian Stock Market Declines Amid Local Sales' detailed a noticeable dip in the EGX 30 index by 0.47%, which suggests negative investor sentiment or reactions, supporting a decrease in positive returns. Additionally, the mid-session decline by 0.49% further cements the viewpoint that market volatility and potential declines are present.",
+            "points_challenging_prior_analysis": "Contrary to the declining trends during several sessions, there was a positive note with 'Egyptian Stock Exchange Opens with Collective Rise in Indices,' indicating some recovery in early trading, with the EGX 30 showing upward movement. This openness to positive trading sentiments can counterbalance the earlier declines somewhat, suggesting potential stability or recovery.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+0%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 25,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 25,
+                "Greater than 5%": 25
+            }
+        },
+        "FinanceCapitalAssetPricingModelAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 40
+            },
+            "points_reinforcing_prior_analysis": "The news reports describe a mixed but generally upward trend in the stock market indices, with some recent gains and positive performance in January. For example, the Egyptian Stock Exchange experienced a 0.12% increase in the EGX 30 on Sunday, January 26. Throughout the month, there have been days with significant rises, reinforcing the initial high probability assigned to '\u22650% and <5%' and 'Greater than 5%' outcomes.",
+            "points_challenging_prior_analysis": "There were several reports of declines in the EGX 30 index during mid-session trading. Notably, on January 27th, the EGX 30 fell by 0.49%, which might indicate volatility or slower growth rates than previously anticipated. These declines suggest that the outcomes predicting a positive return might be more uncertain than initially assumed, and negative outcomes should not be entirely disregarded.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 35
+            }
+        },
+        "EconomicsMacroeconomicTheoryAgent": {
+            "prior_distribution": {
+                "Less than -5%": 0,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 55,
+                "Greater than 5%": 30
+            },
+            "points_reinforcing_prior_analysis": "Several articles mention collective rises in indices, indicating a general trend of recovery or stabilization from earlier declines, such as the gains in market capitalization reported on multiple days. This suggests the likelihood of a moderate gain for the month, aligning with the prior distribution favoring '\u22650% and <5%'.",
+            "points_challenging_prior_analysis": "Significant mid-session decline news and suspension of shares trading could introduce volatility, affecting chances for the outcomes greater than 5% and might push outcomes toward negative territories if the trend persists.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 50,
+                "Greater than 5%": 25
+            }
+        },
+        "EconomicsMonetaryPolicyTheoryAgent": {
+            "prior_distribution": {
+                "Less than -5%": 35,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 15,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The news articles indicate consistent fluctuations in the Egyptian stock market with some trading sessions showing declines, notably driven by local sales. The reports of declines in mid-session trading support the prior forecast that there is an increased likelihood of negative returns in January.",
+            "points_challenging_prior_analysis": "Some trading sessions also reported gains driven by buying operations from Egyptian traders, as indicated by collective rises in the indices on certain days. There is a mention of positive investor sentiment and future expectations of listings, which could suggest a possibility of upward momentum for the market.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 40,
+                "\u2265-5% and <0%": 30,
+                "\u22650% and <5%": 10,
+                "Greater than 5%": 20
+            }
+        },
+        "EconomicsEmergingMarketsTheoryAgent": {
+            "prior_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 35,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "Multiple articles indicate fluctuations in the indices including both rises and falls in the EGX 30, pointing to typical market volatility and supporting a moderate return expectation. The collective rise at session starts followed by mid-session falls aligns with the possibility of fluctuating between slight negative and slight positive returns.",
+            "points_challenging_prior_analysis": "The presence of local sales influencing declines, and trading halts due to exceeding the 5% threshold during sessions suggests instability and potential for larger declines than previously considered. The consistent observations of mid-session declines suggest increased negative pressure than initially forecasted.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+10%",
+                "\u22650% and <5%": "-10%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 20,
+                "\u2265-5% and <0%": 35,
+                "\u22650% and <5%": 25,
+                "Greater than 5%": 20
+            }
+        },
+        "PoliticalSciencePoliticalRiskAnalysisAgent": {
+            "prior_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 55,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The news articles indicate some positive sentiment among investors and certain days where indices have closed with gains. For example, the Egyptian Stock Exchange closed Sunday's trading session (January 26, 2025) with a collective rise in indices and an increase in market capitalization by 8 billion EGP. Despite some mid-session declines on January 27, the general trend over the days appears to point towards a mild increase or stability in the market.",
+            "points_challenging_prior_analysis": "Contrastingly, there are slight declines mentioned in the mid-session trading on January 27, 2025, and previous news articles suggest a mixture of falling and rising indices, indicating some volatility. The suspension of trading in 6 shares due to exceeding a 5% threshold also suggests potential for decline, which might reflect nervousness among investors possibly affecting market returns.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-10%",
+                "Greater than 5%": "0%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 25
+            }
+        },
+        "PoliticalScienceInstitutionalTheoryAgent": {
+            "prior_distribution": {
+                "Less than -5%": 5,
+                "\u2265-5% and <0%": 10,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 40
+            },
+            "points_reinforcing_prior_analysis": "In the last week of January, multiple articles reported both declines and gains in the EGX 30, illustrating its volatility. Despite some mid-session drops, the market has seen collective rises, supported by local investor buying trends. The overall sentiment appears neutral to mildly positive, aligning with our prior analysis that was cautious but accounted more for positive outcomes.",
+            "points_challenging_prior_analysis": "The presence of local sales causing declines and repeated mid-session drops suggest a challenge to the higher probability we assigned to significant positive returns. The frequent suspensions of trading due to volume thresholds being breached also indicate heightened volatility and market sensitivity.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 15,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 35
+            }
+        },
+        "PoliticalScienceComparativePoliticsAgent": {
+            "prior_distribution": {
+                "Less than -5%": 10,
+                "\u2265-5% and <0%": 20,
+                "\u22650% and <5%": 45,
+                "Greater than 5%": 25
+            },
+            "points_reinforcing_prior_analysis": "The news articles indicate that the Egyptian Stock Exchange has experienced both gains and declines over the period. The pattern of the indices opening with gains and being followed by mid-session declines, as well as the mixed results in the closing sessions, supports the expectation of moderate volatility, suggesting a higher probability for outcomes around modest returns. Additionally, the market capitalization gains noted in some sessions support a likelihood of positive outlooks.",
+            "points_challenging_prior_analysis": "The significant declines in mid-session trading due to local sales, as mentioned in several articles, challenge the higher probability of positive returns greater than 5%. These declines suggest a notable level of volatility that could lead to outcomes being lower than previously expected. The execution of block trades and the overall sales pressure hint at potential downward movements.",
+            "overall_effect_on_forecast": {
+                "Less than -5%": "+5%",
+                "\u2265-5% and <0%": "+5%",
+                "\u22650% and <5%": "-5%",
+                "Greater than 5%": "-5%"
+            },
+            "revised_distribution": {
+                "Less than -5%": 15,
+                "\u2265-5% and <0%": 25,
+                "\u22650% and <5%": 40,
+                "Greater than 5%": 20
+            }
+        }
+    },
+    "phase_2_aggregated_distribution": {
+        "Less than -5%": 12,
+        "\u2265-5% and <0%": 24,
+        "\u22650% and <5%": 38,
+        "Greater than 5%": 26
+    },
+    "final_fractioned_result_probabilities": {
+        "Less than -5%": 0.12,
+        "\u2265-5% and <0%": 0.24,
+        "\u22650% and <5%": 0.38,
+        "Greater than 5%": 0.26
+    },
+    "news": "Here are the relevant news articles:\n\n**Egyptian Stock Market Declines Amid Local Sales**\nThe Egyptian stock market experienced a decline in mid-session trading on Monday, driven by local sales. The 'EGX 30' index fell by 0.47% to 29,894 points, while the 'EGX 30 Weighted' index dropped by 0.47% to 37,163 points. The 'EGX 30 Total Return' index decreased by 0.43% to 13,154 points. Other indices, such as 'EGX 70 Equal Weight' and 'EGX 100 Equal Weight', also experienced declines. The Shariah index fell by 0.45% to 3,182 points, and the 'Distinction' index dropped by 0.58% to 10,295 points. The Egyptian Stock Exchange announced the suspension of trading on 6 shares for 10 minutes due to exceeding the 5% threshold. The exchange also reported a settlement of 75,000 documents, bringing the total number of documents to 3.325 million. Additionally, a block trade was executed on shares of Bank of Development and Housing, with 2 million shares being sold for 84.1 million EGP.\nOriginal language: ar\nPublish date: January 27, 2025 10:29 AM\nSource:[\u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0633\u0627\u0628\u0639](https://www.youm7.com/story/2025/1/27/%D9%85%D8%A8%D9%8A%D8%B9%D8%A7%D8%AA-%D9%85%D8%AD%D9%84%D9%8A%D8%A9-%D8%AA%D9%82%D9%88%D8%AF-%D9%87%D8%A8%D9%88%D8%B7-%D9%85%D8%A4%D8%B4%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A8%D9%85%D9%86%D8%AA%D8%B5%D9%81-%D8%AA%D8%B9%D8%A7%D9%85%D9%84%D8%A7%D8%AA-%D8%AC%D9%84%D8%B3%D8%A9-%D8%A7%D9%84%D8%A5%D8%AB%D9%86%D9%8A%D9%86/6861490)\n\n**Egyptian Stock Exchange Opens with Collective Rise in Indices**\nThe Egyptian Stock Exchange started the trading session on Monday with a collective rise in the indices, following yesterday's close on an upward trend. The 'EGX 30' index rose by 0.17% to reach 30,086 points, while the 'EGX 30 Weighted' index increased by 0.18% to reach 37,405 points. The 'EGX 30 Total Return' index jumped by 0.42% to reach 13,266 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.47% to reach 8,566 points, and the 'EGX 100 Equal Weight' index increased by 0.38% to reach 11,720 points.\nOriginal language: ar\nPublish date: January 27, 2025 08:31 AM\nSource:[gulf365.net](https://news.gulf365.net/business/12926790/%D8%A7%D8%B1%D8%AA%D9%81%D8%A7%D8%B9-%D9%85%D8%A4%D8%B4%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A8%D9%85%D8%B3%D8%AA%D9%87%D9%84-%D8%AA%D8%B9%D8%A7%D9%85%D9%84%D8%A7%D8%AA-%D8%AC%D9%84%D8%B3%D8%A9-%D8%A7%D9%84%D8%A5%D8%AB%D9%86%D9%8A%D9%86.html)\n\n**Egyptian Stock Exchange Indices Rise at the Start of Monday's Trading Session**\nThe Egyptian Stock Exchange started the trading session on Monday with a collective rise in the indices, following yesterday's close on an upward trend. The 'EGX 30' index rose by 0.17% to reach 30,086 points, while the 'EGX 30 Weighted' index increased by 0.18% to reach 37,405 points. The 'EGX 30 Total Return' index jumped by 0.42% to reach 13,266 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.47% to reach 8,566 points, and the 'EGX 100 Equal Weight' index increased by 0.38% to reach 11,720 points.\nOriginal language: ar\nPublish date: January 27, 2025 08:30 AM\nSource:[\u0627\u0644\u0635\u0628\u0627\u062d \u0627\u0644\u0639\u0631\u0628\u064a](https://www.sabaharabi.com/650049)\n\n**Egyptian Stock Market Declines in Mid-Session**\nThe Egyptian stock market experienced a decline in mid-session today, with the main index, 'EGX 30', falling 0.49% to 29,889 points. The 'EGX 30' index with a weighted average also dropped 0.51% to 37,147 points. The total return index fell 0.44% to 13,153,000 points, while the Sharia-compliant index 'EGX 33' decreased 0.61% to 3,177 points. The 'EGX 70' index, with equal weighting, declined 0.22% to 8,508 points, and the broader 'EGX 100' index with equal weighting fell 0.33% to 11,638 points.\nOriginal language: ar\nPublish date: January 27, 2025 12:00 AM\nSource:[masress.com](https://www.masress.com/almasryalyoum/6362563)\n\n**Egyptian Stock Exchange Closes Trading Session with Collective Rise in Indices**\nThe Egyptian Stock Exchange (EGX) closed the trading session on Sunday, January 26, 2025, with a collective rise in the indices, driven by buying operations from Egyptian traders, while Arab and foreign traders sold. The market capitalization increased by 8 billion EGP to 2.251 trillion EGP. The EGX 30 index rose by 0.12% to close at 30,034 points, while the EGX 30 Weighted Index rose by 0.03% to close at 37,337 points. The EGX 30 Total Return Index rose by 0.11% to close at 13,211 points. The EGX 70 Equal Weight Index rose by 0.12% to close at 8,526 points, and the EGX 100 Equal Weight Index rose by 0.09% to close at 11,676 points. The Shariah Index rose by 0.47% to close at 3,196 points, while the Distinction Index fell by 2.29% to close at 10,355 points. The Treasury Bills Index fell by 0.15% to close at 1,951 points. A total of 74 companies rose, 96 fell, and 41 remained unchanged. Egyptian traders accounted for 93.74% of total transactions, while Arabs accounted for 5.18% and foreigners accounted for 1.09%. Institutional investors accounted for 20.73% of transactions, while individual investors accounted for 79.26%. The net transactions of institutional investors, Arabs, and foreigners were -62.1 million EGP, -102.6 million EGP, and -19.5 million EGP, respectively. Individual Egyptian, Arab, and foreign investors' net transactions were 126.7 million EGP, 57.4 million EGP, and 149.5 thousand EGP, respectively.\nOriginal language: ar\nPublish date: January 26, 2025 09:19 PM\nSource:[masralyoum.net](https://www.masralyoum.net/economy/8632345/%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1-%D8%A7%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A7%D9%84%D9%8A%D9%88%D9%85-%D8%A7%D9%84%D8%A3%D8%AD%D8%AF-26-1-2025)\n\n**Egyptian Stock Exchange Closes Sunday with Mixed Results**\nThe Egyptian Stock Exchange (EGX) closed Sunday, January 26, 2025, with a 0.12% increase in the 'EGX 30' index, closing at 30,034 points. The 'EGX 30 Weighted' index rose 0.03% to 37,337 points, while the 'EGX 30 Total Return' index increased 0.11% to 13,211 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies rose 0.12% to 8,526 points, while the 'EGX 100 Equal Weight' index increased 0.09% to 11,676 points. The Shariah index rose 0.47% to 3,196 points, while the 'Temseer' index fell 2.29% to 10,355 points. The Treasury bonds index fell 0.15% to 1,951 points. A total of 74 companies saw their shares rise, while 96 companies saw their shares fall, and 41 companies saw no change. The top gainers included Alexandria Mineral Oils Company (AMOC) with a 7.40% increase to 8.270 EGP, Suez Cement with a 6.03% increase to 34.470 EGP, and Egyptian Aluminum with a 5.51% increase to 165.150 EGP.\nOriginal language: ar\nPublish date: January 26, 2025 08:08 PM\nSource:[pressnew.net](https://www.pressnew.net/article/22149801)\n\n**Egyptian Stock Exchange Closes Sunday's Trading Session with a Gain of 7.7 Billion Egyptian Pounds**\nThe Egyptian Stock Exchange (EGX) ended Sunday's trading session with a gain of 7.668 billion Egyptian pounds, bringing the market capitalization to 2.251 trillion pounds. The main index, 'EGX 30', rose by 0.12% to close at 30,034 points. The 'EGX 30 Weighted' index increased by 0.03% to close at 37,337 points, while the 'EGX 30 Total Return' index rose by 0.11% to close at 13,211 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies increased by 0.12% to close at 8,526 points, and the 'EGX 100 Equal Weight' index rose by 0.09% to close at 11,676 points.\nOriginal language: ar\nPublish date: January 26, 2025 03:24 PM\nSource:[sada-elarab.com](https://www.sada-elarab.com/752146)\n\n**Egyptian Stock Exchange Sees Significant Gains at Start of Week**\nThe Egyptian Stock Exchange (EGX) closed Sunday's trading session, the beginning of the week, with a 0.12% increase in the 'EGX 30' index, reaching 30,034 points. The 'EGX 30 Weighted' index rose 0.03% to 37,337 points, while the 'EGX 30 Total Return' index jumped 0.11% to 13,211 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies increased by 0.12% to 8,526 points, and the 'EGX 100 Equal Weight' index rose 0.09% to 11,676 points. The Islamic Sharia index also increased by 0.47% to 3,196 points. 'It was a good day for the market,' said an analyst, 'with a significant increase in the EGX 30 index.' \nOriginal language: ar\nPublish date: January 26, 2025 01:15 PM\nSource:[\u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0633\u0627\u0628\u0639](https://www.youm7.com/story/2025/1/26/%D8%B5%D8%B9%D9%88%D8%AF-%D8%A7%D9%84%D9%85%D8%A4%D8%B4%D8%B1-%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A-%D9%84%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A3%D8%B9%D9%84%D9%89-%D9%85%D8%B3%D8%AA%D9%88%D9%89-30-%D8%A3%D9%84%D9%81-%D8%A8%D8%AE%D8%AA%D8%A7%D9%85-%D8%AA%D8%B9%D8%A7%D9%85%D9%84%D8%A7%D8%AA/6860456)\n\n**Egyptian Stock Exchange Closes Sunday Session with Positive Gains**\nThe Egyptian Stock Exchange closed its Sunday session with a 0.12% increase in the main index, 'EGX 30', to 30,034 points. The 'EGX 30 Weighted' index rose by 0.03% to 37,337 points, while the 'EGX 30 Total Return' index increased by 0.11% to 13,211 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies rose by 0.12% to 8,526 points, and the 'EGX 100 Equal Weight' index increased by 0.09% to 11,676 points. The Islamic Shariah index rose by 0.47% to 3,196 points. The market capitalization increased by 8 billion Egyptian pounds to 2.251 trillion pounds.\nOriginal language: ar\nPublish date: January 26, 2025 01:14 PM\nSource:[\u0627\u0644\u0635\u0628\u0627\u062d \u0627\u0644\u0639\u0631\u0628\u064a](https://www.sabaharabi.com/649987)\n\n**Egyptian Stock Exchange Closes Sunday's Session with Gains**\nThe Egyptian Stock Exchange closed Sunday's session with a gain of 8 billion EGP in the market capitalization, reaching 2.251 trillion EGP. The main index 'EGX 30' rose by 0.12% to close at 30,034 points, while the 'EGX 30 Weighted' index increased by 0.03% to close at 37,337 points. The 'EGX 30 Total Return' index jumped by 0.11% to close at 13,211 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies rose by 0.12% to close at 8,526 points, and the 'EGX 100 Equal Weight' index increased by 0.09% to close at 11,676 points. The Islamic Shariah index also rose by 0.47% to close at 3,196 points.\nOriginal language: ar\nPublish date: January 26, 2025 01:14 PM\nSource:[sabaharabi.com](https://www.sabaharabi.com/649987)\n\n**Egyptian Stock Exchange Sees Collective Rise in Indices**\nThe Egyptian Stock Exchange started the trading session on Wednesday with a collective rise in the indices, following yesterday's close on an upward trend. The 'EGX 30' index rose by 0.78% to reach 30,058 points, while the 'EGX 30 Weighted' index increased by 0.7% to reach 37,350 points. The 'EGX 30 Total Return' index jumped by 0.84% to reach 13,231 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.91% to reach 8,557 points, and the 'EGX 100 Equal Weight' index increased by 0.81% to reach 11,697 points.\nOriginal language: ar\nPublish date: January 22, 2025 12:54 PM\nSource:[elzmannews.com](https://www.elzmannews.com/498278)\n\n**Egyptian Stock Market's Main Index Falls 0.37% Amid Decline of Leading Shares**\nThe Egyptian stock market's main index, 'EGX 30', fell by 0.37% at the end of Monday's trading session, due to the decline of leading shares such as Commercial International Bank (CIB), Abu Qir Fertilizers, and Helwan Steel, among others. However, the EGX 70 and EGX 100 indices rose, with total trading reaching 3.9 billion Egyptian pounds and a market capitalization gain of 1 billion pounds, bringing the total market capitalization to 2.220 trillion pounds. The EGX 30 index closed at 29,619 points, while the EGX 30 Weighted Index fell by 0.3% to 36,837 points, and the EGX 30 Total Return Index decreased by 0.4% to 13,030 points.\nOriginal language: ar\nPublish date: January 20, 2025 01:14 PM\nSource:[\u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0633\u0627\u0628\u0639](https://www.youm7.com/story/2025/1/20/%D8%A3%D8%B3%D9%87%D9%85-%D9%82%D9%8A%D8%A7%D8%AF%D9%8A%D8%A9-%D8%AA%D9%87%D8%A8%D8%B7-%D8%A8%D8%A7%D9%84%D9%85%D8%A4%D8%B4%D8%B1-%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%89-%D9%84%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A8%D9%86%D8%B3%D8%A8%D8%A9-0-37-%D8%A8%D8%AE%D8%AA%D8%A7%D9%85/6853267)\n\n**Egyptian Stock Market Indices Rise on Monday's Session**\nThe Egyptian stock market indices rose on Monday's session. The 'EGX 30' index increased by 0.27% to reach 29808 points, while the 'EGX 70 Equal Weight' index rose by 0.44% to reach 8366 points. The 'EGX 100 Equal Weight' index also increased by 0.39% to reach 11493 points. The 'EGX 30 Weighted' index rose by 0.27% to reach 37046 points, and the 'EGX 30 Total Return' index jumped by 0.19% to reach 13107 points. The Egyptian stock market is a platform where financial assets, such as stocks and bonds, are traded. It operates under specific rules and regulations that govern its performance and the timing of transactions. However, investors who are not well-informed or experienced may face significant losses if they make decisions based on incorrect or inaccurate data.\nOriginal language: ar\nPublish date: January 20, 2025 12:00 AM\nSource:[masress.com](https://www.masress.com/akhbarelyomgate/74535917)\n\n**Egyptian Stock Exchange Sees Significant Gains on Sunday**\nThe Egyptian Stock Exchange saw a collective increase in its indices, resulting in a market capitalization gain of 23.72 billion Egyptian pounds, closing at 2.219.879 trillion pounds. The main index, 'EGX 30', rose by 0.42% to close at 29,728 points. The 'EGX 30 Weighted' index increased by 0.44% to close at 36,947 points, and the 'EGX 30 Total Return' index rose by 0.46% to close at 13,082 points. The 'EGX 70 Equal Weight' index for small and medium-sized companies jumped by 1.22% to close at 8,330 points, while the 'EGX 100 Equal Weight' index rose by 1.08% to close at 11,449 points.\nOriginal language: ar\nPublish date: January 19, 2025 03:43 PM\nSource:[sada-elarab.com](https://www.sada-elarab.com/751269)\n\n**Egyptian Stock Market Indices Rise, Market Capitalization Gains 23 Billion Egyptian Pounds**\nThe Egyptian stock market indices rose collectively during Sunday's trading session, driven by buying operations from Egyptian and Arab investors. Foreign investors tended to sell, with transactions reaching 3.5 billion Egyptian pounds. The market capitalization gained 23 billion Egyptian pounds, reaching 2.219 trillion Egyptian pounds. The 'EGX 30' index rose by 0.42% to close at 29,728 points. The 'EGX 30 Equal Weight' index rose by 0.44% to close at 36,947 points, while the 'EGX 30 Total Return' index rose by 0.45% to close at 13,082 points. The 'EGX 70 Equal Weight' index, which tracks small and medium-sized companies, rose by 1.22% to close at 8,330 points. Ahmed El Sheikh, the head of the Egyptian Stock Exchange, announced the listing of a major company in the real estate sector in January. He also announced the launch of a new sustainability index on the exchange in mid-2024 and a new index that combines sustainability and Islamic finance within six months. El Sheikh stated that the exchange aims to list more than 11 companies in 2025 and expects significant offerings on the exchange in 2025. He also announced that the exchange has agreed with seven companies to increase their capital to the minimum required level. El Sheikh concluded by saying that the exchange has seen an improvement in non-Egyptian transactions in the first week of January and hopes that this trend will continue with the stability of the exchange rate and improvement in economic conditions. The exchange has signed a cooperation protocol with the Chamber of Commerce in Cairo to promote financial culture and awareness of the importance of saving and investing among its members.\nOriginal language: ar\nPublish date: January 19, 2025 02:43 PM\nSource:[tahiamasr.com](https://www.tahiamasr.com/914582)\n\n**Egyptian Stock Exchange Opens Week with Collective Rise in Indices**\nThe Egyptian Stock Exchange started the week with a collective rise in the indices, following last week's close on an upward trend. The 'EGX 30' index rose by 0.32% to reach 29,700 points, while the 'EGX 30 Weighted' index increased by 0.35% to reach 36,912 points. The 'EGX 30 Total Return' index jumped by 0.39% to reach 13,073 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.57% to reach 8,276 points, and the 'EGX 100 Equal Weight' index increased by 0.56% to reach 11,389 points.\nOriginal language: ar\nPublish date: January 19, 2025 10:40 AM\nSource:[aldawlanews.com](https://www.aldawlanews.com/1221658)\n\n**Egyptian Stock Exchange Indices Rise at the End of the Week**\nThe Egyptian Stock Exchange started the session on Thursday, the last day of the week, with a general rise in the indices, following yesterday's decline. The 'EGX 30' index rose by 0.32% to reach 29881 points, while the 'EGX 30 Weighted' index increased by 0.31% to reach 36966 points. The 'EGX 30 Total Return' index jumped by 0.34% to reach 13148 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.59% to reach 8353 points, and the 'EGX 100 Equal Weight' index increased by 0.5% to reach 11462 points.\nOriginal language: ar\nPublish date: January 09, 2025 09:41 AM\nSource:[arqam.news](https://arqam.news/414072/)\n\n**Egyptian Stock Market Indices Decline on Wednesday**\nThe Egyptian stock market indices declined on Wednesday, January 8, due to sales pressure from Arab and foreign investors. The market capitalization lost 10 billion Egyptian pounds, reaching 2.193 trillion pounds. The 'EGX 30' index fell by 0.48% to close at 29,785 points. The 'EGX 30 Equal Weight' index fell by 0.59% to close at 36,852 points, and the 'EGX 30 Total Return' index fell by 0.47% to close at 13,097 points. The 'EGX 70 Equal Weight' index fell by 0.39% to close at 8,304 points. The Islamic Sharia index fell by 0.84% to close at 3,120 points. The Egyptian Stock Exchange announced the execution of a block trading deal on shares of Cairo Housing and Development Company, and another block trading deal on shares of Egyptian Electrical Cables Company.\nOriginal language: ar\nPublish date: January 08, 2025 05:25 PM\nSource:[tahiamasr.com](https://www.tahiamasr.com/911736)\n\n**Egyptian Stock Exchange Indices Rise at the Start of Wednesday's Trading Session**\nThe Egyptian Stock Exchange started the trading session on Wednesday with a collective rise in the indices, following yesterday's increase. The 'EGX 30' index rose by 0.02% to 29,937 points, while the 'EGX 30 Weighted' index increased by 0.02% to 37,079 points. The 'EGX 30 Total Return' index jumped by 0.1% to 13,172 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.07% to 8,342 points, and the 'EGX 100 Equal Weight' index increased by 0.07% to 11,467 points.\nOriginal language: ar\nPublish date: January 08, 2025 08:35 AM\nSource:[\u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0633\u0627\u0628\u0639](https://www.youm7.com/story/2025/1/8/%D8%A7%D8%B1%D8%AA%D9%81%D8%A7%D8%B9-%D9%85%D8%A4%D8%B4%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A8%D9%85%D8%B3%D8%AA%D9%87%D9%84-%D8%AA%D8%B9%D8%A7%D9%85%D9%84%D8%A7%D8%AA-%D8%AC%D9%84%D8%B3%D8%A9-%D8%A7%D9%84%D8%A3%D8%B1%D8%A8%D8%B9%D8%A7%D8%A1/6838833)\n\n**Egyptian Stock Exchange Declares Public Holiday for Christmas**\nThe Egyptian Stock Exchange has declared Tuesday, January 7, 2025, a public holiday to celebrate Christmas. Trading will resume on Wednesday, January 8, 2025. On Monday, January 6, 2025, the Egyptian stock market indices declined. The 'EGX 30' index fell by 0.51% to 30,029 points, while the 'EGX 30 Weighted' index fell by 0.57% to 37,207 points. The 'EGX 30 Total Return' index fell by 0.49% to 13,204 points. The 'EGX 70 Equal Weight' index fell by 0.53% to 8,352 points, while the 'EGX 100 Equal Weight' index fell by 0.57% to 11,408 points. The Islamic Shariah index fell by 0.14% to 3,170 points. However, the market indices rose at the end of the week, with the market capitalization increasing by 23 billion EGP to 2.221 trillion EGP. The 'EGX 30' index rose by 0.41% to 30,183 points, while the 'EGX 30 Weighted' index rose by 0.48% to 37,420 points. The 'EGX 30 Total Return' index rose by 0.41% to 13,270 points. The 'EGX 70 Equal Weight' index rose by 1.37% to 8,397 points, while the 'EGX 100 Equal Weight' index rose by 1.13% to 11,546 points. The Islamic Shariah index rose by 1.3% to 3,178 points. The market indices also rose at the end of the previous week, with the market capitalization increasing by 29 billion EGP to 2.198 trillion EGP. The 'EGX 30' index rose by 1.08% to 30,060 points, while the 'EGX 30 Weighted' index rose by 1.12% to 37,240 points. The 'EGX 30 Total Return' index rose by 1.05% to 13,217 points. The 'EGX 70 Equal Weight' index rose by 1.72% to 8,283 points, while the 'EGX 100 Equal Weight' index rose by 1.79% to 11,418 points. The Islamic Shariah index rose by 1.65% to 3,137 points.\nOriginal language: ar\nPublish date: January 06, 2025 11:25 PM\nSource:[\u0628\u0648\u0627\u0628\u0629 \u0641\u064a\u062a\u0648](https://www.vetogate.com/5321085)\n\n**Egyptian Stock Exchange Sees General Increase in Indices at Start of Monday's Trading Session**\nThe Egyptian Stock Exchange started the trading session on Monday with a general increase in the indices, following yesterday's rise. The 'EGX 30' index rose by 0.05% to reach 30,201 points, while the 'EGX 30 Weighted' index increased by 0.04% to reach 37,433 points. The 'EGX 30 Total Return' index jumped by 0.11% to reach 13,283 points. Additionally, the 'EGX 70 Equal Weight' index for medium and small companies rose by 0.44% to reach 8,434 points, and the 'EGX 100 Equal Weight' index increased by 0.3% to reach 11,580 points. 'It was a good start to the week,' said an analyst, 'but we need to see more stability in the market.' \nOriginal language: ar\nPublish date: January 06, 2025 08:31 AM\nSource:[gulf365.net](https://news.gulf365.net/business/12902774/%D8%A7%D8%B1%D8%AA%D9%81%D8%A7%D8%B9-%D9%85%D8%A4%D8%B4%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D8%A8%D9%88%D8%B1%D8%B5%D8%A9-%D8%A8%D9%85%D8%B3%D8%AA%D9%87%D9%84-%D8%AA%D8%B9%D8%A7%D9%85%D9%84%D8%A7%D8%AA-%D8%AC%D9%84%D8%B3%D8%A9-%D8%A7%D9%84%D8%A5%D8%AB%D9%86%D9%8A%D9%86.html)\n\n**Egyptian Stock Exchange Closes 2024 with a Gain of 30 Billion Egyptian Pounds**\nThe Egyptian Stock Exchange (EGX) closed its trading sessions for 2024 with a gain of 30 billion Egyptian pounds, reaching a market capitalization of 2.169 trillion Egyptian pounds. The main index 'EGX 30' rose by 1.42% to close at 29,740 points, while the 'EGX 30 Weighted' index rose by 1.64% to close at 36,828 points. The 'EGX 30 Total Return' index rose by 1.44% to close at 13,079 points. The small and medium-sized companies index 'EGX 70 Equal Weight' rose by 2.14% to close at 8,143 points, while the 'EGX 100 Equal Weight' index rose by 2.04% to close at 11,217 points. The Islamic Sharia index rose by 2.16% to close at 3,086 points. The EGX will be closed on January 1, 2025, as a holiday for the employees, and will resume work on January 2, 2025.\nOriginal language: ar\nPublish date: January 02, 2025 12:47 AM\nSource:[\u0628\u0648\u0627\u0628\u0629 \u0641\u064a\u062a\u0648](https://www.vetogate.com/5317306)\n\n**Egyptian Stock Exchange Sees Significant Increase in Trading Value on Last Day of 2024**\nThe Egyptian Stock Exchange (EGX) saw a significant increase in trading value on the last day of 2024, with a total value of 235.4 billion Egyptian pounds (EGP) and a total number of 1.094 million securities traded on 77,000 transactions. This is compared to the previous session's total value of 108.4 billion EGP and a total number of 1.450 million securities traded on 87,000 transactions. The EGX's main index, 'EGX 30', rose by 1.42% to close at 29,740 points, while the 'EGX 30 Equal Weighted' index rose by 1.64% to close at 36,828 points. The 'EGX 30 Total Return' index rose by 1.44% to close at 13,079 points. The 'EGX 70 Equal Weighted' index rose by 2.14% to close at 8,143 points, while the 'EGX 100 Equal Weighted' index rose by 2.04% to close at 11,217 points. The Islamic index rose by 2.16% to close at 3,086 points. The EGX will be closed on Wednesday, January 1, 2025, due to the New Year's holiday, and will resume trading on Thursday, January 2, 2025.\nOriginal language: ar\nPublish date: January 01, 2025 05:57 PM\nSource:[mn2ol.com](https://www.mn2ol.com/economy/2294184)\n\n**Egyptian Stock Exchange Continues to Rise on Last Day of Trading in 2024**\nThe Egyptian Stock Exchange continued to rise on Tuesday, the last day of trading in 2024. The main index rose by 0.59% to 29,598 points, while the 'EGX 30 Weighted' index rose by 0.98% to 36,589 points, and the 'EGX 30 Total Return' index rose by 1.02% to 12,925 points. The 'EGX 70 Equal Weight' index rose by 1.41% to 8,091 points, while the 'EGX 100 Equal Weight' index rose by 1.49% to 11,081 points, and the Islamic Shariah index rose by 1.07% to 3,035 points. The market capitalization reached 2.139 trillion EGP. The main index 'EGX 30' fell by 0.91% to 29,325 points, while the 'EGX 30 Weighted' index fell by 0.96% to 36,233 points, and the 'EGX 30 Total Return' index fell by 0.89% to 12,893 points. The 'EGX 70 Equal Weight' index fell by 1.94% to 7,972 points, while the 'EGX 100 Equal Weight' index fell by 1.68% to 10,993 points, and the Islamic Shariah index fell by 1.52% to 3,021 points. The Egyptian Stock Exchange will be closed on Wednesday, January 1, 2025, to celebrate the end of the financial year, and will resume trading on Thursday, January 2, 2025.\nOriginal language: ar\nPublish date: December 31, 2024 12:00 PM\nSource:[\u0628\u0648\u0627\u0628\u0629 \u0641\u064a\u062a\u0648](https://www.vetogate.com/5316590)\n\n**Egyptian Stock Exchange Closes with Losses**\nThe Egyptian Stock Exchange (EGX) closed on Monday, December 30, 2024, with a loss of 26 billion Egyptian pounds, bringing the market capitalization to 2.139 trillion Egyptian pounds. The EGX 30 index fell by 0.91% to close at 29,325 points, while the EGX 30 Weighted index fell by 0.96% to close at 36,233 points. The EGX 30 Total Return index fell by 0.89% to close at 12,893 points. The EGX 70 Equal Weight index fell by 1.94% to close at 7,972 points, while the EGX 100 Equal Weight index fell by 1.68% to close at 10,993 points. The Islamic Shariah index fell by 1.52% to close at 3,021 points. The EGX will be closed on Wednesday, January 1, 2025, as a public holiday, and will resume trading on Thursday, January 2, 2025. The EGX had previously fallen on Sunday, December 29, 2024, with a market capitalization of around 2.165 trillion Egyptian pounds, resulting in a loss of around 22 billion Egyptian pounds. The EGX 30 index fell by 1.21% to close at 29,594 points, while the EGX 30 Weighted index fell by 1.23% to close at 13,009 points. The EGX 70 Equal Weight index rose by 0.77% to close at 8,163 points, while the EGX 100 Equal Weight index fell by 0.06% to close at 11,190 points. The Islamic Shariah index fell by 0.31% to close at 3,067 points. The EGX lost around 43.2 billion Egyptian pounds during the week, bringing the market capitalization to 2.187 trillion Egyptian pounds, with a decline of 1.9%. The EGX closed on Thursday, the last session of the week, with a market capitalization of around 2.187 trillion Egyptian pounds, resulting in a loss of around 5 billion Egyptian pounds.\nOriginal language: ar\nPublish date: December 30, 2024 01:29 PM\nSource:[\u0628\u0648\u0627\u0628\u0629 \u0641\u064a\u062a\u0648](https://www.vetogate.com/5316032)\n\n"
+}
