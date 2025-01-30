@@ -26,22 +26,12 @@ SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
-# You only need *either* Exa or Perplexity or AskNews keys for online research
-
-# if  os.getenv("SUBMIT_PREDICTION") is  not None:
-#     SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")  # set to True to publish your predictions to Metaculus
-# if  os.getenv("USE_EXAMPLE_QUESTIONS") is  not None:
-#     USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")  # set to True to forecast example questions rather than the tournament questions
-# if  os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS") is not None:
-#     SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
-# PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
-# EXA_API_KEY = os.getenv("EXA_API_KEY")
 OPENAI_API_KEY = os.getenv(
-    "OPENAI_API_KEY")  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
+    "OPENAI_API_KEY")
 
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
@@ -63,10 +53,6 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     # (22427, 22427),
     # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
-
-# Also, we realize the below code could probably be cleaned up a bit in a few places
-# Though we are assuming most people will dissect it enough to make this not matter much
-# Hopefully this is a good starting point for people to build on and get a gist of whats involved
 
 ######################### HELPER FUNCTIONS #########################
 

@@ -20,77 +20,32 @@ from logic.summarization import run_summarization_phase
 from utils.config import get_gpt_config
 from utils.utils import normalize_and_average
 
-##############################################
-# Helper function: create a file-friendly name
-##############################################
+
 def strip_title_to_filename(title: str) -> str:
-    """
-    Convert a title into a file-friendly string:
-    - Replace spaces with underscores.
-    - Remove non-alphanumeric characters except underscores.
-    - Limit length to avoid filesystem issues.
-    """
+
     filename = re.sub(r'[^a-zA-Z0-9_]', '', title.replace(' ', '_'))
     return filename[:100]  # Limit to 100 chars
 
 
-############################################################
-# forecast_single_binary_question
-############################################################
 async def forecast_single_binary_question(
     question_details: dict,
     news: str,
     cache_seed: int = 42
 ) -> Tuple[int, str]:
-    """
-    Forecast a binary (Yes/No) question using a multi-phase (expert-based) process.
 
-    The output JSON includes:
-      1) question
-      2) description
-      3) fine_print
-      4) date
-      5) news
-      Then for each forecaster:
-        - initial_reasoning
-        - initial_probability
-        - perspective_derived_factors
-        - phase_1_final_probability
-        - revised_reasoning
-        - revised_probability
-      Lastly, overall statistics:
-        - mean_initial_probability
-        - sd_initial_probability
-        - mean_phase_1_final_probability
-        - sd_phase_1_final_probability
-        - mean_revised_probability
-        - sd_revised_probability
-
-    Returns:
-      (final_proba, summarization):
-        - final_proba: integer, mean of revised probabilities (rounded)
-        - summarization: a text summarizing the entire forecast process
-    """
-
-    # Extract question info
     title = question_details.get("title", "")
     description = question_details.get("description", "")
     fine_print = question_details.get("fine_print", "")
-    # We'll use "date" to store the time we did the forecast
     forecast_date = datetime.datetime.now().isoformat()
 
-    # 1) Model/LLM config
     config = get_gpt_config(cache_seed, 0.7, "gpt-4o", 120)
 
-    # 2) Identify relevant experts
     expert_identifier = create_experts_analyzer_assistant(config=config)
-    # We'll feed the question title (or a concatenation) to the expert finder
     academic_disciplines, frameworks, professional_expertise, specialty = run_expert_extractor(
         expert_identifier,
         title
     )
 
-    # 3) Create expert agents
     all_professional_experts = expert_creator(
         experts=professional_expertise, config=config, frameworks_specialties=specialty
     )
@@ -99,14 +54,7 @@ async def forecast_single_binary_question(
     )
     all_experts = all_professional_experts + all_academic_experts
 
-    # 4) Phase 1: initial forecasts from each agent
     phase_1_results = run_first_stage_forecasters(all_experts, title)
-    # Example phase_1_results[agent_name] = {
-    #   "initial_reasoning": "...",
-    #   "initial_probability": 45,
-    #   "perspective_derived_factors": "...",
-    #   "final_probability": 50
-    # }
 
     # Collect probabilities
     initial_probabilities = [
@@ -131,11 +79,6 @@ async def forecast_single_binary_question(
 
     # 5) Phase 2: incorporate news, revise forecasts
     phase_2_results = run_second_stage_forecasters(all_experts, news)
-    # Example phase_2_results[agent_name] = {
-    #   "prior_probability": 50,
-    #   "analysis_updates": "...",
-    #   "revised_probability": 55
-    # }
 
     revised_probabilities = [
         int(res["revised_probability"]) for res in phase_2_results.values()
@@ -210,39 +153,12 @@ async def forecast_single_binary_question(
     return final_proba, summarization
 
 
-############################################################
-# forecast_single_multiple_choice_question
-############################################################
 async def forecast_single_multiple_choice_question(
     question_details: dict,
     options: List[str],
     news: str,
     cache_seed: int = 42
 ) -> Tuple[Dict[str, float], str]:
-    """
-    Forecast a multiple-choice question using a multi-phase (expert-based) process.
-
-    The output JSON includes:
-      1) question
-      2) description
-      3) fine_print
-      4) date
-      5) news
-      Then for each forecaster:
-        - initial_reasoning
-        - initial_distribution
-        - perspective_derived_factors
-        - phase_1_final_distribution
-        - revised_reasoning
-        - revised_distribution
-      Lastly, overall statistics (aggregated distribution).
-
-    Returns:
-      (final_fractions_dict, summarization):
-        - final_fractions_dict: final normalized distribution across options (0-1 range)
-        - summarization: textual summary
-    """
-
     # Extract question info
     title = question_details.get("title", "")
     description = question_details.get("description", "")
@@ -281,13 +197,6 @@ async def forecast_single_multiple_choice_question(
 
     # 4) Phase 1: initial forecasts
     phase_1_results = run_first_stage_forecasters(all_experts, title)
-    # Example: phase_1_results[agent_name] might have:
-    # {
-    #   "initial_reasoning": "...",
-    #   "initial_distribution": {"OptionA": 20, "OptionB": 80, ...},
-    #   "perspective_derived_factors": "...",
-    #   "final_distribution": {"OptionA": 25, "OptionB": 75, ...}
-    # }
 
     # 4a) Collect the final distributions from Phase 1
     final_distributions_phase1 = [
@@ -298,12 +207,7 @@ async def forecast_single_multiple_choice_question(
 
     # 5) Phase 2: news integration
     phase_2_results = run_second_stage_forecasters(all_experts, news)
-    # Example: phase_2_results[agent_name] might have:
-    # {
-    #   "prior_distribution": {...},
-    #   "analysis_updates": "...",
-    #   "revised_distribution": {...}
-    # }
+
 
     # Collect the revised distributions
     revised_distributions = [
@@ -330,6 +234,7 @@ async def forecast_single_multiple_choice_question(
         "fine_print": fine_print,
         "date": forecast_date,
         "news": news,
+        "options": options
     }
 
     # Forecasters detail
