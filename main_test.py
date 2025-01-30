@@ -58,10 +58,6 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
-# Also, we realize the below code could probably be cleaned up a bit in a few places
-# Though we are assuming most people will dissect it enough to make this not matter much
-# Hopefully this is a good starting point for people to build on and get a gist of whats involved
-
 ######################### HELPER FUNCTIONS #########################
 
 # @title Helper functions
@@ -899,71 +895,96 @@ def forecast_is_already_made(post_details: dict) -> bool:
 
 
 async def forecast_individual_question(
-        question_id: int,
-        post_id: int,
-        submit_prediction: bool,
-        num_runs_per_question: int,
-        skip_previously_forecasted_questions: bool,
-        cache_seed: int = 42
+    question_id: int,
+    post_id: int,
+    submit_prediction: bool,
+    num_runs_per_question: int,
+    skip_previously_forecasted_questions: bool,
+    cache_seed: int = 42
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
     title = question_details["title"]
     question_type = question_details["type"]
 
-    summary_of_forecast = ""
-    summary_of_forecast += f"-----------------------------------------------\nQuestion: {title}\n"
-    summary_of_forecast += f"URL: https://www.metaculus.com/questions/{post_id}/\n"
-
+    summary_of_forecast = (
+        f"-----------------------------------------------\n"
+        f"Question: {title}\n"
+        f"URL: https://www.metaculus.com/questions/{post_id}/\n"
+    )
     if question_type == "multiple_choice":
-        options = question_details["options"]
-        summary_of_forecast += f"options: {options}\n"
+        summary_of_forecast += f"options: {question_details['options']}\n"
 
+    # Check if we already forecasted, skip if so:
     if (
-            forecast_is_already_made(post_details)
-            and skip_previously_forecasted_questions == True
+        forecast_is_already_made(post_details)
+        and skip_previously_forecasted_questions
     ):
-        summary_of_forecast += f"Skipped: Forecast already made\n"
+        summary_of_forecast += "Skipped: Forecast already made\n"
         return summary_of_forecast
 
+    # GET "NEWS" or "RESEARCH" from question.title
+    summary_report = run_research(title)
+
+    # Now decide which forecast function to use
     if question_type == "binary":
-        forecast, comment = await get_binary_gpt_prediction(
-            question_details, num_runs_per_question, cache_seed
+        # Call the new forecast_single_binary_question
+        final_proba, summarization = await forecast_single_binary_question(
+            question_details,  # a dict
+            news=summary_report,
+            cache_seed=cache_seed
         )
-    elif question_type == "numeric":
-        # forecast, comment = await get_numeric_gpt_prediction(
-        #     question_details, num_runs_per_question
-        # )
-        summary_of_forecast += f"Skipped: Forecast already made\n"
-        forecast = "Skipped: Forecast already made"
-        comment = "Skipped: Forecast already made"
+        # Metaculus API expects a decimal 0..1, so we convert int% => float
+        forecast = final_proba / 100.0
+        comment = summarization
 
     elif question_type == "multiple_choice":
-        forecast, comment = await get_multiple_choice_gpt_prediction(
-            question_details, num_runs_per_question, cache_seed
+        # call the new forecast_single_multiple_choice_question
+        final_dist, summarization = await forecast_single_multiple_choice_question(
+            question_details,
+            options=question_details["options"],
+            news=summary_report,
+            cache_seed=cache_seed
         )
+        forecast = final_dist  # e.g. {"Option A":0.2,"Option B":0.8}
+        comment = summarization
+
+    elif question_type == "numeric":
+        # If you want to call your numeric forecast eventually, do it here:
+        # cdf, summarization = await forecast_single_numeric_question(...)
+        summary_of_forecast += "Skipped numeric forecast for now.\n"
+        forecast = None
+        comment = None
+
     else:
-        print("skipping")
+        summary_of_forecast += f"Skipping unknown question type: {question_type}\n"
+        forecast = None
+        comment = None
 
-    print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
-    print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
-    print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
+    # In case forecast is None from skipping
+    if forecast is None:
+        return summary_of_forecast
 
-    if question_type == "numeric":
-        summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
-    else:
-        summary_of_forecast += f"Forecast: {forecast}\n"
+    # Print to console for debugging
+    print(f"-----------------------------------------------\nPost {post_id} (Q {question_id}):\n")
+    print(f"Forecast for post {post_id}: {forecast}")
+    print(f"Comment for post {post_id}: {comment}")
 
-    summary_of_forecast += f"Comment:\n```\n{comment[:200]}...\n```\n\n"
+    # Build the summary
+    summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
+    if comment:
+        short_comment = comment[:200] + "..." if len(comment) > 200 else comment
+        summary_of_forecast += f"Comment:\n```\n{short_comment}\n```\n\n"
 
-    if submit_prediction == True and question_type != "numeric":
+    # Optionally submit forecast to Metaculus
+    if submit_prediction and forecast is not None and question_type in ("binary","multiple_choice"):
         forecast_payload = create_forecast_payload(forecast, question_type)
         post_question_prediction(question_id, forecast_payload)
-        post_question_comment(post_id, comment)
+        if comment:
+            post_question_comment(post_id, comment)
         summary_of_forecast += "Posted: Forecast was posted to Metaculus.\n"
 
     return summary_of_forecast
-
 
 async def forecast_questions(
         open_question_id_post_id: list[tuple[int, int]],
