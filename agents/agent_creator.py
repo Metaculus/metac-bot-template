@@ -11,13 +11,13 @@ def create_agent(name:str, expertise:str, config:Dict[str,Any], human_input: Lit
     system_message = SPECIFIC_EXPERTISE.format(expertise=expertise)
     return ConversableAgent(name = name, system_message=system_message, llm_config=config, human_input_mode=human_input)
 
-def create_gpt_assistant(config:Dict[str,Any], expertise: str, specialty_expertise: str, prompt:str = SPECIFIC_EXPERTISE) -> GPTAssistantAgent:
+async def create_gpt_assistant(config:Dict[str,Any], expertise: str, specialty_expertise: str, prompt:str = SPECIFIC_EXPERTISE) -> GPTAssistantAgent:
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
     return GPTAssistantAgent(name=name, instructions=system_message, llm_config=config)
 
-def create_gpt_assistant_multiple_choices(config:Dict[str,Any], expertise: str, specialty_expertise: str, options:List[str], prompt:str = SPECIFIC_EXPERTISE_MULTIPLE_CHOICE) -> GPTAssistantAgent:
+async def create_gpt_assistant_multiple_choices(config:Dict[str,Any], expertise: str, specialty_expertise: str, options:List[str], prompt:str = SPECIFIC_EXPERTISE_MULTIPLE_CHOICE) -> GPTAssistantAgent:
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
     system_message = prompt.format(expertise=expertise_and_specialty_framework, options=options)

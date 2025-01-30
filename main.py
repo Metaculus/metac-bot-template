@@ -633,7 +633,6 @@ async def forecast_individual_question(
 async def forecast_questions(
         open_question_id_post_id: list[tuple[int, int]],
         submit_prediction: bool,
-        num_runs_per_question: int,
         skip_previously_forecasted_questions: bool,
         cache_seed: int = 42
 ) -> None:
@@ -681,7 +680,6 @@ if __name__ == "__main__":
         forecast_questions(
             open_question_id_post_id,
             SUBMIT_PREDICTION,
-            NUM_RUNS_PER_QUESTION,
             SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
             cache_seed=33
         )
