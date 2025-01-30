@@ -201,7 +201,7 @@ async def forecast_single_multiple_choice_question(
 
     # 4a) Collect the final distributions from Phase 1
     final_distributions_phase1 = [
-        res["final_distribution"] for res in phase_1_results.values() if "final_distribution" in res
+        res["final_probability"] for res in phase_1_results.values() if "final_probability" in res
     ]
     # Aggregate them
     phase_1_aggregated_distribution = normalize_and_average(final_distributions_phase1, options)
@@ -249,7 +249,7 @@ async def forecast_single_multiple_choice_question(
             "initial_reasoning": p1_data.get("initial_reasoning", ""),
             "initial_distribution": p1_data.get("initial_distribution", {}),
             "perspective_derived_factors": p1_data.get("perspective_derived_factors", ""),
-            "phase_1_final_distribution": p1_data.get("final_distribution", {}),
+            "phase_1_final_distribution": p1_data.get("final_probability", {}),
             "revised_reasoning": revised_reasoning,
             "revised_distribution": p2_data.get("revised_distribution", {})
         })
