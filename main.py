@@ -642,7 +642,6 @@ async def forecast_questions(
             question_id,
             post_id,
             submit_prediction,
-            num_runs_per_question,
             skip_previously_forecasted_questions,
             cache_seed
         )
