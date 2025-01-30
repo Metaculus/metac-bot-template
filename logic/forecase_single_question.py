@@ -201,7 +201,7 @@ async def forecast_single_multiple_choice_question(
 
     # 4a) Collect the final distributions from Phase 1
     final_distributions_phase1 = [
-        res["final_distribution"] for res in phase_1_results.values()
+        res["final_distribution"] for res in phase_1_results.values() if "final_distribution" in res
     ]
     # Aggregate them
     phase_1_aggregated_distribution = normalize_and_average(final_distributions_phase1, options)
@@ -212,7 +212,7 @@ async def forecast_single_multiple_choice_question(
 
     # Collect the revised distributions
     revised_distributions = [
-        res["revised_distribution"] for res in phase_2_results.values()
+        res["revised_distribution"] for res in phase_2_results.values() if "revised_distribution" in res
     ]
     phase_2_aggregated_distribution = normalize_and_average(revised_distributions, options)
 
