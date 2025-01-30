@@ -172,7 +172,7 @@ async def forecast_single_multiple_choice_question(
 
 
     # 1) Model/LLM config
-    config = get_gpt_config(cache_seed=cache_seed, temperature=, model=, timeout=)
+    config = get_gpt_config(cache_seed=cache_seed, temperature=0.7, model="gpt-4o")
 
     # 2) Identify relevant experts
     expert_identifier = create_experts_analyzer_assistant(config=config)
