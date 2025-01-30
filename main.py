@@ -525,7 +525,8 @@ def forecast_is_already_made(post_details: dict) -> bool:
         return False
 
 
-async def question_answer_decider(question_type: str, question_details: dict, summary_report: str, cache_seed: int = 42,summary_of_forecast: str = "") -> None:
+async def question_answer_decider(question_type: str, question_details: dict, summary_report: str, cache_seed: int = 42,summary_of_forecast: str = "")\
+        -> tuple[float | dict[str, float] | list[float], str, str]:
 
 
     # Now decide which forecast function to use
@@ -552,8 +553,6 @@ async def question_answer_decider(question_type: str, question_details: dict, su
         comment = summarization
 
     elif question_type == "numeric":
-        # If you want to call your numeric forecast eventually, do it here:
-        # cdf, summarization = await forecast_single_numeric_question(...)
         summary_of_forecast += "Skipped numeric forecast for now.\n"
         forecast = None
         comment = None
@@ -566,6 +565,19 @@ async def question_answer_decider(question_type: str, question_details: dict, su
     return forecast, comment, summary_of_forecast
 
 
+def print_for_debugging(post_id: int, question_id: int, forecast: float | dict[str, float] | list[float], comment: str, question_type: str,
+                        summary_of_forecast:str) -> None:
+
+    # Print to console for debugging
+    print(f"-----------------------------------------------\nPost {post_id} (Q {question_id}):\n")
+    print(f"Forecast for post {post_id}: {forecast}")
+    print(f"Comment for post {post_id}: {comment}")
+
+    # Build the summary
+    summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
+    if comment:
+        short_comment = comment[:200] + "..." if len(comment) > 200 else comment
+        summary_of_forecast += f"Comment:\n```\n{short_comment}\n```\n\n"
 
 
 async def forecast_individual_question(
@@ -599,22 +611,13 @@ async def forecast_individual_question(
     # GET "NEWS" or "RESEARCH" from question.title
     summary_report = run_research(title)
 
-    forecast, comment, summary_of_forecast = question_answer_decider(question_type, question_details, summary_report, cache_seed, summary_of_forecast)
+    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, summary_report, cache_seed, summary_of_forecast)
 
     # In case forecast is None from skipping
     if forecast is None:
         return summary_of_forecast
 
-    # Print to console for debugging
-    print(f"-----------------------------------------------\nPost {post_id} (Q {question_id}):\n")
-    print(f"Forecast for post {post_id}: {forecast}")
-    print(f"Comment for post {post_id}: {comment}")
-
-    # Build the summary
-    summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
-    if comment:
-        short_comment = comment[:200] + "..." if len(comment) > 200 else comment
-        summary_of_forecast += f"Comment:\n```\n{short_comment}\n```\n\n"
+    print_for_debugging(post_id, question_id, forecast, comment, question_type, summary_of_forecast)
 
     # Optionally submit forecast to Metaculus
     if submit_prediction and forecast is not None and question_type in ("binary","multiple_choice"):
@@ -623,6 +626,7 @@ async def forecast_individual_question(
         if comment:
             post_question_comment(post_id, comment)
         summary_of_forecast += "Posted: Forecast was posted to Metaculus.\n"
+
 
     return summary_of_forecast
 
