@@ -176,7 +176,7 @@ async def forecast_single_multiple_choice_question(
 
     # 2) Identify relevant experts
     expert_identifier = create_experts_analyzer_assistant(config=config)
-    academic_disciplines, frameworks, professional_expertise, specialty = run_expert_extractor(
+    academic_disciplines, frameworks, professional_expertise, specialty = await run_expert_extractor(
         expert_identifier, title
     )
 
