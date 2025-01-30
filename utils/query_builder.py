@@ -10,7 +10,8 @@ from utils.config import get_gpt_config
 class QuestionToQuery:
     def __init__(self):
 
-        self._agent = AssistantAgent(name="KeywordAgent", system_message=KEYWORDS_PROMPT, llm_config=get_gpt_config(CACHE_SEED, 0.7, "gpt-4o", 120),
+        self._agent = AssistantAgent(name="KeywordAgent", system_message=KEYWORDS_PROMPT, llm_config=get_gpt_config(
+            CACHE_SEED, 0.7, "gpt-4o", 120),
                                      human_input_mode="NEVER")
 
     def _create_messages(self,question):

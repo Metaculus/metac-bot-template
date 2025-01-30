@@ -41,21 +41,22 @@ async def forecast_single_binary_question(
     config = get_gpt_config(cache_seed, 0.7, "gpt-4o", 120)
 
     expert_identifier = create_experts_analyzer_assistant(config=config)
-    academic_disciplines, frameworks, professional_expertise, specialty = run_expert_extractor(
+    academic_disciplines, frameworks, professional_expertise, specialty = await run_expert_extractor(
         expert_identifier,
         title
     )
 
-    all_professional_experts = expert_creator(
+    all_professional_experts = await expert_creator(
         experts=professional_expertise, config=config, frameworks_specialties=specialty
     )
-    all_academic_experts = expert_creator(
+    all_academic_experts = await expert_creator(
         experts=academic_disciplines, config=config, frameworks_specialties=frameworks
     )
     all_experts = all_professional_experts + all_academic_experts
 
-    phase_1_results = run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, title)
 
+    #todo put into function
     # Collect probabilities
     initial_probabilities = [
         int(res["initial_probability"]) for res in phase_1_results.values()
@@ -78,8 +79,9 @@ async def forecast_single_binary_question(
         final_mean_phase1, final_std_phase1 = (0.0, 0.0)
 
     # 5) Phase 2: incorporate news, revise forecasts
-    phase_2_results = run_second_stage_forecasters(all_experts, news)
+    phase_2_results = await run_second_stage_forecasters(all_experts, news)
 
+    #todo put into function
     revised_probabilities = [
         int(res["revised_probability"]) for res in phase_2_results.values()
     ]
@@ -91,7 +93,7 @@ async def forecast_single_binary_question(
 
     # 6) Summarization
     summarization_assistant = create_summarization_assistant(config)
-    summarization = run_summarization_phase(
+    summarization = await run_summarization_phase(
         first_phase_results=phase_1_results,
         news_analysis_results=phase_2_results,
         question=title,
@@ -111,6 +113,7 @@ async def forecast_single_binary_question(
         "news": news,
     }
 
+    #todo wrap into function
     # Forecasters detail
     forecasters_list = []
     for agent_name, p1_data in phase_1_results.items():
@@ -131,6 +134,7 @@ async def forecast_single_binary_question(
 
     final_json["forecasters"] = forecasters_list
 
+    #todo wrap into function
     # Statistics
     stats_dict = {
         "mean_initial_probability": initial_mean,
@@ -142,6 +146,7 @@ async def forecast_single_binary_question(
     }
     final_json["statistics"] = stats_dict
 
+    #todo wrap into function
     # 9) Write the JSON file
     filename = strip_title_to_filename(title)
     os.makedirs("forecasts", exist_ok=True)
@@ -165,13 +170,9 @@ async def forecast_single_multiple_choice_question(
     fine_print = question_details.get("fine_print", "")
     forecast_date = datetime.datetime.now().isoformat()
 
+
     # 1) Model/LLM config
-    config = get_gpt_config(
-        seed=cache_seed,
-        temperature=0.7,
-        model_name="gpt-4o",
-        max_tokens=120
-    )
+    config = get_gpt_config(cache_seed=cache_seed, temperature=0.7, model="gpt-4o", timeout=120)
 
     # 2) Identify relevant experts
     expert_identifier = create_experts_analyzer_assistant(config=config)
@@ -181,13 +182,13 @@ async def forecast_single_multiple_choice_question(
 
     # 3) Create specialized multiple-choice agents
     # We pass the "options" into multiple_questions_expert_creator so each agent can forecast each choice
-    all_professional_experts = multiple_questions_expert_creator(
+    all_professional_experts = await multiple_questions_expert_creator(
         experts=professional_expertise,
         config=config,
         frameworks_specialties=specialty,
         options=options
     )
-    all_academic_experts = multiple_questions_expert_creator(
+    all_academic_experts = await multiple_questions_expert_creator(
         experts=academic_disciplines,
         config=config,
         frameworks_specialties=frameworks,
@@ -196,7 +197,7 @@ async def forecast_single_multiple_choice_question(
     all_experts = all_professional_experts + all_academic_experts
 
     # 4) Phase 1: initial forecasts
-    phase_1_results = run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, title)
 
     # 4a) Collect the final distributions from Phase 1
     final_distributions_phase1 = [
@@ -206,7 +207,7 @@ async def forecast_single_multiple_choice_question(
     phase_1_aggregated_distribution = normalize_and_average(final_distributions_phase1, options)
 
     # 5) Phase 2: news integration
-    phase_2_results = run_second_stage_forecasters(all_experts, news)
+    phase_2_results = await run_second_stage_forecasters(all_experts, news)
 
 
     # Collect the revised distributions
@@ -217,7 +218,7 @@ async def forecast_single_multiple_choice_question(
 
     # 6) Summarization
     summarization_assistant = create_summarization_assistant(config)
-    summarization = run_summarization_phase(
+    summarization = await run_summarization_phase(
         first_phase_results=phase_1_results,
         news_analysis_results=phase_2_results,
         question=title,

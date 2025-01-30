@@ -7,8 +7,8 @@ from logic.chat import validate_and_parse_response
 from utils.PROMPTS import SPECIFIC_EXPERTISE
 
 
-def run_expert_extractor(expert_identifier: ConversableAgent, question: str):
-    experts = expert_identifier.generate_reply(
+async def run_expert_extractor(expert_identifier: ConversableAgent, question: str):
+    experts = await expert_identifier.a_generate_reply(
         messages=[{"role": "system", "content": expert_identifier.system_message},
                   {"role": "user", "content": question}])
 
@@ -25,22 +25,22 @@ def run_expert_extractor(expert_identifier: ConversableAgent, question: str):
     return academic_disciplines, frameworks, professional_expertise, specialty
 
 
-def expert_creator(experts: List[str], frameworks_specialties: List[List[str]], config: Dict[str, Any], prompt: str = SPECIFIC_EXPERTISE) -> List[
+async def expert_creator(experts: List[str], frameworks_specialties: List[List[str]], config: Dict[str, Any], prompt: str = SPECIFIC_EXPERTISE) -> List[
     ConversableAgent]:
     all_agents = []
     for expert, specialties in zip(experts, frameworks_specialties):
         for specialty in specialties:
-            agent = create_gpt_assistant(expertise=expert, config=config, specialty_expertise=specialty, prompt=prompt)
+            agent = await create_gpt_assistant(expertise=expert, config=config, specialty_expertise=specialty, prompt=prompt)
             all_agents.append(agent)
     return all_agents
 
 
-def multiple_questions_expert_creator(experts: List[str], frameworks_specialties: List[List[str]],options :List[str], config: Dict[str, Any], prompt: str = SPECIFIC_EXPERTISE) -> List[
+async def multiple_questions_expert_creator(experts: List[str], frameworks_specialties: List[List[str]],options :List[str], config: Dict[str, Any], prompt: str = SPECIFIC_EXPERTISE) -> List[
     ConversableAgent]:
     all_agents = []
     for expert, specialties in zip(experts, frameworks_specialties):
         for specialty in specialties:
-            agent = create_gpt_assistant_multiple_choices(expertise=expert, config=config, specialty_expertise=specialty, prompt=prompt,options=options)
+            agent = await create_gpt_assistant_multiple_choices(expertise=expert, config=config, specialty_expertise=specialty, prompt=prompt,options=options)
             all_agents.append(agent)
     return all_agents
 
