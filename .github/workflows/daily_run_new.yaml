@@ -1,0 +1,128 @@
+name: Regularly forecast new questions and open new PR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  daily_build:
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      SUBMIT_PREDICTION: ${{ vars.SUBMIT_PREDICTION }}
+      USE_EXAMPLE_QUESTIONS: ${{ vars.USE_EXAMPLE_QUESTIONS }}
+      SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ vars.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
+
+    steps:
+      # Step 1: Check out repository
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 2: Set up Python environment
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      # Step 3: Run bot (continue-on-error so workflow does not fail if the script fails)
+      - name: Run bot
+        continue-on-error: true
+        run: |
+          printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
+          poetry run python main.py
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+          SUBMIT_PREDICTION: ${{ env.SUBMIT_PREDICTION }}
+          USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
+          SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
+
+      # Step 4: Check if forecasts directory exists
+      - name: Check if forecasts directory exists
+        run: |
+          echo "Checking if forecasts directory exists..."
+          ls -l forecasts || echo "forecasts directory does not exist"
+
+      - name: Create forecasts zip
+        run: |
+          mkdir -p artifacts
+          # Check if the forecasts directory exists before zipping
+          if [ -d "forecasts" ]; then
+            zip -r artifacts/forecasts.zip forecasts
+          else
+            echo "forecasts directory not found. Skipping zipping step."
+          fi
+
+      - name: Upload forecasts
+        uses: actions/upload-artifact@v3
+        with:
+          name: forecasts
+          path: artifacts/forecasts.zip
+
+      # Step 5: Check for changes in forecasts folder
+      - name: Check for changes in forecasts folder
+        id: changes_check
+        run: |
+          echo "Checking for changes in forecasts folder..."
+          ls -l forecasts
+          # Stage the changes to see if anything is different
+          git add forecasts
+          git add .cache
+          if git diff --quiet HEAD -- forecasts .cache; then
+            echo "No changes detected in forecasts folder."
+            echo "changes=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected in forecasts folder."
+            echo "changes=true" >> $GITHUB_ENV
+          fi
+
+      # Step 6: Commit and push changes to new branch if any
+      - name: Commit and push changes to new branch
+        if: env.changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create a new branch (e.g. forecast-updates-<run-id>)
+          BRANCH_NAME="forecast-updates-${{ github.run_number }}-${{ github.run_id }}"
+          echo "Creating new branch: $BRANCH_NAME"
+          git checkout -b "$BRANCH_NAME"
+          
+          git add forecasts
+          git add .cache
+          git commit -m "Update forecast files from GitHub Action run #${{ github.run_number }}" || echo "No changes to commit"
+          git push --set-upstream origin "$BRANCH_NAME"
+
+      # Step 7 (Optional): Create a pull request
+      - name: Create a pull request
+        if: env.changes == 'true'
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Adjust base if your main branch is named something else
+          base: main
+          # Matches the newly pushed branch
+          head: forecast-updates-${{ github.run_number }}-${{ github.run_id }}
+          title: "Forecast updates"
+          body: "This PR includes updated forecast files."
+          # Optionally, automatically merge or add labels, etc.
+          draft: false
