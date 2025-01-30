@@ -167,7 +167,7 @@ async def forecast_single_multiple_choice_question(
 
     # 1) Model/LLM config
     config = get_gpt_config(
-        seed=cache_seed,
+        cache_seed=cache_seed,
         temperature=0.7,
         model_name="gpt-4o",
         max_tokens=120
