@@ -254,9 +254,9 @@ async def forecast_single_multiple_choice_question(
     # Collect final distributions from Phase 1, with safer error handling
     try:
         final_distributions_phase1 = [
-            res["final_distribution"]
+            res["final_probability"]
             for res in phase_1_results.values()
-            if "final_distribution" in res
+            if "final_probability" in res
         ]
     except Exception as e:
         print("Error extracting phase 1 final distributions:", e)
