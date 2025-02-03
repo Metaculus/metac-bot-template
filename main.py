@@ -19,10 +19,10 @@ from asknews_sdk import AskNewsSDK
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+SUBMIT_PREDICTION = False  # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
@@ -48,7 +48,7 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    # (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
     (22427, 22427),
     # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
@@ -490,8 +490,9 @@ async def get_multiple_choice_gpt_prediction(
 
 
     probability_yes_per_category_and_comment_pairs = await asyncio.gather(
-        *[forecast_single_multiple_choice_question(question_input_to_prompt, options=options, news=summary_report,
-                                                   cache_seed=cache_seed) for _ in range(num_runs)]
+        *[forecast_single_multiple_choice_question(question_details, options=options, news=summary_report,
+                                                   cache_seed=cache_seed)
+          for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_yes_per_category_and_comment_pairs]
     final_comment_sections = [

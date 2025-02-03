@@ -161,7 +161,7 @@ Forecasts must not be biased by personal preference or moral judgments. Base you
     }}
     // Add additional factor objects as needed
   ],
-  "final_distribution": {{
+  "final_probability": {{
     "Option_A": int,
     "Option_B": int,
     "...": int
