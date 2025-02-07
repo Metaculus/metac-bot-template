@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "*/30 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
 
+
+concurrency:
+  group: forecast-workflow
+  cancel-in-progress: false  # Ensures only one instance runs at a time
+
 jobs:
   daily_build:
     runs-on: ubuntu-latest
