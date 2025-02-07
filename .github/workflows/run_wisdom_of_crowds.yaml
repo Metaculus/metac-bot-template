@@ -1,9 +1,9 @@
-name: Regularly forecast new questions and save JSON
+name: daily wisdom of crowds forecast
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/30 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
+    - cron: "*/1440 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
 
 
 concurrency:
@@ -13,11 +13,6 @@ concurrency:
 jobs:
   daily_build:
     runs-on: ubuntu-latest
-    env:
-      SUBMIT_PREDICTION: ${{ vars.SUBMIT_PREDICTION }}
-      USE_EXAMPLE_QUESTIONS: ${{ vars.USE_EXAMPLE_QUESTIONS }}
-      SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ vars.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
-
     steps:
       # Step 1: Check out repository
       - name: Check out repository
@@ -49,7 +44,7 @@ jobs:
         continue-on-error: true
         run: |
           printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
-          poetry run python main.py
+          poetry run python wisdom_of_crowds.py
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -62,14 +57,14 @@ jobs:
       - name: Check if forecasts directory exists
         run: |
           echo "Checking if forecasts directory exists..."
-          ls -l forecasts || echo "forecasts directory does not exist"
+          ls -l forecasts/wisdom_of_crowds_forecasts || echo "wisdom_of_crowds_forecasts directory does not exist"
 
       - name: Create forecasts zip
         run: |
           mkdir -p artifacts
           # Check if the forecasts directory exists before zipping
-          if [ -d "forecasts" ]; then
-            zip -r artifacts/forecasts.zip forecasts
+          if [ -d "forecasts/wisdom_of_crowds_forecasts" ]; then
+            zip -r artifacts/wisdom_of_crowds_forecasts.zip forecasts
           else
             echo "forecasts directory not found. Skipping zipping step."
           fi
@@ -77,22 +72,22 @@ jobs:
       - name: Upload forecasts
         uses: actions/upload-artifact@v4
         with:
-          name: forecasts
-          path: artifacts/forecasts.zip
+          name: wisdom_of_crowds_forecasts
+          path: artifacts/wisdom_of_crowds_forecasts.zip
 
       # Step 4: Check if forecasts folder exists
       - name: Check for changes in forecasts folder
         id: changes_check
         run: |
           echo "Checking for changes in forecasts folder..."
-          ls -l forecasts
-          git add forecasts
+          ls -l forecasts/wisdom_of_crowds_forecasts
+          git add forecasts/wisdom_of_crowds_forecasts
           git add .cache
           if git diff --quiet HEAD -- forecasts; then
-            echo "No changes detected in forecasts folder."
+            echo "No changes detected in forecasts/wisdom_of_crowds_forecasts folder."
             echo "changes=false" >> $GITHUB_ENV
           else
-            echo "Changes detected in forecasts folder."
+            echo "Changes detected in forecasts/wisdom_of_crowds_forecasts folder."
             echo "changes=true" >> $GITHUB_ENV
           fi
 
