@@ -290,10 +290,10 @@ async def run_multiple_choice_wisdom_of_crowds(file:str) -> Tuple[int, str]:
 
     # 9) Write the JSON file
     filename = strip_title_to_filename(title)
-    os.makedirs("forecasts", exist_ok=True)
-    filepath = os.path.join("forecasts", f"{filename}.json")
+    filepath = os.path.join(WISDOM_OF_CROWDS_PATH, f"{filename}.json")
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(final_json, f, indent=4)
+        f.close()
 
     # Return final distribution + summarization
     return final_fractions_dict, summarization
