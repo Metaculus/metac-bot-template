@@ -44,7 +44,7 @@ jobs:
         continue-on-error: true
         run: |
           printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
-          poetry run python logic/wisdom_of_crowds.py
+          poetry run python wisdom_of_crowds.py
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
