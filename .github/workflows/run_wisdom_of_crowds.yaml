@@ -3,7 +3,7 @@ name: daily wisdom of crowds forecast
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/1440 * * * *" # runs every 30 minutes. Make sure to skip already forecasted questions!
+    - cron: "0 0 * * *"  # Run daily at midnight UTC
 
 
 concurrency:
