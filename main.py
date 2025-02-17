@@ -29,6 +29,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Suppress LiteLLM logging
+litellm_logger = logging.getLogger("LiteLLM")
+litellm_logger.setLevel(logging.WARNING)
+litellm_logger.propagate = False
 
 class Q1TemplateBot(ForecastBot):
     """
