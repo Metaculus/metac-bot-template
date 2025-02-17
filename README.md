@@ -3,7 +3,7 @@ This repository contains a simple bot meant to get you started with creating you
 
 In this project are 2 files:
 - **main.py**: Our recommended template option that uses [forecasting-tools](https://github.com/Metaculus/forecasting-tools) package to handle a lot of stuff in the background for you (such as API calls). We will update the package, thus allowing you to gain new features with minimal changes to your code.
-- **main_with_no_framework.py**: A copy of main.py but with implemented with minimal dependencies. Useful if you want a more custom approach.
+- **main_with_no_framework.py**: A copy of main.py but implemented with minimal dependencies. Useful if you want a more custom approach.
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
@@ -23,7 +23,8 @@ To get a bot account and your API Token:
 2) Click "Log Out" if you are using your personal account
 3) Click "Create a Bot Account"
 4) Create your account
-5) Got back to https://metaculus.com/aib and click 'Show My Token'
+5) Go back to https://metaculus.com/aib
+6) Click 'Show My Token'
 
 ## Search Provider API Keys
 
@@ -53,7 +54,7 @@ Exa is closer to a more traditional search provider. Exa takes in a search query
 3. Click on "API Keys" in the left sidebar
 4. Create a new key
 5. Go to 'Billing' in the left sidebar and add funds to your acount with the 'Top Up Balance'
-6. Add it to the .env as `EXA_API_Key=your-key-here`
+6. Add it to the .env as `EXA_API_KEY=your-key-here`
 
 
 
@@ -80,8 +81,8 @@ Running the bot requires various environment variables. If you run the bot local
 
 ### Running the bot
 
-To run the simple bot, execute the following command in your terminal:
+To test the simple bot, execute the following command in your terminal:
 ```bash
-poetry run python main.py
+poetry run python main.py --mode quarterly_cup
 ```
-Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True`.
+Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True` (it is set to `True` by default in main.py).

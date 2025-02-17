@@ -5,16 +5,27 @@ import os
 from datetime import datetime
 from typing import Literal
 
-from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
-                               GeneralLlm, MetaculusApi, MetaculusQuestion,
-                               MultipleChoiceQuestion, NumericDistribution,
-                               NumericQuestion, PredictedOptionList,
-                               PredictionExtractor, ReasonedPrediction,
-                               SmartSearcher, clean_indents)
+from forecasting_tools import (
+    AskNewsSearcher,
+    BinaryQuestion,
+    ForecastBot,
+    GeneralLlm,
+    MetaculusApi,
+    MetaculusQuestion,
+    MultipleChoiceQuestion,
+    NumericDistribution,
+    NumericQuestion,
+    PredictedOptionList,
+    PredictionExtractor,
+    ReasonedPrediction,
+    SmartSearcher,
+    ForecastReport,
+    clean_indents,
+)
+import typeguard
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -49,20 +60,18 @@ class Q1TemplateBot(ForecastBot):
     Most notably there is a built in benchmarker that integrates with ForecastBot objects.
     """
 
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    _max_concurrent_questions = (
+        2  # Set this to whatever works for your search-provider/ai-model rate limits
+    )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
             if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = AskNewsSearcher().get_formatted_news(
-                    question.question_text
-                )
+                research = AskNewsSearcher().get_formatted_news(question.question_text)
             elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(
-                    question.question_text
-                )
+                research = await self._call_exa_smart_searcher(question.question_text)
             elif os.getenv("PERPLEXITY_API_KEY"):
                 research = await self._call_perplexity(question.question_text)
             else:
@@ -112,13 +121,9 @@ class Q1TemplateBot(ForecastBot):
         if os.getenv("OPENAI_API_KEY"):
             model = GeneralLlm(model="gpt-4o", temperature=0.3)
         elif os.getenv("ANTHROPIC_API_KEY"):
-            model = GeneralLlm(
-                model="claude-3-5-sonnet-20241022", temperature=0.3
-            )
+            model = GeneralLlm(model="claude-3-5-sonnet-20241022", temperature=0.3)
         elif os.getenv("OPENROUTER_API_KEY"):
-            model = GeneralLlm(
-                model="openrouter/openai/gpt-4o", temperature=0.3
-            )
+            model = GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.3)
         elif os.getenv("METACULUS_TOKEN"):
             model = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
         else:
@@ -168,9 +173,7 @@ class Q1TemplateBot(ForecastBot):
         logger.info(
             f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -221,9 +224,7 @@ class Q1TemplateBot(ForecastBot):
         logger.info(
             f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -289,9 +290,7 @@ class Q1TemplateBot(ForecastBot):
         logger.info(
             f"Forecasted {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
@@ -310,19 +309,55 @@ class Q1TemplateBot(ForecastBot):
             )
         return upper_bound_message, lower_bound_message
 
+def summarize_reports(forecast_reports: list[ForecastReport | BaseException]) -> None:
+    valid_reports = [
+        report for report in forecast_reports if isinstance(report, ForecastReport)
+    ]
+    exceptions = [
+        report for report in forecast_reports if isinstance(report, BaseException)
+    ]
+    minor_exceptions = [
+        report.errors for report in valid_reports if report.errors
+    ]
+
+    for report in valid_reports:
+        question_summary = clean_indents(f"""
+            URL: {report.question.page_url}
+            Errors: {report.errors}
+            Summary:
+            {report.summary}
+            ---------------------------------------------------------
+        """)
+        logger.info(question_summary)
+
+    if exceptions:
+        raise RuntimeError(
+            f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
+        )
+    if minor_exceptions:
+        logger.error(
+            f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
+        )
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the Q1TemplateBot forecasting system")
+    parser = argparse.ArgumentParser(
+        description="Run the Q1TemplateBot forecasting system"
+    )
     parser.add_argument(
         "--mode",
         type=str,
         choices=["tournament", "quarterly_cup", "test_questions"],
         default="tournament",
-        help="Specify the run mode (default: tournament)"
+        help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
     run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
-    assert run_mode in ["tournament", "quarterly_cup", "test_questions"], "Invalid run mode"
+    assert run_mode in [
+        "tournament",
+        "quarterly_cup",
+        "test_questions",
+    ], "Invalid run mode"
 
     template_bot = Q1TemplateBot(
         research_reports_per_question=1,
@@ -336,12 +371,20 @@ if __name__ == "__main__":
     if run_mode == "tournament":
         Q4_2024_AI_BENCHMARKING_ID = 32506
         Q1_2025_AI_BENCHMARKING_ID = 32627
-        asyncio.run(template_bot.forecast_on_tournament(Q1_2025_AI_BENCHMARKING_ID))
+        forecast_reports = asyncio.run(
+            template_bot.forecast_on_tournament(
+                Q1_2025_AI_BENCHMARKING_ID, return_exceptions=True
+            )
+        )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
         Q1_2025_QUARTERLY_CUP_ID = 32630
         template_bot.skip_previously_forecasted_questions = False
-        asyncio.run(template_bot.forecast_on_tournament(Q1_2025_QUARTERLY_CUP_ID))
+        forecast_reports = asyncio.run(
+            template_bot.forecast_on_tournament(
+                Q1_2025_QUARTERLY_CUP_ID, return_exceptions=True
+            )
+        )
     elif run_mode == "test_questions":
         # Example questions are a good way to test the bot's performance on a single question
         EXAMPLE_QUESTIONS = [
@@ -350,6 +393,15 @@ if __name__ == "__main__":
             "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
         ]
         template_bot.skip_previously_forecasted_questions = False
-        questions = [MetaculusApi.get_question_by_url(question_url) for question_url in EXAMPLE_QUESTIONS]
-        for question in questions:
-            asyncio.run(template_bot.forecast_questions(questions))
+        questions = [
+            MetaculusApi.get_question_by_url(question_url)
+            for question_url in EXAMPLE_QUESTIONS
+        ]
+        forecast_reports = asyncio.run(
+            template_bot.forecast_questions(
+                questions, return_exceptions=True
+            )
+        )
+    forecast_reports = typeguard.check_type(forecast_reports, list[ForecastReport | BaseException])
+    summarize_reports(forecast_reports)
+
