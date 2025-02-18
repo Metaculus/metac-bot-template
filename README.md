@@ -7,6 +7,11 @@ In this project are 2 files:
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
+## 30min Video Tutorial (yep, it really only takes 30min!)
+[![Watch the tutorial](https://cdn.loom.com/sessions/thumbnails/fc3c1a643b984a15b510647d8f760685-42b452e1ab7d2afa-full-play.gif)](https://www.loom.com/share/fc3c1a643b984a15b510647d8f760685?sid=29b502e0-cf64-421e-82c0-3a78451159ed)
+
+Though given murphy's law, something will probably go wrong, so maybe budget 30min-1hr 😉. If you do run into trouble, reach out to `ben [at] metaculus [.com]`
+
 
 ## Quick start -> Fork and use Github Actions
 The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 30min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
