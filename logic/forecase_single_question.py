@@ -76,8 +76,15 @@ async def forecast_single_binary_question(
     )
     all_experts = all_professional_experts + all_academic_experts
 
+    full_prompt = (
+        f"Forecast Date: {forecast_date}\n\n"
+        f"{title}\n\n"
+        f"Description:\n{description}\n\n"
+        f"Fine Print:\n{fine_print}\n\n"
+    )
+
     # 4) Phase 1: initial forecasts
-    phase_1_results = await run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, full_prompt)
 
     # Collect initial and final probabilities from Phase 1, with safer error handling:
     try:
@@ -248,8 +255,15 @@ async def forecast_single_multiple_choice_question(
     )
     all_experts = all_professional_experts + all_academic_experts
 
+    full_prompt = (
+        f"Forecast Date: {forecast_date}\n\n"
+        f"{title}\n\n"
+        f"Description:\n{description}\n\n"
+        f"Fine Print:\n{fine_print}\n\n"
+    )
+
     # 4) Phase 1: initial forecasts
-    phase_1_results = await run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, full_prompt)
 
     # Collect final distributions from Phase 1, with safer error handling
     try:
