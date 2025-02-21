@@ -20,7 +20,9 @@ from asknews_sdk import AskNewsSDK
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = False# set to True to forecast example questions rather than the tournament questions
+FORECAST_BINARY = True  # set to True to forecast binary questions
+FORECAST_MULTIPLE_CHOICE = False  # set to True to forecast multiple choice questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = True  # set to True to enable the bot to do online research
@@ -531,7 +533,7 @@ async def question_answer_decider(question_type: str, question_details: dict, su
 
 
     # Now decide which forecast function to use
-    if question_type == "binary":
+    if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
         final_proba, summarization = await forecast_single_binary_question(
             question_details,  # a dict
@@ -542,7 +544,7 @@ async def question_answer_decider(question_type: str, question_details: dict, su
         forecast = final_proba / 100.0
         comment = summarization
 
-    elif question_type == "multiple_choice":
+    elif question_type == "multiple_choice" and FORECAST_MULTIPLE_CHOICE:
         # call the new forecast_single_multiple_choice_question
         final_dist, summarization = await forecast_single_multiple_choice_question(
             question_details,
