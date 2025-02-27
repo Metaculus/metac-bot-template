@@ -96,15 +96,28 @@ jobs:
             echo "changes=true" >> $GITHUB_ENV
           fi
 
-      # Step 5: Commit and push changes if any
       - name: Commit and push changes
         if: env.changes == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add forecasts
-          git add .cache
-          git commit -m "Update forecasts files" || echo "No changes to commit"
-          git config pull.rebase True
+          
+          # Ensure we're on the correct branch
+          git fetch origin main
+          git checkout main
+          
+          # Stage only if changes exist
+          git add forecasts || echo "No changes in forecasts"
+          git add .cache || echo "No changes in cache"
+          
+          # Commit only if there are staged changes
+          git diff --cached --quiet || git commit -m "Update forecasts files"
+          
+          # Safe pull and rebase to avoid conflicts
+          git pull --rebase origin main || (git rebase --abort && echo "Merge conflict detected, aborting")
+          
           echo "Pushing changes to remote repository..."
-          git push origin HEAD
+          
+          # Retry logic to handle race conditions
+          git push origin main || (sleep 5 && git push origin main) || (sleep 10 && git push origin main)
+     
