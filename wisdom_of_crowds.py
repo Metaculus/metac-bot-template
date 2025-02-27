@@ -45,7 +45,7 @@ async def run_binary_wisdom_of_crowds(file:str) -> Tuple[int, str]:
 
 
     # 4) Phase 1: initial forecasts
-    phase_1_results = await run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, title, )
 
     # Collect initial and final probabilities from Phase 1, with safer error handling:
     try:
@@ -186,7 +186,7 @@ async def run_multiple_choice_wisdom_of_crowds(file:str) -> Tuple[int, str]:
     )
 
     # 4) Phase 1: initial forecasts
-    phase_1_results = await run_first_stage_forecasters(all_experts, title)
+    phase_1_results = await run_first_stage_forecasters(all_experts, title, )
 
     # Collect final distributions from Phase 1, with safer error handling
     try:
