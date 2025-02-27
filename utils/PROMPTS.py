@@ -234,3 +234,8 @@ You will also receive the question itself.
 Your task is to summarize the resolution of the experts in a coherent and concise manner.\n
 You will not add information of your own knowledge to the analysis nor will you add anything of your own.
 \n\nPlease output the results in the following JSON format: {"summary": str}"""
+
+
+HYDE_PROMPT = """Given the question, generate a summary of an article that helps answering the question.
+For example, for the question "What is the impact of climate change on the economy?", you could generate a summary of an article titled "Climate Change and the Economy: A Comprehensive Analysis":A recent analysis explores the economic impact of climate change, highlighting risks to industries such as agriculture, insurance, and infrastructure. Rising temperatures and extreme weather events are expected to disrupt supply chains and increase financial strain. Governments and businesses are focusing on carbon pricing, green investments, and adaptation strategies to mitigate these effects. Experts emphasize that addressing climate change is crucial for long-term economic stability.
+\n\nPlease output the results in the following JSON format: {"article": str}"""
