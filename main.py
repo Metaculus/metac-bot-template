@@ -48,7 +48,7 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),
+    # (22427, 22427),
     # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
