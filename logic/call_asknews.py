@@ -14,7 +14,7 @@ def run_research(question: Dict[str,str]) -> str:
     research = ""
     if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
         print("Running research...")
-        research = call_asknews(question)
+        research = call_asknews(question.get("title",""))
     else:
         raise ValueError("No API key provided")
 
