@@ -1,30 +1,26 @@
-import asyncio
 import datetime
 import json
 import os
-import re
-from random import randint
-from time import sleep
 
+import asyncio
 import dotenv
 
-from logic.forecase_single_question import  \
+from logic.forecase_single_question import \
     forecast_single_question
 
 dotenv.load_dotenv()
 
 from openai import AsyncOpenAI
-import numpy as np
 import requests
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = False  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = True# set to True to forecast example questions rather than the tournament questions
+SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 FORECAST_BINARY = True  # set to True to forecast binary questions
-FORECAST_MULTIPLE_CHOICE = True  # set to True to forecast multiple choice questions
+FORECAST_MULTIPLE_CHOICE = False  # set to True to forecast multiple choice questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
@@ -260,10 +256,9 @@ def forecast_is_already_made(post_details: dict) -> bool:
         return False
 
 
-async def question_answer_decider(question_type: str, question_details: dict, cache_seed: int = 42,summary_of_forecast: str = "")\
+async def question_answer_decider(question_type: str, question_details: dict, cache_seed: int = 42,
+                                  summary_of_forecast: str = "") \
         -> tuple[float | dict[str, float] | list[float], str, str]:
-
-
     # Now decide which forecast function to use
     if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
@@ -298,9 +293,9 @@ async def question_answer_decider(question_type: str, question_details: dict, ca
     return forecast, comment, summary_of_forecast
 
 
-def print_for_debugging(post_id: int, question_id: int, forecast: float | dict[str, float] | list[float], comment: str, question_type: str,
-                        summary_of_forecast:str) -> None:
-
+def print_for_debugging(post_id: int, question_id: int, forecast: float | dict[str, float] | list[float], comment: str,
+                        question_type: str,
+                        summary_of_forecast: str) -> None:
     # Print to console for debugging
     print(f"-----------------------------------------------\nPost {post_id} (Q {question_id}):\n")
     print(f"Forecast for post {post_id}: {forecast}")
@@ -314,11 +309,11 @@ def print_for_debugging(post_id: int, question_id: int, forecast: float | dict[s
 
 
 async def forecast_individual_question(
-    question_id: int,
-    post_id: int,
-    submit_prediction: bool,
-    skip_previously_forecasted_questions: bool,
-    cache_seed: int = 42
+        question_id: int,
+        post_id: int,
+        submit_prediction: bool,
+        skip_previously_forecasted_questions: bool,
+        cache_seed: int = 42
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -335,14 +330,14 @@ async def forecast_individual_question(
 
     # Check if we already forecasted, skip if so:
     if (
-        forecast_is_already_made(post_details)
-        and skip_previously_forecasted_questions
+            forecast_is_already_made(post_details)
+            and skip_previously_forecasted_questions
     ):
         summary_of_forecast += "Skipped: Forecast already made\n"
         return summary_of_forecast
 
-
-    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, cache_seed, summary_of_forecast)
+    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, cache_seed,
+                                                                           summary_of_forecast)
 
     # In case forecast is None from skipping
     if forecast is None:
@@ -351,15 +346,15 @@ async def forecast_individual_question(
     print_for_debugging(post_id, question_id, forecast, comment, question_type, summary_of_forecast)
 
     # Optionally submit forecast to Metaculus
-    if submit_prediction and forecast is not None and question_type in ("binary","multiple_choice"):
+    if submit_prediction and forecast is not None and question_type in ("binary", "multiple_choice"):
         forecast_payload = create_forecast_payload(forecast, question_type)
         post_question_prediction(question_id, forecast_payload)
         if comment:
             post_question_comment(post_id, comment)
         summary_of_forecast += "Posted: Forecast was posted to Metaculus.\n"
 
-
     return summary_of_forecast
+
 
 async def forecast_questions(
         open_question_id_post_id: list[tuple[int, int]],
