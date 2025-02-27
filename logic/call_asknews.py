@@ -3,7 +3,10 @@ from typing import Dict
 
 from asknews_sdk import AskNewsSDK
 from autogen import ConversableAgent
-from logic.utils import extract_question_details, create_prompt
+
+from logic.chat import validate_and_parse_response
+from logic.utils import create_prompt
+from utils.PROMPTS import HYDE_PROMPT
 
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
@@ -26,7 +29,7 @@ def call_asknews(question: str) -> str:
     The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
     """
     ask = AskNewsSDK(
-        client_id=ASKNEWS_CLIENT_ID, client_secret=ASKNEWS_SECRET, scopes=set(["news"])
+        client_id=ASKNEWS_CLIENT_ID, client_secret=ASKNEWS_SECRET, scopes={"news"}
     )
 
     # get the latest news related to the query (within the past 48 hours)
@@ -74,11 +77,11 @@ def call_asknews(question: str) -> str:
     return formatted_articles
 
 
-async def HyDE(question_details:Dict[str,str])->str:
+async def hyde(question_details:Dict[str,str])->str:
     prompt = create_prompt(question_details)
-    agent = ConversableAgent(name = "Hyde",system_message="HyDE system message",human_input_mode="NEVER")
+    agent = ConversableAgent(name = "Hyde",system_message=HYDE_PROMPT,human_input_mode="NEVER")
     hyde_reply = await agent.a_generate_reply(messages=[{"user":prompt}])
-
-    return hyde_reply
+    result = validate_and_parse_response(hyde_reply['content'])
+    return result.get("article",None)
 
 

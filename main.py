@@ -10,17 +10,16 @@ from logic.forecase_single_question import \
 
 dotenv.load_dotenv()
 
-from openai import AsyncOpenAI
 import requests
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+SUBMIT_PREDICTION = False  # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 FORECAST_BINARY = True  # set to True to forecast binary questions
 FORECAST_MULTIPLE_CHOICE = False  # set to True to forecast multiple choice questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
@@ -199,44 +198,6 @@ def get_post_details(post_id: int) -> dict:
     return details
 
 
-CONCURRENT_REQUESTS_LIMIT = 5
-llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
-
-
-async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3) -> str:
-    """
-    Makes a streaming completion request to OpenAI's API with concurrent request limiting.
-    """
-
-    # Remove the base_url parameter to call the OpenAI API directly
-    # Also checkout the package 'litellm' for one function that can call any model from any provider
-    # Email support@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
-    client = AsyncOpenAI(
-        base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
-        default_headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Token {METACULUS_TOKEN}",
-        },
-        api_key=os.environ.get("OPENAI_API_KEY"),
-        max_retries=2,
-    )
-
-    async with llm_rate_limiter:
-        collected_content = []
-        stream = await client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            stream=True,
-        )
-
-        async for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content is not None:
-                collected_content.append(chunk.choices[0].delta.content)
-
-    return "".join(collected_content)
-
-
 ################### FORECASTING ###################
 def forecast_is_already_made(post_details: dict) -> bool:
     """
@@ -257,14 +218,17 @@ def forecast_is_already_made(post_details: dict) -> bool:
 
 
 async def question_answer_decider(question_type: str, question_details: dict, cache_seed: int = 42,
-                                  summary_of_forecast: str = "") \
+                                  summary_of_forecast: str = "", is_woc=False,num_of_experts=None,news:str = None) \
         -> tuple[float | dict[str, float] | list[float], str, str]:
     # Now decide which forecast function to use
     if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
         final_proba, summarization = await forecast_single_question(
             question_details,  # a dict
-            cache_seed=cache_seed
+            cache_seed=cache_seed,
+            is_woc=is_woc,
+            num_of_experts=num_of_experts,
+            news=news
         )
         # Metaculus API expects a decimal 0..1, so we convert int% => float
         forecast = final_proba / 100.0
@@ -313,7 +277,10 @@ async def forecast_individual_question(
         post_id: int,
         submit_prediction: bool,
         skip_previously_forecasted_questions: bool,
-        cache_seed: int = 42
+        cache_seed: int = 42,
+        is_woc=False,
+        num_of_experts = None,
+        news:str=None
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -337,7 +304,7 @@ async def forecast_individual_question(
         return summary_of_forecast
 
     forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, cache_seed,
-                                                                           summary_of_forecast)
+                                                                           summary_of_forecast, is_woc,num_of_experts,news)
 
     # In case forecast is None from skipping
     if forecast is None:
