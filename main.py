@@ -14,15 +14,19 @@ import requests
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+# SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
+# USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 FORECAST_BINARY = True  # set to True to forecast binary questions
 FORECAST_MULTIPLE_CHOICE = False  # set to True to forecast multiple choice questions
 NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+# SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 GET_NEWS = True  # set to True to enable the bot to do online research
 
 # Environment variables
+
+SUBMIT_PREDICTION = os.getenv("SUBMIT_PREDICTION")
+USE_EXAMPLE_QUESTIONS = os.getenv("USE_EXAMPLE_QUESTIONS")
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS")
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
