@@ -1,22 +1,16 @@
-import datetime
 import json
 import os
-import random
 from typing import List, Tuple
 
 import asyncio
-import numpy as np
+import logging
 
-from agents.agent_creator import create_summarization_assistant
-from agents.experts_extractor import expert_creator, multiple_questions_expert_creator
-from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters
-from logic.forecase_single_question import strip_title_to_filename
-from logic.summarization import run_summarization_phase
 from main import forecast_individual_question
-from utils.PROMPTS import SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE, \
-    NEWS_OUTPUT_FORMAT_MULTIPLE_CHOICE
-from utils.config import get_gpt_config
-from utils.utils import normalize_and_average
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 FORECASTS_PATH = "forecasts/"
 WISDOM_OF_CROWDS_PATH = f"{FORECASTS_PATH}wisdom_of_crowds_forecasts/"
@@ -61,15 +55,14 @@ WHITELIST = ['Will_Russia_have_control_of_Chasiv_Yar_on_February_28_2025.json',
              'What_will_be_the_return_of_the_Egyptian_stock_market_index_the_EGX_30_in_January_2025.json']
 
 
-
 def check_run_wisdom_of_crowds(all_files: List[str], wisdom_of_crowds_files: List[str]) -> bool:
     should_run = False
     if len(all_files) == 0:
-        print("No forecast files found.")
+        log.info("No forecast files found.")
     if len(wisdom_of_crowds_files) < len(all_files):
         should_run = True
-        print("Running wisdom of crowds")
-        print(f"files missing: {set(all_files) - set(wisdom_of_crowds_files)}")
+        log.info("Running wisdom of crowds")
+        log.info(f"files missing: {set(all_files) - set(wisdom_of_crowds_files)}")
 
     return should_run
 
@@ -92,23 +85,23 @@ async def main():
     wisdom_of_crowds_files = [file for file in os.listdir(WISDOM_OF_CROWDS_PATH) if file.endswith(".json")]
     should_run = check_run_wisdom_of_crowds(all_files, wisdom_of_crowds_files)
     if should_run:
-        print("Running wisdom of crowds")
+        log.info("Running wisdom of crowds")
     else:
-        print("No need to run wisdom of crowds")
+        log.info("No need to run wisdom of crowds")
         return
 
     # Run wisdom of crowds
     files_needed = set(all_files) - set(wisdom_of_crowds_files)
     for file in files_needed:
-        print(f"Running wisdom of crowds for {file}")
+        log.info(f"Running wisdom of crowds for {file}")
 
         question_id, post_id, num_of_experts, news = get_question_details(file)
         if not question_id or not post_id:
-            print(f"Question ID or Post ID not found in file: {file}\nYou can run it manually if needed")
+            log.info(f"Question ID or Post ID not found in file: {file}\nYou can run it manually if needed")
             continue
         await forecast_individual_question(question_id=question_id, post_id=post_id, submit_prediction=False,
                                            skip_previously_forecasted_questions=False, is_woc=True, cache_seed=42,
-                                           num_of_experts=num_of_experts, news = news)
+                                           num_of_experts=num_of_experts, news=news)
 
 
 if __name__ == "__main__":
