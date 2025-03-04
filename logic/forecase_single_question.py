@@ -27,7 +27,7 @@ async def forecast_single_question(
 
     if not is_woc:
         # Extract news
-        news = run_research(question_details)
+        news = await run_research(question_details)
 
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details , is_multiple_choice, options,is_woc, num_of_experts)

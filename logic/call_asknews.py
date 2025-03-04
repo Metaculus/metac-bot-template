@@ -1,6 +1,7 @@
 import os
 from typing import Dict
 
+import asyncio
 from asknews_sdk import AskNewsSDK
 from autogen import ConversableAgent
 
@@ -10,11 +11,16 @@ from utils.PROMPTS import HYDE_PROMPT
 
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
-def run_research(question: Dict[str,str]) -> str:
+async def run_research(question: Dict[str,str]) -> str:
     research = ""
     if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
         print("Running research...")
-        research = call_asknews(question.get("title",""))
+        try:
+            research = call_asknews(question.get("title",""))
+        except:
+            print("Error in research, retrying... in 30 seconds")
+            await asyncio.sleep(60)
+            research = call_asknews(question.get("title",""))
     else:
         raise ValueError("No API key provided")
 
