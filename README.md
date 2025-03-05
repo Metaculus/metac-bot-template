@@ -10,7 +10,7 @@ Join the conversation about bot creation, get support, and follow updates on the
 ## 30min Video Tutorial (yep, it really only takes 30min!)
 [![Watch the tutorial](https://cdn.loom.com/sessions/thumbnails/fc3c1a643b984a15b510647d8f760685-42b452e1ab7d2afa-full-play.gif)](https://www.loom.com/share/fc3c1a643b984a15b510647d8f760685?sid=29b502e0-cf64-421e-82c0-3a78451159ed)
 
-Though given murphy's law, something will probably go wrong, so maybe budget 30min-1hr 😉. If you do run into trouble, reach out to `ben [at] metaculus [.com]`
+If you do run into trouble, reach out to `ben [at] metaculus [.com]`
 
 
 ## Quick start -> Fork and use Github Actions
@@ -73,6 +73,17 @@ If you forked the repository first, you have to replace the url in the `git clon
 
 ### Installing dependencies
 Make sure you have python and [poetry](https://python-poetry.org/docs/#installing-with-pipx) installed (poetry is a python package manager).
+
+If you don't have poetry installed run the below:
+```bash
+sudo apt update -y
+sudo apt install -y pipx
+pipx install poetry
+
+# Optional
+poetry config virtualenvs.in-project true
+```
+
 
 Inside the terminal, go to the directory you cloned the repository into and run the following command:
 ```bash
