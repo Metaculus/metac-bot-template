@@ -124,8 +124,7 @@ async def build_and_write_json(filename, data, is_woc=False):
     path = "forecasts/wisdom_of_crowds_forecasts" if is_woc else "forecasts"
     await aiofiles.os.makedirs(path, exist_ok=True)
 
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filepath = f"{path}/{filename}_{timestamp}.json"
+    filepath = f"{path}/{filename}.json"
 
     async with aiofiles.open(filepath, mode="w", encoding="utf-8") as f:
         await f.write(json.dumps(data, indent=4))
