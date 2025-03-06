@@ -18,7 +18,7 @@ async def run_research(question: Dict[str,str]) -> str:
         try:
             research = call_asknews(question.get("title",""))
         except:
-            print("Error in research, retrying... in 30 seconds")
+            print("Error in research, retrying... in 60 seconds")
             await asyncio.sleep(60)
             research = call_asknews(question.get("title",""))
     else:
