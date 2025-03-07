@@ -4,7 +4,8 @@ import os
 import re
 import random
 from typing import Tuple, List, Dict
-
+import aiofiles
+import aiofiles.os
 import asyncio
 
 from agents.agent_creator import create_experts_analyzer_assistant
@@ -119,11 +120,11 @@ def extract_probabilities(results, first_step_key: str, second_step_key: str) ->
     return first_step_probabilities, second_step_probabilities
 
 
-def build_and_write_json(filename, data, is_woc=False):
-    path = "forecasts"
-    if is_woc:
-        path = f"forecasts/wisdom_of_crowds_forecasts"
-    os.makedirs(path, exist_ok=True)
-    filepath = os.path.join(path, f"{filename}.json")
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+async def build_and_write_json(filename, data, is_woc=False):
+    path = "forecasts/wisdom_of_crowds_forecasts" if is_woc else "forecasts"
+    await aiofiles.os.makedirs(path, exist_ok=True)
+
+    filepath = f"{path}/{filename}.json"
+
+    async with aiofiles.open(filepath, mode="w", encoding="utf-8") as f:
+        await f.write(json.dumps(data, indent=4))
