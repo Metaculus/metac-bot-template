@@ -1,0 +1,638 @@
+{
+    "question_details": {
+        "id": 35351,
+        "title": "Will a Chinese model have a higher Arena Score than all Anthropic models on the Chatbot Arena Leaderboard at the end of the 1st Quarter of 2025?",
+        "description": "CNBC: [China wants to dominate in AI \u2014 and some of its models are already beating their U.S. rivals](https://www.cnbc.com/2024/12/17/chinese-ai-models-are-popular-globally-and-are-beating-us-rivals-in-some-areas.html)",
+        "created_at": "2025-03-08T04:57:12.018359Z",
+        "open_time": "2025-03-12T21:00:00Z",
+        "cp_reveal_time": "2025-03-12T22:00:00Z",
+        "scheduled_resolve_time": "2025-04-01T00:00:00Z",
+        "actual_resolve_time": null,
+        "resolution_set_time": null,
+        "scheduled_close_time": "2025-03-12T22:00:00Z",
+        "actual_close_time": "2025-03-12T22:00:00Z",
+        "type": "binary",
+        "options": null,
+        "group_variable": "",
+        "status": "open",
+        "possibilities": null,
+        "resolution": null,
+        "include_bots_in_aggregates": true,
+        "question_weight": 0.5,
+        "resolution_criteria": "This question resolves as **Yes** if a Chinese model has a higher Arena Score than all models with Anthropic as their Organization at the [Chatbot Arena Leaderboard](https://lmarena.ai/?leaderboard) in the \"Overall\" category when accessed by Metaculus on or after April 1, 2025.",
+        "fine_print": "A Chinese model is defined as one whose Organization is headquartered in the People's Republic of China or conducts a majority of its R&D activities in the PRC. At the time of this question, models that qualified under this definition were Yi-Lightning, from 01 AI; Qwen2.5-plus-1127, from Alibaba; and GLM-4-Plus, from Zhipu AI.",
+        "label": "",
+        "open_upper_bound": null,
+        "open_lower_bound": null,
+        "scaling": {
+            "range_max": null,
+            "range_min": null,
+            "zero_point": null
+        },
+        "post_id": 35917,
+        "aggregations": {
+            "recency_weighted": {
+                "history": [],
+                "latest": null,
+                "score_data": {}
+            },
+            "unweighted": {
+                "history": [],
+                "latest": null,
+                "score_data": {}
+            },
+            "single_aggregation": {
+                "history": [],
+                "latest": null,
+                "score_data": {}
+            },
+            "metaculus_prediction": {
+                "history": [],
+                "latest": null,
+                "score_data": {}
+            }
+        },
+        "my_forecasts": {
+            "history": [],
+            "latest": null,
+            "score_data": {}
+        }
+    },
+    "date": "2025-03-12T21:16:26.364570",
+    "news": "Here are the relevant news articles:\n\n**Google Releases Gemma 3 Series of Models, a Single-GPU Model with High Performance**\nGoogle has released the Gemma 3 series of models, which are the most advanced, portable, and responsible open-source models developed by Google. According to Google's blog, Gemma 3 is 'the world's best single-GPU model'. It supports over 35 languages and can analyze text, images, and short videos. The model's advantages include its ability to run directly on mobile phones, PCs, and workstations, with parameter sizes of 1B, 4B, 12B, and 27B. Developers can choose the parameter size based on their specific hardware and performance requirements. In the initial human preference evaluation on the LMArena leaderboard, Gemma 3 outperformed Llama-405B, DeepSeek-V3, and o3-mini. Google has also released a 4B-parameter image safety classifier called ShieldGemma 2, which can be used to filter image inputs and outputs to detect explicit, violent, or dangerous content. Google has also provided a quantized version of the model, which can run on a single GPU, unlike other models that may require up to 32 GPUs. According to the Chatbot Arena Elo score ranking, Gemma 3-27B has a high score, indicating that it is highly favored by users. The model's paper mentions that all models were evaluated by human scorers in a blind and parallel manner, and each model received an Elo score. Gemma-3-27B-IT scored higher than DeepSeek-V3 and o3-preview in the initial human preference evaluation on the LMArena leaderboard. Gemma 3 supports over 35 languages out of the box and provides pre-trained support for over 140 languages. It can also help developers create AI functions with advanced text and visual reasoning capabilities, such as image, text, and short video analysis applications. Gemma 3 supports function calls and structured output, enabling developers to automate tasks and build agents. Google has also released a 4B-parameter image safety classifier called ShieldGemma 2, which can be used to filter image inputs and outputs to detect explicit, violent, or dangerous content. The model's training data includes a larger token budget than Gemma 2, with 14T tokens used for the 27B version, 12T tokens used for the 12B version, 4T tokens used for the 4B version, and 2T tokens used for the 1B version. The model also uses a SentencePiece Tokenizer with 262k entries, which is more balanced for non-English languages. Gemma 3 uses filtering techniques to reduce unnecessary or unsafe speech risks and delete certain personal information and other sensitive data. The model's development tools include Hugging Face Transformers, Ollama, JAX, Keras, PyTorch, Google AI Edge, UnSloth, vLLM, and Gemma.cpp. Developers can access Gemma 3 in Google AI Studio or download the model through Kaggle or Hugging Face. The model also provides a customized code library for efficient fine-tuning and inference, which can be used in Google Colab, Vertex AI, or game GPUs. Gemma 3 provides multiple deployment options, including Vertex AI, Cloud Run, Google GenAI API, and local environments. NVIDIA has directly optimized the Gemma 3 model to ensure that developers can achieve the highest performance on devices ranging from Jetson Nano to the latest Blackwell chip. Gemma 3 is now available on the NVIDIA API directory, where developers can call the API to achieve rapid prototyping. NVIDIA API directory: https://build.nvidia.com/search?q=gemma. Gemma 3 has also been optimized for Google Cloud TPU and integrated with AMD GPU through the open-source ROCm stack. Conclusion: Low-hardware-demand models are popular, Google's Gemma 3 academic plan is launched. The attention to DeepSeek and other models highlights the interest of developers in models with low hardware requirements. Therefore, Google has also launched the Gemma 3 academic plan to further promote academic research breakthroughs. Academic researchers can apply for Google Cloud credits (worth $10,000 each) to accelerate their research based on Gemma 3. The application form is now open and will remain open for four weeks.\nOriginal language: zh\nPublish date: March 12, 2025 11:30 AM\nSource:[\u51e4\u51f0\u7f51\uff08\u51e4\u51f0\u65b0\u5a92\u4f53\uff09](https://tech.ifeng.com/c/8hfS3I6v43h)\n\n**Can Chinese AI 'Manus' Surpass 'Chat GPT' Dominance?**\nThe Chinese AI, 'Manus', has been making waves in the tech world, but can it surpass the dominance of 'Chat GPT'? Manus is a new AI model that focuses on practical solutions, unlike its predecessors. According to its creator, Yishao Bi, Manus is not just another chatbot, but a new generation of AI that can perform tasks and produce real results independently. Manus has the ability to perform complex tasks such as browsing, clicking on links, data analysis, and even making purchases and investments on behalf of users. This is similar to other models like 'Cloud' from 'Anthropie' and 'Deep Research' from Chat GPT, but Manus focuses on actual execution, helping users complete tasks rather than just providing recommendations. Manus is currently in its experimental phase, where its capabilities are being tested and potential issues are being identified before its official launch. Despite the hype surrounding Manus, there are growing concerns about data security and privacy, particularly with the increasing tensions between China and the West. The US and European countries have been cautious about Chinese technology, imposing restrictions on Chinese apps like 'TikTok' and 'Huawei' due to cybersecurity concerns. With Manus entering the scene, some predict it will face challenges in global adoption, especially in Western markets with strict regulations on Chinese systems.\nOriginal language: ar\nPublish date: March 12, 2025 02:27 AM\nSource:[tahiamasr.com](https://www.tahiamasr.com/929426)\n\n**New Chinese AI Program 'Manus' Sparks Interest and Concerns**\nThe Chinese artificial intelligence program 'Manus' has sparked interest among experts in the field, generating limited enthusiasm, disappointment, and concerns about data security. The program's creator, Yishao Bi, said in a promotional video, 'It's not just another chatbot'. He added, 'It's an independent program already', stating that while other AI systems generate ideas, 'Manus' provides results, and we see it as the next model for human-machine collaboration.' Since the launch of 'Chat GPT' in late 2022, major tech companies and startups have been competing to develop advanced AI assistants. There are programs with similar capabilities, such as 'Cloud' by 'Anthropi' and 'Chat GPT' with its 'Deep Research' feature. 'Patr Fly Effect', the Chinese startup that developed 'Manus', has showcased examples of tasks that its AI assistant can perform, including 'buying a property in New York'. The company stated that 'Manus' is still in its initial testing phase and is working to improve its performance gradually. 'Manus' can also prepare research reports, analyze financial data, and program games.\nOriginal language: ar\nPublish date: March 11, 2025 11:36 PM\nSource:[\u0633\u0643\u0627\u064a \u0646\u064a\u0648\u0632 \u0639\u0631\u0628\u064a\u0629](https://www.skynewsarabia.com/technology/1783133-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC-%D8%B0%D9%83%D8%A7%D8%A1-%D8%A7%D8%B5%D8%B7%D9%86%D8%A7%D8%B9%D9%8A-%D8%B5%D9%8A%D9%86%D9%8A-%D8%AC%D8%AF%D9%8A%D8%AF-%D9%8A%D9%86%D8%A7%D9%81%D8%B3-%D8%AA%D8%B4%D8%A7%D8%AA-%D8%AC%D9%8A-%D8%AA%D9%8A%D8%9F)\n\n**Chinese AI Program 'Manus' Challenges 'Chat GPT' with Independent Capabilities**\nThe Chinese AI program 'Manus' has gained attention from experts in the field, sparking limited enthusiasm, disappointment, and concerns about data security. The program's creator, Yishao Bi, said in a promotional video, 'It's not just another chatbot'. He added, 'It's actually an independent program', stating that 'Manus' provides results, and 'we see it as the next step in human-machine collaboration'. Since the launch of 'Chat GPT' in late 2022, major tech companies and startups have been competing to develop advanced AI assistants. Programs like 'Manus' and 'Chat GPT' have similar capabilities, allowing them to act independently to some extent, replacing users to perform tasks online such as browsing and clicking links, and creating summaries. For example, the 'Cloud' program from 'Anthropi' works with the 'Computer User' setting launched in October, and 'Chat GPT' with the 'Deep Research' feature. As Kyle Wiggers, a journalist at 'TechCrunch', pointed out, AI-powered assistant programs have failed to order food and book a ticket to Japan.\nOriginal language: ar\nPublish date: March 11, 2025 09:17 PM\nSource:[\u0627\u0644\u0628\u064a\u0627\u0646](https://www.albayan.ae/technology/science-technology/artificial-intelligence/32739)\n\n**Meet 4 of the Chinese AI models upending the market**\nChina's AI scene is heating up, with new models rivaling top US players and rattling the stock market. Manus, an AI agent, is being hailed as the next potential 'DeepSeek moment.' DeepSeek was the first Chinese AI startup to shake up the industry, with its R1 model rivaling top competitors like ChatGPT's o1. Alibaba has become a key player to watch after it open-sourced its QwQ-32B model, which used less data than DeepSeek and sent its stock surging 8%. Tencent's AI chatbot Yuanbao topped China's iOS App Store last week, surpassing DeepSeek as the most downloaded free app. Researchers at Monica said Manus is the world's first fully autonomous AI agent, outperforming OpenAI's Deep Research model on the GAIA benchmark. However, some users questioned whether Manus was built from scratch, and others called it overhyped, citing factual errors and execution failures during tests.\nOriginal language: en\nPublish date: March 11, 2025 10:11 AM\nSource:[Business Insider](https://www.businessinsider.com/chinese-ai-models-manus-deepseek-alibaba-tencent-2025-3)\n\n**Manus AI: The New Chinese Intelligent and Autonomous Agent**\nManus AI, a new Chinese intelligent and autonomous agent, has been unveiled in March 2025. This tool is presented as the first agent capable of performing complex tasks autonomously, from start to finish. Unlike other chatbots like ChatGPT and Gemini, Manus can complete tasks without continuous human interaction. 'We are building what we think is the next evolution in AI. It's not just another chatbot, but a truly autonomous agent that bridges the gap between design and execution,' explains Yichao 'Peak' Ji, one of Manus' co-founders. Manus has been demonstrated to produce impressive results in various tasks, such as market analysis and project management. It uses a multi-agent model, combining several specialized AI models, and can interact with the web autonomously using the 'Browser use' tool. Manus has outperformed GPT-4 in benchmarking tests, scoring 86.5% on a set of 466 questions, compared to GPT-4's 74.3%.\nOriginal language: fr\nPublish date: March 11, 2025 06:18 AM\nSource:[Le Point.fr](https://www.lepoint.fr/high-tech-internet/qu-est-ce-que-manus-ai-ce-nouvel-agent-intelligent-et-autonome-chinois-11-03-2025-2584380_47.php)\n\n**Chinese AI agent Manus transcends chatbots, start-up's founder says**\nManus, a Chinese AI agent developed by Butterfly Effect, claims to surpass traditional chatbots in performance. According to Red Xiao Hong, the founder and CEO, Manus is 'more like a human being' because it interacts with its environment, collects feedback, and uses it as a new prompt. Manus is built on existing Large Language Models (LLMs), including Anthropic's Claude and fine-tuned versions of Alibaba Group Holding's Qwen. This allows Manus to perform tasks such as devising an itinerary for a trip to Japan, analyzing Tesla's stock, and providing real-estate tips in New York based on a family's requirements.\nOriginal language: en\nPublish date: March 11, 2025 04:00 AM\nSource:[South China Morning Post](https://www.scmp.com/tech/tech-trends/article/3301864/chinese-ai-agent-manus-transcends-chatbots-founder-start-butterfly-effect-says)\n\n**China Develops First Autonomous AI Agent, Challenging US Leadership**\nSome experts believe that the emergence of Manus challenges the narrative that the US is the undisputed leader in developing advanced AI. This suggests that China has caught up and possibly surpassed the US in developing truly autonomous AI agents. In January, Chinese company DeepSeek released a free chatbot that caused panic among investors in Silicon Valley and outperformed American ChatGPT in several reasoning tests. Additionally, Alibaba's AI division, Qwen, released an AI model, QwQ-32B, which is comparable to DeepSeek's development. 'This is a significant development that shows China's rapid progress in AI,' said an expert, although no specific name is mentioned. 'It's a wake-up call for the US to reassess its AI strategy and catch up with China's advancements.'\nOriginal language: ru\nPublish date: March 11, 2025 03:56 AM\nSource:[\u041a\u043e\u0440\u0440\u0435\u0441\u043f\u043e\u043d\u0434\u0435\u043d\u0442.net](https://korrespondent.net/tech/technews/4762721-v-kytae-zaiavyly-o-sozdanyy-pervoho-v-myre-avtonomnoho-ahenta-yy)\n\n**Aliyun Releases QwQ-32B Model, a New Open-Source Large Model**\nAliyun has officially released the 'QwQ-32B' model, a new open-source large model developed by the Aliyun team. This model has surpassed the performance of the 'DeepSeek-R1' model in multiple authoritative evaluations, including math, code, and general capabilities. The QwQ-32B model has quickly become the most popular open-source model on the Hugging Face platform, with over 10,000 derivative models created. Aliyun has also open-sourced the Qwen and Wan series of models, covering a range of sizes from 0.5B to 110B. These models have won numerous awards in the Chatbot Arena and OpenCompass competitions, and have been used to create over 100,000 models. Aliyun's CTO, Zhou Jingren, has stated that the company will continue to promote the development of the Chinese AI ecosystem, providing developers with access to the most powerful computing resources and development tools. Aliyun has also announced plans to invest over 380 billion yuan in cloud and AI infrastructure over the next three years, with the goal of reducing the cost of AI training and making it more accessible to developers.\nOriginal language: zh\nPublish date: March 11, 2025 01:54 AM\nSource:[\u51e4\u51f0\u7f51\uff08\u51e4\u51f0\u65b0\u5a92\u4f53\uff09](https://hb.ifeng.com/c/8hcyfGaRyy6)\n\n**China's National Pride: The Rise of Humanoid Robots**\nIn China, humanoid robots enhanced with artificial intelligence have made significant progress in dancing. At the Chinese New Year's Eve gala, a team of robotic dancers mixed with human performers for a futuristic and impressive show. The robots moved with fluidity and precision, making them the stars of the most important TV event in China. The robots are produced by the Chinese start-up Unitree Robotics, which sees the G1 model as a precursor to mass production. The G1 robot is available for 13,000 euros and is being used by some companies as entertainers at trade shows and advertising events. Beijing's economic planners see robotics as a promising consumer trend. They hope to create a 'disruptive' product like laptops, smartphones, or electric cars, which could potentially be in every household. Unitree's founder, Wang Xingxing, is currently in high favor with the Beijing government, along with Liang Wenfeng, who developed the DeepSeek AI model. KI-chatbots and humanoid robots are seen as particularly effective in highlighting China's ambitions to technological leadership on a global scale. However, two-legged robots are considered impractical due to technical difficulties. For example, a recent 'football tournament' in Shanghai, where robots played a game of soccer, was more like a geriatric game of stand-up football. While robots can be programmed to perform complex movements, adapting to a human opponent with two legs is still a 'next level' challenge.\nOriginal language: de\nPublish date: March 10, 2025 02:10 PM\nSource:[boersen-zeitung.de](https://www.boersen-zeitung.de/meinung-analyse/nationalstolze-tanzroboter)\n\n**GPT 4.5 Becomes #1 on Chatbot Arena!**\nOpenAI's GPT-4.5 has become the #1 model on the Chatbot Arena LLM Leaderboard, securing over 3,200+ votes and excelling in Style Control and Multi-Turn interactions. According to the leaderboard, GPT-4.5 has a strong average win rate of 56% against other models, showing its ability to handle various tasks well. This milestone reaffirms OpenAI's leading role in advancing AI technology, despite intense competition. As described by the Chatbot Arena LLM Leaderboard, 'The Chatbot Arena LLM Leaderboard is a platform that compares large language models by having them compete against each other. It collects user opinions from many interactions, looking at things like accuracy, creativity, understanding context, and conversation skills.' This achievement sets a high benchmark for future innovations in the competitive landscape of large language models.\nOriginal language: en\nPublish date: March 03, 2025 05:59 PM\nSource:[Analytics Vidhya](https://www.analyticsvidhya.com/blog/2025/03/gpt-4-5-becomes-1-on-chatbot-arena/)\n\n**Chatbot Arena Italia: A Platform for Comparing Large Language Models**\nChatbot Arena Italia, a platform for comparing Large Language Models (LLM), has been made available to the public. This platform allows users to compare the responses of different chatbots, including popular ones like ChatGPT, to the same question. The idea is to create a ranking of the best LLMs specifically for the Italian language, where users can give a score to each response and determine which chatbot provided the best answer. The platform offers three modes: Arena (battles), where two LLMs are compared anonymously; Arena (side by side), where two AI are selected manually and compared; and Chat, where a user can select a chatbot and start a conversation. Chatbot Arena Italia is free and allows users to access paid versions of chatbots like ChatGPT, as well as Italian chatbots like Minerva and Modello Italia, and the Chinese chatbot DeepSeek. 'It's a great opportunity to compare the responses of different chatbots and determine which one is the best for the Italian language,' said the author of the article. 'We can finally have a democratic way to compare LLMs and choose the best one for our language.'\nOriginal language: it\nPublish date: February 25, 2025 07:29 PM\nSource:[macitynet.it](https://www.macitynet.it/chatbot-arena-italia/)\n\n**Grok-3 Takes the Lead in Chatbot Arena's February 2025 Rankings**\nThe Chatbot Arena, a platform that compares AI models, has released its leaderboard for February 2025. Grok-3, developed by xAI, has taken the top spot with a score of 1,402. However, it's essential to note that the results are based on unique prompts decided by users, and may not reflect the full capabilities of the models. For example, ChatGPT-4o excels in image and document analysis, has advanced vocal mode, and is better at online research. The top 10 models are: Grok-3, Gemini 2.0, ChatGPT-4o, DeepSeek R1, Qwen, Claude, Mistral, LLaMA, BERT, and PaLM. The Chatbot Arena uses a system of duels between anonymous models, with users determining the best response to a given request. The Elo system is used to evaluate the models and establish a dynamic ranking based on their performance.\nOriginal language: fr\nPublish date: February 21, 2025 09:39 AM\nSource:[blogdumoderateur.com](https://www.blogdumoderateur.com/ia-modeles-plus-performants-fevrier-2025/)\n\n**Elon Musk just released an AI that\u2019s smarter than ChatGPT \u2014 here\u2019s why that matters**\nElon Musk's xAI has released Grok 3, an AI model that outperforms leading competitors across key technical benchmarks. The model has achieved superior scores in mathematics, scientific reasoning, and coding tasks, and has topped the influential Chatbot Arena leaderboard. Former OpenAI researcher Andrej Karpathy praised Grok 3's 'state of the art thinking capabilities', but noted that it sometimes fabricates citations and struggles with certain types of humor and ethical reasoning tasks. The model's development required massive computational resources, with xAI doubling its GPU cluster to 200,000 Nvidia chips. The launch intensifies competition in the AI industry, particularly as Chinese startup DeepSeek recently demonstrated comparable performance with reportedly lower computational requirements.\nOriginal language: en\nPublish date: February 18, 2025 07:51 PM\nSource:[venturebeat.com](https://venturebeat.com/ai/elon-musk-just-released-an-ai-thats-smarter-than-chatgpt-heres-why-that-matters/)\n\n**Anthropic's New AI Model: A Hybrid Approach to Reasoning and Speed**\nAnthropic is set to release a new AI model that combines 'deep reasoning' with fast response times in a hybrid system. According to The Information, the model will feature a 'sliding scale' that allows developers to choose between more computationally intensive reasoning functions and faster responses, optimizing costs. Initial tests suggest that the new model, expected to be released in the coming weeks, outperforms OpenAI's o3-mini-high 'reasoning' model on various programming tasks. It excels particularly in analyzing large codebases and business-relevant benchmarks. Anthropic CEO Dario Amodei has expressed skepticism towards the strict separation between normal and reasoning models, instead pursuing a more nuanced approach. Despite being a top contender with its previous model Claude 3.5 Sonnet, Anthropic has fallen out of the top 15 on the important Chatbot Arena Leaderboard due to the influx of new AI models from OpenAI, DeepSeek, Alibaba, Google, and xAI. However, with nearly $15 billion in investments from companies like Amazon and Google, expectations are high for the OpenAI challenger, which will also provide the foundation for Amazon's revamped Alexa assistant.\nOriginal language: de\nPublish date: February 14, 2025 08:37 AM\nSource:[trendingtopics.eu](https://www.trendingtopics.eu/anthropic-unter-druck-neues-ai-modell-kommt-bald-soll-mit-openai-und-deepseek-gleichziehen/)\n\n**Qwen2.5-Max: China's AI Model Surpasses DeepSeek and Enters Top 10 Global Rankings**\nQwen2.5-Max, a large language model (LLM) developed by Alibaba Cloud, has made impressive results on Chatbot Arena, a platform for evaluating LLMs and AI chatbots. It entered the top 10 global rankings for the first time, with strong performances in coding and mathematics. Qwen2.5-Max surpassed models like DeepSeek-V3, o1-mini, and Claude-3.5-Sonnet. DeepSeek-R1 and ChatGPT-4o are still tied for third place in the global performance ranking, according to Chatbot Arena's website. Qwen2.5-Max ranked first in mathematics and programming, and second in Hard Prompts. 'Qwen-Max from Alibaba is strong in all areas, especially in technical domains (coding, mathematics, Hard Prompts)', said Chatbot Arena on X. Vilmate, a technology-focused blog, published an article titled 'DeepSeek and Qwen2.5-Max: China's bold move to lead the AI race'. It described Qwen2.5-Max as a powerful AI model that surpasses DeepSeek V3 and GPT-4o. Enthusiasts have openly praised Qwen2.5-Max on social media. 'I used Qwen-Max, and it's a very good model. I believe in Chinese technologies and hope to continue on the path of sharing and open source', wrote a user on X under the official account of Qwen. 'Qwen is one of the first open-source models from China and has been recognized as a leading national model for a long time. However, it has attracted significant global attention after the release of a new version during the Spring Festival, shortly after the emergence of DeepSeek as a global competitor', said Li Baiyang, associate professor of intelligence studies at Nanjing University. 'China has firmly established itself as a force that cannot be ignored and must be recognized and evaluated with objectivity and fairness', said Shen Yang, professor studying AI and media at Tsinghua University, Beijing. However, Australia has banned all services from Chinese technology company DeepSeek on government systems and devices, following similar measures taken by US agencies, including NASA and the Pentagon. These measures have been criticized by Chinese observers, as they show, according to them, 'that some Western countries are unable to evaluate China's technological progress in a fair and objective manner'. 'I think since DeepSeek to the recognition of Qwen2.5-Max by users and technology communities, the contribution of Chinese developers to the open-source ecosystem, a noble ideal and practice for programmers, has increased significantly', said Mr. Shen. Several US tech giants, including Microsoft, Nvidia, and Amazon, have adopted the latest AI reasoning model from DeepSeek, reported various media. 'Thanks to open-source, Chinese AI models offer developers worldwide an open platform for innovation and applications, accelerating global adoption of AI, which ultimately benefits the entire technological ecosystem', assured Mr. Shen. 'AI technology should not be monopolized by a few, as monopolization could lead to AI supremacy and control by a privileged few.' \nOriginal language: fr\nPublish date: February 06, 2025 07:01 AM\nSource:[china.org.cn/china.com.cn(\u4e2d\u56fd\u7f51)](http://french.china.org.cn/business/txt/2025-02/06/content_117698260.htm)\n\n**Google\u2019s Gemini 2.0 series now broadly available via API, Gemini app**\nGoogle's Gemini 2.0 series is now available via API and the Gemini app. The models have already ranked #1, #2, #5, and #10 on the Chatbot Arena LLM Leaderboard. Meanwhile, China has surpassed the US in the number of top AI models, with 7 out of the top 21 models being Chinese. OpenAI's o3 and o1 models have led the frontier AI model race, but DeepSeek's R1 and V3 models are close behind. Chinese AI models have been catching up to US models on benchmarks since 2024, with 4 of the top-5 reasoning AI models coming from Chinese labs. DeepSeek took the lead from Alibaba in late 2024 with the release of the V3 model.\nOriginal language: en\nPublish date: February 06, 2025 12:00 AM\nSource:[bayareatimes.com](https://www.bayareatimes.com/p/google-s-gemini-2-0-series-now-broadly-available-via-api-gemini-app)\n\n**Aliyun's Qwen 2.5-Max Model Tops Global AI Large Model Leaderboard**\nAliyun announced that its Qwen 2.5-Max model has topped the latest AI large model leaderboard, Chatbot Arena, with a score of 1332, ranking seventh globally. In addition, Qwen2.5-Max ranked first in mathematics and programming, and second in hard prompts. Aliyun stated that Qwen2.5-Max performed well in various benchmark tests, including Arena-Hard, LiveBench, LiveCodeBench, GPQA-Diamond, and MMLU-Pro, surpassing GPT-4o, DeepSeek-V3, and Llama-3.1-405B. 'Qwen2.5-Max is a non-reasoning Chinese large model champion,' said Aliyun. 'It has surpassed DeepSeek V3, Open AI o1-mini, and Claude-3.5-Sonnet in Chatbot Arena.' \nOriginal language: zh\nPublish date: February 05, 2025 11:54 AM\nSource:[\u51e4\u51f0\u7f51\uff08\u51e4\u51f0\u65b0\u5a92\u4f53\uff09](https://tech.ifeng.com/c/8gjLlvGftJl)\n\n**Aliyun's Qwen2.5-Max Model Surpasses DeepSeek and Rivals OpenAI's o1 Series**\nAliyun's Qwen2.5-Max model has surpassed DeepSeek and become the second Chinese model to rival OpenAI's o1 series. According to the LMArena's 'ChatBot Arena LLM' rankings, Qwen2.5-Max scored 1332 points, ranking 7th overall, surpassing DeepSeek's DeepSeek-V3 and OpenAI's o1-mini. In mathematics and programming, Qwen2.5-Max ranked 1st, and in Hard prompts, it ranked 2nd. The rankings were based on 2.6 million user votes and are considered an authoritative benchmark in the industry. Aliyun's Qwen2.5-Max model has shown global-leading performance in various tests, including knowledge, coding, and comprehensive evaluation. It also surpassed all comparison models in the 'Arena-Hard' test, which evaluates a model's ability to understand complex commands and engage in multi-round conversations. 'Qwen2.5-Max' demonstrated its ability to quickly analyze problems, integrate relevant knowledge, and provide accurate and comprehensive answers, scoring 89.4 points. According to Aliyun, Qwen2.5-Max was compared to the leading open-source MoE model DeepSeek V3, the largest open-source dense model Llama-3.1-405B, and the open-source dense model Qwen2.5-72B. In all 11 benchmark tests, including MMLU, Qwen2.5-Max surpassed all comparison models. The ChatBot Arena official evaluation stated, 'Qwen2.5-Max performed strongly in multiple fields, particularly in professional technical areas such as programming, mathematics, and hard prompts.'\nOriginal language: zh\nPublish date: February 05, 2025 07:24 AM\nSource:[k.sina.com.cn](https://k.sina.com.cn/article_1887344341_707e96d502001kxqe.html)\n\n**Qwen2.5-Max: Alibaba's New Large Language Model Surpasses Global Competitors**\nQwen2.5-Max, a new large language model developed by Alibaba's Aliyun Tianti team, has surpassed DeepSeek V3, o1-mini, and Claude-3.5-Sonnet in the Chatbot Arena LLM Leaderboard, ranking 7th globally with a score of 1332. Qwen-Max shows exceptional comprehensive performance in various benchmark tests, including Arena-Hard, LiveBench, LiveCodeBench, GPQA-Diamond, and MMLU-Pro. The model has been praised by ChatBot Arena officials for its strong performance in professional technical fields, such as programming, mathematics, and hard prompts. According to the developers, continuous improvement of data scale and model parameter scale can effectively enhance model intelligence. They are confident in the next version of Qwen2.5-Max and plan to explore further, including scaling up pre-training and reinforcement learning. 'With Qwen2.5-max, can we say goodbye to ChatGPT?' said an Arabic-speaking user. Many overseas users expressed their amazement at Qwen2.5-max's extreme performance. 'Another Chinese model has arrived,' joked a user, referring to OpenAI's CEO Sam Altman. 'The iteration speed and quality of Chinese models are stunning,' said several overseas users.\nOriginal language: zh\nPublish date: February 05, 2025 03:02 AM\nSource:[\u51e4\u51f0\u7f51\uff08\u51e4\u51f0\u65b0\u5a92\u4f53\uff09](https://tech.ifeng.com/c/8ghZ7IGCLDf)\n\n**Qwen2.5-Max Ranks Seventh Globally in Large Model Blind Testing Rankings**\nChatbot Arena, a three-party benchmark testing platform, released the latest global large model blind testing rankings on February 4. The newly released Qwen2.5-Max surpassed DeepSeek V3, o1-mini, and Claude-3.5-Sonnet, ranking seventh globally with a score of 1332, and becoming the non-reasoning class champion of Chinese large models. Additionally, Qwen2.5-Max ranked first in math and programming, and second in hard prompts. 'Qwen2.5-Max's outstanding performance demonstrates the rapid progress of Chinese large models in the field of natural language processing,' said the author. However, the author also emphasized that 'the accuracy, reliability, and completeness of the content in this article are not guaranteed.' \nOriginal language: zh\nPublish date: February 05, 2025 03:00 AM\nSource:[\u548c\u8baf\u7f51](http://tech.hexun.com/2025-02-05/217109181.html)\n\n**Qwen2.5-Max: A New Global Model Leaderboard Champion**\nAliyun's Qwen2.5-Max has topped the global model leaderboard, surpassing DeepSeek V3, o1-mini, and Claude-3.5-Sonnet, with a score of 1332, ranking 7th globally. Qwen2.5-Max also ranked 1st in math and programming, and 2nd in hard prompts. The model has shown excellent comprehensive performance in various benchmark tests, including Arena-Hard, LiveBench, LiveCodeBench, GPQA-Diamond, and MMLU-Pro. ChatBot Arena officials praised Qwen2.5-Max's strong performance in multiple fields, particularly in professional technical areas such as programming, math, and difficult prompts. 'With Qwen2.5-max, we can say goodbye to ChatGPT?' said a user in Arabic. Many overseas users expressed their amazement at Qwen2.5-max's extreme performance. The Aliyun team is confident in the next version of Qwen2.5-Max and will continue to explore, focusing on scaling up pre-training and reinforcement learning to achieve human-level intelligence and drive AI exploration of the unknown.\nOriginal language: zh\nPublish date: February 04, 2025 11:33 AM\nSource:[\u4e1c\u65b9\u8d22\u5bcc\u7f51](https://finance.eastmoney.com/a/202502043310254134.html)\n\n**DeepSeek AI Models Prices 10-20 Times Lower Than OpenAI**\nDeepSeek, a Chinese startup, has caused a stir in the AI industry with its powerful and affordable AI models. The company's two key language models, DeepSeek R1 and DeepSeek V3, have the potential to not only compete with market leaders like OpenAI, Google, and Anthropic, but also surpass them, while using significantly fewer resources. One of the biggest surprises in the industry is the extremely low prices of these models. According to DeepSeek, the prices of their models are based on the amount of input and output data, with one unit being one million tokens. The input data for V3 is ten times cheaper than for GPT-4o Mini, and twenty times cheaper than for Claude 3 Haiku from Anthropic. The output data for V3 is also cheaper, but still more expensive than for GPT-4o Mini. DeepSeek's model R1 is the most affordable among the most powerful models, with prices that are significantly lower than those of Gemini 1.5 Pro and Nova Pro from Amazon. 'DeepSeek's models can not only compete with other models in terms of price, but also demonstrate high performance, making it difficult to justify the high prices of other providers,' said a spokesperson for DeepSeek. As of now, R1 is ranked first in the 'Style Control' rating on the Chatbot Arena website, alongside ChatGPT-4o and Gemini-Exp-1206.\nOriginal language: uk\nPublish date: January 28, 2025 06:04 PM\nSource:[itechua.com](https://itechua.com/news/275758)\n\n",
+    "results": {
+        "ArtificialIntelligenceResearchAiModelBenchmarkingAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, China's AI development has been progressing rapidly, with substantial investments and a focus on becoming a global leader in AI technology. The base rate for Chinese models surpassing those of competitors, including AI companies from other countries such as the U.S., has been gradually increasing. However, Anthropic, a major U.S.-based AI company, has consistently released competitive models. While there hasn't been a consistent pattern of Chinese models outperforming Anthropic specifically, it's reasonable to start with a relatively moderate initial probability based on China's growing influence in the AI field. An initial probability of 30% seems appropriate, reflecting the scenario's uncertainty but acknowledging China's realistic potential.",
+                "initial_probability": 30,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Investment and National Strategy",
+                        "reasoning": "China has declared AI as a national priority and continuously invests heavily in AI research and development. This increases the likelihood that Chinese models might achieve a high Arena Score through significant resources and focus.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Competitive AI Landscape",
+                        "reasoning": "Anthropic, as a key player in the AI industry, will deploy robust techniques to maintain competitive standings on leaderboards. This often results in a strong performance baseline for comparison.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Recent Performance Trends",
+                        "reasoning": "Recent articles, such as the CNBC article, highlight instances where Chinese models have outperformed U.S. counterparts in certain areas. Such trends suggest an upward trajectory in capability, lending credibility to the idea that a Chinese model could surpass Anthropic.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Rapid Innovation Cycles",
+                        "reasoning": "The ongoing improvements and frequent releases from Chinese AI companies suggest a capacity for rapid innovation. This agility could allow a Chinese model to achieve top scores quickly.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Regulatory and Political Challenges",
+                        "reasoning": "Potential international regulatory challenges and geopolitical tensions might hinder the adoption or perceived neutrality of Chinese models, affecting their comparative performance on international platforms.",
+                        "effect": "-5%"
+                    }
+                ],
+                "final_probability": 45
+            },
+            "phase_2_result": {
+                "prior_probability": 45,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Chinese AI models such as Manus and Qwen2.5-Max are highlighted for their strong performances and capabilities. Manus is emphasized as an autonomous agent surpassing traditional chatbots, with benchmarks against competitors showing strong results. Qwen2.5-Max consistently ranks high on global leaderboards, indicating a high level of performance among Chinese models.",
+                        "points_challenging_prior_analysis": "Anthropic's new model development aims to retain competitive positioning, with substantial investments indicating potential for high-performing models. Additionally, strong performances from other competitors like Google's new Gemma 3 and Elon Musk's Grok 3 indicate a crowded and competitive field.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 50
+            }
+        },
+        "ArtificialIntelligenceResearchAlgorithmDevelopmentAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "To estimate the initial probability, I reviewed the historical performance of Chinese AI models versus those from Western entities like Anthropic on leaderboards such as the Chatbot Arena. Historically, Chinese models have increased their competitive performance significantly over the past few years. According to the referenced CNBC article, some Chinese models have outperformed US competitors in specific areas, indicating a rising trajectory. Considering the noted advancements and the fact that specific Chinese models have been mentioned as competitive, an initial estimate of the likelihood of a Chinese model outperforming Anthropic models is about 40%. This is based on the known capacity for rapid improvement in AI technology and recent competitive results.",
+                "initial_probability": 40,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Investment and Development in China",
+                        "reasoning": "China has been investing heavily in AI, with significant resources dedicated to advancing their AI infrastructure and talent pool. This investment has led to rapid advancements in the capabilities of Chinese AI models, which might increase their competitive edge against organizations such as Anthropic.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Chinese Model Performance Trend",
+                        "reasoning": "Recently, Chinese models such as Yi-Lightning, Qwen2.5-plus-1127, and GLM-4-Plus have been making significant strides in terms of performance. If this trend continues, it could mean that one of these models might surpass Anthropic's on the leaderboard by the end of Q1 2025.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Ongoing Model Improvements",
+                        "reasoning": "Anthropic has consistently shown strong performance in its models and continues to make enhancements, ensuring they remain competitive on leaderboards like the Chatbot Arena. The ongoing improvements and innovation at Anthropic limit the likelihood of being surpassed by Chinese models at this point.",
+                        "effect": "-5%"
+                    }
+                ],
+                "final_probability": 55
+            },
+            "phase_2_result": {
+                "prior_probability": 55,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "The articles highlight the continued progress and competitiveness of Chinese AI models, particularly Qwen2.5-Max, which has performed strongly in mathematical and programming benchmarks. Manus is also noted for its innovative capabilities and autonomous functionalities, suggesting a strong competitive landscape for Chinese models.",
+                        "points_challenging_prior_analysis": "OpenAI's GPT-4.5 has reclaimed the top position on the Chatbot Arena Leaderboard, indicating strong competition from established players. Anthropic's planned new AI model also indicates continued competition.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 60
+            }
+        },
+        "TechnologyPolicyAnalysisGlobalAiPolicyStandardsAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, the progress of AI models and their rankings on leaderboards like the Chatbot Arena has been dynamic, with regular changes driven by technological advances and strategic efforts by organizations. Generally, new AI models frequently outperform existing ones due to rapid enhancements in AI capabilities. Chinese companies have made significant advancements in AI, often closing the gap with Western firms quickly. Historically, the probability of a major AI leader from China overtaking a Western counterpart in leaderboards within a year's time is moderate, given both the rapid pace of Chinese technological advancement and the competitive state of AI development globally.",
+                "initial_probability": 50,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Chinese Government Support",
+                        "reasoning": "The Chinese government has been strongly supporting AI development, providing funding and creating favorable policies which enhance the capabilities of Chinese companies in the AI sector. This centralized push can help accelerate advances of Chinese models relative to their Western counterparts.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Recent Performance Trends",
+                        "reasoning": "Recent reports, such as the CNBC article, point to Chinese models already outperforming their U.S. rivals in certain areas, indicating a trend where top Chinese models are becoming highly competitive rapidly.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Track Record of Chinese Models",
+                        "reasoning": "Chinese AI models have historically improved rapidly and caught up with or surpassed Western models through iterations. However, securing and maintaining the top spot against organizations like Anthropic, known for their cutting-edge research, will require exceptional gains.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Anthropic's R&D Investments",
+                        "reasoning": "Anthropic, like other U.S.-based AI organizations, has extensive investments in AI research and development with a strong track record of innovations. This makes it challenging for competitors to surpass their models.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "Innovation Cycles",
+                        "reasoning": "Within AI, innovation cycles are very rapid, meaning advancements that can affect leaderboard performances can emerge suddenly. Given the proximity to the end of the quarter, the impact of innovation cycles may already be in motion or close to realization.",
+                        "effect": "+5%"
+                    }
+                ],
+                "final_probability": 60
+            },
+            "phase_2_result": {
+                "prior_probability": 60,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "The release of Google's Gemma 3 series indicates a competitive landscape, but this is more relevant to global AI advances rather than an increase in the probability of Chinese models outperforming Anthropic. The news about Manus and other Chinese AI developments, such as Qwen2.5-Max, highlight significant progress, with Manus reportedly outperforming GPT-4 in certain tests. Aliyun's Qwen2.5-Max has entered the top rankings globally, underscoring the strength of Chinese models.",
+                        "points_challenging_prior_analysis": "Anthropic is mentioned as developing new models, although specifics are scarce. This suggests ongoing competition from Anthropic that could offset gains by Chinese models. Concerns around data security and privacy for Chinese models like Manus could hinder adoption in Western markets, potentially limiting their arena exposure.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 65
+            }
+        },
+        "TechnologyPolicyAnalysisIntellectualPropertyManagementInTechAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, the development of AI models in China has seen significant growth, with models from major companies like Alibaba and Baidu increasingly competing with Western counterparts. As per the sources, Chinese models have started outperforming some US models in specific domains. However, Chinese models leading globally across the board, especially over companies like Anthropic, is less common historically. The historical base rate for a non-US model surpassing major US tech firms like Anthropic would likely be low, so I estimate the base probability to be around 20%.",
+                "initial_probability": 20,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Government Support",
+                        "reasoning": "The Chinese government provides extensive support and investment into AI development, driving rapid advancements and competitive positioning against US models.",
+                        "effect": "+15%"
+                    },
+                    {
+                        "name": "Global Adoption and Performance",
+                        "reasoning": "Recent reports, such as those by CNBC, indicate that Chinese models are gaining popularity globally and demonstrate competitive performance, potentially increasing their chances of ranking high on international leaderboards.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Strong Performance",
+                        "reasoning": "Anthropic is a leading entity in AI development with a focus on safety and innovation, maintaining strong competitive models. This acts as a counterweight, making it challenging for any model to consistently outperform its offerings.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "Technological Advancements in China",
+                        "reasoning": "China has been rapidly advancing its AI technologies, and prior models have occasionally surpassed or matched US models in niche areas. This trend can result in certain edge cases where a Chinese model might lead.",
+                        "effect": "+5%"
+                    }
+                ],
+                "final_probability": 40
+            },
+            "phase_2_result": {
+                "prior_probability": 40,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Recent releases such as Manus show China's significant advancements in AI, demonstrating a competitive edge with autonomous abilities and specialized performance that could potentially surpass Anthropic models. Additionally, Aliyun's Qwen2.5-Max model has achieved high rankings on global leaderboards, showcasing strong performance in various technical benchmarks.",
+                        "points_challenging_prior_analysis": "Google's release of Gemma 3 series models highlights continued progress in the West, which, alongside Anthropic's ongoing investments and hybrid model strategies, may counteract the momentum of Chinese models like Qwen2.5-Max. Additionally, the release of OpenAI's GPT-4.5 commanding the top leaderboard position indicates strong performance from Western models.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 45
+            }
+        },
+        "CompetitiveAnalysisCompetitorBenchmarkingAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "To establish an initial probability for a Chinese model having a higher Arena Score than all Anthropic models by the end of Q1 2025, I will consider the historical competitiveness of Chinese AI models versus their international counterparts. Historically, China has made substantial advancements in AI, as indicated by various reports of Chinese models outperforming some U.S. models in specific applications and benchmarks. However, the overall dominance of these models on international leaderboards like the Chatbot Arena is less consistent. Therefore, I estimate a base rate probability of 40% that a Chinese model could outperform Anthropic models based on historical data found over the past few years.",
+                "initial_probability": 40,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Recent Technological Advances",
+                        "reasoning": "Chinese AI research has been rapidly advancing, particularly with significant investments and favorable government policies supporting AI development. Such advancement increases the likelihood of Chinese models surpassing Anthropic models in performance.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Dedicated Resources",
+                        "reasoning": "Anthropic has a strong focus on developing cutting-edge AI, backed by significant funding and talent pools. This can maintain its competitive edge in AI model performance, which might reduce the probability of a Chinese model leading.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "International Competitions and Benchmarks",
+                        "reasoning": "Efforts by Chinese organizations to compete internationally and perform well in global benchmarks are likely to enhance their models' competitiveness on international platforms like the Chatbot Arena.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Reports of Specific Model Performance",
+                        "reasoning": "Recent reports cite that Chinese models are already outperforming their U.S. counterparts in specific areas, suggesting a growing capability to surpass even well-funded companies like Anthropic on certain leaderboards.",
+                        "effect": "+10%"
+                    }
+                ],
+                "final_probability": 55
+            },
+            "phase_2_result": {
+                "prior_probability": 55,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Recent news confirms that Chinese AI models, like Qwen2.5-Max, have made significant progress, outranking notable competitors in key technical domains. This aligns with expectations about the rapid advancement and competitiveness of Chinese AI models.",
+                        "points_challenging_prior_analysis": "The release of strong competitors like Google's Gemma 3 series and OpenAI's GPT-4.5, both securing high rankings, indicates increased competition. Additionally, Anthropic's upcoming model, promising a hybrid approach of reasoning and speed, could further challenge Chinese models' supremacy.",
+                        "overall_effect_on_forecast": "-10%"
+                    }
+                ],
+                "revised_probability": 45
+            }
+        },
+        "CompetitiveAnalysisMarketTrendAnalysisAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, advancements in AI models have been highly competitive between Chinese and U.S. companies. Chinese AI research has been rapidly developing, driven by significant government support and investment. Several Chinese models have already started to outperform U.S. models in certain areas. However, Anthropic has been a strong contender with advanced models. Based on past performance and development trends, there is an initial probability of 40% that a Chinese model will surpass Anthropic models on the chat arena leaderboard by the end of Q1 2025.",
+                "initial_probability": 40,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Chinese Government Support",
+                        "reasoning": "The Chinese government has been heavily investing in AI development, aiming for global leadership in this field. This strong backing accelerates innovation and efficiency among Chinese AI organizations, increasing their competitiveness and probability of outperforming Anthropic models.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Recent Developments",
+                        "reasoning": "Anthropic has been continuously innovating, with significant advancements in their AI models. The organization's focused research and substantial venture capital funding bolster their chances to maintain competitive AI models.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Global AI Collaboration and Talent",
+                        "reasoning": "Chinese AI firms are increasingly attracting global talent and participating in international collaborations, enhancing model performance and innovation. This broadens their capabilities to improve model quality faster.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Current Leaderboard Trends",
+                        "reasoning": "As of the last available data, Chinese models have shown significant improvements in leaderboard positions. A recent trend indicates an upward trajectory in scores for these models, suggesting a higher probability of surpassing competitors like Anthropic.",
+                        "effect": "+10%"
+                    }
+                ],
+                "final_probability": 60
+            },
+            "phase_2_result": {
+                "prior_probability": 60,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "The performance of Chinese AI models such as Qwen2.5-Max shows strong technical capabilities, particularly in mathematics and coding, securing high global rankings on the Chatbot Arena Leaderboard. This suggests that Chinese models are indeed competitive on the global stage.",
+                        "points_challenging_prior_analysis": "The newly released model Manus, while gaining attention, faces skepticism regarding its independent capabilities and concerns over data security. Meanwhile, Anthropic is set to release a new AI model soon, which may improve their ranking on the leaderboard.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 65
+            }
+        },
+        "ComputerScienceMachineLearningTheoryAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "To forecast whether a Chinese model will have a higher Arena Score than all Anthropic models by the end of Q1 2025, I consider the recent developments and base rates in AI model performance competitions. Historically, Chinese AI organizations have shown significant progress and have been increasingly competitive on global leaderboards. From the available data, it appears there is a roughly equal chance for a leading Chinese model to outperform U.S.-based rivals like Anthropic given recent advancements. Thus, I will start with a base probability of 50%.",
+                "initial_probability": 50,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Recent Advancements in Chinese AI",
+                        "reasoning": "The cited article from CNBC highlights substantial progress made by Chinese AI models, with some already outperforming U.S. counterparts in specific areas. Continuous innovation and investment in this field suggest an increased likelihood of strong leaderboard performance.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Arena Score Competition Dynamics",
+                        "reasoning": "In competitive environments like the Chatbot Arena, a few percentage points of model performance often determine rankings. Given China's aggressive push in AI, there is a higher probability that at least one model from China could edge out Anthropic models, considering tie-breaking factors such as innovation and improvement speed.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Anthropic's Commitment and Trajectory",
+                        "reasoning": "Despite progress in Chinese AI, Anthropic remains a leader in AI safety and performance, continuously refining their models. Their sustained focus might maintain or enhance their model's positions on the leaderboard.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Resource Allocation and Strategic Goals",
+                        "reasoning": "China's strategic emphasis on becoming a world leader in AI could drive disproportionate resource allocation to AI development, enhancing their competitive edge. This factor strengthens the likelihood of outperforming rivals in arenas determining global leadership.",
+                        "effect": "+10%"
+                    }
+                ],
+                "final_probability": 70
+            },
+            "phase_2_result": {
+                "prior_probability": 70,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "There is significant attention on Chinese AI models such as Qwen2.5-Max and Manus, showcasing strong performance in benchmarks and considerable innovation. Reports highlight China's rapid progress and competitive models like Qwen2.5-Max ranking highly in Chatbot Arena, indicating robust competitiveness against global models.",
+                        "points_challenging_prior_analysis": "Google's release of the Gemma 3 series, particularly the 27B model with significant user favor, and OpenAI's GPT-4.5 taking the #1 spot on the Chatbot Arena leaderboard, present strong competition. Additionally, Anthropic's new hybrid model is expected to perform well in upcoming tests, possibly strengthening their leaderboard positions.",
+                        "overall_effect_on_forecast": "-5%"
+                    }
+                ],
+                "revised_probability": 65
+            }
+        },
+        "ComputerScienceNaturalLanguageProcessingAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, Chinese AI models have been competitive in the global AI landscape. As of late 2024, some Chinese models have already been outperforming their U.S. rivals in specific areas, as noted by CNBC. China's AI research has been growing rapidly, fueled by significant investments and government support. The base rate for a Chinese model outperforming Western models on a given leaderboard can be considered moderate, given their historical performance but not overwhelmingly probable due to the strong competition from companies like Anthropic, OpenAI, and others.",
+                "initial_probability": 50,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Advancements in Chinese AI capabilities",
+                        "reasoning": "China's AI research sector is expanding rapidly with heavy investments in AI technology and strategic government initiatives aimed at overtaking Western rivals. Recent trends have shown that Chinese models are achieving competitive performance levels. This factor increases the probability that a Chinese model could score higher than Anthropic models.",
+                        "effect": "+15%"
+                    },
+                    {
+                        "name": "Anthropic's R&D investments",
+                        "reasoning": "Anthropic, being a major player in the AI field, continuously invests in pushing the state of the art in AI technologies and safety measures, which could lead to improved model performance that could place them at the top of leaderboards.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "Market dynamics of Chatbot Arena scores",
+                        "reasoning": "The Chatbot Arena Leaderboard ecosystem is competitive, with positions frequently changing as models are updated and improved. This volatility increases the uncertainty regarding which organization\u2019s models might be leading at a specific point in time.",
+                        "effect": "+5%"
+                    }
+                ],
+                "final_probability": 60
+            },
+            "phase_2_result": {
+                "prior_probability": 60,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Several Chinese AI models, including Manus and Qwen2.5-Max, have shown significant capabilities, with Qwen2.5-Max entering the top 10 on the Chatbot Arena Leaderboard, indicating strong performance against global competitors, including Anthropic models. The presence of Chinese models in competitive positions supports the view that a Chinese model could outrank Anthropic models.",
+                        "points_challenging_prior_analysis": "The release of Google's Gemma 3 series, positioned as highly competitive and efficient on a single GPU, and OpenAI's GPT-4.5 topping the leaderboard, highlights intensified global competition. This suggests that despite strong Chinese advancements, dominant competitors from other countries continue to push the boundaries, potentially overshadowing Chinese models.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 65
+            }
+        },
+        "ComputerSciencePerformanceEvaluationMetricsAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "To estimate the initial probability, we look at historical data indicating the trend of Chinese AI models performing competitively against American models. There have been instances where Chinese models have outperformed globally, particularly in language and machine learning benchmarks. Given their recent advancements and investments in AI, particularly from companies like Alibaba and Baidu, I estimate the base rate probability of a Chinese model outperforming Anthropic on the Chatbot Arena Leaderboard at around 40%.",
+                "initial_probability": 40,
+                "perspective_derived_factors": [
+                    {
+                        "name": "AI Research Advancements in China",
+                        "reasoning": "China has been heavily investing in AI research and development, and its AI models have shown substantial improvements over the past years. This consistent progress increases the likelihood of a Chinese model outperforming Anthropic models.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Strategic National Investment",
+                        "reasoning": "The Chinese government has made AI a national priority with significant funding allocated to research, which is likely to accelerate AI development effectively. This well-funded environment could give Chinese firms an edge in producing leading models.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Cutting-edge AI Techniques",
+                        "reasoning": "Recent reports suggest that Chinese models are using innovative techniques and architectures that are beginning to set new performance standards. This technological edge could lead to higher Arena Scores.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Competition from Non-cloud AI Service Providers",
+                        "reasoning": "Companies focused on local or edge AI solutions might focus less on competing in cloud-based benchmark contests like Chatbot Arena, which could affect the level of competition faced by Chinese models.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Geopolitical Tensions",
+                        "reasoning": "Ongoing geopolitical tensions might limit cross-border collaborations and information exchange, potentially hindering some technological advancements or platform participation.",
+                        "effect": "-5%"
+                    }
+                ],
+                "final_probability": 55
+            },
+            "phase_2_result": {
+                "prior_probability": 55,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Chinese models, like Qwen2.5-Max from Alibaba, have achieved high global rankings in the Chatbot Arena, outperforming models from DeepSeek and OpenAI in various technical areas. The Chinese AI scene is increasingly competitive, with models showing strong performances, especially in programming and mathematics.",
+                        "points_challenging_prior_analysis": "Google's release of Gemma 3 series has introduced models with high performance and low hardware requirements, potentially increasing the competition significantly. Additionally, OpenAI's GPT-4.5 has claimed the top spot in the Chatbot Arena, reaffirming OpenAI's leading role in the AI landscape, which could challenge Chinese models' ability to secure the top position over Anthropic.",
+                        "overall_effect_on_forecast": "-5%"
+                    }
+                ],
+                "revised_probability": 50
+            }
+        },
+        "EconomicsInnovationDiffusionTheoryAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, China's advancements in AI have accelerated rapidly, especially since the publishing of China's AI development plan in 2017 which aimed to become a global leader by 2030. Considering previous instances where Chinese AI models have surpassed expectations, such as in facial recognition and mobile applications, the probability of outpacing specific companies like Anthropic in a competitive metric such as Arena Score is feasible. As of recent years, Chinese AI models have been increasingly competitive with Western models. Based on these observations, a plausible base rate for a Chinese model outperforming a specific subset like Anthropic, which has also shown significant capabilities in AI development, could be approximately 20%.",
+                "initial_probability": 20,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Government Support and Investment",
+                        "reasoning": "The Chinese government has heavily invested in AI research and development, providing substantial resources and favorable policies that enhance the capabilities of Chinese technology companies. This kind of support is likely to increase the competitiveness of Chinese AI models, including their performance metrics such as Arena Score.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Collaborative Ecosystem",
+                        "reasoning": "Chinese AI companies benefit from a dense ecosystem of collaboration between services and academia, enabling rapid integration of cutting-edge research into commercial applications. This enhances innovation diffusion and may give Chinese models an edge in evolving quickly.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Domestic Market Dominance",
+                        "reasoning": "Chinese technology firms benefit from a large domestic market, allowing them to collect expansive datasets and optimize their models extensively. This context provides them with a competitive edge, facilitating better performance on benchmarks like the Arena Score.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Competition from Established US firms",
+                        "reasoning": "Despite the rapid rise of Chinese AI models, US companies such as Anthropic are deeply involved in fundamental AI research and have access to leading AI experts globally. This strong competition limits the probability of any single model surpassing Anthropic.",
+                        "effect": "-10%"
+                    }
+                ],
+                "final_probability": 40
+            },
+            "phase_2_result": {
+                "prior_probability": 40,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Chinese AI models, such as Aliyun's Qwen2.5-Max, have recently seen strong performances on competitive leaderboards like the Chatbot Arena, surpassing notable contenders like DeepSeek and some OpenAI models. This reinforces the idea that Chinese models are becoming more competitive on a global scale, which aligns with the initial rationale that Chinese AI technology is rapidly advancing.",
+                        "points_challenging_prior_analysis": "Despite the advancements, there is significant competition from other established models, such as Google's Gemma 3 series and OpenAI's GPT-4.5, both of which have been excelling on various benchmarks. Additionally, Anthropic's new model promises to bridge fast response times with deep reasoning, suggesting ongoing competition. Furthermore, concerns regarding data security and Western market reluctance towards Chinese technologies, as indicated by challenges faced by Manus, may hinder their adoption and performance metrics.",
+                        "overall_effect_on_forecast": "-10%"
+                    }
+                ],
+                "revised_probability": 30
+            }
+        },
+        "EconomicsMarketStructureAndCompetitionAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Anthropic and Chinese companies are both strong competitors in the AI field. Historically, Chinese tech companies have rapidly advanced in AI capabilities, often catching up or surpassing Western counterparts in certain areas. Given historical precedent, such as China's rapid advancements in technology and AI research, the base rate for a Chinese model outperforming a major Western competitor on a specific leaderboard or task could be estimated at around 40%. Chinese AI models have demonstrated significant capability and are increasingly recognized. According to the provided CNBC article, Chinese models have already shown they can beat U.S. rivals in some areas, indicating strong competitive capabilities.",
+                "initial_probability": 40,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Chinese AI Investment and R&D Focus",
+                        "reasoning": "China has heavily invested in AI technology development over recent years, and R&D efforts in Chinese companies continue to strengthen their competitive edge. The focus on AI as a strategic priority by the Chinese government suggests that the advantage may continue to grow, supporting an increased probability.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Competitive Position",
+                        "reasoning": "Anthropic is a well-established organization in the AI space, known for its safety-focused, robust AI models. This formidable position suggests it remains a strong competitor against Chinese companies and can potentially maintain superiority, thus diminishing the probability.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "Language and Regional Optimization",
+                        "reasoning": "Chinese AI models may benefit from localized optimization better suited for certain tasks and contexts, which can give an advantage on specific benchmarks or evaluations, potentially leading to higher score outcomes.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "Global Recognition and Metrics",
+                        "reasoning": "Metric choices in leaderboards like Arena Score may sometimes favor Western models due to criteria or language biases. If this bias exists, it could depress the performance ranking of Chinese models relative to their U.S. counterparts.",
+                        "effect": "-5%"
+                    }
+                ],
+                "final_probability": 40
+            },
+            "phase_2_result": {
+                "prior_probability": 40,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "The release of Manus AI and Aliyun's Qwen2.5-Max model, both showing impressive results on the Chatbot Arena, reinforces the notion that Chinese AI models are strong contenders in global rankings. Specifically, Qwen2.5-Max's high performance in technical areas, such as mathematics and programming, surpassed existing models such as DeepSeek V3, which had been competitive against U.S. models.",
+                        "points_challenging_prior_analysis": "The introduction of new powerful models from other tech giants, such as Google's Gemma 3 series and xAI's Grok 3, which are performing well in Chatbot Arena and are being recognized for their advanced capabilities, challenges the probability that a Chinese model will outscore Anthropic models. Additionally, existing security and regulatory concerns surrounding Chinese technology may hinder broader adoption and perceptions.",
+                        "overall_effect_on_forecast": "+0%"
+                    }
+                ],
+                "revised_probability": 40
+            }
+        },
+        "EconomicsResearchAndDevelopmentEconomicsAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, advancements in AI technology have seen a rapid pace in both the United States and China. In recent years, China has made significant investments in AI, often with government backing, aiming to be at the forefront of AI development. The rise of Chinese AI models such as Yi-Lightning, Qwen2.5-plus-1127, and GLM-4-Plus indicates progress towards this goal. On the other hand, Anthropic, a major US player in the AI field, is known for its cutting-edge technology and safety focus. Given previous patterns in AI competition, it's common for leading models from both regions to oscillate in rankings.",
+                "initial_probability": 30,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Chinese Government Investment in AI",
+                        "reasoning": "The Chinese government's focus and extensive funding in AI developments provide a conducive environment for rapid advancements. This support bolsters the probability of a Chinese model surpassing its rivals.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Anthropic's Focus on Safety and Alignment",
+                        "reasoning": "While Anthropic is dedicated to pushing model boundaries, their focus on safety and alignment might slow the pace of pure performance advancements compared to competitors more focused on maximizing capabilities.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Recent Performance Trends",
+                        "reasoning": "Recent reports suggest Chinese models are already outperforming some US models in certain areas. This trend suggests the capability of at least one Chinese model surpassing Anthropic models in arena scores.",
+                        "effect": "+10%"
+                    }
+                ],
+                "final_probability": 45
+            },
+            "phase_2_result": {
+                "prior_probability": 45,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Chinese AI models like Qwen2.5-Max and Manus are gaining significant traction, with Qwen2.5-Max achieving a high ranking on the Chatbot Arena Leaderboard and outperforming several key models in mathematics and programming. Manus is also being hailed as the first fully autonomous AI, suggesting a maturity level in Chinese AI development that could surpass Anthropic models.",
+                        "points_challenging_prior_analysis": "The introduction of Google's Gemma 3 series and OpenAI's GPT-4.5, which are high-performing models with widespread accessibility and strong user favor, presents formidable competition to Chinese models. Additionally, Anthropic is set to release a new model soon, potentially altering competitive dynamics before the end of Q1 2025.",
+                        "overall_effect_on_forecast": "+5%"
+                    }
+                ],
+                "revised_probability": 50
+            }
+        },
+        "ChineseStudiesTechnologyPolicyInChinaAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, competition between Chinese and U.S. AI models has been quite intense, with both sides making significant advancements. However, it has not been a given for Chinese models to consistently outperform U.S. models like those from Anthropic. Reviewing past performances, Chinese models have occasionally but not consistently surpassed U.S. models significantly in domains such as natural language processing. For instance, in specific benchmarks, Chinese models have shown capabilities comparable to leading U.S. models. As of late 2024, there has been an increased presence and competence demonstrated by Chinese AI firms, but outright dominance is sporadic. Therefore, establishing a base rate of Chinese models outperforming highly competitive U.S. models such as Anthropic's around 25% seems reasonable, considering this historical backdrop.",
+                "initial_probability": 25,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Government Support",
+                        "reasoning": "The Chinese government's strategic focus on AI and significant investment into its development enhances the infrastructure and manpower dedicated to AI projects, which can accelerate improvement in model performance.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Technological Advancements",
+                        "reasoning": "The rapid advancement in technological capabilities and innovations in Chinese AI companies, combined with increased collaborations with academic institutions, influences the development speed and sophistication of new AI models.",
+                        "effect": "+5%"
+                    },
+                    {
+                        "name": "International Pressure",
+                        "reasoning": "International scrutiny and export restrictions imposed by Western countries may limit the resources available to Chinese AI firms, affecting their ability to quickly adapt and innovate in certain situations.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Anthropic's Current Model Strength",
+                        "reasoning": "Anthropic, a leading AI company, has shown consistent improvements in AI models and maintained strong positions on the leaderboard, showcasing a robust pipeline and model development which may maintain or improve their standing.",
+                        "effect": "-10%"
+                    }
+                ],
+                "final_probability": 25
+            },
+            "phase_2_result": {
+                "prior_probability": 25,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "Chinese AI models like Qwen2.5-Max are gaining impressive ranks on global leaderboards, demonstrating strong performance in coding, mathematics, and hard prompts. China's investment in AI infrastructure and open-source model development is drawing significant attention globally, reinforcing the potential for Chinese models to outperform competitors.",
+                        "points_challenging_prior_analysis": "The introduction of Google's Gemma 3 and OpenAI's GPT-4.5 models to the Chatbot Arena leaderboard introduces strong competitors. Additionally, the launch of Anthropic's potentially improved AI models backed with significant investments also poses a challenge to the dominance of Chinese models. These models may overshadow any recent gains by Chinese models in the leaderboard rankings.",
+                        "overall_effect_on_forecast": "+0%"
+                    }
+                ],
+                "revised_probability": 25
+            }
+        },
+        "ChineseStudiesChina'sAiDevelopmentStrategyAgent": {
+            "phase_1_result": {
+                "initial_reasoning": "Historically, Chinese AI models have improved significantly, with increasing competitive performance against their US counterparts. However, US-based firms like Anthropic have consistently remained at the forefront of AI technology. The likelihood of any single firm, including Chinese ones, surpassing Anthropic is historically low but not negligible.",
+                "initial_probability": 20,
+                "perspective_derived_factors": [
+                    {
+                        "name": "Chinese Government Support",
+                        "reasoning": "The Chinese government is heavily investing in AI to become a global leader, which can significantly enhance the capabilities of Chinese AI models.",
+                        "effect": "+10%"
+                    },
+                    {
+                        "name": "Recent Advancements in Chinese AI",
+                        "reasoning": "Recent reports suggest significant strides in Chinese AI models, showcasing competitive performance in specific benchmarks.",
+                        "effect": "+15%"
+                    },
+                    {
+                        "name": "Consistency of Anthropic's Performance",
+                        "reasoning": "Anthropic has a strong track record of maintaining superior AI models, which suggests they will continue to improve their models to stay ahead.",
+                        "effect": "-10%"
+                    },
+                    {
+                        "name": "Global AI Collaboration",
+                        "reasoning": "International collaborations often give an edge to companies in areas such as access to diverse datasets and talent, which is more prevalent in US-based firms.",
+                        "effect": "-5%"
+                    },
+                    {
+                        "name": "Rapidly Changing AI Landscape",
+                        "reasoning": "The fast pace of AI developments, especially with the influx of generative AI technologies, often leads to unpredictable breakthroughs that could favor Chinese models.",
+                        "effect": "+5%"
+                    }
+                ],
+                "final_probability": 35
+            },
+            "phase_2_result": {
+                "prior_probability": 35,
+                "analysis_updates": [
+                    {
+                        "points_reinforcing_prior_analysis": "The news indicates strong performance and interest in Chinese AI models like Qwen2.5-Max and Manus, suggesting rapid progress and potential to challenge US models. Qwen2.5-Max has been praised for its performance, surpassing notable competitors in benchmark tests and reaching the top of the Chatbot Arena leaderboard in specific categories.",
+                        "points_challenging_prior_analysis": "Despite Chinese advancements, there is continued dominance from models like GPT-4.5 and new entrants like Grok-3 also taking top positions in rankings. Moreover, Anthropic plans to release a new model soon, suggesting ongoing competition from US companies.",
+                        "overall_effect_on_forecast": "+0%"
+                    }
+                ],
+                "revised_probability": 35
+            }
+        }
+    },
+    "summary": "After reviewing the news articles and reconsidering their initial analyses, most forecasting experts increased the probability that a Chinese AI model will have a higher Arena Score than all Anthropic models on the Chatbot Arena Leaderboard by the end of the first quarter of 2025. The revised probabilities across different experts generally range from 45% to 65%, with a few exceptions predicting lower odds. The experts cite recent strong performances by Chinese models like Qwen2.5-Max and Manus, which have shown competitive capabilities in global benchmarks. However, they also acknowledge the strong competition from other leading AI models, particularly from OpenAI and Google's new releases, as well as Anthropic's continued developments, which present significant challenges to Chinese models dominating the leaderboard.",
+    "statistics": {
+        "mean_first_step": 48.92857142857143,
+        "mean_second_step": 49.285714285714285,
+        "sd_first_step": 12.275455722164175,
+        "sd_second_step": 13.567090110481837,
+        "final_result": 49
+    }
+}
