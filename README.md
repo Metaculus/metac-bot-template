@@ -17,7 +17,7 @@ If you run into trouble, reach out to `ben [at] metaculus [.com]`
 The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 30min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
 
 1) **Fork the repository**: Go to the [repository](https://github.com/Metaculus/metac-bot-template) and click 'fork'.
-2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, and so you can use our OpenAI/Anthropic proxy (reach out to support@metaculus.com with your bot description to apply for credits. We are giving credits fairly generously to encourage participation).
+2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, and so you can use our OpenAI/Anthropic proxy (reach out to `ben [at] metaculus [.com]` with your bot description to apply for credits. See the relevant section below).
 3) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Regularly forecast new questions' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on.
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
@@ -31,6 +31,7 @@ To get a bot account and your API Token:
 5) Go back to https://metaculus.com/aib
 6) Click 'Show My Token'
 
+If your regular Metaculus account uses Gmail, you can create a separate bot account while keeping your existing email by adding a '+bot' before the @ symbol. For example, if your email is 'youremail@gmail.com', you can use 'youremail+bot1@gmail.com' for your bot account.
 
 ## Search Provider API Keys
 
@@ -72,7 +73,7 @@ Here are some other unvetted but interesting options for search and website read
 - Playwright
 
 ## Accessing the Metaculus LLM Proxy
-OpenAI and Anthropic have given a generous donation of credits for bot builders in the tournament. If you plan to use their models, visit [this page](href="https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0e1f7bf8c8a248e4a38da8758cc04de4") for instructions on how to call the Metaculus proxy directly. You can also use the `forecasting-tools` package to call the proxy. To do this, call `await forecasting-tools.GeneralLlm(model="metaculus/{model_name}").invoke(prompt)`. You will need METACULUS_TOKEN set in your .env file and have already had credits assigned to your account and model choice.
+OpenAI and Anthropic have given a generous donation of credits for bot builders in the tournament which we are providing through an llm proxy.
 
 To get credits assigned to your model choices (or if you need renewed credits from a previous quarter), please send an email to `ben [at] metaculus [.com]` with the below:
 * The username of your bot
@@ -81,6 +82,10 @@ To get credits assigned to your model choices (or if you need renewed credits fr
 * Your preferred Anthropic/OpenAI model(s) and how you want the budget distributed between them (there is budget distributed to each individual model name rather than to your account on whole)
 
 Metaculus will add new OpenAI and Anthropic completion models to the proxy as they come out. If you want to use a new model, please send us an email with the model you desire, and how much budget you want removed from one model and transferred to another. Alternatively, if you have a new idea that needs more support, pitch it to us, and we can add give additional credits. Reach out if you run out.
+
+Visit [this page](href="https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0e1f7bf8c8a248e4a38da8758cc04de4") for instructions on how to call the Metaculus proxy directly. 
+
+You can also use the `forecasting-tools` package to call the proxy. To do this, call `await forecasting-tools.GeneralLlm(model="metaculus/{openai_or_anthropic_model_name}").invoke(prompt)`. You will need METACULUS_TOKEN set in your .env file and have already had credits assigned to your account and model choice. GeneralLlm is a wrapper around the litellm package which provides one API for every major model and provider and can be used for other providers like Gemini, XAI, or OpenRouter. For more information about how to use GeneralLlm/litellm see [forecasting-tools](https://github.com/Metaculus/forecasting-tools) and [litellm](https://github.com/BerriAI/litellm)
 
 
 ## Run the bot locally
