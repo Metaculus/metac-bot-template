@@ -38,7 +38,7 @@ If your regular Metaculus account uses Gmail, you can create a separate bot acco
 ### Getting AskNews Setup
 Metaculus is collaborating with AskNews to give free access for internet searches. Each registered bot builder gets 3k calls per month, 9k calls total for the tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls). Bots have access to the /news endpoint only. To sign up:
 1. Make an account on AskNews (if you have not yet, https://my.asknews.app)
-2. Send the email address associated with your AskNews account to the email `rob [at] asknews [.app]`
+2. Send the email address associated with your AskNews account to the email `rob [at] asknews [.app]` (or DM `@drafty` in Discord)
 3. In that email also send the username of your Metaculus bot
 4. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
 5. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` and add that to the .env
