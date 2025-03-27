@@ -19,31 +19,27 @@ from forecasting_tools import (
     PredictionExtractor,
     ReasonedPrediction,
     SmartSearcher,
-    ForecastReport,
     clean_indents,
 )
-import typeguard
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
-# Suppress LiteLLM logging
-litellm_logger = logging.getLogger("LiteLLM")
-litellm_logger.setLevel(logging.WARNING)
-litellm_logger.propagate = False
 
-class Q1TemplateBot(ForecastBot):
+class Q2TemplateBot2025(ForecastBot):
     """
-    This is a template bot that uses the forecasting-tools library to simplify bot making.
+    This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
+    The official bots on the leaderboard use AskNews in Q2.
+    Main template bot changes since Q1
+    - Support for new units parameter was added
+    - You now set your llms when you initialize the bot (making it easier to switch between and benchmark different models)
 
     The main entry point of this bot is `forecast_on_tournament` in the parent class.
-    However generally the flow is:
+    See the script at the bottom of the file for more details on how to run the bot.
+    Ignoring the finer details, the general flow is:
     - Load questions from Metaculus
     - For each question
-        - Execute run_research for research_reports_per_question runs
-        - Execute respective run_forecast function for `predictions_per_research_report * research_reports_per_question` runs
+        - Execute run_research a number of times equal to research_reports_per_question
+        - Execute respective run_forecast function `predictions_per_research_report * research_reports_per_question` times
         - Aggregate the predictions
         - Submit prediction (if publish_reports_to_metaculus is True)
     - Return a list of ForecastReport objects
@@ -59,33 +55,42 @@ class Q1TemplateBot(ForecastBot):
     ) # Allows 1 request per second on average with a burst of 2 requests initially. Set this as a class variable
     await self.rate_limiter.wait_till_able_to_acquire_resources(1) # 1 because it's consuming 1 request (use more if you are adding a token limit)
     ```
-
-    Check out https://github.com/Metaculus/forecasting-tools for a full set of features from this package.
-    Most notably there is a built in benchmarker that integrates with ForecastBot objects.
+    Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = (
-        10  # Set this to whatever works for your search-provider/ai-model rate limits
-    )
+    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
             if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = AskNewsSearcher().get_formatted_news(question.question_text)
+                research = await AskNewsSearcher().get_formatted_news_async(
+                    question.question_text
+                )
             elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(question.question_text)
+                research = await self._call_exa_smart_searcher(
+                    question.question_text
+                )
             elif os.getenv("PERPLEXITY_API_KEY"):
                 research = await self._call_perplexity(question.question_text)
             elif os.getenv("OPENROUTER_API_KEY"):
-                research = await self._call_perplexity(question.question_text, use_open_router=True)
+                research = await self._call_perplexity(
+                    question.question_text, use_open_router=True
+                )
             else:
+                logger.warning(
+                    f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
+                )
                 research = ""
-            logger.info(f"Found Research for {question.page_url}:\n{research}")
+            logger.info(
+                f"Found Research for URL {question.page_url}:\n{research}"
+            )
             return research
 
-    async def _call_perplexity(self, question: str, use_open_router: bool = False) -> str:
+    async def _call_perplexity(
+        self, question: str, use_open_router: bool = False
+    ) -> str:
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster.
@@ -96,11 +101,11 @@ class Q1TemplateBot(ForecastBot):
             Question:
             {question}
             """
-        )
+        )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
             model_name = "openrouter/perplexity/sonar-reasoning"
         else:
-            model_name = "perplexity/sonar-pro" # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search.
+            model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search.
         model = GeneralLlm(
             model=model_name,
             temperature=0.1,
@@ -110,10 +115,10 @@ class Q1TemplateBot(ForecastBot):
 
     async def _call_exa_smart_searcher(self, question: str) -> str:
         """
-        SmartSearcher is a custom class that is a wrapper around a search on Exa.ai
+        SmartSearcher is a custom class that is a wrapper around an search on Exa.ai
         """
         searcher = SmartSearcher(
-            model=self._get_final_decision_llm(),
+            model=self.get_llm("default", "llm"),
             temperature=0,
             num_searches_to_run=2,
             num_sites_per_search=10,
@@ -127,20 +132,6 @@ class Q1TemplateBot(ForecastBot):
         )  # You can ask the searcher to filter by date, exclude/include a domain, and run specific searches for finding sources vs finding highlights within a source
         response = await searcher.invoke(prompt)
         return response
-
-    def _get_final_decision_llm(self) -> GeneralLlm:
-        model = None
-        if os.getenv("OPENAI_API_KEY"):
-            model = GeneralLlm(model="gpt-4o", temperature=0.3)
-        elif os.getenv("ANTHROPIC_API_KEY"):
-            model = GeneralLlm(model="claude-3-5-sonnet-20241022", temperature=0.3)
-        elif os.getenv("OPENROUTER_API_KEY"):
-            model = GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.3)
-        elif os.getenv("METACULUS_TOKEN"):
-            model = GeneralLlm(model="metaculus/gpt-4o", temperature=0.3)
-        else:
-            raise ValueError("No API key for final_decision_llm found")
-        return model
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
@@ -178,14 +169,16 @@ class Q1TemplateBot(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        return ReasonedPrediction(
+            prediction_value=prediction, reasoning=reasoning
+        )
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -227,16 +220,18 @@ class Q1TemplateBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
             )
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        return ReasonedPrediction(
+            prediction_value=prediction, reasoning=reasoning
+        )
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -258,6 +253,7 @@ class Q1TemplateBot(ForecastBot):
 
             {question.fine_print}
 
+            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
@@ -268,7 +264,7 @@ class Q1TemplateBot(ForecastBot):
             {upper_bound_message}
 
             Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there
 
@@ -293,16 +289,18 @@ class Q1TemplateBot(ForecastBot):
             "
             """
         )
-        reasoning = await self._get_final_decision_llm().invoke(prompt)
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: NumericDistribution = (
             PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question
             )
         )
         logger.info(
-            f"Forecasted {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
+            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        return ReasonedPrediction(
+            prediction_value=prediction, reasoning=reasoning
+        )
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
@@ -321,38 +319,18 @@ class Q1TemplateBot(ForecastBot):
             )
         return upper_bound_message, lower_bound_message
 
-def summarize_reports(forecast_reports: list[ForecastReport | BaseException]) -> None:
-    valid_reports = [
-        report for report in forecast_reports if isinstance(report, ForecastReport)
-    ]
-    exceptions = [
-        report for report in forecast_reports if isinstance(report, BaseException)
-    ]
-    minor_exceptions = [
-        report.errors for report in valid_reports if report.errors
-    ]
-
-    for report in valid_reports:
-        question_summary = clean_indents(f"""
-            URL: {report.question.page_url}
-            Errors: {report.errors}
-            Summary:
-            {report.summary}
-            ---------------------------------------------------------
-        """)
-        logger.info(question_summary)
-
-    if exceptions:
-        raise RuntimeError(
-            f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
-        )
-    if minor_exceptions:
-        logger.error(
-            f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
-        )
-
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+
+    # Suppress LiteLLM logging
+    litellm_logger = logging.getLogger("LiteLLM")
+    litellm_logger.setLevel(logging.WARNING)
+    litellm_logger.propagate = False
+
     parser = argparse.ArgumentParser(
         description="Run the Q1TemplateBot forecasting system"
     )
@@ -364,37 +342,46 @@ if __name__ == "__main__":
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
+    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = (
+        args.mode
+    )
     assert run_mode in [
         "tournament",
         "quarterly_cup",
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = Q1TemplateBot(
+    template_bot = Q2TemplateBot2025(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
+        # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+        #     "default": GeneralLlm(
+        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022",
+        #         temperature=0.3,
+        #         timeout=40,
+        #         allowed_tries=2,
+        #     ),
+        #     "summarizer": "openai/gpt-4o-mini",
+        # },
     )
 
     if run_mode == "tournament":
-        Q4_2024_AI_BENCHMARKING_ID = 32506
-        Q1_2025_AI_BENCHMARKING_ID = 32627
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                Q1_2025_AI_BENCHMARKING_ID, return_exceptions=True
+                MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
-        Q1_2025_QUARTERLY_CUP_ID = 32630
+        # The new quarterly cup may not be initialized near the beginning of a quarter
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
-                Q1_2025_QUARTERLY_CUP_ID, return_exceptions=True
+                MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
             )
         )
     elif run_mode == "test_questions":
@@ -410,10 +397,6 @@ if __name__ == "__main__":
             for question_url in EXAMPLE_QUESTIONS
         ]
         forecast_reports = asyncio.run(
-            template_bot.forecast_questions(
-                questions, return_exceptions=True
-            )
+            template_bot.forecast_questions(questions, return_exceptions=True)
         )
-    forecast_reports = typeguard.check_type(forecast_reports, list[ForecastReport | BaseException])
-    summarize_reports(forecast_reports)
-
+    Q2TemplateBot2025.log_report_summary(forecast_reports)  # type: ignore
