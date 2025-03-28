@@ -25,7 +25,7 @@ from forecasting_tools import (
 logger = logging.getLogger(__name__)
 
 
-class Q2TemplateBot2025(ForecastBot):
+class TemplateForecaster(ForecastBot):
     """
     This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
     The official bots on the leaderboard use AskNews in Q2.
@@ -351,7 +351,7 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = Q2TemplateBot2025(
+    template_bot = TemplateForecaster(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
@@ -399,4 +399,4 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(questions, return_exceptions=True)
         )
-    Q2TemplateBot2025.log_report_summary(forecast_reports)  # type: ignore
+    TemplateForecaster.log_report_summary(forecast_reports)  # type: ignore

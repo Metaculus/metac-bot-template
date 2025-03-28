@@ -128,6 +128,17 @@ poetry run python main.py --mode test_questions
 ```
 Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True` (it is set to `True` by default in main.py).
 
+## Early Benchmarking
+Provided in this project is an example of how to benchmark your bot against the community forecast. Running `community_benchmark.py` will run multiple iterations of your bot (e.g. with different LLMs or research paths) and score them on how close they are to the community prediction using expected baseline score (a proper score assuming the community prediction is the true probability). You will want to edit the file to choose which bot configurations you want to test and how many questions you want to test on.
+
+To run a benchmark:
+`poetry run python community_benchmark.py --mode run`
+
+To view a UI showing your scores:
+`poetry run streamlit run community_benchmark.py`
+
+See for information in the benchmarking section of the [forecasting-tools repo](https://github.com/Metaculus/forecasting-tools?tab=readme-ov-file#benchmarking)
+
 ## Ideas for bot improvements
 Below are some ideas for making a novel bot. Consider using the Benchmarker from the forecasting-tools repo.
 - Finetuned LLM on Metaculus Data: Create an optimized prompt (using DSPY or a similar toolset) and/or a fine-tuned LLM using all past Metaculus data. The thought is that this will train the LLM to be well-calibrated on real-life questions.

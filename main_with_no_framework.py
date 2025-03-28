@@ -19,7 +19,6 @@ SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
-GET_NEWS = False  # set to True to enable the bot to do online research
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -50,7 +49,6 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
 # Though we are assuming most people will dissect it enough to make this not matter much
-# Hopefully this is a good starting point for people to build on and get a gist of whats involved
 
 ######################### HELPER FUNCTIONS #########################
 
@@ -235,15 +233,12 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
 def run_research(question: str) -> str:
     research = ""
-    if GET_NEWS == True:
-        if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-            research = call_asknews(question)
-        elif EXA_API_KEY:
-            research = call_exa_smart_searcher(question)
-        elif PERPLEXITY_API_KEY:
-            research = call_perplexity(question)
-        else:
-            raise ValueError("No API key provided")
+    if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
+        research = call_asknews(question)
+    elif EXA_API_KEY:
+        research = call_exa_smart_searcher(question)
+    elif PERPLEXITY_API_KEY:
+        research = call_perplexity(question)
     else:
         research = "No research done"
 
