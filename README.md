@@ -83,7 +83,7 @@ To get credits assigned to your model choices (or if you need renewed credits fr
 
 Metaculus will add new OpenAI and Anthropic completion models to the proxy as they come out. If you want to use a new model, please send us an email with the model you desire, and how much budget you want removed from one model and transferred to another. Alternatively, if you have a new idea that needs more support, pitch it to us, and we can add give additional credits. Reach out if you run out.
 
-Visit [this page](href="https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0e1f7bf8c8a248e4a38da8758cc04de4") for instructions on how to call the Metaculus proxy directly. 
+Visit [this page](href="https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0e1f7bf8c8a248e4a38da8758cc04de4") for instructions on how to call the Metaculus proxy directly.
 
 You can also use the `forecasting-tools` package to call the proxy. To do this, call `await forecasting-tools.GeneralLlm(model="metaculus/{openai_or_anthropic_model_name}").invoke(prompt)`. You will need METACULUS_TOKEN set in your .env file and have already had credits assigned to your account and model choice. GeneralLlm is a wrapper around the litellm package which provides one API for every major model and provider and can be used for other providers like Gemini, XAI, or OpenRouter. For more information about how to use GeneralLlm/litellm see [forecasting-tools](https://github.com/Metaculus/forecasting-tools) and [litellm](https://github.com/BerriAI/litellm)
 
@@ -124,9 +124,23 @@ Running the bot requires various environment variables. If you run the bot local
 
 To test the simple bot, execute the following command in your terminal:
 ```bash
-poetry run python main.py --mode quarterly_cup
+poetry run python main.py --mode test_questions
 ```
 Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True` (it is set to `True` by default in main.py).
+
+## Early Benchmarking
+Provided in this project is an example of how to benchmark your bot against the community forecast. Running `community_benchmark.py` will run multiple iterations of your bot (e.g. with different LLMs or research paths) and score them on how close they are to the community prediction using expected baseline score (a proper score assuming the community prediction is the true probability). You will want to edit the file to choose which bot configurations you want to test and how many questions you want to test on. Any class inheriting from `forecasting-tools.Forecastbot` can be passed into the benchmarker. In past quarters, many people underperformed the template bot, so we recommend using this to get some early sense of whether your bot is better than the template. As of March 28, 2025 the benchmarker only works with binary questions.
+
+To run a benchmark:
+`poetry run python community_benchmark.py --mode run`
+
+To run a custom benchmark (e.g. remove background info from questions to test retrival):
+`poetry run python community_benchmark.py --mode custom`
+
+To view a UI showing your scores and bot's reasoning:
+`poetry run streamlit run community_benchmark.py`
+
+See for information in the benchmarking section of the [forecasting-tools repo](https://github.com/Metaculus/forecasting-tools?tab=readme-ov-file#benchmarking)
 
 ## Ideas for bot improvements
 Below are some ideas for making a novel bot. Consider using the Benchmarker from the forecasting-tools repo.

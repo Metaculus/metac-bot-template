@@ -19,7 +19,6 @@ SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
-GET_NEWS = False  # set to True to enable the bot to do online research
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -50,7 +49,6 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
 # Though we are assuming most people will dissect it enough to make this not matter much
-# Hopefully this is a good starting point for people to build on and get a gist of whats involved
 
 ######################### HELPER FUNCTIONS #########################
 
@@ -209,7 +207,7 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
     # Remove the base_url parameter to call the OpenAI API directly
     # Also checkout the package 'litellm' for one function that can call any model from any provider
-    # Email support@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
+    # Email ben@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
     client = AsyncOpenAI(
         base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
         default_headers={
@@ -221,32 +219,26 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
     )
 
     async with llm_rate_limiter:
-        collected_content = []
-        stream = await client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=temperature,
-            stream=True,
+            stream=False,
         )
-
-        async for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content is not None:
-                collected_content.append(chunk.choices[0].delta.content)
-
-    return "".join(collected_content)
+        answer = response.choices[0].message.content
+        if answer is None:
+            raise ValueError("No answer returned from LLM")
+        return answer
 
 
 def run_research(question: str) -> str:
     research = ""
-    if GET_NEWS == True:
-        if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-            research = call_asknews(question)
-        elif EXA_API_KEY:
-            research = call_exa_smart_searcher(question)
-        elif PERPLEXITY_API_KEY:
-            research = call_perplexity(question)
-        else:
-            raise ValueError("No API key provided")
+    if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
+        research = call_asknews(question)
+    elif EXA_API_KEY:
+        research = call_exa_smart_searcher(question)
+    elif PERPLEXITY_API_KEY:
+        research = call_perplexity(question)
     else:
         research = "No research done"
 
@@ -485,6 +477,7 @@ Background:
 
 {fine_print}
 
+Units for answer: {units}
 
 Your research assistant says:
 {summary_report}
@@ -688,6 +681,7 @@ async def get_numeric_gpt_prediction(
     scaling = question_details["scaling"]
     open_upper_bound = question_details["open_upper_bound"]
     open_lower_bound = question_details["open_lower_bound"]
+    unit_of_measure = question_details["unit"] if question_details["unit"] else "Not stated (please infer this)"
     upper_bound = scaling["range_max"]
     lower_bound = scaling["range_min"]
     zero_point = scaling["zero_point"]
@@ -713,6 +707,7 @@ async def get_numeric_gpt_prediction(
         summary_report=summary_report,
         lower_bound_message=lower_bound_message,
         upper_bound_message=upper_bound_message,
+        units=unit_of_measure,
     )
 
     async def ask_llm_to_get_cdf(content: str) -> tuple[list[float], str]:
