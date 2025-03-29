@@ -41,7 +41,7 @@ Metaculus is collaborating with AskNews to give free access for internet searche
 2. Send the email address associated with your AskNews account to the email `rob [at] asknews [.app]` (or DM `@drafty` in Discord)
 3. In that email also send the username of your Metaculus bot
 4. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
-5. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` and add that to the .env
+5. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` [here](https://my.asknews.app/en/settings/api-credentials) and add that to the .env
 6. Run the AskNewsSearcher from the forecasting-tools repo or use the AskNews SDK python package
 
 Your account will be active for the duration of the tournament. There is only one account allowed per participant.
