@@ -129,7 +129,7 @@ poetry run python main.py --mode test_questions
 Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True` (it is set to `True` by default in main.py).
 
 ## Early Benchmarking
-Provided in this project is an example of how to benchmark your bot against the community forecast. Running `community_benchmark.py` will run multiple iterations of your bot (e.g. with different LLMs or research paths) and score them on how close they are to the community prediction using expected baseline score (a proper score assuming the community prediction is the true probability). You will want to edit the file to choose which bot configurations you want to test and how many questions you want to test on. Any class inheriting from `forecasting-tools.Forecastbot` can be passed into the benchmarker. In past quarters, many people underperformed the template bot, so we recommend using this to get some early sense of whether your bot is better than the template. As of March 28, 2025 the benchmarker only works with binary questions.
+Provided in this project is an example of how to benchmark your bot's forecasts against the community prediction for questions on Metaculus. Running `community_benchmark.py` will run versions of your bot defined by you (e.g. with different LLMs or research paths) and score them on how close they are to the community prediction using expected baseline score (a proper score assuming the community prediction is the true probability). You will want to edit the file to choose which bot configurations you want to test and how many questions you want to test on. Any class inheriting from `forecasting-tools.Forecastbot` can be passed into the benchmarker. As of March 28, 2025 the benchmarker only works with binary questions.
 
 To run a benchmark:
 `poetry run python community_benchmark.py --mode run`
@@ -137,7 +137,7 @@ To run a benchmark:
 To run a custom benchmark (e.g. remove background info from questions to test retrival):
 `poetry run python community_benchmark.py --mode custom`
 
-To view a UI showing your scores and bot's reasoning:
+To view a UI showing your scores, statistical error bars, and your bot's reasoning:
 `poetry run streamlit run community_benchmark.py`
 
 See for information in the benchmarking section of the [forecasting-tools repo](https://github.com/Metaculus/forecasting-tools?tab=readme-ov-file#benchmarking)
