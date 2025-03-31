@@ -140,7 +140,7 @@ To run a custom benchmark (e.g. remove background info from questions to test re
 To view a UI showing your scores, statistical error bars, and your bot's reasoning:
 `poetry run streamlit run community_benchmark.py`
 
-See for information in the benchmarking section of the [forecasting-tools repo](https://github.com/Metaculus/forecasting-tools?tab=readme-ov-file#benchmarking)
+See more information in the benchmarking section of the [forecasting-tools repo](https://github.com/Metaculus/forecasting-tools?tab=readme-ov-file#benchmarking)
 
 ## Ideas for bot improvements
 Below are some ideas for making a novel bot. Consider using the Benchmarker from the forecasting-tools repo.
