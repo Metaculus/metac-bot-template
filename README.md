@@ -38,15 +38,106 @@ If your regular Metaculus account uses Gmail, you can create a separate bot acco
 ## Search Provider API Keys
 
 ### Getting AskNews Setup
-Metaculus is collaborating with AskNews to give free access for internet searches. Each registered bot builder gets 3k calls per month, 9k calls total for the tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls). Bots have access to the /news endpoint only. To sign up:
+Metaculus is collaborating with AskNews to give free access for news searches. Each registered bot builder gets 3k calls per month, 9k calls total for the tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls), and 5M tokens. Bots have access to the /news and /deepnews endpoints. To sign up:
 1. Make an account on AskNews (if you have not yet, https://my.asknews.app)
 2. Send the email address associated with your AskNews account to the email `rob [at] asknews [.app]` (or DM `@drafty` in Discord)
-3. In that email also send the username of your Metaculus bot
+3. In that email also send the username of your Metaculus bot and please indicate if you plan to use /news and/or /deepnews.
 4. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
 5. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` [here](https://my.asknews.app/en/settings/api-credentials) and add that to the .env
 6. Run the AskNewsSearcher from the forecasting-tools repo or use the AskNews SDK python package
 
 Your account will be active for the duration of the tournament. There is only one account allowed per participant.
+
+Example usage of /news and /deepnews:
+
+```python
+from asknews_sdk import AsyncAskNewsSDK
+import asyncio
+
+"""
+More information available here:
+https://docs.asknews.app/en/news
+https://docs.asknews.app/en/deepnews
+
+Installation:
+pip install asknews
+"""
+
+client_id = ""
+client_secret = ""
+
+ask = AsyncAskNewsSDK(
+    client_id=client_id,
+    client_secret=client_secret,
+    scopes=["chat", "news", "stories", "analytics"],
+)
+
+# /news endpoint example
+async def search_news(query):
+
+  hot_response = await ask.news.search_news(
+      query=query, # your natural language query
+      n_articles=5, # control the number of articles to include in the context
+      return_type="both",
+      strategy="latest news" # enforces looking at the latest news only
+  )
+
+  print(hot_response.as_string)
+
+  # get context from the "historical" database that contains a news archive going back to 2023
+  historical_response = await ask.news.search_news(
+      query=query,
+      n_articles=10,
+      return_type="both",
+      strategy="news knowledge" # looks for relevant news within the past 60 days
+  )
+
+  print(historical_response.as_string)
+
+# /deepnews endpoint example:
+async def deep_research(
+    query, sources, model, search_depth=2, max_depth=2
+):
+
+    response = await ask.chat.get_deep_news(
+        messages=[{"role": "user", "content": query}],
+        search_depth=search_depth,
+        max_depth=max_depth,
+        sources=sources,
+        stream=False,
+        return_sources=False,
+        model=model,
+        inline_citations="numbered"
+    )
+
+    print(response)
+
+
+if __name__ == "__main__":
+    query = "What is the TAM of the global market for electric vehicles in 2025? With your final report, please report the TAM in USD using the tags <TAM> ... </TAM>"
+
+    sources = ["asknews"]
+    model = "deepseek-basic"
+    search_depth = 2
+    max_depth = 2 
+    asyncio.run(
+        deep_research(
+            query, sources, model, search_depth, max_depth
+        )
+    )
+
+    asyncio.run(search_news(query))
+```
+
+Some tips for DeepNews:
+
+You will get tags in your response, including:
+
+<think> </think>
+<asknews_search> </asknews_search>
+<final_response> </final_response>
+
+These tags are likely useful for extracting the pieces that you need for your pipeline. For example, if you dont want to include all the thinking/searching, you could just extract <final_response> </final_response>
 
 ### Getting Perplexity Set Up
 Perplexity works as an internet powered LLM, and costs half a cent per search (if you pick the right model) plus token costs. It is less customizable but generally cheaper.
