@@ -8,7 +8,7 @@ from time import sleep
 
 import dotenv
 
-from logic.forecase_single_question import forecast_single_binary_question, forecast_single_multiple_choice_question
+from logic.forecast_single_question import forecast_single_binary_question, forecast_single_multiple_choice_question
 
 dotenv.load_dotenv()
 

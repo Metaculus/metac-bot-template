@@ -5,7 +5,7 @@ import os
 import asyncio
 import dotenv
 
-from logic.forecase_single_question import \
+from logic.forecast_single_question import \
     forecast_single_question
 
 dotenv.load_dotenv()
