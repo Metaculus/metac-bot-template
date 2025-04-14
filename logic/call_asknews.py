@@ -29,7 +29,7 @@ async def run_research(question: Dict[str,str]) -> str:
     return research
 
 
-def call_asknews(question: str) -> str:
+async def call_asknews(question_details:Dict[str,str]) -> str:
     """
     Use the AskNews `news` endpoint to get news context for your query.
     The full API reference can be found here: https://docs.asknews.app/en/reference#get-/v1/news/search
@@ -37,19 +37,20 @@ def call_asknews(question: str) -> str:
     ask = AskNewsSDK(
         client_id=ASKNEWS_CLIENT_ID, client_secret=ASKNEWS_SECRET, scopes={"news"}
     )
+    hyde_results = await hyde(question_details)
 
     # get the latest news related to the query (within the past 48 hours)
     hot_response = ask.news.search_news(
-        query=question,  # your natural language query
-        n_articles=10,  # control the number of articles to include in the context, originally 5
+        query=hyde_results,  # your natural language query
+        n_articles=5,  # control the number of articles to include in the context, originally 5
         return_type="both",
         strategy="latest news",  # enforces looking at the latest news only
     )
 
     # get context from the "historical" database that contains a news archive going back to 2023
     historical_response = ask.news.search_news(
-        query=question,
-        n_articles=15,
+        query=hyde_results,
+        n_articles=10,
         return_type="both",
         strategy="news knowledge",  # looks for relevant news within the past 60 days
     )

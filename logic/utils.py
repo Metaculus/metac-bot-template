@@ -8,6 +8,8 @@ import aiofiles
 import aiofiles.os
 import asyncio
 
+from autogen import ConversableAgent
+
 from agents.agent_creator import create_experts_analyzer_assistant
 from agents.experts_extractor import multiple_questions_expert_creator, expert_creator, run_expert_extractor
 from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters
@@ -24,9 +26,10 @@ def extract_question_details(question_details: dict) -> Tuple[str, str, str, str
     return title, description, fine_print, resolution_criteria, forecast_date
 
 
-def create_prompt(question_details: Dict[str, str]) -> str:
+def create_prompt(question_details: Dict[str, str],news:str) -> str:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    full_prompt = f"Forecast Date: {forecast_date}\n\n{title}\n\nDescription:\n{description}\n\nFine Print:\n{fine_print}\n\nResolution Criteria:\n{resolution_criteria}\n\n"
+    full_prompt = (f"##Forecast Date: {forecast_date}\n\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
+                   f"{fine_print}\n\n##Resolution Criteria:\n{resolution_criteria}\n\n##News Articles:\n{news}")
     return full_prompt
 
 
@@ -58,24 +61,19 @@ def strip_title_to_filename(title: str) -> str:
 
 async def perform_forecasting_phase(experts, question_details: Dict[str, str], news=None, is_multiple_choice=False,
                                     options=None) -> Dict[str, Dict[str, Dict[str, str]]]:
-    question_formatted = create_prompt(question_details)
     results = {}
 
-    async def forecast_for_expert(expert):
+    async def forecast_for_expert(expert:ConversableAgent):
+        question_formatted = create_prompt(question_details, news)
         phase_1 = await run_first_stage_forecasters([expert], question=question_formatted,
-                                                    question_title=question_details['title'], system_message="",
+                                                    system_message="",
                                                     options=options)
-        news_prompt = NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE.format(options=options) if is_multiple_choice else None
-        phase_2 = await run_second_stage_forecasters([expert], news, prompt=news_prompt, options=options)
-        return expert, phase_1, phase_2
+        return expert, phase_1
 
     tasks = [forecast_for_expert(expert) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
-    for expert, phase_1_result, phase_2_result in results_list:
-        results[expert.name] = {
-            "phase_1_result": phase_1_result,
-            "phase_2_result": phase_2_result
-        }
+    for expert, result in results_list:
+        results[expert.name] = result
 
     return results
 

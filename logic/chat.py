@@ -8,10 +8,10 @@ from autogen import ConversableAgent
 from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
 
 
-async def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str, question_title: str,
+async def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str,
                                       system_message: str = "", options: List[str] = "") -> Dict[str, dict]:
     today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    phase_one_introduction = f"Welcome to Phase 1. Today's date is {today_date} Your forecasting question is: '{question}'"
+    phase_one_introduction = f"Welcome to Phase 1. Today's date is {today_date} Your forecasting question is: '{question}'\n\n"
 
     if options:
         phase_one_introduction += f"\n\nOptions:\n\n{', '.join(options)}\n"

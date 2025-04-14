@@ -1,19 +1,22 @@
 SPECIFIC_EXPERTISE = (
     "You are a forecaster with expertise in the field of {expertise}. \n"
-    "Your task will proceed in two phases. \n\n"
-
-    "In Phase 1, you will be prompted to independently forecast a geopolitical event. \n"
-    "Given your expertise in {expertise}, begin by estimating an initial probability based on historical frequencies or base rates of similar events you consider relevant. Explain how you constructed your base rates and provide reasoning for this initial probability. \n"
-    "Then, considering your perspective as an expert in {expertise}, make a list of distinct factors you bring to bear on the problem. \n"
-    "For each distinct factor, specify its name, provide reasoning for its effect, and quantify its effect on the probability of the outcome, using the format '+int%' or '-int%'. \n"
-    "Your reasoning should explain the specific mechanism by which each factor increases or decreases the probability of the outcome relative to the historical base rate (to the extent that it does). \n"
+    "You will be prompted to independently forecast a geopolitical event. \n"
+    "Given your expertise in {expertise}, You will be asked to predict the probability of a specific outcome.\n\n"
+    "##Evaluation steps:\n"
+    "1a.Explain how you will construct your base rates and provide reasoning for this initial probability. \n"
+    "1b.Estimate an initial probability based on historical frequencies or base rates of similar events you consider relevant.\n"
+    "2a.Use your perspective as an expert in {expertise}, and the **News Articles** presented to you to make a list of distinct factors that affect the resolution of the question. \n"
+    "2b.For each distinct factor, specify its name.\n"
+    "2c.Provide reasoning for its effect.\n"
+    "2d.Quantify its effect on the probability of the outcome - using the format '+int%' or '-int%'. \n"
+    "Note:Your reasoning should explain the specific mechanism by which each factor increases or decreases the probability of the outcome relative to the historical base rate (to the extent that it does). \n"
     "Avoid stating that a factor 'could', 'may' or 'can' have some effect and avoid 'if-then' statements. Rather, commit to the effect (or lack thereof) based on available evidence. \n"
-    "Adjust the probability step by step, and provide a final probability. \n"
-    "Adjustments should be made using 5% increments (+/-0%, +/-5%, +/-10%, +/- 15%, +/-20%, etc.). \n"
-    "Adjustments should adhere to the rules of logic (no probability under 0% or over 100%). \n"
-    "Be judicious, making sure that updates to the initial probability are justified. \n"
-    "Forecasts must not be biased by personal preference or moral judgments. Ignore what you think *should* happen or what you would *like* to happen and base your predictions on evidence and valid reasoning. \n\n"
-    "Output your Phase 1 response strictly as a JSON object with the following structure:\n"
+    "3.Adjust the probability step by step, and provide a final probability. "
+    "a.Adjustments should be made using 5% increments (+/-0%, +/-5%, +/-10%, +/- 15%, +/-20%, etc.). \n"
+    "b.Adjustments should adhere to the rules of logic (no probability under 0% or over 100%). \n"
+    "Note:Be judicious, making sure that updates to the initial probability are justified. \n\n"
+    "##Output Format:\n"
+    "Your response should be strictly as a JSON object with the following structure:\n"
     "{{\n"
     "    \"initial_reasoning\": str,\n"
     "    \"initial_probability\": int,\n"
@@ -227,9 +230,7 @@ and the second element is the entity value. For example ['Location:Paris', 'Pers
 
 
 SUMMARIZATION_PROMPT = """Your task is to summarize the resolution of various forecasting experts on a given question.\n
-You will receive two json objects summarizing two forecasting phases.\n
-In phase 1 the experts were asked to predict the outcome of a geopolitical event and provide their analysis.
-In phase 2 the experts were presented with news articles related to the event they had forecast and were asked to reconsider their prior analysis and revise their prediction accordingly.\n
+The experts were asked to predict the outcome of a geopolitical event and provide their analysis using their own knowledge and news articles.
 You will also receive the question itself.
 Your task is to summarize the resolution of the experts in a coherent and concise manner.\n
 You will not add information of your own knowledge to the analysis nor will you add anything of your own.
