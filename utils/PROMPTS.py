@@ -1,8 +1,12 @@
-SPECIFIC_EXPERTISE = (
+SPECIFIC_META_MESSAGE_EXPERTISE = (
     "You are a forecaster with expertise in the field of {expertise}. \n"
     "You will be prompted to independently forecast a geopolitical event. \n"
     "Given your expertise in {expertise}, You will be asked to predict the probability of a specific outcome.\n\n"
-    "##Evaluation steps:\n"
+
+)
+
+FIRST_PHASE_INSTRUCTIONS = (
+    "## Evaluation steps:\n"
     "1a.Estimate an initial probability based on historical frequencies or base rates of similar events you consider relevant.\n"
     "1b.Explain how you will construct your base rates and provide reasoning for this initial probability. \n"
     "2a.Use your perspective as an expert in {expertise}, and the **News Articles** presented to you to make a list of distinct factors that affect the resolution of the question. \n"
@@ -29,7 +33,7 @@ SPECIFIC_EXPERTISE = (
     "    ],\n"
     "    \"final_probability\": int\n"
     "}}\n"
-    "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc."
+    "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.\n\n"
 )
 
 EXPERTISE_ANALYZER_PROMPT = (

@@ -11,7 +11,7 @@ from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
 async def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str,
                                       system_message: str = "", options: List[str] = "") -> Dict[str, dict]:
     today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    phase_one_introduction = f"Welcome to Phase 1. Today's date is {today_date} Your forecasting question is: '{question}'\n\n"
+    phase_one_introduction = f"Today's date is {today_date} Your forecasting question is: '{question}'\n\n"
 
     if options:
         phase_one_introduction += f"\n\nOptions:\n\n{', '.join(options)}\n"
@@ -20,13 +20,10 @@ async def run_first_stage_forecasters(forecasters: List[ConversableAgent], quest
     return analyses
 
 
-async def run_second_stage_forecasters(forecasters: List[ConversableAgent], news: str,
-                                       prompt: str = NEWS_STEP_INSTRUCTIONS, output_format: str = NEWS_OUTPUT_FORMAT,
-                                       options: List[str] = "") -> Dict[str, dict]:
-    phase_two_instruction_news_analysis = f"Welcome to Phase 2: News Analysis. Below are the news articles you'll need to take into consideration:\n\n{news}"
-    if options:
-        phase_two_instruction_news_analysis += f"\n\nOptions:\n\n{', '.join(options)}\n"
-    analyses = await gather_forecasts(forecasters, prompt, phase_two_instruction_news_analysis + output_format)
+async def run_second_stage_forecasters(forecasters: List[ConversableAgent],
+                                       prompt: str = NEWS_STEP_INSTRUCTIONS) -> Dict[str, dict]:
+    phase_two_instruction_news_analysis = f"Please revise your answer based on previous steps."
+    analyses = await gather_forecasts(forecasters, prompt, phase_two_instruction_news_analysis)
     return analyses
 
 

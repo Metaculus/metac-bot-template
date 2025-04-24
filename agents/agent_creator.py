@@ -3,15 +3,15 @@ from typing import Dict, Any, Literal, List
 from autogen import ConversableAgent, UserProxyAgent, GroupChat, GroupChatManager
 from autogen.agentchat.contrib.gpt_assistant_agent import GPTAssistantAgent
 
-from utils.PROMPTS import SPECIFIC_EXPERTISE, EXPERTISE_ANALYZER_PROMPT, SUMMARIZATION_PROMPT, \
+from utils.PROMPTS import SPECIFIC_META_MESSAGE_EXPERTISE, EXPERTISE_ANALYZER_PROMPT, SUMMARIZATION_PROMPT, \
     SPECIFIC_EXPERTISE_MULTIPLE_CHOICE
 from utils.utils import to_camel_case
 
 def create_agent(name:str, expertise:str, config:Dict[str,Any], human_input: Literal["ALWAYS", "NEVER"] = "NEVER") -> ConversableAgent:
-    system_message = SPECIFIC_EXPERTISE.format(expertise=expertise)
+    system_message = SPECIFIC_META_MESSAGE_EXPERTISE.format(expertise=expertise)
     return ConversableAgent(name = name, system_message=system_message, llm_config=config, human_input_mode=human_input)
 
-async def create_gpt_assistant(config:Dict[str,Any], expertise: str, specialty_expertise: str, prompt:str = SPECIFIC_EXPERTISE) -> GPTAssistantAgent:
+async def create_gpt_assistant(config:Dict[str,Any], expertise: str, specialty_expertise: str, prompt:str = SPECIFIC_META_MESSAGE_EXPERTISE) -> GPTAssistantAgent:
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
     system_message = prompt.format(expertise=expertise_and_specialty_framework)

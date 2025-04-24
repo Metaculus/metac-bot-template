@@ -13,7 +13,9 @@ from autogen import ConversableAgent
 from agents.agent_creator import create_experts_analyzer_assistant
 from agents.experts_extractor import multiple_questions_expert_creator, expert_creator, run_expert_extractor
 from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters
-from utils.PROMPTS import SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE
+from utils.PROMPTS import SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE, \
+    FIRST_PHASE_INSTRUCTIONS
+
 EXPERTS_PATH = "experts.json"
 
 
@@ -28,7 +30,7 @@ def extract_question_details(question_details: dict) -> Tuple[str, str, str, str
 
 def create_prompt(question_details: Dict[str, str],news:str) -> str:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    full_prompt = (f"##Forecast Date: {forecast_date}\n\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
+    full_prompt = FIRST_PHASE_INSTRUCTIONS + (f"##Forecast Date: {forecast_date}\n\n##Question:\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
                    f"{fine_print}\n\n##Resolution Criteria:\n{resolution_criteria}\n\n##News Articles:\n{news}")
     return full_prompt
 
@@ -75,6 +77,15 @@ async def perform_forecasting_phase(experts, question_details: Dict[str, str], n
     for expert, result in results_list:
         results[expert.name] = result
 
+    return results
+
+async def perform_revised_forecasting_step(experts: List[ConversableAgent]) -> Dict[str, Dict[str, str]]:
+    results = {}
+    tasks = []
+    tasks.append(run_second_stage_forecasters(experts,prompt="NEW PROMPT FOR FINAL REVISION"))
+    results_list = await asyncio.gather(*tasks, return_exceptions=True)
+    for expert, result in results_list:
+        results[expert.name] = result
     return results
 
 

@@ -5,6 +5,7 @@ import os
 import asyncio
 import dotenv
 
+from logic.chat_group_single_question import chat_group_single_question
 from logic.forecast_single_question import \
     forecast_single_question
 
@@ -227,7 +228,7 @@ async def question_answer_decider(question_type: str, question_details: dict, ca
     # Now decide which forecast function to use
     if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
-        final_proba, summarization = await forecast_single_question(
+        final_proba, summarization = await chat_group_single_question(
             question_details,  # a dict
             cache_seed=cache_seed,
             is_woc=is_woc,
