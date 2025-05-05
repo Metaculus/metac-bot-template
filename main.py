@@ -234,7 +234,105 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
-    Only asknews included in research. New, multiworld prompt for numeric prompt.
+    # Only asknews included in research. New, multiworld prompt for numeric prompt. DRE 5-5-2025
+    async def _run_forecast_on_numeric(
+        self, question: NumericQuestion, research: str
+    ) -> ReasonedPrediction[NumericDistribution]:
+        upper_bound_message, lower_bound_message = (
+            self._create_upper_and_lower_bound_messages(question)
+        )
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
+
+            Your research assistant says:
+            {research}
+
+            Today is {datetime.now().strftime("%Y-%m-%d")}.
+
+            {lower_bound_message}
+            {upper_bound_message}
+
+            Formatting Instructions:
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
+            - Never use scientific notation.
+            - Always start with a smaller number (more negative if negative) and then increase from there
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            
+            ************
+            Multi-world considerations
+            Now you want to explore ranges of reasonable possibilities. You consider three worlds:
+            1) Low_World: review the news for evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            2) High_World: review the news for evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            3) Mid_World: review the news for evidence from your reseach assistant that the forecast could be around the central views and trends.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate be for this world?
+            - What would be a high forecast estimate be for this world? 
+            ************
+            ************
+            Reference CSV
+            Now, for future reference, make a CSV based on values from your multi-world reasoning.
+            Headings: 
+            Low_World base rate, Low_World low forecast, Low_World high forecast
+            High_World base rate, High_World low forecast, High_World high forecast
+            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
+            ************
+            ************
+            You order the 6 estimates from low to high because you know that these values represent a reasonable range of outcomes.
+            ************
+            With those values in mind...
+            ************
+
+            The last thing you write is your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            """
+        )
+        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        prediction: NumericDistribution = (
+            PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+                reasoning, question
+            )
+        )
+        logger.info(
+            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
+        )
+        return ReasonedPrediction(
+            prediction_value=prediction, reasoning=reasoning
+        )
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
