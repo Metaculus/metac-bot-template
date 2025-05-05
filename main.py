@@ -68,16 +68,16 @@ class TemplateForecaster(ForecastBot):
                 research = await AskNewsSearcher().get_formatted_news_async(
                     question.question_text
                 )
-            elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(
-                    question.question_text
-                )
-            elif os.getenv("PERPLEXITY_API_KEY"):
-                research = await self._call_perplexity(question.question_text)
-            elif os.getenv("OPENROUTER_API_KEY"):
-                research = await self._call_perplexity(
-                    question.question_text, use_open_router=True
-                )
+            # elif os.getenv("EXA_API_KEY"):
+            #     research = await self._call_exa_smart_searcher(
+            #         question.question_text
+            #     )
+            # elif os.getenv("PERPLEXITY_API_KEY"):
+            #     research = await self._call_perplexity(question.question_text)
+            # elif os.getenv("OPENROUTER_API_KEY"):
+            #     research = await self._call_perplexity(
+            #         question.question_text, use_open_router=True
+            #     )
             else:
                 logger.warning(
                     f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
@@ -180,6 +180,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
+    # multi-world prompt, DRE 05-05-2025
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
@@ -233,74 +234,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
-    async def _run_forecast_on_numeric(
-        self, question: NumericQuestion, research: str
-    ) -> ReasonedPrediction[NumericDistribution]:
-        upper_bound_message, lower_bound_message = (
-            self._create_upper_and_lower_bound_messages(question)
-        )
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
-            {question.question_text}
-
-            Background:
-            {question.background_info}
-
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
-
-            Your research assistant says:
-            {research}
-
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            {lower_bound_message}
-            {upper_bound_message}
-
-            Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
-            - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) The expectations of experts and markets.
-            (e) A brief description of an unexpected scenario that results in a low outcome.
-            (f) A brief description of an unexpected scenario that results in a high outcome.
-
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
-
-            The last thing you write is your final answer as:
-            "
-            Percentile 10: XX
-            Percentile 20: XX
-            Percentile 40: XX
-            Percentile 60: XX
-            Percentile 80: XX
-            Percentile 90: XX
-            "
-            """
-        )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
-        prediction: NumericDistribution = (
-            PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                reasoning, question
-            )
-        )
-        logger.info(
-            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+    Only asknews included in research. New, multiworld prompt for numeric prompt.
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
