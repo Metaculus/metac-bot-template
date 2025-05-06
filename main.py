@@ -68,16 +68,16 @@ class TemplateForecaster(ForecastBot):
                 research = await AskNewsSearcher().get_formatted_news_async(
                     question.question_text
                 )
-            # elif os.getenv("EXA_API_KEY"):
-            #     research = await self._call_exa_smart_searcher(
-            #         question.question_text
-            #     )
-            # elif os.getenv("PERPLEXITY_API_KEY"):
-            #     research = await self._call_perplexity(question.question_text)
-            # elif os.getenv("OPENROUTER_API_KEY"):
-            #     research = await self._call_perplexity(
-            #         question.question_text, use_open_router=True
-            #     )
+            elif os.getenv("EXA_API_KEY"):
+                research = await self._call_exa_smart_searcher(
+                    question.question_text
+                )
+            elif os.getenv("PERPLEXITY_API_KEY"):
+                research = await self._call_perplexity(question.question_text)
+            elif os.getenv("OPENROUTER_API_KEY"):
+                research = await self._call_perplexity(
+                    question.question_text, use_open_router=True
+                )
             else:
                 logger.warning(
                     f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
