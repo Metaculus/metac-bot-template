@@ -8,10 +8,10 @@ import aiofiles
 import aiofiles.os
 import asyncio
 
-from autogen import ConversableAgent
+from autogen_agentchat.agents import AssistantAgent
 
 from agents.agent_creator import create_experts_analyzer_assistant
-from agents.experts_extractor import multiple_questions_expert_creator, expert_creator, run_expert_extractor
+from agents.experts_extractor import expert_creator, run_expert_extractor
 from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters
 from utils.PROMPTS import SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, NEWS_STEP_INSTRUCTIONS_MULTIPLE_CHOICE, \
     FIRST_PHASE_INSTRUCTIONS
@@ -37,17 +37,8 @@ def create_prompt(question_details: Dict[str, str],news:str) -> str:
 
 async def create_experts(professional_expertise, academic_disciplines, specialty, frameworks, config,
                          is_multiple_choice=False, options=None):
-    if is_multiple_choice:
-        return (
-            await multiple_questions_expert_creator(experts=professional_expertise, config=config,
-                                                    frameworks_specialties=specialty,
-                                                    prompt=SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, options=options),
-            await multiple_questions_expert_creator(experts=academic_disciplines, config=config,
-                                                    frameworks_specialties=frameworks,
-                                                    prompt=SPECIFIC_EXPERTISE_MULTIPLE_CHOICE, options=options),
-        )
-    else:
-        return (
+
+    return (
             await expert_creator(experts=professional_expertise, config=config, frameworks_specialties=specialty),
             await expert_creator(experts=academic_disciplines, config=config, frameworks_specialties=frameworks),
         )
@@ -65,7 +56,7 @@ async def perform_forecasting_phase(experts, question_details: Dict[str, str], n
                                     options=None) -> Dict[str, Dict[str, Dict[str, str]]]:
     results = {}
 
-    async def forecast_for_expert(expert:ConversableAgent):
+    async def forecast_for_expert(expert:AssistantAgent):
         question_formatted = create_prompt(question_details, news)
         phase_1 = await run_first_stage_forecasters([expert], question=question_formatted,
                                                     system_message="",
@@ -79,7 +70,7 @@ async def perform_forecasting_phase(experts, question_details: Dict[str, str], n
 
     return results
 
-async def perform_revised_forecasting_step(experts: List[ConversableAgent]) -> Dict[str, Dict[str, str]]:
+async def perform_revised_forecasting_step(experts: List[AssistantAgent]) -> Dict[str, Dict[str, str]]:
     results = {}
     tasks = []
     tasks.append(run_second_stage_forecasters(experts,prompt="NEW PROMPT FOR FINAL REVISION"))

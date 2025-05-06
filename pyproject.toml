@@ -16,8 +16,9 @@ openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.5"
 matplotlib = "^3.10.0"
-autogen-agentchat = "0.2.40"
+autogen-agentchat = "^0.5.5"
 tqdm = "^4.67.1"
+autogen-ext = {extras = ["openai"], version = "^0.5.5"}
 
 
 [tool.poetry.group.dev.dependencies]

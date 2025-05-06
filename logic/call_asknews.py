@@ -3,11 +3,11 @@ from typing import Dict
 
 import asyncio
 from asknews_sdk import AskNewsSDK
-from autogen import ConversableAgent
-from autogen.agentchat.contrib.gpt_assistant_agent import GPTAssistantAgent
+from autogen_agentchat.agents import AssistantAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from logic.chat import validate_and_parse_response
-from logic.utils import create_prompt
+from logic.utils import create_prompt, extract_question_details
 from utils.PROMPTS import HYDE_PROMPT
 from utils.config import get_gpt_config
 
@@ -87,11 +87,14 @@ async def call_asknews(question_details:Dict[str,str]) -> str:
 
 
 async def hyde(question_details:Dict[str,str])->str:
-    config = get_gpt_config(42, 0.7, "gpt-4o", 120)
-    prompt = create_prompt(question_details, news="Empty...")
-    agent = GPTAssistantAgent(name = "Hyde",instructions=HYDE_PROMPT,llm_config=config)
-    hyde_reply = await agent.a_generate_reply(messages=[{"role": "user", "content": prompt}])
-    result = validate_and_parse_response(hyde_reply['content'])
+    model_client = OpenAIChatCompletionClient(model="gpt-4o", temperature=0.7)
+    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    full_prompt = (
+        f"##Forecast Date: {forecast_date}\n\n##Question:\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
+        f"{fine_print}\n\n##Resolution Criteria:\n{resolution_criteria}")
+    agent = AssistantAgent(name = "Hyde",system_message=HYDE_PROMPT,model_client=model_client)
+    hyde_reply = await agent.run(task=full_prompt)
+    result = validate_and_parse_response(hyde_reply.messages[1].content)
     return result.get("article",None)
 
 

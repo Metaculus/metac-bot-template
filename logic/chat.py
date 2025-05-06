@@ -3,12 +3,12 @@ import json
 import re
 from typing import List, Dict
 
-from autogen import ConversableAgent
+from autogen_agentchat.agents import AssistantAgent
 
 from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
 
 
-async def run_first_stage_forecasters(forecasters: List[ConversableAgent], question: str,
+async def run_first_stage_forecasters(forecasters: List[AssistantAgent], question: str,
                                       system_message: str = "", options: List[str] = "") -> Dict[str, dict]:
     today_date = datetime.datetime.now().strftime("%Y-%m-%d")
     phase_one_introduction = f"Today's date is {today_date} Your forecasting question is: '{question}'\n\n"
@@ -20,29 +20,24 @@ async def run_first_stage_forecasters(forecasters: List[ConversableAgent], quest
     return analyses
 
 
-async def run_second_stage_forecasters(forecasters: List[ConversableAgent],
+async def run_second_stage_forecasters(forecasters: List[AssistantAgent],
                                        prompt: str = NEWS_STEP_INSTRUCTIONS) -> Dict[str, dict]:
     phase_two_instruction_news_analysis = f"Please revise your answer based on previous steps."
     analyses = await gather_forecasts(forecasters, prompt, phase_two_instruction_news_analysis)
     return analyses
 
 
-async def forecast(forecaster: ConversableAgent, phase_instructions: str, phase_introduction: str) -> Dict[str, dict]:
-    result = await forecaster.a_generate_reply(
-        messages=[
-            {"role": "assistant", "content": phase_instructions},
-            {"role": "user", "content": phase_introduction},
-        ]
+async def forecast(forecaster: AssistantAgent, phase_instructions: str, phase_introduction: str) -> Dict[str, dict]:
+    result = await forecaster.run(task=f"{phase_instructions}\n \n{phase_introduction}"
     )
-    return validate_and_parse_response(result['content'])
+    if result:
+        return validate_and_parse_response(result.messages[1].content)
 
 
-async def gather_forecasts(forecasters: List[ConversableAgent], system_message: str, phase_introduction: str) -> Dict[
+async def gather_forecasts(forecasters: List[AssistantAgent], system_message: str, phase_introduction: str) -> Dict[
     str, dict]:
     result = {}
     for forecaster in forecasters:
-        if not system_message:
-            system_message = forecaster.system_message
         try:
             result = await forecast(forecaster, system_message, phase_introduction)
             return result
