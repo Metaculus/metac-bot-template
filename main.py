@@ -394,7 +394,7 @@ if __name__ == "__main__":
                 # naming style reminder: "metaculus/{anthropic or openai}/{model_name}".
             "default": GeneralLlm(
                 model="metaculus/openai/o4-mini",
-                temperature=0.3,  # left unchanged, but o4 supposedly doesn't take temperature
+                #temperature=0.3,  # left unchanged, but o4 supposedly doesn't take temperature
                 timeout=40,
                 allowed_tries=2,
             ),
