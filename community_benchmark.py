@@ -20,6 +20,7 @@ from forecasting_tools import (
 
 from main import TemplateForecaster
 from dummy_bot import DummyBot  # Import the new dummy bot
+from bots import AdjacentNewsRelatedMarketsBot  # Import the new Adjacent News bot
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,8 @@ async def benchmark_forecast_bot(mode: str) -> None:
                     ),
                 },
             ),
-            DummyBot(),  # Add the new dummy bot
+            DummyBot(),
+            AdjacentNewsRelatedMarketsBot(),  # Add the new Adjacent News bot
             # Add other ForecastBots here (or same bot with different parameters)
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
