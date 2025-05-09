@@ -390,17 +390,16 @@ if __name__ == "__main__":
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
-        # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
-        #         # naming style reminder: "metaculus/{anthropic or openai}/{model_name}".
-        #     "default": GeneralLlm(
-        #         model="metaculus/openai/o4-mini",
-        #         #temperature=0.3,  # left unchanged, but o4 supposedly doesn't take temperature
-        #         timeout=40,
-        #         allowed_tries=2,
-        #     ),
-        #     #"summarizer": "openai/gpt-4o-mini",
-        #     "summarizer": "metaculus/openai/o4-mini",
-        # },
+        llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+                # naming style reminder: "metaculus/{anthropic or openai}/{model_name}".
+            "default": GeneralLlm(
+                model="metaculus/openai/o4-mini",
+                temperature=0.3,  # left unchanged, but o4 supposedly doesn't take temperature
+                timeout=40,
+                allowed_tries=2,
+            ),
+            "summarizer": "metaculus/openai/o4-mini",  #"summarizer": "openai/gpt-4o-mini",
+        },
     )
 
     if run_mode == "tournament":
