@@ -419,7 +419,7 @@ if __name__ == "__main__":
         )
     elif run_mode == "test_questions":
         # Example questions are a good way to test the bot's performance on a single question
-            EXAMPLE_QUESTIONS = [
+        EXAMPLE_QUESTIONS = [
             "https://www.metaculus.com/questions/36295/us-tariff-rate-on-goods-imported-into-us-at-yearend-2026/ "
         ]
         
