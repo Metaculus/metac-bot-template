@@ -340,7 +340,7 @@ class TemplateForecaster(ForecastBot):
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
-        ))
+        )
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
