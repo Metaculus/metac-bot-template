@@ -133,8 +133,8 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    # Consider Range of Outcomes, DRE 5/10/2025
-async def _run_forecast_on_binary(
+    # Consider Range of Reasonable Binary Forecasts, DRE 5/10/2025
+    async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
         prompt = clean_indents(
