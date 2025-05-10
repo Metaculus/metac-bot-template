@@ -133,54 +133,7 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    async def _run_forecast_on_binary(
-        self, question: BinaryQuestion, research: str
-    ) -> ReasonedPrediction[float]:
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
-            {question.question_text}
-
-            Question background:
-            {question.background_info}
-
-
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-
-            Your research assistant says:
-            {research}
-
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
-
-            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
-
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
-            """
-        )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
-        prediction: float = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=1, min_prediction=0
-        )
-        logger.info(
-            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
-        )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
-
-    # multi-world prompt, DRE 05-05-2025
+    # Update DRE 05/10/2025 prompt
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
@@ -200,7 +153,8 @@ class TemplateForecaster(ForecastBot):
             {question.resolution_criteria}
 
             {question.fine_print}
-
+            
+            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
@@ -213,7 +167,28 @@ class TemplateForecaster(ForecastBot):
             (c) A description of an scenario that results in an unexpected outcome.
 
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-
+            ************
+            
+            There are N options in this question, in this order {question.options}
+            - Make a preliminary ranking of the options from highest to lowest probability by your initial perceived probability
+            - Be sure to keep track of the original order of the options, we will need them!
+            ************
+            
+            For each option, break the evidence down into buckets that support low, mid, and high probability
+            - Estimate low, mid, and high probability for each option, using the evidence buckets
+            - Re-rank the options according to the mid probality for each
+            - Are there any dicontinuities or inconsistencies from adjacent options?
+            - Ajust the values if necessary
+            ************
+            
+            Reference CSV
+            Now, for future reference, make a CSV containing the low, mid, and high probability estimates for each option
+            - Headings: Option, low_prob, mid_prob, and hi_prob
+            - Rows: Option_A, Option_B, ... Option_N
+            ************
+            
+            Forecast your best single estimate of probability for each option.
+            
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
