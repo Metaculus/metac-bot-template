@@ -1,10 +1,10 @@
 name: Forecast on Quarterly Cup
 
-#DRE: commented out schedule event on 5/5/2025 because I couldn't disable it
-# on:
-#   workflow_dispatch:
-#   schedule:
-#     - cron: "0 0 */2 * *" # runs at midnight every 2 days
+# uncommented 5/10/2025...DRE: commented out schedule event on 5/5/2025 because I couldn't disable it
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 */2 * *" # runs at midnight every 2 days
 
 # Add concurrency group to prevent parallel runs
 concurrency:
