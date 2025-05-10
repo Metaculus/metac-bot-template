@@ -234,7 +234,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
-    # Only asknews included in research. New, multiworld prompt for numeric prompt. DRE 5-5-2025
+    # Updated, with 1/3 buckets multiworld prompt for numeric prompt. DRE 5-10-2025
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -281,31 +281,39 @@ class TemplateForecaster(ForecastBot):
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
             
             ************
+            Group the evidence
+            Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
+            Bucket 1) Evidence that would indicate a relatively low forecast
+            Bucket 2) Evidence that would indicate a relatively high forecast
+            Bucket 3) Evidence that would indicate a central forecast
+            
+            ************
             Multi-world considerations
             Now you want to explore ranges of reasonable possibilities. You consider three worlds:
-            1) Low_World: review the news for evidence from your reseach assistant that the forecast could be low.
-            - What would an appropriate base rate be for this world:
+            1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
             - What would be a high forecast estimate for this world?
-            2) High_World: review the news for evidence from your reseach assistant that the forecast could be low.
-            - What would an appropriate base rate be for this world:
+            2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
+            - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
             - What would be a high forecast estimate for this world?
-            3) Mid_World: review the news for evidence from your reseach assistant that the forecast could be around the central views and trends.
+            3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
             - What would an appropriate base rate be for this world:
             - What would be a low forecast estimate be for this world?
             - What would be a high forecast estimate be for this world? 
-            ************
+
             ************
             Reference CSV
             Now, for future reference, make a CSV based on values from your multi-world reasoning.
             Headings: 
             Low_World base rate, Low_World low forecast, Low_World high forecast
-            High_World base rate, High_World low forecast, High_World high forecast
             Mid_World base rate, Mid_World low forecast, Mid_World high forecast
-            ************
+            High_World base rate, High_World low forecast, High_World high forecast
+            
             ************
             You order the 6 estimates from low to high because you know that these values represent a reasonable range of outcomes.
+            
             ************
             With those values in mind...
             ************
@@ -332,7 +340,7 @@ class TemplateForecaster(ForecastBot):
         )
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
-        )
+        ))
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
