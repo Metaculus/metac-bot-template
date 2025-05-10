@@ -133,7 +133,8 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    async def _run_forecast_on_binary(
+    # Consider Range of Outcomes, DRE 5/10/2025
+async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
         prompt = clean_indents(
@@ -161,10 +162,54 @@ class TemplateForecaster(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
+            (c) The expectations of experts and markets.
+            (d) A brief description of a scenario that results in a No outcome.
+            (e) A brief description of a scenario that results in a Yes outcome.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            
+            ************
+            Group the evidence
+            Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
+            Bucket 1) Evidence that would indicate a relatively low forecast
+            Bucket 2) Evidence that would indicate a relatively high forecast
+            Bucket 3) Evidence that would indicate a central forecast
+            
+            ************
+            Multi-world considerations
+            Now you want to explore ranges of reasonable possible forecasts. You consider three worlds:
+            1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate be for this world?
+            - What would be a high forecast estimate be for this world?
+            
+            ************
+            Reference CSV
+            Now, for future reference, make a CSV based on values from your multi-world reasoning.
+            Headings: 
+            Low_World base rate, Low_World low forecast, Low_World high forecast
+            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
+            High_World base rate, High_World low forecast, High_World high forecast
+            
+            ************
+            Final expect distribution of reasonable forecasts
+            You order the 6 estimates from low to high because you know that these values represent a range of resonable forecasts.
+            
+            Considering the 6 estimates ordered from low to high:
+            - Project a distribution of reasonable forecasts
+            - Make a CSV with percentiles of probability from P10 to p90 on increments of 10
+            - Reflect on the 50th percentile and adjust as necessary
+            - The 50th percentile is your best estimate of forecast probability
+            ************
+
 
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
