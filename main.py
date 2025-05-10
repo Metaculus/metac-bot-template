@@ -385,7 +385,7 @@ if __name__ == "__main__":
 
     template_bot = TemplateForecaster(
         research_reports_per_question=1,
-        predictions_per_research_report=1,  # predictions_per_research_report=5
+        predictions_per_research_report=5,  # predictions_per_research_report=1
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
