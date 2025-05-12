@@ -4,6 +4,7 @@ import requests
 def get_related_markets_from_adjacent_news(question: str) -> str:
     """
     Given a question string, use the Adjacent News API to find related markets and return them as a formatted string.
+    Only include markets with volume >= 1000, sorted by volume descending.
     """
     api_key = os.getenv("ADJACENT_NEWS_API_KEY")
     if not api_key:
@@ -20,8 +21,22 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
     print(f"DEBUG: Parsed data: {data}")
     if not data or "data" not in data or not data["data"]:
         return "No related markets found."
-    formatted = "Related Markets from Adjacent News:\n"
+    filtered_markets = []
     for market in data["data"]:
+        volume = market.get("volume", "N/A")
+        try:
+            vol_num = float(volume)
+        except (ValueError, TypeError):
+            vol_num = 0
+        if vol_num >= 1000:
+            market["_parsed_volume"] = vol_num  # Store parsed volume for sorting
+            filtered_markets.append(market)
+    if not filtered_markets:
+        return "No related markets found with volume >= 1000."
+    # Sort by volume descending
+    filtered_markets.sort(key=lambda m: m["_parsed_volume"], reverse=True)
+    formatted = "Related Markets from Adjacent News (volume >= 1000, sorted by volume):\n"
+    for market in filtered_markets:
         name = market.get("name", market.get("question", "Unnamed Market"))
         platform = market.get("platform", "Unknown Platform")
         url = market.get("url", market.get("link", ""))
@@ -59,7 +74,7 @@ def get_web_search_results_from_openrouter(question: str) -> str:
     payload = {
         "model": "openai/gpt-4o:online",
         "prompt": prompt,
-        "max_tokens": 512,
+        "max_tokens": 2048,
         "temperature": 0.2,
     }
     headers = {

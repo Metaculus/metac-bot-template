@@ -31,7 +31,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 3 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = 30 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -69,7 +69,9 @@ async def benchmark_forecast_bot(mode: str) -> None:
             #         ),
             #     },
             # ),
-            AdjacentNewsRelatedMarketsBot(),  # Add the new Adjacent News bot
+            AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-3.5-turbo", llm_temperature=0.2),
+            AdjacentNewsRelatedMarketsBot(llm_model="openrouter/anthropic/claude-3-sonnet-20240229", llm_temperature=0.2),
             OpenRouterWebSearchBot(),         # Add the OpenRouter web search bot
             CombinedWebAndAdjacentNewsBot(),  # Add the combined web + adjacent news bot
             # Add other ForecastBots here (or same bot with different parameters)
