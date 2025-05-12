@@ -20,7 +20,7 @@ from forecasting_tools import (
 
 from main import TemplateForecaster
 from dummy_bot import DummyBot  # Import the new dummy bot
-from bots import AdjacentNewsRelatedMarketsBot  # Import the new Adjacent News bot
+from bots import AdjacentNewsRelatedMarketsBot, OpenRouterWebSearchBot, CombinedWebAndAdjacentNewsBot  # Import the new bots
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +71,8 @@ async def benchmark_forecast_bot(mode: str) -> None:
             ),
             DummyBot(),
             AdjacentNewsRelatedMarketsBot(),  # Add the new Adjacent News bot
+            OpenRouterWebSearchBot(),         # Add the OpenRouter web search bot
+            CombinedWebAndAdjacentNewsBot(),  # Add the combined web + adjacent news bot
             # Add other ForecastBots here (or same bot with different parameters)
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
@@ -123,5 +125,23 @@ if __name__ == "__main__":
         args.mode
     )
     asyncio.run(benchmark_forecast_bot(mode))
+
+    # Auto-commit latest benchmark results if in 'run' mode
+    if mode == "run":
+        import os
+        import glob
+        import subprocess
+        benchmarks_dir = "benchmarks"
+        pattern = os.path.join(benchmarks_dir, "benchmarks_*.json")
+        benchmark_files = glob.glob(pattern)
+        if benchmark_files:
+            latest_file = max(benchmark_files, key=os.path.getctime)
+            commit_message = f"Add benchmark results: {os.path.basename(latest_file)}"
+            try:
+                subprocess.run(["git", "add", "-A"], check=True)  # Stage all changes
+                subprocess.run(["git", "commit", "--allow-empty", "-m", commit_message], check=True)
+                print(f"Committed all changes with message: '{commit_message}'")
+            except subprocess.CalledProcessError as e:
+                print(f"Git commit failed: {e}")
 
 

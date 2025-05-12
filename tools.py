@@ -38,4 +38,41 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
             f"  Ends: {end_date}\n"
             f"  URL: {url}\n"
         )
-    return formatted 
+    return formatted
+
+def get_web_search_results_from_openrouter(question: str) -> str:
+    """
+    Given a question string, use the OpenRouter completions API with a web-search-enabled model to get relevant news/info.
+    """
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise ValueError("OPENROUTER_API_KEY not set in environment.")
+    url = "https://openrouter.ai/api/v1/completions"
+    prompt = (
+        "You are an assistant to a superforecaster. "
+        "The superforecaster will give you a question they intend to forecast on. "
+        "To be a great assistant, you generate a concise but detailed rundown of the most relevant news, "
+        "including if the question would resolve Yes or No based on current information. "
+        "You do not produce forecasts yourself.\n\n"
+        f"Question: {question}"
+    )
+    payload = {
+        "model": "openai/gpt-4o:online",
+        "prompt": prompt,
+        "max_tokens": 512,
+        "temperature": 0.2,
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    print(f"DEBUG: Status code: {response.status_code}")
+    print(f"DEBUG: Response text: {response.text}")
+    if not response.ok:
+        raise RuntimeError(f"OpenRouter completions API error: {response.text}")
+    data = response.json()
+    choices = data.get("choices")
+    if not choices or not choices[0].get("text"):
+        return "No web search results found."
+    return choices[0]["text"].strip() 
