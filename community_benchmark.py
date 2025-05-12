@@ -31,7 +31,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 1 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = 3 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
