@@ -1,10 +1,13 @@
 [tool.poetry]
-name = "metac-bot-template"
-version = "0.1.0"
+name = "goodheart-labs"
+version = "0.2.0"
 description = ""
-authors = ["Vasile Popescu <elisescu@elisescu.com>"]
+authors = [
+  "Rob Gordon <rob.gordon@tone-row.com>",
+  "Nathan Young <nathanpmyoung@gmail.com>",
+]
 readme = "README.md"
-package-mode = false
+package-mode = true
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -23,4 +26,3 @@ ipykernel = "^6.29.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
