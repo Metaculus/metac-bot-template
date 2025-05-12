@@ -124,6 +124,7 @@ if __name__ == "__main__":
     mode: Literal["run", "custom", "display"] = (
         args.mode
     )
+    print("Package context:", __package__)
     asyncio.run(benchmark_forecast_bot(mode))
 
     # Auto-commit latest benchmark results if in 'run' mode
