@@ -458,26 +458,17 @@ class FermiEstimationBot(ForecastBot):
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
         # Use Fermi estimation to answer the binary question
-        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
-        if hasattr(reasoning, '__await__'):
-            import asyncio
-            reasoning = await reasoning
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
         prediction = PredictionExtractor.extract_last_percentage_value(reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
-        if hasattr(reasoning, '__await__'):
-            import asyncio
-            reasoning = await reasoning
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
-        if hasattr(reasoning, '__await__'):
-            import asyncio
-            reasoning = await reasoning
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 

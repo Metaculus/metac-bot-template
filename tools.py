@@ -93,7 +93,7 @@ def get_web_search_results_from_openrouter(question: str) -> str:
         return "No web search results found."
     return choices[0]["text"].strip()
 
-def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2) -> str:
+async def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2) -> str:
     """
     Given a question string, use a configurable LLM to perform a Fermi estimation (back-of-the-envelope calculation).
     The LLM is prompted to break down the problem into logical steps, make explicit guesses, and document all reasoning.
@@ -115,11 +115,7 @@ def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_t
         """
     )
     llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
-    response = llm.invoke(prompt)
-    # If GeneralLlm.invoke is async, you may need to await it in an async context
-    if hasattr(response, '__await__'):
-        import asyncio
-        response = asyncio.get_event_loop().run_until_complete(response)
+    response = await llm.invoke(prompt)
     return response
 
 async def get_perplexity_research_from_openrouter(question: str, model_name: str = "openrouter/perplexity/sonar-pro", temperature: float = 0.1) -> str:
