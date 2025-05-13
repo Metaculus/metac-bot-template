@@ -20,7 +20,7 @@ from forecasting_tools import (
 
 from main import TemplateForecaster
 from dummy_bot import DummyBot  # Import the new dummy bot
-from bots import AdjacentNewsRelatedMarketsBot, OpenRouterWebSearchBot, CombinedWebAndAdjacentNewsBot, FermiEstimationBot  # Import the new bots
+from bots import AdjacentNewsRelatedMarketsBot, OpenRouterWebSearchBot, CombinedWebAndAdjacentNewsBot, FermiEstimationBot, PerplexityRelatedMarketsBot  # Import the new bots
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 1 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = 3 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -60,20 +60,8 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            # TemplateForecaster(
-            #     predictions_per_research_report=1,
-            #     llms={
-            #         "default": GeneralLlm(
-            #             model="gpt-4o-mini",
-            #             temperature=0.2,
-            #         ),
-            #     },
-            # ),
-            # AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.1),
-            # AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-3.5-turbo", llm_temperature=0.2),
-            # AdjacentNewsRelatedMarketsBot(llm_model="openrouter/anthropic/claude-3-sonnet-20240229", llm_temperature=0.2),
-            # OpenRouterWebSearchBot(),         # Add the OpenRouter web search bot
-            # CombinedWebAndAdjacentNewsBot(),  # Add the combined web + adjacent news bot
+            # PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),  # forecasts once by default
+            # PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),  # forecasts 5 times
             FermiEstimationBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])

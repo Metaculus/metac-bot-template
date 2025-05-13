@@ -120,4 +120,27 @@ def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_t
     if hasattr(response, '__await__'):
         import asyncio
         response = asyncio.get_event_loop().run_until_complete(response)
+    return response
+
+async def get_perplexity_research_from_openrouter(question: str, model_name: str = "openrouter/perplexity/sonar-pro", temperature: float = 0.1) -> str:
+    """
+    Calls the Perplexity model via OpenRouter for research purposes, using the same prompt as the template bot.
+    You can specify the model (e.g., 'openrouter/perplexity/sonar-pro' or 'openrouter/perplexity/sonar-reasoning').
+    """
+    prompt = clean_indents(
+        f"""
+        You are an assistant to a superforecaster.
+        The superforecaster will give you a question they intend to forecast on.
+        To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+        You do not produce forecasts yourself.
+
+        Question:
+        {question}
+        """
+    )
+    model = GeneralLlm(
+        model=model_name,
+        temperature=temperature,
+    )
+    response = await model.invoke(prompt)
     return response 
