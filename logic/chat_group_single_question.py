@@ -1,3 +1,4 @@
+import json
 from typing import List, Dict, Union, Tuple
 
 import numpy as np
@@ -5,8 +6,9 @@ from autogen_agentchat.teams import RoundRobinGroupChat
 
 from agents.agent_creator import create_admin, create_group
 from logic.call_asknews import run_research
-from logic.utils import extract_question_details, get_all_experts, perform_forecasting_phase, \
+from logic.utils import extract_question_details, get_all_experts, perform_forecasting_phase, format_phase1_results_to_string, \
     perform_revised_forecasting_step
+from utils.PROMPTS import GROUP_INSTRUCTIONS
 from utils.config import get_gpt_config
 from utils.utils import normalize_and_average
 
@@ -33,7 +35,7 @@ async def chat_group_single_question(
     # Forecasting
     results = await perform_forecasting_phase(all_experts, question_details, news=news,
                                               is_multiple_choice=is_multiple_choice, options=options)
-
+    phase1_results_json = json.dumps(results, indent=2)
 
     # Extract probabilities
     final_probability = [result['final_probability'] for result in results.values() if 'final_probability' in result]
@@ -48,7 +50,9 @@ async def chat_group_single_question(
     mean_initial_step = np.mean(initial_probability)
     mean_deliberation_step = np.mean(final_probability)
 
-    group_results = await group_chat.run(task = "Now each one of you will have one turn to convince the others about their answer. ")
+    phase1_results_as_string = format_phase1_results_to_string(results)
+
+    group_results = await group_chat.run(task = GROUP_INSTRUCTIONS)
 
 
 
