@@ -3,7 +3,7 @@ from forecasting_tools import (
     ForecastBot, ReasonedPrediction, BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, NumericDistribution, PredictedOptionList,
     GeneralLlm, PredictionExtractor, clean_indents
 )
-from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter
+from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm
 from datetime import datetime
 
 class AdjacentNewsRelatedMarketsBot(ForecastBot):
@@ -443,5 +443,40 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             """
         )
         reasoning = await self.llm.invoke(prompt)
+        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(reasoning, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+class FermiEstimationBot(ForecastBot):
+    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
+        super().__init__()
+        self.name = "FermiEstimationBot"
+        self.llm_model = llm_model
+        self.llm_temperature = llm_temperature
+
+    async def run_research(self, question):
+        return ""  # Fermi estimation bot does not use external research
+
+    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
+        # Use Fermi estimation to answer the binary question
+        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        if hasattr(reasoning, '__await__'):
+            import asyncio
+            reasoning = await reasoning
+        prediction = PredictionExtractor.extract_last_percentage_value(reasoning, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
+        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        if hasattr(reasoning, '__await__'):
+            import asyncio
+            reasoning = await reasoning
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(reasoning, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
+        reasoning = fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        if hasattr(reasoning, '__await__'):
+            import asyncio
+            reasoning = await reasoning
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning) 

@@ -1,5 +1,6 @@
 import os
 import requests
+from forecasting_tools import GeneralLlm, clean_indents
 
 def get_related_markets_from_adjacent_news(question: str) -> str:
     """
@@ -90,4 +91,33 @@ def get_web_search_results_from_openrouter(question: str) -> str:
     choices = data.get("choices")
     if not choices or not choices[0].get("text"):
         return "No web search results found."
-    return choices[0]["text"].strip() 
+    return choices[0]["text"].strip()
+
+def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2) -> str:
+    """
+    Given a question string, use a configurable LLM to perform a Fermi estimation (back-of-the-envelope calculation).
+    The LLM is prompted to break down the problem into logical steps, make explicit guesses, and document all reasoning.
+    """
+    prompt = clean_indents(
+        f"""
+        You are a professional forecaster skilled in Fermi estimation (back-of-the-envelope reasoning).
+        Your task is to answer the following question using a Fermi estimation approach:
+
+        {question}
+
+        Instructions:
+        - Break the problem down into smaller, logical components.
+        - For each component, make explicit, reasonable guesses or estimates, and clearly state your assumptions.
+        - Document every step and calculation in detail, showing your work.
+        - Do not make any unstated assumptions; explain your reasoning for each guess.
+        - Proceed step by step, combining your estimates to reach a final answer.
+        - At the end, summarize your Fermi estimate and show the final calculation.
+        """
+    )
+    llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    response = llm.invoke(prompt)
+    # If GeneralLlm.invoke is async, you may need to await it in an async context
+    if hasattr(response, '__await__'):
+        import asyncio
+        response = asyncio.get_event_loop().run_until_complete(response)
+    return response 
