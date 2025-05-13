@@ -19,7 +19,7 @@ def create_agent(config: Dict[str, Any], expertise: str, specialty_expertise: st
                  prompt: str = SPECIFIC_META_MESSAGE_EXPERTISE) -> AssistantAgent:
     client = OpenAIChatCompletionClient(model="gpt-4o", temperature=0.7)
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
-    name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
+    name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}'
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
     return AssistantAgent(name=name, system_message=system_message, model_client=client)
 
@@ -27,9 +27,9 @@ def create_agent(config: Dict[str, Any], expertise: str, specialty_expertise: st
 def create_openai_agent(config: Dict[str, Any], expertise: str, specialty_expertise: str,
                        prompt: str = SPECIFIC_META_MESSAGE_EXPERTISE) -> OpenAIAssistantAgent:
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
-    name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}Agent'
+    name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}'
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
-    return OpenAIAssistantAgent(client=OPEN_AI_CLIENT, name=name, description="You are an expert",
+    return OpenAIAssistantAgent(client=OPEN_AI_CLIENT, name=name, description="You are an expert forecaster",
                                 instructions=system_message, model="gpt-4o", temperature=config["temperature"])
 
 
