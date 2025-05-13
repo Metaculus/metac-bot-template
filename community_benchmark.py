@@ -31,7 +31,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 4 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = 30 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -60,8 +60,9 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            # PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),  # forecasts once by default
-            # PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),  # forecasts 5 times
+            AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),  # forecasts once by default
+            PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),  # forecasts 5 times
             FermiEstimationBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])

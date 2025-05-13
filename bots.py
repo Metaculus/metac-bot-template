@@ -473,8 +473,8 @@ class FermiEstimationBot(ForecastBot):
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 class PerplexityRelatedMarketsBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
+    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
+        super().__init__(predictions_per_research_report=predictions_per_research_report)
         self.name = "CombinedWebSearchAndRelatedMarketsBot"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
