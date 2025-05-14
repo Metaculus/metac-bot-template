@@ -65,32 +65,37 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            # OpenSearchPerpAdjMarkets(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            OpenSearchPerpAdjMarkets(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
+            ),
             AdjacentNewsRelatedMarketsBot(
                 llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
                     model="o3", temperature=0.2)}
             ),
-            # PerplexityRelatedMarketsBot(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
-            # FermiResearchFirstBot(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
-            # CombinedWebAndAdjacentNewsBot(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=1),
-            # CombinedWebAndAdjacentNewsBot(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),
-            # FermiWithSearchControl(
-            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            PerplexityRelatedMarketsBot(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
+            ),
+            FermiResearchFirstBot(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
+            ),
+            CombinedWebAndAdjacentNewsBot(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)},
+                predictions_per_research_report=1
+            ),
+            CombinedWebAndAdjacentNewsBot(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)},
+                predictions_per_research_report=5),
+            FermiWithSearchControl(
+                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
+                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
+            ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
-        # Set explicit names for each bot for clear benchmark headings
-        # bots[0].name = "OpenSearchPerpAdjMarkets | gpt-4o-mini"
-        # bots[0].name = "AdjacentNewsRelatedMarketsBot | o3"
-        # bots[2].name = "PerplexityRelatedMarketsBot | gpt-4o-mini"
-        # bots[3].name = "FermiResearchFirstBot | gpt-4o-mini"
-        # bots[4].name = "CombinedWebAndAdjacentNewsBot | gpt-4o-mini | 1x"
-        # bots[5].name = "CombinedWebAndAdjacentNewsBot | gpt-4o-mini | 5x"
-        # bots[1].name = "FermiWithSearchControl | gpt-4o-mini"
         benchmarks = await Benchmarker(
             questions_to_use=questions,
             forecast_bots=bots,

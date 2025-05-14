@@ -99,7 +99,7 @@ def get_web_search_results_from_openrouter(question: str) -> str:
     return choices[0]["text"].strip()
 
 
-async def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2) -> str:
+async def fermi_estimate_with_llm(question: str, llm: GeneralLlm) -> str:
     """
     Given a question string, use a configurable LLM to perform a Fermi estimation (back-of-the-envelope calculation).
     The LLM is prompted to break down the problem into logical steps, make explicit guesses, and document all reasoning.
@@ -120,7 +120,6 @@ async def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini",
         - At the end, summarize your Fermi estimate and show the final calculation.
         """
     )
-    llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
     response = await llm.invoke(prompt)
     return response
 

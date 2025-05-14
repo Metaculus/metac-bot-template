@@ -149,19 +149,15 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class OpenRouterWebSearchBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.explicit_name = f"OpenRouterWebSearchBot | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         return get_web_search_results_from_openrouter(question.question_text)
@@ -198,7 +194,7 @@ class OpenRouterWebSearchBot(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -239,7 +235,7 @@ class OpenRouterWebSearchBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -301,19 +297,15 @@ class OpenRouterWebSearchBot(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class CombinedWebAndAdjacentNewsBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
-        super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.explicit_name = f"CombinedWebAndAdjacentNewsBot | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
+        super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
 
     async def run_research(self, question):
         web_results = get_web_search_results_from_openrouter(
@@ -354,7 +346,7 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -395,7 +387,7 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -457,49 +449,42 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class FermiEstimationBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.explicit_name = f"FermiEstimationBot | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         return ""  # Fermi estimation bot does not use external research
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
         # Use Fermi estimation to answer the binary question
-        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.get_llm())
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.get_llm())
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        reasoning = await fermi_estimate_with_llm(question.question_text, self.llm_model, self.llm_temperature)
+        reasoning = await fermi_estimate_with_llm(question.question_text, self.get_llm())
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class PerplexityRelatedMarketsBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
-        super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.explicit_name = f"PerplexityRelatedMarketsBot | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
+        super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
 
     async def run_research(self, question):
         # Use Perplexity via OpenRouter (sonar-reasoning) for web research
@@ -541,7 +526,7 @@ class PerplexityRelatedMarketsBot(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -582,7 +567,7 @@ class PerplexityRelatedMarketsBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -644,19 +629,15 @@ class PerplexityRelatedMarketsBot(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class OpenSearchPerpAdjMarkets(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.explicit_name = f"OpenSearchPerpAdjMarkets | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         web_results = get_web_search_results_from_openrouter(
@@ -704,7 +685,7 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -745,7 +726,7 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -807,19 +788,15 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class FermiResearchFirstBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.explicit_name = f"FermiResearchFirst | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         web_results = get_web_search_results_from_openrouter(
@@ -868,7 +845,7 @@ class FermiResearchFirstBot(ForecastBot):
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -912,7 +889,7 @@ class FermiResearchFirstBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -972,19 +949,15 @@ class FermiResearchFirstBot(ForecastBot):
             "
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
 
 class FermiWithSearchControl(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.explicit_name = f"FermiWithSearchControl | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         print("[FermiWithSearchControl] Entering run_research")
@@ -1010,7 +983,7 @@ class FermiWithSearchControl(ForecastBot):
                 """
             )
             print("[FermiWithSearchControl] Step 1: Prompt built, invoking LLM...")
-            fermi_response = await self.llm.invoke(fermi_prompt)
+            fermi_response = await self.get_llm().invoke(fermi_prompt)
             print(
                 "[FermiWithSearchControl] Step 1: Fermi response received:", fermi_response)
 
@@ -1097,7 +1070,7 @@ class FermiWithSearchControl(ForecastBot):
                 At the end, write your final answer as: \"Probability: ZZ%\", 0-100
                 """
             )
-            reasoning = await self.llm.invoke(prompt)
+            reasoning = await self.get_llm().invoke(prompt)
             print("[FermiWithSearchControl] Reasoning:", reasoning)
             prediction = PredictionExtractor.extract_last_percentage_value(
                 reasoning, max_prediction=1, min_prediction=0)
@@ -1132,7 +1105,7 @@ class FermiWithSearchControl(ForecastBot):
                 Option_N: Probability_N
                 """
             )
-            reasoning = await self.llm.invoke(prompt)
+            reasoning = await self.get_llm().invoke(prompt)
             prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options)
             print(
@@ -1180,7 +1153,7 @@ class FermiWithSearchControl(ForecastBot):
                 "
                 """
             )
-            reasoning = await self.llm.invoke(prompt)
+            reasoning = await self.get_llm().invoke(prompt)
             prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question)
             print(
