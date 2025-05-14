@@ -16,6 +16,6 @@ async def run_summarization_phase(results: Dict[str, dict],
               f"Below are the results of the two phases for each expert:\n\n{first_phase_results_to_string_indented}\n\n")
 
     result = await summarization_assistant.run(task=prompt)
-    summary = validate_and_parse_response(result)
+    summary = validate_and_parse_response(result.messages[1].content)
 
     return summary['summary']

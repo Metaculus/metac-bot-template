@@ -12,7 +12,7 @@ from autogen_agentchat.agents import AssistantAgent
 from agents.agent_creator import create_experts_analyzer_assistant
 from agents.experts_extractor import expert_creator, run_expert_extractor
 from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters, run_revised_stage_forecasters
-from utils.PROMPTS import FIRST_PHASE_INSTRUCTIONS
+from utils.PROMPTS import FIRST_PHASE_INSTRUCTIONS, REVISED_OUTPUT_FORMAT
 
 EXPERTS_PATH = "experts.json"
 
@@ -126,7 +126,7 @@ def extract_probabilities(results, first_step_key: str, second_step_key: str) ->
 
 
 async def build_and_write_json(filename, data, is_woc=False):
-    path = "forecasts/wisdom_of_crowds_forecasts" if is_woc else "forecasts"
+    path = "forecasts/wisdom_of_crowds_forecasts" if is_woc else "forecasts/q2"
     await aiofiles.os.makedirs(path, exist_ok=True)
 
     filepath = f"{path}/{filename}.json"
