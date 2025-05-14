@@ -11,19 +11,22 @@ import typeguard
 from forecasting_tools import (
     Benchmarker,
     ForecastBot,
-    GeneralLlm,
     MonetaryCostManager,
     MetaculusApi,
     ApiFilter,
     run_benchmark_streamlit_page,
 )
 
-from main import TemplateForecaster
-from dummy_bot import DummyBot  # Import the new dummy bot
-from bots import AdjacentNewsRelatedMarketsBot, OpenRouterWebSearchBot, CombinedWebAndAdjacentNewsBot, FermiEstimationBot, PerplexityRelatedMarketsBot  # Import the new bots
+from bots import (
+    AdjacentNewsRelatedMarketsBot,
+    PerplexityRelatedMarketsBot,
+    OpenSearchPerpAdjMarkets,
+    FermiResearchFirstBot,
+    CombinedWebAndAdjacentNewsBot,
+    FermiWithSearchControl
+)
 
 logger = logging.getLogger(__name__)
-
 
 
 async def benchmark_forecast_bot(mode: str) -> None:
@@ -31,7 +34,8 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 30 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = 1
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -54,16 +58,26 @@ async def benchmark_forecast_bot(mode: str) -> None:
             randomly_sample=True,
         )
         for question in questions:
-            question.background_info = None # Test ability to find new information
+            question.background_info = None  # Test ability to find new information
     else:
         raise ValueError(f"Invalid mode: {mode}")
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            AdjacentNewsRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
-            PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),  # forecasts once by default
-            PerplexityRelatedMarketsBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),  # forecasts 5 times
-            FermiEstimationBot(llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            # OpenSearchPerpAdjMarkets(
+            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            # AdjacentNewsRelatedMarketsBot(
+            #     llm_model="openrouter/openai/gpt-o3", llm_temperature=0.2),
+            # PerplexityRelatedMarketsBot(
+            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            # FermiResearchFirstBot(
+            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
+            # CombinedWebAndAdjacentNewsBot(
+            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=1),
+            # CombinedWebAndAdjacentNewsBot(
+            #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2, predictions_per_research_report=5),
+            FermiWithSearchControl(
+                llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(
@@ -90,7 +104,8 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+            logging.FileHandler(
+                f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
         ]
     )
 
@@ -129,10 +144,11 @@ if __name__ == "__main__":
             latest_file = max(benchmark_files, key=os.path.getctime)
             commit_message = f"Add benchmark results: {os.path.basename(latest_file)}"
             try:
-                subprocess.run(["git", "add", "-A"], check=True)  # Stage all changes
-                subprocess.run(["git", "commit", "--allow-empty", "-m", commit_message], check=True)
-                print(f"Committed all changes with message: '{commit_message}'")
+                # Stage all changes
+                subprocess.run(["git", "add", "-A"], check=True)
+                subprocess.run(["git", "commit", "--allow-empty",
+                               "-m", commit_message], check=True)
+                print(
+                    f"Committed all changes with message: '{commit_message}'")
             except subprocess.CalledProcessError as e:
                 print(f"Git commit failed: {e}")
-
-

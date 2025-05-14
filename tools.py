@@ -2,6 +2,7 @@ import os
 import requests
 from forecasting_tools import GeneralLlm, clean_indents
 
+
 def get_related_markets_from_adjacent_news(question: str) -> str:
     """
     Given a question string, use the Adjacent News API to find related markets and return them as a formatted string.
@@ -13,7 +14,8 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
     base_url = "https://api.data.adj.news/api/search/query"
     params = {"q": question}
     headers = {"Authorization": f"Bearer {api_key}"}
-    response = requests.request("GET", base_url, params=params, headers=headers)
+    response = requests.request(
+        "GET", base_url, params=params, headers=headers)
     print(f"DEBUG: Status code: {response.status_code}")
     print(f"DEBUG: Response text: {response.text}")
     if not response.ok:
@@ -30,7 +32,8 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
         except (ValueError, TypeError):
             vol_num = 0
         if vol_num >= 1000:
-            market["_parsed_volume"] = vol_num  # Store parsed volume for sorting
+            # Store parsed volume for sorting
+            market["_parsed_volume"] = vol_num
             filtered_markets.append(market)
     if not filtered_markets:
         return "No related markets found with volume >= 1000."
@@ -55,6 +58,7 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
             f"  URL: {url}\n"
         )
     return formatted
+
 
 def get_web_search_results_from_openrouter(question: str) -> str:
     """
@@ -86,12 +90,14 @@ def get_web_search_results_from_openrouter(question: str) -> str:
     print(f"DEBUG: Status code: {response.status_code}")
     print(f"DEBUG: Response text: {response.text}")
     if not response.ok:
-        raise RuntimeError(f"OpenRouter completions API error: {response.text}")
+        raise RuntimeError(
+            f"OpenRouter completions API error: {response.text}")
     data = response.json()
     choices = data.get("choices")
     if not choices or not choices[0].get("text"):
         return "No web search results found."
     return choices[0]["text"].strip()
+
 
 async def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2) -> str:
     """
@@ -118,6 +124,7 @@ async def fermi_estimate_with_llm(question: str, llm_model: str = "gpt-4o-mini",
     response = await llm.invoke(prompt)
     return response
 
+
 async def get_perplexity_research_from_openrouter(question: str, model_name: str = "openrouter/perplexity/sonar-pro", temperature: float = 0.1) -> str:
     """
     Calls the Perplexity model via OpenRouter for research purposes, using the same prompt as the template bot.
@@ -139,4 +146,4 @@ async def get_perplexity_research_from_openrouter(question: str, model_name: str
         temperature=temperature,
     )
     response = await model.invoke(prompt)
-    return response 
+    return response
