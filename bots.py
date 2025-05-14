@@ -10,7 +10,7 @@ import traceback
 class AdjacentNewsRelatedMarketsBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "AdjacentNewsRelatedMarketsBot"
+        self.name = f"AdjacentNewsRelatedMarketsBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -162,7 +162,7 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 class OpenRouterWebSearchBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "OpenRouterWebSearchBot"
+        self.name = f"OpenRouterWebSearchBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -314,7 +314,7 @@ class OpenRouterWebSearchBot(ForecastBot):
 class CombinedWebAndAdjacentNewsBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
         super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.name = "CombinedWebAndAdjacentNewsBot"
+        self.name = f"CombinedWebAndAdjacentNewsBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -470,7 +470,7 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
 class FermiEstimationBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "FermiEstimationBot"
+        self.name = f"FermiEstimationBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
 
@@ -500,7 +500,7 @@ class FermiEstimationBot(ForecastBot):
 class PerplexityRelatedMarketsBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
         super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.name = "CombinedWebSearchAndRelatedMarketsBot"
+        self.name = f"PerplexityRelatedMarketsBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -657,7 +657,7 @@ class PerplexityRelatedMarketsBot(ForecastBot):
 class OpenSearchPerpAdjMarkets(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "OpenSearchPerpAdjMarkets"
+        self.name = f"OpenSearchPerpAdjMarkets | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -820,7 +820,7 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
 class FermiResearchFirstBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "FermiResearchFirst"
+        self.name = f"FermiResearchFirst | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -985,7 +985,7 @@ class FermiResearchFirstBot(ForecastBot):
 class FermiWithSearchControl(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = "FermiWithSearchControl"
+        self.name = f"FermiWithSearchControl | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -1094,7 +1094,11 @@ class FermiWithSearchControl(ForecastBot):
 
                 {research}
 
-                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making. At the end, write your final answer as: \"Probability: ZZ%\", 0-100
+                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making.
+
+                IMPORTANT: Your final answer must be an integer percentage between 0 and 100 (e.g., \"Probability: 24%\"). Do not use decimals or fractions. Always round to the nearest integer.
+
+                At the end, write your final answer as: \"Probability: ZZ%\", 0-100
                 """
             )
             reasoning = await self.llm.invoke(prompt)
@@ -1121,7 +1125,11 @@ class FermiWithSearchControl(ForecastBot):
 
                 {research}
 
-                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making. At the end, write your final probabilities for the N options in this order {question.options} as:
+                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making.
+
+                IMPORTANT: Your final answer must be an integer percentage between 0 and 100 (e.g., \"Probability: 24%\"). Do not use decimals or fractions. Always round to the nearest integer.
+
+                At the end, write your final probabilities for the N options in this order {question.options} as:
                 Option_A: Probability_A
                 Option_B: Probability_B
                 ...
@@ -1161,7 +1169,11 @@ class FermiWithSearchControl(ForecastBot):
                 {lower_bound_message}
                 {upper_bound_message}
 
-                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making. At the end, write your final answer as:
+                Now, update your Fermi estimate and reasoning in light of this new information. Clearly state any changes or updates you are making.
+
+                IMPORTANT: Your final answer must be an integer percentage between 0 and 100 (e.g., \"Probability: 24%\"). Do not use decimals or fractions. Always round to the nearest integer.
+
+                At the end, write your final answer as:
                 "
                 Percentile 10: XX
                 Percentile 20: XX
