@@ -8,12 +8,8 @@ import traceback
 
 
 class AdjacentNewsRelatedMarketsBot(ForecastBot):
-    def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
-        super().__init__()
-        self.name = f"AdjacentNewsRelatedMarketsBot | {llm_model}"
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
+    def __init__(self, llms: dict[str, GeneralLlm]):
+        super().__init__(llms=llms)
 
     async def run_research(self, question):
         return get_related_markets_from_adjacent_news(question.question_text)
@@ -47,10 +43,10 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            The last thing you write is your final answer as: "Probability: 50%", 0-100 (no decimals, do not include a space between the number and the % sign)
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=1, min_prediction=0)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -91,7 +87,7 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.llm.invoke(prompt)
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
             reasoning, question.options)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
@@ -162,7 +158,7 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 class OpenRouterWebSearchBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = f"OpenRouterWebSearchBot | {llm_model}"
+        self.explicit_name = f"OpenRouterWebSearchBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -314,7 +310,7 @@ class OpenRouterWebSearchBot(ForecastBot):
 class CombinedWebAndAdjacentNewsBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
         super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.name = f"CombinedWebAndAdjacentNewsBot | {llm_model}"
+        self.explicit_name = f"CombinedWebAndAdjacentNewsBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -470,7 +466,7 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
 class FermiEstimationBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = f"FermiEstimationBot | {llm_model}"
+        self.explicit_name = f"FermiEstimationBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
 
@@ -500,7 +496,7 @@ class FermiEstimationBot(ForecastBot):
 class PerplexityRelatedMarketsBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2, predictions_per_research_report=1):
         super().__init__(predictions_per_research_report=predictions_per_research_report)
-        self.name = f"PerplexityRelatedMarketsBot | {llm_model}"
+        self.explicit_name = f"PerplexityRelatedMarketsBot | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -657,7 +653,7 @@ class PerplexityRelatedMarketsBot(ForecastBot):
 class OpenSearchPerpAdjMarkets(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = f"OpenSearchPerpAdjMarkets | {llm_model}"
+        self.explicit_name = f"OpenSearchPerpAdjMarkets | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -820,7 +816,7 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
 class FermiResearchFirstBot(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = f"FermiResearchFirst | {llm_model}"
+        self.explicit_name = f"FermiResearchFirst | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)
@@ -985,7 +981,7 @@ class FermiResearchFirstBot(ForecastBot):
 class FermiWithSearchControl(ForecastBot):
     def __init__(self, llm_model: str = "gpt-4o-mini", llm_temperature: float = 0.2):
         super().__init__()
-        self.name = f"FermiWithSearchControl | {llm_model}"
+        self.explicit_name = f"FermiWithSearchControl | {llm_model}"
         self.llm_model = llm_model
         self.llm_temperature = llm_temperature
         self.llm = GeneralLlm(model=llm_model, temperature=llm_temperature)

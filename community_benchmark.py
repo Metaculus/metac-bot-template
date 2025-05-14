@@ -15,6 +15,7 @@ from forecasting_tools import (
     MetaculusApi,
     ApiFilter,
     run_benchmark_streamlit_page,
+    GeneralLlm
 )
 
 from bots import (
@@ -67,7 +68,9 @@ async def benchmark_forecast_bot(mode: str) -> None:
             # OpenSearchPerpAdjMarkets(
             #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
             AdjacentNewsRelatedMarketsBot(
-                llm_model="o3", llm_temperature=0.2),
+                llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+                    model="o3", temperature=0.2)}
+            ),
             # PerplexityRelatedMarketsBot(
             #     llm_model="openrouter/openai/gpt-4o-mini", llm_temperature=0.2),
             # FermiResearchFirstBot(
