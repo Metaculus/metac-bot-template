@@ -11,6 +11,7 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
 
 )
 
+
 FIRST_PHASE_INSTRUCTIONS = (
     "## Phase I: Initial Forecast\n"
     "In this phase, you will be presented with a forecasting question and some relevant news articles relating to the question.\n"
@@ -38,7 +39,7 @@ FIRST_PHASE_INSTRUCTIONS = (
     "    \"initial_probability\": int,\n"
     "    \"perspective_derived_factors\": [\n"
     "        {{\n"
-    "            \"name\": str,\n"
+    "            \"factor\": str,\n"
     "            \"reasoning\": str,\n"
     "            \"effect\": \"+int%\" or \"-int%\"\n"
     "        }}\n"
@@ -114,18 +115,11 @@ Output your response strictly as a JSON object with the following structure:
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
 
-NEWS_OUTPUT_FORMAT = """
+REVISED_OUTPUT_FORMAT = """
 Output your response strictly as a JSON object with the following structure:
 {
-  "prior_probability": int,
-  "analysis_updates": [
-    {
-      "points_reinforcing_prior_analysis": str,
-      "points_challenging_prior_analysis": str,
-      "overall_effect_on_forecast": "+int%" or "-int%"
-    }
-  ],
-  "revised_probability": int
+    "reasoning_for_revised_probability: str,
+    "revised_probability": int
 }
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
@@ -260,17 +254,23 @@ For example, for the question "What is the impact of climate change on the econo
 GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
-In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED, and either critique their forecasts' weaknesses, or defend their strengths.
+In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED, and either critique their forecasts' weaknesses, or defend their strengths, use the "response" field for your answer.
 Meanwhile, be sure not to simply repeat their forecast, but rather engage with it directly from your own unique perspective.
+
+Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
 ## Prior forecasts
 {phase1_results_json_string} 
 
+## List of forecasters to engage with
+{forecasters_list}
+
 ## Response format:
 Output your response in JSON format with the following structure:
-{
+{{
   "forecaster_to_engage": str,
-  "critique_or_defense": str,
-  },
-}
+  "response_type": Literal["critique", "defense"],
+  "response": str,
+}}
+Ensure the JSON is valid (no trailing commas, no single quotes). 
 """

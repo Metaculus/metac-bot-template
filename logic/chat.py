@@ -5,18 +5,29 @@ from typing import List, Dict
 
 from autogen_agentchat.agents import AssistantAgent
 
-from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS, NEWS_OUTPUT_FORMAT
+from utils.PROMPTS import NEWS_STEP_INSTRUCTIONS
 
 
-async def run_first_stage_forecasters(forecasters: List[AssistantAgent], question: str,
+async def run_first_stage_forecasters(forecasters: List[AssistantAgent], prompt: str,
                                       system_message: str = "", options: List[str] = "") -> Dict[str, dict]:
     today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    phase_one_introduction = f"'{question}'"
+    phase_one_introduction = f"'{prompt}'"
 
     if options:
         phase_one_introduction += f"\n\nOptions:\n\n{', '.join(options)}\n"
 
     analyses = await gather_forecasts(forecasters, system_message, phase_one_introduction)
+    return analyses
+
+async def run_revised_stage_forecasters(forecasters: List[AssistantAgent], prompt: str,
+                                      system_message: str = "", options: List[str] = "") -> Dict[str, dict]:
+    today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    revision_phase_introduction = f"'{prompt}'"
+
+    if options:
+        revision_phase_introduction += f"\n\nOptions:\n\n{', '.join(options)}\n"
+
+    analyses = await gather_forecasts(forecasters, system_message, revision_phase_introduction)
     return analyses
 
 

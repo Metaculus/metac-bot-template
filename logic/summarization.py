@@ -8,8 +8,8 @@ from logic.utils import create_prompt
 
 
 async def run_summarization_phase(results: Dict[str, dict],
-                                  question: Dict[str, str], summarization_assistant: AssistantAgent, news:str) -> str:
-    full_question = create_prompt(question, news=news)
+                                  question: Dict[str, str], summarization_assistant: AssistantAgent) -> str:
+    full_question = create_prompt(question,news = "No News Articles")
     first_phase_results_to_string_indented = "\n\n".join(
         [f"{key}:\n{value}" for key, value in results.items()])
     prompt = (f"The question and question details are:\n\n{full_question}\n\n"
