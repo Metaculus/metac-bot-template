@@ -36,7 +36,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     """
 
     # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
-    number_of_questions = 1
+    number_of_questions = 30
     if mode == "display":
         run_benchmark_streamlit_page()
         return
