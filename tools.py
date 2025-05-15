@@ -49,13 +49,14 @@ def get_related_markets_from_adjacent_news(question: str) -> str:
         status = market.get("status", "N/A")
         end_date = market.get("end_date", market.get("resolution_date", "N/A"))
         formatted += (
-            f"- {name}\n"
-            f"  Platform: {platform}\n"
-            f"  Probability: {probability}\n"
-            f"  Volume: {volume}\n"
-            f"  Status: {status}\n"
-            f"  Ends: {end_date}\n"
-            f"  URL: {url}\n"
+            f"- {name}\n\n"
+            f"  Platform: {platform}\n\n"
+            f"  Probability: {probability}\n\n"
+            f"  Volume: {volume}\n\n"
+            f"  Status: {status}\n\n"
+            f"  Ends: {end_date}\n\n"
+            f"  URL: {url}\n\n"
+            "\n"  # Add a blank line between markets
         )
     return formatted
 

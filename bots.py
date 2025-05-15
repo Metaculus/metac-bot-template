@@ -6,6 +6,12 @@ from tools import get_related_markets_from_adjacent_news, get_web_search_results
 from datetime import datetime
 import traceback
 
+PROBABILITY_FINAL_ANSWER_LINE = (
+    "Before giving your final answer, rewrite the question as a probability statement (e.g., "
+    "\"What is the probability that [event] will happen?\"), making sure it matches the outcome you are forecasting. "
+    "Then, the last thing you write is your final answer as: \"Probability: ZZ%\", 0-100 (no decimals, do not include a space between the number and the % sign)."
+)
+
 
 class AdjacentNewsRelatedMarketsBot(ForecastBot):
     def __init__(self, llms: dict[str, GeneralLlm]):
@@ -33,6 +39,8 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
             Your research assistant found related markets info:
             {research}
 
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
             Before answering you write:
@@ -43,7 +51,7 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: 50%", 0-100 (no decimals, do not include a space between the number and the % sign)
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -70,6 +78,8 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 
             Your research assistant found related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -117,6 +127,8 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
 
             Your research assistant found related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -181,6 +193,8 @@ class OpenRouterWebSearchBot(ForecastBot):
             Your research assistant found web search results:
             {research}
 
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
             Before answering you write:
@@ -191,7 +205,7 @@ class OpenRouterWebSearchBot(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -218,6 +232,8 @@ class OpenRouterWebSearchBot(ForecastBot):
 
             Your research assistant found web search results:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -265,6 +281,8 @@ class OpenRouterWebSearchBot(ForecastBot):
 
             Your research assistant found web search results:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -333,6 +351,8 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             Your research assistant found web search results and related markets info:
             {research}
 
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
             Before answering you write:
@@ -343,7 +363,7 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -370,6 +390,8 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
 
             Your research assistant found web search results and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -417,6 +439,8 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
 
             Your research assistant found web search results and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -512,6 +536,8 @@ class PerplexityRelatedMarketsBot(ForecastBot):
             Your research assistant found web search results and related markets info:
             {research}
 
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
             Before answering you write:
@@ -523,7 +549,7 @@ class PerplexityRelatedMarketsBot(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -550,6 +576,8 @@ class PerplexityRelatedMarketsBot(ForecastBot):
 
             Your research assistant found web search results and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -597,6 +625,8 @@ class PerplexityRelatedMarketsBot(ForecastBot):
 
             Your research assistant found web search results and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -672,6 +702,8 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
             Your research assistant found web search results (OpenRouter), web search results (Perplexity Sonar Reasoning), and related markets info:
             {research}
 
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
             Before answering you write:
@@ -682,7 +714,7 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -709,6 +741,8 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
 
             Your research assistant found web search results (OpenRouter), web search results (Perplexity Sonar Reasoning), and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -756,6 +790,8 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
 
             Your research assistant found web search results (OpenRouter), web search results (Perplexity Sonar Reasoning), and related markets info:
             {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
 
             Today is {datetime.now().strftime('%Y-%m-%d')}.
 
@@ -842,7 +878,7 @@ class FermiResearchFirstBot(ForecastBot):
             - At the end, summarize your Fermi estimate and show the final calculation.
             - If the No outcome is more likely, your answer should be closer to 0; if Yes, closer to 100.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -1067,7 +1103,7 @@ class FermiWithSearchControl(ForecastBot):
 
                 IMPORTANT: Your final answer must be an integer percentage between 0 and 100 (e.g., \"Probability: 24%\"). Do not use decimals or fractions. Always round to the nearest integer.
 
-                At the end, write your final answer as: \"Probability: ZZ%\", 0-100
+                {PROBABILITY_FINAL_ANSWER_LINE}
                 """
             )
             reasoning = await self.get_llm().invoke(prompt)
