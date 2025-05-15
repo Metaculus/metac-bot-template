@@ -301,7 +301,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
-    # Updated, with 1/3 buckets multiworld prompt for numeric prompt. DRE 5-10-2025
+    # 5/15/2025 prompt 1 for numeric questions. More detailed multi-world. Use of experts and base rates.
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -339,52 +339,89 @@ class TemplateForecaster(ForecastBot):
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) The expectations of experts and markets.
-            (e) A brief description of an unexpected scenario that results in a low outcome.
-            (f) A brief description of an unexpected scenario that results in a high outcome.
-
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
             
             ************
-            Group the evidence
+            General Analysis
+            Status quo situations
+            - Write the outcome if nothing changes
+            - Write the outcome if the current trends continue
+            
+            Experts and Markets
+            - What do the markets suggest?
+            - What do experts expect?
+            - Adjust for expert bias: exageration, tendancy towards extremes, overconfidence
+            - Post central value and range for expert forecast, and post any corrections/interpretations with a short (around 3 sentences) summary
+            
+            Logical Considerations
+            - Are there any values that are logically excluded?
+            - How does that affect the forecast probabilities or values?
+            - Are there any other logical considerations?
+            - Make a short summary of of logical considerations
+            
+            ************
+            Scenario based forecasting
+            - Your main strategy for forecasting a reasonable range of responses is based on generating multiple scenarios
+            
+            Group the Evidence
             Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
             Bucket 1) Evidence that would indicate a relatively low forecast
             Bucket 2) Evidence that would indicate a relatively high forecast
             Bucket 3) Evidence that would indicate a central forecast
             
-            ************
-            Multi-world considerations
+            Multi-world Scenarios
             Now you want to explore ranges of reasonable possibilities. You consider three worlds:
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
             - What would an appropriate base rate be for this world:
             - What would be a low forecast estimate be for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate be for this world? 
 
             ************
-            Reference CSV
-            Now, for future reference, make a CSV based on values from your multi-world reasoning.
-            Headings: 
-            Low_World base rate, Low_World low forecast, Low_World high forecast
-            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
-            High_World base rate, High_World low forecast, High_World high forecast
+            Judging the Range of Scenarios
+            
+            Preliminary Scenario CSV ()
+            1) For reference, make a CSV based on values from your multi-world reasoning.
+            - Headings: World, base rate, low forecast, mid forecast, high forecast
+            2) There should be a total of 9 forecasts which you order from low to high
+            - Write the values for reference
+            3) These values represent a range of reasonable outcomes
+            
+            Status Quo World: which world is most consistent with status quo from your general analysis?
+            - Scenario from this "status quo" world should receive more weight
+            
+            Allow for unknowns not covered by the scenarios.
+            
+            Weight of the Scenarios
+            - For each of the 9 scenarios, assign a weight between 1 and 99 for probability that the scenario will be the outcome
+            - Sum of the 9 probabilities should be 100
+            
+            Final Forecast Reference CSV for the 9 scenarios
+            Rows: 
+            Low World Low
+            Low World Mid
+            Low World High
+            Mid World Low
+            Mid World Mid
+            Mid World High
+            High World Low
+            High World Mid
+            High World High
+            
+            Headings: Scenario, Forecast, Scenario Weight
             
             ************
-            You order the 6 estimates from low to high because you know that these values represent a reasonable range of outcomes.
+            Finally, using the Final Forecast Reference CSV for reference...
             
-            ************
-            With those values in mind...
-            ************
-
             The last thing you write is your final answer as:
             "
             Percentile 10: XX
