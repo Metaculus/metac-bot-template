@@ -21,6 +21,7 @@ from forecasting_tools import (
     SmartSearcher,
     clean_indents,
 )
+from bots import PerplexityRelatedMarketsBot
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ class TemplateForecaster(ForecastBot):
     Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    # Set this to whatever works for your search-provider/ai-model rate limits
+    _max_concurrent_questions = 2
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -105,7 +107,8 @@ class TemplateForecaster(ForecastBot):
         if use_open_router:
             model_name = "openrouter/perplexity/sonar-reasoning"
         else:
-            model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
+            # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
+            model_name = "perplexity/sonar-pro"
         model = GeneralLlm(
             model=model_name,
             temperature=0.1,
@@ -351,52 +354,39 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = TemplateForecaster(
-        research_reports_per_question=1,
-        predictions_per_research_report=5,
-        use_research_summary_to_forecast=False,
-        publish_reports_to_metaculus=True,
-        folder_to_save_reports_to=None,
-        skip_previously_forecasted_questions=True,
-        # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
-        #     "default": GeneralLlm(
-        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022",
-        #         temperature=0.3,
-        #         timeout=40,
-        #         allowed_tries=2,
-        #     ),
-        #     "summarizer": "openai/gpt-4o-mini",
-        # },
+    bot = PerplexityRelatedMarketsBot(
+        llms={
+            "default": GeneralLlm(model="o3", temperature=0.2),
+            "summarizer": GeneralLlm(model="o3", temperature=0.2)
+        }
     )
 
     if run_mode == "tournament":
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+            bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
     elif run_mode == "quarterly_cup":
-        # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
-        # The new quarterly cup may not be initialized near the beginning of a quarter
-        template_bot.skip_previously_forecasted_questions = False
+        bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+            bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
             )
         )
     elif run_mode == "test_questions":
-        # Example questions are a good way to test the bot's performance on a single question
         EXAMPLE_QUESTIONS = [
-            "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
-            "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-            "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            "https://www.metaculus.com/questions/578/human-extinction-by-2100/",
+            "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",
+            "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",
         ]
-        template_bot.skip_previously_forecasted_questions = False
+        bot.skip_previously_forecasted_questions = False
         questions = [
             MetaculusApi.get_question_by_url(question_url)
             for question_url in EXAMPLE_QUESTIONS
         ]
         forecast_reports = asyncio.run(
-            template_bot.forecast_questions(questions, return_exceptions=True)
+            bot.forecast_questions(questions, return_exceptions=True)
         )
-    TemplateForecaster.log_report_summary(forecast_reports)  # type: ignore
+    PerplexityRelatedMarketsBot.log_report_summary(
+        forecast_reports)  # type: ignore
