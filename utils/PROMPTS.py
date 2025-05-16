@@ -1,7 +1,7 @@
 SPECIFIC_META_MESSAGE_EXPERTISE = (
     "You are a superforecaster with expertise in the field of {expertise}. \n"
     "You are participating in a prize-bearing geopolitical forecasting competition. Your goal is to win the contest by providing the most accurate predictions across questions.\n"
-    "That means bold predictions are rewarded, to the extent they can be well-justified .\n"
+    "Bold predictions (closer to 0% for No and closer to 100% for Yes) are rewarded, but only to the extent they can be well-justified .\n"
     "Each question will be addressed in three phases.\n"
     "1. Initial Forecast.\n"
     "2. Group Deliberation.\n"
@@ -14,7 +14,7 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
 
 FIRST_PHASE_INSTRUCTIONS = (
     "## Phase I: Initial Forecast\n"
-    "In this phase, you will be presented with a forecasting question and some relevant news articles relating to the question.\n"
+    "In this phase, you will be presented with a forecasting question and some relevant news articles.\n"
     "Make your forecast by following these steps:\n"
     "- Start by explaining the relevance of the unique perspective you bring to bear on the question.\n"
     "- State the time left until the question resolves.\n"
@@ -28,12 +28,12 @@ FIRST_PHASE_INSTRUCTIONS = (
     "Avoid stating that a factor 'could', 'may' or 'can' have some effect and avoid 'if-then' statements. Rather, commit to the effect (or lack thereof) based on the available evidence. \n"
     "Be as compelling as possible, knowing that later on, other forecasters will see and scrutinize your response. \n"
     "Adjust the probability step by step, and provide a final probability. "
-    "Adjustments should be made using 5% increments (+/-0%, +/-5%, +/-10%, +/- 15%, +/-20%, etc.). \n"
-    "Adjustments should adhere to the rules of logic (no probability under 0% or over 100%). \n"
-    "Be judicious, making sure that updates to the status quo prediction are justified, remembering that the world tends to change slowly. \n\n"
+    "Adjustments should be made using increments of at least 2.5% increments (e.g. +/-2.5%, +/-5%, +/-10%, +/-20%, etc.). \n"
+    "Adjustments should *adhere to the rules of logic* (no probability can be under 0% or over 100%). \n\n"
     "##Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
+    "    \"time_to_resolution\": str,\n"
     "    \"perspective_relevance\": str,\n"
     "    \"initial_reasoning\": str,\n"
     "    \"initial_probability\": int,\n"
@@ -55,21 +55,24 @@ Given a forecasting question, follow these steps systematically to analyze it:
 
 1. Identify Relevant Academic Disciplines and Professional Areas of Expertise
    - Name established and widely recognized disciplines/professional areas of expertise that are best-positioned to provide insights on the outcome in question.
-   - The list should be comprehensive, providing complementary perspectives for understanding the question.
+   - The list should be comprehensive, but non-redundant, providing complementary perspectives for understanding the question.
    - If they are relevant, include at least one region-specific or culture-specific discipline within your list (expertise on China, Africa, Latin America, Europe, Middle East, etc.).
 
 2. List Specific Theories, Frameworks, and Schools of Thought
    - For each discipline or professional area of expertise, name specific well-established, recognized theories, hypotheses, schools of thought, doctrines, models, frameworks, or specialties that apply to the question.
-   - The list should be comprehensive, providing competing and complementary perspectives for understanding the question.
-   - Exclude speculative or made-up frameworks. Only include existing frameworks that have significant peer-reviewed or professional acceptance.
+   - The list should be comprehensive, but non-redundant, providing competing and complementary perspectives for understanding the question.
+   - Exclude speculative, made-up or ad-hoc frameworks. Only include real, existing frameworks that have significant peer-reviewed or professional acceptance.
 
 General Note: the idea is to generate *distinct* perspectives on the forecasting question as possible while *avoiding redundancy* among experts.
-
 ---
 
 ### Output Format
 
-Keep the framework names concise and only add frameworks as necessary. Produce your answer strictly in the following JSON structure:
+Keep the naming concise. 
+The combination of discipline+framework and expertise+specialty must not exceed 64 characters 
+The names cannot contain special characters. 
+Do not add superfluous information (e.g. the word 'framework' at the end of a framework or repeating the name of the superordinate discipline).
+Produce your answer strictly in the following JSON structure:
 
 {
   "forecasting_question": "<Insert forecasting question here>",
@@ -116,9 +119,16 @@ Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing comm
 """
 
 REVISED_OUTPUT_FORMAT = """
+## Phase 3: Forecast Revision 
+
+Please review your initial forecast and the group deliberation.
+In light of this information, would you revise your initial prediction? 
+If so, how? To the extent that did change, explain what changed. 
+
 Output your response strictly as a JSON object with the following structure:
 {
-    "reasoning_for_revised_probability: str,
+    "my_phase1_final_probability": str,
+    "reasoning_for_revised_probability": str,
     "revised_probability": int
 }
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
@@ -239,10 +249,10 @@ and the second element is the entity value. For example ['Location:Paris', 'Pers
 \n\nPlease output the results in the following JSON format: {"query": str, "countries": List[str], "languages": List[str], "categories": List[str], "entity_guarantee": List[str], "string_guarantee": List[str]}"""
 
 
-SUMMARIZATION_PROMPT = """Your task is to summarize the resolution of various forecasting experts on a given question.\n
-The experts were asked to predict the outcome of a geopolitical event and provide their analysis using their own knowledge and news articles.
+SUMMARIZATION_PROMPT = """Your task is to summarize the forecasts of various forecasting experts on a given question.\n
+The experts were asked to predict the outcome of a geopolitical event and provide their analysis using their own knowledge and news articles. Later, they engaged in a group chat with other forecasters.
 You will also receive the question itself.
-Your task is to summarize the resolution of the experts in a coherent and concise manner.\n
+Your task is to summarize the forecasts of the experts in a coherent and concise manner.\n
 You will not add information of your own knowledge to the analysis nor will you add anything of your own.
 \n\nPlease output the results in the following JSON format: {"summary": str}"""
 
