@@ -25,13 +25,12 @@ async def chat_group_single_question(
         news: str = None
 ) -> Tuple[Union[int, Dict[str, float]], str]:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    config = get_gpt_config(cache_seed, 0.7, "gpt-4o", 120)
+    config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
     news = await run_research(question_details)
 
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details, is_multiple_choice, options, is_woc, num_of_experts)
-    all_experts = all_experts[:2]  # TODO Remove this line when we have the new experts
     forecasters_names = [expert.name for expert in all_experts]
 
     group_chat = create_group(all_experts)
