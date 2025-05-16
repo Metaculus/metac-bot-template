@@ -225,6 +225,8 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
 
+    # Candidate Muliple Choice Prompt 5-16-2025, DRE, attempt binary logic on multiple choice
+    ## This is my active tournament prompt from beginning of the tournament (for me) to Bot #229
     # Update DRE 05/10/2025 prompt
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
@@ -238,15 +240,16 @@ class TemplateForecaster(ForecastBot):
 
             The options are: {question.options}
 
-
             Background:
             {question.background_info}
 
+            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
             {question.resolution_criteria}
 
             {question.fine_print}
             
-            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
+            Units for answer: 
+            {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
@@ -257,30 +260,51 @@ class TemplateForecaster(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
-
-            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-            ************
             
+            FORECAST PART ONE 
             There are N options in this question, in this order {question.options}
-            - Make a preliminary ranking of the options from highest to lowest probability by your initial perceived probability
-            - Be sure to keep track of the original order of the options, we will need them!
-            ************
             
-            For each option, break the evidence down into buckets that support low, mid, and high probability
-            - Estimate low, mid, and high probability for each option, using the evidence buckets
-            - Re-rank the options according to the mid probality for each
-            - Are there any dicontinuities or inconsistencies from adjacent options?
-            - Ajust the values if necessary
-            ************
+            You perform the following steps for each question option:
             
-            Reference CSV
-            Now, for future reference, make a CSV containing the low, mid, and high probability estimates for each option
+            1) Before answering you write:
+            (a) A brief description of a scenario that results in a No outcome for the option.
+            (b) A brief description of a scenario that results in a Yes outcome for the option.
+            
+            2) You write your rationale remembering that good forecasters 
+            - Put extra weight on the status quo outcome since the world changes slowly most of the time, and 
+            - Leave some moderate probability on most options to account for unexpected outcomes.
+            
+            3) Group the evidence
+            Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
+            Bucket 1) Evidence that would indicate a relatively low forecast
+            Bucket 2) Evidence that would indicate a relatively high forecast
+            Bucket 3) Evidence that would indicate a central forecast
+            
+            4) Multi-world considerations
+            Now you want to explore ranges of reasonable possible forecasts. You consider three worlds for the option:
+            (a) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            (b) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            (c) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate be for this world?
+            - What would be a high forecast estimate be for this world?
+
+            FORECAST PART TWO - CONSOLIDATION
+            1) You make a CSV containing the low, mid, and high probability estimates for each option
             - Headings: Option, low_prob, mid_prob, and hi_prob
             - Rows: Option_A, Option_B, ... Option_N
-            ************
             
-            Forecast your best single estimate of probability for each option.
+            2) You write a short summary rationale.
             
+            3) You forecast your best single probability for each option.
+            
+            FORECAST PART THREE - REPORT THE FINAL FORECASTS
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
@@ -300,7 +324,7 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
+        
     # 5/15/2025 prompt 1 for numeric questions. More detailed multi-world. Use of experts and base rates.
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
@@ -534,8 +558,8 @@ if __name__ == "__main__":
         EXAMPLE_QUESTIONS = [
             # "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
             # "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-            # "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-            "https://www.metaculus.com/questions/36295/us-tariff-rate-on-goods-imported-into-us-at-yearend-2026/",  # new question chosen by me
+            "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            # "https://www.metaculus.com/questions/36295/us-tariff-rate-on-goods-imported-into-us-at-yearend-2026/",  # new question chosen by me
         ]
         template_bot.skip_previously_forecasted_questions = False
         questions = [
