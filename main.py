@@ -133,7 +133,7 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    # Consider Range of Reasonable Binary Forecasts, DRE 5/10/2025
+    # DRE 5/17/2025, Add mid cases, revise reference CSV
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
@@ -181,35 +181,35 @@ class TemplateForecaster(ForecastBot):
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
             - What would an appropriate base rate be for this world:
             - What would be a low forecast estimate be for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate be for this world?
             
             ************
             Reference CSV
             Now, for future reference, make a CSV based on values from your multi-world reasoning.
-            Headings: 
-            Low_World base rate, Low_World low forecast, Low_World high forecast
-            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
-            High_World base rate, High_World low forecast, High_World high forecast
+            Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
+            Rows: Low_World, Mid_World, High_World
             
             ************
-            Final expect distribution of reasonable forecasts
-            You order the 6 estimates from low to high because you know that these values represent a range of resonable forecasts.
+            Final expected distribution of reasonable forecasts
+            You order the 9 estimates from low to high because you know that these values represent a range of resonable forecasts.
             
-            Considering the 6 estimates ordered from low to high:
+            Considering the 9 estimates ordered from low to high:
             - Project a distribution of reasonable forecasts
             - Make a CSV with percentiles of probability from P10 to p90 on increments of 10
             - Reflect on the 50th percentile and adjust as necessary
             - The 50th percentile is your best estimate of forecast probability
             ************
-
 
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
@@ -224,10 +224,8 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
-    # Candidate Muliple Choice Prompt 5-16-2025, DRE, attempt binary logic on multiple choice
-    ## This is my active tournament prompt from beginning of the tournament (for me) to Bot #229
-    # Update DRE 05/10/2025 prompt
+    
+    # DRE 05/17/2025 prompt, introduce main factors, write option-by-option outcome scenarios
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
@@ -238,18 +236,18 @@ class TemplateForecaster(ForecastBot):
             Your interview question is:
             {question.question_text}
 
-            The options are: {question.options}
+            The options are: 
+            {question.options}
+
 
             Background:
             {question.background_info}
 
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
             {question.resolution_criteria}
 
             {question.fine_print}
             
-            Units for answer: 
-            {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
+            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
@@ -259,52 +257,40 @@ class TemplateForecaster(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
+            (c) The expectations of experts and markets.
             
-            FORECAST PART ONE 
-            There are N options in this question, in this order {question.options}
+            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+            ************
             
-            You perform the following steps for each question option:
+            There are N options in this question, in this order:
+            {question.options}
             
-            1) Before answering you write:
-            (a) A brief description of a scenario that results in a No outcome for the option.
-            (b) A brief description of a scenario that results in a Yes outcome for the option.
+            For each option you write:
+            (a) A brief description of a scenario that results in a No outcome.
+            (b) A brief description of a scenario that results in a Yes outcome.
             
-            2) You write your rationale remembering that good forecasters 
-            - Put extra weight on the status quo outcome since the world changes slowly most of the time, and 
-            - Leave some moderate probability on most options to account for unexpected outcomes.
+            Make a preliminary ranking of the options from highest to lowest probability
+            - Be sure to keep track of the original order of the options, we will need them!
+            ************
             
-            3) Group the evidence
-            Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
-            Bucket 1) Evidence that would indicate a relatively low forecast
-            Bucket 2) Evidence that would indicate a relatively high forecast
-            Bucket 3) Evidence that would indicate a central forecast
+            Based on your analysis so far, you write the 3 main factors that determine if an option will resolve positve
+            ***********
             
-            4) Multi-world considerations
-            Now you want to explore ranges of reasonable possible forecasts. You consider three worlds for the option:
-            (a) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
-            - What would an appropriate base rate be for this world?
-            - What would be a low forecast estimate for this world?
-            - What would be a high forecast estimate for this world?
-            (b) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
-            - What would an appropriate base rate be for this world?
-            - What would be a low forecast estimate for this world?
-            - What would be a high forecast estimate for this world?
-            (c) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
-            - What would an appropriate base rate be for this world:
-            - What would be a low forecast estimate be for this world?
-            - What would be a high forecast estimate be for this world?
-
-            FORECAST PART TWO - CONSOLIDATION
-            1) You make a CSV containing the low, mid, and high probability estimates for each option
+            For each option, you use the three main factors to place the evidence in buckets that support low, mid, and high probability
+            - Estimate low, mid, and high probability for each option, using the evidence buckets
+            - Re-rank the options according to the mid probality for each
+            - Are there any dicontinuities or inconsistencies from adjacent options?
+            - Ajust the values if necessary
+            ************
+            
+            Reference CSV
+            Now, for future reference, make a CSV containing the low, mid, and high probability estimates for each option
             - Headings: Option, low_prob, mid_prob, and hi_prob
             - Rows: Option_A, Option_B, ... Option_N
+            ************
             
-            2) You write a short summary rationale.
+            Forecast your best single estimate of probability for each option.
             
-            3) You forecast your best single probability for each option.
-            
-            FORECAST PART THREE - REPORT THE FINAL FORECASTS
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
@@ -325,7 +311,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
         
-    # 5/15/2025 prompt 1 for numeric questions. More detailed multi-world. Use of experts and base rates.
+    # DRE 5/17/2025, Numeric, Add mid cases, revise reference CSV, add p50 output
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -363,36 +349,23 @@ class TemplateForecaster(ForecastBot):
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
             
             ************
-            General Analysis
-            Status quo situations
-            - Write the outcome if nothing changes
-            - Write the outcome if the current trends continue
-            
-            Experts and Markets
-            - What do the markets suggest?
-            - What do experts expect?
-            - Adjust for expert bias: exageration, tendancy towards extremes, overconfidence
-            - Post central value and range for expert forecast, and post any corrections/interpretations with a short (around 3 sentences) summary
-            
-            Logical Considerations
-            - Are there any values that are logically excluded?
-            - How does that affect the forecast probabilities or values?
-            - Are there any other logical considerations?
-            - Make a short summary of of logical considerations
-            
-            ************
-            Scenario based forecasting
-            - Your main strategy for forecasting a reasonable range of responses is based on generating multiple scenarios
-            
-            Group the Evidence
+            Group the evidence
             Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
             Bucket 1) Evidence that would indicate a relatively low forecast
             Bucket 2) Evidence that would indicate a relatively high forecast
             Bucket 3) Evidence that would indicate a central forecast
             
-            Multi-world Scenarios
+            ************
+            Multi-world considerations
             Now you want to explore ranges of reasonable possibilities. You consider three worlds:
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
@@ -411,46 +384,26 @@ class TemplateForecaster(ForecastBot):
             - What would be a high forecast estimate be for this world? 
 
             ************
-            Judging the Range of Scenarios
-            
-            Preliminary Scenario CSV ()
-            1) For reference, make a CSV based on values from your multi-world reasoning.
-            - Headings: World, base rate, low forecast, mid forecast, high forecast
-            2) There should be a total of 9 forecasts which you order from low to high
-            - Write the values for reference
-            3) These values represent a range of reasonable outcomes
-            
-            Status Quo World: which world is most consistent with status quo from your general analysis?
-            - Scenario from this "status quo" world should receive more weight
-            
-            Allow for unknowns not covered by the scenarios.
-            
-            Weight of the Scenarios
-            - For each of the 9 scenarios, assign a weight between 1 and 99 for probability that the scenario will be the outcome
-            - Sum of the 9 probabilities should be 100
-            
-            Final Forecast Reference CSV for the 9 scenarios
-            Rows: 
-            Low World Low
-            Low World Mid
-            Low World High
-            Mid World Low
-            Mid World Mid
-            Mid World High
-            High World Low
-            High World Mid
-            High World High
-            
-            Headings: Scenario, Forecast, Scenario Weight
+            Reference CSV
+            Now, for future reference, make a CSV based on values from your multi-world reasoning.
+            Reference CSV
+            Now, for future reference, make a CSV based on values from your multi-world reasoning.
+            Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
+            Rows: Low_World, Mid_World, High_World
             
             ************
-            Finally, using the Final Forecast Reference CSV for reference...
+            You order the 9 estimates from low to high because you know that these values represent a reasonable range of outcomes.
             
+            ************
+            With those values in mind...
+            ************
+
             The last thing you write is your final answer as:
             "
             Percentile 10: XX
             Percentile 20: XX
             Percentile 40: XX
+            Percentile 50: XX
             Percentile 60: XX
             Percentile 80: XX
             Percentile 90: XX
@@ -469,7 +422,7 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
+    
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
     ) -> tuple[str, str]:
