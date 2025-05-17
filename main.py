@@ -474,7 +474,7 @@ if __name__ == "__main__":
 
     template_bot = TemplateForecaster(
         research_reports_per_question=1,
-        predictions_per_research_report=8, #predictions_per_research_report=5,  # predictions_per_research_report=1
+        predictions_per_research_report=5, #predictions_per_research_report=8,  # predictions_per_research_report=1
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
@@ -482,12 +482,12 @@ if __name__ == "__main__":
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
                 # naming style reminder: "metaculus/{anthropic or openai}/{model_name}".
             "default": GeneralLlm(
-                model="metaculus/openai/o4-mini",
+                model="metaculus/openai/o1", #model="metaculus/openai/o4-mini",
                 temperature=1,  # change to 1 because o4-mini only takes (1) temperature... error on run
                 timeout=40,
                 allowed_tries=2,
             ),
-            "summarizer": "metaculus/openai/o4-mini",  #"summarizer": "openai/gpt-4o-mini",
+            "summarizer": "metaculus/openai/o1",  #"metaculus/openai/o4-mini", #"summarizer": "openai/gpt-4o-mini",
         },
     )
 
