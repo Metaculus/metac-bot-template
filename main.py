@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 
 import asyncio
@@ -118,7 +119,7 @@ def create_forecast_payload(
     """
     if question_type == "binary":
         return {
-            "probability_yes": forecast,
+            "probability_yes": ensure_probability_in_range(forecast),
             "probability_yes_per_category": None,
             "continuous_cdf": None,
         }
@@ -135,6 +136,17 @@ def create_forecast_payload(
         "continuous_cdf": forecast,
     }
 
+def ensure_probability_in_range(proba:float)->float:
+    """
+    Ensure that the probability is in the range [0.001, 0.999].
+    """
+    if proba <= 1e-3:
+        logging.warning("Probability is too low, setting to 0.001")
+        return 1e-3
+    if proba >= 0.999:
+        logging.warning("Probability is too high, setting to 0.999")
+        return 0.999
+    return proba
 
 def list_posts_from_tournament(
         tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
