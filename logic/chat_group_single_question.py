@@ -7,7 +7,7 @@ from logic.summarization import run_summarization_phase
 from logic.utils import extract_question_details, get_all_experts, perform_forecasting_phase, \
     format_phase1_results_to_string, \
     perform_revised_forecasting_step, strip_title_to_filename, build_and_write_json, get_probabilities, \
-    enrich_probabilities
+    enrich_probabilities, get_first_phase_probabilities
 from utils.PROMPTS import GROUP_INSTRUCTIONS
 from utils.config import get_gpt_config
 
@@ -37,6 +37,8 @@ async def chat_group_single_question(
 
     phase1_results_as_string = format_phase1_results_to_string(results)
 
+    probabilities = get_first_phase_probabilities(results, question_details, news, is_multiple_choice, options)
+
     group_results = await group_chat.run(
         task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=phase1_results_as_string,
                                        forecasters_list=forecasters_names))
@@ -53,7 +55,7 @@ async def chat_group_single_question(
                                                   summarization_assistant)
 
     # Extract probabilities
-    probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options)
+    probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options, probabilities)
 
     enrich_probabilities(probabilities, question_details, news, forecast_date, summarization)
 
