@@ -386,8 +386,6 @@ class TemplateForecaster(ForecastBot):
             ************
             Reference CSV
             Now, for future reference, make a CSV based on values from your multi-world reasoning.
-            Reference CSV
-            Now, for future reference, make a CSV based on values from your multi-world reasoning.
             Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
             Rows: Low_World, Mid_World, High_World
             
