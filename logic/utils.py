@@ -170,8 +170,8 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
         round(np.mean(deliberation_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(deliberation_step_probability, options=options).items()
     }
-    first_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
-        opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()
+    initial_step_probability_result = int(round(np.mean(initial_probability))) if not is_multiple_choice else {
+        opt: val / 100.0 for opt, val in normalize_and_average(initial_probability, options=options).items()
     }
     revision_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()
@@ -192,7 +192,7 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
         "initial_probability": initial_probability,
         "initial_mean_probability": mean_initial_step,
         "initial_sd": sd_initial_step,
-        "initial_probability_result": first_step_probability_result,
+        "initial_probability_result": initial_step_probability_result,
         "deliberation_probability": deliberation_step_probability,
         "deliberation_mean_probability": mean_deliberation_step,
         "deliberation_sd": sd_deliberation_step,
