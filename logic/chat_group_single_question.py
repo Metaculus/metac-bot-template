@@ -18,13 +18,13 @@ async def chat_group_single_question(
         is_multiple_choice: bool = False,
         options: List[str] = None,
         is_woc: bool = False,
+        use_hyde: bool = True,
         num_of_experts: str | None = None,
-        news: str = None
 ) -> Tuple[Union[int, Dict[str, float]], str]:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
-    news = await run_research(question_details)
+    news = await run_research(question_details,use_hyde = use_hyde)
 
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details, is_multiple_choice, options, is_woc, num_of_experts)
@@ -37,7 +37,7 @@ async def chat_group_single_question(
 
     phase1_results_as_string = format_phase1_results_to_string(results)
 
-    probabilities = get_first_phase_probabilities(results, question_details, news, is_multiple_choice, options)
+    probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
 
     group_results = await group_chat.run(
         task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=phase1_results_as_string,

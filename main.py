@@ -1,9 +1,9 @@
+import asyncio
 import datetime
 import json
 import logging
 import os
 
-import asyncio
 import dotenv
 
 from logic.chat_group_single_question import chat_group_single_question
@@ -136,7 +136,8 @@ def create_forecast_payload(
         "continuous_cdf": forecast,
     }
 
-def ensure_probability_in_range(proba:float)->float:
+
+def ensure_probability_in_range(proba: float) -> float:
     """
     Ensure that the probability is in the range [0.001, 0.999].
     """
@@ -147,6 +148,7 @@ def ensure_probability_in_range(proba:float)->float:
         logging.warning("Probability is too high, setting to 0.999")
         return 0.999
     return proba
+
 
 def list_posts_from_tournament(
         tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
@@ -234,19 +236,15 @@ def forecast_is_already_made(post_details: dict) -> bool:
         return False
 
 
-async def question_answer_decider(question_type: str, question_details: dict, cache_seed: int = 42,
-                                  summary_of_forecast: str = "", is_woc=False,num_of_experts=None,news:str = None) \
+async def question_answer_decider(question_type: str, question_details: dict, use_hyde: bool = True,
+                                  cache_seed: int = 42, summary_of_forecast: str = "", is_woc=False,
+                                  num_of_experts=None, news: str = None) \
         -> tuple[float | dict[str, float] | list[float], str, str]:
     # Now decide which forecast function to use
     if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
-        final_proba, summarization = await chat_group_single_question(
-            question_details,  # a dict
-            cache_seed=cache_seed,
-            is_woc=is_woc,
-            num_of_experts=num_of_experts,
-            news=news
-        )
+        final_proba, summarization = await chat_group_single_question(question_details, cache_seed=cache_seed,
+                                                                      is_woc=is_woc, num_of_experts=num_of_experts,use_hyde = use_hyde)
         # Metaculus API expects a decimal 0..1, so we convert int% => float
         forecast = final_proba / 100.0
         comment = summarization
@@ -294,10 +292,11 @@ async def forecast_individual_question(
         post_id: int,
         submit_prediction: bool,
         skip_previously_forecasted_questions: bool,
+        use_hyde: bool = True,
         cache_seed: int = 42,
         is_woc=False,
-        num_of_experts = None,
-        news:str=None
+        num_of_experts=None,
+        news: str = None
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -320,8 +319,10 @@ async def forecast_individual_question(
         summary_of_forecast += "Skipped: Forecast already made\n"
         return summary_of_forecast
 
-    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, cache_seed,
-                                                                           summary_of_forecast, is_woc,num_of_experts,news)
+    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, use_hyde,
+                                                                           cache_seed,
+                                                                           summary_of_forecast, is_woc, num_of_experts,
+                                                                           news)
 
     # In case forecast is None from skipping
     if forecast is None:
@@ -344,6 +345,7 @@ async def forecast_questions(
         open_question_id_post_id: list[tuple[int, int]],
         submit_prediction: bool,
         skip_previously_forecasted_questions: bool,
+        use_hyde=True,
         cache_seed: int = 42
 ) -> None:
     forecast_tasks = [
@@ -352,6 +354,7 @@ async def forecast_questions(
             post_id,
             submit_prediction,
             skip_previously_forecasted_questions,
+            use_hyde,
             cache_seed
         )
         for question_id, post_id in open_question_id_post_id
