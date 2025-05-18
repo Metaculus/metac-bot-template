@@ -3,16 +3,18 @@ import datetime
 import json
 import random
 import re
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Any
 
 import aiofiles
 import aiofiles.os
+import numpy as np
 from autogen_agentchat.agents import AssistantAgent
 
 from agents.agent_creator import create_experts_analyzer_assistant
 from agents.experts_extractor import expert_creator, run_expert_extractor
-from logic.chat import run_first_stage_forecasters, run_second_stage_forecasters, run_revised_stage_forecasters
+from logic.chat import run_first_stage_forecasters, run_revised_stage_forecasters
 from utils.PROMPTS import FIRST_PHASE_INSTRUCTIONS, REVISED_OUTPUT_FORMAT
+from utils.utils import normalize_and_average
 
 EXPERTS_PATH = "experts.json"
 
@@ -62,11 +64,12 @@ async def perform_forecasting_phase(experts, question_details: Dict[str, str], n
 
     return results
 
-async def perform_revised_forecasting_step(experts, question_details: Dict[str, str], news=None, is_multiple_choice=False,
-                                    options=None):
 
+async def perform_revised_forecasting_step(experts, question_details: Dict[str, str], news=None,
+                                           is_multiple_choice=False,
+                                           options=None):
     results = {}
-    tasks = [forecast_for_expert(expert, run_revised_stage_forecasters, prompt = REVISED_OUTPUT_FORMAT,
+    tasks = [forecast_for_expert(expert, run_revised_stage_forecasters, prompt=REVISED_OUTPUT_FORMAT,
                                  options=options) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
     for expert, result in results_list:
@@ -74,10 +77,10 @@ async def perform_revised_forecasting_step(experts, question_details: Dict[str, 
 
     return results
 
-async def forecast_for_expert(expert: AssistantAgent, stage_function=run_first_stage_forecasters, options=None,
-                              prompt = ""):
 
-    results = await stage_function([expert], prompt = prompt,
+async def forecast_for_expert(expert: AssistantAgent, stage_function=run_first_stage_forecasters, options=None,
+                              prompt=""):
+    results = await stage_function([expert], prompt=prompt,
                                    system_message="",
                                    options=options)
     return expert, results
@@ -151,3 +154,60 @@ def format_phase1_results_to_string(phase1_results_input_dict: Dict[str, Dict]) 
 
     phase1_summary_str += "\n---\n"
     return phase1_summary_str
+
+
+def get_probabilities(first_step_results, revision_results, group_results, is_multiple_choice, options) -> Dict[
+    str, Any]:
+    deliberation_step_probability = [result['final_probability'] for result in first_step_results.values() if
+                                     'final_probability' in result]
+    initial_probability = [result['initial_probability'] for result in first_step_results.values() if
+                           'initial_probability' in result]
+
+    revision_step_probability = [result['revised_probability'] for result in revision_results.values() if
+                                 'revised_probability' in result]
+
+    deliberation_step_probability_result = int(
+        round(np.mean(deliberation_step_probability))) if not is_multiple_choice else {
+        opt: val / 100.0 for opt, val in normalize_and_average(deliberation_step_probability, options=options).items()
+    }
+    first_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
+        opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()
+    }
+    revision_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
+        opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()
+    }
+
+    sd_initial_step = np.std(initial_probability, ddof=1)
+    sd_deliberation_step = np.std(deliberation_step_probability, ddof=1)
+    sd_revision_step = np.std(revision_step_probability, ddof=1)
+    mean_initial_step = np.mean(initial_probability)
+    mean_deliberation_step = np.mean(deliberation_step_probability)
+    mean_revision_step = np.mean(revision_step_probability)
+
+    # Build final JSON
+    probability_json = {
+        "deliberation_results": first_step_results,
+        "group_results": group_results,
+        "revision_results": revision_results,
+        "initial_probability": initial_probability,
+        "initial_mean_probability": mean_initial_step,
+        "initial_sd": sd_initial_step,
+        "initial_probability_result": first_step_probability_result,
+        "deliberation_probability": deliberation_step_probability,
+        "deliberation_mean_probability": mean_deliberation_step,
+        "deliberation_sd": sd_deliberation_step,
+        "deliberation_probability_result": deliberation_step_probability_result,
+        "revision_probability": revision_step_probability,
+        "revision_mean_probability": mean_revision_step,
+        "revision_sd": sd_revision_step,
+        "revision_probability_result": revision_step_probability_result,
+    }
+
+    return probability_json
+
+
+def enrich_probabilities(probabilities, question_details, news, forecast_date, summarization):
+    probabilities["question_details"] = question_details
+    probabilities["news"] = news
+    probabilities["date"] = forecast_date
+    probabilities["summary"] = summarization
