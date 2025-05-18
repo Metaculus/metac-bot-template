@@ -20,6 +20,7 @@ def create_agent(config: Dict[str, Any], expertise: str, specialty_expertise: st
     client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=1)
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}'
+    name = name[:63] # Limit to 63 characters for autogen purposes
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
     return AssistantAgent(name=name, system_message=system_message, model_client=client)
 
