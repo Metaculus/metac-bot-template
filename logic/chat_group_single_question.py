@@ -56,6 +56,7 @@ async def chat_group_single_question(
     probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options)
 
     enrich_probabilities(probabilities, question_details, news, forecast_date, summarization)
+
     final_answer = probabilities['revision_probability_result']
 
     # Save JSON
