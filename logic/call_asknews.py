@@ -44,7 +44,7 @@ async def call_asknews(question_details:Dict[str,str]) -> str:
     # get the latest news related to the query (within the past 48 hours)
     hot_response = ask.news.search_news(
         query=hyde_results,  # your natural language query
-        n_articles=20,  # control the number of articles to include in the context, originally 5
+        n_articles=5,  # control the number of articles to include in the context, originally 5
         return_type="both",
         strategy="latest news",  # enforces looking at the latest news only
     )
@@ -52,7 +52,7 @@ async def call_asknews(question_details:Dict[str,str]) -> str:
     # get context from the "historical" database that contains a news archive going back to 2023
     historical_response = ask.news.search_news(
         query=hyde_results,
-        n_articles=20,
+        n_articles=15,
         return_type="both",
         strategy="news knowledge",  # looks for relevant news within the past 60 days
     )

@@ -1,14 +1,14 @@
 SPECIFIC_META_MESSAGE_EXPERTISE = (
     "You are a superforecaster with expertise in the field of {expertise}. \n"
     "You are participating in a prize-bearing geopolitical forecasting competition. Your goal is to win the contest by providing the most accurate predictions across questions.\n"
-    "Bold predictions (closer to 0% for No and closer to 100% for Yes) are rewarded, but only to the extent they can be well-justified .\n"
+    "Bolder/more extreme predictions (closer to 0% or 100%) are rewarded, but only to the extent they can be well-justified .\n"
     "Each question will be addressed in three phases.\n"
     "1. Initial Forecast.\n"
     "2. Group Deliberation.\n"
     "3. Forecast Revision.\n"
     "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
     "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
-    "Ignore what you would like the outcome to be, be dispassionate and focus on the evidence.\n"
+    "Ignore what you would like the outcome to be or which outcome seems better or more ethical. Be dispassionate and focus on the evidence at hand.\n"
 
 )
 
@@ -21,14 +21,14 @@ FIRST_PHASE_INSTRUCTIONS = (
     "- State the time left until the question resolves.\n"
     "- Provide a 'status quo' prediction based on base rates/historical frequencies of similar events you consider relevant. This predictions should reflect the probability of the event occurring if nothing changes until the time of resolution. \n"
     "- Briefly explain how you constructed the base rate, while relying on your perspective as an expert in {expertise}. \n"
-    "- Considering your unique perspective, list the factors you bring to bear on the forecasting question. These should explain if and how the current outcome may diverge from the status quo forecast.  \n"
+    "- Considering your unique perspective, list the factors you bring to bear on the forecasting question. These should explain how the current outcome may diverge from the status quo prediction.  \n"
     "- For each distinct factor, specify its name.\n"
-    "- Provide reasoning for its effect.\n"
+    "- Describe its potential to increase or decrease the probability of the outcome.\n"
     "- Provide a brief description of a scenario that results in a No outcome.\n"
     "- Provide a brief description of a scenario that results in a Yes outcome.\n"
-    "- Provide a final probability in light of your reasoning.\n"
-    "Be as compelling as possible, knowing that later on, other forecasters will see and scrutinize your response. \n"
-    "##Output Format:\n"
+    "- Provide a final probability in light of your reasoning, the news, and the resolution criteria and fine print. \n"
+    "Be as compelling as possible, knowing that later on, other forecasters will see and scrutinize your forecast. \n"
+    "## Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
     "    \"time_to_resolution\": str,\n"
@@ -39,10 +39,10 @@ FIRST_PHASE_INSTRUCTIONS = (
     "        {{\n"
     "            \"factor\": str,\n"
     "            \"reasoning\": str,\n"
-    "            \"no_scenario\": str,\"\n"
-    "            \"yes_scenario\": str\"\n"
     "        }}\n"
     "    ],\n"
+    "    \"no_scenario\": str,\"\n"
+    "    \"yes_scenario\": str\"\n"
     "    \"final_probability\": int\n"
     "}}\n"
     "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.\n\n"
@@ -126,7 +126,7 @@ If so, how? To the extent that did change, explain what changed.
 
 Output your response strictly as a JSON object with the following structure:
 {
-    "my_phase1_final_probability": str,
+    "my_phase1_final_probability": int,
     "reasoning_for_revised_probability": str,
     "revised_probability": int
 }
