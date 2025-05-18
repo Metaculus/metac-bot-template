@@ -133,7 +133,7 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    # Consider Range of Reasonable Binary Forecasts, DRE 5/10/2025
+    # DRE 5/17/2025, Add mid cases, revise reference CSV
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
@@ -181,35 +181,35 @@ class TemplateForecaster(ForecastBot):
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
             - What would an appropriate base rate be for this world:
             - What would be a low forecast estimate be for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate be for this world?
             
             ************
             Reference CSV
             Now, for future reference, make a CSV based on values from your multi-world reasoning.
-            Headings: 
-            Low_World base rate, Low_World low forecast, Low_World high forecast
-            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
-            High_World base rate, High_World low forecast, High_World high forecast
+            Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
+            Rows: Low_World, Mid_World, High_World
             
             ************
-            Final expect distribution of reasonable forecasts
-            You order the 6 estimates from low to high because you know that these values represent a range of resonable forecasts.
+            Final expected distribution of reasonable forecasts
+            You order the 9 estimates from low to high because you know that these values represent a range of resonable forecasts.
             
-            Considering the 6 estimates ordered from low to high:
+            Considering the 9 estimates ordered from low to high:
             - Project a distribution of reasonable forecasts
             - Make a CSV with percentiles of probability from P10 to p90 on increments of 10
             - Reflect on the 50th percentile and adjust as necessary
             - The 50th percentile is your best estimate of forecast probability
             ************
-
 
             The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
@@ -224,8 +224,8 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
-    # Update DRE 05/10/2025 prompt
+    
+    # DRE 05/17/2025 prompt, introduce main factors, write option-by-option outcome scenarios
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
@@ -236,7 +236,8 @@ class TemplateForecaster(ForecastBot):
             Your interview question is:
             {question.question_text}
 
-            The options are: {question.options}
+            The options are: 
+            {question.options}
 
 
             Background:
@@ -256,17 +257,26 @@ class TemplateForecaster(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
-
+            (c) The expectations of experts and markets.
+            
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
             ************
             
-            There are N options in this question, in this order {question.options}
-            - Make a preliminary ranking of the options from highest to lowest probability by your initial perceived probability
+            There are N options in this question, in this order:
+            {question.options}
+            
+            For each option you write:
+            (a) A brief description of a scenario that results in a No outcome.
+            (b) A brief description of a scenario that results in a Yes outcome.
+            
+            Make a preliminary ranking of the options from highest to lowest probability
             - Be sure to keep track of the original order of the options, we will need them!
             ************
             
-            For each option, break the evidence down into buckets that support low, mid, and high probability
+            Based on your analysis so far, you write the 3 main factors that determine if an option will resolve positve
+            ***********
+            
+            For each option, you use the three main factors to place the evidence in buckets that support low, mid, and high probability
             - Estimate low, mid, and high probability for each option, using the evidence buckets
             - Re-rank the options according to the mid probality for each
             - Are there any dicontinuities or inconsistencies from adjacent options?
@@ -300,8 +310,8 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
-    # Updated, with 1/3 buckets multiworld prompt for numeric prompt. DRE 5-10-2025
+        
+    # DRE 5/17/2025, Numeric, Add mid cases, revise reference CSV, add p50 output
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -360,26 +370,29 @@ class TemplateForecaster(ForecastBot):
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate for this world?
             3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
             - What would an appropriate base rate be for this world:
             - What would be a low forecast estimate be for this world?
+            - What would be a mid forecast estimate for this world?
             - What would be a high forecast estimate be for this world? 
 
             ************
             Reference CSV
             Now, for future reference, make a CSV based on values from your multi-world reasoning.
-            Headings: 
-            Low_World base rate, Low_World low forecast, Low_World high forecast
-            Mid_World base rate, Mid_World low forecast, Mid_World high forecast
-            High_World base rate, High_World low forecast, High_World high forecast
+            Reference CSV
+            Now, for future reference, make a CSV based on values from your multi-world reasoning.
+            Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
+            Rows: Low_World, Mid_World, High_World
             
             ************
-            You order the 6 estimates from low to high because you know that these values represent a reasonable range of outcomes.
+            You order the 9 estimates from low to high because you know that these values represent a reasonable range of outcomes.
             
             ************
             With those values in mind...
@@ -390,6 +403,7 @@ class TemplateForecaster(ForecastBot):
             Percentile 10: XX
             Percentile 20: XX
             Percentile 40: XX
+            Percentile 50: XX
             Percentile 60: XX
             Percentile 80: XX
             Percentile 90: XX
@@ -408,7 +422,7 @@ class TemplateForecaster(ForecastBot):
         return ReasonedPrediction(
             prediction_value=prediction, reasoning=reasoning
         )
-
+    
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
     ) -> tuple[str, str]:
@@ -460,7 +474,7 @@ if __name__ == "__main__":
 
     template_bot = TemplateForecaster(
         research_reports_per_question=1,
-        predictions_per_research_report=5,  # predictions_per_research_report=1
+        predictions_per_research_report=1, #predictions_per_research_report=8,  # predictions_per_research_report=5
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
@@ -468,12 +482,12 @@ if __name__ == "__main__":
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
                 # naming style reminder: "metaculus/{anthropic or openai}/{model_name}".
             "default": GeneralLlm(
-                model="metaculus/openai/o4-mini",
+                model="metaculus/openai/o1", #model="metaculus/openai/o4-mini",
                 temperature=1,  # change to 1 because o4-mini only takes (1) temperature... error on run
-                timeout=40,
+                timeout=200,  #timeout=40
                 allowed_tries=2,
             ),
-            "summarizer": "metaculus/openai/o4-mini",  #"summarizer": "openai/gpt-4o-mini",
+            "summarizer": "metaculus/openai/o1",  #"metaculus/openai/o4-mini", #"summarizer": "openai/gpt-4o-mini",
         },
     )
 
@@ -495,10 +509,10 @@ if __name__ == "__main__":
     elif run_mode == "test_questions":
         # Example questions are a good way to test the bot's performance on a single question
         EXAMPLE_QUESTIONS = [
-            "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
-            # "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-            # "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-            # "https://www.metaculus.com/questions/36295/us-tariff-rate-on-goods-imported-into-us-at-yearend-2026/",  # new question chosen by me
+            #"https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
+            "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
+            #"https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            #"https://www.metaculus.com/questions/36295/us-tariff-rate-on-goods-imported-into-us-at-yearend-2026/",  # new question chosen by me
         ]
         template_bot.skip_previously_forecasted_questions = False
         questions = [
