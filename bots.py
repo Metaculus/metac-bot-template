@@ -2,7 +2,7 @@ from forecasting_tools import (
     ForecastBot, ReasonedPrediction, BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, NumericDistribution, PredictedOptionList,
     GeneralLlm, PredictionExtractor, clean_indents
 )
-from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter
+from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter, log_report_summary_returning_str
 from datetime import datetime
 import traceback
 
@@ -166,6 +166,10 @@ class AdjacentNewsRelatedMarketsBot(ForecastBot):
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
+
 
 class OpenRouterWebSearchBot(ForecastBot):
     def __init__(self, llms: dict[str, GeneralLlm]):
@@ -319,6 +323,10 @@ class OpenRouterWebSearchBot(ForecastBot):
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
 
 
 class CombinedWebAndAdjacentNewsBot(ForecastBot):
@@ -478,6 +486,10 @@ class CombinedWebAndAdjacentNewsBot(ForecastBot):
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
+
 
 class FermiEstimationBot(ForecastBot):
     def __init__(self, llms: dict[str, GeneralLlm]):
@@ -504,6 +516,10 @@ class FermiEstimationBot(ForecastBot):
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
 
 
 class PerplexityRelatedMarketsBot(ForecastBot):
@@ -663,6 +679,10 @@ class PerplexityRelatedMarketsBot(ForecastBot):
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
 
 
 class OpenSearchPerpAdjMarkets(ForecastBot):
@@ -829,6 +849,10 @@ class OpenSearchPerpAdjMarkets(ForecastBot):
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
+
 
 class FermiResearchFirstBot(ForecastBot):
     def __init__(self, llms: dict[str, GeneralLlm]):
@@ -989,6 +1013,10 @@ class FermiResearchFirstBot(ForecastBot):
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
             reasoning, question)
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
 
 
 class FermiWithSearchControl(ForecastBot):
@@ -1199,3 +1227,7 @@ class FermiWithSearchControl(ForecastBot):
             print("[FermiWithSearchControl] Exception in _run_forecast_on_numeric:", e)
             traceback.print_exc()
             return ReasonedPrediction(prediction_value=None, reasoning=f"Exception: {e}")
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)

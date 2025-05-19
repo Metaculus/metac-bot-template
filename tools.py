@@ -1,6 +1,9 @@
 import os
 import requests
 from forecasting_tools import GeneralLlm, clean_indents
+import logging
+
+logger = logging.getLogger("forecasting_tools.forecast_bots.forecast_bot")
 
 
 def get_related_markets_from_adjacent_news(question: str) -> str:
@@ -147,3 +150,65 @@ async def get_perplexity_research_from_openrouter(question: str, model_name: str
     )
     response = await model.invoke(prompt)
     return response
+
+
+def log_report_summary_returning_str(forecast_reports) -> str:
+    # Import here to avoid circular import
+    from forecasting_tools import clean_indents
+    try:
+        ForecastReport = __import__('forecasting_tools.forecast_bots.forecast_bot', fromlist=[
+                                    'ForecastReport']).ForecastReport
+    except Exception:
+        ForecastReport = None
+    valid_reports = [
+        report
+        for report in forecast_reports
+        if ForecastReport and isinstance(report, ForecastReport)
+    ]
+    exceptions = [
+        report
+        for report in forecast_reports
+        if isinstance(report, BaseException)
+    ]
+    minor_exceptions = [
+        getattr(report, 'errors', None) for report in valid_reports if getattr(report, 'errors', None)
+    ]
+
+    full_summary = ""
+    for report in valid_reports:
+        question_summary = clean_indents(
+            f"""
+            URL: {report.question.page_url}
+            Errors: {report.errors}
+            <<<<<<<<<<<<<<<<<<<< Summary >>>>>>>>>>>>>>>>>>>>>
+            {report.summary}
+
+            <<<<<<<<<<<<<<<<<<<< First Rationales >>>>>>>>>>>>>>>>>>>>>
+            {report.forecast_rationales.split('##')[1][:10000]}
+            -------------------------------------------------------------------------------------------
+        """
+        )
+        full_summary += question_summary + "\n"
+
+    for report in forecast_reports:
+        if ForecastReport and isinstance(report, ForecastReport):
+            short_summary = f"✅ URL: {report.question.page_url} | Minor Errors: {len(report.errors)}"
+        else:
+            exception_message = (
+                str(report)
+                if len(str(report)) < 1000
+                else f"{str(report)[:500]}...{str(report)[-500:]}"
+            )
+            short_summary = f"❌ Exception: {report.__class__.__name__} | Message: {exception_message}"
+        full_summary += short_summary + "\n"
+    logger.info(full_summary)
+
+    if minor_exceptions:
+        logger.error(
+            f"{len(minor_exceptions)} minor exceptions occurred while forecasting: {minor_exceptions}"
+        )
+    if exceptions:
+        raise RuntimeError(
+            f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
+        )
+    return full_summary
