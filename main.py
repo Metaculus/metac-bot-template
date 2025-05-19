@@ -4,6 +4,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Literal
+import requests
 
 from forecasting_tools import (
     AskNewsSearcher,
@@ -323,6 +324,23 @@ class TemplateForecaster(ForecastBot):
         return upper_bound_message, lower_bound_message
 
 
+def send_slack_notification(message: str, webhook_url: str | None = None) -> None:
+    """Send a notification to Slack using a webhook URL."""
+    if not webhook_url:
+        logger.warning("No Slack webhook URL provided, skipping notification")
+        return
+    try:
+        response = requests.post(
+            webhook_url,
+            json={"text": message},
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info("Successfully sent Slack notification")
+    except Exception as e:
+        logger.error(f"Failed to send Slack notification: {e}")
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
@@ -343,6 +361,11 @@ if __name__ == "__main__":
         choices=["tournament", "quarterly_cup", "test_questions"],
         default="tournament",
         help="Specify the run mode (default: tournament)",
+    )
+    parser.add_argument(
+        "--slack-notify",
+        action="store_true",
+        help="Send results summary to Slack",
     )
     args = parser.parse_args()
     run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = (
@@ -388,5 +411,12 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             bot.forecast_questions(questions, return_exceptions=True)
         )
-    PerplexityRelatedMarketsBot.log_report_summary(
+    summary = PerplexityRelatedMarketsBot.log_report_summary(
         forecast_reports)  # type: ignore
+
+    if args.slack_notify:
+        webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+        send_slack_notification(
+            f"*Metaculus Bot Run Summary*\n```\n{summary}\n```",
+            webhook_url
+        )
