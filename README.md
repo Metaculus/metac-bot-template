@@ -221,6 +221,26 @@ poetry run python main.py --mode test_questions
 ```
 Make sure to set the environment variables as described above and to set the parameters in the code to your liking. In particular, to submit predictions, make sure that `submit_predictions` is set to `True` (it is set to `True` by default in main.py).
 
+## Using the CLI Tool for Custom Questions
+
+A new CLI tool, `cli.py`, is included in this repository. This tool allows you (or your client) to enter a custom binary question and receive a forecast using the same bot logic as the tournament mode.
+
+**Key features:**
+- Accepts a user-entered binary question (e.g., "Will there be a US recession by EOY2025?").
+- Runs the PerplexityRelatedMarketsBot on your question.
+- Outputs a detailed forecast report.
+- Automatically generates a styled HTML report and opens it in your browser for easy reading.
+- Saves all reports in the `local_forecasts/` folder (which you can add to `.gitignore`).
+
+**Limitations:**
+- Currently, only binary (yes/no) questions are supported.
+
+**How to run:**
+```bash
+poetry run python cli.py
+```
+You will be prompted to enter your question. After a short wait, a browser window will open with your forecast report.
+
 ## Early Benchmarking
 Provided in this project is an example of how to benchmark your bot's forecasts against the community prediction for questions on Metaculus. Running `community_benchmark.py` will run versions of your bot defined by you (e.g. with different LLMs or research paths) and score them on how close they are to the community prediction using expected baseline score (a proper score assuming the community prediction is the true probability). You will want to edit the file to choose which bot configurations you want to test and how many questions you want to test on. Any class inheriting from `forecasting-tools.Forecastbot` can be passed into the benchmarker. As of March 28, 2025 the benchmarker only works with binary questions.
 
@@ -244,10 +264,10 @@ Below are some ideas for making a novel bot.
 - Base rate researcher: Create a tool to find accurate base rates. There is an experimental version [here](https://forecasting-tools.streamlit.app/base-rate-generator) in [forecasting-tools](https://github.com/Metaculus/forecasting-tools) that works 50% of the time.
 - Key factors researcher: Improve our experimental [key factors researcher](https://forecasting-tools.streamlit.app/key-factors) to find higher significance key factors for a given question.
 - Monte Carlo Simulations: Experiment with combining some tools to run effective Monte Carlo simulations. This could include experimenting with combining Squiggle with the question decomposer.
-- Adding personality diversity, LLM diversity, and other variations: Have GPT come up with a number of different ‘expert personalities’ or 'world-models' that it runs the forecasting bot with and then aggregates the median. Additionally, run the bot on different LLMs and see if the median of different LLMs improves the forecast. Finally, try simulating up to hundreds of personalities/LLM combinations to create large diverse crowds. Each individual could have a backstory, thinking process, biases they are resistant to, etc. This will ideally improve accuracy and give more useful bot reasoning outputs to help humans reading the output consider things from multiple angles.
-- Worldbuilding: Have GPT world build different future scenarios and then forecast all the different parts of those scenarios. It then would choose the most likely future world. In addition to a forecast, descriptions of future ‘worlds’ are created. This can take inspiration from Feinman paths.
+- Adding personality diversity, LLM diversity, and other variations: Have GPT come up with a number of different 'expert personalities' or 'world-models' that it runs the forecasting bot with and then aggregates the median. Additionally, run the bot on different LLMs and see if the median of different LLMs improves the forecast. Finally, try simulating up to hundreds of personalities/LLM combinations to create large diverse crowds. Each individual could have a backstory, thinking process, biases they are resistant to, etc. This will ideally improve accuracy and give more useful bot reasoning outputs to help humans reading the output consider things from multiple angles.
+- Worldbuilding: Have GPT world build different future scenarios and then forecast all the different parts of those scenarios. It then would choose the most likely future world. In addition to a forecast, descriptions of future 'worlds' are created. This can take inspiration from Feinman paths.
 - Consistency Forecasting: Forecast many tangential questions all at once (in a single prompt) and prompts for consistency rules.
 - Extremize & Calibrate Predictions: Using the historical performance of a bot, adjust forecasts to be better calibrated. For instance, if predictions of 30% from the bot actually happen 40% of the time, then transform predictions of 30% to 40%.
-- Assigning points to evidence: Starting with some ideas from a [blog post from Ozzie Gooen](https://forum.effectivealtruism.org/posts/mrAZFnEjsQAQPJvLh/using-points-to-rate-different-kinds-of-evidence), you could experiment with assigning ‘points’ to major types of evidence and having GPT categorize the evidence it finds related to a forecast so that the ‘total points’ can be calculated. This can then be turned into a forecast, and potentially optimized using machine learning on past Metaculus data.
+- Assigning points to evidence: Starting with some ideas from a [blog post from Ozzie Gooen](https://forum.effectivealtruism.org/posts/mrAZFnEjsQAQPJvLh/using-points-to-rate-different-kinds-of-evidence), you could experiment with assigning 'points' to major types of evidence and having GPT categorize the evidence it finds related to a forecast so that the 'total points' can be calculated. This can then be turned into a forecast, and potentially optimized using machine learning on past Metaculus data.
 - Search provider benchmark: Run bots using different combinations of search providers (e.g. Google, Bing, Exa.ai, Tavily, AskNews, Perplexity, etc) and search filters (e.g. only recent data, sites with a certain search rank, etc) and see if any specific one is better than others, or if using multiple of them makes a difference.
 - Timeline researcher: Make a tool that can take a niche topic and make a timeline for all major and minor events relevant to that topic.
