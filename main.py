@@ -416,7 +416,8 @@ if __name__ == "__main__":
 
     if args.slack_notify:
         webhook_url = os.getenv("SLACK_WEBHOOK_URL")
-        send_slack_notification(
-            f"*Metaculus Bot Run Summary*\n```\n{summary}\n```",
-            webhook_url
-        )
+        if summary and summary.strip():
+            send_slack_notification(
+                f"*Metaculus Bot Run Summary*\n```\n{summary}\n```",
+                webhook_url
+            )
