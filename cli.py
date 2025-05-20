@@ -23,8 +23,8 @@ def main():
 
     bot = PerplexityRelatedMarketsBot(
         llms={
-            "default": GeneralLlm(model="o3", temperature=0.2),
-            "summarizer": GeneralLlm(model="o3", temperature=0.2)
+            "default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2),
+            "summarizer": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2)
         }
     )
 
