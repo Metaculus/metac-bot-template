@@ -39,7 +39,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     """
 
     # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
-    number_of_questions = 1
+    number_of_questions = 30
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -68,19 +68,19 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            # PerplexityRelatedMarketsBot(
-            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
-            #         model="o3", temperature=0.2)}
-            # ),
-            # PerplexityRelatedMarketsBot(
-            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
-            #         model="o3", temperature=0.2)},
-            #     predictions_per_research_report=5
-            # ),
-            # PerpRelatedMarketsConfirmationBot(
-            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
-            #         model="o3", temperature=0.2)}
-            # ),
+            PerplexityRelatedMarketsBot(
+                llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+                    model="o3", temperature=0.2)}
+            ),
+            PerplexityRelatedMarketsBot(
+                llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+                    model="o3", temperature=0.2)},
+                predictions_per_research_report=5
+            ),
+            PerpRelatedMarketsConfirmationBot(
+                llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+                    model="o3", temperature=0.2)}
+            ),
             P_RM_NathanV1_Bot(
                 llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
                     model="o3", temperature=0.2)}
