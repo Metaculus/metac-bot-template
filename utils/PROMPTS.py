@@ -9,44 +9,43 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
     "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
     "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
     "Ignore what you would like the outcome to be or which outcome seems better or more ethical. Be dispassionate and focus on the evidence at hand.\n"
-
 )
-
-
 FIRST_PHASE_INSTRUCTIONS = (
     "## Phase I: Initial Forecast\n"
     "In this phase, you will be presented with a forecasting question and some relevant news articles.\n"
     "Make your forecast by following these steps:\n"
-    "- Start by explaining the relevance of the unique perspective you bring to bear on the question.\n"
     "- State the time left until the question resolves.\n"
-    "- Provide a 'status quo' prediction based on base rates/historical frequencies of similar events you consider relevant. This predictions should reflect the probability of the event occurring if nothing changes until the time of resolution. \n"
-    "- Briefly explain how you constructed the base rate, while relying on your perspective as an expert in {expertise}. \n"
-    "- Considering your unique perspective, list the factors you bring to bear on the forecasting question. These should explain how the current outcome may diverge from the status quo prediction.  \n"
+    "- Explain the relevance of the unique perspective you bring to bear on the question.\n"
+    "- State the status quo outcome if nothing changed. \n"
+    "- Considering your unique perspective, list the factors you bring to bear on the forecasting question. \n"
     "- For each distinct factor, specify its name.\n"
-    "- Describe its potential to increase or decrease the probability of the outcome.\n"
-    "- Provide a brief description of a scenario that results in a No outcome.\n"
-    "- Provide a brief description of a scenario that results in a Yes outcome.\n"
-    "- Provide a final probability in light of your reasoning, the news, and the resolution criteria and fine print. \n"
-    "Be as compelling as possible, knowing that later on, other forecasters will see and scrutinize your forecast. \n"
+    "- Explains how it increases or decreases the probability of the outcome.\n"
+    "- Given your perspective, provide a brief description of a scenario that results in a No outcome.\n"
+    "- Given your perspective, provide a brief description of a scenario that results in a Yes outcome.\n"
+    "- Provide a final probability, summarizing your reasoning in light of the news, resolution criteria, and fine print. \n"
+    "General notes: \n"
+    "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. \n"
+    "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"
     "## Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
     "    \"time_to_resolution\": str,\n"
     "    \"perspective_relevance\": str,\n"
-    "    \"initial_reasoning\": str,\n"
-    "    \"initial_probability\": int,\n"
+    "    \"status_quo\": str,\n"
     "    \"perspective_derived_factors\": [\n"
     "        {{\n"
     "            \"factor\": str,\n"
-    "            \"reasoning\": str,\n"
+    "            \"effect\": str,\n"
     "        }}\n"
     "    ],\n"
     "    \"no_scenario\": str,\"\n"
-    "    \"yes_scenario\": str\"\n"
-    "    \"final_probability\": int\n"
+    "    \"yes_scenario\": str,\"\n"
+    "    \"final_reasoning\": str, \"\n"
+    "    \"final_probability\": int 0-100 \"\n"
     "}}\n"
     "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.\n\n"
 )
+
 
 EXPERTISE_ANALYZER_PROMPT = (
 """
@@ -126,9 +125,9 @@ If so, how? To the extent that did change, explain what changed.
 
 Output your response strictly as a JSON object with the following structure:
 {
-    "my_phase1_final_probability": int,
+    "my_phase1_final_probability": int 0-100,
     "reasoning_for_revised_probability": str,
-    "revised_probability": int
+    "revised_probability": int 0-100
 }
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
