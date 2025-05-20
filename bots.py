@@ -2,14 +2,17 @@ from forecasting_tools import (
     ForecastBot, ReasonedPrediction, BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, NumericDistribution, PredictedOptionList,
     GeneralLlm, PredictionExtractor, clean_indents
 )
-from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter, log_report_summary_returning_str
+from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter, log_report_summary_returning_str, get_asknews_research, confirm_or_revise_prediction
 from datetime import datetime
 import traceback
-
-PROBABILITY_FINAL_ANSWER_LINE = (
-    "Before giving your final answer, rewrite the question as a probability statement (e.g., "
-    "\"What is the probability that [event] will happen?\"), making sure it matches the outcome you are forecasting. "
-    "Then, the last thing you write is your final answer as: \"Probability: ZZ%\", 0-100 (no decimals, do not include a space between the number and the % sign)."
+from prompts import (
+    perp_related_markets_binary_prompt,
+    perp_related_markets_mc_prompt,
+    perp_related_markets_numeric_prompt,
+    nathan_v1_binary_prompt,
+    nathan_v1_mc_prompt,
+    nathan_v1_numeric_prompt,
+    PROBABILITY_FINAL_ANSWER_LINE,
 )
 
 
@@ -534,151 +537,39 @@ class PerplexityRelatedMarketsBot(ForecastBot):
         return f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{related_markets}"
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
-            {question.question_text}
-
-            Question background:
-            {question.background_info}
-
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Your research assistant found web search results and related markets info:
-            {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
-            Today is {datetime.now().strftime('%Y-%m-%d')}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
-            (e) Write out the question again, and acknolwedge that if the No outcome is more likely your answers should be closer to 0 and if the Yes outcome is more likely your answers should be closer to 100.
-
-            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
-
-            {PROBABILITY_FINAL_ANSWER_LINE}
-            """
-        )
-        reasoning = await self.get_llm().invoke(prompt)
+        prompt = perp_related_markets_binary_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=1, min_prediction=0)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+            rationale, max_prediction=1, min_prediction=0)
+        # Compose message for confirmation
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        # Optionally, re-extract the prediction from the confirmation step
+        final_prediction = PredictionExtractor.extract_last_percentage_value(
+            confirmed, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
 
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
-            {question.question_text}
-
-            The options are: {question.options}
-
-            Background:
-            {question.background_info}
-
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Your research assistant found web search results and related markets info:
-            {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
-            Today is {datetime.now().strftime('%Y-%m-%d')}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
-
-            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-
-            The last thing you write is your final probabilities for the N options in this order {question.options} as:
-            Option_A: Probability_A
-            Option_B: Probability_B
-            ...
-            Option_N: Probability_N
-            """
-        )
-        reasoning = await self.get_llm().invoke(prompt)
+        prompt = perp_related_markets_mc_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            reasoning, question.options)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+            rationale, question.options)
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        final_prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            confirmed, question.options)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
 
     async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        lower = getattr(question, 'lower_bound', 0)
-        upper = getattr(question, 'upper_bound', 100)
-        lower_bound_message = f"The outcome can not be lower than {lower}." if hasattr(
-            question, 'lower_bound') else ""
-        upper_bound_message = f"The outcome can not be higher than {upper}." if hasattr(
-            question, 'upper_bound') else ""
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
-            {question.question_text}
-
-            Background:
-            {question.background_info}
-
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
-
-            Your research assistant found web search results and related markets info:
-            {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
-            Today is {datetime.now().strftime('%Y-%m-%d')}.
-
-            {lower_bound_message}
-            {upper_bound_message}
-
-            Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
-            - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) The expectations of experts and markets.
-            (e) A brief description of an unexpected scenario that results in a low outcome.
-            (f) A brief description of an unexpected scenario that results in a high outcome.
-
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
-
-            The last thing you write is your final answer as:
-            "
-            Percentile 10: XX
-            Percentile 20: XX
-            Percentile 40: XX
-            Percentile 60: XX
-            Percentile 80: XX
-            Percentile 90: XX
-            "
-            """
-        )
-        reasoning = await self.get_llm().invoke(prompt)
+        prompt = perp_related_markets_numeric_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            reasoning, question)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+            rationale, question)
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        final_prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            confirmed, question)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
 
     @staticmethod
     def log_report_summary(forecast_reports):
@@ -1227,6 +1118,240 @@ class FermiWithSearchControl(ForecastBot):
             print("[FermiWithSearchControl] Exception in _run_forecast_on_numeric:", e)
             traceback.print_exc()
             return ReasonedPrediction(prediction_value=None, reasoning=f"Exception: {e}")
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
+
+
+class AskNewsResearchBot(ForecastBot):
+    def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
+        super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
+
+    async def run_research(self, question):
+        # Use AskNews for research
+        return await get_asknews_research(question.question_text)
+
+    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Question background:
+            {question.background_info}
+
+            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Your research assistant found news results:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The status quo outcome if nothing changed.
+            (c) A brief description of a scenario that results in a No outcome.
+            (d) A brief description of a scenario that results in a Yes outcome.
+            (e) Write out the question again, and acknolwedge that if the No outcome is more likely your answers should be closer to 0 and if the Yes outcome is more likely your answers should be closer to 100.
+
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_last_percentage_value(
+            reasoning, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            The options are: {question.options}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Your research assistant found news results:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The status quo outcome if nothing changed.
+            (c) A description of an scenario that results in an unexpected outcome.
+
+            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+
+            The last thing you write is your final probabilities for the N options in this order {question.options} as:
+            Option_A: Probability_A
+            Option_B: Probability_B
+            ...
+            Option_N: Probability_N
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
+        lower = getattr(question, 'lower_bound', 0)
+        upper = getattr(question, 'upper_bound', 100)
+        lower_bound_message = f"The outcome can not be lower than {lower}." if hasattr(
+            question, 'lower_bound') else ""
+        upper_bound_message = f"The outcome can not be higher than {upper}." if hasattr(
+            question, 'upper_bound') else ""
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
+
+            Your research assistant found news results:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            {lower_bound_message}
+            {upper_bound_message}
+
+            Formatting Instructions:
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
+            - Never use scientific notation.
+            - Always start with a smaller number (more negative if negative) and then increase from there
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+
+            The last thing you write is your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            reasoning, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)
+
+
+class PerpRelatedMarketsConfirmationBot(PerplexityRelatedMarketsBot):
+    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
+        prompt = perp_related_markets_binary_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_last_percentage_value(
+            rationale, max_prediction=1, min_prediction=0)
+        # Compose message for confirmation
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        # Optionally, re-extract the prediction from the confirmation step
+        final_prediction = PredictionExtractor.extract_last_percentage_value(
+            confirmed, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+
+    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
+        prompt = perp_related_markets_mc_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            rationale, question.options)
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        final_prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            confirmed, question.options)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+
+    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
+        prompt = perp_related_markets_numeric_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            rationale, question)
+        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
+        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
+        final_prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            confirmed, question)
+        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+
+
+class P_RM_NathanV1_Bot(ForecastBot):
+    def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
+        super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
+
+    async def run_research(self, question):
+        # Use Perplexity via OpenRouter (sonar-reasoning) for web research
+        web_results = await get_perplexity_research_from_openrouter(question.question_text, model_name="openrouter/perplexity/sonar-reasoning")
+        related_markets = get_related_markets_from_adjacent_news(
+            question.question_text)
+        return f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{related_markets}"
+
+    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
+        prompt = nathan_v1_binary_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_last_percentage_value(
+            rationale, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
+
+    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
+        prompt = nathan_v1_mc_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            rationale, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
+
+    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
+        prompt = nathan_v1_numeric_prompt(question, research)
+        rationale = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            rationale, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
 
     @staticmethod
     def log_report_summary(forecast_reports):

@@ -1,6 +1,6 @@
 import os
 import requests
-from forecasting_tools import GeneralLlm, clean_indents
+from forecasting_tools import GeneralLlm, clean_indents, AskNewsSearcher
 import logging
 
 logger = logging.getLogger("forecasting_tools.forecast_bots.forecast_bot")
@@ -212,3 +212,60 @@ def log_report_summary_returning_str(forecast_reports) -> str:
             f"{len(exceptions)} errors occurred while forecasting: {exceptions}"
         )
     return full_summary
+
+
+async def get_asknews_research(question: str) -> str:
+    """
+    Given a question string, use AskNewsSearcher to get formatted news results (async).
+    Requires ASKNEWS_CLIENT_ID and ASKNEWS_SECRET in the environment.
+    """
+    if not (os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET")):
+        raise ValueError(
+            "ASKNEWS_CLIENT_ID and/or ASKNEWS_SECRET not set in environment.")
+    searcher = AskNewsSearcher()
+    return await searcher.get_formatted_news_async(question)
+
+
+async def confirm_or_revise_prediction(message: str, question, llm: GeneralLlm) -> str:
+    """
+    Given a message (containing research/results and a prediction), a question object, and an LLM,
+    prompt the LLM to confirm or revise its prediction, reiterating the required answer format based on the question type.
+    Returns the LLM's response as a string.
+    """
+    # Determine question type and format instructions
+    from forecasting_tools import clean_indents
+    # Try to get the class name in a robust way
+    qtype = type(question).__name__
+    if qtype == "BinaryQuestion":
+        format_instructions = (
+            'If you agree with your prediction above, restate it. If you would like to revise it, provide a new rationale and answer.\n'
+            'Format: Probability: ZZ% (0-100, no decimals, no space between number and % sign)'
+        )
+    elif qtype == "MultipleChoiceQuestion":
+        options = getattr(question, 'options', None)
+        options_str = f" in this order: {options}" if options else ""
+        format_instructions = (
+            f'If you agree with your probabilities above, restate them. If you would like to revise them, provide a new rationale and answer.\n'
+            f'Format: Option_A: Probability_A\nOption_B: Probability_B\n...\nOption_N: Probability_N{options_str} (0-100, no decimals, no space between number and % sign)'
+        )
+    elif qtype == "NumericQuestion":
+        unit = getattr(question, 'unit_of_measure',
+                       'Not stated (please infer this)')
+        format_instructions = (
+            f'If you agree with your numeric distribution above, restate it. If you would like to revise it, provide a new rationale and answer.\n'
+            f'Format:\nPercentile 10: XX\nPercentile 20: XX\nPercentile 40: XX\nPercentile 60: XX\nPercentile 80: XX\nPercentile 90: XX\nUnits: {unit}\n(Do not use scientific notation. Always start with the smallest value and increase. No decimals unless required by the question.)'
+        )
+    else:
+        format_instructions = (
+            'If you agree with your answer above, restate it. If you would like to revise it, provide a new rationale and answer.'
+        )
+
+    prompt = clean_indents(f"""
+    {message}
+
+    ---
+    Do you agree with your prediction above, or would you like to revise it? Please answer below.
+    {format_instructions}
+    """)
+    response = await llm.invoke(prompt)
+    return response

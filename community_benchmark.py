@@ -20,11 +20,14 @@ from forecasting_tools import (
 
 from bots import (
     AdjacentNewsRelatedMarketsBot,
+    PerpRelatedMarketsConfirmationBot,
     PerplexityRelatedMarketsBot,
     OpenSearchPerpAdjMarkets,
     FermiResearchFirstBot,
     CombinedWebAndAdjacentNewsBot,
-    FermiWithSearchControl
+    FermiWithSearchControl,
+    AskNewsResearchBot,
+    P_RM_NathanV1_Bot,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +39,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     """
 
     # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
-    number_of_questions = 30
+    number_of_questions = 1
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -65,29 +68,22 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            AdjacentNewsRelatedMarketsBot(
+            # PerplexityRelatedMarketsBot(
+            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+            #         model="o3", temperature=0.2)}
+            # ),
+            # PerplexityRelatedMarketsBot(
+            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+            #         model="o3", temperature=0.2)},
+            #     predictions_per_research_report=5
+            # ),
+            # PerpRelatedMarketsConfirmationBot(
+            #     llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
+            #         model="o3", temperature=0.2)}
+            # ),
+            P_RM_NathanV1_Bot(
                 llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
                     model="o3", temperature=0.2)}
-            ),
-            OpenSearchPerpAdjMarkets(
-                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
-                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
-            ),
-            PerplexityRelatedMarketsBot(
-                llms={"default": GeneralLlm(model="o3", temperature=0.2), "summarizer": GeneralLlm(
-                    model="o3", temperature=0.2)}
-            ),
-            FermiResearchFirstBot(
-                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
-                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
-            ),
-            CombinedWebAndAdjacentNewsBot(
-                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
-                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)},
-                predictions_per_research_report=5),
-            FermiWithSearchControl(
-                llms={"default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2), "summarizer": GeneralLlm(
-                    model="openrouter/openai/gpt-4o-mini", temperature=0.2)}
             ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
