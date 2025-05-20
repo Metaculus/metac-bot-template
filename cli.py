@@ -1,6 +1,6 @@
 import sys
 from forecasting_tools import BinaryQuestion, GeneralLlm
-from bots import PerplexityRelatedMarketsBot
+from bots import PerplexityRelatedMarketsBot, BOT_CLASS_MAP
 import asyncio
 import os
 import webbrowser
@@ -21,12 +21,36 @@ def main():
         page_url="cli://user-question"
     )
 
-    bot = PerplexityRelatedMarketsBot(
-        llms={
-            "default": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2),
-            "summarizer": GeneralLlm(model="openrouter/openai/gpt-4o-mini", temperature=0.2)
-        }
-    )
+    # List available bots
+    print("\nAvailable bots:")
+    for i, (bot_key, bot_cls) in enumerate(BOT_CLASS_MAP.items(), 1):
+        print(f"  {i}. {bot_key}")
+    bot_choice = input(
+        "\nEnter the name or number of the bot you want to use (default: perplexity_related_markets): ").strip()
+
+    # Determine selected bot
+    selected_bot_cls = None
+    if bot_choice.isdigit():
+        idx = int(bot_choice) - 1
+        if 0 <= idx < len(BOT_CLASS_MAP):
+            selected_bot_cls = list(BOT_CLASS_MAP.values())[idx]
+    elif bot_choice in BOT_CLASS_MAP:
+        selected_bot_cls = BOT_CLASS_MAP[bot_choice]
+    if selected_bot_cls is None:
+        print("Using default: PerplexityRelatedMarketsBot")
+        selected_bot_cls = PerplexityRelatedMarketsBot
+
+    # Use o3 as the model for both llms
+    llms = {
+        "default": GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.2),
+        "summarizer": GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.2)
+    }
+
+    # Some bots require predictions_per_research_report, handle gracefully
+    try:
+        bot = selected_bot_cls(llms=llms)
+    except TypeError:
+        bot = selected_bot_cls(llms=llms, predictions_per_research_report=1)
 
     print("Running forecast... (this may take a moment)")
     forecast_reports = asyncio.run(

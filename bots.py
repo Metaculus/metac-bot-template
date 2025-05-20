@@ -1356,3 +1356,19 @@ class P_RM_NathanV1_Bot(ForecastBot):
     @staticmethod
     def log_report_summary(forecast_reports):
         return log_report_summary_returning_str(forecast_reports)
+
+
+# Mapping from string names to bot classes
+BOT_CLASS_MAP = {
+    "adjacent_news_related_markets": AdjacentNewsRelatedMarketsBot,
+    "openrouter_web_search": OpenRouterWebSearchBot,
+    "combined_web_and_adjacent_news": CombinedWebAndAdjacentNewsBot,
+    "fermi_estimation": FermiEstimationBot,
+    "perplexity_related_markets": PerplexityRelatedMarketsBot,
+    "open_search_perp_adj_markets": OpenSearchPerpAdjMarkets,
+    "fermi_research_first": FermiResearchFirstBot,
+    "fermi_with_search_control": FermiWithSearchControl,
+    "asknews_research": AskNewsResearchBot,
+    "perp_related_markets_confirmation": PerpRelatedMarketsConfirmationBot,
+    "p_rm_nathan_v1": P_RM_NathanV1_Bot,
+}
