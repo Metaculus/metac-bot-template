@@ -5,9 +5,8 @@ from logic.call_asknews import run_research
 from logic.chat import validate_and_parse_response
 from logic.summarization import run_summarization_phase
 from logic.utils import extract_question_details, get_all_experts, perform_forecasting_phase, \
-    format_phase1_results_to_string, \
     perform_revised_forecasting_step, strip_title_to_filename, build_and_write_json, get_probabilities, \
-    enrich_probabilities, get_first_phase_probabilities
+    enrich_probabilities, get_first_phase_probabilities, get_relevant_contexts_to_group_discussion
 from utils.PROMPTS import GROUP_INSTRUCTIONS
 from utils.config import get_gpt_config
 
@@ -24,7 +23,7 @@ async def chat_group_single_question(
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
-    news = await run_research(question_details,use_hyde = use_hyde)
+    news = await run_research(question_details, use_hyde=use_hyde)
 
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details, is_multiple_choice, options, is_woc, num_of_experts)
@@ -35,12 +34,12 @@ async def chat_group_single_question(
     results = await perform_forecasting_phase(all_experts, question_details, news=news,
                                               is_multiple_choice=is_multiple_choice, options=options)
 
-    phase1_results_as_string = format_phase1_results_to_string(results)
+    group_contextualization = get_relevant_contexts_to_group_discussion(results)
 
     probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
 
     group_results = await group_chat.run(
-        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=phase1_results_as_string,
+        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=group_contextualization,
                                        forecasters_list=forecasters_names))
 
     parsed_group_results = {group_single_answer.source: validate_and_parse_response(group_single_answer.content) for
@@ -55,7 +54,8 @@ async def chat_group_single_question(
                                                   summarization_assistant)
 
     # Extract probabilities
-    probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options, probabilities)
+    probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options,
+                                      probabilities)
 
     enrich_probabilities(probabilities, question_details, news, forecast_date, summarization)
 

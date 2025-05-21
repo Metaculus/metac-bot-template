@@ -138,50 +138,36 @@ async def build_and_write_json(filename, data, is_woc=False):
         await f.write(json.dumps(data, indent=4))
 
 
-def format_phase1_results_to_string(phase1_results_input_dict: Dict[str, Dict]) -> str:
-    if not phase1_results_input_dict:
-        return "No Phase 1 forecasts were available to display.\n"
+def get_relevant_contexts_to_group_discussion(first_run_results: Dict[str, Dict]) -> str:
+    output = {}
+    for expert, values in first_run_results.items():
+        output[expert] = {
+            'reasoning': values['final_reasoning'],
+            'probability': values['final_probability'],
+        }
+    output = json.dumps(output, indent=4)
+    return output
 
-    phase1_summary_str = ""
-    for agent_name, p1_result_obj in phase1_results_input_dict.items():
-        phase1_summary_str += f"\n--- Forecast from Forecaster: {agent_name} ---\n"
-        try:
-            phase1_summary_str += f"{json.dumps(p1_result_obj, indent=2)}\n"
-        except TypeError as e:
-            phase1_summary_str += f"Could not fully serialize forecast data for {agent_name}. Raw data: {str(p1_result_obj)}. Error: {e}\n"
-        except Exception as e:
-            phase1_summary_str += f"An unexpected error occurred while serializing forecast for {agent_name}. Raw data: {str(p1_result_obj)}. Error: {e}\n"
 
-    phase1_summary_str += "\n---\n"
-    return phase1_summary_str
 
 
 def get_first_phase_probabilities(first_step_results, is_multiple_choice, options):
     deliberation_step_probability = [result['final_probability'] for result in first_step_results.values() if
                                      'final_probability' in result]
-    initial_probability = [result['initial_probability'] for result in first_step_results.values() if
-                           'initial_probability' in result]
+    bound_bottom_to_one_hundred = lambda x: min(max(x, 1), 100)
+    deliberation_step_probability = [bound_bottom_to_one_hundred(prob) for prob in deliberation_step_probability]
 
     deliberation_step_probability_result = int(
         round(np.mean(deliberation_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(deliberation_step_probability, options=options).items()
     }
-    initial_step_probability_result = int(round(np.mean(initial_probability))) if not is_multiple_choice else {
-        opt: val / 100.0 for opt, val in normalize_and_average(initial_probability, options=options).items()
-    }
 
-    sd_initial_step = np.std(initial_probability, ddof=1)
     sd_deliberation_step = np.std(deliberation_step_probability, ddof=1)
-    mean_initial_step = np.mean(initial_probability)
     mean_deliberation_step = np.mean(deliberation_step_probability)
 
     # Build final JSON
     probability_json = {
         "deliberation_results": first_step_results,
-        "initial_probability": initial_probability,
-        "initial_mean_probability": mean_initial_step,
-        "initial_sd": sd_initial_step,
-        "initial_probability_result": initial_step_probability_result,
         "deliberation_probability": deliberation_step_probability,
         "deliberation_mean_probability": mean_deliberation_step,
         "deliberation_sd": sd_deliberation_step,
@@ -195,6 +181,8 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
     str, Any]:
     revision_step_probability = [result['revised_probability'] for result in revision_results.values() if
                                  'revised_probability' in result]
+    bound_bottom_to_one_hundred = lambda x: min(max(x, 1), 100)
+    revision_step_probability = [bound_bottom_to_one_hundred(prob) for prob in revision_step_probability]
 
     revision_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()

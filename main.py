@@ -394,7 +394,8 @@ if __name__ == "__main__":
             open_question_id_post_id,
             SUBMIT_PREDICTION,
             SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
-            cache_seed=33
+            cache_seed=33,
+            use_hyde=False,
         )
     )
     print(f"time taken to run: {datetime.datetime.now() - now}")
