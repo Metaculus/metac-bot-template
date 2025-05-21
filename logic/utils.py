@@ -154,29 +154,20 @@ def get_relevant_contexts_to_group_discussion(first_run_results: Dict[str, Dict]
 def get_first_phase_probabilities(first_step_results, is_multiple_choice, options):
     deliberation_step_probability = [result['final_probability'] for result in first_step_results.values() if
                                      'final_probability' in result]
-    initial_probability = [result['initial_probability'] for result in first_step_results.values() if
-                           'initial_probability' in result]
+    bound_bottom_to_one_hundred = lambda x: min(max(x, 1), 100)
+    deliberation_step_probability = [bound_bottom_to_one_hundred(prob) for prob in deliberation_step_probability]
 
     deliberation_step_probability_result = int(
         round(np.mean(deliberation_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(deliberation_step_probability, options=options).items()
     }
-    initial_step_probability_result = int(round(np.mean(initial_probability))) if not is_multiple_choice else {
-        opt: val / 100.0 for opt, val in normalize_and_average(initial_probability, options=options).items()
-    }
 
-    sd_initial_step = np.std(initial_probability, ddof=1)
     sd_deliberation_step = np.std(deliberation_step_probability, ddof=1)
-    mean_initial_step = np.mean(initial_probability)
     mean_deliberation_step = np.mean(deliberation_step_probability)
 
     # Build final JSON
     probability_json = {
         "deliberation_results": first_step_results,
-        "initial_probability": initial_probability,
-        "initial_mean_probability": mean_initial_step,
-        "initial_sd": sd_initial_step,
-        "initial_probability_result": initial_step_probability_result,
         "deliberation_probability": deliberation_step_probability,
         "deliberation_mean_probability": mean_deliberation_step,
         "deliberation_sd": sd_deliberation_step,
@@ -190,6 +181,8 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
     str, Any]:
     revision_step_probability = [result['revised_probability'] for result in revision_results.values() if
                                  'revised_probability' in result]
+    bound_bottom_to_one_hundred = lambda x: min(max(x, 1), 100)
+    revision_step_probability = [bound_bottom_to_one_hundred(prob) for prob in revision_step_probability]
 
     revision_step_probability_result = int(round(np.mean(revision_step_probability))) if not is_multiple_choice else {
         opt: val / 100.0 for opt, val in normalize_and_average(revision_step_probability, options=options).items()
