@@ -138,22 +138,17 @@ async def build_and_write_json(filename, data, is_woc=False):
         await f.write(json.dumps(data, indent=4))
 
 
-def format_phase1_results_to_string(phase1_results_input_dict: Dict[str, Dict]) -> str:
-    if not phase1_results_input_dict:
-        return "No Phase 1 forecasts were available to display.\n"
+def get_relevant_contexts_to_group_discussion(first_run_results: Dict[str, Dict]) -> str:
+    output = {}
+    for expert, values in first_run_results.items():
+        output[expert] = {
+            'reasoning': values['final_reasoning'],
+            'probability': values['final_probability'],
+        }
+    output = json.dumps(output, indent=4)
+    return output
 
-    phase1_summary_str = ""
-    for agent_name, p1_result_obj in phase1_results_input_dict.items():
-        phase1_summary_str += f"\n--- Forecast from Forecaster: {agent_name} ---\n"
-        try:
-            phase1_summary_str += f"{json.dumps(p1_result_obj, indent=2)}\n"
-        except TypeError as e:
-            phase1_summary_str += f"Could not fully serialize forecast data for {agent_name}. Raw data: {str(p1_result_obj)}. Error: {e}\n"
-        except Exception as e:
-            phase1_summary_str += f"An unexpected error occurred while serializing forecast for {agent_name}. Raw data: {str(p1_result_obj)}. Error: {e}\n"
 
-    phase1_summary_str += "\n---\n"
-    return phase1_summary_str
 
 
 def get_first_phase_probabilities(first_step_results, is_multiple_choice, options):
