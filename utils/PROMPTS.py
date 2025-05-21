@@ -23,7 +23,7 @@ FIRST_PHASE_INSTRUCTIONS = (
     "- Given your perspective, provide a brief description of a scenario that results in a Yes outcome.\n"
     "- Provide a final probability, summarizing your reasoning in light of the news, resolution criteria, and fine print. \n"
     "General notes: \n"
-    "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. \n"
+    "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. Prizes will be awarded to the most compelling arguments.\n"
     "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"
     "## Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
@@ -261,8 +261,12 @@ For example, for the question "What is the impact of climate change on the econo
 GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
-In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED, and either critique their forecasts' weaknesses, or defend their strengths, use the "response" field for your answer.
-Meanwhile, be sure not to simply repeat their forecast, but rather engage with it directly from your own unique perspective.
+In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED, and either critique their forecasts' weaknesses, or defend their strengths.
+Use the "response" field for your answer. 
+General notes:
+- Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
+- Avoid preamble and go straight to your response. 
+- Imagine you are participating in an online discussion board; you do not have to be too civil or formal. 
 
 Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
