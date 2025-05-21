@@ -2,6 +2,7 @@ import os
 import requests
 from forecasting_tools import GeneralLlm, clean_indents, AskNewsSearcher
 import logging
+import re
 
 logger = logging.getLogger("forecasting_tools.forecast_bots.forecast_bot")
 
@@ -269,3 +270,186 @@ async def confirm_or_revise_prediction(message: str, question, llm: GeneralLlm) 
     """)
     response = await llm.invoke(prompt)
     return response
+
+
+def get_related_markets_raw(question: str) -> list[dict]:
+    """
+    Given a question string, use the Adjacent News API to find related markets and return them as a list of dictionaries.
+    Only include markets with volume >= 1000, sorted by volume descending.
+    """
+    api_key = os.getenv("ADJACENT_NEWS_API_KEY")
+    if not api_key:
+        raise ValueError("ADJACENT_NEWS_API_KEY not set in environment.")
+    base_url = "https://api.data.adj.news/api/search/query"
+    params = {"q": question}
+    headers = {"Authorization": f"Bearer {api_key}"}
+    response = requests.request(
+        "GET", base_url, params=params, headers=headers)
+    print(f"DEBUG: Status code: {response.status_code}")
+    print(f"DEBUG: Response text: {response.text}")
+    if not response.ok:
+        raise RuntimeError(f"Adjacent News API error: {response.text}")
+    data = response.json()
+    print(f"DEBUG: Parsed data: {data}")
+    if not data or "data" not in data or not data["data"]:
+        return []
+    filtered_markets = []
+    for market in data["data"]:
+        volume = market.get("volume", "N/A")
+        try:
+            vol_num = float(volume)
+        except (ValueError, TypeError):
+            vol_num = 0
+        if vol_num >= 1000:
+            # Store parsed volume for sorting
+            market["_parsed_volume"] = vol_num
+            filtered_markets.append(market)
+    if not filtered_markets:
+        return []
+    # Sort by volume descending
+    filtered_markets.sort(key=lambda m: m["_parsed_volume"], reverse=True)
+    return filtered_markets
+
+
+def format_markets(markets: list[dict]) -> str:
+    """
+    Format a list of market dictionaries into a readable string.
+    """
+    if not markets:
+        return "No related markets found with volume >= 1000."
+    formatted = "Related Markets from Adjacent News (volume >= 1000, sorted by volume):\n"
+    for market in markets:
+        name = market.get("name", market.get("question", "Unnamed Market"))
+        platform = market.get("platform", "Unknown Platform")
+        url = market.get("url", market.get("link", ""))
+        probability = market.get("probability", "N/A")
+        volume = market.get("volume", "N/A")
+        status = market.get("status", "N/A")
+        end_date = market.get("end_date", market.get("resolution_date", "N/A"))
+        formatted += (
+            f"- {name}\n\n"
+            f"  Platform: {platform}\n\n"
+            f"  Probability: {probability}\n\n"
+            f"  Volume: {volume}\n\n"
+            f"  Status: {status}\n\n"
+            f"  Ends: {end_date}\n\n"
+            f"  URL: {url}\n\n"
+            "\n"  # Add a blank line between markets
+        )
+    return formatted
+
+
+class IntegerExtractor:
+    @staticmethod
+    def extract_last_integer_value(
+        text: str, max_value: int = 5, min_value: int = 1
+    ) -> int:
+        """
+        Extract the last integer value from text that appears after "Score: ".
+        The integer should be between min_value and max_value (inclusive).
+        
+        Args:
+            text: The text to search for an integer
+            max_value: Maximum allowed value (default: 5)
+            min_value: Minimum allowed value (default: 1)
+            
+        Returns:
+            The last integer found, clamped between min_value and max_value
+            
+        Raises:
+            ValueError: If no integer is found or if text is empty
+        """
+        if not text or text.strip() == "":
+            raise ValueError(
+                "While trying to extract last integer value found that the text is None or an empty string"
+            )
+        assert (
+            min_value <= max_value
+        ), f"Max value {max_value} is not greater than or equal to min value {min_value}"
+        
+        # Look for integers after "Score: "
+        matches = re.findall(r"Score:\s*(\d+)", text)
+        if matches:
+            # Return the last number found after "Score: "
+            original_number = int(matches[-1])
+            clamped_number = min(
+                max_value, max(min_value, original_number)
+            )
+            assert (
+                min_value <= clamped_number <= max_value
+            ), f"Clamped number {clamped_number} is not between {min_value} and {max_value}"
+            return int(clamped_number)
+        else:
+            raise ValueError(
+                f"Could not extract integer from response. The text was: {text}"
+            )
+
+
+class FactsExtractor:
+    @staticmethod
+    def extract_facts(text: str) -> list[str]:
+        """
+        Extract a list of facts from text that appears after the "Key Facts" heading
+        and before the next section.
+        
+        Args:
+            text: The text to search for facts
+            
+        Returns:
+            A list of facts, or empty list if none found
+        """
+        if not text or text.strip() == "":
+            return []
+            
+        # Look for the facts section starting with "Key Facts"
+        facts_section = re.search(r"Key Facts(.*?)(?=Follow Up Questions|$)", text, re.DOTALL)
+        if not facts_section:
+            return []
+            
+        # Split into individual facts
+        facts_text = facts_section.group(1).strip()
+        facts = []
+        
+        # Look for numbered or bulleted facts
+        for line in facts_text.split('\n'):
+            # Remove common bullet points and numbers
+            line = re.sub(r'^[\d\.\-\*]+[\s]*', '', line.strip())
+            if line and len(line) > 10:  # Only include non-empty lines with some content
+                facts.append(line)
+                
+        return facts[:5]  # Return at most 5 facts
+
+
+class FollowUpQuestionsExtractor:
+    @staticmethod
+    def extract_follow_up_questions(text: str) -> list[str]:
+        """
+        Extract a list of follow-up questions from text that appears after the "Follow Up Questions" heading
+        and before the next section.
+        
+        Args:
+            text: The text to search for follow-up questions
+            
+        Returns:
+            A list of follow-up questions, or empty list if none found
+        """
+        if not text or text.strip() == "":
+            return []
+            
+        # Look for the follow-up questions section starting with "Follow Up Questions"
+        questions_section = re.search(r"Follow Up Questions(.*?)(?=Prediction Markets|$)", text, re.DOTALL)
+        if not questions_section:
+            return []
+            
+        # Split into individual questions
+        questions_text = questions_section.group(1).strip()
+        questions = []
+        
+        # Look for numbered or bulleted questions
+        for line in questions_text.split('\n'):
+            # Remove common bullet points and numbers
+            line = re.sub(r'^[\d\.\-\*]+[\s]*', '', line.strip())
+            if line and len(line) > 10 and line.endswith('?'):  # Only include non-empty lines that end with a question mark
+                questions.append(line)
+                
+        return questions[:5]  # Return at most 5 questions

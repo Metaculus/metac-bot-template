@@ -2,17 +2,18 @@ from forecasting_tools import (
     ForecastBot, ReasonedPrediction, BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, NumericDistribution, PredictedOptionList,
     GeneralLlm, PredictionExtractor, clean_indents
 )
-from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter, log_report_summary_returning_str, get_asknews_research, confirm_or_revise_prediction
+from tools import get_related_markets_from_adjacent_news, get_web_search_results_from_openrouter, fermi_estimate_with_llm, get_perplexity_research_from_openrouter, log_report_summary_returning_str, get_related_markets_raw, format_markets, IntegerExtractor, FactsExtractor, FollowUpQuestionsExtractor
 from datetime import datetime
 import traceback
-from prompts import (
-    perp_related_markets_binary_prompt,
-    perp_related_markets_mc_prompt,
-    perp_related_markets_numeric_prompt,
-    nathan_v1_binary_prompt,
-    nathan_v1_mc_prompt,
-    nathan_v1_numeric_prompt,
-    PROBABILITY_FINAL_ANSWER_LINE,
+
+# OpenRouter model names
+CLAUDE_SONNET = "openrouter/anthropic/claude-3.7-sonnet"
+PERPLEXITY_SONAR = "openrouter/perplexity/sonar-reasoning"
+
+PROBABILITY_FINAL_ANSWER_LINE = (
+    "Before giving your final answer, rewrite the question as a probability statement (e.g., "
+    "\"What is the probability that [event] will happen?\"), making sure it matches the outcome you are forecasting. "
+    "Then, the last thing you write is your final answer as: \"Probability: ZZ%\", 0-100 (no decimals, do not include a space between the number and the % sign)."
 )
 
 
@@ -537,39 +538,151 @@ class PerplexityRelatedMarketsBot(ForecastBot):
         return f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{related_markets}"
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
-        prompt = perp_related_markets_binary_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Question background:
+            {question.background_info}
+
+            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Your research assistant found web search results and related markets info:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The status quo outcome if nothing changed.
+            (c) A brief description of a scenario that results in a No outcome.
+            (d) A brief description of a scenario that results in a Yes outcome.
+            (e) Write out the question again, and acknolwedge that if the No outcome is more likely your answers should be closer to 0 and if the Yes outcome is more likely your answers should be closer to 100.
+
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
-            rationale, max_prediction=1, min_prediction=0)
-        # Compose message for confirmation
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        # Optionally, re-extract the prediction from the confirmation step
-        final_prediction = PredictionExtractor.extract_last_percentage_value(
-            confirmed, max_prediction=1, min_prediction=0)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+            reasoning, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        prompt = perp_related_markets_mc_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            The options are: {question.options}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Your research assistant found web search results and related markets info:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The status quo outcome if nothing changed.
+            (c) A description of an scenario that results in an unexpected outcome.
+
+            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+
+            The last thing you write is your final probabilities for the N options in this order {question.options} as:
+            Option_A: Probability_A
+            Option_B: Probability_B
+            ...
+            Option_N: Probability_N
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            rationale, question.options)
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        final_prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            confirmed, question.options)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+            reasoning, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        prompt = perp_related_markets_numeric_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        lower = getattr(question, 'lower_bound', 0)
+        upper = getattr(question, 'upper_bound', 100)
+        lower_bound_message = f"The outcome can not be lower than {lower}." if hasattr(
+            question, 'lower_bound') else ""
+        upper_bound_message = f"The outcome can not be higher than {upper}." if hasattr(
+            question, 'upper_bound') else ""
+        prompt = clean_indents(
+            f"""
+            You are a professional forecaster interviewing for a job.
+
+            Your interview question is:
+            {question.question_text}
+
+            Background:
+            {question.background_info}
+
+            {question.resolution_criteria}
+
+            {question.fine_print}
+
+            Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
+
+            Your research assistant found web search results and related markets info:
+            {research}
+
+            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
+
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+
+            {lower_bound_message}
+            {upper_bound_message}
+
+            Formatting Instructions:
+            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
+            - Never use scientific notation.
+            - Always start with a smaller number (more negative if negative) and then increase from there
+
+            Before answering you write:
+            (a) The time left until the outcome to the question is known.
+            (b) The outcome if nothing changed.
+            (c) The outcome if the current trend continued.
+            (d) The expectations of experts and markets.
+            (e) A brief description of an unexpected scenario that results in a low outcome.
+            (f) A brief description of an unexpected scenario that results in a high outcome.
+
+            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+
+            The last thing you write is your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            rationale, question)
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        final_prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            confirmed, question)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
+            reasoning, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     @staticmethod
     def log_report_summary(forecast_reports):
@@ -1124,46 +1237,54 @@ class FermiWithSearchControl(ForecastBot):
         return log_report_summary_returning_str(forecast_reports)
 
 
-class AskNewsResearchBot(ForecastBot):
+class PerplexityRelatedMarketsScenarioBot(ForecastBot):
+    name = "perplexity-scenario"
+    
     def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
         super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
 
     async def run_research(self, question):
-        # Use AskNews for research
-        return await get_asknews_research(question.question_text)
+        # Use Perplexity via OpenRouter (sonar-reasoning) for web research
+        web_results = await get_perplexity_research_from_openrouter(question.question_text, model_name="openrouter/perplexity/sonar-reasoning")
+        related_markets = get_related_markets_from_adjacent_news(
+            question.question_text)
+        return f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{related_markets}"
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
 
-            Your interview question is:
             {question.question_text}
-
-            Question background:
+            
+            The question background:
+            
             {question.background_info}
-
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            
             {question.resolution_criteria}
-
             {question.fine_print}
-
-            Your research assistant found news results:
+            
+            Here is some research and related forecasts:
+            
             {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
+            
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            
             Today is {datetime.now().strftime('%Y-%m-%d')}.
-
+            
             Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
-            (e) Write out the question again, and acknolwedge that if the No outcome is more likely your answers should be closer to 0 and if the Yes outcome is more likely your answers should be closer to 100.
-
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one where the question would resolve no and one where it would resolve yes. The scenarios must be moderately different. If they aren't, just use yes and no.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Write up to 5 prediction markets that you would like to exist that haven't been supplied in the research above.
+            (g) Consider all these scenarios and then give an overall probability as [number]%
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
-
+            
             {PROBABILITY_FINAL_ANSWER_LINE}
             """
         )
@@ -1175,34 +1296,27 @@ class AskNewsResearchBot(ForecastBot):
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
             {question.question_text}
-
             The options are: {question.options}
-
-            Background:
+            The question background:
             {question.background_info}
-
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
             {question.resolution_criteria}
-
             {question.fine_print}
-
-            Your research assistant found news results:
+            Here is some research and related forecasts:
             {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
             Today is {datetime.now().strftime('%Y-%m-%d')}.
-
             Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
-
-            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each option. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give probabilities for each option.
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
@@ -1224,46 +1338,28 @@ class AskNewsResearchBot(ForecastBot):
             question, 'upper_bound') else ""
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
             {question.question_text}
-
-            Background:
+            The question background:
             {question.background_info}
-
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
             {question.resolution_criteria}
-
             {question.fine_print}
-
             Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
-
-            Your research assistant found news results:
+            Here is some research and related forecasts:
             {research}
-
-            IMPORTANT: The research above was gathered by junior research assistants. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you should ignore it when making your forecast.
-
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
             Today is {datetime.now().strftime('%Y-%m-%d')}.
-
             {lower_bound_message}
             {upper_bound_message}
-
-            Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
-            - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
-
             Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) The expectations of experts and markets.
-            (e) A brief description of an unexpected scenario that results in a low outcome.
-            (f) A brief description of an unexpected scenario that results in a high outcome.
-
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
-
-            The last thing you write is your final answer as:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each possible outcome range. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give your final answer as:
             "
             Percentile 10: XX
             Percentile 20: XX
@@ -1272,6 +1368,7 @@ class AskNewsResearchBot(ForecastBot):
             Percentile 80: XX
             Percentile 90: XX
             "
+            You write your rationale remembering that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
             """
         )
         reasoning = await self.get_llm().invoke(prompt)
@@ -1284,91 +1381,653 @@ class AskNewsResearchBot(ForecastBot):
         return log_report_summary_returning_str(forecast_reports)
 
 
-class PerpRelatedMarketsConfirmationBot(PerplexityRelatedMarketsBot):
-    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
-        prompt = perp_related_markets_binary_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
-        prediction = PredictionExtractor.extract_last_percentage_value(
-            rationale, max_prediction=1, min_prediction=0)
-        # Compose message for confirmation
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        # Optionally, re-extract the prediction from the confirmation step
-        final_prediction = PredictionExtractor.extract_last_percentage_value(
-            confirmed, max_prediction=1, min_prediction=0)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
-
-    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        prompt = perp_related_markets_mc_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
-        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            rationale, question.options)
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        final_prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            confirmed, question.options)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
-
-    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        prompt = perp_related_markets_numeric_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
-        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            rationale, question)
-        message = f"""Initial rationale and prediction:\n\n{rationale}\n\nPrediction: {prediction}"""
-        confirmed = await confirm_or_revise_prediction(message, question, self.get_llm())
-        final_prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            confirmed, question)
-        return ReasonedPrediction(prediction_value=final_prediction, reasoning=confirmed)
-
-
-class P_RM_NathanV1_Bot(ForecastBot):
+class PerplexityFilteredRelatedMarketsScenarioBot(ForecastBot):
+    name = "perplexity-scenario-filtered"
+    
     def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
         super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
+        # Use Claude Sonnet through OpenRouter for lightweight tasks
+        self.lightweight_llm = GeneralLlm(model=CLAUDE_SONNET, temperature=0.2)
+
+    async def score_market_relevance(self, market: dict, question: str, current_date: str) -> dict:
+        """
+        Score how relevant a market is to the question using Claude Sonnet.
+        Returns a dict containing the score and reasoning.
+        """
+        # Get market name using the same logic as in run_research
+        name = market.get("name", market.get("question", "Unnamed Market"))
+        
+        prompt = clean_indents(
+            f"""
+            You are evaluating how relevant a prediction market is to a forecasting question.
+            
+            The forecasting question is:
+            {question}
+
+            The current date is: 
+            {current_date}
+            
+            The prediction market is:
+            Name: {name}
+            Platform: {market.get('platform', 'Unknown Platform')}
+            Volume: {market.get('volume', 'N/A')}
+            Status: {market.get('status', 'N/A')}
+            End Date: {market.get('end_date', 'N/A')}
+            
+            Before giving your final score, please:
+            1. Analyze how similar the topics/events are between the market and question
+            2. Compare the timeframes of both
+            3. Evaluate how similar the outcomes being predicted are
+            4. Consider any other relevant factors
+            
+            Then, assign a score between 1 and 5 where:
+            1 = Completely irrelevant
+            2 = Largely irrelevant
+            3 = Some useful information
+            4 = Useful information
+            5 = Perfect/near-perfect match
+            
+            Write out your analysis and reasoning, then end with "Score: X" where X is your final score between 1 and 5.
+            """
+        )
+        response = await self.lightweight_llm.invoke(prompt)
+        try:
+            score = IntegerExtractor.extract_last_integer_value(response)
+            return {'score': score, 'reasoning': response}
+        except ValueError as e:
+            # If we can't extract a score, default to 1 (completely irrelevant)
+            # and include the error in the reasoning
+            error_msg = f"Error extracting score: {str(e)}. Defaulting to score 1 (completely irrelevant)."
+            return {'score': 1, 'reasoning': f"{response}\n\n{error_msg}"}
 
     async def run_research(self, question):
-        # Use Perplexity via OpenRouter (sonar-reasoning) for web research
-        web_results = await get_perplexity_research_from_openrouter(question.question_text, model_name="openrouter/perplexity/sonar-reasoning")
-        related_markets = get_related_markets_from_adjacent_news(
-            question.question_text)
-        return f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{related_markets}"
+        # Get raw market data
+        markets = get_related_markets_raw(question.question_text)
+        
+        # Score each market's relevance
+        scored_markets = []
+        filtered_markets = []
+        print("\nAnalyzing market relevance:")
+        print("=" * 80)
+        for market in markets:
+            name = market.get("name", market.get("question", "Unnamed Market"))
+            print(f"\nEvaluating market: {name}")
+            print("-" * 80)
+            result = await self.score_market_relevance(market, question.question_text, datetime.now().strftime('%Y-%m-%d'))
+            score = result['score']
+            reasoning = result['reasoning']
+            print(f"Reasoning:\n{reasoning}")
+            print(f"Final score: {score}")
+            print("-" * 80)
+            
+            if score >= 4:  # Only include markets with relevance score >= 4 (useful information or better)
+                scored_markets.append(market)
+            else:
+                filtered_markets.append(market)
+        
+        # Format the filtered markets
+        formatted_markets = format_markets(scored_markets)
+        
+        # Get web results from Perplexity
+        web_results = await get_perplexity_research_from_openrouter(
+            question.question_text, 
+            model_name=PERPLEXITY_SONAR
+        )
+        
+        # Extract facts and follow-up questions from the web results
+        facts = FactsExtractor.extract_facts(web_results)
+        follow_up_questions = FollowUpQuestionsExtractor.extract_follow_up_questions(web_results)
+        
+        # Verify each fact with Perplexity
+        verified_facts = []
+        print("\nVerifying facts:")
+        print("=" * 80)
+        for fact in facts:
+            print(f"\nVerifying fact: {fact}")
+            print("-" * 80)
+            verification = await get_perplexity_research_from_openrouter(
+                f"Is this true? {fact}",
+                model_name=PERPLEXITY_SONAR
+            )
+            verified_facts.append({
+                'fact': fact,
+                'verification': verification
+            })
+            print(f"Verification result:\n{verification}")
+            print("-" * 80)
+        
+        # Process follow-up questions
+        follow_up_results = []
+        if follow_up_questions:
+            print("\nProcessing follow-up questions:")
+            print("=" * 80)
+            for q in follow_up_questions:
+                print(f"\nProcessing question: {q}")
+                print("-" * 80)
+                result = await get_perplexity_research_from_openrouter(
+                    q,
+                    model_name=PERPLEXITY_SONAR
+                )
+                follow_up_results.append({
+                    'question': q,
+                    'answer': result
+                })
+                print(f"Answer:\n{result}")
+                print("-" * 80)
+        
+        # Add report of filtered markets
+        filtered_report = "\nMarkets which were considered not relevant:\n"
+        for market in filtered_markets:
+            filtered_report += f"- {market.get('name', 'Unnamed Market')}\n"
+        
+        # Format facts with their verifications
+        facts_section = "\nKey Facts (with verifications):\n"
+        for vf in verified_facts:
+            facts_section += f"- Fact: {vf['fact']}\n  Verification: {vf['verification']}\n\n"
+        
+        # Format follow-up questions with their answers
+        questions_section = "\nFollow-up Questions (with answers):\n"
+        for fr in follow_up_results:
+            questions_section += f"- Question: {fr['question']}\n  Answer: {fr['answer']}\n\n"
+        
+        # Create the initial research report
+        initial_research = f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{formatted_markets}\n{filtered_report}{facts_section}{questions_section}"
+        
+        # Run a second prompt to process all the research and follow-up results
+        second_prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+
+            Your forecasting question is:
+            {question.question_text}
+
+            Here is a previous conversation you had. There were a number of questions and things you wanted to check. After the conversation will be printed the responses to those checks. All searches are done via LM. There may be mistakes, but given that they are more specific, they are a bit more likely to be correct than the original search material was.
+
+            Original Research and Thinking:
+            {initial_research}
+
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 2 - 5 sentence-length scenarios based on the question, including at least one where the question would resolve no and one where it would resolve yes. The scenarios must be moderately different. If they aren't, just use yes and no.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation. Start this with the headline "Key Facts"
+            (e) Write 5 follow up questions which would allow you to make a better decision. Start this with the headline "Follow Up Questions"
+            (f) Suggest up to 5 prediction markets that could be created to aid this question. Start this with the headline "Prediction Markets"
+            (g) Consider all these scenarios and then give an overall probability as a number in the format described below.
+
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        
+        # Get the second analysis
+        second_analysis = await self.get_llm().invoke(second_prompt)
+        
+        # Combine everything into the final report
+        final_report = f"""
+        Original Research and Initial Analysis:
+        {initial_research}
+
+        Updated Analysis After Follow-up Research:
+        {second_analysis}
+        """
+        
+        return final_report
 
     async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
-        prompt = nathan_v1_binary_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+
+            {question.question_text}
+            
+            The question background:
+            
+            {question.background_info}
+            
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            
+            {question.resolution_criteria}
+            {question.fine_print}
+            
+            Here is some research and related forecasts:
+            
+            {research}
+            
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one where the question would resolve no and one where it would resolve yes. The scenarios must be moderately different. If they aren't, just use yes and no.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Suggest up to 5 prediction markets that could be created to aid this question
+            (g) Consider all these scenarios and then give an overall probability as a number in the format described below.
+            
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_last_percentage_value(
-            rationale, max_prediction=1, min_prediction=0)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
+            reasoning, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
-        prompt = nathan_v1_mc_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+            {question.question_text}
+            The options are: {question.options}
+            The question background:
+            {question.background_info}
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            {question.resolution_criteria}
+            {question.fine_print}
+            Here is some research and related forecasts:
+            {research}
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each option. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give probabilities for each option.
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            The last thing you write is your final probabilities for the N options in this order {question.options} as:
+            Option_A: Probability_A
+            Option_B: Probability_B
+            ...
+            Option_N: Probability_N
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            rationale, question.options)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
+            reasoning, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
-        prompt = nathan_v1_numeric_prompt(question, research)
-        rationale = await self.get_llm().invoke(prompt)
+        lower = getattr(question, 'lower_bound', 0)
+        upper = getattr(question, 'upper_bound', 100)
+        lower_bound_message = f"The outcome can not be lower than {lower}." if hasattr(
+            question, 'lower_bound') else ""
+        upper_bound_message = f"The outcome can not be higher than {upper}." if hasattr(
+            question, 'upper_bound') else ""
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+            {question.question_text}
+            The question background:
+            {question.background_info}
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            {question.resolution_criteria}
+            {question.fine_print}
+            Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
+            Here is some research and related forecasts:
+            {research}
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            {lower_bound_message}
+            {upper_bound_message}
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each possible outcome range. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            You write your rationale remembering that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
         prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-            rationale, question)
-        return ReasonedPrediction(prediction_value=prediction, reasoning=rationale)
+            reasoning, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     @staticmethod
     def log_report_summary(forecast_reports):
         return log_report_summary_returning_str(forecast_reports)
 
 
-# Mapping from string names to bot classes
-BOT_CLASS_MAP = {
-    "adjacent_news_related_markets": AdjacentNewsRelatedMarketsBot,
-    "openrouter_web_search": OpenRouterWebSearchBot,
-    "combined_web_and_adjacent_news": CombinedWebAndAdjacentNewsBot,
-    "fermi_estimation": FermiEstimationBot,
-    "perplexity_related_markets": PerplexityRelatedMarketsBot,
-    "open_search_perp_adj_markets": OpenSearchPerpAdjMarkets,
-    "fermi_research_first": FermiResearchFirstBot,
-    "fermi_with_search_control": FermiWithSearchControl,
-    "asknews_research": AskNewsResearchBot,
-    "perp_related_markets_confirmation": PerpRelatedMarketsConfirmationBot,
-    "p_rm_nathan_v1": P_RM_NathanV1_Bot,
-}
+class PerplexityFilteredRelatedMarketsScenarioPerplexityBot(ForecastBot):
+    name = "perplexity-scenario-filtered"
+    
+    def __init__(self, llms: dict[str, GeneralLlm], predictions_per_research_report=1):
+        super().__init__(llms=llms, predictions_per_research_report=predictions_per_research_report)
+        # Use Claude Sonnet through OpenRouter for lightweight tasks
+        self.lightweight_llm = GeneralLlm(model=CLAUDE_SONNET, temperature=0.2)
+
+    async def score_market_relevance(self, market: dict, question: str, current_date: str) -> dict:
+        """
+        Score how relevant a market is to the question using Claude Sonnet.
+        Returns a dict containing the score and reasoning.
+        """
+        # Get market name using the same logic as in run_research
+        name = market.get("name", market.get("question", "Unnamed Market"))
+        
+        prompt = clean_indents(
+            f"""
+            You are evaluating how relevant a prediction market is to a forecasting question.
+            
+            The forecasting question is:
+            {question}
+
+            The current date is: 
+            {current_date}
+            
+            The prediction market is:
+            Name: {name}
+            Platform: {market.get('platform', 'Unknown Platform')}
+            Volume: {market.get('volume', 'N/A')}
+            Status: {market.get('status', 'N/A')}
+            End Date: {market.get('end_date', 'N/A')}
+            
+            Before giving your final score, please:
+            1. Analyze how similar the topics/events are between the market and question
+            2. Compare the timeframes of both
+            3. Evaluate how similar the outcomes being predicted are
+            4. Consider any other relevant factors
+            
+            Then, assign a score between 1 and 5 where:
+            1 = Completely irrelevant
+            2 = Largely irrelevant
+            3 = Some useful information
+            4 = Useful information
+            5 = Perfect/near-perfect match
+            
+            Write out your analysis and reasoning, then end with "Score: X" where X is your final score between 1 and 5.
+            """
+        )
+        response = await self.lightweight_llm.invoke(prompt)
+        try:
+            score = IntegerExtractor.extract_last_integer_value(response)
+            return {'score': score, 'reasoning': response}
+        except ValueError as e:
+            # If we can't extract a score, default to 1 (completely irrelevant)
+            # and include the error in the reasoning
+            error_msg = f"Error extracting score: {str(e)}. Defaulting to score 1 (completely irrelevant)."
+            return {'score': 1, 'reasoning': f"{response}\n\n{error_msg}"}
+
+    async def run_research(self, question):
+        # Get raw market data
+        markets = get_related_markets_raw(question.question_text)
+        
+        # Score each market's relevance
+        scored_markets = []
+        filtered_markets = []
+        print("\nAnalyzing market relevance:")
+        print("=" * 80)
+        for market in markets:
+            name = market.get("name", market.get("question", "Unnamed Market"))
+            print(f"\nEvaluating market: {name}")
+            print("-" * 80)
+            result = await self.score_market_relevance(market, question.question_text, datetime.now().strftime('%Y-%m-%d'))
+            score = result['score']
+            reasoning = result['reasoning']
+            print(f"Reasoning:\n{reasoning}")
+            print(f"Final score: {score}")
+            print("-" * 80)
+            
+            if score >= 4:  # Only include markets with relevance score >= 4 (useful information or better)
+                scored_markets.append(market)
+            else:
+                filtered_markets.append(market)
+        
+        # Format the filtered markets
+        formatted_markets = format_markets(scored_markets)
+        
+        # Get web results from Perplexity
+        web_results = await get_perplexity_research_from_openrouter(
+            question.question_text, 
+            model_name=PERPLEXITY_SONAR
+        )
+        
+        # Extract facts and follow-up questions from the web results
+        facts = FactsExtractor.extract_facts(web_results)
+        follow_up_questions = FollowUpQuestionsExtractor.extract_follow_up_questions(web_results)
+        
+        # Verify each fact with Perplexity
+        verified_facts = []
+        print("\nVerifying facts:")
+        print("=" * 80)
+        for fact in facts:
+            print(f"\nVerifying fact: {fact}")
+            print("-" * 80)
+            verification = await get_perplexity_research_from_openrouter(
+                f"Is this true? {fact}",
+                model_name=PERPLEXITY_SONAR
+            )
+            verified_facts.append({
+                'fact': fact,
+                'verification': verification
+            })
+            print(f"Verification result:\n{verification}")
+            print("-" * 80)
+        
+        # Process follow-up questions
+        follow_up_results = []
+        if follow_up_questions:
+            print("\nProcessing follow-up questions:")
+            print("=" * 80)
+            for q in follow_up_questions:
+                print(f"\nProcessing question: {q}")
+                print("-" * 80)
+                result = await get_perplexity_research_from_openrouter(
+                    q,
+                    model_name=PERPLEXITY_SONAR
+                )
+                follow_up_results.append({
+                    'question': q,
+                    'answer': result
+                })
+                print(f"Answer:\n{result}")
+                print("-" * 80)
+        
+        # Add report of filtered markets
+        filtered_report = "\nMarkets which were considered not relevant:\n"
+        for market in filtered_markets:
+            filtered_report += f"- {market.get('name', 'Unnamed Market')}\n"
+        
+        # Format facts with their verifications
+        facts_section = "\nKey Facts (with verifications):\n"
+        for vf in verified_facts:
+            facts_section += f"- Fact: {vf['fact']}\n  Verification: {vf['verification']}\n\n"
+        
+        # Format follow-up questions with their answers
+        questions_section = "\nFollow-up Questions (with answers):\n"
+        for fr in follow_up_results:
+            questions_section += f"- Question: {fr['question']}\n  Answer: {fr['answer']}\n\n"
+        
+        # Create the initial research report
+        initial_research = f"Web search results (Perplexity Sonar Reasoning):\n{web_results}\n\nRelated markets info:\n{formatted_markets}\n{filtered_report}{facts_section}{questions_section}"
+        
+        # Run a second prompt to process all the research and follow-up results
+        second_prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+
+            Your forecasting question is:
+            {question.question_text}
+
+            Here is a previous conversation you had. There were a number of questions and things you wanted to check. After the conversation will be printed the responses to those checks. All searches are done via LM. There may be mistakes, but given that they are more specific, they are a bit more likely to be correct than the original search material was.
+
+            Original Research and Thinking:
+            {initial_research}
+
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one where the question would resolve no and one where it would resolve yes. The scenarios must be moderately different. If they aren't, just use yes and no.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation. Start this with the headline "Key Facts"
+            (e) Write 5 follow up questions which would allow you to make a better decision. Start this with the headline "Follow Up Questions"
+            (f) Suggest up to 5 prediction markets that could be created to aid this question. Start this with the headline "Prediction Markets"
+            (g) Consider all these scenarios and then give an overall probability as a number in the format described below.
+
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        
+        # Get the second analysis
+        second_analysis = await self.get_llm().invoke(second_prompt)
+        
+        # Combine everything into the final report
+        final_report = f"""
+Original Research and Initial Analysis:
+{initial_research}
+
+Updated Analysis After Follow-up Research:
+{second_analysis}
+"""
+        
+        return final_report
+
+    async def _run_forecast_on_binary(self, question: BinaryQuestion, research: str) -> ReasonedPrediction[float]:
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+
+            {question.question_text}
+            
+            The question background:
+            
+            {question.background_info}
+            
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            
+            {question.resolution_criteria}
+            {question.fine_print}
+            
+            Here is some research and related forecasts:
+            
+            {research}
+            
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one where the question would resolve no and one where it would resolve yes. The scenarios must be moderately different. If they aren't, just use yes and no.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation. Start this with the headline "Key Facts"
+            (e) Write 5 follow up questions which would allow you to make a better decision. Start this with the headline "Follow Up Questions"
+            (f) Suggest up to 5 prediction markets that could be created to aid this question. Start this with the headline "Prediction Markets"
+            (g) Consider all these scenarios and then give an overall probability as a number in the format described below.
+            
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            
+            {PROBABILITY_FINAL_ANSWER_LINE}
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_last_percentage_value(
+            reasoning, max_prediction=1, min_prediction=0)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_multiple_choice(self, question: MultipleChoiceQuestion, research: str) -> ReasonedPrediction[PredictedOptionList]:
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+            {question.question_text}
+            The options are: {question.options}
+            The question background:
+            {question.background_info}
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            {question.resolution_criteria}
+            {question.fine_print}
+            Here is some research and related forecasts:
+            {research}
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each option. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give probabilities for each option.
+            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            The last thing you write is your final probabilities for the N options in this order {question.options} as:
+            Option_A: Probability_A
+            Option_B: Probability_B
+            ...
+            Option_N: Probability_N
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, question.options)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    async def _run_forecast_on_numeric(self, question: NumericQuestion, research: str) -> ReasonedPrediction[NumericDistribution]:
+        lower = getattr(question, 'lower_bound', 0)
+        upper = getattr(question, 'upper_bound', 100)
+        lower_bound_message = f"The outcome can not be lower than {lower}." if hasattr(
+            question, 'lower_bound') else ""
+        upper_bound_message = f"The outcome can not be higher than {upper}." if hasattr(
+            question, 'upper_bound') else ""
+        prompt = clean_indents(
+            f"""
+            You are a forecasting bot. Please think to the best of your ability, like a Good Judgement Project Superforecaster. Please be straightforward and accurate even if it results in answers that are awkward.
+            Your forecasting question is:
+            {question.question_text}
+            The question background:
+            {question.background_info}
+            This question's outcome will be determined by the specific criteria below. These criteria have almost certainly not yet been satisfied:
+            {question.resolution_criteria}
+            {question.fine_print}
+            Units for answer: {getattr(question, 'unit_of_measure', 'Not stated (please infer this)')}
+            Here is some research and related forecasts:
+            {research}
+            IMPORTANT: The research above was gathered by LLM search. It is always possible that some of it is out of date, misleading, or tangential to the question. Use only the parts that seem the most up to date and directly relevant to the question. If any information seems older, less reliable, or only tangentially related, you can ignore it when making your forecast.
+            Today is {datetime.now().strftime('%Y-%m-%d')}.
+            {lower_bound_message}
+            {upper_bound_message}
+            Before answering you write:
+            (a) Write out a quick summary of the situation as we know it, from the research. Please include the amount of time left between now and the question's resolution.
+            (b) Write out 3 - 5 sentence-length scenarios based on the question, including at least one for each possible outcome range. The scenarios must be moderately different.
+            (c) Write out a paragraph about each scenario, describing how it might arise from the information. Then attempt to assign a base rate to it - how long has the world been possible for this scenario to occur, how many times has it done so in that time?
+            (d) Write 5 facts which are key parts of our current understanding of the situation.
+            (e) Write 5 follow up questions which would allow you to make a better decision.
+            (f) Consider all these scenarios and then give your final answer as:
+            "
+            Percentile 10: XX
+            Percentile 20: XX
+            Percentile 40: XX
+            Percentile 60: XX
+            Percentile 80: XX
+            Percentile 90: XX
+            "
+            You write your rationale remembering that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            """
+        )
+        reasoning = await self.get_llm().invoke(prompt)
+        prediction = PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+            reasoning, question)
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def log_report_summary(forecast_reports):
+        return log_report_summary_returning_str(forecast_reports)

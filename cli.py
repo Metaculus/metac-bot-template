@@ -1,6 +1,7 @@
 import sys
 from forecasting_tools import BinaryQuestion, GeneralLlm
-from bots import PerplexityRelatedMarketsBot, BOT_CLASS_MAP
+from bots import PerplexityFilteredRelatedMarketsScenarioPerplexityBot
+from tools import FactsExtractor, FollowUpQuestionsExtractor
 import asyncio
 import os
 import webbrowser
@@ -21,36 +22,12 @@ def main():
         page_url="cli://user-question"
     )
 
-    # List available bots
-    print("\nAvailable bots:")
-    for i, (bot_key, bot_cls) in enumerate(BOT_CLASS_MAP.items(), 1):
-        print(f"  {i}. {bot_key}")
-    bot_choice = input(
-        "\nEnter the name or number of the bot you want to use (default: perplexity_related_markets): ").strip()
-
-    # Determine selected bot
-    selected_bot_cls = None
-    if bot_choice.isdigit():
-        idx = int(bot_choice) - 1
-        if 0 <= idx < len(BOT_CLASS_MAP):
-            selected_bot_cls = list(BOT_CLASS_MAP.values())[idx]
-    elif bot_choice in BOT_CLASS_MAP:
-        selected_bot_cls = BOT_CLASS_MAP[bot_choice]
-    if selected_bot_cls is None:
-        print("Using default: PerplexityRelatedMarketsBot")
-        selected_bot_cls = PerplexityRelatedMarketsBot
-
-    # Use o3 as the model for both llms
-    llms = {
-        "default": GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.2),
-        "summarizer": GeneralLlm(model="openrouter/openai/gpt-4o", temperature=0.2)
-    }
-
-    # Some bots require predictions_per_research_report, handle gracefully
-    try:
-        bot = selected_bot_cls(llms=llms)
-    except TypeError:
-        bot = selected_bot_cls(llms=llms, predictions_per_research_report=1)
+    bot = PerplexityFilteredRelatedMarketsScenarioPerplexityBot(
+        llms={
+            "default": GeneralLlm(model="o3", temperature=0.2),
+            "summarizer": GeneralLlm(model="o3", temperature=0.2)
+        }
+    )
 
     print("Running forecast... (this may take a moment)")
     forecast_reports = asyncio.run(
@@ -62,9 +39,39 @@ def main():
         # Try to extract the markdown explanation
         explanation = getattr(report, 'explanation', None)
         if explanation:
+            # Extract facts and follow-up questions
+            facts = FactsExtractor.extract_facts(explanation)
+            follow_up_questions = FollowUpQuestionsExtractor.extract_follow_up_questions(explanation)
+            
+            # Print facts and questions to console
+            if facts:
+                print("\nKey Facts:")
+                for fact in facts:
+                    print(f"- {fact}")
+            
+            if follow_up_questions:
+                print("\nFollow-up Questions:")
+                for question in follow_up_questions:
+                    print(f"- {question}")
+            
             # Convert markdown to HTML
             html = markdown.markdown(explanation, extensions=[
                                      'extra', 'tables', 'sane_lists'])
+            
+            # Add facts and questions to HTML if they exist
+            if facts or follow_up_questions:
+                html += "\n\n<h2>Extracted Information</h2>"
+                if facts:
+                    html += "\n<h3>Key Facts</h3><ul>"
+                    for fact in facts:
+                        html += f"\n<li>{fact}</li>"
+                    html += "</ul>"
+                if follow_up_questions:
+                    html += "\n<h3>Follow-up Questions</h3><ul>"
+                    for question in follow_up_questions:
+                        html += f"\n<li>{question}</li>"
+                    html += "</ul>"
+            
             # Add a simple HTML wrapper
             html_content = f"""
             <html>
@@ -75,6 +82,8 @@ def main():
                     body {{ font-family: Arial, sans-serif; margin: 40px; }}
                     pre, code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 4px; }}
                     h1, h2, h3, h4 {{ color: #2c3e50; }}
+                    ul {{ margin-left: 20px; }}
+                    li {{ margin: 8px 0; }}
                 </style>
             </head>
             <body>
