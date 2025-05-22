@@ -261,14 +261,14 @@ For example, for the question "What is the impact of climate change on the econo
 GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
-In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED, and either critique their forecasts' weaknesses, or defend their strengths.
-Use the "response" field for your answer. 
+- In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
+- Either critique their forecasts' weaknesses, or defend their strengths, using a polemic style. 
 General notes:
 - Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
 - Avoid preamble and go straight to your response. 
 - Imagine you are participating in an online discussion board; you do not have to be too civil or formal. 
-
-Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
+- Use the "response" field for your answer. 
+- Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
 ## Prior forecasts
 {phase1_results_json_string} 
