@@ -266,7 +266,7 @@ In this phase you will be shown predictions made by other forecasters contending
 General notes:
 - Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
 - Avoid preamble and go straight to your response. 
-- Imagine you are participating in an online discussion board; you do not have to be too civil or formal. 
+- Imagine you are participating in an online discussion board; do not be too formal or civil. 
 - Use the "response" field for your answer. 
 - Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
