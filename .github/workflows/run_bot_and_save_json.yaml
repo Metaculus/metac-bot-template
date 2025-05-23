@@ -3,121 +3,102 @@ name: Regularly forecast new questions and save JSON
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *" # runs every 10 minutes. Make sure to skip already forecasted questions!
-
+    - cron: "*/10 * * * *"      # every 10 minutes
 
 concurrency:
   group: forecast-workflow
-  cancel-in-progress: false  # Ensures only one instance runs at a time
+  cancel-in-progress: false     # queue a new run instead of cancelling the old one
 
 jobs:
   forecast:
     runs-on: ubuntu-latest
+
     env:
       SUBMIT_PREDICTION: ${{ vars.SUBMIT_PREDICTION }}
       USE_EXAMPLE_QUESTIONS: ${{ vars.USE_EXAMPLE_QUESTIONS }}
       SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ vars.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
     steps:
-      # Step 1: Check out repository
+      # 1 – checkout
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 2: Set up Python environment
-      - uses: actions/setup-python@v4
+      # 2 – Python toolchain
+      - name: Set up Python
+        id: setup-python              # give the step an ID so we can read its outputs
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install poetry
+
+      - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+
       - name: Load cached venv
-        id: cached-poetry-dependencies
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      # Step 3: Run bot
+      # 3 – run the forecasting bot
       - name: Run bot
-        continue-on-error: true
+        continue-on-error: true       # keep the workflow alive even if the script exits non-zero
+        env:
+          METACULUS_TOKEN:      ${{ secrets.METACULUS_TOKEN }}
+          OPENAI_API_KEY:       ${{ secrets.OPENAI_API_KEY }}
+          ASKNEWS_SECRET:       ${{ secrets.ASKNEWS_SECRET }}
+          ASKNEWS_CLIENT_ID:    ${{ secrets.ASKNEWS_CLIENT_ID }}
+          SUBMIT_PREDICTION:    ${{ env.SUBMIT_PREDICTION }}
+          USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
+          SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
         run: |
           printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
           poetry run python main.py
-        env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-          SUBMIT_PREDICTION: ${{ env.SUBMIT_PREDICTION }}
-          USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
-          SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
-      - name: Check if forecasts directory exists
-        run: |
-          echo "Checking if forecasts directory exists..."
-          ls -l forecasts || echo "forecasts directory does not exist"
-
+      # 4 – zip & upload forecasts (only if something was produced)
       - name: Create forecasts zip
+        if: ${{ hashFiles('forecasts/**') != '' }}
         run: |
           mkdir -p artifacts
-          # Check if the forecasts directory exists before zipping
-          if [ -d "forecasts" ]; then
-            zip -r artifacts/forecasts.zip forecasts
-          else
-            echo "forecasts directory not found. Skipping zipping step."
-          fi
+          zip -r artifacts/forecasts.zip forecasts
 
       - name: Upload forecasts
+        if: ${{ hashFiles('forecasts/**') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: forecasts
           path: artifacts/forecasts.zip
 
-      # Step 4: Check if forecasts folder exists
+      # 5 – commit results back to repo
       - name: Check for changes in forecasts folder
+        if: ${{ hashFiles('forecasts/**') != '' }}
         id: changes_check
         run: |
-          echo "Checking for changes in forecasts folder..."
-          ls -l forecasts
-          git add forecasts
-          git add .cache
-          if git diff --quiet HEAD -- forecasts; then
-            echo "No changes detected in forecasts folder."
-            echo "changes=false" >> $GITHUB_ENV
+          git add forecasts .cache
+          if git diff --cached --quiet; then
+            echo "CHANGES=false" >> $GITHUB_ENV
           else
-            echo "Changes detected in forecasts folder."
-            echo "changes=true" >> $GITHUB_ENV
+            echo "CHANGES=true"  >> $GITHUB_ENV
           fi
 
       - name: Commit and push changes
-        if: env.changes == 'true'
+        if: env.CHANGES == 'true'
         run: |
-          git config --global user.name "github-actions[bot]"
+          git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Ensure we're on the correct branch
+
           git fetch origin main
           git checkout main
-          
-          # Stage only if changes exist
-          git add forecasts || echo "No changes in forecasts"
-          git add .cache || echo "No changes in cache"
-          
-          # Commit only if there are staged changes
-          git diff --cached --quiet || git commit -m "Update forecasts files"
-          
-          # Safe pull and rebase to avoid conflicts
-          git pull --rebase origin main || (git rebase --abort && echo "Merge conflict detected, aborting")
-          
-          echo "Pushing changes to remote repository..."
-          
-          # Retry logic to handle race conditions
+          git rebase origin/main || { git rebase --abort && echo "Rebase failed; skipping push"; exit 0; }
+
+          git commit -am "Update forecasts files" || echo "Nothing to commit"
+          # simple retry to dodge rare push-race
           git push origin main || (sleep 5 && git push origin main) || (sleep 10 && git push origin main)
-     
