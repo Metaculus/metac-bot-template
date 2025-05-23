@@ -9,7 +9,7 @@ import dotenv
 from logic.chat_group_single_question import chat_group_single_question
 from logic.forecast_single_question import \
     forecast_single_question
-
+from forecasting_tools import MetaculusApi
 dotenv.load_dotenv()
 
 import requests
@@ -48,7 +48,7 @@ RESPIRATORY_OUTLOOK_ID = 3411
 
 CACHE_SEED = 42
 
-TOURNAMENT_ID = Q2_2025_AI_BENCHMARKING_ID
+TOURNAMENT_ID = MetaculusApi.CURRENT_AI_COMPETITION_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
