@@ -39,6 +39,7 @@ OPENAI_API_KEY = os.getenv(
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
+Q2_2025_AI_BENCHMARKING_ID = 32721
 Q4_2024_QUARTERLY_CUP_ID = 3672
 Q1_2025_QUARTERLY_CUP_ID = 32630
 AXC_2025_TOURNAMENT_ID = 32564
@@ -47,7 +48,7 @@ RESPIRATORY_OUTLOOK_ID = 3411
 
 CACHE_SEED = 42
 
-TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
+TOURNAMENT_ID = Q2_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
