@@ -3,11 +3,11 @@ name: Regularly forecast new questions and save JSON
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/10 * * * *"      # every 10 minutes
 
 concurrency:
   group: forecast-workflow
-  cancel-in-progress: true
+  cancel-in-progress: false     # queue a new run instead of cancelling the old one
 
 jobs:
   forecast:
@@ -19,60 +19,86 @@ jobs:
       SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ vars.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
 
     steps:
-      - uses: actions/checkout@v4
+      # 1 – checkout
+      - name: Check out repository
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
-        id: setup-python
+      # 2 – Python toolchain
+      - name: Set up Python
+        id: setup-python              # give the step an ID so we can read its outputs
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - uses: snok/install-poetry@v1
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Cache poetry venv
-        id: cache-venv
+      - name: Load cached venv
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
-        if: steps.cache-venv.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
 
+      # 3 – run the forecasting bot
       - name: Run bot
-        run: poetry run python main.py
+        continue-on-error: true       # keep the workflow alive even if the script exits non-zero
         env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+          METACULUS_TOKEN:      ${{ secrets.METACULUS_TOKEN }}
+          OPENAI_API_KEY:       ${{ secrets.OPENAI_API_KEY }}
+          ASKNEWS_SECRET:       ${{ secrets.ASKNEWS_SECRET }}
+          ASKNEWS_CLIENT_ID:    ${{ secrets.ASKNEWS_CLIENT_ID }}
+          SUBMIT_PREDICTION:    ${{ env.SUBMIT_PREDICTION }}
+          USE_EXAMPLE_QUESTIONS: ${{ env.USE_EXAMPLE_QUESTIONS }}
+          SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: ${{ env.SKIP_PREVIOUSLY_FORECASTED_QUESTIONS }}
+        run: |
+          printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
+          poetry run python main.py
 
-      - name: Archive forecasts
-        if: ${{ exists('forecasts') }}
+      # 4 – zip & upload forecasts (only if something was produced)
+      - name: Create forecasts zip
+        if: ${{ hashFiles('forecasts/**') != '' }}
         run: |
           mkdir -p artifacts
-          zip -qr artifacts/forecasts.zip forecasts
+          zip -r artifacts/forecasts.zip forecasts
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ exists('forecasts') }}
+      - name: Upload forecasts
+        if: ${{ hashFiles('forecasts/**') != '' }}
+        uses: actions/upload-artifact@v4
         with:
           name: forecasts
           path: artifacts/forecasts.zip
-          retention-days: 7
 
-      - name: Commit & push updates
-        if: ${{ exists('forecasts') && steps.cache-venv.outcome == 'success' }}
+      # 5 – commit results back to repo
+      - name: Check for changes in forecasts folder
+        if: ${{ hashFiles('forecasts/**') != '' }}
+        id: changes_check
+        run: |
+          git add forecasts .cache
+          if git diff --cached --quiet; then
+            echo "CHANGES=false" >> $GITHUB_ENV
+          else
+            echo "CHANGES=true"  >> $GITHUB_ENV
+          fi
+
+      - name: Commit and push changes
+        if: env.CHANGES == 'true'
         run: |
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add forecasts .cache
-          git diff --cached --quiet || git commit -m "chore: update forecasts"
-          git push --force-with-lease origin HEAD:main
+          git fetch origin main
+          git checkout main
+          git rebase origin/main || { git rebase --abort && echo "Rebase failed; skipping push"; exit 0; }
+
+          git commit -am "Update forecasts files" || echo "Nothing to commit"
+          # simple retry to dodge rare push-race
+          git push origin main || (sleep 5 && git push origin main) || (sleep 10 && git push origin main)
