@@ -1,13 +1,29 @@
 import json
 import os
+import re
 from collections import defaultdict
 from typing import List
 
 
-def to_camel_case(expertise: str) -> str:
-    # Split the string on whitespace and parentheses
-    words = expertise.replace("(", "").replace(")", "").split()
-    # Combine words in camel case
+def to_camel_case(text: str) -> str:
+    # 1. Remove parentheses (your original logic)
+    processed_text = text.replace("(", "").replace(")", "")
+
+    # 2. Remove specific problematic characters: apostrophes (both kinds), commas, and hyphens.
+    #    Replaces them with an empty string, effectively deleting them.
+    processed_text = re.sub(r"[’',-]", "", processed_text)
+
+    # 3. Your original splitting and capitalization logic
+    words = processed_text.split()
+
+    if not words:
+        return ""  # Your original fallback
+
+    # Your original concatenation logic.
+    # WARNING: If 'words[0].capitalize()' starts with a digit after the above processing
+    # (e.g., if an input was "1st-thing" -> "1stthing" -> "1stthing"),
+    # this will still result in a part of the agent name that is an invalid Python identifier.
+    # You explicitly asked to remove the first digit solution.
     return words[0].capitalize() + ''.join(word.capitalize() for word in words[1:])
 
 
@@ -49,3 +65,4 @@ def normalize_and_average(probability_dicts: list[dict],options: List[str]) -> d
 
 
     return normalized_probabilities
+

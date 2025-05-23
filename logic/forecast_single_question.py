@@ -38,25 +38,23 @@ async def forecast_single_question(
                                               is_multiple_choice=is_multiple_choice, options=options)
 
     # Extract probabilities
-    first_step_key = "final_probability"
-    second_step_key = "revised_distribution" if is_multiple_choice else "revised_probability"
-    first_step_probabilities, second_step_probabilities = extract_probabilities(results, first_step_key,
-                                                                                second_step_key)
+    final_probability = [result['final_probability'] for result in results.values() if 'final_probability' in result]
+    initial_probability = [result['initial_probability'] for result in results.values() if 'initial_probability' in result]
 
     # Summarization
     summarization_assistant = create_summarization_assistant(config)
     summarization = await run_summarization_phase(results, question_details,
-                                                  summarization_assistant)
+                                                  summarization_assistant,news)
 
     # Compute final probabilities
-    final_result = int(round(np.mean(second_step_probabilities))) if not is_multiple_choice else {
-        opt: val / 100.0 for opt, val in normalize_and_average(second_step_probabilities, options=options).items()
+    final_result = int(round(np.mean(final_probability))) if not is_multiple_choice else {
+        opt: val / 100.0 for opt, val in normalize_and_average(final_probability, options=options).items()
     }
 
-    sd_first_step = np.std(first_step_probabilities, ddof=1)
-    sd_second_step = np.std(second_step_probabilities, ddof=1)
-    mean_first_step = np.mean(first_step_probabilities)
-    mean_second_step = np.mean(second_step_probabilities)
+    sd_first_step = np.std(initial_probability, ddof=1)
+    sd_second_step = np.std(final_probability, ddof=1)
+    mean_first_step = np.mean(initial_probability)
+    mean_second_step = np.mean(final_probability)
 
     # Build final JSON
     final_json = {

@@ -1,13 +1,15 @@
+import asyncio
 import datetime
 import json
+import logging
 import os
 
-import asyncio
 import dotenv
 
-from logic.forecase_single_question import \
+from logic.chat_group_single_question import chat_group_single_question
+from logic.forecast_single_question import \
     forecast_single_question
-
+from forecasting_tools import MetaculusApi
 dotenv.load_dotenv()
 
 import requests
@@ -37,6 +39,7 @@ OPENAI_API_KEY = os.getenv(
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
+Q2_2025_AI_BENCHMARKING_ID = 32721
 Q4_2024_QUARTERLY_CUP_ID = 3672
 Q1_2025_QUARTERLY_CUP_ID = 32630
 AXC_2025_TOURNAMENT_ID = 32564
@@ -45,7 +48,7 @@ RESPIRATORY_OUTLOOK_ID = 3411
 
 CACHE_SEED = 42
 
-TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
+TOURNAMENT_ID = MetaculusApi.CURRENT_AI_COMPETITION_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
@@ -117,7 +120,7 @@ def create_forecast_payload(
     """
     if question_type == "binary":
         return {
-            "probability_yes": forecast,
+            "probability_yes": ensure_probability_in_range(forecast),
             "probability_yes_per_category": None,
             "continuous_cdf": None,
         }
@@ -133,6 +136,19 @@ def create_forecast_payload(
         "probability_yes_per_category": None,
         "continuous_cdf": forecast,
     }
+
+
+def ensure_probability_in_range(proba: float) -> float:
+    """
+    Ensure that the probability is in the range [0.001, 0.999].
+    """
+    if proba <= 1e-3:
+        logging.warning("Probability is too low, setting to 0.001")
+        return 1e-3
+    if proba >= 0.999:
+        logging.warning("Probability is too high, setting to 0.999")
+        return 0.999
+    return proba
 
 
 def list_posts_from_tournament(
@@ -221,19 +237,15 @@ def forecast_is_already_made(post_details: dict) -> bool:
         return False
 
 
-async def question_answer_decider(question_type: str, question_details: dict, cache_seed: int = 42,
-                                  summary_of_forecast: str = "", is_woc=False,num_of_experts=None,news:str = None) \
+async def question_answer_decider(question_type: str, question_details: dict, use_hyde: bool = True,
+                                  cache_seed: int = 42, summary_of_forecast: str = "", is_woc=False,
+                                  num_of_experts=None, news: str = None) \
         -> tuple[float | dict[str, float] | list[float], str, str]:
     # Now decide which forecast function to use
     if question_type == "binary" and FORECAST_BINARY:
         # Call the new forecast_single_binary_question
-        final_proba, summarization = await forecast_single_question(
-            question_details,  # a dict
-            cache_seed=cache_seed,
-            is_woc=is_woc,
-            num_of_experts=num_of_experts,
-            news=news
-        )
+        final_proba, summarization = await chat_group_single_question(question_details, cache_seed=cache_seed,
+                                                                      is_woc=is_woc, num_of_experts=num_of_experts,use_hyde = use_hyde)
         # Metaculus API expects a decimal 0..1, so we convert int% => float
         forecast = final_proba / 100.0
         comment = summarization
@@ -281,10 +293,11 @@ async def forecast_individual_question(
         post_id: int,
         submit_prediction: bool,
         skip_previously_forecasted_questions: bool,
+        use_hyde: bool = True,
         cache_seed: int = 42,
         is_woc=False,
-        num_of_experts = None,
-        news:str=None
+        num_of_experts=None,
+        news: str = None
 ) -> str:
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
@@ -307,8 +320,10 @@ async def forecast_individual_question(
         summary_of_forecast += "Skipped: Forecast already made\n"
         return summary_of_forecast
 
-    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, cache_seed,
-                                                                           summary_of_forecast, is_woc,num_of_experts,news)
+    forecast, comment, summary_of_forecast = await question_answer_decider(question_type, question_details, use_hyde,
+                                                                           cache_seed,
+                                                                           summary_of_forecast, is_woc, num_of_experts,
+                                                                           news)
 
     # In case forecast is None from skipping
     if forecast is None:
@@ -331,6 +346,7 @@ async def forecast_questions(
         open_question_id_post_id: list[tuple[int, int]],
         submit_prediction: bool,
         skip_previously_forecasted_questions: bool,
+        use_hyde=True,
         cache_seed: int = 42
 ) -> None:
     forecast_tasks = [
@@ -339,6 +355,7 @@ async def forecast_questions(
             post_id,
             submit_prediction,
             skip_previously_forecasted_questions,
+            use_hyde,
             cache_seed
         )
         for question_id, post_id in open_question_id_post_id
@@ -378,7 +395,8 @@ if __name__ == "__main__":
             open_question_id_post_id,
             SUBMIT_PREDICTION,
             SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
-            cache_seed=33
+            cache_seed=33,
+            use_hyde=False,
         )
     )
     print(f"time taken to run: {datetime.datetime.now() - now}")

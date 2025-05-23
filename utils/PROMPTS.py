@@ -1,33 +1,50 @@
-SPECIFIC_EXPERTISE = (
-    "You are a forecaster with expertise in the field of {expertise}. \n"
-    "Your task will proceed in two phases. \n\n"
-
-    "In Phase 1, you will be prompted to independently forecast a geopolitical event. \n"
-    "Given your expertise in {expertise}, begin by estimating an initial probability based on historical frequencies or base rates of similar events you consider relevant. Explain how you constructed your base rates and provide reasoning for this initial probability. \n"
-    "Then, considering your perspective as an expert in {expertise}, make a list of distinct factors you bring to bear on the problem. \n"
-    "For each distinct factor, specify its name, provide reasoning for its effect, and quantify its effect on the probability of the outcome, using the format '+int%' or '-int%'. \n"
-    "Your reasoning should explain the specific mechanism by which each factor increases or decreases the probability of the outcome relative to the historical base rate (to the extent that it does). \n"
-    "Avoid stating that a factor 'could', 'may' or 'can' have some effect and avoid 'if-then' statements. Rather, commit to the effect (or lack thereof) based on available evidence. \n"
-    "Adjust the probability step by step, and provide a final probability. \n"
-    "Adjustments should be made using 5% increments (+/-0%, +/-5%, +/-10%, +/- 15%, +/-20%, etc.). \n"
-    "Adjustments should adhere to the rules of logic (no probability under 0% or over 100%). \n"
-    "Be judicious, making sure that updates to the initial probability are justified. \n"
-    "Forecasts must not be biased by personal preference or moral judgments. Ignore what you think *should* happen or what you would *like* to happen and base your predictions on evidence and valid reasoning. \n\n"
-    "Output your Phase 1 response strictly as a JSON object with the following structure:\n"
+SPECIFIC_META_MESSAGE_EXPERTISE = (
+    "You are a superforecaster with expertise in the field of {expertise}. \n"
+    "You are participating in a prize-bearing geopolitical forecasting competition. Your goal is to win the contest by providing the most accurate predictions across questions.\n"
+    "Bolder/extreme predictions (closer to 0% or 100%) are rewarded, but only to the extent they can be well-justified; your level of uncertainty should be reflected in the extremeness of the probability judgment \n"
+    "Each question will be addressed in three phases.\n"
+    "1. Initial Forecast.\n"
+    "2. Group Deliberation.\n"
+    "3. Forecast Revision.\n"
+    "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
+    "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
+)
+FIRST_PHASE_INSTRUCTIONS = (
+    "## Phase I: Initial Forecast\n"
+    "In this phase, you will be presented with a forecasting question and some relevant news articles.\n"
+    "Make your forecast by following these steps:\n"
+    "- State the time left until the question resolves.\n"
+    "- Explain the relevance of the unique perspective you bring to bear on the question.\n"
+    "- State the status quo outcome if nothing changed. \n"
+    "- Considering your unique perspective, list the factors you bring to bear on the forecasting question. \n"
+    "- For each distinct factor, specify its name.\n"
+    "- Explains how it increases or decreases the probability of the outcome.\n"
+    "- Given your perspective, provide a brief description of a scenario that results in a No outcome.\n"
+    "- Given your perspective, provide a brief description of a scenario that results in a Yes outcome.\n"
+    "- Provide a final probability, summarizing your reasoning in light of the news, resolution criteria, and fine print. \n"
+    "General notes: \n"
+    "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. Prizes will be awarded to the most compelling arguments.\n"
+    "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"
+    "## Output Format:\n"
+    "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
-    "    \"initial_reasoning\": str,\n"
-    "    \"initial_probability\": int,\n"
+    "    \"time_to_resolution\": str,\n"
+    "    \"perspective_relevance\": str,\n"
+    "    \"status_quo\": str,\n"
     "    \"perspective_derived_factors\": [\n"
     "        {{\n"
-    "            \"name\": str,\n"
-    "            \"reasoning\": str,\n"
-    "            \"effect\": \"+int%\" or \"-int%\"\n"
+    "            \"factor\": str,\n"
+    "            \"effect\": str,\n"
     "        }}\n"
     "    ],\n"
-    "    \"final_probability\": int\n"
+    "    \"no_scenario\": str,\n"
+    "    \"yes_scenario\": str,\n"
+    "    \"final_reasoning\": str,\n"
+    "    \"final_probability\": int 0-100\n"
     "}}\n"
-    "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc."
+    "Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.\n\n"
 )
+
 
 EXPERTISE_ANALYZER_PROMPT = (
 """
@@ -35,20 +52,23 @@ Given a forecasting question, follow these steps systematically to analyze it:
 
 1. Identify Relevant Academic Disciplines and Professional Areas of Expertise
    - Name established and widely recognized disciplines/professional areas of expertise that are best-positioned to provide insights on the outcome in question.
-   - The list should be comprehensive, providing a completementary perspectives for understanding the question.
+   - The list should be comprehensive, but non-redundant, providing complementary perspectives for understanding the question.
    - If they are relevant, include at least one region-specific or culture-specific discipline within your list (expertise on China, Africa, Latin America, Europe, Middle East, etc.).
 
 2. List Specific Theories, Frameworks, and Schools of Thought
    - For each discipline or professional area of expertise, name specific well-established, recognized theories, hypotheses, schools of thought, doctrines, models, frameworks, or specialties that apply to the question.
-   - The list should be comprehensive, providing competing and complementary perspectives for understanding the question.
-   - Exclude speculative or made-up frameworks. Only include existing frameworks that have significant peer-reviewed or professional acceptance.
+   - The list should be comprehensive, but non-redundant, providing competing and complementary perspectives for understanding the question.
+   - Exclude speculative, made-up or ad-hoc frameworks. Only include real, existing frameworks that have significant peer-reviewed or professional acceptance.
 
-General Note: the idea is to generate as many distinct perspectives on the forecasting question as possible while avoiding redundancy among experts.
-
+General Note: the idea is to generate *distinct* perspectives on the forecasting question as possible while *avoiding redundancy* among experts.
 ---
 
 ### Output Format
 
+Keep the naming concise. 
+The combination of discipline+framework and expertise+specialty must not exceed 64 characters 
+The names cannot contain special characters. 
+Do not add superfluous information (e.g. the word 'framework' at the end of a framework or repeating the name of the superordinate discipline).
 Produce your answer strictly in the following JSON structure:
 
 {
@@ -58,23 +78,23 @@ Produce your answer strictly in the following JSON structure:
       "discipline": "<Academic Discipline>",
       "frameworks": [
         "<Recognized Theory/School of Thought/Framework>"
-        // Add 2-3 distinct frameworks as needed to make a comprehensive but non-redundant list
+        // Add 2-3 distinct frameworks (only as needed) to make a comprehensive but non-redundant list
       ]
     }
-    // Add 2-3 distinct academic disciplines as needed to make a comprehensive but non-redundant list
+    // Add 2-3 distinct academic disciplines (only as needed) to make a comprehensive but non-redundant list
   ],
   "professional_expertise": [
     {
       "expertise": "<Professional Expertise>",
       "specialty": [
         "<Recognized Professional Framework/Standard>"
-        // Add 2-3 distinct specialties as needed to make a comprehensive but non-redundant list
+        // Add 2-3 distinct specialties (only as needed) to make a comprehensive but non-redundant list
       ]
     }
-    // Add 2-3 distinct areas of professional expertise as needed to make a comprehensive but non-redundant list
+    // Add 2-3 distinct areas of professional expertise (only as needed) to make a comprehensive but non-redundant list
   ]
 }
-Ensure the JSON is valid (no trailing commas, no single quotes). When reporting the final distribution, ensure the sum of probabilities equals 100%. 
+Ensure the JSON is valid (no trailing commas, no single quotes) and the framework names are concisely-named and well-established. 
 """)
 
 
@@ -95,18 +115,18 @@ Output your response strictly as a JSON object with the following structure:
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
 
-NEWS_OUTPUT_FORMAT = """
+REVISED_OUTPUT_FORMAT = """
+## Phase 3: Forecast Revision 
+
+Please review your initial forecast and the group deliberation.
+In light of this information, would you revise your initial prediction? 
+If so, how? To the extent that did change, explain what changed. 
+
 Output your response strictly as a JSON object with the following structure:
 {
-  "prior_probability": int,
-  "analysis_updates": [
-    {
-      "points_reinforcing_prior_analysis": str,
-      "points_challenging_prior_analysis": str,
-      "overall_effect_on_forecast": "+int%" or "-int%"
-    }
-  ],
-  "revised_probability": int
+    "my_phase1_final_probability": int 0-100,
+    "reasoning_for_revised_probability": str,
+    "revised_probability": int 0-100
 }
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
@@ -226,12 +246,10 @@ and the second element is the entity value. For example ['Location:Paris', 'Pers
 \n\nPlease output the results in the following JSON format: {"query": str, "countries": List[str], "languages": List[str], "categories": List[str], "entity_guarantee": List[str], "string_guarantee": List[str]}"""
 
 
-SUMMARIZATION_PROMPT = """Your task is to summarize the resolution of various forecasting experts on a given question.\n
-You will receive two json objects summarizing two forecasting phases.\n
-In phase 1 the experts were asked to predict the outcome of a geopolitical event and provide their analysis.
-In phase 2 the experts were presented with news articles related to the event they had forecast and were asked to reconsider their prior analysis and revise their prediction accordingly.\n
+SUMMARIZATION_PROMPT = """Your task is to summarize the forecasts of various forecasting experts on a given question.\n
+The experts were asked to predict the outcome of a geopolitical event and provide their analysis using their own knowledge and news articles. Later, they engaged in a group chat with other forecasters.
 You will also receive the question itself.
-Your task is to summarize the resolution of the experts in a coherent and concise manner.\n
+Your task is to summarize the forecasts of the experts in a coherent and concise manner.\n
 You will not add information of your own knowledge to the analysis nor will you add anything of your own.
 \n\nPlease output the results in the following JSON format: {"summary": str}"""
 
@@ -239,3 +257,31 @@ You will not add information of your own knowledge to the analysis nor will you 
 HYDE_PROMPT = """Given the question, generate a summary of an article that helps answering the question.
 For example, for the question "What is the impact of climate change on the economy?", you could generate a summary of an article titled "Climate Change and the Economy: A Comprehensive Analysis":A recent analysis explores the economic impact of climate change, highlighting risks to industries such as agriculture, insurance, and infrastructure. Rising temperatures and extreme weather events are expected to disrupt supply chains and increase financial strain. Governments and businesses are focusing on carbon pricing, green investments, and adaptation strategies to mitigate these effects. Experts emphasize that addressing climate change is crucial for long-term economic stability.
 \n\nPlease output the results in the following JSON format: {"article": str}"""
+
+GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
+
+In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
+- In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
+- Either critique their forecasts' weaknesses, or defend their strengths, using a polemic style. 
+General notes:
+- Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
+- Avoid preamble and go straight to your response. 
+- Imagine you are participating in an online discussion board; do not be too formal or civil. 
+- Use the "response" field for your answer. 
+- Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
+
+## Prior forecasts
+{phase1_results_json_string} 
+
+## List of forecasters to engage with
+{forecasters_list}
+
+## Response format:
+Output your response in JSON format with the following structure:
+{{
+  "forecaster_to_engage": str,
+  "response_type": Literal["critique", "defense"],
+  "response": str,
+}}
+Ensure the JSON is valid (no trailing commas, no single quotes). 
+"""

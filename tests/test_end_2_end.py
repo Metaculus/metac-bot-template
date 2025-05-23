@@ -13,23 +13,11 @@ class TestEnd2End(unittest.IsolatedAsyncioTestCase):
                 open_question_id_post_id,
                 submit_prediction=True,
                 skip_previously_forecasted_questions=False,
+                use_hyde=True,
                 cache_seed=42
             )
         print(f"time taken to run: {datetime.datetime.now() - now}")
 
-
-
-    # async def test_e2e_multiple(self):
-    #     open_question_id_post_id = [(22427, 22427)]
-    #     now = datetime.datetime.now()
-    #     await forecast_questions(
-    #             open_question_id_post_id,
-    #             submit_prediction=True,
-    #             skip_previously_forecasted_questions=False,
-    #             cache_seed=42
-    #         )
-    #     print(f"time taken to run: {datetime.datetime.now() - now}")
-    #
 
 if __name__ == "__main__":
     unittest.main()
