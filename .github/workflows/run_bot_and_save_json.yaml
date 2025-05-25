@@ -65,24 +65,27 @@ jobs:
 
       # 4 – zip & upload forecasts (only if something was produced)
       - name: Create forecasts zip
-        if: ${{ hashFiles('forecasts/**') != '' }}
+        if: ${{ hashFiles('forecasts/q2/**') != '' }}
         run: |
           mkdir -p artifacts
           zip -r artifacts/forecasts.zip forecasts
 
       - name: Upload forecasts
-        if: ${{ hashFiles('forecasts/**') != '' }}
+        if: ${{ hashFiles('forecasts/q2/**') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: forecasts
           path: artifacts/forecasts.zip
 
-      # 5 – commit results back to repo
-      - name: Check for changes in forecasts folder
-        if: ${{ hashFiles('forecasts/**') != '' }}
+      # 5 – commit results back to repo (q2 only)
+      - name: Check for changes in forecasts/q2
+        if: ${{ hashFiles('forecasts/q2/**') != '' }}
         id: changes_check
         run: |
-          git add forecasts .cache
+          # Stage just the q2 forecasts
+          git add forecasts/q2 || true
+      
+          # Flag whether anything is staged
           if git diff --cached --quiet; then
             echo "CHANGES=false" >> $GITHUB_ENV
           else
@@ -95,10 +98,11 @@ jobs:
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin main
-          git checkout main
-          git rebase origin/main || { git rebase --abort && echo "Rebase failed; skipping push"; exit 0; }
-
-          git commit -am "Update forecasts files" || echo "Nothing to commit"
-          # simple retry to dodge rare push-race
-          git push origin main || (sleep 5 && git push origin main) || (sleep 10 && git push origin main)
+          # Commit only the staged q2 forecasts
+          git commit -m "Update forecasts/q2 files"
+      
+          # Safest update sequence: rebase w/ autostash, atomic + protected push
+          git pull --rebase --autostash origin main
+      
+          # One-liner: all-or-nothing push, refuse if remote moved
+          git push --atomic --force-with-lease origin HEAD:main
