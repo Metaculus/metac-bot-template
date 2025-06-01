@@ -362,7 +362,7 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
         
-    # DRE 5/17/2025, Numeric, Add mid cases, revise reference CSV, add p50 output
+    # DRE 5/31/2025 Numeric enforcement building on 5/17/2025 prompt
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -384,6 +384,7 @@ class TemplateForecaster(ForecastBot):
             {question.fine_print}
 
             Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
+            You write Units for the answer are: (whatever units you determined)
 
             Your research assistant says:
             {research}
@@ -416,8 +417,14 @@ class TemplateForecaster(ForecastBot):
             Bucket 3) Evidence that would indicate a central forecast
             
             ************
+            Verify the Units for the answer, and write them here
+            You check that those are the same units used above in questions (a), (b), (c), (d), (e), and (f)
+            If the units are in agreement write "units confirmed"
+            
+            ************
             Multi-world considerations
-            Now you want to explore ranges of reasonable possibilities. You consider three worlds:
+            For this section, you are careful to report values in the confirmed units for answer
+            You want to explore ranges of reasonable possibilities. You consider three worlds:
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
@@ -444,9 +451,9 @@ class TemplateForecaster(ForecastBot):
             You order the 9 estimates from low to high because you know that these values represent a reasonable range of outcomes.
             
             ************
-            With those values in mind...
+            With those values in mind, you are careful to use the units for answer
+            
             ************
-
             The last thing you write is your final answer as:
             "
             Percentile 10: XX
