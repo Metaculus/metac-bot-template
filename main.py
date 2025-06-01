@@ -133,7 +133,7 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    # DRE 5/17/2025, Add mid cases, revise reference CSV
+    # DRE 5/31/2025 encourage forecast and probability precision of 1.0% over range 0.1% to 99.9
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
@@ -158,6 +158,12 @@ class TemplateForecaster(ForecastBot):
             {research}
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
+            
+            Throughout your reasoning process, you maintain consistency in the numbers you use to express probability,
+            using a range from 0.1% to 99.9% (examples: 13.0%, 0.9%, 57%, 87.0%, 7.5%, 99.5%,...). 
+            
+            You know that elite forecasters use granular values since they often contain predictive value, so in all 
+            forecasts and scenarios you make your best effort to forecast probability with a precision of 1.0% or even less.
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
@@ -177,7 +183,8 @@ class TemplateForecaster(ForecastBot):
             
             ************
             Multi-world considerations
-            Now you want to explore ranges of reasonable possible forecasts. You consider three worlds:
+            Now you want to explore ranges of reasonable, possible forecasts, all with precision of 1.0% or less. 
+            You consider three worlds:
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
             - What would be a low forecast estimate for this world?
@@ -206,12 +213,12 @@ class TemplateForecaster(ForecastBot):
             
             Considering the 9 estimates ordered from low to high:
             - Project a distribution of reasonable forecasts
-            - Make a CSV with percentiles of probability from P10 to p90 on increments of 10
+            - Make a CSV with percentiles of probability (1.0% precision or better) from P10 to p90 on increments of 10
             - Reflect on the 50th percentile and adjust as necessary
-            - The 50th percentile is your best estimate of forecast probability
+            - The 50th percentile is a good estimate of forecast probability, but you modify your final answer based on your analysis
             ************
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            The last thing you write is your final answer as: "Probability: ZZ.Z%", 0.1% to 99.9%
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
