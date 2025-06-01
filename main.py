@@ -133,7 +133,8 @@ class TemplateForecaster(ForecastBot):
         response = await searcher.invoke(prompt)
         return response
 
-    # DRE 5/31/2025 encourage forecast and probability precision of 1.0% over range 0.1% to 99.9
+    # Revised DRE 5/31/2025 encourage forecast and probability precision of 1%
+    # Modified from DRE 5/17/2025 prompt
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
@@ -159,15 +160,11 @@ class TemplateForecaster(ForecastBot):
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
             
-            Throughout your reasoning process, you maintain consistency in the numbers you use to express probability,
-            using a range from 0.1% to 99.9% (examples: 13.0%, 0.9%, 57%, 87.0%, 7.5%, 99.5%,...). 
+            1% precision
+            You commit to forecast with 1% precision. This means you do not preferentially choose forecast probabilities
+            of 5%, 10%, 15%, 20% etc. Instead you make your best forecast, allowing values such as 12%, 17%, 34%, 48%, 71%... 
+            Particularly when aggregating several forecasts, this may result in a more accurate overall forecast.
             
-            You know that elite forecasters use granular values since they often contain predictive value, so in all 
-            forecasts and scenarios you make your best effort to forecast probability with a precision of 1.0% or even less.
-            
-            You are also careful to avoid forecasts that fall exactly on 5% or 10% (unless that is the actual best 
-            estimate) because accuracy will be lost. For instance, your best estimate might be 22%... use that, not 20%.
-
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
@@ -186,7 +183,7 @@ class TemplateForecaster(ForecastBot):
             
             ************
             Multi-world considerations
-            Now you want to explore ranges of reasonable, possible forecasts, all with precision of 1.0% or less. 
+            Now you want to explore ranges of reasonable, possible forecasts, aiming for 1% precision. 
             You consider three worlds:
             1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
             - What would an appropriate base rate be for this world?
@@ -216,7 +213,7 @@ class TemplateForecaster(ForecastBot):
             
             Considering the 9 estimates ordered from low to high:
             - Project a distribution of reasonable forecasts
-            - Make a CSV with percentiles of probability (1.0% precision or better) from P10 to p90 on increments of 10
+            - Make a CSV with percentiles of probability from P10 to p90 on increments of 10
             - Reflect on the 50th percentile and adjust as necessary
             - The 50th percentile is a good estimate of forecast probability, but you modify your final answer based on your analysis
             ************
