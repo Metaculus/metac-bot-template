@@ -164,6 +164,9 @@ class TemplateForecaster(ForecastBot):
             
             You know that elite forecasters use granular values since they often contain predictive value, so in all 
             forecasts and scenarios you make your best effort to forecast probability with a precision of 1.0% or even less.
+            
+            You are also careful to avoid forecasts that fall exactly on 5% or 10% (unless that is the actual best 
+            estimate) because accuracy will be lost. For instance, your best estimate might be 22%... use that, not 20%.
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
@@ -218,7 +221,7 @@ class TemplateForecaster(ForecastBot):
             - The 50th percentile is a good estimate of forecast probability, but you modify your final answer based on your analysis
             ************
 
-            The last thing you write is your final answer as: "Probability: ZZ.Z%", 0.1% to 99.9%
+            The last thing you write is your final answer as: "Probability: ZZ.Z%", 0.1 to 99.9
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
