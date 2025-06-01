@@ -558,7 +558,8 @@ if __name__ == "__main__":
     elif run_mode == "test_questions":
         # Example questions are a good way to test the bot's performance on a single question
         EXAMPLE_QUESTIONS = [
-            "https://www.metaculus.com/questions/36440/tour-de-france-2025-winner/", # multiple choice
+            "https://www.metaculus.com/questions/36934/tariff-disappear-from-nyt-and-wsj-front-pages-before-jul-2025/", # binary
+            #"https://www.metaculus.com/questions/36440/tour-de-france-2025-winner/", # multiple choice
             #"https://www.metaculus.com/questions/37522/control-of-gaza-strip-on-august-31-2025/", # multiple choice
             #"https://www.metaculus.com/questions/18677/member-country-leaves-brics-by-2035/", # binary
             #"https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
