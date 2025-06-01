@@ -221,7 +221,7 @@ class TemplateForecaster(ForecastBot):
             - The 50th percentile is a good estimate of forecast probability, but you modify your final answer based on your analysis
             ************
 
-            The last thing you write is your final answer as: "Probability: ZZ.Z%", 0.1-99.9
+            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
