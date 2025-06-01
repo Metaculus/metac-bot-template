@@ -232,7 +232,8 @@ class TemplateForecaster(ForecastBot):
             prediction_value=prediction, reasoning=reasoning
         )
     
-    # DRE 05/17/2025 prompt, introduce main factors, write option-by-option outcome scenarios
+    # DRE 6/1/2025 prompt: Multiworld, 1% precision
+    # Built from Binary 5/31/2025 and Multiple Choice 5/17/2025 (revised)
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
@@ -254,49 +255,92 @@ class TemplateForecaster(ForecastBot):
 
             {question.fine_print}
             
-            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
 
             Your research assistant says:
             {research}
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
-
+            
+            1% precision
+            You commit to forecast with 1% precision. This means you do not preferentially choose forecast probabilities
+            of 5%, 10%, 15%, 20% etc. Instead you make your best forecast, allowing values such as 12%, 17%, 34%, 48%, 71%... 
+            Particularly when aggregating several forecasts, this may result in a more accurate overall forecast.
+            
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) The expectations of experts and markets.
             
-            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-            ************
+            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome 
+            since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability
+            on most options to account for unexpected outcomes.
             
+            ************
             There are N options in this question, in this order:
             {question.options}
             
-            For each option you write:
-            (a) A brief description of a scenario that results in a No outcome.
-            (b) A brief description of a scenario that results in a Yes outcome.
+            At this stage, you treat each option as an independent, binary question. 
             
-            Make a preliminary ranking of the options from highest to lowest probability
-            - Be sure to keep track of the original order of the options, we will need them!
+            For each option you conduct the following steps:
+            
+            You write:
+            - The status quo outcome if nothing changed for the option.
+            - The expectations of experts and markets for the option.
+            - A brief description of a scenario that results in a No outcome for the option.
+            - A brief description of a scenario that results in a Yes outcome for the option.
+            
+            Group the evidence for the option
+            Review the evidence from your reseach assistant and group it into three buckets of approximately the same size:
+            Bucket 1) Evidence that would indicate a relatively low forecast
+            Bucket 2) Evidence that would indicate a relatively high forecast
+            Bucket 3) Evidence that would indicate a central forecast
+            
+            Multi-world considerations for the option
+            Now you want to explore ranges of reasonable possible forecasts. You consider three worlds:
+            1) Low_World: review the bucket 1 evidence from your reseach assistant that the forecast could be low.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            2) High_World: review the bucket 3 evidence from your reseach assistant that the forecast could be high.
+            - What would an appropriate base rate be for this world?
+            - What would be a low forecast estimate for this world?
+            - What would be a mid forecast estimate for this world?
+            - What would be a high forecast estimate for this world?
+            3) Mid_World: review the bucket 3 evidence from your reseach assistant that the forecast could be around the central views and trends.
+            - What would an appropriate base rate be for this world:
+            - What would be a low forecast estimate be for this world?
+            - What would be a mid forecast estimate for this world?
+            - What would be a high forecast estimate be for this world?
+            
+            Reference Table for the option
+            Now, for future reference, make a CSV based on values from your multi-world reasoning around the option.
+            Headings: World_name, Base rate, Low Forecast, Mid Forecast, High Forecast
+            Rows: Low_World, Mid_World, High_World
+            
+            You order the 9 estimates for the option from low to high because you know that these values represent a 
+            range of resonable forecasts.
+            
+            Considering the 9 estimates ordered from low to high for the option
+            - You use your judgment to make a table of with percentiles of probability
+              from P10 to p90 on increments of 10
+            - The 50th percentile is your preliminary estimate of probability for the option
+            
             ************
+            Consolidate and adjust the multiple choice option forecasts
             
-            Based on your analysis so far, you write the 3 main factors that determine if an option will resolve positve
-            ***********
+            Sort the option probabilities from highest to lowest and reflect on:
+            - The options should sum to 100%
+            - Does the relative probability of each option make sense?
+            - Does the status quo impact the probability?
+            - Does evidence suggest moving away from the status quo?
+            - Does the evidence indicate the preliminary probability should be adjusted?
             
-            For each option, you use the three main factors to place the evidence in buckets that support low, mid, and high probability
-            - Estimate low, mid, and high probability for each option, using the evidence buckets
-            - Re-rank the options according to the mid probality for each
-            - Are there any dicontinuities or inconsistencies from adjacent options?
-            - Ajust the values if necessary
             ************
+            Final forecast
             
-            Reference CSV
-            Now, for future reference, make a CSV containing the low, mid, and high probability estimates for each option
-            - Headings: Option, low_prob, mid_prob, and hi_prob
-            - Rows: Option_A, Option_B, ... Option_N
-            ************
-            
-            Forecast your best single estimate of probability for each option.
+            You make your final and best forecast using any adjustments after reflection and remembering to report at 1% or 
+            better precision.
             
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
