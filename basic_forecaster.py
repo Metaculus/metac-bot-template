@@ -62,7 +62,7 @@ class BasicForecaster(ForecastBot):
         async with self._concurrency_limiter:
             research = ""
             if os.getenv("METACULUS_TOKEN"):
-                research = await self._call_openai(question.question_text)
+                research = await self._call_openai_search(question.question_text)
             else:
                 logger.warning(
                     f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
@@ -71,7 +71,7 @@ class BasicForecaster(ForecastBot):
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
-    async def _call_openai(self, question: str) -> str:
+    async def _call_openai_search(self, question: str) -> str:
         model = GeneralLlm(
             model="metaculus/gpt-4o-search-preview",
             temperature=None,
