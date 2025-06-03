@@ -18,10 +18,9 @@ from forecasting_tools import (
     run_benchmark_streamlit_page,
 )
 
-from main import TemplateForecaster
+from forecaster import TemplateForecaster
 
 logger = logging.getLogger(__name__)
-
 
 
 async def benchmark_forecast_bot(mode: str) -> None:
@@ -29,7 +28,9 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = 30 # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    number_of_questions = (
+        30  # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
+    )
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -52,18 +53,20 @@ async def benchmark_forecast_bot(mode: str) -> None:
             randomly_sample=True,
         )
         for question in questions:
-            question.background_info = None # Test ability to find new information
+            question.background_info = None  # Test ability to find new information
     else:
         raise ValueError(f"Invalid mode: {mode}")
 
     with MonetaryCostManager() as cost_manager:
         bots = [
             TemplateForecaster(
-                predictions_per_research_report=5,
+                predictions_per_research_report=1,
                 llms={
                     "default": GeneralLlm(
-                        model="gpt-4o-mini",
-                        temperature=0.3,
+                        model="metaculus/o4-mini",
+                        temperature=None,
+                        timeout=40,
+                        allowed_tries=2,
                     ),
                 },
             ),
@@ -71,8 +74,10 @@ async def benchmark_forecast_bot(mode: str) -> None:
                 predictions_per_research_report=1,
                 llms={
                     "default": GeneralLlm(
-                        model="gpt-4o-mini",
-                        temperature=0.3,
+                        model="openai/gpt-4o-mini",
+                        temperature=None,
+                        timeout=40,
+                        allowed_tries=2,
                     ),
                 },
             ),
@@ -86,12 +91,8 @@ async def benchmark_forecast_bot(mode: str) -> None:
             concurrent_question_batch_size=10,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
-            logger.info(
-                f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}"
-            )
-            logger.info(
-                f"- Final Score: {benchmark.average_expected_baseline_score}"
-            )
+            logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
+            logger.info(f"- Final Score: {benchmark.average_expected_baseline_score}")
             logger.info(f"- Total Cost: {benchmark.total_cost}")
             logger.info(f"- Time taken: {benchmark.time_taken_in_minutes}")
         logger.info(f"Total Cost: {cost_manager.current_usage}")
@@ -103,8 +104,10 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
-        ]
+            logging.FileHandler(
+                f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+            ),
+        ],
     )
 
     # Suppress LiteLLM logging
@@ -113,9 +116,7 @@ if __name__ == "__main__":
     litellm_logger.propagate = False
 
     # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description="Benchmark a list of bots"
-    )
+    parser = argparse.ArgumentParser(description="Benchmark a list of bots")
     parser.add_argument(
         "--mode",
         type=str,
@@ -124,9 +125,5 @@ if __name__ == "__main__":
         help="Specify the run mode (default: display)",
     )
     args = parser.parse_args()
-    mode: Literal["run", "custom", "display"] = (
-        args.mode
-    )
+    mode: Literal["run", "custom", "display"] = args.mode
     asyncio.run(benchmark_forecast_bot(mode))
-
-
