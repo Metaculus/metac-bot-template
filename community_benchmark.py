@@ -18,7 +18,7 @@ from forecasting_tools import (
     run_benchmark_streamlit_page,
 )
 
-from forecaster import TemplateForecaster
+from basic_forecaster import BasicForecaster
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
 
     with MonetaryCostManager() as cost_manager:
         bots = [
-            TemplateForecaster(
+            BasicForecaster(
                 predictions_per_research_report=1,
                 llms={
                     "default": GeneralLlm(
@@ -70,7 +70,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
                     ),
                 },
             ),
-            TemplateForecaster(
+            BasicForecaster(
                 predictions_per_research_report=1,
                 llms={
                     "default": GeneralLlm(

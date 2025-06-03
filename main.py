@@ -6,12 +6,10 @@ from datetime import datetime
 from typing import Literal
 
 from forecasting_tools import (
-    AskNewsSearcher,
     GeneralLlm,
     MetaculusApi,
-    SmartSearcher,
 )
-from forecaster import TemplateForecaster
+from basic_forecaster import BasicForecaster
 
 logger = logging.getLogger(__name__)
 
@@ -44,21 +42,21 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = TemplateForecaster(
+    template_bot = BasicForecaster(
         research_reports_per_question=1,
-        predictions_per_research_report=5,
+        predictions_per_research_report=1,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=os.getenv("FOLDER_TO_SAVE_REPORTS_TO") or None,
         skip_previously_forecasted_questions=True,
-        llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+        llms={
             "default": GeneralLlm(
                 model="metaculus/o4-mini",
                 temperature=None,
                 timeout=40,
                 allowed_tries=2,
             ),
-            "summarizer": "metaculus/o4-mini",
+            "summarizer": "openai/gpt-4.1-nano",
         },
     )
 
@@ -92,4 +90,4 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(questions, return_exceptions=True)
         )
-    TemplateForecaster.log_report_summary(forecast_reports)  # type: ignore
+    BasicForecaster.log_report_summary(forecast_reports)  # type: ignore

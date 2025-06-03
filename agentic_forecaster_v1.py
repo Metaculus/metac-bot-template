@@ -20,37 +20,10 @@ from forecasting_tools import (
 logger = logging.getLogger(__name__)
 
 
-class TemplateForecaster(ForecastBot):
+class AgenticForecasterV1(ForecastBot):
     """
-    This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
-    The official bots on the leaderboard use AskNews in Q2.
-    Main template bot changes since Q1
-    - Support for new units parameter was added
-    - You now set your llms when you initialize the bot (making it easier to switch between and benchmark different models)
-
-    The main entry point of this bot is `forecast_on_tournament` in the parent class.
-    See the script at the bottom of the file for more details on how to run the bot.
-    Ignoring the finer details, the general flow is:
-    - Load questions from Metaculus
-    - For each question
-        - Execute run_research a number of times equal to research_reports_per_question
-        - Execute respective run_forecast function `predictions_per_research_report * research_reports_per_question` times
-        - Aggregate the predictions
-        - Submit prediction (if publish_reports_to_metaculus is True)
-    - Return a list of ForecastReport objects
-
-    Only the research and forecast functions need to be implemented in ForecastBot subclasses.
-
-    If you end up having trouble with rate limits and want to try a more sophisticated rate limiter try:
-    ```
-    from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import RefreshingBucketRateLimiter
-    rate_limiter = RefreshingBucketRateLimiter(
-        capacity=2,
-        refresh_rate=1,
-    ) # Allows 1 request per second on average with a burst of 2 requests initially. Set this as a class variable
-    await self.rate_limiter.wait_till_able_to_acquire_resources(1) # 1 because it's consuming 1 request (use more if you are adding a token limit)
-    ```
-    Additionally OpenRouter has large rate limits immediately on account creation
+    This builds upon BasicForecaster but uses a more agentic approach to forecasting.
+    The primary change is in run_forecast_on_binary, which will ran against community benchmarks to optimize.
     """
 
     _max_concurrent_questions = (
