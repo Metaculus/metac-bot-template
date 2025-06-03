@@ -42,7 +42,7 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = BasicForecaster(
+    current_bot = BasicForecaster(
         research_reports_per_question=1,
         predictions_per_research_report=1,
         use_research_summary_to_forecast=False,
@@ -62,16 +62,16 @@ if __name__ == "__main__":
 
     if run_mode == "tournament":
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+            current_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
             )
         )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
         # The new quarterly cup may not be initialized near the beginning of a quarter
-        template_bot.skip_previously_forecasted_questions = False
+        current_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
+            current_bot.forecast_on_tournament(
                 MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
             )
         )
@@ -82,12 +82,12 @@ if __name__ == "__main__":
             "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
             "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
         ]
-        template_bot.skip_previously_forecasted_questions = False
+        current_bot.skip_previously_forecasted_questions = False
         questions = [
             MetaculusApi.get_question_by_url(question_url)
             for question_url in EXAMPLE_QUESTIONS
         ]
         forecast_reports = asyncio.run(
-            template_bot.forecast_questions(questions, return_exceptions=True)
+            current_bot.forecast_questions(questions, return_exceptions=True)
         )
     BasicForecaster.log_report_summary(forecast_reports)  # type: ignore
