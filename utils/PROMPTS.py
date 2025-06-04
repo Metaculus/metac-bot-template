@@ -25,6 +25,7 @@ FIRST_PHASE_INSTRUCTIONS = (
     "General notes: \n"
     "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. Prizes will be awarded to the most compelling arguments.\n"
     "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"
+    "Remember that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time."
     "## Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
@@ -266,7 +267,6 @@ In this phase you will be shown predictions made by other forecasters contending
 General notes:
 - Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
 - Avoid preamble and go straight to your response. 
-- Imagine you are participating in an online discussion board; do not be too formal or civil. 
 - Use the "response" field for your answer. 
 - Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
