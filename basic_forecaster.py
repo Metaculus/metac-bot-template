@@ -112,7 +112,7 @@ class BasicForecaster(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            The last thing you write is your final answer as: "Probability: ZZ%", 0.1-99.9
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
