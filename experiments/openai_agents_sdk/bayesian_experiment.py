@@ -326,7 +326,8 @@ ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE = (
     "Your process must be radically evidence-based and rigorous:\n"
     "1.  **Verify Temporal Status**: For any potential factor you consider, you MUST first use `web_search` with a direct question to verify if the event has already occurred and its outcome is known. For example, search for 'who won the 2024 US presidential election'. If an outcome is a known fact, explicitly state it in your reasoning and DO NOT include it as a node in the BN. Build the network only around factors that are genuinely uncertain as of today.\n"
     "2.  **Evidence-First for Structure**: For the remaining uncertain variables, use `web_search` extensively to discover causal links. Formulate your search queries as specific, probing questions aimed at uncovering causal links, not just keywords. For example, instead of 'Taiwan independence factors', ask 'What are the military, economic, and political factors that influence Taiwan's decision to declare formal independence?'.\n"
-    "3.  **Identify States**: For each node you do include, define a set of mutually exclusive and collectively exhaustive states. Use `web_search` with targeted questions to find common or expert-defined states for a variable. For instance, ask 'What are the standard ways to categorize public support for a policy?'.\n\n"
+    "3.  **Identify States**: For each node you do include, define a set of mutually exclusive and collectively exhaustive states. Use `web_search` with targeted questions to find common or expert-defined states for a variable. For instance, ask 'What are the standard ways to categorize public support for a policy?'.\n"
+    "4.  **Format the Output**: The `nodes` field in your final JSON output must be a dictionary where each key is the string `name` of a node, and the value is the node object itself. The `name` field inside the node object must exactly match its key in the `nodes` dictionary.\n\n"
     "Return the entire structure as a single, valid JSON object conforming to the `BNStructure` schema. You MUST also identify and specify the `target_node_name` in the output, which should be the name of the node that directly answers the forecasting question. Do not populate the CPTs; that will be done by another agent."
 )
 
@@ -471,21 +472,29 @@ async def run_forecasting_pipeline(
         "Follow your instructions carefully. Use web search to find the latest information on all key entities and concepts. Your output will serve as the ground truth for all subsequent analysis."
     )
     context_report: Optional[ContextReport] = None
-    try:
-        # Run the dynamically instantiated ContextAgent
-        context_result = await Runner.run(context_agent_instance, context_prompt)
-        if context_result.final_output and isinstance(
-            context_result.final_output, ContextReport
-        ):
-            context_report = context_result.final_output
-        else:
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            print(f"ContextAgent attempt {attempt + 1}/{max_retries}...")
+            # Run the dynamically instantiated ContextAgent
+            context_result = await Runner.run(context_agent_instance, context_prompt)
+            if context_result.final_output and isinstance(
+                context_result.final_output, ContextReport
+            ):
+                context_report = context_result.final_output
+                break  # Success
+            else:
+                print(
+                    f"ContextAgent returned invalid output type on attempt {attempt + 1}. Expected ContextReport but got {type(context_result.final_output)}."
+                )
+        except Exception as e:
             print(
-                f"ContextAgent returned invalid output type. Expected ContextReport but got {type(context_result.final_output)}."
+                f"An unexpected error of type {type(e).__name__} occurred during ContextAgent execution on attempt {attempt + 1}: {e}"
             )
-    except Exception as e:
-        print(
-            f"An unexpected error of type {type(e).__name__} occurred during ContextAgent execution: {e}"
-        )
+        if attempt < max_retries - 1:
+            print("Retrying ContextAgent...")
+        else:
+            print("ContextAgent failed after all retries.")
 
     if not context_report:
         print("ContextAgent failed to return a valid ContextReport. Exiting.")
@@ -519,23 +528,31 @@ async def run_forecasting_pipeline(
         "Your final network should only contain nodes representing events that are still uncertain."
     )
     bn_structure: Optional[BNStructure] = None
-    try:
-        # Run the dynamically instantiated ArchitectAgent
-        architect_result = await Runner.run(
-            architect_agent_instance, architect_prompt, max_turns=20
-        )
-        if architect_result.final_output and isinstance(
-            architect_result.final_output, BNStructure
-        ):
-            bn_structure = architect_result.final_output
-        else:
-            print(
-                f"ArchitectAgent returned invalid output type. Expected BNStructure but got {type(architect_result.final_output)}."
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            print(f"ArchitectAgent attempt {attempt + 1}/{max_retries}...")
+            # Run the dynamically instantiated ArchitectAgent
+            architect_result = await Runner.run(
+                architect_agent_instance, architect_prompt, max_turns=20
             )
-    except Exception as e:
-        print(
-            f"An unexpected error of type {type(e).__name__} occurred during ArchitectAgent execution: {e}"
-        )
+            if architect_result.final_output and isinstance(
+                architect_result.final_output, BNStructure
+            ):
+                bn_structure = architect_result.final_output
+                break  # Success
+            else:
+                print(
+                    f"ArchitectAgent returned invalid output type on attempt {attempt + 1}. Expected BNStructure but got {type(architect_result.final_output)}."
+                )
+        except Exception as e:
+            print(
+                f"An unexpected error of type {type(e).__name__} occurred during ArchitectAgent execution on attempt {attempt + 1}: {e}"
+            )
+        if attempt < max_retries - 1:
+            print("Retrying ArchitectAgent...")
+        else:
+            print("ArchitectAgent failed after all retries.")
 
     if not bn_structure:
         print("ArchitectAgent failed to return a valid BNStructure. Exiting.")
