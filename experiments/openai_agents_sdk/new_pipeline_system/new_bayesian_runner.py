@@ -2,11 +2,19 @@ import asyncio
 import json
 import pathlib
 import sys
-from datetime import datetime # Not strictly needed by runner, but good for log timestamping if done here
-from typing import List, Dict, Any # Standard typing imports
+from datetime import (
+    datetime,
+)  # Not strictly needed by runner, but good for log timestamping if done here
+from typing import List, Dict, Any  # Standard typing imports
+
+# Add project root to sys.path to resolve imports when running script directly
+project_root = str(pathlib.Path(__file__).resolve().parents[3])
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 
 # --- Imports from the new pipeline system ---
-from .pipeline_models import (
+from experiments.openai_agents_sdk.new_pipeline_system.pipeline_models import (
     PipelineData,
     ModelConfig,
     AgentConfig,
@@ -17,14 +25,14 @@ from .pipeline_models import (
     # Tools like web_search, if AgentConfig expects the actual function
     web_search,
 )
-from .pipeline_constants import (
+from experiments.openai_agents_sdk.new_pipeline_system.pipeline_constants import (
     CONTEXT_AGENT_INSTRUCTIONS_TEMPLATE,
     ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE,
     CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE,
     FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE,
 )
-from .pipeline_core import Pipeline
-from .pipeline_steps import (
+from experiments.openai_agents_sdk.new_pipeline_system.pipeline_core import Pipeline
+from experiments.openai_agents_sdk.new_pipeline_system.pipeline_steps import (
     ContextStep,
     ArchitectStep,
     CPTGenerationStep,
@@ -33,21 +41,17 @@ from .pipeline_steps import (
 )
 
 # --- Imports from agent framework & project root ---
-# Assuming agent_sdk.py is in the project root, 3 levels up from new_pipeline_system
+# With project root in sys.path, we can now import directly.
 try:
     from agent_sdk import MetaculusAsyncOpenAI
-except ImportError:
-    # Adjust path if the script is not run from a context where root is in PYTHONPATH
-    project_root_for_sdk = str(pathlib.Path(__file__).resolve().parents[3])
-    if project_root_for_sdk not in sys.path:
-        sys.path.insert(0, project_root_for_sdk)
-    try:
-        from agent_sdk import MetaculusAsyncOpenAI
-    except ImportError as e:
-        print(f"CRITICAL: Could not import MetaculusAsyncOpenAI from agent_sdk. Ensure agent_sdk.py is in project root. Error: {e}")
-        sys.exit(1)
+except ImportError as e:
+    print(
+        f"CRITICAL: Could not import MetaculusAsyncOpenAI from agent_sdk. "
+        f"Ensure agent_sdk.py is in project root ('{project_root}'). Error: {e}"
+    )
+    sys.exit(1)
 
-from agents import Agent as ActualAgentClass # The actual agent class
+from agents import Agent as ActualAgentClass  # The actual agent class
 from agents import AgentOutputSchema
 
 
@@ -55,16 +59,19 @@ from agents import AgentOutputSchema
 class Tee:
     def __init__(self, *files):
         self.files = files
+
     def write(self, obj):
         for f_handle in self.files:
             f_handle.write(obj)
-            f_handle.flush() # Ensure immediate flush
+            f_handle.flush()  # Ensure immediate flush
+
     def flush(self):
         for f_handle in self.files:
             f_handle.flush()
 
+
 async def main_pipeline_run():
-    forecasting_topic = "Will commercial quantum computing achieve 'quantum supremacy' for a practical problem (excluding research demonstrations) by the end of 2028?"
+    forecasting_topic = "Will Donald Trump attend the NATO Summit in June 2025?"
 
     # Setup logging (similar to original experiment)
     log_dir = pathlib.Path(__file__).parent / "runner_logs"
@@ -99,8 +106,8 @@ async def main_pipeline_run():
         try:
             # 1. Configure Agent Settings
             default_model_cfg = ModelConfig(
-                model_name="gpt-4o-mini", # Changed to gpt-4o-mini as o4-mini is not a model.
-                openai_client=shared_openai_client
+                model_name="o4-mini",
+                openai_client=shared_openai_client,
             )
             # Example: Using a more powerful model for the architect
             # powerful_model_cfg = ModelConfig(model_name="gpt-4o", openai_client=shared_openai_client)
@@ -108,14 +115,16 @@ async def main_pipeline_run():
             context_agent_config = AgentConfig(
                 agent_class=ActualAgentClass,
                 model_settings=default_model_cfg,
-                tools=[web_search], # web_search function from pipeline_models
-                output_schema=AgentOutputSchema(ContextReport, strict_json_schema=False),
+                tools=[web_search],  # web_search function from pipeline_models
+                output_schema=AgentOutputSchema(
+                    ContextReport, strict_json_schema=False
+                ),
                 instructions_template=CONTEXT_AGENT_INSTRUCTIONS_TEMPLATE,
             )
 
             architect_agent_config = AgentConfig(
                 agent_class=ActualAgentClass,
-                model_settings=default_model_cfg, # Consider powerful_model_cfg for complex tasks
+                model_settings=default_model_cfg,  # Consider powerful_model_cfg for complex tasks
                 tools=[web_search],
                 output_schema=AgentOutputSchema(BNStructure, strict_json_schema=False),
                 instructions_template=ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE,
@@ -125,15 +134,17 @@ async def main_pipeline_run():
                 agent_class=ActualAgentClass,
                 model_settings=default_model_cfg,
                 tools=[web_search],
-                output_schema=AgentOutputSchema(QualitativeCpt, strict_json_schema=False),
+                output_schema=AgentOutputSchema(
+                    QualitativeCpt, strict_json_schema=False
+                ),
                 instructions_template=CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE,
             )
 
             forecaster_agent_config = AgentConfig(
                 agent_class=ActualAgentClass,
                 model_settings=default_model_cfg,
-                tools=[], # No tools
-                output_schema=None, # Plain text output
+                tools=[],  # No tools
+                output_schema=None,  # Plain text output
                 instructions_template=FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE,
             )
 
@@ -141,17 +152,21 @@ async def main_pipeline_run():
             context_step = ContextStep(agent_config=context_agent_config)
             architect_step = ArchitectStep(agent_config=architect_agent_config)
             cpt_step = CPTGenerationStep(agent_config=cpt_estimator_agent_config)
-            calculation_step = FinalCalculationStep(evidence=None) # Optional: provide evidence
+            calculation_step = FinalCalculationStep(
+                evidence=None
+            )  # Optional: provide evidence
             forecaster_step = ForecasterStep(agent_config=forecaster_agent_config)
 
             # 3. Create the Pipeline
-            pipeline = Pipeline(steps=[
-                context_step,
-                architect_step,
-                cpt_step,
-                calculation_step,
-                forecaster_step,
-            ])
+            pipeline = Pipeline(
+                steps=[
+                    context_step,
+                    architect_step,
+                    cpt_step,
+                    calculation_step,
+                    forecaster_step,
+                ]
+            )
 
             # 4. Define Initial PipelineData
             # Only 'topic' is mandatory for PipelineData to be valid initially.
@@ -160,7 +175,9 @@ async def main_pipeline_run():
 
             # 5. Run the Pipeline
             print(f"\n--- RUNNING PIPELINE ---")
-            final_data = await pipeline.run(initial_pipeline_data) # Pass the Pydantic object
+            final_data = await pipeline.run(
+                initial_pipeline_data
+            )  # Pass the Pydantic object
             print(f"--- PIPELINE EXECUTION FINISHED ---")
 
             # 6. Process and Display Results from final_data
@@ -178,7 +195,9 @@ async def main_pipeline_run():
                 # For full BN structure:
                 # print(f"\nBN Structure (JSON):\n{final_data.bn_structure.model_dump_json(indent=2, exclude_none=True)}")
 
-            print(f"\nFinal Probabilities: {final_data.final_probabilities_str or 'Not calculated.'}")
+            print(
+                f"\nFinal Probabilities: {final_data.final_probabilities_str or 'Not calculated.'}"
+            )
 
             if final_data.forecaster_agent_output:
                 print(f"\nForecaster Output:\n{final_data.forecaster_agent_output}")
@@ -188,11 +207,15 @@ async def main_pipeline_run():
 
         except Exception as e:
             # This catches errors from pipeline.run() itself or unhandled ones from main_pipeline_run setup
-            print(f"CRITICAL - Unhandled error in main_pipeline_run: {type(e).__name__} - {e}", file=sys.stderr)
+            print(
+                f"CRITICAL - Unhandled error in main_pipeline_run: {type(e).__name__} - {e}",
+                file=sys.stderr,
+            )
             import traceback
+
             traceback.print_exc(file=sys.stderr)
         finally:
-            sys.stdout = original_stdout # Restore stdout
+            sys.stdout = original_stdout  # Restore stdout
             print(f"\nFull logs saved to {log_filename}")
             print(f"--- RUNNER FINISHED ---")
 
@@ -202,7 +225,7 @@ if __name__ == "__main__":
     # The try-except block for MetaculusAsyncOpenAI import already handles one level of this.
 
     # Python 3.8+ specific for Windows asyncio
-    if sys.platform == "win32" and sys.version_info >= (3,8):
+    if sys.platform == "win32" and sys.version_info >= (3, 8):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     asyncio.run(main_pipeline_run())
