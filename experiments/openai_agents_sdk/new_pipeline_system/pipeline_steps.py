@@ -1,6 +1,6 @@
 import asyncio
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Type, Tuple, Generic # Added Generic
+from typing import List, Dict, Any, Optional, Type, Tuple, Generic  # Added Generic
 
 # Agent framework imports
 from agents import (
@@ -12,19 +12,19 @@ from agents import (
 )
 
 # Project-specific imports
-from .pipeline_core import PipelineStep, InputStepData, OutputStepData # Updated
+from .pipeline_core import PipelineStep, InputStepData, OutputStepData  # Updated
 from .pipeline_models import (
     # Removed: PipelineData
-    BasePipelineData, # Added
-    ContextStepOutput, # Added
-    ArchitectStepInput, # Added
-    ArchitectStepOutput, # Added
-    CPTGenerationStepInput, # Added
-    CPTGenerationStepOutput, # Added
-    FinalCalculationStepInput, # Added
-    FinalCalculationStepOutput, # Added
-    ForecasterStepInput, # Added
-    ForecasterStepOutput, # Added
+    BasePipelineData,  # Added
+    ContextStepOutput,  # Added
+    ArchitectStepInput,  # Added
+    ArchitectStepOutput,  # Added
+    CPTGenerationStepInput,  # Added
+    CPTGenerationStepOutput,  # Added
+    FinalCalculationStepInput,  # Added
+    FinalCalculationStepOutput,  # Added
+    ForecasterStepInput,  # Added
+    ForecasterStepOutput,  # Added
     AgentConfig,
     ContextReport,
     BNStructure,
@@ -37,7 +37,11 @@ import itertools
 import json
 
 
-class BaseAgentStep(PipelineStep[InputStepData, OutputStepData], ABC, Generic[InputStepData, OutputStepData]):
+class BaseAgentStep(
+    PipelineStep[InputStepData, OutputStepData],
+    ABC,
+    Generic[InputStepData, OutputStepData],
+):
     def __init__(self, agent_config: AgentConfig, agent_name: Optional[str] = None):
         self.agent_config = agent_config
         self.agent_name = agent_name if agent_name else self.__class__.__name__
@@ -126,8 +130,10 @@ class BaseAgentStep(PipelineStep[InputStepData, OutputStepData], ABC, Generic[In
                     initial_prompt
                     + f"\n\nPREVIOUS ATTEMPT FAILED with an unexpected error: {type(e).__name__} - {e}. {prompt_retry_instruction_addon}"
                 )
-        if agent_final_output is None and max_retries > 0: # Ensure agent_final_output is checked only if retries were attempted
-             raise RuntimeError(
+        if (
+            agent_final_output is None and max_retries > 0
+        ):  # Ensure agent_final_output is checked only if retries were attempted
+            raise RuntimeError(
                 f"{self.agent_name} failed to produce output after {max_retries} attempts and no specific exception was caught in the last try."
             )
         return agent_final_output
@@ -136,7 +142,7 @@ class BaseAgentStep(PipelineStep[InputStepData, OutputStepData], ABC, Generic[In
         print(f"Executing {self.__class__.__name__} (agent: {self.agent_name})...")
         try:
             prompt = self._prepare_prompt(data)
-            if not prompt: # If prompt is empty, indicates an issue or intentional skip
+            if not prompt:  # If prompt is empty, indicates an issue or intentional skip
                 print(
                     f"  - Prompt preparation for {self.agent_name} returned no prompt. Skipping agent run."
                 )
@@ -150,14 +156,18 @@ class BaseAgentStep(PipelineStep[InputStepData, OutputStepData], ABC, Generic[In
                 # We assume _process_output will be called with None and handle it.
                 return self._process_output(None, data)
 
-
-            max_run_retries = 3 # Default
+            max_run_retries = 3  # Default
             # Attempt to get max_retries from AgentConfig, which could be Pydantic model or dict
-            if hasattr(self.agent_config, "max_retries") and self.agent_config.max_retries is not None:
+            if (
+                hasattr(self.agent_config, "max_retries")
+                and self.agent_config.max_retries is not None
+            ):
                 max_run_retries = self.agent_config.max_retries
-            elif isinstance(self.agent_config, dict) and "max_retries" in self.agent_config: # Fallback for dict
-                 max_run_retries = self.agent_config.get("max_retries", 3)
-
+            elif (
+                isinstance(self.agent_config, dict)
+                and "max_retries" in self.agent_config
+            ):  # Fallback for dict
+                max_run_retries = self.agent_config.get("max_retries", 3)
 
             agent_raw_output = await self._run_agent_with_retry(
                 initial_prompt=prompt, max_retries=max_run_retries
@@ -190,16 +200,18 @@ class BaseAgentStep(PipelineStep[InputStepData, OutputStepData], ABC, Generic[In
             # The prompt modification "return self._process_output(None, data)" for empty prompt is a start.
             # If e is the exception object, then:
             try:
-                return self._process_output(e, data) # Pass exception as raw output
+                return self._process_output(e, data)  # Pass exception as raw output
             except Exception as proc_e:
-                 # If _process_output itself fails, then we have a problem creating OutputStepData.
-                 # This path should ideally not be taken.
-                 # A fallback would be to try to create a generic OutputStepData if possible,
-                 # but OutputStepData is abstract.
-                 # This highlights a need for robust error object creation in _process_output.
-                 print(f"    Additionally, error during _process_output handling the original error: {proc_e}")
-                 # Re-raise the original error if _process_output fails to handle it
-                 raise e
+                # If _process_output itself fails, then we have a problem creating OutputStepData.
+                # This path should ideally not be taken.
+                # A fallback would be to try to create a generic OutputStepData if possible,
+                # but OutputStepData is abstract.
+                # This highlights a need for robust error object creation in _process_output.
+                print(
+                    f"    Additionally, error during _process_output handling the original error: {proc_e}"
+                )
+                # Re-raise the original error if _process_output fails to handle it
+                raise e
 
 
 class ContextStep(BaseAgentStep[BasePipelineData, ContextStepOutput]):
@@ -213,21 +225,25 @@ class ContextStep(BaseAgentStep[BasePipelineData, ContextStepOutput]):
             print(
                 f"Warning: {self.agent_name} initialized with AgentConfig that might not specifically output ContextReport."
             )
-        self.current_date_for_step: str = "" # Initialize
+        self.current_date_for_step: str = ""  # Initialize
 
     def _prepare_prompt(self, data: BasePipelineData) -> str:
         topic = data.topic
         if not topic:
             # This should ideally set data.error_message and return "" to be handled by BaseAgentStep.execute
-            data.error_message = (data.error_message or "") + "; Topic not found for ContextStep."
-            return "" # Empty prompt will be handled by execute
+            data.error_message = (
+                data.error_message or ""
+            ) + "; Topic not found for ContextStep."
+            return ""  # Empty prompt will be handled by execute
         self.current_date_for_step = datetime.now().strftime("%Y-%m-%d")
         return f"The current date is {self.current_date_for_step}. Please establish the factual context for the topic: '{topic}'."
 
     def _process_output(
         self, agent_raw_output: Any, data: BasePipelineData
     ) -> ContextStepOutput:
-        current_date = getattr(self, "current_date_for_step", datetime.now().strftime("%Y-%m-%d"))
+        current_date = getattr(
+            self, "current_date_for_step", datetime.now().strftime("%Y-%m-%d")
+        )
         error_msg = data.error_message or ""
 
         if isinstance(agent_raw_output, Exception):
@@ -247,7 +263,9 @@ class ContextStep(BaseAgentStep[BasePipelineData, ContextStepOutput]):
             return ContextStepOutput(
                 topic=data.topic,
                 current_date=current_date,
-                context_report=ContextReport(verified_facts=[], summary="Invalid output from agent"),
+                context_report=ContextReport(
+                    verified_facts=[], summary="Invalid output from agent"
+                ),
                 context_facts_str="",
                 context_summary="Invalid output from agent",
                 error_message=error_msg.strip("; "),
@@ -264,7 +282,7 @@ class ContextStep(BaseAgentStep[BasePipelineData, ContextStepOutput]):
             context_report=agent_raw_output,
             context_facts_str=context_facts_str,
             context_summary=context_summary,
-            error_message=error_msg.strip("; ") or None, # Ensure None if empty
+            error_message=error_msg.strip("; ") or None,  # Ensure None if empty
         )
 
 
@@ -281,9 +299,18 @@ class ArchitectStep(BaseAgentStep[ArchitectStepInput, ArchitectStepOutput]):
             )
 
     def _prepare_prompt(self, data: ArchitectStepInput) -> str:
-        if not all([data.topic, data.current_date, data.context_summary, data.context_facts_str]):
-            data.error_message = (data.error_message or "") + "; Missing required fields for ArchitectStep prompt."
-            return "" # Empty prompt
+        if not all(
+            [
+                data.topic,
+                data.current_date,
+                data.context_summary,
+                data.context_facts_str,
+            ]
+        ):
+            data.error_message = (
+                data.error_message or ""
+            ) + "; Missing required fields for ArchitectStep prompt."
+            return ""  # Empty prompt
         return (
             f"**Established Context:**\n{data.context_summary}\n\n**Verified Facts:**\n{data.context_facts_str}\n\n"
             f"Based on the context above, and with the current date being {data.current_date}, "
@@ -296,30 +323,37 @@ class ArchitectStep(BaseAgentStep[ArchitectStepInput, ArchitectStepOutput]):
         self, agent_raw_output: Any, data: ArchitectStepInput
     ) -> ArchitectStepOutput:
         error_msg = data.error_message or ""
-        default_bn_structure = BNStructure(topic=data.topic, explanation="Error or invalid output", nodes={}, target_node_name="")
+        default_bn_structure = BNStructure(
+            topic=data.topic,
+            explanation="Error or invalid output",
+            nodes={},
+            target_node_name="",
+        )
 
         if isinstance(agent_raw_output, Exception):
             error_msg += f"; Error during agent execution: {str(agent_raw_output)}"
+            data.error_message = error_msg.strip("; ")
             return ArchitectStepOutput(
                 **data.model_dump(),
-                bn_structure=default_bn_structure, # Provide a default BNStructure
-                error_message=error_msg.strip("; "),
+                bn_structure=default_bn_structure,
             )
 
         if not isinstance(agent_raw_output, BNStructure):
             error_msg += f"; {self.agent_name} did not return a valid BNStructure. Output: {type(agent_raw_output)}"
             print(f"ERROR in ArchitectStep._process_output: {error_msg}")
+            data.error_message = error_msg.strip("; ")
             return ArchitectStepOutput(
                 **data.model_dump(),
                 bn_structure=default_bn_structure,
-                error_message=error_msg.strip("; "),
             )
 
-        print(f"  ArchitectStep processed. BN for '{agent_raw_output.topic}'. Target: {agent_raw_output.target_node_name}")
+        print(
+            f"  ArchitectStep processed. BN for '{agent_raw_output.topic}'. Target: {agent_raw_output.target_node_name}"
+        )
+        data.error_message = error_msg.strip("; ") or None
         return ArchitectStepOutput(
-            **data.model_dump(), # Pass through all fields from input
+            **data.model_dump(),  # Pass through all fields from input
             bn_structure=agent_raw_output,
-            error_message=error_msg.strip("; ") or None,
         )
 
 
@@ -366,7 +400,7 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
                 f"Warning: {self.agent_name_prefix} initialized with AgentConfig not for QualitativeCpt."
             )
 
-    async def _run_single_cpt_estimation( # Internal method, signature doesn't need InputStepData/OutputStepData
+    async def _run_single_cpt_estimation(  # Internal method, signature doesn't need InputStepData/OutputStepData
         self,
         node_name: str,
         node_obj: Node,
@@ -401,7 +435,7 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
             or "This is a root node."
         )
         combo_list_str = "\n".join(
-            [f"- {str(combo)}" for combo in parent_state_combinations]
+            [f"- {json.dumps(list(combo))}" for combo in parent_state_combinations]
         )
         initial_prompt = (
             f"**Context:**\n{context_summary}\n\n**Facts:**\n{context_facts_str}\n\n"
@@ -409,15 +443,14 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
             f"**Child Node:** {node_name} ({node_obj.description}) States: {list(node_obj.states.keys())}\n"
             f"**Parent Nodes:**\n{parents_info_str}\n\n"
             f"Generate `QualitativeCpt` JSON. Use `web_search` for influence. Estimate likelihood scores for child states given parent combinations:\n{combo_list_str}\n"
-            "Ensure `cpt_qualitative_estimates` keys match these combinations."
+            "IMPORTANT: Ensure `cpt_qualitative_estimates` keys are JSON array strings that EXACTLY match the combinations listed above."
         )
         current_prompt = initial_prompt
         max_run_retries = 3
-        if hasattr(self.agent_config, "max_retries") and self.agent_config.max_retries is not None: # type: ignore
-            max_run_retries = self.agent_config.max_retries # type: ignore
+        if hasattr(self.agent_config, "max_retries") and self.agent_config.max_retries is not None:  # type: ignore
+            max_run_retries = self.agent_config.max_retries  # type: ignore
         elif isinstance(self.agent_config, dict) and "max_retries" in self.agent_config:
-             max_run_retries = self.agent_config.get("max_retries", 3)
-
+            max_run_retries = self.agent_config.get("max_retries", 3)
 
         for attempt in range(max_run_retries):
             print(
@@ -433,7 +466,9 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
                 )
                 if attempt == max_run_retries - 1:
                     # Return None to indicate failure after retries
-                    print(f"  - Failed CPT for '{node_name}' due to invalid output type after {max_run_retries} attempts.")
+                    print(
+                        f"  - Failed CPT for '{node_name}' due to invalid output type after {max_run_retries} attempts."
+                    )
                     return None
                 current_prompt = (
                     initial_prompt + f"\n\nFAILED: {error_message} Review & retry."
@@ -444,51 +479,69 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
                 )
                 if attempt == max_run_retries - 1:
                     # Return None or raise, here we return None to allow processing of other CPTs
-                    print(f"  - Failed CPT for '{node_name}' due to exception after {max_run_retries} attempts: {e}")
-                    return None # Propagate as a failure for this CPT
+                    print(
+                        f"  - Failed CPT for '{node_name}' due to exception after {max_run_retries} attempts: {e}"
+                    )
+                    return None  # Propagate as a failure for this CPT
                 current_prompt = (
                     initial_prompt
                     + f"\n\nFAILED (Error: {type(e).__name__} - {e}). Retry."
                 )
         # Fallthrough if loop finishes without returning (e.g. max_retries is 0)
-        print(f"  - Failed CPT for '{node_name}' after {max_run_retries} attempts (fallthrough).")
+        print(
+            f"  - Failed CPT for '{node_name}' after {max_run_retries} attempts (fallthrough)."
+        )
         return None
 
     async def execute(self, data: CPTGenerationStepInput) -> CPTGenerationStepOutput:
         print("Executing CPTGenerationStep...")
         current_error_message = data.error_message or ""
 
-        if not data.bn_structure:
-            error_msg = "BNStructure missing for CPTGenerationStep."
+        # Validate inputs from `data`
+        bn_obj = data.bn_structure
+        if not bn_obj:
+            error_msg = "BNStructure not found for CPTGenerationStep."
             current_error_message += f"; {error_msg}"
             # Return a CPTGenerationStepOutput with the error
-            return CPTGenerationStepOutput(**data.model_dump(), error_message=current_error_message.strip("; "))
+            output_dict = data.model_dump()
+            output_dict["error_message"] = current_error_message.strip("; ")
+            return CPTGenerationStepOutput(**output_dict)
 
         if not all([data.context_summary, data.context_facts_str, data.topic]):
-            error_msg = "Context summary, facts, or topic missing for CPTGenerationStep."
+            error_msg = "Missing context, facts, or topic for CPTGenerationStep."
             current_error_message += f"; {error_msg}"
             # Return a CPTGenerationStepOutput with the error
-            return CPTGenerationStepOutput(**data.model_dump(), error_message=current_error_message.strip("; "))
+            output_dict = data.model_dump()
+            output_dict["error_message"] = current_error_message.strip("; ")
+            return CPTGenerationStepOutput(**output_dict)
 
-        bn_obj = data.bn_structure # Operate directly on the bn_structure from the input data
+        bn_obj = data.bn_structure  # Already checked for None, but mypy might not know.
         tasks = []
         for name, node in bn_obj.nodes.items():
             parents_info = [
                 (p.name, p.description, list(p.states.keys()))
-                for p_name_str in node.parents # p_name is string
-                if (p := bn_obj.nodes.get(p_name_str)) # get node object
+                for p_name_str in node.parents  # p_name is string
+                if (p := bn_obj.nodes.get(p_name_str))  # get node object
             ]
-            parent_states_lists = [info[2] for info in parents_info] # list of lists of states
+            parent_states_lists = [
+                info[2] for info in parents_info
+            ]  # list of lists of states
             # Ensure state_combos gets [tuple()] for nodes without parents
-            state_combos = list(itertools.product(*parent_states_lists)) if parent_states_lists else [tuple()]
+            state_combos = (
+                list(itertools.product(*parent_states_lists))
+                if parent_states_lists
+                else [tuple()]
+            )
 
-            print(f"  - Task for CPT of node '{name}'... Combinations: {len(state_combos)}")
+            print(
+                f"  - Task for CPT of node '{name}'... Combinations: {len(state_combos)}"
+            )
             tasks.append(
                 asyncio.create_task(
                     self._run_single_cpt_estimation(
                         name,
                         node,
-                        bn_obj.topic or data.topic, # Use bn_obj.topic first
+                        bn_obj.topic or data.topic,  # Use bn_obj.topic first
                         data.context_summary,
                         data.context_facts_str,
                         parents_info,
@@ -499,7 +552,9 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
             )
 
         print(f"  - Waiting for {len(tasks)} CPT tasks...")
-        results = await asyncio.gather(*tasks, return_exceptions=True) # Catch exceptions from tasks
+        results = await asyncio.gather(
+            *tasks, return_exceptions=True
+        )  # Catch exceptions from tasks
         print("  - All CPT tasks completed.")
 
         successful_cpt_count = 0
@@ -507,15 +562,17 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
             # Original node list used for task creation determines the node name
             node_name = list(bn_obj.nodes.keys())[i]
             if isinstance(res_or_exc, QualitativeCpt):
-                print(f"  - Processed CPT for '{node_name}'. Justification: {res_or_exc.justification[:50]}...")
+                print(
+                    f"  - Processed CPT for '{node_name}'. Justification: {res_or_exc.justification[:50]}..."
+                )
                 # Modify bn_obj (which is data.bn_structure) in place
                 bn_obj.nodes[node_name].cpt = normalize_cpt(res_or_exc)
                 successful_cpt_count += 1
-            elif isinstance(res_or_exc, Exception): # Exception from gather
+            elif isinstance(res_or_exc, Exception):  # Exception from gather
                 error_detail = f"CPT generation task for {node_name} failed with exception: {type(res_or_exc).__name__} - {str(res_or_exc)}"
                 print(f"  - ERROR: {error_detail}")
                 current_error_message += f"; {error_detail}"
-            else: # None or other unexpected result from _run_single_cpt_estimation
+            else:  # None or other unexpected result from _run_single_cpt_estimation
                 error_detail = f"CPT generation for {node_name} failed to produce valid output or was None."
                 print(f"  - ERROR: {error_detail}")
                 current_error_message += f"; {error_detail}"
@@ -527,11 +584,12 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
 
         # data.bn_structure was modified in-place.
         # Create CPTGenerationStepOutput by passing all fields from input data, error message updated.
-        output_data = CPTGenerationStepOutput(
-            **data.model_dump(),
-            error_message=current_error_message.strip("; ") or None
+        output_dict = data.model_dump()
+        output_dict["error_message"] = current_error_message.strip("; ") or None
+        output_data = CPTGenerationStepOutput(**output_dict)
+        print(
+            f"CPTGenerationStep complete. {successful_cpt_count}/{len(bn_obj.nodes)} CPTs generated."
         )
-        print(f"CPTGenerationStep complete. {successful_cpt_count}/{len(bn_obj.nodes)} CPTs generated.")
         return output_data
 
 
@@ -539,120 +597,161 @@ class CPTGenerationStep(PipelineStep[CPTGenerationStepInput, CPTGenerationStepOu
 def calculate_final_probability(
     bn: BNStructure, target_node_name: str, evidence: Optional[Dict[str, str]] = None
 ) -> Dict[str, float]:
+    """
+    Calculates the conditional probability distribution of a target node given evidence,
+    using the variable elimination algorithm.
+    """
     evidence = evidence or {}
-    if not bn.nodes:
+    if not bn.nodes or target_node_name not in bn.nodes:
         return {}
 
-    order, q, in_degree = (
-        [],
-        [n for n, d in bn.nodes.items() if not d.parents],
-        {n: len(d.parents) for n, d in bn.nodes.items()},
-    )
-    processed = set()
-    # Kahn's algorithm for topological sort
-    queue_for_sort = list(q) # Use a copy for manipulation
-    while queue_for_sort:
-        u = queue_for_sort.pop(0)
-        order.append(u)
-        processed.add(u)
-        # Iterate over all nodes to find children of u
-        for v_name, v_node in bn.nodes.items():
-            if u in v_node.parents: # u is a parent of v_name
-                in_degree[v_name] -= 1
-                if in_degree[v_name] == 0 and v_name not in processed:
-                    queue_for_sort.append(v_name)
+    # 1. Get topological sort of nodes. This ensures we process parents before children.
+    try:
+        order = []
+        # Kahn's algorithm for topological sort
+        in_degree = {n: len(d.parents) for n, d in bn.nodes.items()}
+        queue_for_sort = [n for n, d in bn.nodes.items() if not d.parents]
 
-    if len(order) != len(bn.nodes):
-        # Handle cycles or disconnected components if necessary, or raise error
-        # For now, extend with remaining nodes, though this might not be ideal for faulty BNs
-        order.extend([n for n in bn.nodes if n not in order])
+        while queue_for_sort:
+            u = queue_for_sort.pop(0)
+            order.append(u)
+            # Find children of u
+            for v_name, v_node in bn.nodes.items():
+                if u in v_node.parents:
+                    in_degree[v_name] -= 1
+                    if in_degree[v_name] == 0:
+                        queue_for_sort.append(v_name)
 
+        if len(order) != len(bn.nodes):
+            # This indicates a cycle in the BN structure, which is invalid.
+            # Handle by adding remaining nodes, but log a warning.
+            print(
+                f"Warning: Cycle detected or disconnected components in BN. Topological sort may be incorrect."
+            )
+            order.extend([n for n in bn.nodes if n not in order])
+
+    except Exception as e:
+        print(f"Error during topological sort: {e}")
+        return {}  # Cannot proceed without a valid order
 
     memo = {}
 
-    def enumerate_all_recursive(
+    def _get_probability(
+        variable: str, assigned_state: str, current_evidence: Dict[str, str]
+    ) -> float:
+        """
+        Recursively calculates the probability of a variable being in a specific state,
+        given the states of its parents in the current_evidence.
+        """
+        node = bn.nodes[variable]
+
+        # For root nodes (no parents)
+        if not node.parents:
+            # The key for a root node's CPT is an empty JSON array '[]'.
+            # It might also be legacy '()' so we check for both.
+            return node.cpt.get("[]", node.cpt.get("()", {})).get(assigned_state, 0.0)
+
+        # For nodes with parents
+        try:
+            # The order of parent states must match the order in `node.parents`.
+            parent_states = [current_evidence[p_name] for p_name in node.parents]
+            # The CPT key is a JSON array string of parent states.
+            cpt_key = json.dumps(parent_states)
+            return node.cpt.get(cpt_key, {}).get(assigned_state, 0.0)
+        except KeyError as e:
+            # This happens if a parent's state is not in the evidence, which shouldn't occur with topological sort.
+            print(
+                f"Error: Missing parent state for {e} when calculating probability for {variable}"
+            )
+            return 0.0
+        except Exception as e:
+            print(
+                f"An unexpected error occurred in _get_probability for {variable}: {e}"
+            )
+            return 0.0
+
+    def _enumerate_all_recursive(
         vars_list: List[str], current_evidence: Dict[str, str]
     ) -> float:
-        vt, et = tuple(sorted(vars_list)), tuple(sorted(current_evidence.items()))
-        if not vars_list: # Base case: no variables left to sum out
+        """
+        Recursively sums out variables to compute a joint probability.
+        """
+        if not vars_list:
             return 1.0
-        if (vt, et) in memo: # Memoization check
-            return memo[(vt, et)]
+
+        memo_key = (tuple(vars_list), tuple(sorted(current_evidence.items())))
+        if memo_key in memo:
+            return memo[memo_key]
 
         Y, rest_vars = vars_list[0], vars_list[1:]
-        node_Y = bn.nodes.get(Y)
 
-        if not node_Y: # Should not happen in a valid BN
-            return enumerate_all_recursive(rest_vars, current_evidence)
+        if Y in current_evidence:
+            # Variable Y is evidence, so we use its probability and recurse.
+            prob = _get_probability(Y, current_evidence[Y], current_evidence)
+            result = prob * _enumerate_all_recursive(rest_vars, current_evidence)
+        else:
+            # Variable Y is hidden, so we sum over all its possible states.
+            result = 0.0
+            node_Y = bn.nodes[Y]
+            if not node_Y.states:
+                # If a node has no states, it's a modeling error.
+                # Treat its contribution as 1 to not break the chain, but this is not ideal.
+                return _enumerate_all_recursive(rest_vars, current_evidence)
 
-        # Construct CPT key from parent states in current_evidence
-        parent_states_values = []
-        if node_Y.parents:
-            for p_name in node_Y.parents:
-                parent_states_values.append(current_evidence.get(p_name))
-        # Key for CPT: string representation of tuple of parent states
-        cpt_key = str(tuple(parent_states_values)) if node_Y.parents else "()"
+            for y_state in node_Y.states.keys():
+                # The probability of Y=y_state given its parents' states in current_evidence.
+                prob = _get_probability(Y, y_state, current_evidence)
+                # Recurse with Y now part of the evidence for its children.
+                result += prob * _enumerate_all_recursive(
+                    rest_vars, {**current_evidence, Y: y_state}
+                )
 
+        memo[memo_key] = result
+        return result
 
-        if Y in current_evidence: # If Y is part of evidence
-            prob_y_given_parents = node_Y.cpt.get(cpt_key, {}).get(current_evidence[Y], 0.0)
-            if prob_y_given_parents == 0.0: # Check for zero probability with evidence
-                 # This might happen if evidence contradicts CPT.
-                 # Depending on desired behavior, could return 0.0 or handle as error.
-                 pass # Allow zero probability to propagate
-            result_sum = prob_y_given_parents * enumerate_all_recursive(rest_vars, current_evidence)
-        else: # Y needs to be summed out
-            result_sum = 0.0
-            if not node_Y.states: # Node has no states defined
-                 # This is problematic; skip or assign uniform? For now, skip contribution.
-                 result_sum = enumerate_all_recursive(rest_vars, current_evidence) # Effectively P(Y|parents)=1 for this path
-            else:
-                for y_state in node_Y.states.keys():
-                    prob_y_state_given_parents = node_Y.cpt.get(cpt_key, {}).get(y_state, 0.0)
-                    result_sum += prob_y_state_given_parents * enumerate_all_recursive(
-                        rest_vars, {**current_evidence, Y: y_state}
-                    )
+    # Main calculation
+    target_node = bn.nodes[target_node_name]
+    if not target_node.states:
+        return {}
 
-        memo[(vt, et)] = result_sum
-        return result_sum
-
-    if target_node_name not in bn.nodes or not bn.nodes[target_node_name].states:
-        return {} # Target node or its states not defined
-
-    # Calculate probability for each state of the target node
+    # Calculate P(target_state, evidence) for each state of the target node
     distribution = {}
-    for target_state in bn.nodes[target_node_name].states.keys():
-        # For each state of Y, P(Y=y_s, e) = P(Y=y_s | parents(Y), e_parents) * P(e_other_vars | Y=y_s, e_parents)
-        # This should be P(Y=target_state | evidence) by calculating P(Y=target_state, evidence) / P(evidence)
-        # enumerate_all_recursive calculates sum over all vars for P(vars_list | current_evidence)
-        # So, P(target_state, evidence) = enumerate_all_recursive(order, {**evidence, target_node_name: target_state})
-        distribution[target_state] = enumerate_all_recursive(
-            order, {**evidence, target_node_name: target_state}
+    for state in target_node.states.keys():
+        joint_prob = _enumerate_all_recursive(
+            order, {**evidence, target_node_name: state}
         )
-
-    total_probability = sum(distribution.values())
-
-    if total_probability == 0:
-        # This can happen if evidence is contradictory or CPTs lead to zero paths.
-        # Return uniform distribution over states or error.
-        num_target_states = len(bn.nodes[target_node_name].states)
-        return {s: 1.0 / num_target_states for s in bn.nodes[target_node_name].states} if num_target_states > 0 else {}
+        distribution[state] = joint_prob
 
     # Normalize to get P(target_node | evidence)
+    total_prob = sum(distribution.values())
+
+    if total_prob == 0:
+        print(
+            "Warning: Total probability is zero. This may indicate contradictory evidence or zero-probability paths in CPTs. Returning uniform distribution."
+        )
+        num_states = len(target_node.states)
+        return (
+            {s: 1.0 / num_states for s in target_node.states} if num_states > 0 else {}
+        )
+
     normalized_distribution = {
-        state: prob / total_probability for state, prob in distribution.items()
+        state: prob / total_prob for state, prob in distribution.items()
     }
     return normalized_distribution
 
 
-class FinalCalculationStep(PipelineStep[FinalCalculationStepInput, FinalCalculationStepOutput]):
+class FinalCalculationStep(
+    PipelineStep[FinalCalculationStepInput, FinalCalculationStepOutput]
+):
     def __init__(self, evidence: Optional[Dict[str, str]] = None):
         self.evidence = evidence or {}
         print(
             f"Initialized FinalCalculationStep with evidence: {self.evidence if self.evidence else 'None'}"
         )
 
-    async def execute(self, data: FinalCalculationStepInput) -> FinalCalculationStepOutput:
+    async def execute(
+        self, data: FinalCalculationStepInput
+    ) -> FinalCalculationStepOutput:
         print("Executing FinalCalculationStep...")
         current_error_message = data.error_message or ""
         final_probabilities: Optional[Dict[str, float]] = None
@@ -662,28 +761,36 @@ class FinalCalculationStep(PipelineStep[FinalCalculationStepInput, FinalCalculat
             error_msg = "BNStructure not found for FinalCalculationStep."
             current_error_message += f"; {error_msg}"
             final_probabilities_str = error_msg
-            return FinalCalculationStepOutput(
-                **data.model_dump(),
-                final_probabilities=None,
-                final_probabilities_str=final_probabilities_str,
-                error_message=current_error_message.strip("; ")
-            )
+            output_dict = data.model_dump()
+            output_dict["final_probabilities"] = None
+            output_dict["final_probabilities_str"] = final_probabilities_str
+            output_dict["error_message"] = current_error_message.strip("; ")
+            return FinalCalculationStepOutput(**output_dict)
 
         bn_obj = data.bn_structure
+        print(f"BN Object: {bn_obj}")
         target_name = bn_obj.target_node_name
         calculation_error_details = ""
 
         if not target_name:
-            calculation_error_details = "No target node specified in BNStructure. Skipping calculation."
+            calculation_error_details = (
+                "No target node specified in BNStructure. Skipping calculation."
+            )
         elif target_name not in bn_obj.nodes:
             calculation_error_details = f"Target node '{target_name}' not found in BN nodes. Skipping calculation."
         else:
-            print(f"  - Calculating Final Probability for Target Node: '{target_name}' with evidence: {self.evidence}")
+            print(
+                f"  - Calculating Final Probability for Target Node: '{target_name}' with evidence: {self.evidence}"
+            )
             try:
                 # Sanity check CPTs (optional, but good for debugging)
                 for node_name_check, node_check in bn_obj.nodes.items():
-                    if not node_check.cpt and (node_check.parents or not self.evidence.get(node_name_check)): # Root nodes not in evidence need CPTs
-                        print(f"  - Warning: Node '{node_name_check}' might be missing CPTs or is an unevidenced root.")
+                    if not node_check.cpt and (
+                        node_check.parents or not self.evidence.get(node_name_check)
+                    ):  # Root nodes not in evidence need CPTs
+                        print(
+                            f"  - Warning: Node '{node_name_check}' might be missing CPTs or is an unevidenced root."
+                        )
 
                 final_probabilities = calculate_final_probability(
                     bn=bn_obj, target_node_name=target_name, evidence=self.evidence
@@ -691,29 +798,31 @@ class FinalCalculationStep(PipelineStep[FinalCalculationStepInput, FinalCalculat
 
                 if final_probabilities:
                     final_probabilities_str = json.dumps(final_probabilities, indent=2)
-                    print(f"  - Final Probabilities calculated: {final_probabilities_str}")
+                    print(
+                        f"  - Final Probabilities calculated: {final_probabilities_str}"
+                    )
                 else:
                     final_probabilities_str = "Calculation resulted in empty or None probabilities. This might indicate issues with CPTs or evidence consistency."
                     print(f"  - {final_probabilities_str}")
 
             except Exception as e:
                 import traceback
+
                 calculation_error_details = f"Error during final probability calculation: {type(e).__name__} - {e}. Trace: {traceback.format_exc()}"
                 print(f"  - {calculation_error_details}")
-                final_probabilities_str = f"Error: {str(e)}" # Keep it concise for the data field
+                final_probabilities_str = (
+                    f"Error: {str(e)}"  # Keep it concise for the data field
+                )
 
         if calculation_error_details:
             current_error_message += f"; {calculation_error_details}"
-            # final_probabilities_str might already be set to a specific error from calculation
-            if final_probabilities_str == "Not calculated.":
-                 final_probabilities_str = calculation_error_details # More specific error
+            final_probabilities_str = calculation_error_details
 
-        output_data = FinalCalculationStepOutput(
-            **data.model_dump(),
-            final_probabilities=final_probabilities,
-            final_probabilities_str=final_probabilities_str,
-            error_message=current_error_message.strip("; ") or None
-        )
+        output_dict = data.model_dump()
+        output_dict["final_probabilities"] = final_probabilities
+        output_dict["final_probabilities_str"] = final_probabilities_str
+        output_dict["error_message"] = current_error_message.strip("; ")
+        output_data = FinalCalculationStepOutput(**output_dict)
         print("FinalCalculationStep complete.")
         return output_data
 
@@ -728,17 +837,28 @@ class ForecasterStep(BaseAgentStep[ForecasterStepInput, ForecasterStepOutput]):
 
     def _prepare_prompt(self, data: ForecasterStepInput) -> str:
         missing_parts = []
-        if not data.topic: missing_parts.append("topic")
-        if not data.context_summary: missing_parts.append("context_summary")
+        if not data.topic:
+            missing_parts.append("topic")
+        if not data.context_summary:
+            missing_parts.append("context_summary")
         # bn_structure and final_probabilities_str can be None/error states, prompt should reflect that.
 
         if missing_parts:
             # Allow proceeding but record error. Prompt will use 'Not available'.
-            data.error_message = (data.error_message or "") + f"; Missing critical data for ForecasterStep prompt: {', '.join(missing_parts)}"
+            data.error_message = (
+                (data.error_message or "")
+                + f"; Missing critical data for ForecasterStep prompt: {', '.join(missing_parts)}"
+            )
             # Do not return "" here, let the prompt be formed with "Not available"
 
-        final_bn_json_str = data.bn_structure.model_dump_json(indent=2) if data.bn_structure else "{}"
-        target_node_name_str = data.bn_structure.target_node_name if data.bn_structure and data.bn_structure.target_node_name else "N/A"
+        final_bn_json_str = (
+            data.bn_structure.model_dump_json(indent=2) if data.bn_structure else "{}"
+        )
+        target_node_name_str = (
+            data.bn_structure.target_node_name
+            if data.bn_structure and data.bn_structure.target_node_name
+            else "N/A"
+        )
 
         prompt = (
             f"**Established Context:**\n{data.context_summary or 'Not available'}\n\n"
@@ -773,9 +893,10 @@ class ForecasterStep(BaseAgentStep[ForecasterStepInput, ForecasterStepOutput]):
         else:
             forecaster_text_output = str(agent_raw_output)
 
-        print(f"  ForecasterStep processed. Output length: {len(forecaster_text_output or '')}")
-        return ForecasterStepOutput(
-            **data.model_dump(),
-            forecaster_agent_output=forecaster_text_output,
-            error_message=error_msg.strip("; ") or None,
+        print(
+            f"  ForecasterStep processed. Output length: {len(forecaster_text_output or '')}"
         )
+        output_dict = data.model_dump()
+        output_dict["forecaster_agent_output"] = forecaster_text_output
+        output_dict["error_message"] = error_msg.strip("; ") or None
+        return ForecasterStepOutput(**output_dict)

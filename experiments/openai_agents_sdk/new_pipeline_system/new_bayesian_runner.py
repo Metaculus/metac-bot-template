@@ -16,7 +16,7 @@ if project_root not in sys.path:
 # --- Imports from the new pipeline system ---
 from experiments.openai_agents_sdk.new_pipeline_system.pipeline_models import (
     BasePipelineData,  # Changed from PipelineData
-    ForecasterStepOutput, # Added for type hinting final_data
+    ForecasterStepOutput,  # Added for type hinting final_data
     ModelConfig,
     AgentConfig,
     ContextReport,
@@ -167,12 +167,10 @@ async def main_pipeline_run():
             else:
                 print("\nContext Summary: Not available (ContextReport is None)")
 
-
             if final_data.bn_structure:
                 print(f"\nBN Target Node: {final_data.bn_structure.target_node_name}")
             else:
                 print("\nBN Target Node: Not available (BNStructure is None)")
-
 
             print(
                 f"\nFinal Probabilities: {final_data.final_probabilities_str or 'Not calculated.'}"
@@ -183,13 +181,13 @@ async def main_pipeline_run():
             else:
                 print("\nForecaster Output: Not available.")
 
-
         except Exception as e:
             print(
                 f"CRITICAL - Unhandled error in main_pipeline_run: {type(e).__name__} - {e}",
                 file=sys.stderr,
             )
             import traceback
+
             traceback.print_exc(file=sys.stderr)
         finally:
             sys.stdout = original_stdout
