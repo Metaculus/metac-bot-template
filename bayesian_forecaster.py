@@ -1005,8 +1005,8 @@ if __name__ == "__main__":
         "BayesianForecaster class definition complete. Further testing requires appropriate environment setup."
     )
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# if __name__ == "__main__":
+#     asyncio.run(main())
 
 # Remove the old BayesianForecaster class (simple version)
 # The overwrite_file_with_block tool replaces the entire file content.
