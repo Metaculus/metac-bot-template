@@ -44,12 +44,14 @@ from agent_sdk import MetaculusAsyncOpenAI
 
 client = MetaculusAsyncOpenAI()
 
+# Global constant for the web search LLM model
+WEB_SEARCH_LLM_MODEL = "metaculus/gpt-4o-search-preview"
 
 @function_tool
 async def web_search(query: str) -> str:
     """Searches the web for information about a given query."""
     print(f"\n🔎 Performing web search for: '{query}'")
-    model = GeneralLlm(model="metaculus/gpt-4o-search-preview", temperature=None)
+    model = GeneralLlm(model=WEB_SEARCH_LLM_MODEL, temperature=None)
     response = await model.invoke(query)
     print(f"\n🔍 Search result: {response}")
     return response
@@ -68,6 +70,28 @@ async def patched_create(*args, **kwargs):
 
 
 client.chat.completions.create = patched_create
+
+
+# ==============================================================================
+# Agent Configuration Models
+# ==============================================================================
+
+class ModelConfig(BaseModel):
+    model_name: str
+    openai_client: Any = client # Default to the global client
+
+class AgentConfig(BaseModel):
+    agent_class: Any # Stores the agent class, e.g., agents.Agent
+    model_config: ModelConfig
+    tools: List[Any] = Field(default_factory=list)
+    output_schema: Optional[Any] = None
+    instructions_template: str # Base instructions template
+
+class PipelineAgentsConfig(BaseModel):
+    context_agent: AgentConfig
+    architect_agent: AgentConfig
+    cpt_estimator_agent: AgentConfig
+    forecaster_agent: AgentConfig
 
 
 # ==============================================================================
@@ -275,91 +299,141 @@ def calculate_probability_from_evidence(report: EvidenceReport) -> float:
 
 
 # ==============================================================================
-# Agent Definitions
+# Agent Instruction Templates
 # ==============================================================================
 
-# ### NEW ### Agent to establish the factual baseline
-ContextAgent = Agent(
-    name="ContextAgent",
-    model=OpenAIChatCompletionsModel(model="o4-mini", openai_client=client),
-    instructions=(
-        "You are an expert fact-checker and intelligence analyst. Your primary goal is to establish a solid, up-to-date factual baseline for a given forecasting question. "
-        "Your own knowledge is definitely outdated. You MUST NOT rely on it. Your entire process must be driven by `web_search` to find the absolute latest information.\n\n"
-        "Your process:\n"
-        "1. **Deconstruct the Question**: Break down the user's question into its core components: entities (e.g., 'Donald Trump', 'NATO'), concepts (e.g., 'formal independence'), and timeframes (e.g., 'June 2025').\n"
-        "2. **Verify and Define**: For each component, use `web_search` to find the most current status and definitions. This is especially crucial for time-sensitive facts. For example, if the question involves a politician, you MUST search for their current official title and status *today*. If it involves an organization, verify its current members and stated goals.\n"
-        "   - Example Query: 'Who is the current President of the United States as of [today's date]?'\n"
-        "   - Example Query: 'What is the official definition of the NATO summit?'\n"
-        "3. **Synthesize Facts**: Compile your findings into a list of clear, unambiguous statements in the `verified_facts` field. Each statement should be a critical piece of context.\n"
-        "4. **Summarize Context**: Provide a brief `summary` of the overall situation based on your findings.\n\n"
-        "Return a single, valid JSON object conforming to the `ContextReport` schema. This report will be the foundational context for all other agents."
-    ),
-    output_type=AgentOutputSchema(ContextReport, strict_json_schema=False),
-    tools=[web_search],
+CONTEXT_AGENT_INSTRUCTIONS_TEMPLATE = (
+    "You are an expert fact-checker and intelligence analyst. Your primary goal is to establish a solid, up-to-date factual baseline for a given forecasting question. "
+    "Your own knowledge is definitely outdated. You MUST NOT rely on it. Your entire process must be driven by `web_search` to find the absolute latest information.\n\n"
+    "Your process:\n"
+    "1. **Deconstruct the Question**: Break down the user's question into its core components: entities (e.g., 'Donald Trump', 'NATO'), concepts (e.g., 'formal independence'), and timeframes (e.g., 'June 2025').\n"
+    "2. **Verify and Define**: For each component, use `web_search` to find the most current status and definitions. This is especially crucial for time-sensitive facts. For example, if the question involves a politician, you MUST search for their current official title and status *today*. If it involves an organization, verify its current members and stated goals.\n"
+    "   - Example Query: 'Who is the current President of the United States as of [today's date]?'\n"
+    "   - Example Query: 'What is the official definition of the NATO summit?'\n"
+    "3. **Synthesize Facts**: Compile your findings into a list of clear, unambiguous statements in the `verified_facts` field. Each statement should be a critical piece of context.\n"
+    "4. **Summarize Context**: Provide a brief `summary` of the overall situation based on your findings.\n\n"
+    "Return a single, valid JSON object conforming to the `ContextReport` schema. This report will be the foundational context for all other agents."
 )
 
-ArchitectAgent = Agent(
-    name="ArchitectAgent",
-    model=OpenAIChatCompletionsModel(model="o4-mini", openai_client=client),
-    instructions=(
-        "You are an expert in causal inference and systems thinking. Your task is to design a Bayesian Network (BN) for the given topic.\n"
-        "Crucially, you MUST consider the current date. Your own knowledge may be outdated. Do not model events whose outcomes are already established historical facts as uncertain variables.\n\n"
-        "Your process must be radically evidence-based and rigorous:\n"
-        "1.  **Verify Temporal Status**: For any potential factor you consider, you MUST first use `web_search` with a direct question to verify if the event has already occurred and its outcome is known. For example, search for 'who won the 2024 US presidential election'. If an outcome is a known fact, explicitly state it in your reasoning and DO NOT include it as a node in the BN. Build the network only around factors that are genuinely uncertain as of today.\n"
-        "2.  **Evidence-First for Structure**: For the remaining uncertain variables, use `web_search` extensively to discover causal links. Formulate your search queries as specific, probing questions aimed at uncovering causal links, not just keywords. For example, instead of 'Taiwan independence factors', ask 'What are the military, economic, and political factors that influence Taiwan's decision to declare formal independence?'.\n"
-        "3.  **Identify States**: For each node you do include, define a set of mutually exclusive and collectively exhaustive states. Use `web_search` with targeted questions to find common or expert-defined states for a variable. For instance, ask 'What are the standard ways to categorize public support for a policy?'.\n\n"
-        "Return the entire structure as a single, valid JSON object conforming to the `BNStructure` schema. You MUST also identify and specify the `target_node_name` in the output, which should be the name of the node that directly answers the forecasting question. Do not populate the CPTs; that will be done by another agent."
-    ),
-    output_type=AgentOutputSchema(BNStructure, strict_json_schema=False),
-    tools=[web_search],
+ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE = (
+    "You are an expert in causal inference and systems thinking. Your task is to design a Bayesian Network (BN) for the given topic.\n"
+    "Crucially, you MUST consider the current date. Your own knowledge may be outdated. Do not model events whose outcomes are already established historical facts as uncertain variables.\n\n"
+    "Your process must be radically evidence-based and rigorous:\n"
+    "1.  **Verify Temporal Status**: For any potential factor you consider, you MUST first use `web_search` with a direct question to verify if the event has already occurred and its outcome is known. For example, search for 'who won the 2024 US presidential election'. If an outcome is a known fact, explicitly state it in your reasoning and DO NOT include it as a node in the BN. Build the network only around factors that are genuinely uncertain as of today.\n"
+    "2.  **Evidence-First for Structure**: For the remaining uncertain variables, use `web_search` extensively to discover causal links. Formulate your search queries as specific, probing questions aimed at uncovering causal links, not just keywords. For example, instead of 'Taiwan independence factors', ask 'What are the military, economic, and political factors that influence Taiwan's decision to declare formal independence?'.\n"
+    "3.  **Identify States**: For each node you do include, define a set of mutually exclusive and collectively exhaustive states. Use `web_search` with targeted questions to find common or expert-defined states for a variable. For instance, ask 'What are the standard ways to categorize public support for a policy?'.\n\n"
+    "Return the entire structure as a single, valid JSON object conforming to the `BNStructure` schema. You MUST also identify and specify the `target_node_name` in the output, which should be the name of the node that directly answers the forecasting question. Do not populate the CPTs; that will be done by another agent."
 )
 
-EvidenceCollectorAgent = Agent(
-    name="EvidenceCollectorAgent",
-    model=OpenAIChatCompletionsModel(model="o4-mini", openai_client=client),
-    instructions=(
-        "You are an expert intelligence analyst. Your task is to gather and structure evidence to help estimate a specific probability for a single outcome. You MUST NOT estimate the final probability yourself.\n"
-        "Your goal is to fill out an 'EvidenceReport' based on rigorous web research. **When using `web_search`, you must formulate your queries as fully-formed, probing questions with a clear analytical goal. Avoid simple keywords.** For example, instead of 'NATO summit Trump', ask 'What are the official positions of NATO member states regarding Donald Trump's potential attendance at the 2025 summit?'.\n\n"
-        "Follow these steps:\n\n"
-        "1.  **Establish a Base Rate**: Perform a `web_search` with a clear question to find a historical base rate, a relevant statistical precedent, or a logical starting point. For example: 'What is the historical frequency of former US presidents attending NATO summits?'. For a binary question with no clear precedent, you must justify starting with 0.5.\n"
-        "2.  **Hunt for Arguments FOR**: Use targeted `web_search` questions to find distinct arguments, facts, and expert opinions that SUPPORT the outcome. For each, create a clear 'claim', cite the 'evidence', and critically assess the source's credibility and potential biases.\n"
-        "3.  **Hunt for Arguments AGAINST**: Do the same for arguments that OPPOSE the outcome. Actively look for counter-evidence and dissenting opinions with specific questions like 'What are the primary arguments against Donald Trump attending the 2025 NATO summit?'. Again, critically assess the sources.\n"
-        "4.  **Assess Strength**: For each argument, provide a 'strength' score from 0.0 to 1.0, representing how much this piece of evidence should shift the probability.\n"
-        "5.  **Fill the Report**: Compile your findings into a single, complete JSON object conforming to the `EvidenceReport` schema. Do not output anything else."
-    ),
-    output_type=AgentOutputSchema(EvidenceReport, strict_json_schema=False),
-    tools=[web_search],
+CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE = (
+    "You are an expert in causal analysis and quantitative estimation. Your task is to analyze the relationship between a 'child' node and its 'parent' nodes in a Bayesian Network and produce a qualitative estimate of its Conditional Probability Table (CPT).\n\n"
+    "**Your Process:**\n"
+    "1.  **Holistic Research:** Use `web_search` with targeted, fully-formed questions to understand the causal system as a whole. Do not just search for one variable or use keywords. Instead, ask probing questions about how the parent nodes *jointly* influence the child. For example: 'How does the level of international tension and domestic political stability jointly affect the likelihood of a country investing in renewable energy?'.\n"
+    "2.  **Relative Estimation:** For each possible combination of parent states, your goal is to determine the *relative likelihood* of each of the child's states. Express this using integer scores (e.g., from 1 to 100). A score of 0 is acceptable for impossible outcomes.\n"
+    "3.  **Focus on Ratios, Not Absolutes:** The absolute numbers don't matter as much as their ratios. If you think Child State A is three times more likely than Child State B, you could score them as `{'A': 75, 'B': 25}` or `{'A': 60, 'B': 20}`. The normalization will be handled later.\n"
+    "4.  **Provide Justification:** In the `justification` field, explain your reasoning. Why are certain parent states more influential? What evidence underpins your likelihood scores? This is crucial for transparency.\n\n"
+    "Return a single, valid JSON object conforming to the `QualitativeCpt` schema."
 )
 
-CptEstimatorAgent = Agent(
-    name="CptEstimatorAgent",
-    model=OpenAIChatCompletionsModel(model="o4-mini", openai_client=client),
-    instructions=(
-        "You are an expert in causal analysis and quantitative estimation. Your task is to analyze the relationship between a 'child' node and its 'parent' nodes in a Bayesian Network and produce a qualitative estimate of its Conditional Probability Table (CPT).\n\n"
-        "**Your Process:**\n"
-        "1.  **Holistic Research:** Use `web_search` with targeted, fully-formed questions to understand the causal system as a whole. Do not just search for one variable or use keywords. Instead, ask probing questions about how the parent nodes *jointly* influence the child. For example: 'How does the level of international tension and domestic political stability jointly affect the likelihood of a country investing in renewable energy?'.\n"
-        "2.  **Relative Estimation:** For each possible combination of parent states, your goal is to determine the *relative likelihood* of each of the child's states. Express this using integer scores (e.g., from 1 to 100). A score of 0 is acceptable for impossible outcomes.\n"
-        "3.  **Focus on Ratios, Not Absolutes:** The absolute numbers don't matter as much as their ratios. If you think Child State A is three times more likely than Child State B, you could score them as `{'A': 75, 'B': 25}` or `{'A': 60, 'B': 20}`. The normalization will be handled later.\n"
-        "4.  **Provide Justification:** In the `justification` field, explain your reasoning. Why are certain parent states more influential? What evidence underpins your likelihood scores? This is crucial for transparency.\n\n"
-        "Return a single, valid JSON object conforming to the `QualitativeCpt` schema."
-    ),
-    output_type=AgentOutputSchema(QualitativeCpt, strict_json_schema=False),
-    tools=[web_search],
+FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE = (
+    "You are an expert forecaster and data analyst. You have been provided with a complete Bayesian Network (BN), including Conditional Probability Tables (CPTs), that has been meticulously constructed and populated based on evidence.\nYour task is to interpret this model and provide a final forecast.\nYour analysis must be based *exclusively* on the provided BN data. Do NOT use your own knowledge or any external information. Your role is to be the analytical interpreter of the model, not an independent researcher."
 )
 
-ForecasterAgent = Agent(
-    name="ForecasterAgent",
-    model=OpenAIChatCompletionsModel(model="o4-mini", openai_client=client),
-    instructions="You are an expert forecaster and data analyst. You have been provided with a complete Bayesian Network (BN), including Conditional Probability Tables (CPTs), that has been meticulously constructed and populated based on evidence.\nYour task is to interpret this model and provide a final forecast.\nYour analysis must be based *exclusively* on the provided BN data. Do NOT use your own knowledge or any external information. Your role is to be the analytical interpreter of the model, not an independent researcher.",
-    tools=[],
-)
+# Note: EvidenceCollectorAgent is not part of the PipelineAgentsConfig for this refactoring,
+# so its instructions are not included here. If it were, its template would be defined similarly.
+
 
 # ==============================================================================
 # ### MODIFIED ### Generic Orchestration Pipeline
 # ==============================================================================
 
 
+async def run_cpt_estimator_for_node(
+    cpt_estimator_agent_config: AgentConfig, # MODIFIED: Pass agent config
+    base_prompt_template_for_retries: str, # Used for retries, contains agent's core instructions + initial dynamic parts
+    node_name: str,
+    max_retries: int,
+    # context_summary: str, # No longer needed directly, should be part of base_prompt_template
+    # topic: str, # No longer needed directly
+    # node_obj_description: str, # No longer needed directly
+    # node_obj_states: List[str], # No longer needed directly
+    # parents_info_str: str, # No longer needed directly
+    combo_list_str_for_retry: str, # Still needed for retry prompt construction
+    # initial_estimator_prompt_template: str, # Renamed to base_prompt_template_for_retries
+) -> tuple[str, Optional[QualitativeCpt]]:
+    """
+    Helper async function to run CptEstimatorAgent for a single node with retry logic.
+    Returns the node name and the qualitative CPT or None if it fails.
+    """
+    qualitative_cpt = None
+
+    # Instantiate CPT Estimator Agent model
+    cpt_model = OpenAIChatCompletionsModel(
+        model=cpt_estimator_agent_config.model_config.model_name,
+        openai_client=cpt_estimator_agent_config.model_config.openai_client,
+    )
+    # Instantiate CPT Estimator Agent
+    cpt_estimator_agent_instance = cpt_estimator_agent_config.agent_class(
+        name="CptEstimatorAgentDynamic", # Name can be dynamic or fixed
+        model=cpt_model,
+        instructions=cpt_estimator_agent_config.instructions_template, # Base instructions
+        tools=cpt_estimator_agent_config.tools,
+        output_type=cpt_estimator_agent_config.output_schema,
+    )
+
+    # The 'prompt' passed to this function is now the fully formed initial prompt
+    # including dynamic parts like context, node info etc. which was built based on instructions_template
+    current_prompt = base_prompt_template_for_retries
+
+    for i in range(max_retries):
+        try:
+            print(f"  - Attempt {i + 1}/{max_retries} for CPT of node '{node_name}'...")
+            # Use the dynamically instantiated agent
+            cpt_estimator_result = await Runner.run(cpt_estimator_agent_instance, current_prompt)
+
+            if cpt_estimator_result.final_output and isinstance(
+                cpt_estimator_result.final_output, QualitativeCpt
+            ):
+                qualitative_cpt = cpt_estimator_result.final_output
+                print(
+                    f"  - Successfully received qualitative CPT for '{node_name}' on attempt {i + 1}."
+                )
+                break  # Success
+            else:
+                error_message = f"Agent returned invalid output type on attempt {i+1}. Expected QualitativeCpt but got {type(cpt_estimator_result.final_output)}."
+                print(f"  - {error_message} for node '{node_name}'")
+                current_prompt = (
+                    base_prompt_template_for_retries # Start with the base prompt (which includes original instructions and dynamic info)
+                    + f"\n\nYour previous attempt for node '{node_name}' failed. {error_message}. "
+                    "Please ensure you return a single, valid JSON object that strictly follows the `QualitativeCpt` schema. "
+                    "Do not add any commentary before or after the JSON. "
+                    f"Remember to include all parent state combinations:\n{combo_list_str_for_retry}"
+                )
+
+        except exceptions.ModelBehaviorError as e:
+            print(
+                f"  - Attempt {i + 1}/{max_retries} for node '{node_name}' failed with validation error: {e}"
+            )
+            current_prompt = (
+                base_prompt_template_for_retries
+                + f"\n\nYour previous attempt for node '{node_name}' failed with a validation error. The JSON you provided was invalid. Please fix it. The error was: {str(e)}. "
+                "You MUST return a single, valid JSON object conforming to the `QualitativeCpt` schema. Do not output any text before or after the JSON object. "
+                f"Remember to include all parent state combinations:\n{combo_list_str_for_retry}"
+            )
+        except Exception as e:
+            print(
+                f"  - Attempt {i + 1}/{max_retries} for node '{node_name}' failed with an unexpected error: {type(e).__name__} - {e}"
+            )
+            current_prompt = (
+                base_prompt_template_for_retries
+                + f"\n\nYour previous attempt for node '{node_name}' failed with an unexpected error: {type(e).__name__} - {e}. Please try again, ensuring you follow all instructions. "
+                f"Remember to include all parent state combinations:\n{combo_list_str_for_retry}"
+            )
+    return node_name, qualitative_cpt
+
+
 async def run_forecasting_pipeline(topic: str):
+async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConfig): # MODIFIED: Added agent_configs
     """
     ### MODIFIED ###
     Main pipeline that now takes any `topic` as input.
@@ -371,13 +445,29 @@ async def run_forecasting_pipeline(topic: str):
     # --- Phase 0: ContextAgent establishes the factual baseline ---
     print("\n--- Phase 0: ContextAgent is establishing the factual baseline... ---")
     current_date = datetime.now().strftime("%Y-%m-%d")
+
+    # Instantiate Context Agent model
+    context_model = OpenAIChatCompletionsModel(
+        model=agent_configs.context_agent.model_config.model_name,
+        openai_client=agent_configs.context_agent.model_config.openai_client,
+    )
+    # Instantiate Context Agent
+    context_agent_instance = agent_configs.context_agent.agent_class(
+        name="ContextAgentDynamic",
+        model=context_model,
+        instructions=agent_configs.context_agent.instructions_template,
+        tools=agent_configs.context_agent.tools,
+        output_type=agent_configs.context_agent.output_schema,
+    )
+    # Dynamic part of the prompt for ContextAgent
     context_prompt = (
         f"The current date is {current_date}. Please establish the factual context for the topic: '{topic}'.\n"
         "Follow your instructions carefully. Use web search to find the latest information on all key entities and concepts. Your output will serve as the ground truth for all subsequent analysis."
     )
     context_report: Optional[ContextReport] = None
     try:
-        context_result = await Runner.run(ContextAgent, context_prompt)
+        # Run the dynamically instantiated ContextAgent
+        context_result = await Runner.run(context_agent_instance, context_prompt)
         if context_result.final_output and isinstance(
             context_result.final_output, ContextReport
         ):
@@ -401,16 +491,32 @@ async def run_forecasting_pipeline(topic: str):
 
     # --- Phase 1: ArchitectAgent builds the graph for the given topic ---
     print("\n--- Phase 1: ArchitectAgent is defining the BN structure... ---")
+
+    # Instantiate Architect Agent model
+    architect_model = OpenAIChatCompletionsModel(
+        model=agent_configs.architect_agent.model_config.model_name,
+        openai_client=agent_configs.architect_agent.model_config.openai_client,
+    )
+    # Instantiate Architect Agent
+    architect_agent_instance = agent_configs.architect_agent.agent_class(
+        name="ArchitectAgentDynamic",
+        model=architect_model,
+        instructions=agent_configs.architect_agent.instructions_template, # Base instructions from config
+        tools=agent_configs.architect_agent.tools,
+        output_type=agent_configs.architect_agent.output_schema,
+    )
+    # Dynamic part of the prompt for ArchitectAgent (prepended to instructions from template)
     architect_prompt = (
         f"**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
         f"Based on the context above, and with the current date being {current_date}, please design a Bayesian Network for the topic: '{topic}'.\n"
-        "Follow your instructions carefully. Use the provided context as your source of truth. Use web search to verify temporal statuses of events. Do not model known past events as uncertain variables. "
+        "Follow your agent's core instructions carefully (already provided). Use the provided context as your source of truth. Use web search to verify temporal statuses of events. Do not model known past events as uncertain variables. "
         "Your final network should only contain nodes representing events that are still uncertain."
     )
     bn_structure: Optional[BNStructure] = None
     try:
+        # Run the dynamically instantiated ArchitectAgent
         architect_result = await Runner.run(
-            ArchitectAgent, architect_prompt, max_turns=20
+            architect_agent_instance, architect_prompt, max_turns=20
         )
         if architect_result.final_output and isinstance(
             architect_result.final_output, BNStructure
@@ -432,94 +538,84 @@ async def run_forecasting_pipeline(topic: str):
     print(bn_structure.model_dump_json(indent=2, exclude={"cpt"}))
 
     # --- Phase 2: Systematically populate CPT for every node ---
-    print("\n--- Phase 2: Evidence Collection and CPT Calculation... ---")
+    print("\n--- Phase 2: Evidence Collection and CPT Calculation (Concurrent)... ---")
+    tasks = []
+    max_retries = 3  # Define max_retries for CPT estimation
+
+    # Store initial prompt templates for each node to use in retries
+    initial_prompts_map = {}
 
     for node_name, node_obj in bn_structure.nodes.items():
-        print(f"\n--- Processing CPT for node: '{node_name}' ---")
-
         parent_nodes = [bn_structure.nodes[p_name] for p_name in node_obj.parents]
-        parents_info = "\n".join(
+        parents_info_str = "\n".join(
             [
                 f"- **{p.name}**: {p.description} (States: {list(p.states.keys())})"
                 for p in parent_nodes
             ]
         )
-        if not parents_info:
-            parents_info = "This is a root node with no parents."
+        if not parents_info_str:
+            parents_info_str = "This is a root node with no parents."
 
-        # Explicitly list the parent state combinations the agent must provide estimates for
         parent_states_list = [list(p.states.keys()) for p in parent_nodes]
         parent_state_combinations = list(itertools.product(*parent_states_list))
         if not parent_state_combinations:
-            parent_state_combinations.append(())  # for root nodes
+            parent_state_combinations.append(())
 
         combo_list_str = "\n".join(
             [f"- {str(combo)}" for combo in parent_state_combinations]
         )
 
-        # ### NEW ### Fully generic prompt generation for the new CPT Estimator Agent
-        estimator_prompt = (
-            f"**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
-            f"You are creating the CPT for the node '{node_name}' in a Bayesian Network about '{topic}'. Your work must be consistent with the established context above.\n\n"
+        # The CPT Estimator Agent's core instructions are in agent_configs.cpt_estimator_agent.instructions_template
+        # The dynamic parts (context, topic, node info) will be formatted into this template.
+
+        # This is the fully formed prompt for the first attempt, based on the agent's instruction template
+        # and filled with dynamic information. This will also serve as the base for retries.
+        initial_prompt_for_node_cpt_estimation = (
+            agent_configs.cpt_estimator_agent.instructions_template # Base instructions
+            + f"\n\n**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
+            f"You are creating the CPT for the node '{node_name}' in a Bayesian Network about '{topic}'. Your work must be consistent with the established context above and your core instructions.\n\n"
             f"**Child Node Information:**\n"
             f"- **Name:** {node_name}\n"
             f"- **Description:** {node_obj.description}\n"
             f"- **States:** {list(node_obj.states.keys())}\n\n"
             f"**Parent Node Information:**\n"
-            f"{parents_info}\n\n"
-            "Your task is to generate a `QualitativeCpt` JSON object. "
-            "To do this, you must first perform `web_search` to understand how the parent factors influence the child node. "
+            f"{parents_info_str}\n\n"
+            "Your task is to generate a `QualitativeCpt` JSON object as per your core instructions. "
+            "You must first perform `web_search` to understand how the parent factors influence the child node. "
             "Then, for each of the parent state combinations listed below, provide a dictionary of relative likelihood scores (e.g., from 1 to 100) for each child state.\n\n"
             f"**Parent State Combinations to Estimate:**\n{combo_list_str}\n\n"
             "The `cpt_qualitative_estimates` field in your JSON output must have an entry for every combination listed above. The key for each entry must be the string representation of the tuple (e.g., `\"('High', 'Low')\"`)."
         )
+        # initial_prompts_map[node_name] = initial_estimator_prompt_template_for_node # No longer needed with new helper sig
 
-        print(f"  - Querying CptEstimatorAgent for qualitative CPT of '{node_name}'...")
-        # ### NEW ### Add retry logic for CPT estimation
-        max_retries = 3
-        qualitative_cpt = None
-        current_prompt = estimator_prompt
-        for i in range(max_retries):
-            try:
-                cpt_estimator_result = await Runner.run(
-                    CptEstimatorAgent, current_prompt
-                )
+        print(f"  - Creating task for CPT estimation of node '{node_name}'...")
+        task = run_cpt_estimator_for_node(
+            cpt_estimator_agent_config=agent_configs.cpt_estimator_agent, # Pass the config
+            base_prompt_template_for_retries=initial_prompt_for_node_cpt_estimation, # Full initial prompt
+            node_name=node_name,
+            max_retries=max_retries,
+            combo_list_str_for_retry=combo_list_str,
+        )
+        tasks.append(task)
 
-                if cpt_estimator_result.final_output and isinstance(
-                    cpt_estimator_result.final_output, QualitativeCpt
-                ):
-                    qualitative_cpt = cpt_estimator_result.final_output
-                    print(
-                        f"  - Successfully received qualitative CPT for '{node_name}' on attempt {i + 1}."
-                    )
-                    break  # Success
-                else:
-                    error_message = f"Agent returned invalid output type on attempt {i+1}. Expected QualitativeCpt but got {type(cpt_estimator_result.final_output)}."
-                    print(f"  - {error_message}")
-                    current_prompt += f"\n\nYour previous attempt failed. {error_message}. Please ensure you return a single, valid JSON object that strictly follows the `QualitativeCpt` schema. Do not add any commentary before or after the JSON."
+    print(f"\n  - Waiting for {len(tasks)} CPT estimation tasks to complete...")
+    # Execute all CPT estimation tasks concurrently
+    processed_cpt_results = await asyncio.gather(*tasks)
+    print("  - All CPT estimation tasks have completed.")
 
-            except exceptions.ModelBehaviorError as e:
-                print(
-                    f"  - Attempt {i + 1}/{max_retries} failed for node '{node_name}' with validation error."
-                )
-                # Feed the error back to the agent to fix it
-                current_prompt += f"\n\nYour previous attempt failed with a validation error. The JSON you provided was invalid. Please fix it. The error was: {str(e)}. You MUST return a single, valid JSON object conforming to the `QualitativeCpt` schema. Do not output any text before or after the JSON object."
-            except Exception as e:
-                print(
-                    f"  - Attempt {i + 1}/{max_retries} failed for node '{node_name}' with an unexpected error: {e}"
-                )
-                current_prompt += f"\n\nYour previous attempt failed with an unexpected error: {e}. Please try again, ensuring you follow all instructions."
-
+    # Process the results
+    for node_name, qualitative_cpt in processed_cpt_results:
         if qualitative_cpt:
             print(
-                f"  - Received qualitative CPT from agent. Justification: {qualitative_cpt.justification}"
+                f"  - Successfully processed CPT for node '{node_name}'. Justification: {qualitative_cpt.justification}"
             )
-
             # Normalize the qualitative scores into a valid CPT
             normalized_cpt = normalize_cpt(qualitative_cpt)
-
             # Update the BN structure
-            bn_structure.nodes[node_name].cpt = normalized_cpt
+            if node_name in bn_structure.nodes:
+                bn_structure.nodes[node_name].cpt = normalized_cpt
+            else:
+                print(f"  - Error: Node '{node_name}' not found in bn_structure after async processing. This should not happen.")
         else:
             print(
                 f"  - Warning: Failed to get qualitative CPT for node '{node_name}' after {max_retries} attempts. CPT will be empty."
@@ -563,7 +659,24 @@ async def run_forecasting_pipeline(topic: str):
 
     # --- Phase 4: ForecasterAgent gives the final summary ---
     print("\n--- Phase 4: Forecaster Agent delivering the final verdict... ---")
+
+    # Instantiate Forecaster Agent model
+    forecaster_model = OpenAIChatCompletionsModel(
+        model=agent_configs.forecaster_agent.model_config.model_name,
+        openai_client=agent_configs.forecaster_agent.model_config.openai_client,
+    )
+    # Instantiate Forecaster Agent
+    forecaster_agent_instance = agent_configs.forecaster_agent.agent_class(
+        name="ForecasterAgentDynamic",
+        model=forecaster_model,
+        instructions=agent_configs.forecaster_agent.instructions_template, # Base instructions
+        tools=agent_configs.forecaster_agent.tools,
+        output_type=agent_configs.forecaster_agent.output_schema, # Should be None or handle plain text
+    )
+
+    # Dynamic part of the prompt for ForecasterAgent
     forecaster_prompt = (
+        f"{agent_configs.forecaster_agent.instructions_template}\n\n" # Start with core instructions
         f"**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
         f"Analyze the provided Bayesian Network and its CPTs for the topic: '{topic}'.\n\n"
         "Your analysis must be based exclusively on the data below. Do not use outside knowledge. The context and facts provided above are the ground truth from a previous step and are incorporated into the network.\n"
@@ -575,10 +688,14 @@ async def run_forecasting_pipeline(topic: str):
         "Be firm and clear in your final summary, as it is the conclusion of a rigorous, evidence-based process.\n\n"
         f"Here is the complete Bayesian Network: {final_bn_json}"
     )
-    final_result = await Runner.run(ForecasterAgent, forecaster_prompt)
+    # Run the dynamically instantiated ForecasterAgent
+    final_result = await Runner.run(forecaster_agent_instance, forecaster_prompt)
 
     print("\n--- PIPELINE COMPLETE. FINAL FORECAST: ---")
-    print(final_result.final_output)
+    if final_result and final_result.final_output:
+        print(final_result.final_output)
+    else:
+        print("ForecasterAgent did not produce a final output.")
     print(f"\n--- 🚀 TOTAL LLM CALLS: {LLM_CALL_COUNT} ---")
 
 
@@ -587,16 +704,70 @@ async def run_forecasting_pipeline(topic: str):
 # ==============================================================================
 
 if __name__ == "__main__":
-    # ### NEW ### You can now easily swap the forecasting topic here
+    # --------------------------------------------------------------------------
+    # Primary Input: Forecasting Topic
+    # --------------------------------------------------------------------------
+    # Modify the `forecasting_topic` variable to change the subject of the forecast.
+    # Examples:
+    # forecasting_topic = "Will Taiwan declare formal independence by the end of 2026?" # Geopolitical
+    # forecasting_topic = "Will the US Federal Reserve cut interest rates in Q3 2025?" # Economic
+    forecasting_topic = "Will Donald Trump attend the NATO Summit in June 2025?" # Political/Geopolitical
 
-    # Example 1: Geopolitical Topic
-    # forecasting_topic = "Will Taiwan declare formal independence by the end of 2026?"
+    # --------------------------------------------------------------------------
+    # Agent Configuration Setup
+    # --------------------------------------------------------------------------
+    # `default_pipeline_configs` holds all agent configurations for the pipeline.
+    # You can customize agent behavior by modifying this object before passing it
+    # to `run_forecasting_pipeline`.
 
-    # Example 2: Technology Topic
-    forecasting_topic = "Will Donald Trump attend the NATO Summit in June 2025?"
+    # Example: Change the model for a specific agent:
+    #   default_pipeline_configs.architect_agent.model_config.model_name = "gpt-4o"
+    #   (Make sure the client supports this model and you have access)
 
-    # Example 3: Economic Topic
-    # forecasting_topic = "Will the US Federal Reserve cut interest rates in Q3 2025?"
+    # Example: Change instructions for an agent:
+    #   1. Modify one of the INSTRUCTIONS_TEMPLATE constants above.
+    #   2. Or, for a one-off change:
+    #      default_pipeline_configs.context_agent.instructions_template = "New custom instructions for context agent..."
+
+    # Define the default model configuration shared by agents
+    default_model_config = ModelConfig(model_name="o4-mini", openai_client=client)
+
+    # Populate the pipeline agent configurations using the defaults
+    default_pipeline_configs = PipelineAgentsConfig(
+        context_agent=AgentConfig(
+            agent_class=Agent, # Using the base agents.Agent class
+            model_config=default_model_config,
+            tools=[web_search],
+            output_schema=AgentOutputSchema(ContextReport, strict_json_schema=False),
+            instructions_template=CONTEXT_AGENT_INSTRUCTIONS_TEMPLATE,
+        ),
+        architect_agent=AgentConfig(
+            agent_class=Agent, # Using the base agents.Agent class
+            model_config=default_model_config,
+            tools=[web_search],
+            output_schema=AgentOutputSchema(BNStructure, strict_json_schema=False),
+            instructions_template=ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE,
+        ),
+        cpt_estimator_agent=AgentConfig(
+            agent_class=Agent, # Using the base agents.Agent class
+            model_config=default_model_config,
+            tools=[web_search],
+            output_schema=AgentOutputSchema(QualitativeCpt, strict_json_schema=False),
+            instructions_template=CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE,
+        ),
+        forecaster_agent=AgentConfig(
+            agent_class=Agent, # Using the base agents.Agent class
+            model_config=default_model_config,
+            tools=[], # No tools for forecaster
+            output_schema=None, # Outputs plain text, handled by Runner
+            instructions_template=FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE,
+        ),
+    )
+
+    # Example of how to modify a configuration before running the pipeline:
+    # print("\n!!! EXAMPLE: Overriding ArchitectAgent model to 'gpt-4o' (example) !!!\n")
+    # default_pipeline_configs.architect_agent.model_config.model_name = "gpt-4o"
+
 
     log_dir = pathlib.Path(__file__).parent / "logs"
     log_dir.mkdir(exist_ok=True)
@@ -606,7 +777,7 @@ if __name__ == "__main__":
     with open(log_filename, "w") as log_file:
         sys.stdout = Tee(original_stdout, log_file)
         try:
-            asyncio.run(run_forecasting_pipeline(topic=forecasting_topic))
+            asyncio.run(run_forecasting_pipeline(topic=forecasting_topic, agent_configs=default_pipeline_configs)) # Pass configs
         finally:
             sys.stdout = original_stdout
     print(f"\nFull logs have been exported to {log_filename}")
