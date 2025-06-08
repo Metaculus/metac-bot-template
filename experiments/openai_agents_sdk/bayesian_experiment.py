@@ -47,6 +47,7 @@ client = MetaculusAsyncOpenAI()
 # Global constant for the web search LLM model
 WEB_SEARCH_LLM_MODEL = "metaculus/gpt-4o-search-preview"
 
+
 @function_tool
 async def web_search(query: str) -> str:
     """Searches the web for information about a given query."""
@@ -66,6 +67,8 @@ async def patched_create(*args, **kwargs):
     # (Logging details omitted for brevity, but they are kept from your original)
     print(f"\n>> LLM Call {LLM_CALL_COUNT} ({kwargs.get('model')})...")
     response = await original_create(*args, **kwargs)
+    print(f"\n>> LLM Call {LLM_CALL_COUNT} ({kwargs.get('model')})... done")
+    print(f"\n>> Response: {response}")
     return response
 
 
@@ -76,16 +79,19 @@ client.chat.completions.create = patched_create
 # Agent Configuration Models
 # ==============================================================================
 
+
 class ModelConfig(BaseModel):
     model_name: str
-    openai_client: Any = client # Default to the global client
+    openai_client: Any = client  # Default to the global client
+
 
 class AgentConfig(BaseModel):
-    agent_class: Any # Stores the agent class, e.g., agents.Agent
-    model_config: ModelConfig
+    agent_class: Any  # Stores the agent class, e.g., agents.Agent
+    model_settings: ModelConfig
     tools: List[Any] = Field(default_factory=list)
     output_schema: Optional[Any] = None
-    instructions_template: str # Base instructions template
+    instructions_template: str  # Base instructions template
+
 
 class PipelineAgentsConfig(BaseModel):
     context_agent: AgentConfig
@@ -167,7 +173,6 @@ class QualitativeCpt(BaseModel):
 # ==============================================================================
 
 
-# ### NEW ### Deterministic function to convert qualitative scores to a valid CPT
 def normalize_cpt(qualitative_cpt: QualitativeCpt) -> Dict[str, Dict[str, float]]:
     """
     Converts a QualitativeCpt with likelihood scores into a normalized CPT with probabilities.
@@ -335,9 +340,7 @@ CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE = (
     "Return a single, valid JSON object conforming to the `QualitativeCpt` schema."
 )
 
-FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE = (
-    "You are an expert forecaster and data analyst. You have been provided with a complete Bayesian Network (BN), including Conditional Probability Tables (CPTs), that has been meticulously constructed and populated based on evidence.\nYour task is to interpret this model and provide a final forecast.\nYour analysis must be based *exclusively* on the provided BN data. Do NOT use your own knowledge or any external information. Your role is to be the analytical interpreter of the model, not an independent researcher."
-)
+FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE = "You are an expert forecaster and data analyst. You have been provided with a complete Bayesian Network (BN), including Conditional Probability Tables (CPTs), that has been meticulously constructed and populated based on evidence.\nYour task is to interpret this model and provide a final forecast.\nYour analysis must be based *exclusively* on the provided BN data. Do NOT use your own knowledge or any external information. Your role is to be the analytical interpreter of the model, not an independent researcher."
 
 # Note: EvidenceCollectorAgent is not part of the PipelineAgentsConfig for this refactoring,
 # so its instructions are not included here. If it were, its template would be defined similarly.
@@ -349,8 +352,8 @@ FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE = (
 
 
 async def run_cpt_estimator_for_node(
-    cpt_estimator_agent_config: AgentConfig, # MODIFIED: Pass agent config
-    base_prompt_template_for_retries: str, # Used for retries, contains agent's core instructions + initial dynamic parts
+    cpt_estimator_agent_config: AgentConfig,  # MODIFIED: Pass agent config
+    base_prompt_template_for_retries: str,  # Used for retries, contains agent's core instructions + initial dynamic parts
     node_name: str,
     max_retries: int,
     # context_summary: str, # No longer needed directly, should be part of base_prompt_template
@@ -358,7 +361,7 @@ async def run_cpt_estimator_for_node(
     # node_obj_description: str, # No longer needed directly
     # node_obj_states: List[str], # No longer needed directly
     # parents_info_str: str, # No longer needed directly
-    combo_list_str_for_retry: str, # Still needed for retry prompt construction
+    combo_list_str_for_retry: str,  # Still needed for retry prompt construction
     # initial_estimator_prompt_template: str, # Renamed to base_prompt_template_for_retries
 ) -> tuple[str, Optional[QualitativeCpt]]:
     """
@@ -369,14 +372,14 @@ async def run_cpt_estimator_for_node(
 
     # Instantiate CPT Estimator Agent model
     cpt_model = OpenAIChatCompletionsModel(
-        model=cpt_estimator_agent_config.model_config.model_name,
-        openai_client=cpt_estimator_agent_config.model_config.openai_client,
+        model=cpt_estimator_agent_config.model_settings.model_name,
+        openai_client=cpt_estimator_agent_config.model_settings.openai_client,
     )
     # Instantiate CPT Estimator Agent
     cpt_estimator_agent_instance = cpt_estimator_agent_config.agent_class(
-        name="CptEstimatorAgentDynamic", # Name can be dynamic or fixed
+        name="CptEstimatorAgentDynamic",  # Name can be dynamic or fixed
         model=cpt_model,
-        instructions=cpt_estimator_agent_config.instructions_template, # Base instructions
+        instructions=cpt_estimator_agent_config.instructions_template,  # Base instructions
         tools=cpt_estimator_agent_config.tools,
         output_type=cpt_estimator_agent_config.output_schema,
     )
@@ -389,7 +392,9 @@ async def run_cpt_estimator_for_node(
         try:
             print(f"  - Attempt {i + 1}/{max_retries} for CPT of node '{node_name}'...")
             # Use the dynamically instantiated agent
-            cpt_estimator_result = await Runner.run(cpt_estimator_agent_instance, current_prompt)
+            cpt_estimator_result = await Runner.run(
+                cpt_estimator_agent_instance, current_prompt
+            )
 
             if cpt_estimator_result.final_output and isinstance(
                 cpt_estimator_result.final_output, QualitativeCpt
@@ -403,7 +408,7 @@ async def run_cpt_estimator_for_node(
                 error_message = f"Agent returned invalid output type on attempt {i+1}. Expected QualitativeCpt but got {type(cpt_estimator_result.final_output)}."
                 print(f"  - {error_message} for node '{node_name}'")
                 current_prompt = (
-                    base_prompt_template_for_retries # Start with the base prompt (which includes original instructions and dynamic info)
+                    base_prompt_template_for_retries  # Start with the base prompt (which includes original instructions and dynamic info)
                     + f"\n\nYour previous attempt for node '{node_name}' failed. {error_message}. "
                     "Please ensure you return a single, valid JSON object that strictly follows the `QualitativeCpt` schema. "
                     "Do not add any commentary before or after the JSON. "
@@ -432,8 +437,9 @@ async def run_cpt_estimator_for_node(
     return node_name, qualitative_cpt
 
 
-async def run_forecasting_pipeline(topic: str):
-async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConfig): # MODIFIED: Added agent_configs
+async def run_forecasting_pipeline(
+    topic: str, agent_configs: PipelineAgentsConfig
+):  # MODIFIED: Added agent_configs
     """
     ### MODIFIED ###
     Main pipeline that now takes any `topic` as input.
@@ -448,8 +454,8 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
 
     # Instantiate Context Agent model
     context_model = OpenAIChatCompletionsModel(
-        model=agent_configs.context_agent.model_config.model_name,
-        openai_client=agent_configs.context_agent.model_config.openai_client,
+        model=agent_configs.context_agent.model_settings.model_name,
+        openai_client=agent_configs.context_agent.model_settings.openai_client,
     )
     # Instantiate Context Agent
     context_agent_instance = agent_configs.context_agent.agent_class(
@@ -494,14 +500,14 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
 
     # Instantiate Architect Agent model
     architect_model = OpenAIChatCompletionsModel(
-        model=agent_configs.architect_agent.model_config.model_name,
-        openai_client=agent_configs.architect_agent.model_config.openai_client,
+        model=agent_configs.architect_agent.model_settings.model_name,
+        openai_client=agent_configs.architect_agent.model_settings.openai_client,
     )
     # Instantiate Architect Agent
     architect_agent_instance = agent_configs.architect_agent.agent_class(
         name="ArchitectAgentDynamic",
         model=architect_model,
-        instructions=agent_configs.architect_agent.instructions_template, # Base instructions from config
+        instructions=agent_configs.architect_agent.instructions_template,  # Base instructions from config
         tools=agent_configs.architect_agent.tools,
         output_type=agent_configs.architect_agent.output_schema,
     )
@@ -571,7 +577,7 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
         # This is the fully formed prompt for the first attempt, based on the agent's instruction template
         # and filled with dynamic information. This will also serve as the base for retries.
         initial_prompt_for_node_cpt_estimation = (
-            agent_configs.cpt_estimator_agent.instructions_template # Base instructions
+            agent_configs.cpt_estimator_agent.instructions_template  # Base instructions
             + f"\n\n**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
             f"You are creating the CPT for the node '{node_name}' in a Bayesian Network about '{topic}'. Your work must be consistent with the established context above and your core instructions.\n\n"
             f"**Child Node Information:**\n"
@@ -582,7 +588,7 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
             f"{parents_info_str}\n\n"
             "Your task is to generate a `QualitativeCpt` JSON object as per your core instructions. "
             "You must first perform `web_search` to understand how the parent factors influence the child node. "
-            "Then, for each of the parent state combinations listed below, provide a dictionary of relative likelihood scores (e.g., from 1 to 100) for each child state.\n\n"
+            "Then, for each of the parent state combinations listed below, provide a dictionary of relative likelihood scores (from 1 to 10) for each child state.\n\n"
             f"**Parent State Combinations to Estimate:**\n{combo_list_str}\n\n"
             "The `cpt_qualitative_estimates` field in your JSON output must have an entry for every combination listed above. The key for each entry must be the string representation of the tuple (e.g., `\"('High', 'Low')\"`)."
         )
@@ -590,8 +596,8 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
 
         print(f"  - Creating task for CPT estimation of node '{node_name}'...")
         task = run_cpt_estimator_for_node(
-            cpt_estimator_agent_config=agent_configs.cpt_estimator_agent, # Pass the config
-            base_prompt_template_for_retries=initial_prompt_for_node_cpt_estimation, # Full initial prompt
+            cpt_estimator_agent_config=agent_configs.cpt_estimator_agent,  # Pass the config
+            base_prompt_template_for_retries=initial_prompt_for_node_cpt_estimation,  # Full initial prompt
             node_name=node_name,
             max_retries=max_retries,
             combo_list_str_for_retry=combo_list_str,
@@ -615,7 +621,9 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
             if node_name in bn_structure.nodes:
                 bn_structure.nodes[node_name].cpt = normalized_cpt
             else:
-                print(f"  - Error: Node '{node_name}' not found in bn_structure after async processing. This should not happen.")
+                print(
+                    f"  - Error: Node '{node_name}' not found in bn_structure after async processing. This should not happen."
+                )
         else:
             print(
                 f"  - Warning: Failed to get qualitative CPT for node '{node_name}' after {max_retries} attempts. CPT will be empty."
@@ -662,21 +670,21 @@ async def run_forecasting_pipeline(topic: str, agent_configs: PipelineAgentsConf
 
     # Instantiate Forecaster Agent model
     forecaster_model = OpenAIChatCompletionsModel(
-        model=agent_configs.forecaster_agent.model_config.model_name,
-        openai_client=agent_configs.forecaster_agent.model_config.openai_client,
+        model=agent_configs.forecaster_agent.model_settings.model_name,
+        openai_client=agent_configs.forecaster_agent.model_settings.openai_client,
     )
     # Instantiate Forecaster Agent
     forecaster_agent_instance = agent_configs.forecaster_agent.agent_class(
         name="ForecasterAgentDynamic",
         model=forecaster_model,
-        instructions=agent_configs.forecaster_agent.instructions_template, # Base instructions
+        instructions=agent_configs.forecaster_agent.instructions_template,  # Base instructions
         tools=agent_configs.forecaster_agent.tools,
-        output_type=agent_configs.forecaster_agent.output_schema, # Should be None or handle plain text
+        output_type=agent_configs.forecaster_agent.output_schema,  # Should be None or handle plain text
     )
 
     # Dynamic part of the prompt for ForecasterAgent
     forecaster_prompt = (
-        f"{agent_configs.forecaster_agent.instructions_template}\n\n" # Start with core instructions
+        f"{agent_configs.forecaster_agent.instructions_template}\n\n"  # Start with core instructions
         f"**Established Context:**\n{context_summary}\n\n**Verified Facts:**\n{context_facts_str}\n\n"
         f"Analyze the provided Bayesian Network and its CPTs for the topic: '{topic}'.\n\n"
         "Your analysis must be based exclusively on the data below. Do not use outside knowledge. The context and facts provided above are the ground truth from a previous step and are incorporated into the network.\n"
@@ -711,7 +719,9 @@ if __name__ == "__main__":
     # Examples:
     # forecasting_topic = "Will Taiwan declare formal independence by the end of 2026?" # Geopolitical
     # forecasting_topic = "Will the US Federal Reserve cut interest rates in Q3 2025?" # Economic
-    forecasting_topic = "Will Donald Trump attend the NATO Summit in June 2025?" # Political/Geopolitical
+    forecasting_topic = "Will Sudan ratify AfCFTA (the pan-African free trade agreement) before July 1, 2025?"
+
+    # Political/Geopolitical
 
     # --------------------------------------------------------------------------
     # Agent Configuration Setup
@@ -721,7 +731,7 @@ if __name__ == "__main__":
     # to `run_forecasting_pipeline`.
 
     # Example: Change the model for a specific agent:
-    #   default_pipeline_configs.architect_agent.model_config.model_name = "gpt-4o"
+    #   default_pipeline_configs.architect_agent.model_settings.model_name = "gpt-4o"
     #   (Make sure the client supports this model and you have access)
 
     # Example: Change instructions for an agent:
@@ -735,39 +745,38 @@ if __name__ == "__main__":
     # Populate the pipeline agent configurations using the defaults
     default_pipeline_configs = PipelineAgentsConfig(
         context_agent=AgentConfig(
-            agent_class=Agent, # Using the base agents.Agent class
-            model_config=default_model_config,
+            agent_class=Agent,  # Using the base agents.Agent class
+            model_settings=default_model_config,
             tools=[web_search],
             output_schema=AgentOutputSchema(ContextReport, strict_json_schema=False),
             instructions_template=CONTEXT_AGENT_INSTRUCTIONS_TEMPLATE,
         ),
         architect_agent=AgentConfig(
-            agent_class=Agent, # Using the base agents.Agent class
-            model_config=default_model_config,
+            agent_class=Agent,  # Using the base agents.Agent class
+            model_settings=default_model_config,
             tools=[web_search],
             output_schema=AgentOutputSchema(BNStructure, strict_json_schema=False),
             instructions_template=ARCHITECT_AGENT_INSTRUCTIONS_TEMPLATE,
         ),
         cpt_estimator_agent=AgentConfig(
-            agent_class=Agent, # Using the base agents.Agent class
-            model_config=default_model_config,
+            agent_class=Agent,  # Using the base agents.Agent class
+            model_settings=default_model_config,
             tools=[web_search],
             output_schema=AgentOutputSchema(QualitativeCpt, strict_json_schema=False),
             instructions_template=CPT_ESTIMATOR_AGENT_INSTRUCTIONS_TEMPLATE,
         ),
         forecaster_agent=AgentConfig(
-            agent_class=Agent, # Using the base agents.Agent class
-            model_config=default_model_config,
-            tools=[], # No tools for forecaster
-            output_schema=None, # Outputs plain text, handled by Runner
+            agent_class=Agent,  # Using the base agents.Agent class
+            model_settings=default_model_config,
+            tools=[],  # No tools for forecaster
+            output_schema=None,  # Outputs plain text, handled by Runner
             instructions_template=FORECASTER_AGENT_INSTRUCTIONS_TEMPLATE,
         ),
     )
 
     # Example of how to modify a configuration before running the pipeline:
     # print("\n!!! EXAMPLE: Overriding ArchitectAgent model to 'gpt-4o' (example) !!!\n")
-    # default_pipeline_configs.architect_agent.model_config.model_name = "gpt-4o"
-
+    # default_pipeline_configs.architect_agent.model_settings.model_name = "gpt-4o"
 
     log_dir = pathlib.Path(__file__).parent / "logs"
     log_dir.mkdir(exist_ok=True)
@@ -777,7 +786,11 @@ if __name__ == "__main__":
     with open(log_filename, "w") as log_file:
         sys.stdout = Tee(original_stdout, log_file)
         try:
-            asyncio.run(run_forecasting_pipeline(topic=forecasting_topic, agent_configs=default_pipeline_configs)) # Pass configs
+            asyncio.run(
+                run_forecasting_pipeline(
+                    topic=forecasting_topic, agent_configs=default_pipeline_configs
+                )
+            )  # Pass configs
         finally:
             sys.stdout = original_stdout
     print(f"\nFull logs have been exported to {log_filename}")
