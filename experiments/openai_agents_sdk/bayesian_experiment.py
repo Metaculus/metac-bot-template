@@ -167,6 +167,18 @@ class QualitativeCpt(BaseModel):
         description="A detailed explanation of the reasoning used to arrive at the estimates, citing the evidence and principles applied."
     )
 
+# ### NEW ### Pydantic model for the forecasting pipeline's structured output
+class PipelineOutput(BaseModel):
+    """
+    Structured output from the main forecasting pipeline.
+    """
+    topic: str
+    context_report: Optional[ContextReport] = None
+    bn_structure: Optional[BNStructure] = None # This will contain CPTs
+    final_probabilities: Optional[Dict[str, float]] = None
+    forecaster_agent_output: Optional[str] = None
+    error_message: Optional[str] = None
+
 
 # ==============================================================================
 # Deterministic Calculation Function (Unchanged)
@@ -440,14 +452,15 @@ async def run_cpt_estimator_for_node(
 
 async def run_forecasting_pipeline(
     topic: str, agent_configs: PipelineAgentsConfig
-):  # MODIFIED: Added agent_configs
+) -> PipelineOutput:  # MODIFIED: Added agent_configs and return type
     """
     ### MODIFIED ###
-    Main pipeline that now takes any `topic` as input.
+    Main pipeline that now takes any `topic` as input and returns a structured PipelineOutput.
     """
     global LLM_CALL_COUNT
     LLM_CALL_COUNT = 0
     print(f"--- STARTING GENERIC FORECASTING PIPELINE FOR: {topic} ---")
+    output = PipelineOutput(topic=topic)
 
     # --- Phase 0: ContextAgent establishes the factual baseline ---
     print("\n--- Phase 0: ContextAgent is establishing the factual baseline... ---")
@@ -498,7 +511,9 @@ async def run_forecasting_pipeline(
 
     if not context_report:
         print("ContextAgent failed to return a valid ContextReport. Exiting.")
-        return
+        output.error_message = "ContextAgent failed to return a valid ContextReport."
+        return output # Return partial output with error
+    output.context_report = context_report
     print("\n--- Context Phase Complete. Verified Facts: ---")
     print(context_report.model_dump_json(indent=2))
     context_facts_str = "\n".join(f"- {fact}" for fact in context_report.verified_facts)
@@ -556,7 +571,9 @@ async def run_forecasting_pipeline(
 
     if not bn_structure:
         print("ArchitectAgent failed to return a valid BNStructure. Exiting.")
-        return
+        output.error_message = "ArchitectAgent failed to return a valid BNStructure."
+        return output # Return partial output with error
+    output.bn_structure = bn_structure # Store initial structure
     print("\n--- Architect Phase Complete. Generated Structure: ---")
     print(bn_structure.model_dump_json(indent=2, exclude={"cpt"}))
 
@@ -647,12 +664,15 @@ async def run_forecasting_pipeline(
             )
 
     print("\n--- CPT Population Complete. Final Structure with CPTs: ---")
+    # bn_structure is updated in-place with CPTs
+    output.bn_structure = bn_structure # Ensure the updated bn_structure is in output
     final_bn_json = bn_structure.model_dump_json(indent=2)
     print(final_bn_json)
 
     # --- Phase 3: Calculate Final Probability and Deliver Forecast ---
     print("\n--- Phase 3: Calculating Final Probability & Delivering Verdict... ---")
 
+    final_probabilities: Optional[Dict[str, float]] = None
     final_probabilities_str = "Not calculated."
     if (
         bn_structure.target_node_name
@@ -662,25 +682,33 @@ async def run_forecasting_pipeline(
             f"\n--- Calculating Final Probability for Target Node: '{bn_structure.target_node_name}' ---"
         )
         try:
-            final_probabilities = calculate_final_probability(
+            final_probabilities = calculate_final_probability( # This is the actual dict
                 bn=bn_structure,
                 target_node_name=bn_structure.target_node_name,
                 evidence=None,  # No external evidence provided in this pipeline
             )
+            output.final_probabilities = final_probabilities # Store the dict
             print("Final Probabilities:")
             print(json.dumps(final_probabilities, indent=2))
             final_probabilities_str = json.dumps(final_probabilities, indent=2)
         except Exception as e:
-            print(f"An error occurred during final probability calculation: {e}")
+            error_msg = f"An error occurred during final probability calculation: {e}"
+            print(error_msg)
             final_probabilities_str = f"Error during calculation: {e}"
+            if output.error_message: output.error_message += f"; {error_msg}"
+            else: output.error_message = error_msg
+
     elif not bn_structure.target_node_name:
-        print(
-            "Warning: No target node specified by ArchitectAgent. Skipping final probability calculation."
-        )
+        error_msg = "Warning: No target node specified by ArchitectAgent. Skipping final probability calculation."
+        print(error_msg)
+        if output.error_message: output.error_message += f"; {error_msg}"
+        else: output.error_message = error_msg
     else:
-        print(
-            f"Warning: Target node '{bn_structure.target_node_name}' not found in the network. Skipping calculation."
-        )
+        error_msg = f"Warning: Target node '{bn_structure.target_node_name}' not found in the network. Skipping calculation."
+        print(error_msg)
+        if output.error_message: output.error_message += f"; {error_msg}"
+        else: output.error_message = error_msg
+
 
     # --- Phase 4: ForecasterAgent gives the final summary ---
     print("\n--- Phase 4: Forecaster Agent delivering the final verdict... ---")
@@ -719,9 +747,15 @@ async def run_forecasting_pipeline(
     print("\n--- PIPELINE COMPLETE. FINAL FORECAST: ---")
     if final_result and final_result.final_output:
         print(final_result.final_output)
+        output.forecaster_agent_output = str(final_result.final_output)
     else:
-        print("ForecasterAgent did not produce a final output.")
+        error_msg = "ForecasterAgent did not produce a final output."
+        print(error_msg)
+        if output.error_message: output.error_message += f"; {error_msg}"
+        else: output.error_message = error_msg
+
     print(f"\n--- 🚀 TOTAL LLM CALLS: {LLM_CALL_COUNT} ---")
+    return output # Return the structured output
 
 
 # ==============================================================================
@@ -793,7 +827,7 @@ if __name__ == "__main__":
 
     # Example of how to modify a configuration before running the pipeline:
     # print("\n!!! EXAMPLE: Overriding ArchitectAgent model to 'gpt-4o' (example) !!!\n")
-    # default_pipeline_configs.architect_agent.model_settings.model_name = "gpt-4o"
+    # default_pipeline_configs.architect_agent.model_settings.model_name = "gpt-4o" # type: ignore
 
     log_dir = pathlib.Path(__file__).parent / "logs"
     log_dir.mkdir(exist_ok=True)
@@ -803,11 +837,15 @@ if __name__ == "__main__":
     with open(log_filename, "w") as log_file:
         sys.stdout = Tee(original_stdout, log_file)
         try:
-            asyncio.run(
+            # Modified to capture and print the structured output
+            pipeline_output_result = asyncio.run(
                 run_forecasting_pipeline(
-                    topic=forecasting_topic, agent_configs=default_pipeline_configs
+                    topic=forecasting_topic, agent_configs=default_pipeline_configs # type: ignore
                 )
             )  # Pass configs
+            print("\n--- FINAL PIPELINE OUTPUT (Structured) ---")
+            print(pipeline_output_result.model_dump_json(indent=2, exclude_none=True))
+
         finally:
             sys.stdout = original_stdout
     print(f"\nFull logs have been exported to {log_filename}")
