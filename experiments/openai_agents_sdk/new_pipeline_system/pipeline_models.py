@@ -1,50 +1,37 @@
 import sys
 import pathlib
-from typing import List, Dict, Any, Optional, Callable  # Added Callable for agent_class
+from typing import List, Dict, Any, Optional, Callable
 
 from pydantic import BaseModel, Field
 
 # To import from root agent_sdk.py and forecasting_tools.py
-# This assumes the script is run from a context where the project root is in sys.path
-# For robustness in different execution contexts, absolute imports or path manipulation might be needed
-# For now, we rely on the typical project structure where the root is added to PYTHONPATH.
 try:
     from agent_sdk import MetaculusAsyncOpenAI
 except ImportError:
-    # Attempt to add project root to path if agent_sdk is not found
-    # This is a common pattern for scripts within subdirectories of a project
-    project_root = str(
-        pathlib.Path(__file__).resolve().parents[3]
-    )  # Adjust depth as needed
+    project_root = str(pathlib.Path(__file__).resolve().parents[3])
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
     from agent_sdk import MetaculusAsyncOpenAI
 
-# Assuming forecasting_tools is also in the root or a findable path
 from forecasting_tools import GeneralLlm
-from agents import function_tool, AgentOutputSchema
+from agents import function_tool, AgentOutputSchema # Assuming AgentOutputSchema is still used, if not, can be removed.
 
 
 # Global constant for the web search LLM model
-WEB_SEARCH_LLM_MODEL = "metaculus/gpt-4o-search-preview"  # Or your preferred model
+WEB_SEARCH_LLM_MODEL = "metaculus/gpt-4o-search-preview"
 
 
 @function_tool
 async def web_search(query: str) -> str:
     """Searches the web for information about a given query."""
     print(f"\n🔎 Performing web search for: '{query}'")
-    # Assuming GeneralLlm can be initialized without a specific client for web search,
-    # or that it defaults to a globally available one.
-    # If MetaculusAsyncOpenAI client is needed for GeneralLlm, it must be passed or accessible.
-    # For this tool, it seems to initialize its own model instance.
     model = GeneralLlm(model=WEB_SEARCH_LLM_MODEL, temperature=None)
     response = await model.invoke(query)
     print(f"\n🔍 Search result: {response}")
     return response
 
 
-# --- Pydantic Models for BN and Data Structures ---
-
+# --- Pydantic Models for BN and Data Structures (Unchanged from original) ---
 
 class Node(BaseModel):
     name: str
@@ -52,27 +39,20 @@ class Node(BaseModel):
     states: Dict[str, str]
     parents: List[str] = Field(default_factory=list)
     cpt: Dict[str, Dict[str, float]] = (
-        Field(  # CPT values should be floats (probabilities)
+        Field(
             default_factory=dict, description="The Conditional Probability Table."
         )
     )
 
-
 class BNStructure(BaseModel):
-    topic: str
+    topic: str # topic is also in BasePipelineData, ensure consistency or decide if it's needed here
     explanation: str
     nodes: Dict[str, Node] = Field(default_factory=dict)
     target_node_name: str = Field(
         description="The name of the node that directly answers the forecasting question."
     )
 
-
 class ContextReport(BaseModel):
-    """
-    A report containing key facts, definitions, and the current context relevant to the forecasting topic.
-    This information is verified with the latest available data.
-    """
-
     verified_facts: List[str] = Field(
         description="A list of key facts and definitions that have been verified against the latest information."
     )
@@ -80,14 +60,7 @@ class ContextReport(BaseModel):
         description="A brief summary of the overall context based on the verified facts."
     )
 
-
 class QualitativeCpt(BaseModel):
-    """
-    Holds the LLM's qualitative assessment of likelihoods for a node's CPT.
-    The keys are parent state combinations, and the values are dictionaries
-    mapping child states to a relative, non-normalized likelihood score (e.g., 1-100).
-    """
-
     cpt_qualitative_estimates: Dict[str, Dict[str, int]] = Field(
         description="A dictionary where keys are string representations of parent state tuples, "
         "and values are dictionaries mapping child states to their relative likelihood scores."
@@ -97,28 +70,96 @@ class QualitativeCpt(BaseModel):
     )
 
 
-# --- Agent Configuration Models ---
-
+# --- Agent Configuration Models (Unchanged from original) ---
 
 class ModelConfig(BaseModel):
     model_name: str
-    # The openai_client should be Any to accommodate various client types,
-    # but specifically MetaculusAsyncOpenAI in this context.
-    # It's made optional here; the runner script will be responsible for providing it.
     openai_client: Optional[Any] = None
 
-
 class AgentConfig(BaseModel):
-    agent_class: Callable[..., Any]  # Type for an agent class (e.g., agents.Agent)
+    agent_class: Callable[..., Any]
     model_settings: ModelConfig
     tools: List[Any] = Field(default_factory=list)
-    output_schema: Optional[Any] = None  # e.g., AgentOutputSchema(ContextReport)
-    instructions_template: str  # Base instructions template from pipeline_constants.py
+    output_schema: Optional[Any] = None
+    instructions_template: str
 
 
-# --- Main Pipeline Data Structure ---
+# --- New Step-Specific Pipeline Data Models ---
+
+class BasePipelineData(BaseModel):
+    """
+    Base model for pipeline data, ensuring topic and error message are always available.
+    """
+    topic: str
+    error_message: Optional[str] = None
+
+class ContextStepOutput(BasePipelineData):
+    """
+    Data output by the ContextStep.
+    """
+    current_date: str
+    context_report: ContextReport
+    context_facts_str: str
+    context_summary: str
+
+class ArchitectStepInput(ContextStepOutput):
+    """
+    Input for the ArchitectStep, taking all data from ContextStepOutput.
+    """
+    pass
+
+class ArchitectStepOutput(ArchitectStepInput):
+    """
+    Data output by the ArchitectStep, including the BN structure.
+    The bn_structure here is expected to have its structure defined but CPTs might be empty.
+    """
+    bn_structure: BNStructure
+
+class CPTGenerationStepInput(ArchitectStepOutput):
+    """
+    Input for the CPTGenerationStep, taking all data from ArchitectStepOutput.
+    """
+    pass
+
+class CPTGenerationStepOutput(CPTGenerationStepInput):
+    """
+    Data output by the CPTGenerationStep.
+    The bn_structure field (inherited from ArchitectStepOutput) is now expected
+    to be populated with CPTs.
+    """
+    # No new fields, but bn_structure within this model is understood to have CPTs.
+    # If a distinct field name is strongly preferred in the future, it could be:
+    # bn_structure_with_cpts: BNStructure
+    pass
+
+class FinalCalculationStepInput(CPTGenerationStepOutput):
+    """
+    Input for the FinalCalculationStep.
+    """
+    pass
+
+class FinalCalculationStepOutput(FinalCalculationStepInput):
+    """
+    Data output by the FinalCalculationStep.
+    """
+    final_probabilities: Optional[Dict[str, float]] = None
+    final_probabilities_str: Optional[str] = None
+
+class ForecasterStepInput(FinalCalculationStepOutput):
+    """
+    Input for the ForecasterStep.
+    """
+    pass
+
+class ForecasterStepOutput(ForecasterStepInput):
+    """
+    Data output by the ForecasterStep.
+    """
+    forecaster_agent_output: Optional[str] = None
 
 
+# --- DEPRECATED Main Pipeline Data Structure ---
+# DEPRECATED: This will be removed in favor of step-specific data models.
 class PipelineData(BaseModel):
     """
     A Pydantic model to hold and pass all data between pipeline steps.
