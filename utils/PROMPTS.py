@@ -8,6 +8,7 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
     "3. Forecast Revision.\n"
     "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
     "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
+    "Remember that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time."
 )
 FIRST_PHASE_INSTRUCTIONS = (
     "## Phase I: Initial Forecast\n"
