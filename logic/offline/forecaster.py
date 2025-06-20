@@ -22,7 +22,7 @@ from logic.utils import (
 from utils.PROMPTS import GROUP_INSTRUCTIONS
 from utils.config import get_gpt_config
 
-
+EXP_NAME = "SOMETHING"
 def _create_offline_agent(name: str) -> AssistantAgent:
     client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=1)
     system_message = f"You are {name}, an expert forecaster."
@@ -76,7 +76,7 @@ async def chat_group_single_question_offline(
 
     final_answer = probabilities["revision_probability_result"]
 
-    filename = strip_title_to_filename(title) + "_offline"
+    filename = strip_title_to_filename(title) + EXP_NAME
     await build_and_write_json(filename, probabilities, is_woc)
 
     return final_answer, summarization
