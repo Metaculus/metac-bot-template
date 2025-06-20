@@ -31,6 +31,7 @@ async def forecast_single_question(
 
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details , is_multiple_choice, options,is_woc, num_of_experts)
+    expert_names = [getattr(expert, "display_name", expert.name) for expert in all_experts]
 
 
     # Forecasting
@@ -60,6 +61,7 @@ async def forecast_single_question(
     final_json = {
         "question_details": question_details,
         "date": forecast_date, "news": news,
+        "forecasters": expert_names,
         "results": results,
         "summary": summarization,
         "statistics": {"mean_first_step": mean_first_step, "mean_second_step": mean_second_step,

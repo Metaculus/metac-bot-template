@@ -28,6 +28,7 @@ async def chat_group_single_question(
     # Identify and create experts
     all_experts = await get_all_experts(config, question_details, is_multiple_choice, options, is_woc, num_of_experts)
     forecasters_names = [expert.name for expert in all_experts]
+    forecasters_display_names = [getattr(expert, "display_name", expert.name) for expert in all_experts]
 
     group_chat = create_group(all_experts)
     # Forecasting
@@ -57,7 +58,7 @@ async def chat_group_single_question(
     probabilities = get_probabilities(results, revision_results, parsed_group_results, is_multiple_choice, options,
                                       probabilities)
 
-    enrich_probabilities(probabilities, question_details, news, forecast_date, summarization)
+    enrich_probabilities(probabilities, question_details, news, forecast_date, summarization, forecasters_display_names)
 
     final_answer = probabilities['revision_probability_result']
 

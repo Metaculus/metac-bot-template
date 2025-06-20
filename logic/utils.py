@@ -60,7 +60,8 @@ async def perform_forecasting_phase(experts, question_details: Dict[str, str], n
                                  options=options) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
     for expert, result in results_list:
-        results[expert.name] = result
+        key = getattr(expert, "display_name", expert.name)
+        results[key] = result
 
     return results
 
@@ -73,7 +74,8 @@ async def perform_revised_forecasting_step(experts, question_details: Dict[str, 
                                  options=options) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
     for expert, result in results_list:
-        results[expert.name] = result
+        key = getattr(expert, "display_name", expert.name)
+        results[key] = result
 
     return results
 
@@ -204,8 +206,9 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
     return probabilities
 
 
-def enrich_probabilities(probabilities, question_details, news, forecast_date, summarization):
+def enrich_probabilities(probabilities, question_details, news, forecast_date, summarization, forecasters):
     probabilities["question_details"] = question_details
     probabilities["news"] = news
     probabilities["date"] = forecast_date
     probabilities["summary"] = summarization
+    probabilities["forecasters"] = forecasters
