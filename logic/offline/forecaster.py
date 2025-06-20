@@ -26,12 +26,33 @@ EXP_NAME = "SOMETHING"
 def _create_offline_agent(name: str) -> AssistantAgent:
     client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=1)
     system_message = f"You are {name}, an expert forecaster."
-    agent = AssistantAgent(name=name, system_message=system_message, model_client=client)
+
+    agent = AssistantAgent(name=_to_camel_case(name), system_message=system_message, model_client=client)
     agent.display_name = name
     return agent
 
 
-async def chat_group_single_question_offline(
+import re
+
+
+def _to_camel_case(text: str) -> str:
+    # Remove parentheses and their contents, then add back the contents as separate words
+    parenthetical = re.findall(r'\((.*?)\)', text)
+    no_parens = re.sub(r'\(.*?\)', '', text)
+
+    # Combine the main text and the parenthetical content
+    words = no_parens.split() + [word for phrase in parenthetical for word in phrase.split()]
+
+    # Clean up any stray punctuation and make all lowercase first
+    words = [re.sub(r'\W+', '', word) for word in words if word.strip()]
+
+    # Convert to camelCase
+    if not words:
+        return ''
+    return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+
+
+async def chat_group_single_question(
     question_details: dict,
     news: str,
     expert_names: List[str],
@@ -88,14 +109,9 @@ async def forecast_from_json(path: str, is_woc: bool = False, cache_seed: int = 
 
     question_details = data.get("question_details", {})
     news = data.get("news", "")
-    expert_names = list(data.get("results", {}).keys())
+    expert_names = data.get("forecasters", [])
 
-    await chat_group_single_question_offline(
-        question_details=question_details,
-        news=news,
-        expert_names=expert_names,
-        cache_seed=cache_seed,
-        is_multiple_choice=question_details.get("type") == "multiple_choice",
-        options=question_details.get("options"),
-        is_woc=is_woc,
-    )
+    await chat_group_single_question(question_details=question_details, news=news, expert_names=expert_names,
+                                     cache_seed=cache_seed,
+                                     is_multiple_choice=question_details.get("type") == "multiple_choice",
+                                     options=question_details.get("options"), is_woc=is_woc)
