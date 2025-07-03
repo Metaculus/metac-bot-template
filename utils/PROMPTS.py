@@ -8,7 +8,10 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
     "3. Forecast Revision.\n"
     "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
     "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
+    "Set aside any personal preferences about which outcome would be preferable. your emotional reactions to potential outcomes are irrelevant to their likelihood. \n"
+    "Approach the task of forecasting with utter dispassion, as if analyzing events in which you have no personal stakes. \n"
 )
+
 FIRST_PHASE_INSTRUCTIONS = (
     "## Phase I: Initial Forecast\n"
     "In this phase, you will be presented with a forecasting question and some relevant news articles.\n"
@@ -233,7 +236,7 @@ Ensure the JSON is valid (no trailing commas, no single quotes). When reporting 
 
 
 
-
+1
 KEYWORDS_PROMPT = """Your job is to extract keywords out of a question and convert it into a query for AskNews.
 \n\nThe must need parameters needed are:\n\n1. Keywords - Including the question title\n
 2.Country - The country - in ISO 3166-1 alpha-2 code format\n3. Language - The language - This is the two-letter 
@@ -262,11 +265,10 @@ GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
 - In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
-- Either critique their forecasts' weaknesses, or defend their strengths, using a polemic style. 
+- Either critique their forecasts' weaknesses, or defend their strengths.
 General notes:
 - Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
 - Avoid preamble and go straight to your response. 
-- Imagine you are participating in an online discussion board; do not be too formal or civil. 
 - Use the "response" field for your answer. 
 - Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 
