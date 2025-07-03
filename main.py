@@ -96,14 +96,15 @@ class TemplateForecaster(ForecastBot):
             You are an assistant to a superforecaster.
             The superforecaster will give you a question they intend to forecast on.
             To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-            You do not produce forecasts yourself.
+            In addition to news, consider and research all relevant prediction markets that are relevant to the question.
+            You do not produce forecasts yourself; you must provide all relevant data to the superforecaster so they can make an expert judgment.
 
             Question:
             {question}
             """
         )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
-            model_name = "openrouter/perplexity/sonar-reasoning"
+            model_name = "openrouter/perplexity/sonar-reasoning-pro"
         else:
             model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
         model = GeneralLlm(
@@ -138,9 +139,11 @@ class TemplateForecaster(ForecastBot):
     ) -> ReasonedPrediction[float]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
+            You are a senior forecaster preparing a public report for expert peers.
+            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You should consider current prediction markets when possible but not be beholden to them.
 
-            Your interview question is:
+            Your Metaculus question is:
             {question.question_text}
 
             Question background:
@@ -161,8 +164,11 @@ class TemplateForecaster(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
+            (c) The historical base rate or plausible base rates with weighting for each.
+            (c) The Strongest Bear Case (FOR 'No'): Construct the most compelling, evidence-based argument for a 'No' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
+            (d) The Strongest Bull Case (FOR 'Yes'): Construct the most compelling, evidence-based argument for a 'Yes' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
+            (e) Red team critique of the Strongest Bull Case and Strongest Bear Case.
+            (f) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on Brier Score and your calibration.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
@@ -185,9 +191,11 @@ class TemplateForecaster(ForecastBot):
     ) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
+            You are a senior forecaster preparing a rigorous public report for expert peers.
+            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You should consider current prediction markets when possible but not be beholden to them.
 
-            Your interview question is:
+            Your Metaculus question is:
             {question.question_text}
 
             The options are: {question.options}
@@ -209,7 +217,8 @@ class TemplateForecaster(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
+            (c) The historical base rate or plausible base rate for each option if possible.
+            (d) A description of an scenario that results in an unexpected outcome.
 
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
@@ -241,9 +250,11 @@ class TemplateForecaster(ForecastBot):
         )
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
+            You are a senior forecaster preparing a public report for expert peers.
+            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You should consider current prediction markets when possible but not be beholden to them.
 
-            Your interview question is:
+            Your Metaculus question is:
             {question.question_text}
 
             Background:
