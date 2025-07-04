@@ -14,7 +14,7 @@ This repository contains a Python-based bot that interacts with the Metaculus pr
     *   `test_bot.yaml`: A workflow for testing the bot's functionality.
 *   **`.env.template`**: A template for the required environment variables, which include API keys for Metaculus and OpenAI.
 
-The package uses a framework (`forecasting_tools`) installed in python which you may have trouble accessing directly due to restrictions; I can manually copy-paste these as needed.
+The package uses a framework (`forecasting_tools`), a python lib which you may have trouble accessing directly due to restrictions; I have pasted a static copy of it in the dir `REFERENCE_COPY_OF_forecasting_tools`, which you may access!
 
 To run anything, first activate the conda env:
 ```bash
