@@ -140,8 +140,9 @@ class TemplateForecaster(ForecastBot):
         prompt = clean_indents(
             f"""
             You are a senior forecaster preparing a public report for expert peers.
-            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
+            Historically, LLMs like you have been overconfident / overestimated probabilities and the base rate for positive resolutions on Metaculus is 35%
 
             Your Metaculus question is:
             {question.question_text}
@@ -172,13 +173,15 @@ class TemplateForecaster(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
+            The last thing you write MUST BE your final answer as an integer percentage. "Probability: ZZ%"
+            An example response is: "Probability: 50%"
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=1, min_prediction=0
+            reasoning, max_prediction=0.99, min_prediction=0.01
         )
+
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
@@ -192,7 +195,7 @@ class TemplateForecaster(ForecastBot):
         prompt = clean_indents(
             f"""
             You are a senior forecaster preparing a rigorous public report for expert peers.
-            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
 
             Your Metaculus question is:
@@ -220,9 +223,12 @@ class TemplateForecaster(ForecastBot):
             (c) The historical base rate or plausible base rate for each option if possible.
             (d) A description of an scenario that results in an unexpected outcome.
 
-            You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+            You write your rationale remembering that 
+            (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and 
+            (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+            (3) Your probabilities should add up to 100% and each probability should be between 1% and 99%.
 
-            The last thing you write is your final probabilities for the N options in this order {question.options} as:
+            The last thing you write is your final probabilities (integers 1% to 99%) for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
             ...
@@ -251,7 +257,7 @@ class TemplateForecaster(ForecastBot):
         prompt = clean_indents(
             f"""
             You are a senior forecaster preparing a public report for expert peers.
-            You will be judged based on the accuracy _and calibration_ of your forecast with standard Metaculus rules (e.g. Brier Score for binary questions, log score for numeric questions).
+            You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
 
             Your Metaculus question is:
@@ -373,8 +379,9 @@ if __name__ == "__main__":
             "default": GeneralLlm(
                 model="openrouter/google/gemini-2.5-pro",
                 temperature=0.3,
-                timeout=40,
-                allowed_tries=2,
+                top_p=0.9,
+                timeout=90,
+                allowed_tries=3,
             ),
             "summarizer": "openrouter/google/gemini-2.5-flash",
         },
