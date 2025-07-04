@@ -20,6 +20,7 @@ import re
 from forecasting_tools.data_models.numeric_report import Percentile  # type: ignore
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class TemplateForecaster(ForecastBot):
@@ -584,7 +585,7 @@ if __name__ == "__main__":
                     stream=False,
                     timeout=180,
                     allowed_tries=3,
-                    provider={"quantizations": ["fp16", "bf16", "fp8"]},
+                    provider={"quantizations": ["fp16", "bf16", "fp8"]},  # think this is working
                 ),
                 GeneralLlm(
                     model="openrouter/openai/o3",
