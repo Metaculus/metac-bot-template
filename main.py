@@ -502,14 +502,14 @@ if __name__ == "__main__":
                     allowed_tries=3,
                 ),
                 GeneralLlm(
-                    model="deepseek/deepseek-r1-0528",
+                    model="openrouter/deepseek/deepseek-r1-0528",
                     temperature=0.0,
                     top_p=0.9,
                     timeout=120,
                     allowed_tries=3,
                 ),
                 GeneralLlm(
-                    model="openai/o3",
+                    model="openrouter/openai/o3",
                     temperature=0.0,
                     top_p=0.9,
                     timeout=120,
@@ -541,6 +541,7 @@ if __name__ == "__main__":
             "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
             "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
             "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            # TODO replace w/ scott aaronson's 5 ai worlds question
         ]
         template_bot.skip_previously_forecasted_questions = False
         questions = [
