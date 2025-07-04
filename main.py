@@ -3,24 +3,18 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import Literal
+from typing import Any, Coroutine, Literal, cast
 
-from forecasting_tools import (
-    AskNewsSearcher,
-    BinaryQuestion,
-    ForecastBot,
-    GeneralLlm,
-    MetaculusApi,
-    MetaculusQuestion,
-    MultipleChoiceQuestion,
-    NumericDistribution,
-    NumericQuestion,
-    PredictedOptionList,
-    PredictionExtractor,
-    ReasonedPrediction,
-    SmartSearcher,
-    clean_indents,
-)
+from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
+                               GeneralLlm, MetaculusApi, MetaculusQuestion,
+                               MultipleChoiceQuestion, NumericDistribution,
+                               NumericQuestion, PredictedOptionList,
+                               PredictionExtractor, ReasonedPrediction,
+                               SmartSearcher, clean_indents)
+from forecasting_tools.data_models.data_organizer import PredictionTypes
+from forecasting_tools.data_models.forecast_report import \
+    ResearchWithPredictions
+from forecasting_tools.data_models.questions import DateQuestion
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +52,67 @@ class TemplateForecaster(ForecastBot):
     Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
+    _max_concurrent_questions = (
+        2  # Set this to whatever works for your search-provider/ai-model rate limits
+    )
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
+
+    def __init__(
+        self,
+        *,
+        research_reports_per_question: int = 1,
+        predictions_per_research_report: int = 1,
+        use_research_summary_to_forecast: bool = False,  # if false, use full research report for forecasting
+        publish_reports_to_metaculus: bool = False,
+        folder_to_save_reports_to: str | None = None,
+        skip_previously_forecasted_questions: bool = False,
+        llms: dict[str, str | GeneralLlm | list[GeneralLlm]] | None = None,
+    ) -> None:
+        if llms is None:
+            raise ValueError(
+                "Either 'forecasters' or a 'default' LLM must be provided."
+            )
+
+        forecasters_llms_config: list[GeneralLlm] = []
+        if "forecasters" in llms:
+            forecasters_config = llms["forecasters"]
+            if isinstance(forecasters_config, list):
+                forecasters_llms_config = forecasters_config
+            else:
+                logger.warning(
+                    "'forecasters' key in llms must be a list of GeneralLlm objects."
+                )
+
+        llms_for_super = {}
+        if forecasters_llms_config:
+            llms_for_super["default"] = forecasters_llms_config[0]
+        elif "default" in llms:
+            llms_for_super["default"] = llms["default"]
+        else:
+            raise ValueError(
+                "Either 'forecasters' or a 'default' LLM must be provided."
+            )
+
+        if "summarizer" in llms:
+            llms_for_super["summarizer"] = llms["summarizer"]
+
+        super().__init__(
+            research_reports_per_question=research_reports_per_question,
+            predictions_per_research_report=predictions_per_research_report,
+            use_research_summary_to_forecast=use_research_summary_to_forecast,
+            publish_reports_to_metaculus=publish_reports_to_metaculus,
+            folder_to_save_reports_to=folder_to_save_reports_to,
+            skip_previously_forecasted_questions=skip_previously_forecasted_questions,
+            llms=llms_for_super,
+        )
+
+        self._forecaster_llms = forecasters_llms_config
+        if self._forecaster_llms:
+            self.predictions_per_research_report = len(self._forecaster_llms)
+        elif predictions_per_research_report == 0:
+            raise ValueError(
+                "Must run at least one prediction if 'forecasters' are not provided."
+            )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -69,9 +122,7 @@ class TemplateForecaster(ForecastBot):
                     question.question_text
                 )
             elif os.getenv("EXA_API_KEY"):
-                research = await self._call_exa_smart_searcher(
-                    question.question_text
-                )
+                research = await self._call_exa_smart_searcher(question.question_text)
             elif os.getenv("PERPLEXITY_API_KEY"):
                 research = await self._call_perplexity(question.question_text)
             elif os.getenv("OPENROUTER_API_KEY"):
@@ -83,10 +134,84 @@ class TemplateForecaster(ForecastBot):
                     f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
                 )
                 research = ""
-            logger.info(
-                f"Found Research for URL {question.page_url}:\n{research}"
-            )
+            logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
+
+    # Override _research_and_make_predictions to support multiple LLMs
+    async def _research_and_make_predictions(
+        self, question: MetaculusQuestion
+    ) -> ResearchWithPredictions[PredictionTypes]:
+        # Call the parent class's method if no specific forecaster LLMs are provided
+        if not self._forecaster_llms:
+            return await super()._research_and_make_predictions(question)
+
+        notepad = await self._get_notepad(question)
+        notepad.num_research_reports_attempted += 1
+        research = await self.run_research(question)
+        summary_report = await self.summarize_research(question, research)
+        research_to_use = (
+            summary_report if self.use_research_summary_to_forecast else research
+        )
+
+        # Generate tasks for each forecaster LLM
+        tasks = cast(
+            list[Coroutine[Any, Any, ReasonedPrediction[Any]]],
+            [
+                self._make_prediction(question, research_to_use, llm_instance)
+                for llm_instance in self._forecaster_llms
+            ],
+        )
+        valid_predictions, errors, exception_group = (
+            await self._gather_results_and_exceptions(tasks)
+        )
+        if errors:
+            logger.warning(f"Encountered errors while predicting: {errors}")
+        if len(valid_predictions) == 0:
+            assert exception_group, "Exception group should not be None"
+            self._reraise_exception_with_prepended_message(
+                exception_group,
+                "Error while running research and predictions",
+            )
+        return ResearchWithPredictions(
+            research_report=research,
+            summary_report=summary_report,
+            errors=errors,
+            predictions=valid_predictions,
+        )
+
+    async def _make_prediction(
+        self,
+        question: MetaculusQuestion,
+        research: str,
+        llm_to_use: GeneralLlm | None = None,
+    ) -> ReasonedPrediction[PredictionTypes]:
+        notepad = await self._get_notepad(question)
+        notepad.num_predictions_attempted += 1
+
+        # Determine which LLM to use
+        actual_llm = llm_to_use if llm_to_use else self.get_llm("default", "llm")
+
+        if isinstance(question, BinaryQuestion):
+            forecast_function = lambda q, r, llm: self._run_forecast_on_binary(
+                q, r, llm
+            )
+        elif isinstance(question, MultipleChoiceQuestion):
+            forecast_function = lambda q, r, llm: self._run_forecast_on_multiple_choice(
+                q, r, llm
+            )
+        elif isinstance(question, NumericQuestion):
+            forecast_function = lambda q, r, llm: self._run_forecast_on_numeric(
+                q, r, llm
+            )
+        elif isinstance(question, DateQuestion):
+            raise NotImplementedError("Date questions not supported yet")
+        else:
+            raise ValueError(f"Unknown question type: {type(question)}")
+
+        prediction = await forecast_function(question, research, actual_llm)
+        # Embed model name in reasoning for reporting
+        prediction.reasoning = f"Model: {actual_llm.model}\n\n{prediction.reasoning}"
+        return prediction  # type: ignore
 
     async def _call_perplexity(
         self, question: str, use_open_router: bool = False
@@ -135,7 +260,7 @@ class TemplateForecaster(ForecastBot):
         return response
 
     async def _run_forecast_on_binary(
-        self, question: BinaryQuestion, research: str
+        self, question: BinaryQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[float]:
         prompt = clean_indents(
             f"""
@@ -177,7 +302,7 @@ class TemplateForecaster(ForecastBot):
             An example response is: "Probability: 50%"
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await llm_to_use.invoke(prompt)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
@@ -185,12 +310,10 @@ class TemplateForecaster(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
-        self, question: MultipleChoiceQuestion, research: str
+        self, question: MultipleChoiceQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
             f"""
@@ -235,7 +358,7 @@ class TemplateForecaster(ForecastBot):
             Option_N: Probability_N
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await llm_to_use.invoke(prompt)
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -244,12 +367,10 @@ class TemplateForecaster(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
-        self, question: NumericQuestion, research: str
+        self, question: NumericQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[NumericDistribution]:
         upper_bound_message, lower_bound_message = (
             self._create_upper_and_lower_bound_messages(question)
@@ -306,7 +427,7 @@ class TemplateForecaster(ForecastBot):
             "
             """
         )
-        reasoning = await self.get_llm("default", "llm").invoke(prompt)
+        reasoning = await llm_to_use.invoke(prompt)
         prediction: NumericDistribution = (
             PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
                 reasoning, question
@@ -315,9 +436,7 @@ class TemplateForecaster(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
-        return ReasonedPrediction(
-            prediction_value=prediction, reasoning=reasoning
-        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
@@ -359,9 +478,7 @@ if __name__ == "__main__":
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = (
-        args.mode
-    )
+    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
     assert run_mode in [
         "tournament",
         "quarterly_cup",
@@ -370,19 +487,35 @@ if __name__ == "__main__":
 
     template_bot = TemplateForecaster(
         research_reports_per_question=1,
-        predictions_per_research_report=1,
+        predictions_per_research_report=1,  # This will be ignored if 'forecasters' is present
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
-        llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
-            "default": GeneralLlm(
-                model="openrouter/google/gemini-2.5-pro",
-                temperature=0.0,
-                top_p=0.9,  # ignored b/c temperature=0.0
-                timeout=90,
-                allowed_tries=3,
-            ),
+        llms={
+            "forecasters": [
+                GeneralLlm(
+                    model="openrouter/google/gemini-2.5-pro",
+                    temperature=0.0,
+                    top_p=0.9,
+                    timeout=120,
+                    allowed_tries=3,
+                ),
+                GeneralLlm(
+                    model="deepseek/deepseek-r1-0528",
+                    temperature=0.0,
+                    top_p=0.9,
+                    timeout=120,
+                    allowed_tries=3,
+                ),
+                GeneralLlm(
+                    model="openai/o3",
+                    temperature=0.0,
+                    top_p=0.9,
+                    timeout=120,
+                    allowed_tries=3,
+                ),
+            ],
             "summarizer": "openrouter/google/gemini-2.5-flash",
         },
     )
