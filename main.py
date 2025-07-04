@@ -412,8 +412,9 @@ class TemplateForecaster(ForecastBot):
             - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there, strictly increasing.
+            - Please only use the term "percentile" in your final answer as shown below and not in your explanation to avoid confusing the regex parser. You can say "pctile" etc. as needed to avoid confusion.
 
-            Before answering you write:
+            Your response begins with your explanation:
             (a) The time left until the outcome to the question is known.
             (b) The outcome if nothing changed.
             (c) The outcome if the current trend continued.
@@ -423,7 +424,7 @@ class TemplateForecaster(ForecastBot):
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
-            The last thing you write MUST BE your final answer as FLOATING POINT NUMBERS, e.g. 100.0:
+            (g) The LAST THING you write MUST BE your final answer as FLOATING POINT NUMBERS, e.g. 100.0 with NOTHING AFTER IT:
             "
             Percentile 10: XX.X
             Percentile 20: XX.X
@@ -433,7 +434,7 @@ class TemplateForecaster(ForecastBot):
             Percentile 90: XX.X
             "
             """
-        )
+        )  # TODO: really should use json here!
         reasoning = await llm_to_use.invoke(prompt)
 
         logger.info(
