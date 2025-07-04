@@ -16,6 +16,13 @@ This repository contains a Python-based bot that interacts with the Metaculus pr
 
 The package uses a framework (`forecasting_tools`) installed in python which you may have trouble accessing directly due to restrictions; I can manually copy-paste these as needed.
 
+To run anything, first activate the conda env:
+```bash
+conda activate metaculus-bot
+```
+
+Then run them with `poetry` (we're using poetry in a Conda env).
+
 Run tests with e.g. (you might also specify given tests/test files):
 ```bash
 PYTHONPATH=. poetry run pytest
