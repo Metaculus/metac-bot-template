@@ -40,6 +40,7 @@ def mock_binary_question():
     question.resolution_criteria = "Binary resolution criteria"
     question.fine_print = "Binary fine print"
     question.unit_of_measure = "binary units"
+    question.id_of_question = 456
     return question
 
 

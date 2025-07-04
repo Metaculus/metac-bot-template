@@ -307,6 +307,7 @@ class TemplateForecaster(ForecastBot):
             """
         )
         reasoning = await llm_to_use.invoke(prompt)
+        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
@@ -363,6 +364,7 @@ class TemplateForecaster(ForecastBot):
             """
         )
         reasoning = await llm_to_use.invoke(prompt)
+        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -532,6 +534,18 @@ Question ID: {question.id_of_question}
                 f"The outcome can not be lower than {question.lower_bound}."
             )
         return upper_bound_message, lower_bound_message
+
+    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int, reasoning: str):
+        logger.info(
+            f"""
+>>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
+LLM: {llm_to_use.model}
+Question ID: {question_id}
+
+{reasoning}
+<<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
+"""
+        )
 
 
 if __name__ == "__main__":
