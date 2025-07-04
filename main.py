@@ -17,7 +17,7 @@ from forecasting_tools.data_models.forecast_report import \
     ResearchWithPredictions
 from forecasting_tools.data_models.questions import DateQuestion
 import re
-from forecasting_tools.data_models.numeric_distribution import Percentile  # type: ignore
+from forecasting_tools.data_models.numeric_report import Percentile  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -405,9 +405,10 @@ class TemplateForecaster(ForecastBot):
             {upper_bound_message}
 
             Formatting Instructions:
+            - Use floating point numbers, e.g. 100.0, not integers.
             - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
+            - Always start with a smaller number (more negative if negative) and then increase from there, strictly increasing.
 
             Before answering you write:
             (a) The time left until the outcome to the question is known.
@@ -419,14 +420,14 @@ class TemplateForecaster(ForecastBot):
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
-            The last thing you write is your final answer as:
+            The last thing you write is your final answer as FLOATING POINT NUMBERS, e.g. 100.0:
             "
-            Percentile 10: XX
-            Percentile 20: XX
-            Percentile 40: XX
-            Percentile 60: XX
-            Percentile 80: XX
-            Percentile 90: XX
+            Percentile 10: XX.X
+            Percentile 20: XX.X
+            Percentile 40: XX.X
+            Percentile 60: XX.X
+            Percentile 80: XX.X
+            Percentile 90: XX.X
             "
             """
         )
