@@ -421,7 +421,7 @@ class TemplateForecaster(ForecastBot):
 
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
 
-            The last thing you write is your final answer as FLOATING POINT NUMBERS, e.g. 100.0:
+            The last thing you write MUST BE your final answer as FLOATING POINT NUMBERS, e.g. 100.0:
             "
             Percentile 10: XX.X
             Percentile 20: XX.X
@@ -454,24 +454,26 @@ Question ID: {question.id_of_question}
         except ValidationError as err:
             # Fallback: find lines with "percentile", extract the last number,
             # and assume they correspond to the required 10/20/40/60/80/90.
-            percentile_lines = [
-                line
-                for line in reasoning.split("\n")
-                if "percentile" in line.lower()
-            ]
+            # Use strict filtering for percentile lines.
+            percentile_lines = []
+            for line in reasoning.split("\n"):
+                match = re.match(r"^[Pp]ercentile\s+\d+:\s+[-]?\d+(?:,\d{3})*(?:\.\d+)?$", line.strip())
+                if match:
+                    percentile_lines.append(line)
 
             if len(percentile_lines) != 6:
-                logger.warning("Did not receive 6 instances of 'percentile'.")
-                raise err  # Reraise, not enough data to recover.
+                logger.warning("Did not receive exactly 6 valid percentile lines after strict filtering.")
+                raise err  # Re-raise original error if strict filtering fails to find 6 lines
 
             values = []
             for line in percentile_lines:
+                # Extract the last number from the strictly filtered line
                 numbers = re.findall(r"-?\d+(?:\.\d+)?", line)
                 if numbers:
                     values.append(float(numbers[-1].replace(",", "")))
 
             if len(values) != 6:
-                raise  # Reraise, couldn't extract a value from each line.
+                raise ValueError("Could not extract 6 numeric values from strictly filtered percentile lines.")
 
             percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
             repaired_percentiles = [
