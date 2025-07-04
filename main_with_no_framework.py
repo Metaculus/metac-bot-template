@@ -3,21 +3,24 @@ import datetime
 import json
 import os
 import re
+
 import dotenv
+
 dotenv.load_dotenv()
 
-from openai import AsyncOpenAI
+import forecasting_tools
 import numpy as np
 import requests
-import forecasting_tools
 from asknews_sdk import AskNewsSDK
-
+from openai import AsyncOpenAI
 
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
-NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+NUM_RUNS_PER_QUESTION = (
+    5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+)
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 
 # Environment variables
@@ -27,7 +30,9 @@ PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 EXA_API_KEY = os.getenv("EXA_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
+OPENAI_API_KEY = os.getenv(
+    "OPENAI_API_KEY"
+)  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
 
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
@@ -42,9 +47,18 @@ TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (
+        578,
+        578,
+    ),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (
+        14333,
+        14333,
+    ),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    (
+        22427,
+        22427,
+    ),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -196,6 +210,7 @@ def get_post_details(post_id: int) -> dict:
     details = json.loads(response.content)
     return details
 
+
 CONCURRENT_REQUESTS_LIMIT = 5
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
@@ -242,9 +257,12 @@ def run_research(question: str) -> str:
     else:
         research = "No research done"
 
-    print(f"########################\nResearch Found:\n{research}\n########################")
+    print(
+        f"########################\nResearch Found:\n{research}\n########################"
+    )
 
     return research
+
 
 def call_perplexity(question: str) -> str:
     url = "https://api.perplexity.ai/chat/completions"
@@ -278,13 +296,16 @@ def call_perplexity(question: str) -> str:
     content = response.json()["choices"][0]["message"]["content"]
     return content
 
+
 def call_exa_smart_searcher(question: str) -> str:
     if OPENAI_API_KEY is None:
         searcher = forecasting_tools.ExaSearcher(
             include_highlights=True,
             num_results=10,
         )
-        highlights = asyncio.run(searcher.invoke_for_highlights_in_relevance_order(question))
+        highlights = asyncio.run(
+            searcher.invoke_for_highlights_in_relevance_order(question)
+        )
         prioritized_highlights = highlights[:10]
         combined_highlights = ""
         for i, highlight in enumerate(prioritized_highlights):
@@ -306,6 +327,7 @@ def call_exa_smart_searcher(question: str) -> str:
         response = asyncio.run(searcher.invoke(prompt))
 
     return response
+
 
 def call_asknews(question: str) -> str:
     """
@@ -359,6 +381,7 @@ def call_asknews(question: str) -> str:
         return formatted_articles
 
     return formatted_articles
+
 
 ############### BINARY ###############
 # @title Binary prompt & functions
@@ -520,7 +543,9 @@ def extract_percentiles_from_response(forecast_text: str) -> dict:
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_percentile_numbers(text) -> dict:
         pattern = r"^.*(?:P|p)ercentile.*$"
-        number_pattern = r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
+        number_pattern = (
+            r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
+        )
         results = []
 
         for line in text.split("\n"):
@@ -531,8 +556,7 @@ def extract_percentiles_from_response(forecast_text: str) -> dict:
                     for match in numbers
                 ]
                 numbers = [
-                    float(num) if "." in num else int(num)
-                    for num in numbers_no_commas
+                    float(num) if "." in num else int(num) for num in numbers_no_commas
                 ]
                 if len(numbers) > 1:
                     first_number = numbers[0]
@@ -607,7 +631,6 @@ def generate_continuous_cdf(
         percentile = float(key) / 100
         normalized_percentile_values[percentile] = value
 
-
     value_percentiles = {
         value: key for key, value in normalized_percentile_values.items()
     }
@@ -681,7 +704,11 @@ async def get_numeric_gpt_prediction(
     scaling = question_details["scaling"]
     open_upper_bound = question_details["open_upper_bound"]
     open_lower_bound = question_details["open_lower_bound"]
-    unit_of_measure = question_details["unit"] if question_details["unit"] else "Not stated (please infer this)"
+    unit_of_measure = (
+        question_details["unit"]
+        if question_details["unit"]
+        else "Not stated (please infer this)"
+    )
     upper_bound = scaling["range_max"]
     lower_bound = scaling["range_min"]
     zero_point = scaling["zero_point"]
@@ -895,7 +922,6 @@ async def get_multiple_choice_gpt_prediction(
     ) -> tuple[dict[str, float], str]:
         rationale = await call_llm(content)
 
-
         option_probabilities = extract_option_probabilities_from_response(
             rationale, options
         )
@@ -968,7 +994,9 @@ async def forecast_individual_question(
     question_type = question_details["type"]
 
     summary_of_forecast = ""
-    summary_of_forecast += f"-----------------------------------------------\nQuestion: {title}\n"
+    summary_of_forecast += (
+        f"-----------------------------------------------\nQuestion: {title}\n"
+    )
     summary_of_forecast += f"URL: https://www.metaculus.com/questions/{post_id}/\n"
 
     if question_type == "multiple_choice":
@@ -997,7 +1025,9 @@ async def forecast_individual_question(
     else:
         raise ValueError(f"Unknown question type: {question_type}")
 
-    print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
+    print(
+        f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n"
+    )
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
     print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
 
@@ -1054,8 +1084,6 @@ async def forecast_questions(
         error_message = f"Errors were encountered: {errors}"
         print(error_message)
         raise RuntimeError(error_message)
-
-
 
 
 ######################## FINAL RUN #########################
