@@ -63,15 +63,34 @@ jobs:
           printenv | grep -E "METACULUS_TOKEN|OPENAI_API_KEY|ASKNEWS_SECRET|ASKNEWS_CLIENT_ID|SUBMIT_PREDICTION|USE_EXAMPLE_QUESTIONS|SKIP_PREVIOUSLY_FORECASTED_QUESTIONS"
           poetry run python main.py
 
-      # 4 – zip & upload forecasts (only if something was produced)
-      - name: Create forecasts zip
+      # 4 – zip & upload *only* the new/updated q2 forecasts
+      - name: Create forecasts zip (q2 changes only)
+        # run this step only if there are any staged-or-working-tree changes in q2
         if: ${{ hashFiles('forecasts/q2/**') != '' }}
+        id: make_zip
         run: |
+          set -euo pipefail
           mkdir -p artifacts
-          zip -r artifacts/forecasts.zip forecasts
+      
+          # Collect paths that are either:
+          #   • modified & tracked          (git ls-files -m)
+          #   • new & untracked            (git ls-files --others --exclude-standard)
+          mapfile -t NEW_FILES < <(
+            git ls-files -m -- "forecasts/q2/**" &&
+            git ls-files --others --exclude-standard -- "forecasts/q2/**"
+          )
+      
+          if [[ ${#NEW_FILES[@]} -eq 0 ]]; then
+            echo "No new or modified q2 forecasts – skipping zip."
+            echo "ZIPPED=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+      
+          zip -r artifacts/forecasts.zip "${NEW_FILES[@]}"
+          echo "ZIPPED=true" >> "$GITHUB_ENV"
 
       - name: Upload forecasts
-        if: ${{ hashFiles('forecasts/q2/**') != '' }}
+        if: env.ZIPPED == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: forecasts
