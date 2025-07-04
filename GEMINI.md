@@ -2,6 +2,8 @@
 
 This repository contains a Python-based bot that interacts with the Metaculus prediction platform. The bot uses the OpenAI API to generate predictions for questions on Metaculus and submits them.
 
+Reference `AGENTS.md` in this directory for my general assistant preferences.
+
 ## Key Files and Functionality
 
 *   **`main.py`**: The main entry point for the bot. It orchestrates the process of fetching questions from Metaculus, generating predictions using OpenAI's models, and submitting them.
