@@ -14,11 +14,13 @@ asknews = "^0.7.54"
 numpy = "^1.26.0"
 openai = "^1.57.4"
 python-dotenv = "^1.0.1"
-forecasting-tools = "^0.2.5"
+forecasting-tools = "0.2.31"
 matplotlib = "^3.10.0"
 autogen-agentchat = "^0.5.5"
 tqdm = "^4.67.1"
 autogen-ext = {extras = ["openai"], version = "^0.5.5"}
+pytest = "^8.4.1"
+pytest-asyncio = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
