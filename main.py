@@ -433,6 +433,17 @@ class TemplateForecaster(ForecastBot):
         )
         reasoning = await llm_to_use.invoke(prompt)
 
+        logger.info(
+            f"""
+>>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
+LLM: {llm_to_use.model}
+Question ID: {question.id}
+
+{reasoning}
+<<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
+"""
+        )
+
         try:
             prediction: NumericDistribution = (
                 PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
