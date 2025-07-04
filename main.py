@@ -381,7 +381,7 @@ if __name__ == "__main__":
                 temperature=0.3,
                 top_p=0.9,
                 timeout=90,
-                allowed_tries=2,
+                allowed_tries=3,
             ),
             "summarizer": "openrouter/google/gemini-2.5-flash",
         },
