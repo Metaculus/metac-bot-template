@@ -379,6 +379,7 @@ if __name__ == "__main__":
             "default": GeneralLlm(
                 model="openrouter/google/gemini-2.5-pro",
                 temperature=0.3,
+                top_p=0.9,
                 timeout=90,
                 allowed_tries=2,
             ),
