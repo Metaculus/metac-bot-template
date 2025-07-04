@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from typing import Any, Coroutine, Literal, cast
 
+from pydantic import ValidationError
 from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
                                GeneralLlm, MetaculusApi, MetaculusQuestion,
                                MultipleChoiceQuestion, NumericDistribution,
@@ -15,6 +16,8 @@ from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import \
     ResearchWithPredictions
 from forecasting_tools.data_models.questions import DateQuestion
+import re
+from forecasting_tools.data_models.numeric_distribution import Percentile  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -428,11 +431,34 @@ class TemplateForecaster(ForecastBot):
             """
         )
         reasoning = await llm_to_use.invoke(prompt)
-        prediction: NumericDistribution = (
-            PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                reasoning, question
+
+        try:
+            prediction: NumericDistribution = (
+                PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
+                    reasoning, question
+                )
             )
-        )
+        except ValidationError:
+            # Minimal fallback: grab the last six numeric values that look like
+            # percentile answers and assume they correspond to the required
+            # 10/20/40/60/80/90 percentiles.
+            all_numbers = [float(n.replace(",", "")) for n in re.findall(r"\d+(?:\.\d+)?", reasoning)]
+
+            if len(all_numbers) < 6:
+                raise  # Reraise original validation error – not enough data to recover
+
+            values = all_numbers[-6:]
+
+            percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
+            repaired_percentiles = [
+                Percentile(value=v, percentile=p)  # type: ignore[arg-type]
+                for v, p in zip(values, percentiles_template)
+            ]
+
+            prediction = NumericDistribution(  # type: ignore
+                declared_percentiles=repaired_percentiles
+            )
+
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
