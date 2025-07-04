@@ -270,7 +270,7 @@ class TemplateForecaster(ForecastBot):
             You are a senior forecaster preparing a public report for expert peers.
             You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
-            Historically, LLMs like you have been overconfident / overestimated probabilities and the base rate for positive resolutions on Metaculus is 35%
+            Historically, LLMs like you have overestimated probabilities, and the base rate for positive resolutions on Metaculus is 35%.
 
             Your Metaculus question is:
             {question.question_text}
@@ -301,7 +301,7 @@ class TemplateForecaster(ForecastBot):
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
-            The last thing you write MUST BE your final answer as an integer percentage. "Probability: ZZ%"
+            The last thing you write MUST BE your final answer as an INTEGER percentage. "Probability: ZZ%"
             An example response is: "Probability: 50%"
             """
         )
@@ -439,31 +439,68 @@ class TemplateForecaster(ForecastBot):
                     reasoning, question
                 )
             )
-        except ValidationError:
-            # Minimal fallback: grab the last six numeric values that look like
-            # percentile answers and assume they correspond to the required
-            # 10/20/40/60/80/90 percentiles.
-            all_numbers = [float(n.replace(",", "")) for n in re.findall(r"\d+(?:\.\d+)?", reasoning)]
+        except ValidationError as err:
+            # Fallback: find lines with "percentile", extract the last number,
+            # and assume they correspond to the required 10/20/40/60/80/90.
+            percentile_lines = [
+                line
+                for line in reasoning.split("\n")
+                if "percentile" in line.lower()
+            ]
 
-            if len(all_numbers) < 6:
-                raise  # Reraise original validation error – not enough data to recover
+            if len(percentile_lines) != 6:
+                logger.warning("Did not receive 6 instances of 'percentile'.")
+                raise err  # Reraise, not enough data to recover.
 
-            values = all_numbers[-6:]
+            values = []
+            for line in percentile_lines:
+                numbers = re.findall(r"-?\d+(?:\.\d+)?", line)
+                if numbers:
+                    values.append(float(numbers[-1].replace(",", "")))
+
+            if len(values) != 6:
+                raise  # Reraise, couldn't extract a value from each line.
 
             percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
             repaired_percentiles = [
-                Percentile(value=v, percentile=p)  # type: ignore[arg-type]
+                Percentile(value=v, percentile=p)
                 for v, p in zip(values, percentiles_template)
             ]
 
-            prediction = NumericDistribution(  # type: ignore
-                declared_percentiles=repaired_percentiles
+            prediction = NumericDistribution(
+                declared_percentiles=repaired_percentiles,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound or max(values),
+                lower_bound=question.lower_bound or min(values),
+                zero_point=question.zero_point,
             )
 
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    # Agg with MEAN not median so we can use fewer LLM calls.
+    async def _aggregate_predictions(
+        self,
+        predictions: list[PredictionTypes],
+        question: MetaculusQuestion,
+    ) -> PredictionTypes:
+        if isinstance(question, BinaryQuestion):
+            # Custom aggregation for BinaryQuestions: mean rounded to one decimal place
+            if not predictions:
+                raise ValueError("Cannot aggregate empty list of predictions")
+            
+            # Ensure all predictions are floats (as expected for binary)
+            float_predictions = cast(list[float], predictions)
+            
+            mean_prediction = sum(float_predictions) / len(float_predictions)
+            rounded_mean = round(mean_prediction, 3)
+            return rounded_mean
+        
+        # Fallback to the parent class's aggregation logic for all other question types
+        return await super()._aggregate_predictions(predictions, question)
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion

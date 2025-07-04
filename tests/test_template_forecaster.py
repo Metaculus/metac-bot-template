@@ -136,7 +136,7 @@ async def test_research_and_make_predictions_with_forecasters(
     )
     assert bot._make_prediction.call_count == 2  # Called once for each forecaster
     bot._make_prediction.assert_any_call(
-        mock_binary_question, "mock summary", mock_general_llm
+        mock_binary_question, "mock research", mock_general_llm
     )
     assert isinstance(result, ResearchWithPredictions)
     assert (
