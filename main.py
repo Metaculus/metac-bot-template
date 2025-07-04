@@ -294,7 +294,7 @@ class TemplateForecaster(ForecastBot):
             (c) The Strongest Bear Case (FOR 'No'): Construct the most compelling, evidence-based argument for a 'No' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
             (d) The Strongest Bull Case (FOR 'Yes'): Construct the most compelling, evidence-based argument for a 'Yes' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
             (e) Red team critique of the Strongest Bull Case and Strongest Bear Case.
-            (f) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on Brier Score and your calibration.
+            (f) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on your Metaculus peer score (log score) and that calibration matters.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
@@ -498,21 +498,25 @@ if __name__ == "__main__":
                     model="openrouter/google/gemini-2.5-pro",
                     temperature=0.0,
                     top_p=0.9,
-                    timeout=120,
+                    stream=False,
+                    timeout=180,
                     allowed_tries=3,
                 ),
                 GeneralLlm(
                     model="openrouter/deepseek/deepseek-r1-0528",
                     temperature=0.0,
                     top_p=0.9,
-                    timeout=120,
+                    stream=False,
+                    timeout=180,
                     allowed_tries=3,
                 ),
                 GeneralLlm(
                     model="openrouter/openai/o3",
                     temperature=0.0,
                     top_p=0.9,
-                    timeout=120,
+                    reasoning_effort="medium",
+                    stream=False,
+                    timeout=180,
                     allowed_tries=3,
                 ),
             ],
