@@ -438,7 +438,7 @@ class TemplateForecaster(ForecastBot):
             f"""
 >>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
 LLM: {llm_to_use.model}
-Question ID: {question.id}
+Question ID: {question.id_of_question}
 
 {reasoning}
 <<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<

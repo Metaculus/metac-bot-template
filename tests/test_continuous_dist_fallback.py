@@ -39,6 +39,7 @@ def make_dummy_numeric_question():
         upper_bound=None,
         page_url="https://example.com/q",
         zero_point=0,
+        id_of_question=123, # Added for testing purposes
     )
 
 

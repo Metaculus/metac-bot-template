@@ -27,6 +27,7 @@ def mock_metaculus_question():
     question.resolution_criteria = "Resolution criteria"
     question.fine_print = "Fine print"
     question.unit_of_measure = "units"
+    question.id_of_question = 123  # Add a mock ID for testing
     return question
 
 
