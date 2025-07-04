@@ -378,8 +378,8 @@ if __name__ == "__main__":
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
             "default": GeneralLlm(
                 model="openrouter/google/gemini-2.5-pro",
-                temperature=0.3,
-                top_p=0.9,
+                temperature=0.0,
+                top_p=0.9,  # ignored b/c temperature=0.0
                 timeout=90,
                 allowed_tries=3,
             ),
