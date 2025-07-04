@@ -608,8 +608,8 @@ if __name__ == "__main__":
         EXAMPLE_QUESTIONS = [
             "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
             "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-            "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-            # TODO replace w/ scott aaronson's 5 ai worlds question
+            # "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
+            "https://www.metaculus.com/questions/20683/which-ai-world/",  # Scott Aaronson's five AI worlds
         ]
         template_bot.skip_previously_forecasted_questions = False
         questions = [
