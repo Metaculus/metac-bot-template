@@ -573,6 +573,7 @@ if __name__ == "__main__":
                     stream=False,
                     timeout=180,
                     allowed_tries=3,
+                    provider={"quantizations": ["fp16", "bf16", "fp8"]},
                 ),
                 GeneralLlm(
                     model="openrouter/openai/o3",
