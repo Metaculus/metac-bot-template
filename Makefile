@@ -4,17 +4,17 @@ conda_env:
 	conda activate metaculus-bot
 
 install:
-	poetry install
+	conda activate metaculus-bot && poetry install
 
 test:
-	PYTHONPATH=. poetry run pytest
+	conda activate metaculus-bot && PYTHONPATH=. poetry run pytest tests/test_aggregation.p
 
 run:
-	poetry run python main.py
+	conda activate metaculus-bot && poetry run python main.py
 
 benchmark:
-	poetry run python community_benchmark.py
+	conda activate metaculus-bot && poetry run python community_benchmark.py
 
 lint:
-	poetry run black .
-	poetry run isort .
+	conda activate metaculus-bot && poetry run black .
+	conda activate metaculus-bot && poetry run isort .
