@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 from typing import cast
 
@@ -52,6 +51,13 @@ async def test_numeric_aggregation_configurable():
         if 0 < p < 1
     ]
 
+    # Third distribution: quadratic skew towards lower bound.
+    dist3_percentiles = [
+        Percentile(value=(p**2) * 100, percentile=p)
+        for p in np.linspace(0, 1, 11)
+        if 0 < p < 1
+    ]
+
     common_args = {
         "open_lower_bound": question.open_lower_bound,
         "open_upper_bound": question.open_upper_bound,
@@ -62,7 +68,8 @@ async def test_numeric_aggregation_configurable():
 
     pred1 = NumericDistribution(declared_percentiles=dist1_percentiles, **common_args)
     pred2 = NumericDistribution(declared_percentiles=dist2_percentiles, **common_args)
-    predictions: list[PredictionTypes] = [pred1, pred2]
+    pred3 = NumericDistribution(declared_percentiles=dist3_percentiles, **common_args)
+    predictions: list[PredictionTypes] = [pred1, pred2, pred3]
 
     # Initialize two forecaster instances with different aggregation methods.
     forecaster_mean = TemplateForecaster(
@@ -86,11 +93,19 @@ async def test_numeric_aggregation_configurable():
     # 3. Assert
     # Manually calculate the expected CDFs to verify the aggregation logic.
     expected_mean_cdf_percentiles = np.mean(
-        [[p.percentile for p in pred1.cdf], [p.percentile for p in pred2.cdf]],
+        [
+            [p.percentile for p in pred1.cdf],
+            [p.percentile for p in pred2.cdf],
+            [p.percentile for p in pred3.cdf],
+        ],
         axis=0,
     )
     expected_median_cdf_percentiles = np.median(
-        [[p.percentile for p in pred1.cdf], [p.percentile for p in pred2.cdf]],
+        [
+            [p.percentile for p in pred1.cdf],
+            [p.percentile for p in pred2.cdf],
+            [p.percentile for p in pred3.cdf],
+        ],
         axis=0,
     )
 
