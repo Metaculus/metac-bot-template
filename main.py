@@ -2,10 +2,10 @@ import argparse
 import asyncio
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Any, Coroutine, Literal, cast
 
-from pydantic import ValidationError
 from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
                                GeneralLlm, MetaculusApi, MetaculusQuestion,
                                MultipleChoiceQuestion, NumericDistribution,
@@ -15,9 +15,10 @@ from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
 from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import \
     ResearchWithPredictions
+from forecasting_tools.data_models.numeric_report import \
+    Percentile  # type: ignore
 from forecasting_tools.data_models.questions import DateQuestion
-import re
-from forecasting_tools.data_models.numeric_report import Percentile  # type: ignore
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -307,7 +308,7 @@ class TemplateForecaster(ForecastBot):
             """
         )
         reasoning = await llm_to_use.invoke(prompt)
-        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)
+        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
         prediction: float = PredictionExtractor.extract_last_percentage_value(
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
@@ -321,65 +322,64 @@ class TemplateForecaster(ForecastBot):
         self, question: MultipleChoiceQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
-    f"""
-    You are a **senior forecaster** preparing a rigorous public report for expert peers.
-    Your accuracy and *calibration* will be scored with Metaculus’ log-score, so avoid
-    over-confidence and make sure your probabilities sum to **100 %**.
-    Please consider news, research, and prediction markets, but you are not beholden to them.
+            f"""
+        You are a **senior forecaster** preparing a rigorous public report for expert peers.
+        Your accuracy and *calibration* will be scored with Metaculus’ log-score, so avoid
+        over-confidence and make sure your probabilities sum to **100 %**.
+        Please consider news, research, and prediction markets, but you are not beholden to them.
 
-    ── Question ──────────────────────────────────────────────────────────
-    {question.question_text}
+        ── Question ──────────────────────────────────────────────────────────
+        {question.question_text}
 
-    • Options (in resolution order): {question.options}
+        • Options (in resolution order): {question.options}
 
-    ── Context ───────────────────────────────────────────────────────────
-    {question.background_info}
+        ── Context ───────────────────────────────────────────────────────────
+        {question.background_info}
 
-    {question.resolution_criteria}
-    {question.fine_print}
+        {question.resolution_criteria}
+        {question.fine_print}
 
-    ── Intelligence Briefing (assistant research) ────────────────────────
-    {research}
+        ── Intelligence Briefing (assistant research) ────────────────────────
+        {research}
 
-    Today’s date: {datetime.now().strftime("%Y-%m-%d")}
+        Today’s date: {datetime.now().strftime("%Y-%m-%d")}
 
-    ── Write your analysis in the following numbered sections ────────────
-    (1) **Time to resolution** – how long until the panel can decide.
+        ── Write your analysis in the following numbered sections ────────────
+        (1) **Time to resolution** – how long until the panel can decide.
 
-    (2) **Status-quo outcome** – if present trends simply continue, which
-        option is most plausible and why?
+        (2) **Status-quo outcome** – if present trends simply continue, which
+            option is most plausible and why?
 
-    (3) **Base-rate & expert priors** – assemble a table like:
-           Option | Historical / analogous base-rate | Expert / market signal
-           -------|-----------------------------------|-----------------------
-           A      | …                                 | …
-           …      | …                                 | …
+        (3) **Base-rate & expert priors** – assemble a table like:
+            Option | Historical / analogous base-rate | Expert / market signal
+            -------|-----------------------------------|-----------------------
+            A      | …                                 | …
+            …      | …                                 | …
 
-    (4) **Strongest pro case** for the *currently most-likely* option
-        (use evidence & causal chains from the briefing).
+        (4) **Strongest pro case** for the *currently most-likely* option
+            (use evidence & causal chains from the briefing).
 
-    (5) **Red-team critique** – attack the argument in (4); highlight
-        hidden assumptions or data that could flip the conclusion.
+        (5) **Red-team critique** – attack the argument in (4); highlight
+            hidden assumptions or data that could flip the conclusion.
 
-    (6) **Unexpected scenario** – outline a plausible but overlooked
-        pathway that would make a different option win.
+        (6) **Unexpected scenario** – outline a plausible but overlooked
+            pathway that would make a different option win.
 
-    (7) **Final rationale** – reconcile everything above into calibrated
-        probabilities.  Remember:
-        • Good forecasters leave a little probability on most options.
-        • Use integers 1-99 (no 0 % or 100 %).
-        • They must sum to 100 %.
+        (7) **Final rationale** – reconcile everything above into calibrated
+            probabilities.  Remember:
+            • Good forecasters leave a little probability on most options.
+            • Use integers 1-99 (no 0 % or 100 %).
+            • They must sum to 100 %.
 
-    ── OUTPUT FORMAT (must be last lines, nothing after) ────────────────
-    Option_A: NN%
-    Option_B: NN%
-    …
-    Option_N: NN%
-    """
-)
+        ── OUTPUT FORMAT (must be last lines, nothing after) ────────────────
+        Option_A: NN%
+        Option_B: NN%
+        …
+        Option_N: NN%
+        """
         )
         reasoning = await llm_to_use.invoke(prompt)
-        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)
+        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
         prediction: PredictedOptionList = (
             PredictionExtractor.extract_option_list_with_percentage_afterwards(
                 reasoning, question.options
@@ -397,7 +397,7 @@ class TemplateForecaster(ForecastBot):
             self._create_upper_and_lower_bound_messages(question)
         )
         prompt = clean_indents(
-        f"""
+            f"""
         You are a **senior forecaster** writing a public report for expert peers.
         You will be scored with Metaculus’ log-score, so accuracy **and** calibration
         (especially the width of your 90 / 10 interval) are critical.
@@ -462,13 +462,13 @@ class TemplateForecaster(ForecastBot):
 
         logger.info(
             f"""
->>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
-LLM: {llm_to_use.model}
-Question ID: {question.id_of_question}
+            >>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
+            LLM: {llm_to_use.model}
+            Question ID: {question.id_of_question}
 
-{reasoning}
-<<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
-"""
+            {reasoning}
+            <<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
+            """
         )
 
         try:
@@ -481,14 +481,20 @@ Question ID: {question.id_of_question}
             # Fallback: find lines with "percentile", extract the last number,
             # and assume they correspond to the required 10/20/40/60/80/90.
             # Use strict filtering for percentile lines.
+            logger.warning("Attempting to repair numeric distribution from LLM output.")
             percentile_lines = []
             for line in reasoning.split("\n"):
-                match = re.match(r"^[Pp]ercentile\s+\d+:\s+[-]?\d+(?:,\d{3})*(?:\.\d+)?$", line.strip())
+                match = re.match(
+                    r"^[Pp]ercentile\s+\d+:\s+[-]?\d+(?:,\d{3})*(?:\.\d+)?$",
+                    line.strip(),
+                )
                 if match:
                     percentile_lines.append(line)
 
             if len(percentile_lines) != 6:
-                logger.warning("Did not receive exactly 6 valid percentile lines after strict filtering.")
+                logger.warning(
+                    "Did not receive exactly 6 valid percentile lines after strict filtering."
+                )
                 raise err  # Re-raise original error if strict filtering fails to find 6 lines
 
             values = []
@@ -499,7 +505,9 @@ Question ID: {question.id_of_question}
                     values.append(float(numbers[-1].replace(",", "")))
 
             if len(values) != 6:
-                raise ValueError("Could not extract 6 numeric values from strictly filtered percentile lines.")
+                raise ValueError(
+                    "Could not extract 6 numeric values from strictly filtered percentile lines."
+                )
 
             percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
             repaired_percentiles = [
@@ -531,14 +539,14 @@ Question ID: {question.id_of_question}
             # Custom aggregation for BinaryQuestions: mean rounded to one decimal place
             if not predictions:
                 raise ValueError("Cannot aggregate empty list of predictions")
-            
+
             # Ensure all predictions are floats (as expected for binary)
             float_predictions = cast(list[float], predictions)
-            
+
             mean_prediction = sum(float_predictions) / len(float_predictions)
             rounded_mean = round(mean_prediction, 3)
             return rounded_mean
-        
+
         # Fallback to the parent class's aggregation logic for all other question types
         return await super()._aggregate_predictions(predictions, question)
 
@@ -559,7 +567,9 @@ Question ID: {question.id_of_question}
             )
         return upper_bound_message, lower_bound_message
 
-    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int, reasoning: str):
+    def _log_raw_llm_output(
+        self, llm_to_use: GeneralLlm, question_id: int, reasoning: str
+    ):
         logger.info(
             f"""
 >>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
@@ -625,7 +635,9 @@ if __name__ == "__main__":
                     stream=False,
                     timeout=180,
                     allowed_tries=3,
-                    provider={"quantizations": ["fp16", "bf16", "fp8"]},  # think this is working
+                    provider={
+                        "quantizations": ["fp16", "bf16", "fp8"]
+                    },  # think this is working
                 ),
                 GeneralLlm(
                     model="openrouter/openai/o3",
