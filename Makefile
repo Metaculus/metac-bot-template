@@ -7,7 +7,7 @@ install:
 	conda activate metaculus-bot && poetry install
 
 test:
-	conda activate metaculus-bot && PYTHONPATH=. poetry run pytest tests/test_aggregation.p
+	conda activate metaculus-bot && PYTHONPATH=. poetry run pytest
 
 run:
 	conda activate metaculus-bot && poetry run python main.py
