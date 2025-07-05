@@ -4,7 +4,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Coroutine, Literal, cast
+from typing import Any, Coroutine, Literal, Sequence, cast
 
 import numpy as np
 from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
@@ -14,10 +14,10 @@ from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
                                PredictionExtractor, ReasonedPrediction,
                                SmartSearcher, clean_indents)
 from forecasting_tools.data_models.data_organizer import PredictionTypes
-from forecasting_tools.data_models.forecast_report import \
-    ResearchWithPredictions
-from forecasting_tools.data_models.numeric_report import \
-    Percentile, NumericReport  # type: ignore
+from forecasting_tools.data_models.forecast_report import (
+    ForecastReport, ResearchWithPredictions)
+from forecasting_tools.data_models.numeric_report import (  # type: ignore
+    NumericReport, Percentile)
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
@@ -58,9 +58,7 @@ class TemplateForecaster(ForecastBot):
     Additionally OpenRouter has large rate limits immediately on account creation
     """
 
-    _max_concurrent_questions = (
-        2  # Set this to whatever works for your search-provider/ai-model rate limits
-    )
+    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     def __init__(
@@ -76,9 +74,7 @@ class TemplateForecaster(ForecastBot):
         llms: dict[str, str | GeneralLlm | list[GeneralLlm]] | None = None,
     ) -> None:
         if llms is None:
-            raise ValueError(
-                "Either 'forecasters' or a 'default' LLM must be provided."
-            )
+            raise ValueError("Either 'forecasters' or a 'default' LLM must be provided.")
 
         forecasters_llms_config: list[GeneralLlm] = []
         if "forecasters" in llms:
@@ -86,9 +82,7 @@ class TemplateForecaster(ForecastBot):
             if isinstance(forecasters_config, list):
                 forecasters_llms_config = forecasters_config
             else:
-                logger.warning(
-                    "'forecasters' key in llms must be a list of GeneralLlm objects."
-                )
+                logger.warning("'forecasters' key in llms must be a list of GeneralLlm objects.")
 
         llms_for_super = {}
         if forecasters_llms_config:
@@ -96,9 +90,7 @@ class TemplateForecaster(ForecastBot):
         elif "default" in llms:
             llms_for_super["default"] = llms["default"]
         else:
-            raise ValueError(
-                "Either 'forecasters' or a 'default' LLM must be provided."
-            )
+            raise ValueError("Either 'forecasters' or a 'default' LLM must be provided.")
 
         if "summarizer" in llms:
             llms_for_super["summarizer"] = llms["summarizer"]
@@ -117,26 +109,20 @@ class TemplateForecaster(ForecastBot):
         if self._forecaster_llms:
             self.predictions_per_research_report = len(self._forecaster_llms)
         elif predictions_per_research_report == 0:
-            raise ValueError(
-                "Must run at least one prediction if 'forecasters' are not provided."
-            )
+            raise ValueError("Must run at least one prediction if 'forecasters' are not provided.")
         self.numeric_aggregation_method = numeric_aggregation_method
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
             if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-                research = await AskNewsSearcher().get_formatted_news_async(
-                    question.question_text
-                )
+                research = await AskNewsSearcher().get_formatted_news_async(question.question_text)
             elif os.getenv("EXA_API_KEY"):
                 research = await self._call_exa_smart_searcher(question.question_text)
             elif os.getenv("PERPLEXITY_API_KEY"):
                 research = await self._call_perplexity(question.question_text)
             elif os.getenv("OPENROUTER_API_KEY"):
-                research = await self._call_perplexity(
-                    question.question_text, use_open_router=True
-                )
+                research = await self._call_perplexity(question.question_text, use_open_router=True)
             else:
                 logger.warning(
                     f"No research provider found when processing question URL {question.page_url}. Will pass back empty string."
@@ -157,21 +143,14 @@ class TemplateForecaster(ForecastBot):
         notepad.num_research_reports_attempted += 1
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
-        research_to_use = (
-            summary_report if self.use_research_summary_to_forecast else research
-        )
+        research_to_use = summary_report if self.use_research_summary_to_forecast else research
 
         # Generate tasks for each forecaster LLM
         tasks = cast(
             list[Coroutine[Any, Any, ReasonedPrediction[Any]]],
-            [
-                self._make_prediction(question, research_to_use, llm_instance)
-                for llm_instance in self._forecaster_llms
-            ],
+            [self._make_prediction(question, research_to_use, llm_instance) for llm_instance in self._forecaster_llms],
         )
-        valid_predictions, errors, exception_group = (
-            await self._gather_results_and_exceptions(tasks)
-        )
+        valid_predictions, errors, exception_group = await self._gather_results_and_exceptions(tasks)
         if errors:
             logger.warning(f"Encountered errors while predicting: {errors}")
         if len(valid_predictions) == 0:
@@ -200,17 +179,11 @@ class TemplateForecaster(ForecastBot):
         actual_llm = llm_to_use if llm_to_use else self.get_llm("default", "llm")
 
         if isinstance(question, BinaryQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_binary(
-                q, r, llm
-            )
+            forecast_function = lambda q, r, llm: self._run_forecast_on_binary(q, r, llm)
         elif isinstance(question, MultipleChoiceQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_multiple_choice(
-                q, r, llm
-            )
+            forecast_function = lambda q, r, llm: self._run_forecast_on_multiple_choice(q, r, llm)
         elif isinstance(question, NumericQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_numeric(
-                q, r, llm
-            )
+            forecast_function = lambda q, r, llm: self._run_forecast_on_numeric(q, r, llm)
         elif isinstance(question, DateQuestion):
             raise NotImplementedError("Date questions not supported yet")
         else:
@@ -221,9 +194,7 @@ class TemplateForecaster(ForecastBot):
         prediction.reasoning = f"Model: {actual_llm.model}\n\n{prediction.reasoning}"
         return prediction  # type: ignore
 
-    async def _call_perplexity(
-        self, question: str, use_open_router: bool = False
-    ) -> str:
+    async def _call_perplexity(self, question: str, use_open_router: bool = False) -> str:
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster.
@@ -316,9 +287,7 @@ class TemplateForecaster(ForecastBot):
             reasoning, max_prediction=0.99, min_prediction=0.01
         )
 
-        logger.info(
-            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
-        )
+        logger.info(f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}")
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
@@ -383,22 +352,16 @@ class TemplateForecaster(ForecastBot):
         )
         reasoning = await llm_to_use.invoke(prompt)
         self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
-        prediction: PredictedOptionList = (
-            PredictionExtractor.extract_option_list_with_percentage_afterwards(
-                reasoning, question.options
-            )
+        prediction: PredictedOptionList = PredictionExtractor.extract_option_list_with_percentage_afterwards(
+            reasoning, question.options
         )
-        logger.info(
-            f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}"
-        )
+        logger.info(f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}")
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[NumericDistribution]:
-        upper_bound_message, lower_bound_message = (
-            self._create_upper_and_lower_bound_messages(question)
-        )
+        upper_bound_message, lower_bound_message = self._create_upper_and_lower_bound_messages(question)
         prompt = clean_indents(
             f"""
         You are a **senior forecaster** writing a public report for expert peers.
@@ -514,9 +477,7 @@ class TemplateForecaster(ForecastBot):
                     percentile_lines.append(line)
 
             if len(percentile_lines) != 6:
-                logger.warning(
-                    "Did not receive exactly 6 valid percentile lines after strict filtering."
-                )
+                logger.warning("Did not receive exactly 6 valid percentile lines after strict filtering.")
                 raise err  # Re-raise original error if strict filtering fails to find 6 lines
 
             values = []
@@ -527,15 +488,10 @@ class TemplateForecaster(ForecastBot):
                     values.append(float(numbers[-1].replace(",", "")))
 
             if len(values) != 6:
-                raise ValueError(
-                    "Could not extract 6 numeric values from strictly filtered percentile lines."
-                )
+                raise ValueError("Could not extract 6 numeric values from strictly filtered percentile lines.")
 
             percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
-            repaired_percentiles = [
-                Percentile(value=v, percentile=p)
-                for v, p in zip(values, percentiles_template)
-            ]
+            repaired_percentiles = [Percentile(value=v, percentile=p) for v, p in zip(values, percentiles_template)]
 
             prediction = NumericDistribution(
                 declared_percentiles=repaired_percentiles,
@@ -589,19 +545,14 @@ class TemplateForecaster(ForecastBot):
                     if any(p.value != x_axis[i] for i, p in enumerate(cdf)):
                         raise ValueError("X axis between CDFs is not the same")
 
-                all_percentiles_of_cdf: list[list[float]] = [
-                    [p.percentile for p in cdf] for cdf in cdfs
-                ]
+                all_percentiles_of_cdf: list[list[float]] = [[p.percentile for p in cdf] for cdf in cdfs]
 
-                mean_percentile_list: list[float] = (
-                    np.mean(np.array(all_percentiles_of_cdf), axis=0).tolist()
-                )
+                mean_percentile_list: list[float] = np.mean(np.array(all_percentiles_of_cdf), axis=0).tolist()
 
                 mean_cdf = [
                     Percentile(value=value, percentile=percentile)
                     for value, percentile in zip(x_axis, mean_percentile_list)
                 ]
-
 
                 return NumericDistribution(
                     declared_percentiles=mean_cdf,
@@ -613,32 +564,22 @@ class TemplateForecaster(ForecastBot):
                     zero_point=question.zero_point,
                 )
 
-            raise ValueError(
-                f"Invalid numeric aggregation method: {self.numeric_aggregation_method}"
-            )
+            raise ValueError(f"Invalid numeric aggregation method: {self.numeric_aggregation_method}")
         # Fallback to the parent class's aggregation logic for all other question types
         return await super()._aggregate_predictions(predictions, question)
 
-    def _create_upper_and_lower_bound_messages(
-        self, question: NumericQuestion
-    ) -> tuple[str, str]:
+    def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         if question.open_upper_bound:
             upper_bound_message = ""
         else:
-            upper_bound_message = (
-                f"The outcome can not be higher than {question.upper_bound}."
-            )
+            upper_bound_message = f"The outcome can not be higher than {question.upper_bound}."
         if question.open_lower_bound:
             lower_bound_message = ""
         else:
-            lower_bound_message = (
-                f"The outcome can not be lower than {question.lower_bound}."
-            )
+            lower_bound_message = f"The outcome can not be lower than {question.lower_bound}."
         return upper_bound_message, lower_bound_message
 
-    def _log_raw_llm_output(
-        self, llm_to_use: GeneralLlm, question_id: int, reasoning: str
-    ):
+    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int, reasoning: str):
         logger.info(
             f"""
 >>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
@@ -649,6 +590,50 @@ Question ID: {question_id}
 <<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
 """
         )
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Compact summary monkey-patch
+# Replaces the verbose log_report_summary from forecasting_tools so we
+# avoid printing duplicated research / rationale blobs in the console.
+# The new version prints exactly one line per successful forecast plus any
+# exceptions.
+
+
+def _compact_log_report_summary(
+    forecast_reports: Sequence[ForecastReport | BaseException],
+) -> None:
+    """Lightweight replacement for ForecastBot.log_report_summary."""
+    valid_reports = [r for r in forecast_reports if isinstance(r, ForecastReport)]
+    exceptions = [r for r in forecast_reports if isinstance(r, BaseException)]
+
+    def _line(r: ForecastReport) -> str:
+        readable = type(r).make_readable_prediction(r.prediction).strip()
+        return f"✅ {r.question.page_url} | Prediction: {readable} | " f"Minor Errors: {len(r.errors)}"
+
+    summary_lines = "\n".join(_line(r) for r in valid_reports)
+
+    for exc in exceptions:
+        msg = str(exc)
+        if len(msg) > 300:
+            msg = msg[:297] + "…"
+        summary_lines += f"\n❌ Exception: {exc.__class__.__name__} | {msg}"
+
+    logger = logging.getLogger(__name__)
+    logger.info(summary_lines + "\n")
+
+    # replicate original behaviour: log aggregated minor errors, then raise on major
+    minor_lists = [r.errors for r in valid_reports if r.errors]
+    if minor_lists:
+        logger.error(f"{len(minor_lists)} minor error groups occurred while forecasting: {minor_lists}")
+
+    if exceptions:
+        raise RuntimeError(f"{len(exceptions)} errors occurred while forecasting: {exceptions}")
+
+
+# Apply the patch
+ForecastBot.log_report_summary = staticmethod(_compact_log_report_summary)
+# ──────────────────────────────────────────────────────────────────────────
 
 
 if __name__ == "__main__":
@@ -662,9 +647,7 @@ if __name__ == "__main__":
     litellm_logger.setLevel(logging.WARNING)
     litellm_logger.propagate = False
 
-    parser = argparse.ArgumentParser(
-        description="Run the Q1TemplateBot forecasting system"
-    )
+    parser = argparse.ArgumentParser(description="Run the Q1TemplateBot forecasting system")
     parser.add_argument(
         "--mode",
         type=str,
@@ -705,9 +688,7 @@ if __name__ == "__main__":
                     stream=False,
                     timeout=180,
                     allowed_tries=3,
-                    provider={
-                        "quantizations": ["fp16", "bf16", "fp8"]
-                    },  # think this is working
+                    provider={"quantizations": ["fp16", "bf16", "fp8"]},  # think this is working
                 ),
                 GeneralLlm(
                     model="openrouter/openai/o3",
@@ -725,18 +706,14 @@ if __name__ == "__main__":
 
     if run_mode == "tournament":
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
-                MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True
-            )
+            template_bot.forecast_on_tournament(MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True)
         )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
         # The new quarterly cup may not be initialized near the beginning of a quarter
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
-                MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True
-            )
+            template_bot.forecast_on_tournament(MetaculusApi.CURRENT_QUARTERLY_CUP_ID, return_exceptions=True)
         )
     elif run_mode == "test_questions":
         # Example questions are a good way to test the bot's performance on a single question
@@ -747,11 +724,6 @@ if __name__ == "__main__":
             "https://www.metaculus.com/questions/20683/which-ai-world/",  # Scott Aaronson's five AI worlds
         ]
         template_bot.skip_previously_forecasted_questions = False
-        questions = [
-            MetaculusApi.get_question_by_url(question_url)
-            for question_url in EXAMPLE_QUESTIONS
-        ]
-        forecast_reports = asyncio.run(
-            template_bot.forecast_questions(questions, return_exceptions=True)
-        )
+        questions = [MetaculusApi.get_question_by_url(question_url) for question_url in EXAMPLE_QUESTIONS]
+        forecast_reports = asyncio.run(template_bot.forecast_questions(questions, return_exceptions=True))
     TemplateForecaster.log_report_summary(forecast_reports)  # type: ignore
