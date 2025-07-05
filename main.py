@@ -397,59 +397,67 @@ class TemplateForecaster(ForecastBot):
             self._create_upper_and_lower_bound_messages(question)
         )
         prompt = clean_indents(
-            f"""
-            You are a senior forecaster preparing a public report for expert peers.
-            You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
-            You should consider current prediction markets when possible but not be beholden to them.
+        f"""
+        You are a **senior forecaster** writing a public report for expert peers.
+        You will be scored with Metaculus’ log-score, so accuracy **and** calibration
+        (especially the width of your 90 / 10 interval) are critical.
+        Please consider news, research, and prediction markets, but you are not beholden to them.
 
-            Your Metaculus question is:
-            {question.question_text}
+        ── Question ──────────────────────────────────────────────────────────
+        {question.question_text}
 
-            Background:
-            {question.background_info}
+        ── Context ───────────────────────────────────────────────────────────
+        {question.background_info}
 
-            {question.resolution_criteria}
+        {question.resolution_criteria}
+        {question.fine_print}
 
-            {question.fine_print}
+        Units: {question.unit_of_measure or "Not stated – infer if possible"}
 
-            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
+        ── Intelligence Briefing (assistant research) ────────────────────────
+        {research}
 
-            Your research assistant says:
-            {research}
+        Today’s date: {datetime.now().strftime("%Y-%m-%d")}
 
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
+        {lower_bound_message}
+        {upper_bound_message}
 
-            {lower_bound_message}
-            {upper_bound_message}
+        ── Write your analysis in the following numbered sections ────────────
+        (1) **Time to resolution** – how long until we know the answer.
 
-            Formatting Instructions:
-            - Use floating point numbers, e.g. 100.0, not integers.
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
-            - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there, strictly increasing.
-            - Please only use the term "percentile" in your final answer as shown below and not in your explanation to avoid confusing the regex parser. You can say "pctile" etc. as needed to avoid confusion.
+        (2) **Status-quo outcome** – what value is implied if current
+            conditions simply persist?
 
-            Your response begins with your explanation:
-            (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) The expectations of experts and markets.
-            (e) A brief description of an unexpected scenario that results in a low outcome.
-            (f) A brief description of an unexpected scenario that results in a high outcome.
+        (3) **Trend continuation** – extrapolate historical data to 
+            the closing date.
 
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+        (4) **Expert & market priors** – cite ranges or point forecasts from
+            specialists, prediction markets, or peer forecasts.
 
-            (g) The LAST THING you write MUST BE your final answer as FLOATING POINT NUMBERS, e.g. 100.0 with NOTHING AFTER IT:
-            "
-            Percentile 10: XX.X
-            Percentile 20: XX.X
-            Percentile 40: XX.X
-            Percentile 60: XX.X
-            Percentile 80: XX.X
-            Percentile 90: XX.X
-            "
-            """
-        )  # TODO: really should use json here!
+        (5) **Unexpected low scenario** – describe a coherent pathway that
+            would push the result into an unusually *low* tail.
+
+        (6) **Unexpected high scenario** – analogous pathway for an unusually
+            *high* tail.
+
+        (7) **Red-team critique & final rationale** – challenge your own
+            assumptions, then state how you weight everything to set each
+            percentile.  Good forecasters:
+            • keep 10 / 90 far apart (unknown unknowns)  
+            • ensure strictly increasing values  
+            • avoid scientific notation  
+            • respect the explicit bounds above.
+
+        ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after) ────────────────
+        Percentile 10: XX.X
+        Percentile 20: XX.X
+        Percentile 40: XX.X
+        Percentile 60: XX.X
+        Percentile 80: XX.X
+        Percentile 90: XX.X
+        """
+        )
+        # TODO: ideally would use JSON above ^^
         reasoning = await llm_to_use.invoke(prompt)
 
         logger.info(
