@@ -295,10 +295,10 @@ class TemplateForecaster(ForecastBot):
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) The historical base rate or plausible base rates with weighting for each.
-            (c) The Strongest Bear Case (FOR 'No'): Construct the most compelling, evidence-based argument for a 'No' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
-            (d) The Strongest Bull Case (FOR 'Yes'): Construct the most compelling, evidence-based argument for a 'Yes' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
-            (e) Red team critique of the Strongest Bull Case and Strongest Bear Case.
-            (f) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on your Metaculus peer score (log score) and that calibration matters.
+            (d) The Strongest Bear Case (FOR 'No'): Construct the most compelling, evidence-based argument for a 'No' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
+            (e) The Strongest Bull Case (FOR 'Yes'): Construct the most compelling, evidence-based argument for a 'Yes' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
+            (f) Red team critique of the Strongest Bull Case and Strongest Bear Case.
+            (g) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on your Metaculus peer score (log score) and that calibration matters.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
 
