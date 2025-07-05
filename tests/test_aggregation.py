@@ -40,23 +40,11 @@ async def test_numeric_aggregation_configurable():
     # Create two different numeric distributions to be aggregated.
     # `dist1` is a uniform distribution.
     # `dist2` is skewed towards the upper bound.
-    dist1_percentiles = [
-        Percentile(value=p * 100, percentile=p)
-        for p in np.linspace(0, 1, 11)
-        if 0 < p < 1
-    ]
-    dist2_percentiles = [
-        Percentile(value=p**0.5 * 100, percentile=p)
-        for p in np.linspace(0, 1, 11)
-        if 0 < p < 1
-    ]
+    dist1_percentiles = [Percentile(value=p * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
+    dist2_percentiles = [Percentile(value=p**0.5 * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
 
     # Third distribution: quadratic skew towards lower bound.
-    dist3_percentiles = [
-        Percentile(value=(p**2) * 100, percentile=p)
-        for p in np.linspace(0, 1, 11)
-        if 0 < p < 1
-    ]
+    dist3_percentiles = [Percentile(value=(p**2) * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
 
     common_args = {
         "open_lower_bound": question.open_lower_bound,
@@ -72,21 +60,13 @@ async def test_numeric_aggregation_configurable():
     predictions: list[PredictionTypes] = [pred1, pred2, pred3]
 
     # Initialize two forecaster instances with different aggregation methods.
-    forecaster_mean = TemplateForecaster(
-        llms={"default": "mock"}, numeric_aggregation_method="mean"
-    )
-    forecaster_median = TemplateForecaster(
-        llms={"default": "mock"}, numeric_aggregation_method="median"
-    )
+    forecaster_mean = TemplateForecaster(llms={"default": "mock"}, numeric_aggregation_method="mean")
+    forecaster_median = TemplateForecaster(llms={"default": "mock"}, numeric_aggregation_method="median")
 
     # 2. Act
     # Run the aggregation for both the 'mean' and 'median' configurations.
-    mean_agg_result_uncast = await forecaster_mean._aggregate_predictions(
-        predictions, question
-    )
-    median_agg_result_uncast = await forecaster_median._aggregate_predictions(
-        predictions, question
-    )
+    mean_agg_result_uncast = await forecaster_mean._aggregate_predictions(predictions, question)
+    median_agg_result_uncast = await forecaster_median._aggregate_predictions(predictions, question)
     mean_agg_result = cast(NumericDistribution, mean_agg_result_uncast)
     median_agg_result = cast(NumericDistribution, median_agg_result_uncast)
 
@@ -110,12 +90,8 @@ async def test_numeric_aggregation_configurable():
     )
 
     # Extract the percentile values from the results.
-    result_mean_percentiles = [
-        p.percentile for p in mean_agg_result.declared_percentiles
-    ]
-    result_median_percentiles = [
-        p.percentile for p in median_agg_result.declared_percentiles
-    ]
+    result_mean_percentiles = [p.percentile for p in mean_agg_result.declared_percentiles]
+    result_median_percentiles = [p.percentile for p in median_agg_result.declared_percentiles]
 
     # Verify that the aggregated distributions match the expected values.
     assert np.allclose(result_mean_percentiles, expected_mean_cdf_percentiles)

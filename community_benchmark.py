@@ -22,9 +22,7 @@ async def benchmark_forecast_bot(mode: str) -> None:
     Run a benchmark that compares your forecasts against the community prediction
     """
 
-    number_of_questions = (
-        30  # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
-    )
+    number_of_questions = 30  # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -94,9 +92,7 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(
-                f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
-            ),
+            logging.FileHandler(f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"),
         ],
     )
 

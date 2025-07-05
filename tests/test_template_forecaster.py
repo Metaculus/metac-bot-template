@@ -73,9 +73,7 @@ async def test_template_forecaster_init_without_forecasters():
 
 @pytest.mark.asyncio
 async def test_template_forecaster_init_no_llms_provided():
-    with pytest.raises(
-        ValueError, match="Either 'forecasters' or a 'default' LLM must be provided."
-    ):
+    with pytest.raises(ValueError, match="Either 'forecasters' or a 'default' LLM must be provided."):
         TemplateForecaster(llms=None)
 
 
@@ -87,19 +85,13 @@ async def test_template_forecaster_init_forecasters_not_list():
     }
     with patch("main.logger.warning") as mock_warning:
         bot = TemplateForecaster(llms=llms_config)
-        mock_warning.assert_called_once_with(
-            "'forecasters' key in llms must be a list of GeneralLlm objects."
-        )
+        mock_warning.assert_called_once_with("'forecasters' key in llms must be a list of GeneralLlm objects.")
         assert not bot._forecaster_llms
-        assert (
-            bot.predictions_per_research_report == 1
-        )  # Default value from parent class
+        assert bot.predictions_per_research_report == 1  # Default value from parent class
 
 
 @pytest.mark.asyncio
-async def test_research_and_make_predictions_with_forecasters(
-    mock_binary_question, mock_general_llm
-):
+async def test_research_and_make_predictions_with_forecasters(mock_binary_question, mock_general_llm):
     llms_config = {
         "forecasters": [mock_general_llm, mock_general_llm],
         "summarizer": "mock_summarizer_model",
@@ -108,16 +100,10 @@ async def test_research_and_make_predictions_with_forecasters(
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock internal methods
-    bot._get_notepad = AsyncMock(
-        return_value=MagicMock(
-            num_research_reports_attempted=0, num_predictions_attempted=0
-        )
-    )
+    bot._get_notepad = AsyncMock(return_value=MagicMock(num_research_reports_attempted=0, num_predictions_attempted=0))
     bot.run_research = AsyncMock(return_value="mock research")
     bot.summarize_research = AsyncMock(return_value="mock summary")
-    bot._make_prediction = AsyncMock(
-        return_value=ReasonedPrediction(prediction_value=0.5, reasoning="test")
-    )
+    bot._make_prediction = AsyncMock(return_value=ReasonedPrediction(prediction_value=0.5, reasoning="test"))
     bot._gather_results_and_exceptions = AsyncMock(
         return_value=(
             [
@@ -133,13 +119,9 @@ async def test_research_and_make_predictions_with_forecasters(
 
     bot._get_notepad.assert_called_once_with(mock_binary_question)
     bot.run_research.assert_called_once_with(mock_binary_question)
-    bot.summarize_research.assert_called_once_with(
-        mock_binary_question, "mock research"
-    )
+    bot.summarize_research.assert_called_once_with(mock_binary_question, "mock research")
     assert bot._make_prediction.call_count == 2  # Called once for each forecaster
-    bot._make_prediction.assert_any_call(
-        mock_binary_question, "mock research", mock_general_llm
-    )
+    bot._make_prediction.assert_any_call(mock_binary_question, "mock research", mock_general_llm)
     assert isinstance(result, ResearchWithPredictions)
     assert (
         len(result.predictions) == 2
@@ -162,9 +144,7 @@ async def test_research_and_make_predictions_without_forecasters(mock_binary_que
         mock_super_method.return_value = ResearchWithPredictions(
             research_report="super research",
             summary_report="super summary",
-            predictions=[
-                ReasonedPrediction(prediction_value=0.6, reasoning="super test")
-            ],
+            predictions=[ReasonedPrediction(prediction_value=0.6, reasoning="super test")],
         )
         result = await bot._research_and_make_predictions(mock_binary_question)
         mock_super_method.assert_called_once_with(mock_binary_question)
@@ -173,9 +153,7 @@ async def test_research_and_make_predictions_without_forecasters(mock_binary_que
 
 
 @pytest.mark.asyncio
-async def test_make_prediction_with_provided_llm(
-    mock_binary_question, mock_general_llm
-):
+async def test_make_prediction_with_provided_llm(mock_binary_question, mock_general_llm):
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
@@ -183,19 +161,13 @@ async def test_make_prediction_with_provided_llm(
     bot = TemplateForecaster(llms=llms_config)
     bot._get_notepad = AsyncMock(return_value=MagicMock(num_predictions_attempted=0))
     bot._run_forecast_on_binary = AsyncMock(
-        return_value=ReasonedPrediction(
-            prediction_value=0.7, reasoning="binary forecast"
-        )
+        return_value=ReasonedPrediction(prediction_value=0.7, reasoning="binary forecast")
     )
 
-    result = await bot._make_prediction(
-        mock_binary_question, "some research", mock_general_llm
-    )
+    result = await bot._make_prediction(mock_binary_question, "some research", mock_general_llm)
 
     bot._get_notepad.assert_called_once_with(mock_binary_question)
-    bot._run_forecast_on_binary.assert_called_once_with(
-        mock_binary_question, "some research", mock_general_llm
-    )
+    bot._run_forecast_on_binary.assert_called_once_with(mock_binary_question, "some research", mock_general_llm)
     assert result.prediction_value == 0.7
     assert "Model: mock_model" in result.reasoning
     assert "binary forecast" in result.reasoning
@@ -211,9 +183,7 @@ async def test_make_prediction_without_provided_llm(mock_binary_question):
     bot = TemplateForecaster(llms=llms_config)
     bot._get_notepad = AsyncMock(return_value=MagicMock(num_predictions_attempted=0))
     bot._run_forecast_on_binary = AsyncMock(
-        return_value=ReasonedPrediction(
-            prediction_value=0.8, reasoning="default binary forecast"
-        )
+        return_value=ReasonedPrediction(prediction_value=0.8, reasoning="default binary forecast")
     )
     bot.get_llm = MagicMock(return_value=mock_default_llm)
 
@@ -221,18 +191,14 @@ async def test_make_prediction_without_provided_llm(mock_binary_question):
 
     bot._get_notepad.assert_called_once_with(mock_binary_question)
     bot.get_llm.assert_called_once_with("default", "llm")
-    bot._run_forecast_on_binary.assert_called_once_with(
-        mock_binary_question, "some research", mock_default_llm
-    )
+    bot._run_forecast_on_binary.assert_called_once_with(mock_binary_question, "some research", mock_default_llm)
     assert result.prediction_value == 0.8
     assert "Model: default_mock_model" in result.reasoning
     assert "default binary forecast" in result.reasoning
 
 
 @pytest.mark.asyncio
-async def test_run_forecast_on_binary_uses_provided_llm(
-    mock_binary_question, mock_general_llm
-):
+async def test_run_forecast_on_binary_uses_provided_llm(mock_binary_question, mock_general_llm):
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
@@ -240,12 +206,8 @@ async def test_run_forecast_on_binary_uses_provided_llm(
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock PredictionExtractor.extract_last_percentage_value
-    with patch(
-        "main.PredictionExtractor.extract_last_percentage_value", return_value=0.65
-    ) as mock_extractor:
-        result = await bot._run_forecast_on_binary(
-            mock_binary_question, "some research", mock_general_llm
-        )
+    with patch("main.PredictionExtractor.extract_last_percentage_value", return_value=0.65) as mock_extractor:
+        result = await bot._run_forecast_on_binary(mock_binary_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_extractor.assert_called_once()
         assert result.prediction_value == 0.65
@@ -253,9 +215,7 @@ async def test_run_forecast_on_binary_uses_provided_llm(
 
 
 @pytest.mark.asyncio
-async def test_run_forecast_on_multiple_choice_uses_provided_llm(
-    mock_metaculus_question, mock_general_llm
-):
+async def test_run_forecast_on_multiple_choice_uses_provided_llm(mock_metaculus_question, mock_general_llm):
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
@@ -268,9 +228,7 @@ async def test_run_forecast_on_multiple_choice_uses_provided_llm(
         "main.PredictionExtractor.extract_option_list_with_percentage_afterwards",
         return_value=MagicMock(),
     ) as mock_extractor:
-        result = await bot._run_forecast_on_multiple_choice(
-            mock_metaculus_question, "some research", mock_general_llm
-        )
+        result = await bot._run_forecast_on_multiple_choice(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_extractor.assert_called_once()
         assert result.prediction_value is not None
@@ -278,9 +236,7 @@ async def test_run_forecast_on_multiple_choice_uses_provided_llm(
 
 
 @pytest.mark.asyncio
-async def test_run_forecast_on_numeric_uses_provided_llm(
-    mock_metaculus_question, mock_general_llm
-):
+async def test_run_forecast_on_numeric_uses_provided_llm(mock_metaculus_question, mock_general_llm):
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
@@ -288,15 +244,11 @@ async def test_run_forecast_on_numeric_uses_provided_llm(
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock _create_upper_and_lower_bound_messages and PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability
-    with patch.object(
-        bot, "_create_upper_and_lower_bound_messages", return_value=("", "")
-    ) as mock_bounds, patch(
+    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, patch(
         "main.PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability",
         return_value=MagicMock(),
     ) as mock_extractor:
-        result = await bot._run_forecast_on_numeric(
-            mock_metaculus_question, "some research", mock_general_llm
-        )
+        result = await bot._run_forecast_on_numeric(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_bounds.assert_called_once()
         mock_extractor.assert_called_once()
