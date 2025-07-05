@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from typing import Any, Coroutine, Literal, cast
 
+import numpy as np
 from forecasting_tools import (AskNewsSearcher, BinaryQuestion, ForecastBot,
                                GeneralLlm, MetaculusApi, MetaculusQuestion,
                                MultipleChoiceQuestion, NumericDistribution,
@@ -324,7 +325,7 @@ class TemplateForecaster(ForecastBot):
         prompt = clean_indents(
             f"""
         You are a **senior forecaster** preparing a rigorous public report for expert peers.
-        Your accuracy and *calibration* will be scored with Metaculus’ log-score, so avoid
+        Your accuracy and *calibration* will be scored with Metaculus' log-score, so avoid
         over-confidence and make sure your probabilities sum to **100 %**.
         Please consider news, research, and prediction markets, but you are not beholden to them.
 
@@ -342,15 +343,15 @@ class TemplateForecaster(ForecastBot):
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
 
-        Today’s date: {datetime.now().strftime("%Y-%m-%d")}
+        Today's date: {datetime.now().strftime("%Y-%m-%d")}
 
         ── Write your analysis in the following numbered sections ────────────
-        (1) **Time to resolution** – how long until the panel can decide.
+        (1) **Time to resolution**: how long until the panel can decide.
 
-        (2) **Status-quo outcome** – if present trends simply continue, which
+        (2) **Status-quo outcome**: if present trends simply continue, which
             option is most plausible and why?
 
-        (3) **Base-rate & expert priors** – assemble a table like:
+        (3) **Base-rate & expert priors**: assemble a table like:
             Option | Historical / analogous base-rate | Expert / market signal
             -------|-----------------------------------|-----------------------
             A      | …                                 | …
@@ -359,13 +360,13 @@ class TemplateForecaster(ForecastBot):
         (4) **Strongest pro case** for the *currently most-likely* option
             (use evidence & causal chains from the briefing).
 
-        (5) **Red-team critique** – attack the argument in (4); highlight
+        (5) **Red-team critique**: attack the argument in (4); highlight
             hidden assumptions or data that could flip the conclusion.
 
-        (6) **Unexpected scenario** – outline a plausible but overlooked
+        (6) **Unexpected scenario**: outline a plausible but overlooked
             pathway that would make a different option win.
 
-        (7) **Final rationale** – reconcile everything above into calibrated
+        (7) **Final rationale**: reconcile everything above into calibrated
             probabilities.  Remember:
             • Good forecasters leave a little probability on most options.
             • Use integers 1-99 (no 0 % or 100 %).
@@ -412,7 +413,7 @@ class TemplateForecaster(ForecastBot):
         {question.resolution_criteria}
         {question.fine_print}
 
-        Units: {question.unit_of_measure or "Not stated – infer if possible"}
+        Units: {question.unit_of_measure or "Not stated: infer if possible"}
 
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
@@ -423,24 +424,24 @@ class TemplateForecaster(ForecastBot):
         {upper_bound_message}
 
         ── Write your analysis in the following numbered sections ────────────
-        (1) **Time to resolution** – how long until we know the answer.
+        (1) **Time to resolution**: how long until we know the answer.
 
-        (2) **Status-quo outcome** – what value is implied if current
+        (2) **Status-quo outcome**: what value is implied if current
             conditions simply persist?
 
-        (3) **Trend continuation** – extrapolate historical data to 
+        (3) **Trend continuation**: extrapolate historical data to 
             the closing date.
 
-        (4) **Expert & market priors** – cite ranges or point forecasts from
+        (4) **Expert & market priors**: cite ranges or point forecasts from
             specialists, prediction markets, or peer forecasts.
 
-        (5) **Unexpected low scenario** – describe a coherent pathway that
+        (5) **Unexpected low scenario**: describe a coherent pathway that
             would push the result into an unusually *low* tail.
 
-        (6) **Unexpected high scenario** – analogous pathway for an unusually
+        (6) **Unexpected high scenario**: analogous pathway for an unusually
             *high* tail.
 
-        (7) **Red-team critique & final rationale** – challenge your own
+        (7) **Red-team critique & final rationale**: challenge your own
             assumptions, then state how you weight everything to set each
             percentile.  Good forecasters:
             • keep 10 / 90 far apart (unknown unknowns)  
