@@ -24,6 +24,10 @@ ipykernel = "^6.29.5"
 pytest = "^8.4.1"
 pytest-asyncio = "^1.0.0"
 
+# Black configuration to enforce 120-character line length
+[tool.black]
+line-length = 120
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
