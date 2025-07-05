@@ -180,6 +180,21 @@ Visit [this page](https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0
 You can also use the `forecasting-tools` package to call the proxy. To do this, call `await forecasting-tools.GeneralLlm(model="metaculus/{openai_or_anthropic_model_name}").invoke(prompt)`. You will need METACULUS_TOKEN set in your .env file and have already had credits assigned to your account and model choice. GeneralLlm is a wrapper around the litellm package which provides one API for every major model and provider and can be used for other providers like Gemini, XAI, or OpenRouter. For more information about how to use GeneralLlm/litellm see [forecasting-tools](https://github.com/Metaculus/forecasting-tools) and [litellm](https://github.com/BerriAI/litellm)
 
 
+## New module structure (May 2025 refactor)
+
+To keep `main.py` lean, the following internal modules were introduced:
+
+| module | purpose |
+|--------|---------|
+| `metaculus_bot/cli.py` | CLI entry-point (was bottom of `main.py`) |
+| `metaculus_bot/utils/logging_utils.py` | Compact log summary & subclass |
+| `metaculus_bot/prompts.py` | Houses prompt-builder functions |
+| `metaculus_bot/numeric_utils.py` | Numeric aggregation helpers |
+| `metaculus_bot/research_providers.py` | Strategy object for research sources |
+| `metaculus_bot/llm_configs.py` | Central LLM configuration |
+
+The public entry-points (`python main.py …` and GitHub Actions) are unchanged.
+
 ## Run the bot locally
 Clone the repository. Find your terminal and run the following commands:
 ```bash

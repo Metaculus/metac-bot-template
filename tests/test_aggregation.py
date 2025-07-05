@@ -40,11 +40,16 @@ async def test_numeric_aggregation_configurable():
     # Create two different numeric distributions to be aggregated.
     # `dist1` is a uniform distribution.
     # `dist2` is skewed towards the upper bound.
-    dist1_percentiles = [Percentile(value=p * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
-    dist2_percentiles = [Percentile(value=p**0.5 * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
+    x_axis = [p * 100 for p in np.linspace(0, 1, 11) if 0 < p < 1]
+    dist1_percentiles = [Percentile(value=v, percentile=p) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])]
+    dist2_percentiles = [
+        Percentile(value=v, percentile=p**0.5) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])
+    ]
 
     # Third distribution: quadratic skew towards lower bound.
-    dist3_percentiles = [Percentile(value=(p**2) * 100, percentile=p) for p in np.linspace(0, 1, 11) if 0 < p < 1]
+    dist3_percentiles = [
+        Percentile(value=v, percentile=p**2) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])
+    ]
 
     common_args = {
         "open_lower_bound": question.open_lower_bound,
