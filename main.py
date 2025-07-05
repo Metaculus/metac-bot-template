@@ -17,7 +17,7 @@ from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import \
     ResearchWithPredictions
 from forecasting_tools.data_models.numeric_report import \
-    Percentile  # type: ignore
+    Percentile, NumericReport  # type: ignore
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
@@ -72,6 +72,7 @@ class TemplateForecaster(ForecastBot):
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
+        numeric_aggregation_method: Literal["mean", "median"] = "mean",
         llms: dict[str, str | GeneralLlm | list[GeneralLlm]] | None = None,
     ) -> None:
         if llms is None:
@@ -119,6 +120,7 @@ class TemplateForecaster(ForecastBot):
             raise ValueError(
                 "Must run at least one prediction if 'forecasters' are not provided."
             )
+        self.numeric_aggregation_method = numeric_aggregation_method
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -478,6 +480,25 @@ class TemplateForecaster(ForecastBot):
                     reasoning, question
                 )
             )
+            # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
+            if (
+                hasattr(prediction, "declared_percentiles")
+                and isinstance(prediction.declared_percentiles, list)
+                and len(prediction.declared_percentiles) != 6
+            ):
+                raise ValidationError.from_exception_data(
+                    "NumericDistribution",  # title
+                    [
+                        {
+                            "type": "value_error",
+                            "loc": ("declared_percentiles",),
+                            "input": prediction.declared_percentiles,
+                            "ctx": {
+                                "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
+                            },
+                        }
+                    ],
+                )
         except ValidationError as err:
             # Fallback: find lines with "percentile", extract the last number,
             # and assume they correspond to the required 10/20/40/60/80/90.
@@ -547,7 +568,54 @@ class TemplateForecaster(ForecastBot):
             mean_prediction = sum(float_predictions) / len(float_predictions)
             rounded_mean = round(mean_prediction, 3)
             return rounded_mean
+        elif isinstance(question, NumericQuestion):
+            # Configurable aggregation for NumericQuestions using full 201-point CDFs.
+            if not predictions:
+                raise ValueError("Cannot aggregate empty list of predictions")
 
+            numeric_predictions = cast(list[NumericDistribution], predictions)
+
+            # Median aggregation can delegate directly to the existing NumericReport helper.
+            if self.numeric_aggregation_method == "median":
+                return await NumericReport.aggregate_predictions(numeric_predictions, question)
+
+            if self.numeric_aggregation_method == "mean":
+                # Replicate NumericReport.aggregate_predictions but with mean instead of median.
+                cdfs = [prediction.cdf for prediction in numeric_predictions]
+
+                # Ensure all CDFs share the same x-axis.
+                x_axis = [percentile.value for percentile in cdfs[0]]
+                for cdf in cdfs:
+                    if any(p.value != x_axis[i] for i, p in enumerate(cdf)):
+                        raise ValueError("X axis between CDFs is not the same")
+
+                all_percentiles_of_cdf: list[list[float]] = [
+                    [p.percentile for p in cdf] for cdf in cdfs
+                ]
+
+                mean_percentile_list: list[float] = (
+                    np.mean(np.array(all_percentiles_of_cdf), axis=0).tolist()
+                )
+
+                mean_cdf = [
+                    Percentile(value=value, percentile=percentile)
+                    for value, percentile in zip(x_axis, mean_percentile_list)
+                ]
+
+
+                return NumericDistribution(
+                    declared_percentiles=mean_cdf,
+                    open_upper_bound=question.open_upper_bound,
+                    open_lower_bound=question.open_lower_bound,
+                    # DO NOT INFER UPPER AND LOWER BOUNDS FROM THE CDF! that will break b/c each model's CDF will not be aligned.
+                    upper_bound=question.upper_bound,
+                    lower_bound=question.lower_bound,
+                    zero_point=question.zero_point,
+                )
+
+            raise ValueError(
+                f"Invalid numeric aggregation method: {self.numeric_aggregation_method}"
+            )
         # Fallback to the parent class's aggregation logic for all other question types
         return await super()._aggregate_predictions(predictions, question)
 
@@ -619,6 +687,7 @@ if __name__ == "__main__":
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
+        numeric_aggregation_method="mean",
         llms={
             "forecasters": [
                 GeneralLlm(

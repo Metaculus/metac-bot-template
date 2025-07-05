@@ -34,8 +34,8 @@ def make_dummy_numeric_question():
         unit_of_measure=None,
         open_upper_bound=True,
         open_lower_bound=True,
-        lower_bound=None,
-        upper_bound=None,
+        lower_bound=0,
+        upper_bound=9999,
         page_url="https://example.com/q",
         zero_point=0,
         id_of_question=123,  # Added for testing purposes
