@@ -1,16 +1,15 @@
 import asyncio
-# type: ignore
-from unittest.mock import patch
-
 from typing import Any, cast
-import pytest
-from pydantic import ValidationError
+# type: ignore
+from unittest.mock import MagicMock, patch
 
+import pytest
 from forecasting_tools import PredictionExtractor
 from forecasting_tools.data_models.numeric_report import NumericDistribution
+from pydantic import ValidationError
+
 # from forecasting_tools.data_models.questions import NumericQuestion
 from main import TemplateForecaster
-from unittest.mock import MagicMock
 
 
 class DummyLLM:  # minimal async LLM for tests
@@ -39,7 +38,7 @@ def make_dummy_numeric_question():
         upper_bound=None,
         page_url="https://example.com/q",
         zero_point=0,
-        id_of_question=123, # Added for testing purposes
+        id_of_question=123,  # Added for testing purposes
     )
 
 
