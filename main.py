@@ -321,47 +321,62 @@ class TemplateForecaster(ForecastBot):
         self, question: MultipleChoiceQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
-            f"""
-            You are a senior forecaster preparing a rigorous public report for expert peers.
-            You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
-            You should consider current prediction markets when possible but not be beholden to them.
+    f"""
+    You are a **senior forecaster** preparing a rigorous public report for expert peers.
+    Your accuracy and *calibration* will be scored with Metaculus’ log-score, so avoid
+    over-confidence and make sure your probabilities sum to **100 %**.
+    Please consider news, research, and prediction markets, but you are not beholden to them.
 
-            Your Metaculus question is:
-            {question.question_text}
+    ── Question ──────────────────────────────────────────────────────────
+    {question.question_text}
 
-            The options are: {question.options}
+    • Options (in resolution order): {question.options}
 
+    ── Context ───────────────────────────────────────────────────────────
+    {question.background_info}
 
-            Background:
-            {question.background_info}
+    {question.resolution_criteria}
+    {question.fine_print}
 
-            {question.resolution_criteria}
+    ── Intelligence Briefing (assistant research) ────────────────────────
+    {research}
 
-            {question.fine_print}
+    Today’s date: {datetime.now().strftime("%Y-%m-%d")}
 
+    ── Write your analysis in the following numbered sections ────────────
+    (1) **Time to resolution** – how long until the panel can decide.
 
-            Your research assistant says:
-            {research}
+    (2) **Status-quo outcome** – if present trends simply continue, which
+        option is most plausible and why?
 
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
+    (3) **Base-rate & expert priors** – assemble a table like:
+           Option | Historical / analogous base-rate | Expert / market signal
+           -------|-----------------------------------|-----------------------
+           A      | …                                 | …
+           …      | …                                 | …
 
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) The historical base rate or plausible base rate for each option if possible.
-            (d) A description of an scenario that results in an unexpected outcome.
+    (4) **Strongest pro case** for the *currently most-likely* option
+        (use evidence & causal chains from the briefing).
 
-            You write your rationale remembering that 
-            (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and 
-            (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
-            (3) Your probabilities should add up to 100% and each probability should be between 1% and 99%.
+    (5) **Red-team critique** – attack the argument in (4); highlight
+        hidden assumptions or data that could flip the conclusion.
 
-            The last thing you write is your final probabilities (integers 1% to 99%) for the N options in this order {question.options} as:
-            Option_A: Probability_A
-            Option_B: Probability_B
-            ...
-            Option_N: Probability_N
-            """
+    (6) **Unexpected scenario** – outline a plausible but overlooked
+        pathway that would make a different option win.
+
+    (7) **Final rationale** – reconcile everything above into calibrated
+        probabilities.  Remember:
+        • Good forecasters leave a little probability on most options.
+        • Use integers 1-99 (no 0 % or 100 %).
+        • They must sum to 100 %.
+
+    ── OUTPUT FORMAT (must be last lines, nothing after) ────────────────
+    Option_A: NN%
+    Option_B: NN%
+    …
+    Option_N: NN%
+    """
+)
         )
         reasoning = await llm_to_use.invoke(prompt)
         self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)
