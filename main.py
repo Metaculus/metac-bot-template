@@ -488,8 +488,8 @@ Question ID: {question.id_of_question}
                 declared_percentiles=repaired_percentiles,
                 open_upper_bound=question.open_upper_bound,
                 open_lower_bound=question.open_lower_bound,
-                upper_bound=question.upper_bound or max(values),
-                lower_bound=question.lower_bound or min(values),
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
                 zero_point=question.zero_point,
             )
 
