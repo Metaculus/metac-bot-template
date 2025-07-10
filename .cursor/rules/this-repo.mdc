@@ -1,8 +1,9 @@
+---
+alwaysApply: true
+---
 # Metaculus Prediction Bot
 
 This repository contains a Python-based bot that interacts with the Metaculus prediction platform. The bot uses the OpenAI API to generate predictions for questions on Metaculus and submits them.
-
-Reference `AGENTS.md` in this directory for my general assistant preferences.
 
 ## Key Files and Functionality
 
@@ -16,7 +17,7 @@ Reference `AGENTS.md` in this directory for my general assistant preferences.
     *   `test_bot.yaml`: A workflow for testing the bot's functionality.
 *   **`.env.template`**: A template for the required environment variables, which include API keys for Metaculus and OpenAI.
 
-The package uses a framework (`forecasting_tools`), a python lib which you may have trouble accessing directly due to restrictions; I have pasted a static copy of it in the dir `REFERENCE_COPY_OF_forecasting_tools`, which you may access!
+The package uses a framework (`forecasting_tools`) installed in python which you may have trouble accessing directly due to restrictions; I can manually copy-paste these as needed.
 
 To run anything, first activate the conda env:
 ```bash
