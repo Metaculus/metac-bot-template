@@ -18,7 +18,7 @@ async def chat_group_single_question(
         num_of_experts: str | None = None,
 ) -> Tuple[Union[int, Dict[str, float]], str]:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
+    config = get_gpt_config(cache_seed, 1, "gpt-o4-mini-high", 120)
 
     news = await run_research(question_details, use_hyde=use_hyde)
 
