@@ -1,5 +1,5 @@
 # Simple Metaculus forecasting bot
-This repository contains a simple bot meant to get you started with creating your own bot for the AI Forecasting Tournament. Go to https://www.metaculus.com/aib/ for more info and tournament rules.
+This repository contains a simple bot meant to get you started with creating your own bot for the AI Forecasting Tournament. Go to https://www.metaculus.com/aib/ for more info and tournament rules (this should link to the "Getting Started" section of our [resources](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#GettingStarted:~:text=AI%20Forecasting%20Benchmark%3F-,Getting%20Started,-We%27ve%20published%20a) page).
 
 In this project are 2 files:
 - **main.py**: Our recommended template option that uses [forecasting-tools](https://github.com/Metaculus/forecasting-tools) package to handle a lot of stuff in the background for you (such as API calls). We will update the package, thus allowing you to gain new features with minimal changes to your code.
@@ -24,31 +24,11 @@ The easiest way to use this repo is to fork it, enable github workflow/actions, 
 
 The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
 
-## Getting your Metaculus Token
-To get a bot account and your API Token:
-1) Go to https://metaculus.com/aib
-2) Click "Log Out" if you are using your personal account
-3) Click "Create a Bot Account"
-4) Create your account
-5) Go back to https://metaculus.com/aib
-6) Click 'Show My Token'
+## API Keys
+Instructions for getting your METACULUS_TOKEN and search provider API keys (AskNews, Exa, Perplexity, etc) are listed on the "Getting Started" section of the [resources](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#GettingStarted:~:text=AI%20Forecasting%20Benchmark%3F-,Getting%20Started,-We%27ve%20published%20a) page.
 
-If your regular Metaculus account uses Gmail, you can create a separate bot account while keeping your existing email by adding a '+bot' before the @ symbol. For example, if your email is 'youremail@gmail.com', you can use 'youremail+bot1@gmail.com' for your bot account.
-
-## Search Provider API Keys
-
-### Getting AskNews Setup
-Metaculus is collaborating with AskNews to give free access for news searches. Each registered bot builder gets 3k calls per month, 9k calls total for the tournament (please note that latest news requests (48 hours back) are 1 call and archive news requests are 5 calls), and 5M tokens. Bots have access to the /news and /deepnews endpoints. To sign up:
-1. Make an account on AskNews (if you have not yet, https://my.asknews.app)
-2. Join the [AskNews discord](https://discord.gg/99qt5HGgUn), send your bot name + AskNews registered email to the #api-support channel.
-3. AskNews will make sure you have free calls and your account is ready to go for you to make API keys and get going
-4. Generate your `ASKNEWS_CLIENT_ID` and `ASKNEWS_SECRET` [here](https://my.asknews.app/en/settings/api-credentials) and add that to the .env
-5. Run the AskNewsSearcher from the forecasting-tools repo or use the AskNews SDK python package
-
-Your account will be active for the duration of the tournament. There is only one account allowed per participant.
-
-Example usage of /news and /deepnews:
-
+## Example usage of /news and /deepnews:
+If you are using AskNews, here is some useful example code.
 ```python
 from asknews_sdk import AsyncAskNewsSDK
 import asyncio
@@ -137,48 +117,6 @@ You will get tags in your response, including:
 <final_response> </final_response>
 
 These tags are likely useful for extracting the pieces that you need for your pipeline. For example, if you dont want to include all the thinking/searching, you could just extract <final_response> </final_response>
-
-### Getting Perplexity Set Up
-Perplexity works as an internet powered LLM, and costs half a cent per search (if you pick the right model) plus token costs. It is less customizable but generally cheaper.
-1. Create an account on the free tier at www.perplexity.ai
-2. Go to https://www.perplexity.ai/settings/account
-3. Click "API" in the top bar
-4. Click "Generate" in the "API Keys" section
-5. Add funds to your account with the 'Buy Credits' button
-6. Add it to the .env as `PERPLEXITY_API_KEY=your-key-here`
-
-### Getting Exa Set Up
-Exa is closer to a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site returned can have scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the `SmartSearcher` of the `forecasting-tools` python package. Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' requested per site requested. Content items include: highlights from a source, summary of a source, or full text.
-1. Make an account with Exa at Exa.ai
-2. Go to https://dashboard.exa.ai/playground
-3. Click on "API Keys" in the left sidebar
-4. Create a new key
-5. Go to 'Billing' in the left sidebar and add funds to your acount with the 'Top Up Balance'
-6. Add it to the .env as `EXA_API_KEY=your-key-here`
-
-### Other Search
-Here are some other unvetted but interesting options for search and website reading:
-- Tavily
-- Google Search API
-- crawl4ai
-- Firecrawl
-- Playwright
-
-## Accessing the Metaculus LLM Proxy
-OpenAI and Anthropic have generously donated credits to bot builders in the tournament which we are providing through an llm proxy.
-
-To get credits assigned to your model choices (or if you need renewed credits from a previous quarter), please send an email to `ben [at] metaculus [.com]` with the below:
-* The username of your bot
-* A couple paragraph description of how your existing bot works, or what you plan to build
-* An estimate of how much budget/tokens you might productively use
-* Your preferred Anthropic/OpenAI model(s) and how you want the budget distributed between them (there is budget distributed to each individual model name rather than to your account on whole)
-
-Metaculus will add new OpenAI and Anthropic completion models to the proxy as they come out. If you want to use a new model, please send us an email with the model you desire, and how much budget you want removed from one model and transferred to another. Alternatively, if you have a new idea that needs more support, pitch it to us, and we can add give additional credits. Reach out if you run out.
-
-Visit [this page](https://www.notion.so/metaculus/OpenAI-and-Anthropic-credits-0e1f7bf8c8a248e4a38da8758cc04de4) for instructions on how to call the Metaculus proxy directly.
-
-You can also use the `forecasting-tools` package to call the proxy. To do this, call `await forecasting-tools.GeneralLlm(model="metaculus/{openai_or_anthropic_model_name}").invoke(prompt)`. You will need METACULUS_TOKEN set in your .env file and have already had credits assigned to your account and model choice. GeneralLlm is a wrapper around the litellm package which provides one API for every major model and provider and can be used for other providers like Gemini, XAI, or OpenRouter. For more information about how to use GeneralLlm/litellm see [forecasting-tools](https://github.com/Metaculus/forecasting-tools) and [litellm](https://github.com/BerriAI/litellm)
-
 
 ## Run the bot locally
 Clone the repository. Find your terminal and run the following commands:
