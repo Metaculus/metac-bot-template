@@ -62,13 +62,14 @@ class FallTemplateBot2025(ForecastBot):
         ...
         llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
             "default": GeneralLlm(
-                model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
+                model="openrouter/openai/gpt-4o", # "anthropic/claude-3-5-sonnet-20241022", etc (see docs for litellm)
                 temperature=0.3,
                 timeout=40,
                 allowed_tries=2,
             ),
             "summarizer": "openai/gpt-4o-mini",
             "researcher": "asknews/deep-research/low",
+            "parser": "openai/gpt-4o-mini",
         },
     )
     ```
@@ -403,7 +404,7 @@ if __name__ == "__main__":
         skip_previously_forecasted_questions=True,
         # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
         #     "default": GeneralLlm(
-        #         model="metaculus/anthropic/claude-3-5-sonnet-20241022", # or "openrouter/openai/gpt-4o-mini", "openai/gpt-4o", etc (see docs for litellm)
+        #         model="openrouter/openai/gpt-4o", # "anthropic/claude-3-5-sonnet-20241022", etc (see docs for litellm)
         #         temperature=0.3,
         #         timeout=40,
         #         allowed_tries=2,

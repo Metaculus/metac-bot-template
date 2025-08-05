@@ -3,22 +3,23 @@ import datetime
 import json
 import os
 import re
+
 import dotenv
+
 dotenv.load_dotenv()
 
-from openai import AsyncOpenAI
+import forecasting_tools
 import numpy as np
 import requests
-import forecasting_tools
 from asknews_sdk import AskNewsSDK
-
+from openai import AsyncOpenAI
 
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -32,19 +33,24 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API K
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
+FALL_2025_AI_BENCHMARKING_ID = "fall-aib-2025"
+CURRENT_MINIBENCH_ID = "minibench"
+
 Q4_2024_QUARTERLY_CUP_ID = 3672
 Q1_2025_QUARTERLY_CUP_ID = 32630
-AXC_2025_TOURNAMENT_ID = 32564
-GIVEWELL_ID = 3600
-RESPIRATORY_OUTLOOK_ID = 3411
+CURRENT_METACULUS_CUP_ID = "metaculus-cup"
 
-TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
+AXC_2025_TOURNAMENT_ID = 32564
+AI_2027_TOURNAMENT_ID = "ai-2027"
+
+TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
     (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -131,7 +137,7 @@ def create_forecast_payload(
 
 
 def list_posts_from_tournament(
-    tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
+    tournament_id: int | str = TOURNAMENT_ID, offset: int = 0, count: int = 50
 ) -> list[dict]:
     """
     List (all details) {count} posts from the {tournament_id}
@@ -145,6 +151,7 @@ def list_posts_from_tournament(
                 "binary",
                 "multiple_choice",
                 "numeric",
+                "discrete",
             ]
         ),
         "tournaments": [tournament_id],
@@ -304,6 +311,7 @@ def call_exa_smart_searcher(question: str) -> str:
             f"\n\nThe question is: {question}"
         )
         response = asyncio.run(searcher.invoke(prompt))
+        assert response is not None
 
     return response
 
@@ -566,6 +574,7 @@ def generate_continuous_cdf(
     upper_bound: float,
     lower_bound: float,
     zero_point: float | None,
+    cdf_size: int,
 ) -> list[float]:
     """
     Returns: list[float]: A list of 201 float values representing the CDF.
@@ -621,7 +630,7 @@ def generate_continuous_cdf(
             scale = lambda x: range_min + (range_max - range_min) * (
                 deriv_ratio**x - 1
             ) / (deriv_ratio - 1)
-        return [scale(x) for x in np.linspace(0, 1, 201)]
+        return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
 
@@ -685,6 +694,11 @@ async def get_numeric_gpt_prediction(
     upper_bound = scaling["range_max"]
     lower_bound = scaling["range_min"]
     zero_point = scaling["zero_point"]
+    if question_type == "discrete":
+        outcome_count = question_details["scaling"]["inbound_outcome_count"]
+        cdf_size = outcome_count + 1
+    else:
+        cdf_size = 201
 
     # Create messages about the bounds that are passed in the LLM prompt
     if open_upper_bound:
@@ -727,6 +741,7 @@ async def get_numeric_gpt_prediction(
             upper_bound,
             lower_bound,
             zero_point,
+            cdf_size,
         )
 
         return cdf, comment
@@ -990,6 +1005,10 @@ async def forecast_individual_question(
         forecast, comment = await get_numeric_gpt_prediction(
             question_details, num_runs_per_question
         )
+    elif question_type == "discrete":
+        forecast, comment = await get_numeric_gpt_prediction(
+            question_details, num_runs_per_question
+        )
     elif question_type == "multiple_choice":
         forecast, comment = await get_multiple_choice_gpt_prediction(
             question_details, num_runs_per_question
@@ -1001,7 +1020,7 @@ async def forecast_individual_question(
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
     print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
 
-    if question_type == "numeric":
+    if question_type == "numeric" or question_type == "discrete":
         summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
     else:
         summary_of_forecast += f"Forecast: {forecast}\n"
