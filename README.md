@@ -7,7 +7,7 @@ In this project are 2 files:
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
-## 30min Video Tutorial
+## 30min Video Tutoriala
 This tutorial shows you how to set up our template bot so you can start forecasting in the tournament.
 
 [![Watch the tutorial](https://cdn.loom.com/sessions/thumbnails/fc3c1a643b984a15b510647d8f760685-42b452e1ab7d2afa-full-play.gif)](https://www.loom.com/share/fc3c1a643b984a15b510647d8f760685?sid=29b502e0-cf64-421e-82c0-3a78451159ed)
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     sources = ["asknews"]
     model = "deepseek-basic"
     search_depth = 2
-    max_depth = 2 
+    max_depth = 2
     asyncio.run(
         deep_research(
             query, sources, model, search_depth, max_depth
@@ -177,7 +177,7 @@ These tags are likely useful for extracting the pieces that you need for your pi
 
 
 ## Ideas for bot improvements
-Below are some ideas for making a novel bot. 
+Below are some ideas for making a novel bot.
 - Finetuned LLM on Metaculus Data: Create an optimized prompt (using DSPY or a similar toolset) and/or a fine-tuned LLM using all past Metaculus data. The thought is that this will train the LLM to be well-calibrated on real-life questions. Consider knowledge cutoffs and data leakage from search providers.
 - Dataset explorer: Create a tool that can find if there are datasets or graphs related to a question online, download them if they exist, and then run data science on them to answer a question.
 - Question decomposer: A tool that takes a complex question and breaks it down into simpler questions to answer those instead
