@@ -7,7 +7,7 @@ In this project are 2 files:
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
-## 30min Video Tutoriala
+## 30min Video Tutorial
 This tutorial shows you how to set up our template bot so you can start forecasting in the tournament.
 
 [![Watch the tutorial](https://cdn.loom.com/sessions/thumbnails/fc3c1a643b984a15b510647d8f760685-42b452e1ab7d2afa-full-play.gif)](https://www.loom.com/share/fc3c1a643b984a15b510647d8f760685?sid=29b502e0-cf64-421e-82c0-3a78451159ed)
