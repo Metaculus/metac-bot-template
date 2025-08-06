@@ -14,6 +14,32 @@ import requests
 from asknews_sdk import AskNewsSDK
 from openai import AsyncOpenAI
 
+
+"""
+This file provides a simple forecasting bot built from the ground up.
+We provide this for people who want to dissect
+it to build their own bot without using forecasting-tools.
+
+This template assumes you are using a OpenAI model and have an OpenAI API key
+You will also need a Metaculus API key, for posting questions to Metaculus
+and a Perplexity or AskNews API key for online research
+
+This is not a representative of the tempalte bots used by Metaculus, as there are some
+differences in implementation. The actual template bot (e.g. like main.py) has the following differences:
+- An LLM now parses the final forecast output (rather than programmatic parsing)
+- Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
+- Upper/Lower bounds are mentioned as suggestions (not ignored) when the bounds are open
+- Group questions are supported
+- The research prompt mentions resolution criteria and fine print explicitly
+
+We realize the below code could probably be cleaned up a bit in a few places
+Though we are assuming most people will dissect it enough to make this not matter much
+
+Note that this is code is given as-is and though we have have done basic testing
+with this file it may be worth double checking key components locally.
+"""
+
+
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
@@ -53,8 +79,6 @@ EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
-# Also, we realize the below code could probably be cleaned up a bit in a few places
-# Though we are assuming most people will dissect it enough to make this not matter much
 
 ######################### HELPER FUNCTIONS #########################
 
@@ -214,16 +238,8 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
     # Remove the base_url parameter to call the OpenAI API directly
     # Also checkout the package 'litellm' for one function that can call any model from any provider
-    # Email ben@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
-    client = AsyncOpenAI(
-        base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
-        default_headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Token {METACULUS_TOKEN}",
-        },
-        api_key="Fake API Key since openai requires this not to be NONE. This isn't used",
-        max_retries=2,
-    )
+    # Also checkout OpenRouter for allowing one API key for many providers (especially powerful if combined with litellm)
+    client = AsyncOpenAI()
 
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
