@@ -13,7 +13,7 @@ from main import TemplateForecaster
 
 @pytest.mark.asyncio
 async def test_binary_parsing_clamps_extremes():
-    bot = TemplateForecaster(llms={"default": "mock"})
+    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
 
     # Minimal binary question
     q = MagicMock(spec=BinaryQuestion)
@@ -45,7 +45,7 @@ async def test_binary_parsing_clamps_extremes():
 
 @pytest.mark.asyncio
 async def test_numeric_parsing_raises_on_wrong_count():
-    bot = TemplateForecaster(llms={"default": "mock"})
+    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
 
     q = SimpleNamespace(
         question_text="num?",
@@ -79,7 +79,7 @@ async def test_numeric_parsing_raises_on_wrong_count():
 
 @pytest.mark.asyncio
 async def test_parser_llm_used_for_structured_output():
-    bot = TemplateForecaster(llms={"default": "mock"})
+    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
 
     sentinel_parser_model = object()
     original_get_llm = bot.get_llm
@@ -92,6 +92,7 @@ async def test_parser_llm_used_for_structured_output():
         # Return a minimally valid object for each call site
         out_type = kwargs.get("output_type") if "output_type" in kwargs else (args[1] if len(args) > 1 else None)
         if out_type.__name__ == "BinaryPrediction":
+
             class _Bin:  # noqa: N801
                 prediction_in_decimal = 0.5
 
@@ -99,7 +100,9 @@ async def test_parser_llm_used_for_structured_output():
         if out_type.__name__ == "PredictedOptionList":
             return MagicMock()
         if out_type.__name__ == "list":  # list[Percentile]
-            return [Percentile(value=v, percentile=p) for v, p in zip([1, 2, 3, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])]
+            return [
+                Percentile(value=v, percentile=p) for v, p in zip([1, 2, 3, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+            ]
         return MagicMock()
 
     # Minimal binary question
@@ -154,7 +157,7 @@ async def test_parser_llm_used_for_structured_output():
 
 @pytest.mark.asyncio
 async def test_mc_additional_instructions_include_options():
-    bot = TemplateForecaster(llms={"default": "mock"})
+    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
     q = MagicMock(spec=MultipleChoiceQuestion)
     q.page_url = "url"
     q.question_text = "who?"

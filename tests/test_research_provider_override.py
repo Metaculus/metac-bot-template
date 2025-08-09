@@ -13,7 +13,10 @@ async def test_run_research_prefers_custom_provider(mock_os_getenv):
     async def custom_provider(_: str) -> str:  # noqa: D401
         return "Custom Research"
 
-    bot = TemplateForecaster(llms={"default": "mock"}, research_provider=custom_provider)
+    bot = TemplateForecaster(
+        llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"},
+        research_provider=custom_provider,
+    )
     q = MetaculusQuestion(question_text="Test", page_url="http://example.com")
 
     # Ensure environment would otherwise enable other providers
@@ -30,4 +33,3 @@ async def test_run_research_prefers_custom_provider(mock_os_getenv):
         asknews_mock.return_value = "Should not be used"
         res = await bot.run_research(q)
         assert res == "Custom Research"
-

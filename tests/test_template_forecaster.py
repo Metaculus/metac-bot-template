@@ -1,11 +1,9 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from forecasting_tools import (BinaryQuestion, GeneralLlm, MetaculusQuestion,
-                               ReasonedPrediction)
+from forecasting_tools import BinaryQuestion, GeneralLlm, MetaculusQuestion, ReasonedPrediction
 from forecasting_tools.data_models.data_organizer import PredictionTypes
-from forecasting_tools.data_models.forecast_report import \
-    ResearchWithPredictions
+from forecasting_tools.data_models.forecast_report import ResearchWithPredictions
 
 from main import TemplateForecaster
 
@@ -49,6 +47,8 @@ async def test_template_forecaster_init_with_forecasters(mock_general_llm):
     llms_config = {
         "forecasters": [mock_general_llm, mock_general_llm],
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
         "default": "mock_default_model",
     }
     bot = TemplateForecaster(llms=llms_config)
@@ -63,6 +63,8 @@ async def test_template_forecaster_init_without_forecasters():
     llms_config = {
         "default": GeneralLlm(model="test_default"),
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config, predictions_per_research_report=3)
 
@@ -78,10 +80,33 @@ async def test_template_forecaster_init_no_llms_provided():
 
 
 @pytest.mark.asyncio
+async def test_template_forecaster_init_missing_required_llms():
+    # Test missing parser and researcher
+    incomplete_llms = {
+        "default": "mock_default_model",
+        "summarizer": "mock_summarizer_model",
+    }
+    with pytest.raises(ValueError, match="Missing required LLM purposes: parser, researcher"):
+        TemplateForecaster(llms=incomplete_llms)
+
+    # Test missing just researcher
+    incomplete_llms = {
+        "default": "mock_default_model",
+        "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+    }
+    with pytest.raises(ValueError, match="Missing required LLM purposes: researcher"):
+        TemplateForecaster(llms=incomplete_llms)
+
+
+@pytest.mark.asyncio
 async def test_template_forecaster_init_forecasters_not_list():
     llms_config = {
         "forecasters": "not_a_list",
         "default": GeneralLlm(model="test_default"),
+        "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     with patch("main.logger.warning") as mock_warning:
         bot = TemplateForecaster(llms=llms_config)
@@ -95,12 +120,16 @@ async def test_research_and_make_predictions_with_forecasters(mock_binary_questi
     llms_config = {
         "forecasters": [mock_general_llm, mock_general_llm],
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
         "default": "mock_default_model",
     }
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock internal methods
-    bot._get_notepad = AsyncMock(return_value=MagicMock(num_research_reports_attempted=0, num_predictions_attempted=0))
+    bot._get_notepad = AsyncMock(
+        return_value=MagicMock(total_research_reports_attempted=0, total_predictions_attempted=0)
+    )
     bot.run_research = AsyncMock(return_value="mock research")
     bot.summarize_research = AsyncMock(return_value="mock summary")
     bot._make_prediction = AsyncMock(return_value=ReasonedPrediction(prediction_value=0.5, reasoning="test"))
@@ -133,6 +162,8 @@ async def test_research_and_make_predictions_without_forecasters(mock_binary_que
     llms_config = {
         "default": GeneralLlm(model="test_default"),
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config, predictions_per_research_report=1)
 
@@ -157,9 +188,11 @@ async def test_make_prediction_with_provided_llm(mock_binary_question, mock_gene
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config)
-    bot._get_notepad = AsyncMock(return_value=MagicMock(num_predictions_attempted=0))
+    bot._get_notepad = AsyncMock(return_value=MagicMock(total_predictions_attempted=0))
     bot._run_forecast_on_binary = AsyncMock(
         return_value=ReasonedPrediction(prediction_value=0.7, reasoning="binary forecast")
     )
@@ -179,9 +212,14 @@ async def test_make_prediction_without_provided_llm(mock_binary_question):
     mock_default_llm.model = "default_mock_model"
     mock_default_llm.invoke = AsyncMock(return_value="default reasoning")
 
-    llms_config = {"default": mock_default_llm, "summarizer": "mock_summarizer_model"}
+    llms_config = {
+        "default": mock_default_llm,
+        "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
+    }
     bot = TemplateForecaster(llms=llms_config)
-    bot._get_notepad = AsyncMock(return_value=MagicMock(num_predictions_attempted=0))
+    bot._get_notepad = AsyncMock(return_value=MagicMock(total_predictions_attempted=0))
     bot._run_forecast_on_binary = AsyncMock(
         return_value=ReasonedPrediction(prediction_value=0.8, reasoning="default binary forecast")
     )
@@ -202,11 +240,15 @@ async def test_run_forecast_on_binary_uses_provided_llm(mock_binary_question, mo
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock structured_output to avoid external parsing LLM calls
-    with patch("main.structure_output", return_value=type("_Bin", (), {"prediction_in_decimal": 0.65})()) as mock_struct:
+    with patch(
+        "main.structure_output", return_value=type("_Bin", (), {"prediction_in_decimal": 0.65})()
+    ) as mock_struct:
         result = await bot._run_forecast_on_binary(mock_binary_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_struct.assert_called_once()
@@ -219,6 +261,8 @@ async def test_run_forecast_on_multiple_choice_uses_provided_llm(mock_metaculus_
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config)
     mock_metaculus_question.options = ["A", "B"]
@@ -237,14 +281,16 @@ async def test_run_forecast_on_numeric_uses_provided_llm(mock_metaculus_question
     llms_config = {
         "default": "mock_default_model",
         "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
     }
     bot = TemplateForecaster(llms=llms_config)
 
     # Mock _create_upper_and_lower_bound_messages and structured_output to return a valid percentile list
     from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
+
     fake_percentiles = [
-        FTPercentile(value=v, percentile=p)
-        for v, p in zip([1, 2, 3, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+        FTPercentile(value=v, percentile=p) for v, p in zip([1, 2, 3, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
     ]
     # Provide minimal numeric bounds attributes expected by NumericDistribution.from_question
     mock_metaculus_question.open_upper_bound = False
@@ -254,8 +300,9 @@ async def test_run_forecast_on_numeric_uses_provided_llm(mock_metaculus_question
     mock_metaculus_question.zero_point = None
     mock_metaculus_question.cdf_size = 201
 
-    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, \
-         patch("main.structure_output", return_value=fake_percentiles) as mock_struct:
+    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, patch(
+        "main.structure_output", return_value=fake_percentiles
+    ) as mock_struct:
         result = await bot._run_forecast_on_numeric(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_bounds.assert_called_once()

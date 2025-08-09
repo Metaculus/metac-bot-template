@@ -8,7 +8,14 @@ from main import TemplateForecaster
 
 @pytest.mark.asyncio
 async def test_run_research_priority(mock_os_getenv):
-    forecaster = TemplateForecaster(llms={"default": "mock_default_model"})
+    forecaster = TemplateForecaster(
+        llms={
+            "default": "mock_default_model",
+            "parser": "mock_parser",
+            "researcher": "mock_researcher",
+            "summarizer": "mock_summarizer",
+        }
+    )
     question = MetaculusQuestion(question_text="Test question", page_url="http://example.com")
 
     # Test AskNews priority

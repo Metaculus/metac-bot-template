@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any, cast
+
 # type: ignore
 from unittest.mock import MagicMock, patch
 
@@ -48,7 +49,12 @@ def dummy_forecaster():
     dummy_llm = MagicMock()
     dummy_llm.model = "dummy"
     return TemplateForecaster(
-        llms={"default": dummy_llm},
+        llms={
+            "default": dummy_llm,
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        },
         publish_reports_to_metaculus=False,
     )
 
@@ -61,6 +67,7 @@ async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
     llm = DummyLLM(rationale)
 
     from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
+
     fake_percentiles = [
         FTPercentile(value=v, percentile=p)
         for v, p in zip([110, 120, 130, 140, 150, 160], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
