@@ -11,14 +11,14 @@ from forecasting_tools import GeneralLlm
 __all__ = ["FORECASTER_LLMS", "SUMMARIZER_LLM"]
 
 FORECASTER_LLMS = [
-    GeneralLlm(
-        model="openrouter/google/gemini-2.5-pro",
-        temperature=0.0,
-        top_p=0.9,
-        stream=False,
-        timeout=180,
-        allowed_tries=3,
-    ),
+    # GeneralLlm(
+    #     model="openrouter/google/gemini-2.5-pro",
+    #     temperature=0.0,
+    #     top_p=0.9,
+    #     stream=False,
+    #     timeout=180,
+    #     allowed_tries=3,
+    # ),
     GeneralLlm(
         model="openrouter/deepseek/deepseek-r1-0528",
         temperature=0.0,
@@ -29,7 +29,7 @@ FORECASTER_LLMS = [
         provider={"quantizations": ["fp16", "bf16", "fp8"]},
     ),
     GeneralLlm(
-        model="openrouter/openai/o3",
+        model="openrouter/openai/gpt-5",
         temperature=0.0,
         top_p=0.9,
         reasoning_effort="medium",
