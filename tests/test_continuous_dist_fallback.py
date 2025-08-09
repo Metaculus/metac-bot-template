@@ -4,7 +4,6 @@ from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from forecasting_tools import PredictionExtractor
 from forecasting_tools.data_models.numeric_report import NumericDistribution
 from pydantic import ValidationError
 
@@ -39,6 +38,7 @@ def make_dummy_numeric_question():
         page_url="https://example.com/q",
         zero_point=0,
         id_of_question=123,  # Added for testing purposes
+        cdf_size=201,
     )
 
 
@@ -54,21 +54,20 @@ def dummy_forecaster():
 
 
 @pytest.mark.asyncio
-async def test_fallback_repairs_extra_numbers(dummy_forecaster):
-    rationale = (
-        "Some intro line with numbers 1 2 3\n"
-        "Percentile 10: 110\n"
-        "Percentile 20: 120\n"
-        "Percentile 40: 130\n"
-        "Percentile 60: 140\n"
-        "Percentile 80: 150\n"
-        "Percentile 90: 160\n"
-        "Another distracting 99% line 200\n"
-    )
-
+async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
+    # We expect to use structured-output only; provide a valid structured parse.
+    rationale = "irrelevant reasoning; parser output is mocked"
     q = make_dummy_numeric_question()
     llm = DummyLLM(rationale)
-    result = await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]
+
+    from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
+    fake_percentiles = [
+        FTPercentile(value=v, percentile=p)
+        for v, p in zip([110, 120, 130, 140, 150, 160], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+    ]
+
+    with patch("main.structure_output", return_value=fake_percentiles):
+        result = await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]
 
     values = [p.value for p in result.prediction_value.declared_percentiles]  # type: ignore
     assert values == [110, 120, 130, 140, 150, 160]
@@ -80,5 +79,6 @@ async def test_fallback_reraises_when_insufficient_numbers(dummy_forecaster):
 
     q = make_dummy_numeric_question()
     llm = DummyLLM(rationale)
-    with pytest.raises(ValidationError):
-        await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]
+    with patch("main.structure_output", side_effect=ValidationError.from_exception_data("NumericDistribution", [])):
+        with pytest.raises(ValidationError):
+            await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]

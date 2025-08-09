@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import re
 from datetime import datetime
 from typing import Any, Coroutine, Literal, Sequence, cast
 
@@ -17,7 +16,6 @@ from forecasting_tools import (
     NumericDistribution,
     NumericQuestion,
     PredictedOptionList,
-    PredictionExtractor,
     ReasonedPrediction,
     SmartSearcher,
     clean_indents,
@@ -41,8 +39,56 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-<<<<<<< HEAD
 class TemplateForecaster(CompactLoggingForecastBot):
+
+    _max_concurrent_questions: int = 2
+    _concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(_max_concurrent_questions)
+
+    def __init__(
+        self,
+        *,
+        research_reports_per_question: int = 1,
+        predictions_per_research_report: int = 1,
+        use_research_summary_to_forecast: bool = False,
+        publish_reports_to_metaculus: bool = False,
+        folder_to_save_reports_to: str | None = None,
+        skip_previously_forecasted_questions: bool = False,
+        llms: dict[str, str | GeneralLlm] | None = None,
+        numeric_aggregation_method: Literal["mean", "median"] = "mean",
+        research_provider: ResearchCallable | None = None,
+    ) -> None:
+        # Enforce that some llm config is provided (tests rely on this).
+        if llms is None:
+            raise ValueError("Either 'forecasters' or a 'default' LLM must be provided.")
+
+        # Setup optional forecasters list; if valid, override default and count.
+        self._forecaster_llms: list[GeneralLlm] = []
+        if "forecasters" in llms:
+            value = llms["forecasters"]
+            if isinstance(value, list) and all(isinstance(x, GeneralLlm) for x in value):
+                if value:
+                    self._forecaster_llms = list(value)
+                    # Ensure default points at first forecaster
+                    llms = dict(llms)
+                    llms["default"] = self._forecaster_llms[0]
+                    predictions_per_research_report = len(self._forecaster_llms)
+            else:
+                logger.warning("'forecasters' key in llms must be a list of GeneralLlm objects.")
+
+        if numeric_aggregation_method not in ("mean", "median"):
+            raise ValueError("numeric_aggregation_method must be 'mean' or 'median'")
+        self.numeric_aggregation_method: Literal["mean", "median"] = numeric_aggregation_method
+        self._custom_research_provider: ResearchCallable | None = research_provider
+
+        super().__init__(
+            research_reports_per_question=research_reports_per_question,
+            predictions_per_research_report=predictions_per_research_report,
+            use_research_summary_to_forecast=use_research_summary_to_forecast,
+            publish_reports_to_metaculus=publish_reports_to_metaculus,
+            folder_to_save_reports_to=folder_to_save_reports_to,
+            skip_previously_forecasted_questions=skip_previously_forecasted_questions,
+            llms=llms,
+        )
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -125,6 +171,27 @@ class TemplateForecaster(CompactLoggingForecastBot):
         # Embed model name in reasoning for reporting
         prediction.reasoning = f"Model: {actual_llm.model}\n\n{prediction.reasoning}"
         return prediction  # type: ignore
+
+    async def _aggregate_predictions(
+        self,
+        predictions: list[PredictionTypes],
+        question: MetaculusQuestion,
+    ) -> PredictionTypes:
+        if not predictions:
+            raise ValueError("Cannot aggregate empty list of predictions")
+
+        # Binary aggregation (floats)
+        if isinstance(predictions[0], (int, float)):
+            float_preds = [float(p) for p in predictions]  # type: ignore[list-item]
+            return aggregate_binary_mean(float_preds)  # type: ignore[return-value]
+
+        # Numeric aggregation (configurable)
+        if isinstance(predictions[0], NumericDistribution) and isinstance(question, NumericQuestion):
+            numeric_preds = [p for p in predictions if isinstance(p, NumericDistribution)]
+            return await aggregate_numeric(numeric_preds, question, self.numeric_aggregation_method)  # type: ignore[return-value]
+
+        # Delegate remaining types (e.g., multiple-choice) to default
+        return await super()._aggregate_predictions(predictions, question)
 
     async def _call_perplexity(self, question: str, use_open_router: bool = False) -> str:
         prompt = clean_indents(
@@ -223,74 +290,50 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
 
-        try:
-            percentile_list: list[Percentile] = await structure_output(
-                reasoning, list[Percentile], model=self.get_llm("parser", "llm")
-            )
-            prediction = NumericDistribution.from_question(percentile_list, question)
-            # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
-            if (
-                hasattr(prediction, "declared_percentiles")
-                and isinstance(prediction.declared_percentiles, list)
-                and len(prediction.declared_percentiles) != 6
-            ):
-                raise ValidationError.from_exception_data(
-                    "NumericDistribution",  # title
-                    [
-                        {
-                            "type": "value_error",
-                            "loc": ("declared_percentiles",),
-                            "input": prediction.declared_percentiles,
-                            "ctx": {
-                                "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
-                            },
-                        }
-                    ],
-                )
-        except ValidationError as err:
-            # Fallback: find lines with "percentile", extract the last number,
-            # and assume they correspond to the required 10/20/40/60/80/90.
-            # Use strict filtering for percentile lines.
-            logger.warning("Attempting to repair numeric distribution from LLM output.")
-            percentile_lines = []
-            for line in reasoning.split("\n"):
-                match = re.match(
-                    r"^[Pp]ercentile\s+\d+:\s+[-]?\d+(?:,\d{3})*(?:\.\d+)?$",
-                    line.strip(),
-                )
-                if match:
-                    percentile_lines.append(line)
-
-            if len(percentile_lines) != 6:
-                logger.warning("Did not receive exactly 6 valid percentile lines after strict filtering.")
-                raise err  # Re-raise original error if strict filtering fails to find 6 lines
-
-            values = []
-            for line in percentile_lines:
-                # Extract the last number from the strictly filtered line
-                numbers = re.findall(r"-?\d+(?:\.\d+)?", line)
-                if numbers:
-                    values.append(float(numbers[-1].replace(",", "")))
-
-            if len(values) != 6:
-                raise ValueError("Could not extract 6 numeric values from strictly filtered percentile lines.")
-
-            percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
-            repaired_percentiles = [Percentile(value=v, percentile=p) for v, p in zip(values, percentiles_template)]
-
-            prediction = NumericDistribution(
-                declared_percentiles=repaired_percentiles,
-                open_upper_bound=question.open_upper_bound,
-                open_lower_bound=question.open_lower_bound,
-                upper_bound=question.upper_bound,
-                lower_bound=question.lower_bound,
-                zero_point=question.zero_point,
+        percentile_list: list[Percentile] = await structure_output(
+            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
+        )
+        prediction = NumericDistribution.from_question(percentile_list, question)
+        # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
+        if (
+            hasattr(prediction, "declared_percentiles")
+            and isinstance(prediction.declared_percentiles, list)
+            and len(prediction.declared_percentiles) != 6
+        ):
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",  # title
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": prediction.declared_percentiles,
+                        "ctx": {
+                            "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
+                        },
+                    }
+                ],
             )
 
         logger.info(
             f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    def _create_upper_and_lower_bound_messages(
+        self, question: NumericQuestion
+    ) -> tuple[str, str]:
+        return bound_messages(question)
+
+    def _log_raw_llm_output(
+        self, llm_to_use: GeneralLlm, question_id: int | None, reasoning: str
+    ) -> None:
+        try:
+            model_name = getattr(llm_to_use, "model", "<unknown-model>")
+        except Exception:
+            model_name = "<unknown-model>"
+        logger.debug(
+            f"Raw LLM output | qid={question_id} | model={model_name} | chars={len(reasoning)}"
+        )
 
 
 if __name__ == "__main__":

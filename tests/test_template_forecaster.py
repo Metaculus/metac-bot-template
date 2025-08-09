@@ -205,11 +205,11 @@ async def test_run_forecast_on_binary_uses_provided_llm(mock_binary_question, mo
     }
     bot = TemplateForecaster(llms=llms_config)
 
-    # Mock PredictionExtractor.extract_last_percentage_value
-    with patch("main.PredictionExtractor.extract_last_percentage_value", return_value=0.65) as mock_extractor:
+    # Mock structured_output to avoid external parsing LLM calls
+    with patch("main.structure_output", return_value=type("_Bin", (), {"prediction_in_decimal": 0.65})()) as mock_struct:
         result = await bot._run_forecast_on_binary(mock_binary_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
-        mock_extractor.assert_called_once()
+        mock_struct.assert_called_once()
         assert result.prediction_value == 0.65
         assert "mock reasoning" in result.reasoning
 
@@ -223,14 +223,11 @@ async def test_run_forecast_on_multiple_choice_uses_provided_llm(mock_metaculus_
     bot = TemplateForecaster(llms=llms_config)
     mock_metaculus_question.options = ["A", "B"]
 
-    # Mock PredictionExtractor.extract_option_list_with_percentage_afterwards
-    with patch(
-        "main.PredictionExtractor.extract_option_list_with_percentage_afterwards",
-        return_value=MagicMock(),
-    ) as mock_extractor:
+    # Mock structured_output for multiple-choice
+    with patch("main.structure_output", return_value=MagicMock()) as mock_struct:
         result = await bot._run_forecast_on_multiple_choice(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
-        mock_extractor.assert_called_once()
+        mock_struct.assert_called_once()
         assert result.prediction_value is not None
         assert "mock reasoning" in result.reasoning
 
@@ -243,14 +240,25 @@ async def test_run_forecast_on_numeric_uses_provided_llm(mock_metaculus_question
     }
     bot = TemplateForecaster(llms=llms_config)
 
-    # Mock _create_upper_and_lower_bound_messages and PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability
-    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, patch(
-        "main.PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability",
-        return_value=MagicMock(),
-    ) as mock_extractor:
+    # Mock _create_upper_and_lower_bound_messages and structured_output to return a valid percentile list
+    from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
+    fake_percentiles = [
+        FTPercentile(value=v, percentile=p)
+        for v, p in zip([1, 2, 3, 4, 5, 6], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+    ]
+    # Provide minimal numeric bounds attributes expected by NumericDistribution.from_question
+    mock_metaculus_question.open_upper_bound = False
+    mock_metaculus_question.open_lower_bound = False
+    mock_metaculus_question.upper_bound = 100
+    mock_metaculus_question.lower_bound = 0
+    mock_metaculus_question.zero_point = None
+    mock_metaculus_question.cdf_size = 201
+
+    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, \
+         patch("main.structure_output", return_value=fake_percentiles) as mock_struct:
         result = await bot._run_forecast_on_numeric(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_bounds.assert_called_once()
-        mock_extractor.assert_called_once()
+        mock_struct.assert_called_once()
         assert result.prediction_value is not None
         assert "mock reasoning" in result.reasoning
