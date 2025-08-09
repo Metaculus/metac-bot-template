@@ -25,8 +25,13 @@ pytest = "^8.4.1"
 pytest-asyncio = "^1.0.0"
 
 # Black configuration to enforce 120-character line length
+pre-commit = "^4.3.0"
 [tool.black]
 line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
 
 [build-system]
 requires = ["poetry-core"]

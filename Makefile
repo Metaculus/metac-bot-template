@@ -16,5 +16,9 @@ benchmark:
 	conda activate metaculus-bot && poetry run python community_benchmark.py
 
 lint:
+	conda activate metaculus-bot && poetry run black --check .
+	conda activate metaculus-bot && poetry run isort --check.
+
+format:
 	conda activate metaculus-bot && poetry run black .
 	conda activate metaculus-bot && poetry run isort .
