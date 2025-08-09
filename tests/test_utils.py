@@ -147,6 +147,33 @@ def test_bound_messages():
     assert "higher" in upper and lower == ""
 
 
+def test_bound_messages_uses_nominal_bounds():
+    from forecasting_tools.data_models.questions import NumericQuestion
+
+    q = NumericQuestion(
+        id_of_question=6,
+        id_of_post=6,
+        page_url="example",
+        question_text="?",
+        background_info="",
+        resolution_criteria="",
+        fine_print="",
+        published_time=None,
+        close_time=None,
+        lower_bound=0,
+        upper_bound=100,
+        open_lower_bound=False,
+        open_upper_bound=False,
+        unit_of_measure="",
+        zero_point=None,
+        nominal_lower_bound=5,
+        nominal_upper_bound=42,
+    )
+
+    upper, lower = bound_messages(q)
+    assert "42" in upper and "5" in lower
+
+
 # ---------- Compact logger --------------------------------------------------
 from pydantic import Field
 from abc import ABC
