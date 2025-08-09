@@ -66,9 +66,11 @@ bot = TemplateBot(
     publish_reports_to_metaculus=False,  # Whether to post the forecasts to Metaculus
     folder_to_save_reports_to="logs/forecasts/",  # Where to save detailed reports
     skip_previously_forecasted_questions=False,
-    llms={ # LLM models to use for different tasks. Will use default llms if not specified. Requires the relevant provider environment variables to be set.
+    llms={ # LLM models to use for different tasks. All four purposes are required. Requires the relevant provider environment variables to be set.
         "default": GeneralLlm(model="openrouter/google/gemini-2.5-pro", temperature=0),
-        "summarizer": "openai/gpt-4o-mini",
+        "summarizer": "openrouter/google/gemini-2.5-flash",
+        "parser": "openrouter/google/gemini-2.5-flash",
+        "researcher": "openrouter/openai/gpt-5",
     }
 )
 
