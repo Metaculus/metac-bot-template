@@ -39,3 +39,14 @@ To run the bot, you need to:
 3.  Run the main script: `poetry run python main.py`
 
 Note that the bot will error out locally if you attempt to run inference! This is expected, since we do not store the relevant API keys locally. You should thoroughly test your code without relying on the antipattern of testing with live API calls. However, you may call this locally anyway as a smoke test.
+
+# Git Repository
+- The current working (project) directory is being managed by a git repository.
+- When asked to commit changes or prepare a commit, always start by gathering information using shell commands:
+  - `git status` to ensure that all relevant files are tracked and staged
+  - `git diff HEAD` to review all changes (including unstaged changes) to tracked files in work tree since last commit.
+    - `git diff --staged` to review only staged changes when a partial commit makes sense or was requested by the user.
+  - `git log -n 3` to review recent commit messages and match their style (verbosity, formatting, signature line, etc.)
+- Combine shell commands whenever possible to save time/steps, e.g. `git status && git diff HEAD && git log -n 3`.
+- Destructive git operations (e.g. `git add`, `git commit`, `git push`, `git reset`) should be left to the user. Non-destructive operations (e.g. `git diff`, `git show`) are perfectly fine.
+- The user prefers to add and commit files to git themself. Keeping git ops nondestructive allows async workflows, and adding files to git async breaks the code review loop.  
