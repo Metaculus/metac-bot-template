@@ -4,7 +4,7 @@ conda_env:
 	conda activate metaculus-bot
 
 install:
-	conda activate metaculus-bot && poetry install
+	poetry install
 
 test:
 	conda run -n metaculus-bot PYTHONPATH=. poetry run pytest
@@ -22,3 +22,6 @@ lint:
 format:
 	conda activate metaculus-bot && poetry run black .
 	conda activate metaculus-bot && poetry run isort .
+
+lock:
+	poetry lock
