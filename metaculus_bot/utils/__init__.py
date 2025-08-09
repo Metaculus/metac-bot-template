@@ -1,1 +1,1 @@
-"""Utility modules for the Metaculus bot refactor.""" 
+"""Utility modules for the Metaculus bot refactor."""

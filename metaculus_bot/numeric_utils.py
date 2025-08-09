@@ -10,12 +10,7 @@ from typing import Literal, Sequence, cast
 
 import numpy as np
 import pandas as pd
-
-from forecasting_tools.data_models.numeric_report import (
-    NumericDistribution,
-    NumericReport,
-    Percentile,
-)
+from forecasting_tools.data_models.numeric_report import NumericDistribution, NumericReport, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 __all__ = [
@@ -73,10 +68,7 @@ async def aggregate_numeric(
     combined_cdf = pd.concat(cdfs_as_dfs)
     mean_series = combined_cdf.groupby("value")["percentile"].mean()
 
-    mean_cdf = [
-        Percentile(value=cast(float, v), percentile=cast(float, p))
-        for v, p in mean_series.items()
-    ]
+    mean_cdf = [Percentile(value=cast(float, v), percentile=cast(float, p)) for v, p in mean_series.items()]
 
     return NumericDistribution(
         declared_percentiles=mean_cdf,
@@ -103,14 +95,10 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     if question.open_upper_bound:
         upper_bound_message = ""
     else:
-        upper_bound_message = (
-            f"The outcome can not be higher than {upper_bound_number}."
-        )
+        upper_bound_message = f"The outcome can not be higher than {upper_bound_number}."
 
     if question.open_lower_bound:
         lower_bound_message = ""
     else:
-        lower_bound_message = (
-            f"The outcome can not be lower than {lower_bound_number}."
-        )
+        lower_bound_message = f"The outcome can not be lower than {lower_bound_number}."
     return upper_bound_message, lower_bound_message

@@ -1,14 +1,15 @@
 import argparse
 import asyncio
+
 # ruff: noqa: F401
 import logging
 from typing import Literal
 
 from forecasting_tools import MetaculusApi
-from metaculus_bot.llm_configs import FORECASTER_LLMS, SUMMARIZER_LLM
 
 # NOTE: TemplateForecaster is still defined in main.py during the first refactor phase.
 from main import TemplateForecaster
+from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
 
 def main() -> None:
@@ -51,6 +52,8 @@ def main() -> None:
         llms={
             "forecasters": FORECASTER_LLMS,
             "summarizer": SUMMARIZER_LLM,
+            "parser": PARSER_LLM,
+            "researcher": RESEARCHER_LLM,
         },
     )
 
@@ -75,7 +78,9 @@ def main() -> None:
             "https://www.metaculus.com/questions/20683/which-ai-world/",  # Scott Aaronson's five AI worlds
             "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/",  # Number of US Labor Strikes Due to AI in 2029 - Discrete
         ]
-        template_bot.skip_previously_forecasted_questions = False  # obviously, we need to rerun test q predictions to test them :)
+        template_bot.skip_previously_forecasted_questions = (
+            False  # obviously, we need to rerun test q predictions to test them :)
+        )
         questions = [MetaculusApi.get_question_by_url(url) for url in EXAMPLE_QUESTIONS]
         forecast_reports = asyncio.run(template_bot.forecast_questions(questions, return_exceptions=True))
     else:
@@ -85,4 +90,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main() 
+    main()

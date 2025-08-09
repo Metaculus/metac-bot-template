@@ -8,9 +8,15 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 import typeguard
-from forecasting_tools import (ApiFilter, Benchmarker, ForecastBot, GeneralLlm,
-                               MetaculusApi, MonetaryCostManager,
-                               run_benchmark_streamlit_page)
+from forecasting_tools import (
+    ApiFilter,
+    Benchmarker,
+    ForecastBot,
+    GeneralLlm,
+    MetaculusApi,
+    MonetaryCostManager,
+    run_benchmark_streamlit_page,
+)
 
 from main import TemplateForecaster
 

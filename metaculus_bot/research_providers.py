@@ -10,7 +10,7 @@ logic lives in one place instead of being in `TemplateForecaster.run_research`.
 import os
 from typing import Awaitable, Callable, Protocol
 
-from forecasting_tools import AskNewsSearcher, SmartSearcher, GeneralLlm
+from forecasting_tools import AskNewsSearcher, GeneralLlm, SmartSearcher
 
 QuestionText = str
 ResearchCallable = Callable[[QuestionText], Awaitable[str]]
@@ -55,9 +55,7 @@ def _exa_provider(default_llm: GeneralLlm) -> ResearchCallable:
 
 def _perplexity_provider(use_open_router: bool = False) -> ResearchCallable:
     async def _fetch(question_text: str) -> str:  # noqa: D401
-        model_name = (
-            "openrouter/perplexity/sonar-reasoning-pro" if use_open_router else "perplexity/sonar-pro"
-        )
+        model_name = "openrouter/perplexity/sonar-reasoning-pro" if use_open_router else "perplexity/sonar-pro"
         model = GeneralLlm(model=model_name, temperature=0.1)
         prompt = (
             "You are an assistant to a superforecaster.\n"
@@ -74,6 +72,7 @@ def _perplexity_provider(use_open_router: bool = False) -> ResearchCallable:
 # ---------------------------------------------------------------------------
 # Strategy selector
 # ---------------------------------------------------------------------------
+
 
 def choose_provider(
     default_llm: GeneralLlm | None = None,
@@ -114,4 +113,4 @@ def choose_provider(
     async def _empty(_: str) -> str:  # noqa: D401
         return ""
 
-    return _empty 
+    return _empty

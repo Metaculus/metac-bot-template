@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from forecasting_tools import (BinaryQuestion, MultipleChoiceQuestion,
-                               NumericQuestion)
+from forecasting_tools import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion
 
 __all__ = [
     "binary_prompt",
@@ -197,4 +196,4 @@ def numeric_prompt(
         Percentile 80: XX.X
         Percentile 90: XX.X
         """
-    ) 
+    )

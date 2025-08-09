@@ -14,7 +14,6 @@ import requests
 from asknews_sdk import AskNewsSDK
 from openai import AsyncOpenAI
 
-
 """
 This file provides a simple forecasting bot built from the ground up.
 We provide this for people who want to dissect
@@ -76,9 +75,18 @@ TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
-    (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
+    (
+        14333,
+        14333,
+    ),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    (
+        22427,
+        22427,
+    ),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (
+        38195,
+        38880,
+    ),  # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
 
@@ -269,6 +277,7 @@ def run_research(question: str) -> str:
 
     return research
 
+
 def call_perplexity(question: str) -> str:
     url = "https://api.perplexity.ai/chat/completions"
     api_key = PERPLEXITY_API_KEY
@@ -301,6 +310,7 @@ def call_perplexity(question: str) -> str:
     content = response.json()["choices"][0]["message"]["content"]
     return content
 
+
 def call_exa_smart_searcher(question: str) -> str:
     if OPENAI_API_KEY is None:
         searcher = forecasting_tools.ExaSearcher(
@@ -320,16 +330,17 @@ def call_exa_smart_searcher(question: str) -> str:
             num_sites_per_search=10,
         )
         prompt = (
-            "You are an assistant to a superforecaster. The superforecaster will give" 
-            "you a question they intend to forecast on. To be a great assistant, you generate" 
-            "a concise but detailed rundown of the most relevant news, including if the question" 
-            "would resolve Yes or No based on current information. You do not produce forecasts yourself." 
+            "You are an assistant to a superforecaster. The superforecaster will give"
+            "you a question they intend to forecast on. To be a great assistant, you generate"
+            "a concise but detailed rundown of the most relevant news, including if the question"
+            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
             f"\n\nThe question is: {question}"
         )
         response = asyncio.run(searcher.invoke(prompt))
         assert response is not None
 
     return response
+
 
 def call_asknews(question: str) -> str:
     """
@@ -592,7 +603,7 @@ def generate_continuous_cdf(
     # Set cdf values outside range
     if open_upper_bound:
         if range_max > percentile_values[percentile_max]:
-            percentile_values[int(100 - (0.5 * (100 - percentile_max))))] = range_max
+            percentile_values[int(100 - (0.5 * (100 - percentile_max)))] = range_max
     else:
         percentile_values[100] = range_max
 
@@ -619,9 +630,7 @@ def generate_continuous_cdf(
             scale = lambda x: range_min + (range_max - range_min) * x
         else:
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-            scale = lambda x: range_min + (range_max - range_min) * (
-                deriv_ratio**x - 1
-            ) / (deriv_ratio - 1)
+            scale = lambda x: range_min + (range_max - range_min) * (deriv_ratio**x - 1) / (deriv_ratio - 1)
         return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
@@ -827,7 +836,8 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
     # confirm that there is a probability for each option
     if len(options) != len(option_probabilities):
         raise ValueError(
-            f"Number of options ({len(options)}) does not match number of probabilities ({len(option_probabilities)})")
+            f"Number of options ({len(options)}) does not match number of probabilities ({len(option_probabilities)})"
+        )
 
     # Ensure we are using decimals
     total_sum = sum(option_probabilities)
@@ -960,13 +970,9 @@ async def forecast_individual_question(
     if question_type == "binary":
         forecast, comment = await get_binary_gpt_prediction(question_details, num_runs_per_question)
     elif question_type == "numeric":
-        forecast, comment = await get_numeric_gpt_prediction(
-            question_details, num_runs_per_question
-        )
+        forecast, comment = await get_numeric_gpt_prediction(question_details, num_runs_per_question)
     elif question_type == "discrete":
-        forecast, comment = await get_numeric_gpt_prediction(
-            question_details, num_runs_per_question
-        )
+        forecast, comment = await get_numeric_gpt_prediction(question_details, num_runs_per_question)
     elif question_type == "multiple_choice":
         forecast, comment = await get_multiple_choice_gpt_prediction(question_details, num_runs_per_question)
     else:

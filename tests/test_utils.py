@@ -4,15 +4,12 @@ from typing import List
 
 import pytest
 
+from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
 from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
-from metaculus_bot.numeric_utils import (
-    aggregate_binary_mean,
-    aggregate_numeric,
-    bound_messages,
-)
 from metaculus_bot.utils.logging_utils import compact_log_report_summary
 
 # ---------- Prompt builders -------------------------------------------------
+
 
 def test_binary_prompt_contains_inputs():
     question = BinaryQuestion(
@@ -174,9 +171,10 @@ def test_bound_messages_uses_nominal_bounds():
     assert "42" in upper and "5" in lower
 
 
+from abc import ABC
+
 # ---------- Compact logger --------------------------------------------------
 from pydantic import Field
-from abc import ABC
 
 
 class DummyQuestion(MetaculusQuestion, ABC):
@@ -206,9 +204,7 @@ class DummyReport(ForecastReport):
         return "N/A"
 
     @classmethod
-    async def aggregate_predictions(
-        cls: type, predictions: list, question: MetaculusQuestion
-    ) -> "DummyReport":
+    async def aggregate_predictions(cls: type, predictions: list, question: MetaculusQuestion) -> "DummyReport":
         raise NotImplementedError()
 
     async def publish_report_to_metaculus(self) -> None:
