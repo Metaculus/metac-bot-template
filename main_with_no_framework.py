@@ -14,6 +14,32 @@ import requests
 from asknews_sdk import AskNewsSDK
 from openai import AsyncOpenAI
 
+
+"""
+This file provides a simple forecasting bot built from the ground up.
+We provide this for people who want to dissect
+it to build their own bot without using forecasting-tools.
+
+This template assumes you are using a OpenAI model and have an OpenAI API key
+You will also need a Metaculus API key, for posting questions to Metaculus
+and a Perplexity or AskNews API key for online research
+
+This is not a representative of the tempalte bots used by Metaculus, as there are some
+differences in implementation. The actual template bot (e.g. like main.py) has the following differences:
+- An LLM now parses the final forecast output (rather than programmatic parsing)
+- Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
+- Upper/Lower bounds are mentioned as suggestions (not ignored) when the bounds are open
+- Group questions are supported
+- The research prompt mentions resolution criteria and fine print explicitly
+
+We realize the below code could probably be cleaned up a bit in a few places
+Though we are assuming most people will dissect it enough to make this not matter much
+
+Note that this is code is given as-is and though we have have done basic testing
+with this file it may be worth double checking key components locally.
+"""
+
+
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
@@ -35,32 +61,26 @@ OPENAI_API_KEY = os.getenv(
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
+FALL_2025_AI_BENCHMARKING_ID = "fall-aib-2025"
+CURRENT_MINIBENCH_ID = "minibench"
+
 Q4_2024_QUARTERLY_CUP_ID = 3672
 Q1_2025_QUARTERLY_CUP_ID = 32630
-AXC_2025_TOURNAMENT_ID = 32564
-GIVEWELL_ID = 3600
-RESPIRATORY_OUTLOOK_ID = 3411
+CURRENT_METACULUS_CUP_ID = "metaculus-cup"
 
-TOURNAMENT_ID = Q1_2025_AI_BENCHMARKING_ID
+AXC_2025_TOURNAMENT_ID = 32564
+AI_2027_TOURNAMENT_ID = "ai-2027"
+
+TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (
-        578,
-        578,
-    ),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (
-        14333,
-        14333,
-    ),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (
-        22427,
-        22427,
-    ),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
-# Also, we realize the below code could probably be cleaned up a bit in a few places
-# Though we are assuming most people will dissect it enough to make this not matter much
 
 ######################### HELPER FUNCTIONS #########################
 
@@ -142,7 +162,9 @@ def create_forecast_payload(
     }
 
 
-def list_posts_from_tournament(tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50) -> list[dict]:
+def list_posts_from_tournament(
+    tournament_id: int | str = TOURNAMENT_ID, offset: int = 0, count: int = 50
+) -> list[dict]:
     """
     List (all details) {count} posts from the {tournament_id}
     """
@@ -155,6 +177,7 @@ def list_posts_from_tournament(tournament_id: int = TOURNAMENT_ID, offset: int =
                 "binary",
                 "multiple_choice",
                 "numeric",
+                "discrete",
             ]
         ),
         "tournaments": [tournament_id],
@@ -215,16 +238,8 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
     # Remove the base_url parameter to call the OpenAI API directly
     # Also checkout the package 'litellm' for one function that can call any model from any provider
-    # Email ben@metaculus.com if you need credit for the Metaculus OpenAI/Anthropic proxy
-    client = AsyncOpenAI(
-        base_url="https://llm-proxy.metaculus.com/proxy/openai/v1",
-        default_headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Token {METACULUS_TOKEN}",
-        },
-        api_key="Fake API Key since openai requires this not to be NONE. This isn't used",
-        max_retries=2,
-    )
+    # Also checkout OpenRouter for allowing one API key for many providers (especially powerful if combined with litellm)
+    client = AsyncOpenAI()
 
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
@@ -253,7 +268,6 @@ def run_research(question: str) -> str:
     print(f"########################\nResearch Found:\n{research}\n########################")
 
     return research
-
 
 def call_perplexity(question: str) -> str:
     url = "https://api.perplexity.ai/chat/completions"
@@ -287,7 +301,6 @@ def call_perplexity(question: str) -> str:
     content = response.json()["choices"][0]["message"]["content"]
     return content
 
-
 def call_exa_smart_searcher(question: str) -> str:
     if OPENAI_API_KEY is None:
         searcher = forecasting_tools.ExaSearcher(
@@ -307,16 +320,16 @@ def call_exa_smart_searcher(question: str) -> str:
             num_sites_per_search=10,
         )
         prompt = (
-            "You are an assistant to a superforecaster. The superforecaster will give"
-            "you a question they intend to forecast on. To be a great assistant, you generate"
-            "a concise but detailed rundown of the most relevant news, including if the question"
-            "would resolve Yes or No based on current information. You do not produce forecasts yourself."
+            "You are an assistant to a superforecaster. The superforecaster will give" 
+            "you a question they intend to forecast on. To be a great assistant, you generate" 
+            "a concise but detailed rundown of the most relevant news, including if the question" 
+            "would resolve Yes or No based on current information. You do not produce forecasts yourself." 
             f"\n\nThe question is: {question}"
         )
         response = asyncio.run(searcher.invoke(prompt))
+        assert response is not None
 
     return response
-
 
 def call_asknews(question: str) -> str:
     """
@@ -501,14 +514,13 @@ Before answering you write:
 You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unkowns.
 
 The last thing you write is your final answer as:
-"
+""
 Percentile 10: XX
 Percentile 20: XX
 Percentile 40: XX
 Percentile 60: XX
 Percentile 80: XX
 Percentile 90: XX
-"
 """
 
 
@@ -557,6 +569,7 @@ def generate_continuous_cdf(
     upper_bound: float,
     lower_bound: float,
     zero_point: float | None,
+    cdf_size: int,
 ) -> list[float]:
     """
     Returns: list[float]: A list of 201 float values representing the CDF.
@@ -579,7 +592,7 @@ def generate_continuous_cdf(
     # Set cdf values outside range
     if open_upper_bound:
         if range_max > percentile_values[percentile_max]:
-            percentile_values[int(100 - (0.5 * (100 - percentile_max)))] = range_max
+            percentile_values[int(100 - (0.5 * (100 - percentile_max))))] = range_max
     else:
         percentile_values[100] = range_max
 
@@ -606,8 +619,10 @@ def generate_continuous_cdf(
             scale = lambda x: range_min + (range_max - range_min) * x
         else:
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-            scale = lambda x: range_min + (range_max - range_min) * (deriv_ratio**x - 1) / (deriv_ratio - 1)
-        return [scale(x) for x in np.linspace(0, 1, 201)]
+            scale = lambda x: range_min + (range_max - range_min) * (
+                deriv_ratio**x - 1
+            ) / (deriv_ratio - 1)
+        return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
 
@@ -669,6 +684,11 @@ async def get_numeric_gpt_prediction(question_details: dict, num_runs: int) -> t
     upper_bound = scaling["range_max"]
     lower_bound = scaling["range_min"]
     zero_point = scaling["zero_point"]
+    if question_type == "discrete":
+        outcome_count = question_details["scaling"]["inbound_outcome_count"]
+        cdf_size = outcome_count + 1
+    else:
+        cdf_size = 201
 
     # Create messages about the bounds that are passed in the LLM prompt
     if open_upper_bound:
@@ -708,6 +728,7 @@ async def get_numeric_gpt_prediction(question_details: dict, num_runs: int) -> t
             upper_bound,
             lower_bound,
             zero_point,
+            cdf_size,
         )
 
         return cdf, comment
@@ -758,7 +779,7 @@ You write your rationale remembering that (1) good forecasters put extra weight 
 The last thing you write is your final probabilities for the N options in this order {options} as:
 Option_A: Probability_A
 Option_B: Probability_B
-...
+... 
 Option_N: Probability_N
 """
 
@@ -806,8 +827,7 @@ def generate_multiple_choice_forecast(options, option_probabilities) -> dict:
     # confirm that there is a probability for each option
     if len(options) != len(option_probabilities):
         raise ValueError(
-            f"Number of options ({len(options)}) does not match number of probabilities ({len(option_probabilities)})"
-        )
+            f"Number of options ({len(options)}) does not match number of probabilities ({len(option_probabilities)})")
 
     # Ensure we are using decimals
     total_sum = sum(option_probabilities)
@@ -940,7 +960,13 @@ async def forecast_individual_question(
     if question_type == "binary":
         forecast, comment = await get_binary_gpt_prediction(question_details, num_runs_per_question)
     elif question_type == "numeric":
-        forecast, comment = await get_numeric_gpt_prediction(question_details, num_runs_per_question)
+        forecast, comment = await get_numeric_gpt_prediction(
+            question_details, num_runs_per_question
+        )
+    elif question_type == "discrete":
+        forecast, comment = await get_numeric_gpt_prediction(
+            question_details, num_runs_per_question
+        )
     elif question_type == "multiple_choice":
         forecast, comment = await get_multiple_choice_gpt_prediction(question_details, num_runs_per_question)
     else:
@@ -950,7 +976,7 @@ async def forecast_individual_question(
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
     print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
 
-    if question_type == "numeric":
+    if question_type == "numeric" or question_type == "discrete":
         summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
     else:
         summary_of_forecast += f"Forecast: {forecast}\n"

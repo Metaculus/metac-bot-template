@@ -23,11 +23,11 @@ To run anything, first activate the conda env:
 conda activate metaculus-bot
 ```
 
-Then run them with `poetry` (we're using poetry in a Conda env).
+Then run them with `poetry` (we're using poetry in a Conda env). e.g.: `conda run -n metaculus-bot poetry lock`
 
 Run tests with e.g. (you might also specify given tests/test files):
 ```bash
-PYTHONPATH=. poetry run pytest
+conda run -n metaculus-bot poetry run pytest
 ```
 
 ## Setup and Execution
