@@ -1,5 +1,5 @@
-# Simple Metaculus forecasting bot
-This repository contains a simple bot meant to get you started with creating your own bot for the AI Forecasting Tournament. Go to https://www.metaculus.com/aib/ for more info and tournament rules.
+# Metaculus forecasting bot
+https://www.metaculus.com/aib/ for more info
 
 In this project are 2 files:
 - **main.py**: Our recommended template option that uses [forecasting-tools](https://github.com/Metaculus/forecasting-tools) package to handle a lot of stuff in the background for you (such as API calls). We will update the package, thus allowing you to gain new features with minimal changes to your code.
@@ -7,33 +7,8 @@ In this project are 2 files:
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
-## 30min Video Tutorial
-This tutorial shows you how to set our template bot so you can start forecasting in the tournament.
-
-[![Watch the tutorial](https://cdn.loom.com/sessions/thumbnails/fc3c1a643b984a15b510647d8f760685-42b452e1ab7d2afa-full-play.gif)](https://www.loom.com/share/fc3c1a643b984a15b510647d8f760685?sid=29b502e0-cf64-421e-82c0-3a78451159ed)
-
-If you run into trouble, reach out to `ben [at] metaculus [.com]`
-
-
-## Quick start -> Fork and use Github Actions
-The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 30min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
-
-1) **Fork the repository**: Go to the [repository](https://github.com/Metaculus/metac-bot-template) and click 'fork'.
-2) **Set secrets**: Go to `Settings -> Secrets and variables -> Actions -> New respository secret` and set API keys/Tokens as secrets. You will want to set your METACULUS_TOKEN. This will be used to post questions to Metaculus, and to use our OpenAI/Anthropic LLM proxy (reach out to `ben [at] metaculus [.com]` with your bot description to apply for credits. See the relevant section below).
-3) **Enable Actions**: Go to 'Actions' then click 'Enable'. Then go to the 'Regularly forecast new questions' workflow, and click 'Enable'. To test if the workflow is working, click 'Run workflow', choose the main branch, then click the green 'Run workflow' button. This will check for new questions and forecast only on ones it has not yet successfully forecast on.
-
-The bot should just work as is at this point. You can disable the workflow by clicking `Actions > Regularly forecast new questions > Triple dots > disable workflow`
-
-## Getting your Metaculus Token
-To get a bot account and your API Token:
-1) Go to https://metaculus.com/aib
-2) Click "Log Out" if you are using your personal account
-3) Click "Create a Bot Account"
-4) Create your account
-5) Go back to https://metaculus.com/aib
-6) Click 'Show My Token'
-
-If your regular Metaculus account uses Gmail, you can create a separate bot account while keeping your existing email by adding a '+bot' before the @ symbol. For example, if your email is 'youremail@gmail.com', you can use 'youremail+bot1@gmail.com' for your bot account.
+## Repository Guidelines
+Coding agents: for coding standards, local commands, testing, and PR expectations, see [AGENTS.md — Repository Guidelines](AGENTS.md#repository-guidelines).
 
 ## Search Provider API Keys
 
@@ -138,14 +113,6 @@ You will get tags in your response, including:
 
 These tags are likely useful for extracting the pieces that you need for your pipeline. For example, if you dont want to include all the thinking/searching, you could just extract <final_response> </final_response>
 
-### Getting Perplexity Set Up
-Perplexity works as an internet powered LLM, and costs half a cent per search (if you pick the right model) plus token costs. It is less customizable but generally cheaper.
-1. Create an account on the free tier at www.perplexity.ai
-2. Go to https://www.perplexity.ai/settings/account
-3. Click "API" in the top bar
-4. Click "Generate" in the "API Keys" section
-5. Add funds to your account with the 'Buy Credits' button
-6. Add it to the .env as `PERPLEXITY_API_KEY=your-key-here`
 
 ### Getting Exa Set Up
 Exa is closer to a more traditional search provider. Exa takes in a search query and a list of filters and returns a list of websites. Each site returned can have scraped text, semantic higlights, AI summary, and more. By putting GPT on top of Exa, you can recreate Perplexity with more control. An implementation of this is available in the `SmartSearcher` of the `forecasting-tools` python package. Each Exa search costs half a cent per search plus a tenth of a cent per 'text-content' requested per site requested. Content items include: highlights from a source, summary of a source, or full text.
