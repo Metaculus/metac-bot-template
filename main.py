@@ -140,7 +140,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             """
         )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
-            model_name = "openrouter/perplexity/sonar-reasoning-pro"
+            model_name = "openrouter/perplexity/sonar-reasoning"  # sonar-reasoning-pro would be slightly better but pricier
         else:
             model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
         model = GeneralLlm(
@@ -291,13 +291,6 @@ class TemplateForecaster(CompactLoggingForecastBot):
             f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
-
-<<<<<<< HEAD
-
-# ──────────────────────────────────────────────────────────────────────────
-# Compact logging now provided by CompactLoggingForecastBot; removed
-# legacy monkey-patch code.
-# ──────────────────────────────────────────────────────────────────────────
 
 
 if __name__ == "__main__":
