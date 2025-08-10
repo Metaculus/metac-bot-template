@@ -6,22 +6,23 @@ conda_env:
 install:
 	poetry install
 
+lock:
+	poetry lock
+
+lint:
+	conda run -n metaculus-bot && poetry run black --check .
+	conda run -n metaculus-bot && poetry run isort --check.
+
+format:
+	conda run -n metaculus-bot && poetry run black .
+	conda run -n metaculus-bot && poetry run isort .
+
 test:
 	conda run -n metaculus-bot PYTHONPATH=. poetry run pytest
 
 run:
-	conda activate metaculus-bot && poetry run python main.py
+	conda run -n metaculus-bot && poetry run python main.py
 
 benchmark:
-	conda activate metaculus-bot && poetry run python community_benchmark.py
+	conda run -n metaculus-bot && poetry run python community_benchmark.py --mode display
 
-lint:
-	conda activate metaculus-bot && poetry run black --check .
-	conda activate metaculus-bot && poetry run isort --check.
-
-format:
-	conda activate metaculus-bot && poetry run black .
-	conda activate metaculus-bot && poetry run isort .
-
-lock:
-	poetry lock
