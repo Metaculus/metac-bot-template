@@ -46,4 +46,4 @@ class CompactLoggingForecastBot(ForecastBot):
     """ForecastBot subclass that uses the compact report summary."""
 
     # Override class attribute with compact logger
-    log_report_summary = staticmethod(compact_log_report_summary)  # type: ignore[misc] 
+    log_report_summary = staticmethod(compact_log_report_summary)  # type: ignore[misc]

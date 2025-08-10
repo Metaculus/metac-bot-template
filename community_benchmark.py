@@ -8,9 +8,15 @@ from datetime import datetime, timedelta
 from typing import Literal
 
 import typeguard
-from forecasting_tools import (ApiFilter, Benchmarker, ForecastBot, GeneralLlm,
-                               MetaculusApi, MonetaryCostManager,
-                               run_benchmark_streamlit_page)
+from forecasting_tools import (
+    ApiFilter,
+    Benchmarker,
+    ForecastBot,
+    GeneralLlm,
+    MetaculusApi,
+    MonetaryCostManager,
+    run_benchmark_streamlit_page,
+)
 
 from main import TemplateForecaster
 
@@ -55,18 +61,24 @@ async def benchmark_forecast_bot(mode: str) -> None:
                 predictions_per_research_report=5,
                 llms={
                     "default": GeneralLlm(
-                        model="gpt-4o-mini",
+                        model="openrouter/google/gemini-2.5-flash",
                         temperature=0.3,
                     ),
+                    "parser": "openrouter/google/gemini-2.5-flash",
+                    "researcher": "openrouter/openai/gpt-5",
+                    "summarizer": "openrouter/google/gemini-2.5-flash",
                 },
             ),
             TemplateForecaster(
                 predictions_per_research_report=1,
                 llms={
                     "default": GeneralLlm(
-                        model="gpt-4o-mini",
+                        model="openrouter/google/gemini-2.5-flash",
                         temperature=0.3,
                     ),
+                    "parser": "openrouter/google/gemini-2.5-flash",
+                    "researcher": "openrouter/openai/gpt-5",
+                    "summarizer": "openrouter/google/gemini-2.5-flash",
                 },
             ),
             # Add other ForecastBots here (or same bot with different parameters)

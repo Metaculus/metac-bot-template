@@ -4,8 +4,7 @@ from typing import cast
 import numpy as np
 import pytest
 from forecasting_tools.data_models.data_organizer import PredictionTypes
-from forecasting_tools.data_models.numeric_report import (NumericDistribution,
-                                                          Percentile)
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from main import TemplateForecaster
@@ -42,14 +41,10 @@ async def test_numeric_aggregation_configurable():
     # `dist2` is skewed towards the upper bound.
     x_axis = [p * 100 for p in np.linspace(0, 1, 11) if 0 < p < 1]
     dist1_percentiles = [Percentile(value=v, percentile=p) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])]
-    dist2_percentiles = [
-        Percentile(value=v, percentile=p**0.5) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])
-    ]
+    dist2_percentiles = [Percentile(value=v, percentile=p**0.5) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])]
 
     # Third distribution: quadratic skew towards lower bound.
-    dist3_percentiles = [
-        Percentile(value=v, percentile=p**2) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])
-    ]
+    dist3_percentiles = [Percentile(value=v, percentile=p**2) for v, p in zip(x_axis, np.linspace(0, 1, 11)[1:-1])]
 
     common_args = {
         "open_lower_bound": question.open_lower_bound,
@@ -65,8 +60,9 @@ async def test_numeric_aggregation_configurable():
     predictions: list[PredictionTypes] = [pred1, pred2, pred3]
 
     # Initialize two forecaster instances with different aggregation methods.
-    forecaster_mean = TemplateForecaster(llms={"default": "mock"}, numeric_aggregation_method="mean")
-    forecaster_median = TemplateForecaster(llms={"default": "mock"}, numeric_aggregation_method="median")
+    llms_min = {"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"}
+    forecaster_mean = TemplateForecaster(llms=llms_min, numeric_aggregation_method="mean")
+    forecaster_median = TemplateForecaster(llms=llms_min, numeric_aggregation_method="median")
 
     # 2. Act
     # Run the aggregation for both the 'mean' and 'median' configurations.

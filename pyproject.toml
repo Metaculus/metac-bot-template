@@ -10,13 +10,14 @@ package-mode = false
 python = "^3.11"
 python-decouple = "^3.8"
 requests = "^2.32.3"
-asknews = "^0.9.1"
-numpy = "^1.26.0"
+asknews = "^0.11.2"
+numpy = "^2.3.0"
 openai = "^1.57.4"
 python-dotenv = "^1.0.1"
-forecasting-tools = "^0.2.23"
+forecasting-tools = "^0.2.54"
 black = "^25.1.0"
 isort = "^6.0.1"
+litellm = {extras = ["proxy"], version = "^1.0.0"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,8 +26,13 @@ pytest = "^8.4.1"
 pytest-asyncio = "^1.0.0"
 
 # Black configuration to enforce 120-character line length
+pre-commit = "^4.3.0"
 [tool.black]
 line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
 
 [build-system]
 requires = ["poetry-core"]

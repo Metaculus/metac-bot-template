@@ -2,104 +2,97 @@ import argparse
 import asyncio
 import logging
 import os
-import re
 from datetime import datetime
 from typing import Any, Coroutine, Literal, Sequence, cast
 
 import numpy as np
-from forecasting_tools import (AskNewsSearcher, BinaryQuestion,
-                               GeneralLlm, MetaculusApi, MetaculusQuestion,
-                               MultipleChoiceQuestion, NumericDistribution,
-                               NumericQuestion, PredictedOptionList,
-                               PredictionExtractor, ReasonedPrediction,
-                               SmartSearcher, clean_indents)
+from forecasting_tools import (
+    AskNewsSearcher,
+    BinaryPrediction,
+    BinaryQuestion,
+    ForecastBot,
+    GeneralLlm,
+    MetaculusApi,
+    MetaculusQuestion,
+    MultipleChoiceQuestion,
+    NumericDistribution,
+    NumericQuestion,
+    Percentile,
+    PredictedOptionList,
+    ReasonedPrediction,
+    SmartSearcher,
+    clean_indents,
+    structure_output,
+)
 from forecasting_tools.data_models.data_organizer import PredictionTypes
-from forecasting_tools.data_models.forecast_report import (
-    ForecastReport, ResearchWithPredictions)
-from forecasting_tools.data_models.numeric_report import (  # type: ignore
-    NumericReport, Percentile)
+from forecasting_tools.data_models.forecast_report import ForecastReport, ResearchWithPredictions
+from forecasting_tools.data_models.numeric_report import NumericReport, Percentile  # type: ignore
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
-from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
+
 from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
-from metaculus_bot.research_providers import choose_provider, ResearchCallable
-from forecasting_tools import ForecastBot  # only for typing maybe
+from metaculus_bot.research_providers import ResearchCallable, choose_provider
+from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-# Inherit from CompactLoggingForecastBot for compact log summary
 class TemplateForecaster(CompactLoggingForecastBot):
-    """
-    This is a copy of the template bot for Q2 2025 Metaculus AI Tournament.
-    The official bots on the leaderboard use AskNews in Q2.
-    Main template bot changes since Q1
-    - Support for new units parameter was added
-    - You now set your llms when you initialize the bot (making it easier to switch between and benchmark different models)
 
-    The main entry point of this bot is `forecast_on_tournament` in the parent class.
-    See the script at the bottom of the file for more details on how to run the bot.
-    Ignoring the finer details, the general flow is:
-    - Load questions from Metaculus
-    - For each question
-        - Execute run_research a number of times equal to research_reports_per_question
-        - Execute respective run_forecast function `predictions_per_research_report * research_reports_per_question` times
-        - Aggregate the predictions
-        - Submit prediction (if publish_reports_to_metaculus is True)
-    - Return a list of ForecastReport objects
-
-    Only the research and forecast functions need to be implemented in ForecastBot subclasses.
-
-    If you end up having trouble with rate limits and want to try a more sophisticated rate limiter try:
-    ```
-    from forecasting_tools.ai_models.resource_managers.refreshing_bucket_rate_limiter import RefreshingBucketRateLimiter
-    rate_limiter = RefreshingBucketRateLimiter(
-        capacity=2,
-        refresh_rate=1,
-    ) # Allows 1 request per second on average with a burst of 2 requests initially. Set this as a class variable
-    await self.rate_limiter.wait_till_able_to_acquire_resources(1) # 1 because it's consuming 1 request (use more if you are adding a token limit)
-    ```
-    Additionally OpenRouter has large rate limits immediately on account creation
-    """
-
-    _max_concurrent_questions = 2  # Set this to whatever works for your search-provider/ai-model rate limits
-    _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
+    _max_concurrent_questions: int = 2
+    _concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(_max_concurrent_questions)
 
     def __init__(
         self,
         *,
         research_reports_per_question: int = 1,
         predictions_per_research_report: int = 1,
-        use_research_summary_to_forecast: bool = False,  # if false, use full research report for forecasting
+        use_research_summary_to_forecast: bool = False,
         publish_reports_to_metaculus: bool = False,
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
+        llms: dict[str, str | GeneralLlm] | None = None,
         numeric_aggregation_method: Literal["mean", "median"] = "mean",
-        llms: dict[str, str | GeneralLlm | list[GeneralLlm]] | None = None,
         research_provider: ResearchCallable | None = None,
+        max_questions_per_run: int | None = 10,
     ) -> None:
+        # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
             raise ValueError("Either 'forecasters' or a 'default' LLM must be provided.")
 
-        forecasters_llms_config: list[GeneralLlm] = []
-        if "forecasters" in llms:
-            forecasters_config = llms["forecasters"]
-            if isinstance(forecasters_config, list):
-                forecasters_llms_config = forecasters_config
+        normalized_llms: dict[str, str | GeneralLlm | list[GeneralLlm]] = dict(llms)
+
+        # Setup optional forecasters list; if valid, override default and count.
+        self._forecaster_llms: list[GeneralLlm] = []
+        if "forecasters" in normalized_llms:
+            value = normalized_llms["forecasters"]
+            if isinstance(value, list) and all(isinstance(x, GeneralLlm) for x in value):
+                if value:
+                    self._forecaster_llms = list(value)
+                    # Ensure default points at first forecaster
+                    normalized_llms["default"] = self._forecaster_llms[0]
+                    predictions_per_research_report = len(self._forecaster_llms)
             else:
                 logger.warning("'forecasters' key in llms must be a list of GeneralLlm objects.")
+            # Remove 'forecasters' before delegating to base to avoid spurious warnings.
+            normalized_llms.pop("forecasters", None)
 
-        llms_for_super = {}
-        if forecasters_llms_config:
-            llms_for_super["default"] = forecasters_llms_config[0]
-        elif "default" in llms:
-            llms_for_super["default"] = llms["default"]
-        else:
-            raise ValueError("Either 'forecasters' or a 'default' LLM must be provided.")
+        # Fail fast if critical LLM purposes are missing. We require parser and researcher explicitly.
+        required_keys = {"default", "parser", "researcher", "summarizer"}
+        missing = sorted(k for k in required_keys if k not in normalized_llms)
+        if missing:
+            raise ValueError(
+                f"Missing required LLM purposes: {', '.join(missing)}. Provide these in the 'llms' config."
+            )
 
-        if "summarizer" in llms:
-            llms_for_super["summarizer"] = llms["summarizer"]
+        if numeric_aggregation_method not in ("mean", "median"):
+            raise ValueError("numeric_aggregation_method must be 'mean' or 'median'")
+        self.numeric_aggregation_method: Literal["mean", "median"] = numeric_aggregation_method
+        self._custom_research_provider: ResearchCallable | None = research_provider
+        if max_questions_per_run is not None and max_questions_per_run <= 0:
+            raise ValueError("max_questions_per_run must be a positive integer if provided")
+        self.max_questions_per_run: int | None = max_questions_per_run
 
         super().__init__(
             research_reports_per_question=research_reports_per_question,
@@ -108,18 +101,27 @@ class TemplateForecaster(CompactLoggingForecastBot):
             publish_reports_to_metaculus=publish_reports_to_metaculus,
             folder_to_save_reports_to=folder_to_save_reports_to,
             skip_previously_forecasted_questions=skip_previously_forecasted_questions,
-            llms=llms_for_super,
+            llms=normalized_llms,  # type: ignore[arg-type]
         )
 
-        self._forecaster_llms = forecasters_llms_config
-        if self._forecaster_llms:
-            self.predictions_per_research_report = len(self._forecaster_llms)
-        elif predictions_per_research_report == 0:
-            raise ValueError("Must run at least one prediction if 'forecasters' are not provided.")
-        self.numeric_aggregation_method = numeric_aggregation_method
+    async def forecast_questions(
+        self,
+        questions: Sequence[MetaculusQuestion],
+        return_exceptions: bool = False,
+    ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
+        # Apply skip filter first (mirrors base class behavior) so we cap unforecasted items
+        if self.skip_previously_forecasted_questions:
+            unforecasted_questions = [q for q in questions if not q.already_forecasted]
+            if len(questions) != len(unforecasted_questions):
+                logger.info(f"Skipping {len(questions) - len(unforecasted_questions)} previously forecasted questions")
+            questions = unforecasted_questions
 
-        # Research provider strategy
-        self._custom_research_provider = research_provider  # may be None
+        # Enforce max questions per run safety cap
+        if self.max_questions_per_run is not None and len(questions) > self.max_questions_per_run:
+            logger.info(f"Limiting to first {self.max_questions_per_run} questions out of {len(questions)}")
+            questions = list(questions)[: self.max_questions_per_run]
+
+        return await super().forecast_questions(questions, return_exceptions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
@@ -141,14 +143,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
     # Override _research_and_make_predictions to support multiple LLMs
     async def _research_and_make_predictions(
-        self, question: MetaculusQuestion
+        self,
+        question: MetaculusQuestion,
     ) -> ResearchWithPredictions[PredictionTypes]:
         # Call the parent class's method if no specific forecaster LLMs are provided
         if not self._forecaster_llms:
             return await super()._research_and_make_predictions(question)
 
         notepad = await self._get_notepad(question)
-        notepad.num_research_reports_attempted += 1
+        if not hasattr(notepad, "total_research_reports_attempted"):
+            raise AttributeError("Notepad is missing expected attribute 'total_research_reports_attempted'")
+        notepad.total_research_reports_attempted += 1
         research = await self.run_research(question)
         summary_report = await self.summarize_research(question, research)
         research_to_use = summary_report if self.use_research_summary_to_forecast else research
@@ -181,7 +186,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
         llm_to_use: GeneralLlm | None = None,
     ) -> ReasonedPrediction[PredictionTypes]:
         notepad = await self._get_notepad(question)
-        notepad.num_predictions_attempted += 1
+        if not hasattr(notepad, "total_predictions_attempted"):
+            raise AttributeError("Notepad is missing expected attribute 'total_predictions_attempted'")
+        notepad.total_predictions_attempted += 1
 
         # Determine which LLM to use
         actual_llm = llm_to_use if llm_to_use else self.get_llm("default", "llm")
@@ -202,6 +209,27 @@ class TemplateForecaster(CompactLoggingForecastBot):
         prediction.reasoning = f"Model: {actual_llm.model}\n\n{prediction.reasoning}"
         return prediction  # type: ignore
 
+    async def _aggregate_predictions(
+        self,
+        predictions: list[PredictionTypes],
+        question: MetaculusQuestion,
+    ) -> PredictionTypes:
+        if not predictions:
+            raise ValueError("Cannot aggregate empty list of predictions")
+
+        # Binary aggregation (floats)
+        if isinstance(predictions[0], (int, float)):
+            float_preds = [float(p) for p in predictions]  # type: ignore[list-item]
+            return aggregate_binary_mean(float_preds)  # type: ignore[return-value]
+
+        # Numeric aggregation (configurable)
+        if isinstance(predictions[0], NumericDistribution) and isinstance(question, NumericQuestion):
+            numeric_preds = [p for p in predictions if isinstance(p, NumericDistribution)]
+            return await aggregate_numeric(numeric_preds, question, self.numeric_aggregation_method)  # type: ignore[return-value]
+
+        # Delegate remaining types (e.g., multiple-choice) to default
+        return await super()._aggregate_predictions(predictions, question)
+
     async def _call_perplexity(self, question: str, use_open_router: bool = False) -> str:
         prompt = clean_indents(
             f"""
@@ -216,7 +244,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
             """
         )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
-            model_name = "openrouter/perplexity/sonar-reasoning-pro"
+            model_name = (
+                "openrouter/perplexity/sonar-reasoning"  # sonar-reasoning-pro would be slightly better but pricier
+            )
         else:
             model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
         model = GeneralLlm(
@@ -250,111 +280,75 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self, question: BinaryQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[float]:
         from metaculus_bot.prompts import binary_prompt
+
         prompt = binary_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
         self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
-        prediction: float = PredictionExtractor.extract_last_percentage_value(
-            reasoning, max_prediction=0.99, min_prediction=0.01
+        binary_prediction: BinaryPrediction = await structure_output(
+            reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
         )
+        decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
-        logger.info(f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}")
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {decimal_pred}")
+        return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[PredictedOptionList]:
         from metaculus_bot.prompts import multiple_choice_prompt
+
         prompt = multiple_choice_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
         self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
-        prediction: PredictedOptionList = PredictionExtractor.extract_option_list_with_percentage_afterwards(
-            reasoning, question.options
+        parsing_instructions = clean_indents(
+            f"""
+            Make sure that all option names are one of the following:
+            {question.options}
+            The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
+            """
         )
-        logger.info(f"Forecasted URL {question.page_url} as {prediction} with reasoning:\n{reasoning}")
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        predicted_option_list: PredictedOptionList = await structure_output(
+            text_to_structure=reasoning,
+            output_type=PredictedOptionList,
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parsing_instructions,
+        )
+        logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
+        return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
 
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[NumericDistribution]:
         upper_bound_message, lower_bound_message = self._create_upper_and_lower_bound_messages(question)
         from metaculus_bot.prompts import numeric_prompt
+
         prompt = numeric_prompt(question, research, lower_bound_message, upper_bound_message)
         reasoning = await llm_to_use.invoke(prompt)
 
-        logger.info(
-            f"""
-            >>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
-            LLM: {llm_to_use.model}
-            Question ID: {question.id_of_question}
+        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
 
-            {reasoning}
-            <<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
-            """
+        percentile_list: list[Percentile] = await structure_output(
+            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
-
-        try:
-            prediction: NumericDistribution = (
-                PredictionExtractor.extract_numeric_distribution_from_list_of_percentile_number_and_probability(
-                    reasoning, question
-                )
-            )
-            # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
-            if (
-                hasattr(prediction, "declared_percentiles")
-                and isinstance(prediction.declared_percentiles, list)
-                and len(prediction.declared_percentiles) != 6
-            ):
-                raise ValidationError.from_exception_data(
-                    "NumericDistribution",  # title
-                    [
-                        {
-                            "type": "value_error",
-                            "loc": ("declared_percentiles",),
-                            "input": prediction.declared_percentiles,
-                            "ctx": {
-                                "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
-                            },
-                        }
-                    ],
-                )
-        except ValidationError as err:
-            # Fallback: find lines with "percentile", extract the last number,
-            # and assume they correspond to the required 10/20/40/60/80/90.
-            # Use strict filtering for percentile lines.
-            logger.warning("Attempting to repair numeric distribution from LLM output.")
-            percentile_lines = []
-            for line in reasoning.split("\n"):
-                match = re.match(
-                    r"^[Pp]ercentile\s+\d+:\s+[-]?\d+(?:,\d{3})*(?:\.\d+)?$",
-                    line.strip(),
-                )
-                if match:
-                    percentile_lines.append(line)
-
-            if len(percentile_lines) != 6:
-                logger.warning("Did not receive exactly 6 valid percentile lines after strict filtering.")
-                raise err  # Re-raise original error if strict filtering fails to find 6 lines
-
-            values = []
-            for line in percentile_lines:
-                # Extract the last number from the strictly filtered line
-                numbers = re.findall(r"-?\d+(?:\.\d+)?", line)
-                if numbers:
-                    values.append(float(numbers[-1].replace(",", "")))
-
-            if len(values) != 6:
-                raise ValueError("Could not extract 6 numeric values from strictly filtered percentile lines.")
-
-            percentiles_template = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9]
-            repaired_percentiles = [Percentile(value=v, percentile=p) for v, p in zip(values, percentiles_template)]
-
-            prediction = NumericDistribution(
-                declared_percentiles=repaired_percentiles,
-                open_upper_bound=question.open_upper_bound,
-                open_lower_bound=question.open_lower_bound,
-                upper_bound=question.upper_bound,
-                lower_bound=question.lower_bound,
-                zero_point=question.zero_point,
+        prediction = NumericDistribution.from_question(percentile_list, question)
+        # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
+        if (
+            hasattr(prediction, "declared_percentiles")
+            and isinstance(prediction.declared_percentiles, list)
+            and len(prediction.declared_percentiles) != 6
+        ):
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",  # title
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": prediction.declared_percentiles,
+                        "ctx": {
+                            "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
+                        },
+                    }
+                ],
             )
 
         logger.info(
@@ -362,42 +356,15 @@ class TemplateForecaster(CompactLoggingForecastBot):
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
-    # Agg with MEAN not median so we can use fewer LLM calls.
-    async def _aggregate_predictions(
-        self,
-        predictions: list[PredictionTypes],
-        question: MetaculusQuestion,
-    ) -> PredictionTypes:
-        if isinstance(question, BinaryQuestion):
-            return aggregate_binary_mean(cast(list[float], predictions))
-        elif isinstance(question, NumericQuestion):
-            return await aggregate_numeric(cast(list[NumericDistribution], predictions), question, cast(str, self.numeric_aggregation_method))
-
-        # Fallback to parent logic for MultipleChoice / other types
-        return await super()._aggregate_predictions(predictions, question)
-
-    # Backwards-compatibility: some tests patch this method directly.
-    def _create_upper_and_lower_bound_messages(self, question: NumericQuestion):  # noqa: D401
-        """Compatibility shim; delegates to numeric_utils.bound_messages."""
+    def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         return bound_messages(question)
 
-    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int, reasoning: str):
-        logger.info(
-            f"""
->>>>>>>>>>>>>>>>>> Raw LLM Output Start >>>>>>>>>>>>>>>>>
-LLM: {llm_to_use.model}
-Question ID: {question_id}
-
-{reasoning}
-<<<<<<<<<<<<<<<<<< Raw LLM Output End <<<<<<<<<<<<<<<<<
-"""
-        )
-
-
-# ──────────────────────────────────────────────────────────────────────────
-# Compact logging now provided by CompactLoggingForecastBot; removed
-# legacy monkey-patch code.
-# ──────────────────────────────────────────────────────────────────────────
+    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int | None, reasoning: str) -> None:
+        try:
+            model_name = getattr(llm_to_use, "model", "<unknown-model>")
+        except Exception:
+            model_name = "<unknown-model>"
+        logger.debug(f"Raw LLM output | qid={question_id} | model={model_name} | chars={len(reasoning)}")
 
 
 if __name__ == "__main__":

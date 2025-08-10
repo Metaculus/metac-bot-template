@@ -4,15 +4,12 @@ from typing import List
 
 import pytest
 
+from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
 from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
-from metaculus_bot.numeric_utils import (
-    aggregate_binary_mean,
-    aggregate_numeric,
-    bound_messages,
-)
 from metaculus_bot.utils.logging_utils import compact_log_report_summary
 
 # ---------- Prompt builders -------------------------------------------------
+
 
 def test_binary_prompt_contains_inputs():
     question = BinaryQuestion(
@@ -147,9 +144,37 @@ def test_bound_messages():
     assert "higher" in upper and lower == ""
 
 
+def test_bound_messages_uses_nominal_bounds():
+    from forecasting_tools.data_models.questions import NumericQuestion
+
+    q = NumericQuestion(
+        id_of_question=6,
+        id_of_post=6,
+        page_url="example",
+        question_text="?",
+        background_info="",
+        resolution_criteria="",
+        fine_print="",
+        published_time=None,
+        close_time=None,
+        lower_bound=0,
+        upper_bound=100,
+        open_lower_bound=False,
+        open_upper_bound=False,
+        unit_of_measure="",
+        zero_point=None,
+        nominal_lower_bound=5,
+        nominal_upper_bound=42,
+    )
+
+    upper, lower = bound_messages(q)
+    assert "42" in upper and "5" in lower
+
+
+from abc import ABC
+
 # ---------- Compact logger --------------------------------------------------
 from pydantic import Field
-from abc import ABC
 
 
 class DummyQuestion(MetaculusQuestion, ABC):
@@ -179,9 +204,7 @@ class DummyReport(ForecastReport):
         return "N/A"
 
     @classmethod
-    async def aggregate_predictions(
-        cls: type, predictions: list, question: MetaculusQuestion
-    ) -> "DummyReport":
+    async def aggregate_predictions(cls: type, predictions: list, question: MetaculusQuestion) -> "DummyReport":
         raise NotImplementedError()
 
     async def publish_report_to_metaculus(self) -> None:
