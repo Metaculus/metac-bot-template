@@ -9,7 +9,7 @@ from forecasting_tools import (
     GeneralLlm,
     MetaculusApi,
 )
-from basic_forecaster import BasicForecaster
+from agentic_forecaster_v1 import AgenticForecasterV1
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    current_bot = BasicForecaster(
+    current_bot = AgenticForecasterV1(
         research_reports_per_question=1,
         predictions_per_research_report=1,
         use_research_summary_to_forecast=False,
@@ -90,4 +90,4 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             current_bot.forecast_questions(questions, return_exceptions=True)
         )
-    BasicForecaster.log_report_summary(forecast_reports)  # type: ignore
+    AgenticForecasterV1.log_report_summary(forecast_reports)  # type: ignore
