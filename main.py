@@ -90,6 +90,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             raise ValueError("numeric_aggregation_method must be 'mean' or 'median'")
         self.numeric_aggregation_method: Literal["mean", "median"] = numeric_aggregation_method
         self._custom_research_provider: ResearchCallable | None = research_provider
+        self.research_provider: ResearchCallable | None = research_provider  # For framework config access
         if max_questions_per_run is not None and max_questions_per_run <= 0:
             raise ValueError("max_questions_per_run must be a positive integer if provided")
         self.max_questions_per_run: int | None = max_questions_per_run
@@ -230,13 +231,13 @@ class TemplateForecaster(CompactLoggingForecastBot):
         # Delegate remaining types (e.g., multiple-choice) to default
         return await super()._aggregate_predictions(predictions, question)
 
-    async def _call_perplexity(self, question: str, use_open_router: bool = False) -> str:
+    async def _call_perplexity(self, question: str, use_open_router: bool = True) -> str:
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster.
             The superforecaster will give you a question they intend to forecast on.
             To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-            In addition to news, consider and research all relevant prediction markets that are relevant to the question.
+            In addition to news, consider and research prediction markets that are relevant to the question.
             You do not produce forecasts yourself; you must provide all relevant data to the superforecaster so they can make an expert judgment.
 
             Question:
@@ -248,7 +249,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 "openrouter/perplexity/sonar-reasoning"  # sonar-reasoning-pro would be slightly better but pricier
             )
         else:
-            model_name = "perplexity/sonar-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
+            model_name = "perplexity/sonar-reasoning"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
         model = GeneralLlm(
             model=model_name,
             temperature=0.1,
