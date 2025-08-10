@@ -19,16 +19,18 @@ from forecasting_tools import (
 )
 
 from main import TemplateForecaster
+from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
 logger = logging.getLogger(__name__)
 
 
-async def benchmark_forecast_bot(mode: str) -> None:
+async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> None:
     """
-    Run a benchmark that compares your forecasts against the community prediction
+    Run a benchmark that compares your forecasts against the community prediction.
+    Ideally 100+ questions for meaningful error bars, but can use e.g. just a few for smoke testing or 30 for a quick run.
     """
+    # TODO: make sure this is ok w/ the max predictions at once cost safety controls we have in place
 
-    number_of_questions = 30  # Recommend 100+ for meaningful error bars, but 30 is faster/cheaper
     if mode == "display":
         run_benchmark_streamlit_page()
         return
@@ -55,33 +57,57 @@ async def benchmark_forecast_bot(mode: str) -> None:
     else:
         raise ValueError(f"Invalid mode: {mode}")
 
+    # Shared configuration for all benchmark bots
+    BENCHMARK_BOT_CONFIG = {
+        "research_reports_per_question": 1,
+        "predictions_per_research_report": 1,  # Ignored when forecasters present
+        "use_research_summary_to_forecast": False,
+        "publish_reports_to_metaculus": False,  # Don't publish during benchmarking
+        "folder_to_save_reports_to": None,
+        "skip_previously_forecasted_questions": False,
+        "numeric_aggregation_method": "mean",
+        "research_provider": None,  # Use default provider selection
+        "max_questions_per_run": None,  # No limit for benchmarking
+    }
+    MODEL_CONFIG = {
+        "temperature": 0.0,
+        "top_p": 0.9,
+        "max_tokens": 8000,  # Prevent truncation issues with reasoning models
+        "stream": False,
+        "timeout": 180,
+        "allowed_tries": 3,
+    }
+
     with MonetaryCostManager() as cost_manager:
         bots = [
+            # FIXME: temp disable to do model-by-model bench
+            # Full ensemble bot using production configuration
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": FORECASTER_LLMS,  # Our current ensemble approach
+            #         "summarizer": SUMMARIZER_LLM,
+            #         "parser": PARSER_LLM,
+            #         "researcher": RESEARCHER_LLM,
+            #     },
+            # ),
+            # Best single forecaster -- GPT-5 only bot for comparison
             TemplateForecaster(
-                predictions_per_research_report=5,
+                **BENCHMARK_BOT_CONFIG,
                 llms={
-                    "default": GeneralLlm(
-                        model="openrouter/google/gemini-2.5-flash",
-                        temperature=0.3,
-                    ),
-                    "parser": "openrouter/google/gemini-2.5-flash",
-                    "researcher": "openrouter/openai/gpt-5",
-                    "summarizer": "openrouter/google/gemini-2.5-flash",
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/openai/gpt-5",
+                            reasoning_effort="medium",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    "summarizer": SUMMARIZER_LLM,
+                    "parser": PARSER_LLM,
+                    "researcher": RESEARCHER_LLM,
                 },
             ),
-            TemplateForecaster(
-                predictions_per_research_report=1,
-                llms={
-                    "default": GeneralLlm(
-                        model="openrouter/google/gemini-2.5-flash",
-                        temperature=0.3,
-                    ),
-                    "parser": "openrouter/google/gemini-2.5-flash",
-                    "researcher": "openrouter/openai/gpt-5",
-                    "summarizer": "openrouter/google/gemini-2.5-flash",
-                },
-            ),
-            # Add other ForecastBots here (or same bot with different parameters)
+            # TODO: single model benchmark vs g2.5pro, o3, grok4, sonnet4 (thinking?), r1-0528, qwen3-235b, glm2.5
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(
@@ -92,9 +118,11 @@ async def benchmark_forecast_bot(mode: str) -> None:
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
-            logger.info(f"- Final Score: {benchmark.average_expected_baseline_score}")
-            logger.info(f"- Total Cost: {benchmark.total_cost}")
-            logger.info(f"- Time taken: {benchmark.time_taken_in_minutes}")
+            logger.info(
+                f"- Final Metaculus Baseline Score: {benchmark.average_expected_baseline_score:.4f} (based on log score, 0=always predict same, https://www.metaculus.com/help/scores-faq/#baseline-score )"
+            )
+            logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
+            logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
         logger.info(f"Total Cost: {cost_manager.current_usage}")
 
 
@@ -122,6 +150,12 @@ if __name__ == "__main__":
         default="display",
         help="Specify the run mode (default: display)",
     )
+    parser.add_argument(
+        "--num-questions",
+        type=int,
+        default=2,
+        help="Number of questions to benchmark (default: 2)",
+    )
     args = parser.parse_args()
     mode: Literal["run", "custom", "display"] = args.mode
-    asyncio.run(benchmark_forecast_bot(mode))
+    asyncio.run(benchmark_forecast_bot(mode, args.num_questions))
