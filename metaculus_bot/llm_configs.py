@@ -11,20 +11,21 @@ from forecasting_tools import GeneralLlm
 __all__ = ["FORECASTER_LLMS", "SUMMARIZER_LLM", "PARSER_LLM", "RESEARCHER_LLM"]
 
 FORECASTER_LLMS = [
-    # TODO: add back gemini 2.5 pro
-    # TODO: expand suite of LLMs, ideally including grok 4, sonnet 4, etc.
-    # GeneralLlm(
-    #     model="openrouter/google/gemini-2.5-pro",
-    #     temperature=0.0,
-    #     top_p=0.9,
-    #     stream=False,
-    #     timeout=180,
-    #     allowed_tries=3,
-    # ),
+    # TODO: expand suite of LLMs, ideally including grok 4, sonnet 4, Qwen3, etc.
+    GeneralLlm(
+        model="openrouter/google/gemini-2.5-pro",
+        temperature=0.0,
+        top_p=0.9,
+        max_tokens=8000,  # Prevent truncation issues with reasoning models
+        stream=False,
+        timeout=180,
+        allowed_tries=3,
+    ),
     GeneralLlm(
         model="openrouter/deepseek/deepseek-r1-0528",
         temperature=0.0,
         top_p=0.9,
+        max_tokens=8000,  # Prevent truncation issues with reasoning models
         stream=False,
         timeout=180,
         allowed_tries=3,
@@ -34,6 +35,7 @@ FORECASTER_LLMS = [
         model="openrouter/openai/gpt-5",
         temperature=0.0,
         top_p=0.9,
+        max_tokens=8000,  # Prevent truncation issues with reasoning models
         reasoning_effort="medium",
         stream=False,
         timeout=180,
