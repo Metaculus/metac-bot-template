@@ -77,6 +77,11 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
         "timeout": 180,
         "allowed_tries": 3,
     }
+    DEFAULT_HELPER_LLMS = {
+        "summarizer": SUMMARIZER_LLM,
+        "parser": PARSER_LLM,
+        "researcher": RESEARCHER_LLM,
+    }
 
     with MonetaryCostManager() as cost_manager:
         bots = [
@@ -91,6 +96,19 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         "researcher": RESEARCHER_LLM,
             #     },
             # ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/anthropic/claude-sonnet-4",
+                            reasoning={"max_tokens": 4000},
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
             # Best single forecaster -- GPT-5 only bot for comparison
             TemplateForecaster(
                 **BENCHMARK_BOT_CONFIG,
@@ -102,12 +120,82 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                             **MODEL_CONFIG,
                         )
                     ],
-                    "summarizer": SUMMARIZER_LLM,
-                    "parser": PARSER_LLM,
-                    "researcher": RESEARCHER_LLM,
+                    **DEFAULT_HELPER_LLMS,
                 },
             ),
             # TODO: single model benchmark vs g2.5pro, o3, grok4, sonnet4 (thinking?), r1-0528, qwen3-235b, glm2.5
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/z-ai/glm-4.5",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/deepseek/deepseek-r1-0528",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/google/gemini-2.5-pro",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/openai/o3",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/x-ai/grok-4",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+            ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
         benchmarks = await Benchmarker(
