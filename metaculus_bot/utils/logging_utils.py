@@ -7,6 +7,7 @@ from forecasting_tools import ForecastBot, ForecastReport
 
 def compact_log_report_summary(
     forecast_reports: Sequence[ForecastReport | BaseException],
+    raise_errors: bool = True,
 ) -> None:
     """Print exactly one line per forecast and summarise exceptions.
 
@@ -38,7 +39,7 @@ def compact_log_report_summary(
     if minor_lists:
         logger.error(f"{len(minor_lists)} minor error groups occurred while forecasting: {minor_lists}")
 
-    if exceptions:
+    if exceptions and raise_errors:
         raise RuntimeError(f"{len(exceptions)} errors occurred while forecasting: {exceptions}")
 
 
