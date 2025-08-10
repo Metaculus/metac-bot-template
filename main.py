@@ -284,7 +284,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         prompt = binary_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
-        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
+        self._log_llm_details(llm_to_use, question.id_of_question, reasoning)  # type: ignore
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
         )
@@ -300,7 +300,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         prompt = multiple_choice_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
-        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
+        self._log_llm_details(llm_to_use, question.id_of_question, reasoning)  # type: ignore
         parsing_instructions = clean_indents(
             f"""
             Make sure that all option names are one of the following:
@@ -326,7 +326,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         prompt = numeric_prompt(question, research, lower_bound_message, upper_bound_message)
         reasoning = await llm_to_use.invoke(prompt)
 
-        self._log_raw_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
+        self._log_llm_details(llm_to_use, question.id_of_question, reasoning)  # type: ignore
 
         percentile_list: list[Percentile] = await structure_output(
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
@@ -352,20 +352,35 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 ],
             )
 
-        logger.info(
-            f"Forecasted URL {question.page_url} as {prediction.declared_percentiles} with reasoning:\n{reasoning}"
-        )
+        logger.info(f"Forecasted URL {question.page_url} as {prediction.declared_percentiles}")
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         return bound_messages(question)
 
-    def _log_raw_llm_output(self, llm_to_use: GeneralLlm, question_id: int | None, reasoning: str) -> None:
+    def _log_llm_details(self, llm_to_use: GeneralLlm, question_id: int | None, reasoning: str) -> None:
         try:
             model_name = getattr(llm_to_use, "model", "<unknown-model>")
         except Exception:
             model_name = "<unknown-model>"
+
+        # Log metadata at debug level
         logger.debug(f"Raw LLM output | qid={question_id} | model={model_name} | chars={len(reasoning)}")
+
+        # Log formatted raw output at info level
+        logger.info(
+            f"""
+========================================
+LLM OUTPUT | Model: {model_name} | Question: {question_id} | Length: {len(reasoning)} chars
+========================================
+
+{reasoning}
+
+========================================
+END LLM OUTPUT | {model_name}
+========================================
+"""
+        )
 
 
 if __name__ == "__main__":
