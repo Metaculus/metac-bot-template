@@ -1,4 +1,4 @@
-.PHONY: conda_env install test run benchmark lint
+.PHONY: conda_env install test run benchmark lint analyze_correlations analyze_correlations_latest
 
 conda_env:
 	conda activate metaculus-bot
@@ -35,3 +35,9 @@ benchmark_run_small:
 
 benchmark_display:
 	conda run -n metaculus-bot && poetry run python community_benchmark.py --mode display
+
+analyze_correlations:
+	conda run -n metaculus-bot poetry run python analyze_correlations.py $(if $(FILE),$(FILE),benchmarks/)
+
+analyze_correlations_latest:
+	conda run -n metaculus-bot poetry run python analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)

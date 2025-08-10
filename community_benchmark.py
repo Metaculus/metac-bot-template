@@ -202,7 +202,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             questions_to_use=questions,
             forecast_bots=bots,
             file_path_to_save_reports="benchmarks/",
-            concurrent_question_batch_size=10,
+            concurrent_question_batch_size=30,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
@@ -212,6 +212,33 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
             logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
         logger.info(f"Total Cost: {cost_manager.current_usage}")
+
+        # Perform correlation analysis if we have multiple models
+        if len(benchmarks) > 1:
+            from metaculus_bot.correlation_analysis import CorrelationAnalyzer
+
+            analyzer = CorrelationAnalyzer()
+            analyzer.add_benchmark_results(benchmarks)
+
+            # Generate and log correlation report
+            report = analyzer.generate_correlation_report("benchmarks/correlation_analysis.md")
+            logger.info("\n" + "=" * 50)
+            logger.info("CORRELATION ANALYSIS")
+            logger.info("=" * 50)
+            logger.info(report)
+
+            # Log optimal ensembles for easy reference
+            optimal_ensembles = analyzer.find_optimal_ensembles(max_ensemble_size=6, max_cost_per_question=1.0)
+            if optimal_ensembles:
+                logger.info(f"\nTop 3 Recommended Ensembles (Cost ≤ $0.50/question):")
+                for i, ensemble in enumerate(optimal_ensembles[:3], 1):
+                    models = " + ".join(ensemble.model_names)
+                    logger.info(
+                        f"{i}. {models} | Score: {ensemble.avg_performance:.2f} | "
+                        f"Cost: ${ensemble.avg_cost:.3f} | Diversity: {ensemble.diversity_score:.3f}"
+                    )
+        else:
+            logger.info("Skipping correlation analysis (need multiple models)")
 
 
 if __name__ == "__main__":
