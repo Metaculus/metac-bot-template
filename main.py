@@ -1,18 +1,11 @@
-import argparse
 import asyncio
 import logging
-import os
-from datetime import datetime
 from typing import Any, Coroutine, Literal, Sequence, cast
 
-import numpy as np
-from forecasting_tools import (
-    AskNewsSearcher,
+from forecasting_tools import (  # AskNewsSearcher,
     BinaryPrediction,
     BinaryQuestion,
-    ForecastBot,
     GeneralLlm,
-    MetaculusApi,
     MetaculusQuestion,
     MultipleChoiceQuestion,
     NumericDistribution,
@@ -26,7 +19,7 @@ from forecasting_tools import (
 )
 from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ForecastReport, ResearchWithPredictions
-from forecasting_tools.data_models.numeric_report import NumericReport, Percentile  # type: ignore
+from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
@@ -40,7 +33,7 @@ logger.setLevel(logging.DEBUG)
 
 class TemplateForecaster(CompactLoggingForecastBot):
 
-    _max_concurrent_questions: int = 2
+    _max_concurrent_questions: int = 3
     _concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(_max_concurrent_questions)
 
     def __init__(
@@ -156,8 +149,14 @@ class TemplateForecaster(CompactLoggingForecastBot):
             raise AttributeError("Notepad is missing expected attribute 'total_research_reports_attempted'")
         notepad.total_research_reports_attempted += 1
         research = await self.run_research(question)
-        summary_report = await self.summarize_research(question, research)
-        research_to_use = summary_report if self.use_research_summary_to_forecast else research
+
+        # Only call summarizer if we plan to use the summary for forecasting
+        if self.use_research_summary_to_forecast:
+            summary_report = await self.summarize_research(question, research)
+            research_to_use = summary_report
+        else:
+            summary_report = research  # Use raw research for reporting compatibility
+            research_to_use = research
 
         # Generate tasks for each forecaster LLM
         tasks = cast(
@@ -237,8 +236,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
             You are an assistant to a superforecaster.
             The superforecaster will give you a question they intend to forecast on.
             To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-            In addition to news, consider and research prediction markets that are relevant to the question.
-            You do not produce forecasts yourself; you must provide all relevant data to the superforecaster so they can make an expert judgment.
+            In addition to news, briefly research prediction markets that are relevant to the question. (If there are no relevant prediction markets, simply skip reporting on this and DO NOT speculate what they would say.)
+            You DO NOT produce forecasts yourself; you must provide ALL relevant data to the superforecaster so they can make an expert judgment.
 
             Question:
             {question}
