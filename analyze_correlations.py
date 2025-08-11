@@ -5,7 +5,7 @@ Standalone script to analyze correlations from existing benchmark results.
 Usage:
     python analyze_correlations.py benchmarks/benchmarks_2025-08-10_15-04-51.jsonl
     python analyze_correlations.py benchmarks/ --max-cost 0.3 --max-size 3
-    
+
 Or via Makefile:
     make analyze_correlations FILE=benchmarks/benchmarks_2025-08-10_15-04-51.jsonl
     make analyze_correlations_latest

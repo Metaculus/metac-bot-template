@@ -18,6 +18,7 @@ from forecasting_tools.data_models.questions import MetaculusQuestion
 from scipy.stats import pearsonr, spearmanr
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 @dataclass
@@ -77,13 +78,20 @@ class EnsembleCandidate:
     @property
     def ensemble_score(self) -> float:
         """Combined score balancing performance, cost, and diversity."""
-        # Weighted combination: performance (0.5) + efficiency (0.3) + diversity (0.2)
         normalized_perf = self.avg_performance / 20.0  # Normalize typical scores
-        normalized_efficiency = min(self.efficiency_ratio / 1000.0, 1.0)  # Cap at 1000
+        normalized_efficiency = min(self.efficiency_ratio / 1500.0, 1.0)  # Cap at 1000
         diversity_bonus = 1.0 - self.avg_correlation
-        PERF_WT, EFFIC_WT, DIVERS_WT = 0.5, 0.1, 0.4
+        PERF_WT, EFFIC_WT, DIVERS_WT = 0.9, 0.025, 0.075
+        perf_score, effic_score, divers_score = (
+            PERF_WT * normalized_perf,
+            EFFIC_WT * normalized_efficiency,
+            DIVERS_WT * diversity_bonus,
+        )
+        logger.debug(
+            f"Score components: performance/accuracy {perf_score:.4f}, efficiency {effic_score:.4f}, diversity {divers_score:.4f}"
+        )
 
-        return PERF_WT * normalized_perf + EFFIC_WT * normalized_efficiency + DIVERS_WT * diversity_bonus
+        return perf_score + effic_score + divers_score
 
 
 class CorrelationAnalyzer:
