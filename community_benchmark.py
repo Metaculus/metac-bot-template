@@ -166,6 +166,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     "forecasters": [
                         GeneralLlm(
                             model="openrouter/google/gemini-2.5-pro",
+                            reasoning={"max_tokens": 8000},
                             **MODEL_CONFIG,
                         )
                     ],
@@ -178,6 +179,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     "forecasters": [
                         GeneralLlm(
                             model="openrouter/openai/o3",
+                            reasoning_effort="medium",
                             **MODEL_CONFIG,
                         )
                     ],
@@ -190,6 +192,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     "forecasters": [
                         GeneralLlm(
                             model="openrouter/x-ai/grok-4",
+                            reasoning={"effort": "medium"},
                             **MODEL_CONFIG,
                         )
                     ],
