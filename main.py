@@ -49,6 +49,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         numeric_aggregation_method: Literal["mean", "median"] = "mean",
         research_provider: ResearchCallable | None = None,
         max_questions_per_run: int | None = 10,
+        is_benchmarking: bool = False,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -87,6 +88,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if max_questions_per_run is not None and max_questions_per_run <= 0:
             raise ValueError("max_questions_per_run must be a positive integer if provided")
         self.max_questions_per_run: int | None = max_questions_per_run
+        self.is_benchmarking: bool = is_benchmarking
 
         super().__init__(
             research_reports_per_question=research_reports_per_question,
@@ -115,6 +117,11 @@ class TemplateForecaster(CompactLoggingForecastBot):
             logger.info(f"Limiting to first {self.max_questions_per_run} questions out of {len(questions)}")
             questions = list(questions)[: self.max_questions_per_run]
 
+        # Log question processing info with progress
+        if questions:
+            bot_name = getattr(self, "name", "Bot")
+            logger.info(f"📊 {bot_name}: Processing {len(questions)} questions...")
+
         return await super().forecast_questions(questions, return_exceptions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -129,6 +136,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                     exa_callback=self._call_exa_smart_searcher,
                     perplexity_callback=self._call_perplexity,
                     openrouter_callback=lambda q: self._call_perplexity(q, use_open_router=True),
+                    is_benchmarking=self.is_benchmarking,
                 )
 
             research = await provider(question.question_text)
@@ -231,12 +239,19 @@ class TemplateForecaster(CompactLoggingForecastBot):
         return await super()._aggregate_predictions(predictions, question)
 
     async def _call_perplexity(self, question: str, use_open_router: bool = True) -> str:
+        # Exclude prediction markets research when benchmarking to avoid data leakage
+        prediction_markets_instruction = (
+            ""
+            if self.is_benchmarking
+            else "In addition to news, briefly research prediction markets that are relevant to the question. (If there are no relevant prediction markets, simply skip reporting on this and DO NOT speculate what they would say.)"
+        )
+
         prompt = clean_indents(
             f"""
             You are an assistant to a superforecaster.
             The superforecaster will give you a question they intend to forecast on.
             To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-            In addition to news, briefly research prediction markets that are relevant to the question. (If there are no relevant prediction markets, simply skip reporting on this and DO NOT speculate what they would say.)
+            {prediction_markets_instruction}
             You DO NOT produce forecasts yourself; you must provide ALL relevant data to the superforecaster so they can make an expert judgment.
 
             Question:

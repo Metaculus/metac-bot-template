@@ -68,6 +68,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
         "numeric_aggregation_method": "mean",
         "research_provider": None,  # Use default provider selection
         "max_questions_per_run": None,  # No limit for benchmarking
+        "is_benchmarking": True,  # Exclude prediction markets to avoid data leakage
     }
     MODEL_CONFIG = {
         "temperature": 0.0,
@@ -201,6 +202,13 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
+
+        # Log progress info
+        total_predictions = len(bots) * len(questions)
+        logger.info(
+            f"🚀 Starting benchmark: {len(bots)} bots × {len(questions)} questions = {total_predictions} total predictions"
+        )
+
         benchmarks = await Benchmarker(
             questions_to_use=questions,
             forecast_bots=bots,
