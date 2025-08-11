@@ -36,13 +36,15 @@ def test_extract_timestamp_from_filename():
 
 
 def create_mock_benchmark_data():
-    """Create mock benchmark data for testing."""
+    """Create mock benchmark data for binary questions only."""
     return {
         "forecast_bot_class_name": "TemplateForecaster",
-        "num_input_questions": 2,
+        "name": "Test Bot | Model | test-model | 2025-08-11_12-00-00",
+        "num_input_questions": 1,
         "timestamp": datetime.now().isoformat(),
         "time_taken_in_minutes": 5.0,
         "total_cost": 0.50,
+        "average_expected_baseline_score": 15.5,
         "forecast_bot_config": {
             "llms": {
                 "forecasters": [{"model": "openrouter/openai/gpt-4o"}],
@@ -57,7 +59,7 @@ def create_mock_benchmark_data():
                     "id_of_question": 1,
                     "id_of_post": 1,
                     "page_url": "https://example.com/1",
-                    "question_text": "Test question?",
+                    "question_text": "Will this binary event happen?",
                     "background_info": "",
                     "resolution_criteria": "",
                     "fine_print": "",
@@ -65,9 +67,10 @@ def create_mock_benchmark_data():
                     "close_time": None,
                 },
                 "prediction": 0.6,
-                "explanation": "Mock reasoning",
+                "explanation": "# Binary Analysis\nThis is mock reasoning for correlation analysis.",
                 "price_estimate": 0.25,
                 "minutes_taken": 2.5,
+                "expected_baseline_score": 15.5,
                 "errors": [],
             }
         ],
@@ -191,7 +194,15 @@ def test_main_function_flow(mock_load, mock_analyzer_class):
     mock_analyzer = Mock()
     mock_analyzer.generate_correlation_report.return_value = "Mock report"
     mock_analyzer.find_optimal_ensembles.return_value = []
-    mock_analyzer.calculate_correlation_matrix.return_value = Mock()
+
+    # Mock correlation matrix with proper get_least_correlated_pairs return value
+    mock_corr_matrix = Mock()
+    mock_corr_matrix.get_least_correlated_pairs.return_value = [
+        ("model1", "model2", 0.1),
+        ("model3", "model4", 0.2),
+        ("model5", "model6", 0.3),
+    ]
+    mock_analyzer.calculate_correlation_matrix.return_value = mock_corr_matrix
     mock_analyzer_class.return_value = mock_analyzer
 
     # Mock sys.argv to avoid parsing real command line
