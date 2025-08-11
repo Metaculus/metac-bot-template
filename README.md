@@ -33,8 +33,8 @@ Instructions for getting your METACULUS_TOKEN, OPENROUTER_API_KEY, or optional s
 ## Changing the Github automation
 You can change which file is run in the GitHub automation by either changing the content of `main.py` to the contents of `main_with_no_framwork.py` (or another script) or by chaging all references to `main.py` to another script in `.github/workflows/run_bot_on_tournament.yaml` and related files.
 
-## Editing non-locally
-Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. However you will probably want to set up local developement in order install packages that allow you to test Computer Use and other similar tools. When making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord.
+## Editing in GitHub UI
+Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. Whether you develop locally or not, when making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord.
 
 ## Run/Edit the bot locally
 Clone the repository. Find your terminal and run the following commands:
