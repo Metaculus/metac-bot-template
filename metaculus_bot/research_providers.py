@@ -53,14 +53,18 @@ def _exa_provider(default_llm: GeneralLlm) -> ResearchCallable:
     return _fetch
 
 
-def _perplexity_provider(use_open_router: bool = False) -> ResearchCallable:
+def _perplexity_provider(use_open_router: bool = False, is_benchmarking: bool = False) -> ResearchCallable:
     async def _fetch(question_text: str) -> str:  # noqa: D401
         model_name = "openrouter/perplexity/sonar-reasoning-pro" if use_open_router else "perplexity/sonar-pro"
         model = GeneralLlm(model=model_name, temperature=0.1)
+        # Exclude prediction markets research when benchmarking to avoid data leakage
+        prediction_markets_instruction = (
+            "" if is_benchmarking else "In addition to news, consider all relevant prediction markets.\n"
+        )
         prompt = (
             "You are an assistant to a superforecaster.\n"
             "Generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.\n"
-            "In addition to news, consider all relevant prediction markets.\n"
+            f"{prediction_markets_instruction}"
             "Do not produce forecasts yourself. Provide data for the superforecaster.\n\n"
             f"Question:\n{question_text}"
         )
@@ -79,6 +83,7 @@ def choose_provider(
     exa_callback: ResearchCallable | None = None,
     perplexity_callback: ResearchCallable | None = None,
     openrouter_callback: ResearchCallable | None = None,
+    is_benchmarking: bool = False,
 ) -> ResearchCallable:
     """Return a research-fetching coroutine based on env vars.
 
@@ -103,12 +108,12 @@ def choose_provider(
     if os.getenv("PERPLEXITY_API_KEY"):
         if perplexity_callback is not None:
             return perplexity_callback
-        return _perplexity_provider(False)
+        return _perplexity_provider(False, is_benchmarking)
 
     if os.getenv("OPENROUTER_API_KEY"):
         if openrouter_callback is not None:
             return openrouter_callback
-        return _perplexity_provider(True)
+        return _perplexity_provider(True, is_benchmarking)
 
     async def _empty(_: str) -> str:  # noqa: D401
         return ""
