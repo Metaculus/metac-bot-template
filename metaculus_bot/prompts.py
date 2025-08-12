@@ -29,7 +29,7 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
             You are a senior forecaster preparing a public report for expert peers.
             You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
-            Historically, LLMs like you have overestimated probabilities, and the base rate for positive resolutions on Metaculus is 35%.
+            Historically, LLMs like you have overestimated probabilities, and the base rate for positive resolutions on Metaculus is 35%. (This should slightly influence your calibration, but it is NOT a base rate.)
 
             Your Metaculus question is:
             {question.question_text}
