@@ -11,6 +11,7 @@ from typing import Literal
 
 import aiohttp
 import typeguard
+from dotenv import load_dotenv
 from forecasting_tools import (
     ApiFilter,
     Benchmarker,
@@ -26,6 +27,9 @@ from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
 logger = logging.getLogger(__name__)
+
+load_dotenv()
+load_dotenv(".env.local", override=True)
 
 
 # Quick mitigation for occasional "Unclosed client session" warnings from aiohttp when
@@ -122,6 +126,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
         "research_provider": None,  # Use default provider selection
         "max_questions_per_run": None,  # No limit for benchmarking
         "is_benchmarking": True,  # Exclude prediction markets to avoid data leakage
+        "allow_research_fallback": False,  # Ensure AskNews runs; do not fallback in benchmark
     }
     MODEL_CONFIG = {
         "temperature": 0.0,
@@ -156,36 +161,6 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                 llms={
                     "forecasters": [
                         GeneralLlm(
-                            model="openrouter/anthropic/claude-sonnet-4",
-                            reasoning={"max_tokens": 4000},
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-            ),
-            # Best single forecaster -- GPT-5 only bot for comparison
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/openai/gpt-5",
-                            reasoning_effort="medium",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-            ),
-            # TODO: single model benchmark vs g2.5pro, o3, grok4, sonnet4 (thinking?), r1-0528, qwen3-235b, glm2.5
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
                             model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
                             **MODEL_CONFIG,
                         )
@@ -194,72 +169,100 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                 },
                 max_concurrent_research=batch_size,
             ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/z-ai/glm-4.5",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-            ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/deepseek/deepseek-r1-0528",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-            ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/google/gemini-2.5-pro",
-                            reasoning={"max_tokens": 8000},
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-            ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/openai/o3",
-                            reasoning_effort="medium",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-            ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/x-ai/grok-4",
-                            reasoning={"effort": "medium"},
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-            ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/z-ai/glm-4.5",
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            #     max_concurrent_research=batch_size,
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/deepseek/deepseek-r1-0528",
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            #     max_concurrent_research=batch_size,
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/anthropic/claude-sonnet-4",
+            #                 reasoning={"max_tokens": 4000},
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            #     max_concurrent_research=batch_size,
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/openai/gpt-5",
+            #                 reasoning_effort="high",
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            #     max_concurrent_research=batch_size,
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/google/gemini-2.5-pro",
+            #                 reasoning={"max_tokens": 8000},
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/openai/o3",
+            #                 reasoning_effort="high",
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            # ),
+            # TemplateForecaster(
+            #     **BENCHMARK_BOT_CONFIG,
+            #     llms={
+            #         "forecasters": [
+            #             GeneralLlm(
+            #                 model="openrouter/x-ai/grok-4",
+            #                 reasoning={"effort": "high"},
+            #                 **MODEL_CONFIG,
+            #             )
+            #         ],
+            #         **DEFAULT_HELPER_LLMS,
+            #     },
+            #     max_concurrent_research=batch_size,
+            # ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
 
@@ -275,13 +278,21 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             file_path_to_save_reports="benchmarks/",
             concurrent_question_batch_size=batch_size,
         ).run_benchmark()
-        for i, benchmark in enumerate(benchmarks):
-            logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
-            logger.info(
-                f"- Final Metaculus Baseline Score: {benchmark.average_expected_baseline_score:.4f} (based on log score, 0=always predict same, https://www.metaculus.com/help/scores-faq/#baseline-score )"
-            )
-            logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
-            logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
+        try:
+            for i, benchmark in enumerate(benchmarks):
+                logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
+                logger.info(
+                    f"- Final Metaculus Baseline Score: {benchmark.average_expected_baseline_score:.4f} (based on log score, 0=always predict same, https://www.metaculus.com/help/scores-faq/#baseline-score )"
+                )
+                logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
+                logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
+        except ValueError as ve:
+            # Provide clearer guidance when no reports exist (likely research provider failures)
+            raise RuntimeError(
+                "Benchmark produced no forecast reports. Likely all research calls failed due to AskNews API issues. "
+                "Check AskNews credentials, account status, and API permissions. "
+                "Fallback is disabled for benchmarks by design."
+            ) from ve
         logger.info(f"Total Cost: {cost_manager.current_usage}")
 
         # Perform correlation analysis if we have multiple models

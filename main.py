@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Any, Coroutine, Literal, Sequence, cast
 
+from dotenv import load_dotenv
 from forecasting_tools import (  # AskNewsSearcher,
     BinaryPrediction,
     BinaryQuestion,
@@ -31,6 +32,9 @@ from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+load_dotenv()
+load_dotenv(".env.local", override=True)
+
 
 class TemplateForecaster(CompactLoggingForecastBot):
 
@@ -49,6 +53,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         max_questions_per_run: int | None = 10,
         is_benchmarking: bool = False,
         max_concurrent_research: int = DEFAULT_MAX_CONCURRENT_RESEARCH,
+        allow_research_fallback: bool = True,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -88,9 +93,12 @@ class TemplateForecaster(CompactLoggingForecastBot):
             raise ValueError("max_questions_per_run must be a positive integer if provided")
         self.max_questions_per_run: int | None = max_questions_per_run
         self.is_benchmarking: bool = is_benchmarking
+        self.allow_research_fallback: bool = allow_research_fallback
 
         if max_concurrent_research <= 0:
             raise ValueError("max_concurrent_research must be a positive integer")
+        # Persist for framework config introspection and logging
+        self.max_concurrent_research: int = max_concurrent_research
         # Instance-level semaphore to avoid cross-instance throttling
         self._concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(max_concurrent_research)
 
@@ -145,7 +153,36 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 )
 
             logger.info(f"Using research provider: {provider_name}")
-            research = await provider(question.question_text)
+            try:
+                research = await provider(question.question_text)
+            except Exception as e:
+                # Optional fallback when primary provider (often AskNews) fails (e.g., 429s)
+                if self.allow_research_fallback and provider_name == "asknews":
+                    logger.warning(f"Primary research provider '{provider_name}' failed with {type(e).__name__}: {e}")
+                    fallback_research: str | None = None
+                    try:
+                        import os
+
+                        if os.getenv("OPENROUTER_API_KEY"):
+                            logger.info("Falling back to openrouter/perplexity for research")
+                            fallback_research = await self._call_perplexity(
+                                question.question_text, use_open_router=True
+                            )
+                        elif os.getenv("PERPLEXITY_API_KEY"):
+                            logger.info("Falling back to Perplexity for research")
+                            fallback_research = await self._call_perplexity(
+                                question.question_text, use_open_router=False
+                            )
+                        elif os.getenv("EXA_API_KEY") and hasattr(self, "_call_exa_smart_searcher"):
+                            logger.info("Falling back to Exa search for research")
+                            fallback_research = await self._call_exa_smart_searcher(question.question_text)
+                    except Exception as fe:
+                        logger.warning(f"Fallback research provider also failed: {type(fe).__name__}: {fe}")
+                    if fallback_research is None:
+                        raise
+                    research = fallback_research
+                else:
+                    raise
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 

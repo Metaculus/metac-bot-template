@@ -7,12 +7,20 @@ formatted research.  The selection is governed by environment variables so the
 logic lives in one place instead of being in `TemplateForecaster.run_research`.
 """
 
+import asyncio
 import os
+import time
 from typing import Awaitable, Callable, Protocol, Tuple
 
 from forecasting_tools import AskNewsSearcher, GeneralLlm, SmartSearcher
 
-from metaculus_bot.constants import RESEARCH_PROVIDER_ENV
+from metaculus_bot.constants import (
+    ASKNEWS_BACKOFF_SECS,
+    ASKNEWS_MAX_CONCURRENCY,
+    ASKNEWS_MAX_RPS,
+    ASKNEWS_MAX_TRIES,
+    RESEARCH_PROVIDER_ENV,
+)
 
 QuestionText = str
 ResearchCallable = Callable[[QuestionText], Awaitable[str]]
@@ -28,9 +36,72 @@ class ResearchProvider(Protocol):
 # ---------------------------------------------------------------------------
 
 
+_ASKNEWS_GLOBAL_SEMAPHORE: asyncio.Semaphore | None = None
+_ASKNEWS_RATE_LOCK: asyncio.Lock = asyncio.Lock()
+_ASKNEWS_LAST_CALL_TS: float = 0.0
+
+
+async def _asknews_rate_gate() -> None:
+    global _ASKNEWS_LAST_CALL_TS
+    if ASKNEWS_MAX_RPS <= 0:
+        return
+    min_interval = 1.0 / ASKNEWS_MAX_RPS
+    async with _ASKNEWS_RATE_LOCK:
+        now = time.monotonic()
+        wait = _ASKNEWS_LAST_CALL_TS + min_interval - now
+        if wait > 0:
+            await asyncio.sleep(wait)
+            now = time.monotonic()
+        _ASKNEWS_LAST_CALL_TS = now
+
+
 def _asknews_provider() -> ResearchCallable:
+    global _ASKNEWS_GLOBAL_SEMAPHORE
+    if _ASKNEWS_GLOBAL_SEMAPHORE is None:
+        # Initialize a single global semaphore to throttle concurrency across all bots
+        max_c = max(1, int(ASKNEWS_MAX_CONCURRENCY))
+        _ASKNEWS_GLOBAL_SEMAPHORE = asyncio.Semaphore(max_c)
+
     async def _fetch(question_text: str) -> str:  # noqa: D401
-        return await AskNewsSearcher().get_formatted_news_async(question_text)
+        assert _ASKNEWS_GLOBAL_SEMAPHORE is not None
+        tries = max(1, int(ASKNEWS_MAX_TRIES))
+        backoff = float(ASKNEWS_BACKOFF_SECS)
+        last_exc: Exception | None = None
+        for attempt in range(1, tries + 1):
+            async with _ASKNEWS_GLOBAL_SEMAPHORE:
+                await _asknews_rate_gate()
+                try:
+                    # Pass credentials explicitly to ensure they're available
+                    import logging
+                    import os
+
+                    logger = logging.getLogger(__name__)
+
+                    client_id = os.getenv("ASKNEWS_CLIENT_ID")
+                    secret = os.getenv("ASKNEWS_SECRET")
+                    if not client_id or not secret:
+                        raise ValueError("ASKNEWS_CLIENT_ID and ASKNEWS_SECRET environment variables must be set")
+
+                    logger.info(
+                        f"AskNews attempt {attempt}/{tries}: Creating searcher with client_id={client_id[:8]}..."
+                    )
+                    searcher = AskNewsSearcher(client_id=client_id, client_secret=secret)
+                    logger.info(f"AskNews attempt {attempt}/{tries}: Calling get_formatted_news_async")
+                    result = await searcher.get_formatted_news_async(question_text)
+                    logger.info(f"AskNews attempt {attempt}/{tries}: Success, got {len(result)} chars")
+                    return result
+                except Exception as e:
+                    last_exc = e
+                    # Only retry on rate/limit errors
+                    msg = str(e).lower()
+                    if not ("429" in msg or "rate limit" in msg or "concurrency limit" in msg):
+                        raise
+            if attempt < tries:
+                # Exponential backoff with linear floor
+                sleep_for = backoff * (2 ** (attempt - 1))
+                await asyncio.sleep(sleep_for)
+        assert last_exc is not None
+        raise last_exc
 
     return _fetch
 
