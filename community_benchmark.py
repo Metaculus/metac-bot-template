@@ -140,7 +140,6 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
         # Keep benchmark and bot research concurrency aligned
         batch_size = 30
         bots = [
-            # FIXME: temp disable to do model-by-model bench
             # Full ensemble bot using production configuration
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
