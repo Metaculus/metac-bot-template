@@ -33,9 +33,6 @@ logger.setLevel(logging.DEBUG)
 
 class TemplateForecaster(CompactLoggingForecastBot):
 
-    _max_concurrent_questions: int = 3
-    _concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(_max_concurrent_questions)
-
     def __init__(
         self,
         *,
@@ -50,6 +47,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         research_provider: ResearchCallable | None = None,
         max_questions_per_run: int | None = 10,
         is_benchmarking: bool = False,
+        max_concurrent_research: int = 3,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -89,6 +87,11 @@ class TemplateForecaster(CompactLoggingForecastBot):
             raise ValueError("max_questions_per_run must be a positive integer if provided")
         self.max_questions_per_run: int | None = max_questions_per_run
         self.is_benchmarking: bool = is_benchmarking
+
+        if max_concurrent_research <= 0:
+            raise ValueError("max_concurrent_research must be a positive integer")
+        # Instance-level semaphore to avoid cross-instance throttling
+        self._concurrency_limiter: asyncio.Semaphore = asyncio.Semaphore(max_concurrent_research)
 
         super().__init__(
             research_reports_per_question=research_reports_per_question,

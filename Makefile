@@ -23,7 +23,7 @@ test:
 run:
 	conda run -n metaculus-bot && poetry run python main.py
 
-# Warning: this will fire off requests to OpenRouter and cost money.
+# Warning: this will fire off requests to OpenRouter and cost (a very small amount) of money.
 benchmark_run_smoke_test:
 	export METACULUS_TOKEN=$$(cat ~/.keys/metaculus_token) && export OPENAI_API_KEY=$$(cat ~/.keys/openai_api_key) && export OPENROUTER_API_KEY=$$(cat ~/.keys/openrouter_key) && conda run -n metaculus-bot && poetry run python community_benchmark.py --mode run --num-questions 2
 

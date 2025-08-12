@@ -85,6 +85,8 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
     }
 
     with MonetaryCostManager() as cost_manager:
+        # Keep benchmark and bot research concurrency aligned
+        batch_size = 30
         bots = [
             # FIXME: temp disable to do model-by-model bench
             # Full ensemble bot using production configuration
@@ -109,6 +111,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
             # Best single forecaster -- GPT-5 only bot for comparison
             TemplateForecaster(
@@ -123,6 +126,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
             # TODO: single model benchmark vs g2.5pro, o3, grok4, sonnet4 (thinking?), r1-0528, qwen3-235b, glm2.5
             TemplateForecaster(
@@ -136,6 +140,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
             TemplateForecaster(
                 **BENCHMARK_BOT_CONFIG,
@@ -148,6 +153,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
             TemplateForecaster(
                 **BENCHMARK_BOT_CONFIG,
@@ -160,6 +166,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
             TemplateForecaster(
                 **BENCHMARK_BOT_CONFIG,
@@ -199,6 +206,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     ],
                     **DEFAULT_HELPER_LLMS,
                 },
+                max_concurrent_research=batch_size,
             ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
@@ -213,7 +221,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             questions_to_use=questions,
             forecast_bots=bots,
             file_path_to_save_reports="benchmarks/",
-            concurrent_question_batch_size=30,
+            concurrent_question_batch_size=batch_size,
         ).run_benchmark()
         for i, benchmark in enumerate(benchmarks):
             logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
