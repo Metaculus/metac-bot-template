@@ -8,9 +8,11 @@ logic lives in one place instead of being in `TemplateForecaster.run_research`.
 """
 
 import os
-from typing import Awaitable, Callable, Protocol
+from typing import Awaitable, Callable, Protocol, Tuple
 
 from forecasting_tools import AskNewsSearcher, GeneralLlm, SmartSearcher
+
+from metaculus_bot.constants import RESEARCH_PROVIDER_ENV
 
 QuestionText = str
 ResearchCallable = Callable[[QuestionText], Awaitable[str]]
@@ -78,14 +80,14 @@ def _perplexity_provider(use_open_router: bool = False, is_benchmarking: bool = 
 # ---------------------------------------------------------------------------
 
 
-def choose_provider(
+def choose_provider_with_name(
     default_llm: GeneralLlm | None = None,
     exa_callback: ResearchCallable | None = None,
     perplexity_callback: ResearchCallable | None = None,
     openrouter_callback: ResearchCallable | None = None,
     is_benchmarking: bool = False,
-) -> ResearchCallable:
-    """Return a research-fetching coroutine based on env vars.
+) -> tuple[ResearchCallable, str]:
+    """Return a research coroutine and its provider name.
 
     Priority order replicates pre-refactor behaviour:
     1. AskNews (ASKNEWS_CLIENT_ID & ASKNEWS_SECRET)
@@ -94,28 +96,68 @@ def choose_provider(
     4. Perplexity via OpenRouter (OPENROUTER_API_KEY)
     5. Fallback stub that returns an empty string.
     """
+    forced = os.getenv(RESEARCH_PROVIDER_ENV)
+    if forced:
+        forced_lc = forced.strip().lower()
+        if forced_lc == "asknews":
+            # Fail fast if creds missing to make misconfig obvious
+            if not (os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET")):
+                raise ValueError("RESEARCH_PROVIDER=asknews requires ASKNEWS_CLIENT_ID and ASKNEWS_SECRET to be set")
+            return _asknews_provider(), "asknews"
+        if forced_lc == "exa":
+            if exa_callback is not None:
+                return exa_callback, "exa"
+            if default_llm is None:
+                raise ValueError("RESEARCH_PROVIDER=exa requires default_llm or exa_callback to be provided")
+            return _exa_provider(default_llm), "exa"
+        if forced_lc == "perplexity":
+            if perplexity_callback is not None:
+                return perplexity_callback, "perplexity"
+            return _perplexity_provider(False, is_benchmarking), "perplexity"
+        if forced_lc == "openrouter":
+            if openrouter_callback is not None:
+                return openrouter_callback, "openrouter"
+            return _perplexity_provider(True, is_benchmarking), "openrouter"
+        # Any other value behaves as auto
 
     if os.getenv("ASKNEWS_CLIENT_ID") and os.getenv("ASKNEWS_SECRET"):
-        return _asknews_provider()
+        return _asknews_provider(), "asknews"
 
     if os.getenv("EXA_API_KEY"):
         if exa_callback is not None:
-            return exa_callback
+            return exa_callback, "exa"
         if default_llm is None:
             raise ValueError("default_llm must be provided for Exa research provider")
-        return _exa_provider(default_llm)
+        return _exa_provider(default_llm), "exa"
 
     if os.getenv("PERPLEXITY_API_KEY"):
         if perplexity_callback is not None:
-            return perplexity_callback
-        return _perplexity_provider(False, is_benchmarking)
+            return perplexity_callback, "perplexity"
+        return _perplexity_provider(False, is_benchmarking), "perplexity"
 
     if os.getenv("OPENROUTER_API_KEY"):
         if openrouter_callback is not None:
-            return openrouter_callback
-        return _perplexity_provider(True, is_benchmarking)
+            return openrouter_callback, "openrouter"
+        return _perplexity_provider(True, is_benchmarking), "openrouter"
 
     async def _empty(_: str) -> str:  # noqa: D401
         return ""
 
-    return _empty
+    return _empty, "none"
+
+
+def choose_provider(
+    default_llm: GeneralLlm | None = None,
+    exa_callback: ResearchCallable | None = None,
+    perplexity_callback: ResearchCallable | None = None,
+    openrouter_callback: ResearchCallable | None = None,
+    is_benchmarking: bool = False,
+) -> ResearchCallable:
+    provider, _ = choose_provider_with_name(
+        default_llm=default_llm,
+        exa_callback=exa_callback,
+        perplexity_callback=perplexity_callback,
+        openrouter_callback=openrouter_callback,
+        is_benchmarking=is_benchmarking,
+    )
+    return provider

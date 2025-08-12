@@ -22,6 +22,7 @@ from forecasting_tools import (
 )
 
 from main import TemplateForecaster
+from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
 logger = logging.getLogger(__name__)
@@ -138,7 +139,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
 
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
-        batch_size = 30
+        batch_size = BENCHMARK_BATCH_SIZE
         bots = [
             # Full ensemble bot using production configuration
             # TemplateForecaster(

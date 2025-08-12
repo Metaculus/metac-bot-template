@@ -23,8 +23,9 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
+from metaculus_bot.constants import DEFAULT_MAX_CONCURRENT_RESEARCH
 from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
-from metaculus_bot.research_providers import ResearchCallable, choose_provider
+from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         research_provider: ResearchCallable | None = None,
         max_questions_per_run: int | None = 10,
         is_benchmarking: bool = False,
-        max_concurrent_research: int = 3,
+        max_concurrent_research: int = DEFAULT_MAX_CONCURRENT_RESEARCH,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -132,9 +133,10 @@ class TemplateForecaster(CompactLoggingForecastBot):
             # Determine provider each call unless a custom one was supplied.
             if self._custom_research_provider is not None:
                 provider = self._custom_research_provider
+                provider_name = "custom"
             else:
                 default_llm = self.get_llm("default", "llm") if hasattr(self, "get_llm") else None  # type: ignore[attr-defined]
-                provider = choose_provider(
+                provider, provider_name = choose_provider_with_name(
                     default_llm,
                     exa_callback=self._call_exa_smart_searcher,
                     perplexity_callback=self._call_perplexity,
@@ -142,6 +144,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                     is_benchmarking=self.is_benchmarking,
                 )
 
+            logger.info(f"Using research provider: {provider_name}")
             research = await provider(question.question_text)
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
