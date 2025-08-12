@@ -71,7 +71,7 @@ def _asknews_provider() -> ResearchCallable:
             async with _ASKNEWS_GLOBAL_SEMAPHORE:
                 await _asknews_rate_gate()
                 try:
-                    # Use custom AskNews integration that avoids problematic "news knowledge" endpoint
+                    # Use custom AskNews integration with proper rate limiting between API calls
                     import logging
                     import os
 
