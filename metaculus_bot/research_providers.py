@@ -71,9 +71,11 @@ def _asknews_provider() -> ResearchCallable:
             async with _ASKNEWS_GLOBAL_SEMAPHORE:
                 await _asknews_rate_gate()
                 try:
-                    # Pass credentials explicitly to ensure they're available
+                    # Use custom AskNews integration that avoids problematic "news knowledge" endpoint
                     import logging
                     import os
+
+                    from asknews_sdk import AsyncAskNewsSDK
 
                     logger = logging.getLogger(__name__)
 
@@ -83,13 +85,61 @@ def _asknews_provider() -> ResearchCallable:
                         raise ValueError("ASKNEWS_CLIENT_ID and ASKNEWS_SECRET environment variables must be set")
 
                     logger.info(
-                        f"AskNews attempt {attempt}/{tries}: Creating searcher with client_id={client_id[:8]}..."
+                        f"AskNews attempt {attempt}/{tries}: Using custom integration, client_id={client_id[:8]}..."
                     )
-                    searcher = AskNewsSearcher(client_id=client_id, client_secret=secret)
-                    logger.info(f"AskNews attempt {attempt}/{tries}: Calling get_formatted_news_async")
-                    result = await searcher.get_formatted_news_async(question_text)
-                    logger.info(f"AskNews attempt {attempt}/{tries}: Success, got {len(result)} chars")
-                    return result
+
+                    async with AsyncAskNewsSDK(
+                        client_id=client_id,
+                        client_secret=secret,
+                        scopes=set(["news"]),
+                    ) as sdk:
+                        # Make first call for latest news
+                        logger.info(f"AskNews attempt {attempt}/{tries}: Calling latest news...")
+                        hot_response = await sdk.news.search_news(
+                            query=question_text,
+                            n_articles=6,
+                            return_type="both",
+                            strategy="latest news",
+                        )
+
+                        # Wait to respect 1 RPS rate limit before second call
+                        logger.info(f"AskNews attempt {attempt}/{tries}: Waiting 1.2s before historical news call...")
+                        await asyncio.sleep(1.2)
+
+                        # Make second call for historical news
+                        logger.info(f"AskNews attempt {attempt}/{tries}: Calling historical news...")
+                        historical_response = await sdk.news.search_news(
+                            query=question_text,
+                            n_articles=10,
+                            return_type="both",
+                            strategy="news knowledge",
+                        )
+
+                        # Combine and format articles like forecasting-tools does
+                        hot_articles = hot_response.as_dicts
+                        historical_articles = historical_response.as_dicts
+                        formatted_articles = "Here are the relevant news articles:\n\n"
+
+                        all_articles = []
+                        if hot_articles:
+                            all_articles.extend(hot_articles)
+                        if historical_articles:
+                            all_articles.extend(historical_articles)
+
+                        if not all_articles:
+                            return "No articles were found for this query.\n\n"
+
+                        # Sort by date and format
+                        sorted_articles = sorted(all_articles, key=lambda x: x.pub_date, reverse=True)
+
+                        for article in sorted_articles:
+                            pub_date = article.pub_date.strftime("%B %d, %Y %I:%M %p")
+                            formatted_articles += f"**{article.eng_title}**\n{article.summary}\nOriginal language: {article.language}\nPublish date: {pub_date}\nSource:[{article.source_id}]({article.article_url})\n\n"
+
+                        logger.info(
+                            f"AskNews attempt {attempt}/{tries}: Success, got {len(formatted_articles)} chars from {len(hot_articles)} hot + {len(historical_articles)} historical articles"
+                        )
+                        return formatted_articles
                 except Exception as e:
                     last_exc = e
                     # Only retry on rate/limit errors
