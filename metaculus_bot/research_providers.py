@@ -118,6 +118,10 @@ def _asknews_provider() -> ResearchCallable:
                         # Combine and format articles like forecasting-tools does
                         hot_articles = hot_response.as_dicts
                         historical_articles = historical_response.as_dicts
+
+                        logger.info(
+                            f"AskNews attempt {attempt}/{tries}: Got {len(hot_articles)} hot articles, {len(historical_articles)} historical articles"
+                        )
                         formatted_articles = "Here are the relevant news articles:\n\n"
 
                         all_articles = []
