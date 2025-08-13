@@ -54,6 +54,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         is_benchmarking: bool = False,
         max_concurrent_research: int = DEFAULT_MAX_CONCURRENT_RESEARCH,
         allow_research_fallback: bool = True,
+        research_cache: dict[int, str] | None = None,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -94,6 +95,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self.max_questions_per_run: int | None = max_questions_per_run
         self.is_benchmarking: bool = is_benchmarking
         self.allow_research_fallback: bool = allow_research_fallback
+        self.research_cache: dict[int, str] | None = research_cache
 
         if max_concurrent_research <= 0:
             raise ValueError("max_concurrent_research must be a positive integer")
@@ -137,7 +139,21 @@ class TemplateForecaster(CompactLoggingForecastBot):
         return await super().forecast_questions(questions, return_exceptions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
+        # Check cache first (only during benchmarking)
+        if self.is_benchmarking and self.research_cache and question.id_of_question in self.research_cache:
+            cache_key = question.id_of_question
+            cached_research = self.research_cache[cache_key]
+            logger.info(f"Using cached research for question {cache_key}")
+            return cached_research
+
         async with self._concurrency_limiter:
+            # Double-check cache in case another instance cached it while we were waiting
+            if self.is_benchmarking and self.research_cache and question.id_of_question in self.research_cache:
+                cache_key = question.id_of_question
+                cached_research = self.research_cache[cache_key]
+                logger.info(f"Using cached research for question {cache_key} (double-check)")
+                return cached_research
+
             # Determine provider each call unless a custom one was supplied.
             if self._custom_research_provider is not None:
                 provider = self._custom_research_provider
@@ -183,6 +199,13 @@ class TemplateForecaster(CompactLoggingForecastBot):
                     research = fallback_research
                 else:
                     raise
+
+            # Cache the result if we're in benchmarking mode
+            if self.is_benchmarking and self.research_cache is not None:
+                cache_key = question.id_of_question
+                self.research_cache[cache_key] = research
+                logger.info(f"Cached research for question {cache_key}")
+
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 

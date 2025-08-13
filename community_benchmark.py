@@ -145,6 +145,10 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
         batch_size = BENCHMARK_BATCH_SIZE
+
+        # Shared research cache for all bots to avoid duplicate API calls
+        research_cache: dict[int, str] = {}
+
         bots = [
             # Full ensemble bot using production configuration
             # TemplateForecaster(
@@ -168,6 +172,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
                     **DEFAULT_HELPER_LLMS,
                 },
                 max_concurrent_research=batch_size,
+                research_cache=research_cache,
             ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -181,6 +186,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         **DEFAULT_HELPER_LLMS,
             #     },
             #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -194,6 +200,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         **DEFAULT_HELPER_LLMS,
             #     },
             #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -208,6 +215,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         **DEFAULT_HELPER_LLMS,
             #     },
             #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -222,6 +230,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         **DEFAULT_HELPER_LLMS,
             #     },
             #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -235,6 +244,8 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         ],
             #         **DEFAULT_HELPER_LLMS,
             #     },
+            #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -248,6 +259,8 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         ],
             #         **DEFAULT_HELPER_LLMS,
             #     },
+            #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
@@ -262,6 +275,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #         **DEFAULT_HELPER_LLMS,
             #     },
             #     max_concurrent_research=batch_size,
+            #     research_cache=research_cache,
             # ),
         ]
         bots = typeguard.check_type(bots, list[ForecastBot])
