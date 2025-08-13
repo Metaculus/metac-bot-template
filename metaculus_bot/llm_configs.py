@@ -8,6 +8,8 @@ possible to tweak/benchmark models without touching application code.
 
 from forecasting_tools import GeneralLlm
 
+from metaculus_bot.api_key_utils import get_openrouter_api_key
+
 __all__ = ["FORECASTER_LLMS", "SUMMARIZER_LLM", "PARSER_LLM", "RESEARCHER_LLM"]
 
 FORECASTER_LLMS = [
@@ -21,6 +23,7 @@ FORECASTER_LLMS = [
         stream=False,
         timeout=180,
         allowed_tries=3,
+        api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
     ),
     GeneralLlm(
         model="openrouter/anthropic/claude-sonnet-4",
@@ -31,6 +34,7 @@ FORECASTER_LLMS = [
         stream=False,
         timeout=180,
         allowed_tries=3,
+        api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
     ),
     # GeneralLlm(
     #     model="openrouter/google/gemini-2.5-pro",
@@ -61,4 +65,7 @@ PARSER_LLM: str = "openrouter/google/gemini-2.5-flash"
 
 # Researcher is only used by the base bot when internal research is invoked.
 # Our implementation uses providers, but we still set it explicitly to avoid silent defaults.
-RESEARCHER_LLM: str = "openrouter/openai/gpt-5"
+RESEARCHER_LLM = GeneralLlm(
+    model="openrouter/openai/gpt-5",
+    api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
+)

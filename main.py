@@ -24,6 +24,7 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
+from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import DEFAULT_MAX_CONCURRENT_RESEARCH
 from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
@@ -333,6 +334,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         model = GeneralLlm(
             model=model_name,
             temperature=0.1,
+            api_key=get_openrouter_api_key(model_name) if model_name.startswith("openrouter/") else None,
         )
         response = await model.invoke(prompt)
         return response

@@ -23,6 +23,7 @@ from forecasting_tools import (
 )
 
 from main import TemplateForecaster
+from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
@@ -209,6 +210,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #             GeneralLlm(
             #                 model="openrouter/anthropic/claude-sonnet-4",
             #                 reasoning={"max_tokens": 4000},
+            #                 api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
             #                 **MODEL_CONFIG,
             #             )
             #         ],
@@ -224,6 +226,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #             GeneralLlm(
             #                 model="openrouter/openai/gpt-5",
             #                 reasoning_effort="high",
+            #                 api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
             #                 **MODEL_CONFIG,
             #             )
             #         ],
@@ -254,6 +257,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
             #             GeneralLlm(
             #                 model="openrouter/openai/o3",
             #                 reasoning_effort="high",
+            #                 api_key=get_openrouter_api_key("openrouter/openai/o3"),
             #                 **MODEL_CONFIG,
             #             )
             #         ],

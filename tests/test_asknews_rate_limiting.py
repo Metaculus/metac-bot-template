@@ -28,7 +28,7 @@ async def test_asknews_rate_limiting_delay():
             "ASKNEWS_SECRET": "test_secret",
         }.get(key)
 
-        with patch("metaculus_bot.research_providers.AsyncAskNewsSDK") as mock_sdk_class:
+        with patch("asknews_sdk.AsyncAskNewsSDK") as mock_sdk_class:
             mock_sdk = AsyncMock()
             mock_sdk.news.search_news = mock_search_news
             mock_sdk_class.return_value.__aenter__.return_value = mock_sdk
@@ -63,7 +63,7 @@ async def test_asknews_calls_both_endpoints():
             "ASKNEWS_SECRET": "test_secret",
         }.get(key)
 
-        with patch("metaculus_bot.research_providers.AsyncAskNewsSDK") as mock_sdk_class:
+        with patch("asknews_sdk.AsyncAskNewsSDK") as mock_sdk_class:
             mock_sdk = AsyncMock()
             mock_sdk.news.search_news = mock_search_news
             mock_sdk_class.return_value.__aenter__.return_value = mock_sdk

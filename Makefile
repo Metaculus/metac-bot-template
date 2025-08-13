@@ -5,6 +5,7 @@
 ENV_FROM_KEYS=export METACULUS_TOKEN=$$(cat $$HOME/.keys/metaculus_token 2>/dev/null); \
               export OPENAI_API_KEY=$$(cat $$HOME/.keys/openai_api_key 2>/dev/null); \
               export OPENROUTER_API_KEY=$$(cat $$HOME/.keys/openrouter_key 2>/dev/null); \
+              export OAI_ANTH_OPENROUTER_KEY=$$(cat $$HOME/.keys/oai_anth_openrouter_key 2>/dev/null); \
               export ASKNEWS_CLIENT_ID=$$(cat $$HOME/.keys/asknews_client_id 2>/dev/null); \
               export ASKNEWS_SECRET=$$(cat $$HOME/.keys/asknews_secret 2>/dev/null); \
               export ASKNEWS_MAX_CONCURRENCY=$$(cat $$HOME/.keys/asknews_max_concurrency 2>/dev/null); \

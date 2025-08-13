@@ -28,12 +28,16 @@ async def test_research_provider_flag_and_logging(mock_os_getenv, caplog):
     )
     q = MetaculusQuestion(question_text="Test", page_url="http://example.com")
 
-    with patch(
-        "forecasting_tools.AskNewsSearcher.get_formatted_news_async",
-        new_callable=AsyncMock,
-    ) as mock_ask:
-        mock_ask.return_value = "AskNews Research"
+    with patch("asknews_sdk.AsyncAskNewsSDK") as mock_sdk_class:
+        # Mock the SDK to return our test result
+        mock_sdk = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.as_dicts = []
+        mock_sdk.news.search_news.return_value = mock_response
+        mock_sdk_class.return_value.__aenter__.return_value = mock_sdk
+
+        # Since no articles are returned, it should return "No articles were found for this query.\n\n"
         with caplog.at_level(logging.INFO):
             res = await bot.run_research(q)
-        assert res == "AskNews Research"
+        assert res == "No articles were found for this query.\n\n"
         assert any("Using research provider: asknews" in rec.message for rec in caplog.records)
