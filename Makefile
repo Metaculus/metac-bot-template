@@ -39,6 +39,9 @@ run:
 benchmark_run_smoke_test:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 1
 
+benchmark_run_4:
+	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 4
+
 benchmark_run_mini:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 10
 

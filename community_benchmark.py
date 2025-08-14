@@ -82,7 +82,66 @@ def _enable_aiohttp_session_autoclose() -> None:
 _enable_aiohttp_session_autoclose()
 
 
-async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> None:
+async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
+    """Get mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)."""
+    import random
+
+    from forecasting_tools import MetaculusQuestion
+
+    # Calculate counts for each type (50/25/25 distribution)
+    binary_count = int(total_questions * 0.5)
+    numeric_count = int(total_questions * 0.25)
+    mc_count = total_questions - binary_count - numeric_count  # Remainder goes to MC
+
+    logger.info(f"Fetching mixed questions: {binary_count} binary, {numeric_count} numeric, {mc_count} multiple-choice")
+
+    # Base filter settings for all question types
+    base_filter_kwargs = {
+        "allowed_statuses": ["open"],
+        "num_forecasters_gte": 40,
+        "scheduled_resolve_time_lt": one_year_from_now,
+        "includes_bots_in_aggregates": False,
+        "community_prediction_exists": True,
+    }
+
+    all_questions = []
+
+    # Fetch each question type separately
+    for question_type, count in [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]:
+        if count > 0:
+            try:
+                api_filter = ApiFilter(
+                    allowed_types=[question_type],
+                    **base_filter_kwargs,
+                )
+                questions = await MetaculusApi.get_questions_matching_filter(
+                    api_filter,
+                    num_questions=count,
+                    randomly_sample=True,
+                )
+                logger.info(f"Successfully fetched {len(questions)} {question_type} questions")
+                all_questions.extend(questions)
+            except Exception as e:
+                logger.warning(f"Failed to fetch {question_type} questions: {e}")
+
+    # Shuffle to avoid clustering by type
+    random.shuffle(all_questions)
+
+    # Clear background_info for all questions (to test ability to find new information)
+    for question in all_questions:
+        question.background_info = None
+
+    # Log final distribution
+    type_counts = {}
+    for q in all_questions:
+        q_type = type(q).__name__
+        type_counts[q_type] = type_counts.get(q_type, 0) + 1
+
+    logger.info(f"Final mixed question distribution: {type_counts}")
+    return all_questions
+
+
+async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_types: bool = False) -> None:
     """
     Run a benchmark that compares your forecasts against the community prediction.
     Ideally 100+ questions for meaningful error bars, but can use e.g. just a few for smoke testing or 30 for a quick run.
@@ -97,19 +156,26 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2) -> Non
     elif mode == "custom":
         # Below is an example of getting custom questions
         one_year_from_now = datetime.now() + timedelta(days=365)
-        api_filter = ApiFilter(
-            allowed_statuses=["open"],
-            allowed_types=["binary"],
-            num_forecasters_gte=40,
-            scheduled_resolve_time_lt=one_year_from_now,
-            includes_bots_in_aggregates=False,
-            community_prediction_exists=True,
-        )
-        questions = await MetaculusApi.get_questions_matching_filter(
-            api_filter,
-            num_questions=number_of_questions,
-            randomly_sample=True,
-        )
+
+        if mixed_types:
+            # Get mixed question types with 50/25/25 distribution
+            questions = await _get_mixed_question_types(number_of_questions, one_year_from_now)
+        else:
+            # Original binary-only approach
+            api_filter = ApiFilter(
+                allowed_statuses=["open"],
+                allowed_types=["binary"],
+                num_forecasters_gte=40,
+                scheduled_resolve_time_lt=one_year_from_now,
+                includes_bots_in_aggregates=False,
+                community_prediction_exists=True,
+            )
+            questions = await MetaculusApi.get_questions_matching_filter(
+                api_filter,
+                num_questions=number_of_questions,
+                randomly_sample=True,
+            )
+
         for question in questions:
             question.background_info = None  # Test ability to find new information
     else:
@@ -371,6 +437,11 @@ if __name__ == "__main__":
         default=2,
         help="Number of questions to benchmark (default: 2)",
     )
+    parser.add_argument(
+        "--mixed",
+        action="store_true",
+        help="Use mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)",
+    )
     args = parser.parse_args()
     mode: Literal["run", "custom", "display"] = args.mode
-    asyncio.run(benchmark_forecast_bot(mode, args.num_questions))
+    asyncio.run(benchmark_forecast_bot(mode, args.num_questions, args.mixed))

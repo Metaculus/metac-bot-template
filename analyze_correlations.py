@@ -89,6 +89,12 @@ def main():
     )
     parser.add_argument("--max-size", type=int, default=5, help="Maximum ensemble size")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "--question-types",
+        nargs="*",
+        choices=["binary", "numeric", "multiple_choice"],
+        help="Filter analysis to specific question types",
+    )
 
     args = parser.parse_args()
 
@@ -110,6 +116,15 @@ def main():
     # Perform analysis
     analyzer = CorrelationAnalyzer()
     analyzer.add_benchmark_results(benchmarks)
+
+    # Check if we have mixed question types
+    has_mixed_types = analyzer._has_mixed_question_types()
+    if has_mixed_types:
+        logger.info("Detected mixed question types - using component-wise correlation analysis")
+        type_breakdown = analyzer._get_question_type_breakdown()
+        logger.info(f"Question type distribution: {type_breakdown}")
+    else:
+        logger.info("Using traditional correlation analysis for binary questions")
 
     # Generate report with timestamped filename
     if args.output:
@@ -163,7 +178,11 @@ def main():
         print("No ensembles found meeting the cost constraint.")
 
     # Show correlation matrix highlights
-    corr_matrix = analyzer.calculate_correlation_matrix()
+    # Use appropriate correlation method based on question types
+    if has_mixed_types:
+        corr_matrix = analyzer.calculate_correlation_matrix_by_components()
+    else:
+        corr_matrix = analyzer.calculate_correlation_matrix()
     print(f"\n{'-'*40}")
     print("CORRELATION HIGHLIGHTS")
     print(f"{'-'*40}")

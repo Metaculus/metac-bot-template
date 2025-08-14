@@ -203,6 +203,9 @@ def test_main_function_flow(mock_load, mock_analyzer_class):
         ("model5", "model6", 0.3),
     ]
     mock_analyzer.calculate_correlation_matrix.return_value = mock_corr_matrix
+    mock_analyzer.calculate_correlation_matrix_by_components.return_value = mock_corr_matrix
+    mock_analyzer._has_mixed_question_types.return_value = False  # Use simple correlation
+    mock_analyzer._get_question_type_breakdown.return_value = {"binary": 10}
     mock_analyzer_class.return_value = mock_analyzer
 
     # Mock sys.argv to avoid parsing real command line

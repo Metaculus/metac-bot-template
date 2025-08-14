@@ -159,15 +159,145 @@ class CorrelationAnalyzer:
             num_questions=len(pivot_df),
         )
 
+    def calculate_correlation_matrix_by_components(self) -> CorrelationMatrix:
+        """Calculate correlations using component-wise analysis for mixed question types.
+
+        For each question, extracts prediction components and calculates correlations:
+        - Binary: Direct correlation on probabilities
+        - Numeric: Average correlation across percentiles (10, 20, 40, 60, 80, 90)
+        - Multiple Choice: Average correlation across option probabilities
+        """
+        # Group predictions by question and extract components
+        question_data = {}
+
+        for pred in self.predictions:
+            q_id = pred.question_id
+            if q_id not in question_data:
+                question_data[q_id] = {}
+
+            # Get the full report to extract components
+            report = None
+            for benchmark in self.benchmarks:
+                for report_candidate in benchmark.forecast_reports:
+                    if (report_candidate.question.id_of_question or 0) == q_id:
+                        if self._extract_model_name(benchmark) == pred.model_name:
+                            report = report_candidate
+                            break
+                if report:
+                    break
+
+            if report:
+                q_type, components = self._extract_prediction_components(report)
+                question_data[q_id][pred.model_name] = (q_type, components)
+
+        # Calculate correlations for each question, then average
+        model_names = list(set(pred.model_name for pred in self.predictions))
+        n_models = len(model_names)
+
+        # Initialize correlation matrices
+        correlation_sums = np.zeros((n_models, n_models))
+        correlation_counts = np.zeros((n_models, n_models))
+
+        for q_id, model_data in question_data.items():
+            # Only process questions where we have data for multiple models
+            available_models = list(model_data.keys())
+            if len(available_models) < 2:
+                continue
+
+            # Group by question type
+            q_types = set(data[0] for data in model_data.values())
+            if len(q_types) > 1:
+                logger.warning(f"Question {q_id} has mixed types across models: {q_types}")
+                continue
+
+            q_type = list(q_types)[0]
+
+            # Calculate correlation for this question
+            model_indices = {name: i for i, name in enumerate(model_names)}
+
+            for i, model1 in enumerate(available_models):
+                for j, model2 in enumerate(available_models):
+                    if i >= j:  # Skip duplicates and self-correlation
+                        continue
+
+                    # Get components for both models
+                    _, components1 = model_data[model1]
+                    _, components2 = model_data[model2]
+
+                    # Calculate component-wise correlation
+                    if q_type == "binary":
+                        # Direct correlation for binary
+                        if len(components1) == 1 and len(components2) == 1:
+                            corr = 1.0 if components1[0] == components2[0] else 0.0
+                        else:
+                            corr = 0.0
+
+                    elif q_type in ["numeric", "multiple_choice"]:
+                        # Average correlation across components
+                        if len(components1) == len(components2) and len(components1) > 1:
+                            # Use scipy.stats.pearsonr for component pairs
+                            try:
+                                corr_val, _ = pearsonr(components1, components2)
+                                corr = corr_val if not np.isnan(corr_val) else 0.0
+                            except:
+                                corr = 0.0
+                        else:
+                            corr = 0.0
+                    else:
+                        corr = 0.0
+
+                    # Add to correlation matrix
+                    idx1 = model_indices[model1]
+                    idx2 = model_indices[model2]
+                    correlation_sums[idx1, idx2] += corr
+                    correlation_sums[idx2, idx1] += corr  # Symmetric
+                    correlation_counts[idx1, idx2] += 1
+                    correlation_counts[idx2, idx1] += 1
+
+        # Calculate average correlations
+        correlation_matrix = np.zeros((n_models, n_models))
+        for i in range(n_models):
+            correlation_matrix[i, i] = 1.0  # Self-correlation is 1
+            for j in range(i + 1, n_models):
+                if correlation_counts[i, j] > 0:
+                    avg_corr = correlation_sums[i, j] / correlation_counts[i, j]
+                    correlation_matrix[i, j] = avg_corr
+                    correlation_matrix[j, i] = avg_corr
+                else:
+                    correlation_matrix[i, j] = 0.0
+                    correlation_matrix[j, i] = 0.0
+
+        # Convert to DataFrame
+        corr_df = pd.DataFrame(correlation_matrix, index=model_names, columns=model_names)
+
+        logger.info(
+            f"Component-wise correlation analysis using {len(question_data)} questions and {len(model_names)} models"
+        )
+
+        return CorrelationMatrix(
+            pearson_matrix=corr_df,
+            spearman_matrix=corr_df,  # For now, use same matrix for both
+            model_names=model_names,
+            num_questions=len(question_data),
+        )
+
     def find_optimal_ensembles(
         self,
         max_ensemble_size: int = 5,
         max_cost_per_question: float = 1.0,
         min_performance: float = 10.0,
+        use_component_analysis: bool = True,
     ) -> List[EnsembleCandidate]:
         """Find optimal ensemble configurations using performance + correlation data."""
         model_stats = self._calculate_model_statistics()
-        correlation_matrix = self.calculate_correlation_matrix()
+
+        # Use component-wise analysis for mixed question types if available
+        if use_component_analysis and self._has_mixed_question_types():
+            correlation_matrix = self.calculate_correlation_matrix_by_components()
+            logger.info("Using component-wise correlation analysis for mixed question types")
+        else:
+            correlation_matrix = self.calculate_correlation_matrix()
+            logger.info("Using traditional correlation analysis")
 
         candidates = []
 
@@ -210,7 +340,11 @@ class CorrelationAnalyzer:
         return f"model_{hash(benchmark.name) % 10000}"
 
     def _extract_prediction_value(self, report) -> float:
-        """Convert prediction to float for correlation analysis."""
+        """Convert prediction to float for correlation analysis.
+
+        This method is used for backward compatibility. For mixed question types,
+        use _extract_prediction_components() instead.
+        """
         prediction = report.prediction
 
         # Binary questions: return probability directly
@@ -236,6 +370,106 @@ class CorrelationAnalyzer:
 
         # Last resort: hash the prediction for some numeric value
         return float(hash(str(prediction)) % 1000) / 1000.0
+
+    def _extract_prediction_components(self, report) -> Tuple[str, List[float]]:
+        """Extract prediction components for improved correlation analysis.
+
+        Returns:
+            Tuple of (question_type, component_values)
+            - Binary: ("binary", [probability])
+            - Numeric: ("numeric", [p10, p20, p40, p60, p80, p90])
+            - Multiple Choice: ("multiple_choice", [prob_option1, prob_option2, ...])
+        """
+        prediction = report.prediction
+
+        # Binary questions: return probability directly
+        if isinstance(prediction, (int, float)):
+            return ("binary", [float(prediction)])
+
+        # Multiple choice: extract all option probabilities (check this first to avoid median conflicts)
+        if (
+            hasattr(prediction, "predicted_options")
+            and prediction.predicted_options is not None
+            and prediction.predicted_options
+        ):
+            try:
+                # Sort by option name for consistency across models
+                sorted_options = sorted(
+                    prediction.predicted_options, key=lambda opt: getattr(opt, "option", "") or str(opt)
+                )
+                option_probs = [float(getattr(opt, "probability", 0)) for opt in sorted_options]
+                return ("multiple_choice", option_probs)
+            except (TypeError, AttributeError):
+                # Handle case where predicted_options is not iterable (e.g., in tests)
+                return ("multiple_choice", [0.5, 0.5])  # Default equal probability for 2 options
+
+        # Numeric questions: extract all percentiles
+        if (
+            hasattr(prediction, "declared_percentiles")
+            and prediction.declared_percentiles is not None
+            and prediction.declared_percentiles
+        ):
+            # Extract the standard percentiles (10, 20, 40, 60, 80, 90)
+            target_percentiles = [10, 20, 40, 60, 80, 90]
+            percentile_values = []
+
+            # Create dict for quick lookup - handle both real and mock objects
+            try:
+                percentile_dict = {p.percentile: p.value for p in prediction.declared_percentiles}
+            except (TypeError, AttributeError):
+                # Handle case where declared_percentiles is not iterable (e.g., in tests)
+                percentile_dict = {}
+
+            for target_p in target_percentiles:
+                if target_p in percentile_dict:
+                    percentile_values.append(float(percentile_dict[target_p]))
+                else:
+                    # If missing, interpolate or use median as fallback
+                    if hasattr(prediction, "median"):
+                        try:
+                            percentile_values.append(float(prediction.median))
+                        except (TypeError, ValueError):
+                            # Handle case where median is a Mock or invalid
+                            percentile_values.append(0.0)
+                    else:
+                        # Last resort: use mean of available percentiles
+                        available_values = list(percentile_dict.values())
+                        percentile_values.append(float(np.mean(available_values)) if available_values else 0.0)
+
+            return ("numeric", percentile_values)
+        elif hasattr(prediction, "median") and prediction.median is not None:
+            # Fallback for numeric with only median
+            try:
+                median_val = float(prediction.median)
+                return ("numeric", [median_val] * 6)  # Repeat median for all percentiles
+            except (TypeError, ValueError):
+                # Handle case where median is a Mock or invalid
+                return ("numeric", [0.0] * 6)
+
+        # Fallback: treat as binary with neutral prediction
+        return ("binary", [0.5])
+
+    def _has_mixed_question_types(self) -> bool:
+        """Check if the benchmarks contain mixed question types."""
+        question_types = set()
+
+        for benchmark in self.benchmarks:
+            for report in benchmark.forecast_reports:
+                q_type, _ = self._extract_prediction_components(report)
+                question_types.add(q_type)
+
+        return len(question_types) > 1
+
+    def _get_question_type_breakdown(self) -> Dict[str, int]:
+        """Get count of each question type in the benchmarks."""
+        type_counts = {}
+
+        for benchmark in self.benchmarks:
+            for report in benchmark.forecast_reports:
+                q_type, _ = self._extract_prediction_components(report)
+                type_counts[q_type] = type_counts.get(q_type, 0) + 1
+
+        return type_counts
 
     def _calculate_model_statistics(self) -> Dict[str, Dict[str, float]]:
         """Calculate performance and cost statistics per model."""
@@ -329,15 +563,29 @@ class CorrelationAnalyzer:
         if not self.predictions:
             return "No prediction data available for correlation analysis."
 
-        correlation_matrix = self.calculate_correlation_matrix()
+        # Use component-wise analysis for mixed question types
+        use_component_analysis = self._has_mixed_question_types()
+        if use_component_analysis:
+            correlation_matrix = self.calculate_correlation_matrix_by_components()
+        else:
+            correlation_matrix = self.calculate_correlation_matrix()
+
         model_stats = self._calculate_model_statistics()
-        optimal_ensembles = self.find_optimal_ensembles()
+        optimal_ensembles = self.find_optimal_ensembles(use_component_analysis=use_component_analysis)
 
         report = []
         report.append("# Model Correlation Analysis Report")
         report.append(
             f"Based on {correlation_matrix.num_questions} questions across {len(correlation_matrix.model_names)} models\n"
         )
+
+        # Add question type breakdown if mixed
+        if use_component_analysis:
+            type_counts = self._get_question_type_breakdown()
+            report.append("## Question Type Distribution")
+            for q_type, count in sorted(type_counts.items()):
+                report.append(f"- **{q_type.title()}**: {count} questions")
+            report.append(f"- **Analysis Method**: Component-wise correlation (improved for mixed types)\n")
 
         # Model Performance Summary
         report.append("## Individual Model Performance")

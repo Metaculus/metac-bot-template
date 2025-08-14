@@ -30,16 +30,28 @@ def test_cli_argument_parsing():
         default=2,
         help="Number of questions to benchmark (default: 2)",
     )
+    parser.add_argument(
+        "--mixed",
+        action="store_true",
+        help="Use mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)",
+    )
 
     # Test default args
     args = parser.parse_args([])
     assert args.mode == "display"
     assert args.num_questions == 2
+    assert args.mixed == False
 
     # Test custom args
     args = parser.parse_args(["--mode", "run", "--num-questions", "5"])
     assert args.mode == "run"
     assert args.num_questions == 5
+    assert args.mixed == False
+
+    # Test mixed flag
+    args = parser.parse_args(["--mode", "custom", "--mixed"])
+    assert args.mode == "custom"
+    assert args.mixed == True
 
     # Test edge cases
     args = parser.parse_args(["--num-questions", "1"])
@@ -198,3 +210,82 @@ def test_invalid_mode_raises_error():
 
     with pytest.raises(ValueError, match="Invalid mode: invalid_mode"):
         asyncio.run(community_benchmark.benchmark_forecast_bot("invalid_mode", 1))
+
+
+@patch("community_benchmark.MetaculusApi.get_questions_matching_filter")
+def test_mixed_question_types_distribution(mock_get_questions_filter):
+    """Test that mixed question type distribution works correctly."""
+    from datetime import datetime, timedelta
+
+    import community_benchmark
+
+    # Mock return values for different question types
+    def mock_filter_side_effect(api_filter, num_questions, randomly_sample):
+        # Return different mock questions based on allowed_types
+        question_type = api_filter.allowed_types[0] if api_filter.allowed_types else "binary"
+        mock_questions = []
+        for i in range(num_questions):
+            mock_question = Mock()
+            mock_question.background_info = f"Mock {question_type} question {i}"
+            mock_questions.append(mock_question)
+        return mock_questions
+
+    mock_get_questions_filter.side_effect = mock_filter_side_effect
+
+    # Test with 12 questions to get nice distribution
+    one_year_from_now = datetime.now() + timedelta(days=365)
+    questions = asyncio.run(community_benchmark._get_mixed_question_types(12, one_year_from_now))
+
+    # Should have called the API 3 times (binary, numeric, multiple_choice)
+    assert mock_get_questions_filter.call_count == 3
+
+    # Should have roughly 50/25/25 distribution: 6/3/3
+    assert len(questions) == 12
+
+    # Verify all questions had background_info cleared
+    for question in questions:
+        assert question.background_info is None
+
+
+@patch("community_benchmark.MetaculusApi.get_questions_matching_filter")
+@patch("community_benchmark.Benchmarker")
+@patch("community_benchmark.MonetaryCostManager")
+def test_custom_mode_with_mixed_flag(mock_cost_manager, mock_benchmarker_class, mock_get_questions_filter):
+    """Test custom mode with mixed flag uses mixed question types."""
+    import community_benchmark
+
+    # Mock return values for different question types
+    def mock_filter_side_effect(api_filter, num_questions, randomly_sample):
+        mock_questions = []
+        for i in range(num_questions):
+            mock_question = Mock()
+            mock_question.background_info = "test"
+            mock_questions.append(mock_question)
+        return mock_questions
+
+    mock_get_questions_filter.side_effect = mock_filter_side_effect
+
+    # Mock benchmarker
+    mock_benchmarker = Mock()
+    mock_benchmarker.run_benchmark = AsyncMock(return_value=[])
+    mock_benchmarker_class.return_value = mock_benchmarker
+
+    # Mock cost manager
+    mock_cost_manager_instance = Mock()
+    mock_cost_manager_instance.__enter__ = Mock(return_value=mock_cost_manager_instance)
+    mock_cost_manager_instance.__exit__ = Mock(return_value=None)
+    mock_cost_manager_instance.current_usage = "Mock Cost"
+    mock_cost_manager.return_value = mock_cost_manager_instance
+
+    # Test custom mode with mixed flag
+    asyncio.run(community_benchmark.benchmark_forecast_bot("custom", 6, mixed_types=True))
+
+    # Should call API 3 times for mixed types (binary, numeric, multiple_choice)
+    assert mock_get_questions_filter.call_count == 3
+
+    # Test custom mode without mixed flag (should call API once)
+    mock_get_questions_filter.reset_mock()
+    asyncio.run(community_benchmark.benchmark_forecast_bot("custom", 6, mixed_types=False))
+
+    # Should call API only once for binary questions
+    assert mock_get_questions_filter.call_count == 1
