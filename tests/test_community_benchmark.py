@@ -227,6 +227,9 @@ def test_mixed_question_types_distribution(mock_get_questions_filter):
         for i in range(num_questions):
             mock_question = Mock()
             mock_question.background_info = f"Mock {question_type} question {i}"
+            mock_question.question_text = (
+                f"Mock {question_type} question text {i} - this is a sample question for testing purposes"
+            )
             mock_questions.append(mock_question)
         return mock_questions
 
@@ -260,6 +263,7 @@ def test_custom_mode_with_mixed_flag(mock_cost_manager, mock_benchmarker_class, 
         for i in range(num_questions):
             mock_question = Mock()
             mock_question.background_info = "test"
+            mock_question.question_text = f"Mock question text {i} - this is a sample question for testing purposes"
             mock_questions.append(mock_question)
         return mock_questions
 

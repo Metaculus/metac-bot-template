@@ -106,10 +106,13 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
     all_questions = []
 
     # Fetch each question type separately
-    for question_type, count in [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]:
+    for i, (question_type, count) in enumerate(
+        [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)], 1
+    ):
         if count > 0:
             try:
-                logger.info(f"Attempting to fetch {count} {question_type} questions...")
+                logger.info(f"[{i}/3] Fetching {count} {question_type} questions...")
+                sys.stdout.flush()  # Force immediate output
 
                 # Customize filter for each question type
                 filter_kwargs = base_filter_kwargs.copy()
@@ -117,7 +120,11 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                 # Community prediction filter only works for binary questions
                 if question_type != "binary":
                     filter_kwargs.pop("community_prediction_exists", None)
-                    logger.info(f"Removed community_prediction_exists filter for {question_type} questions")
+                    logger.info(f"⚠️  Removed community_prediction_exists filter for {question_type} questions")
+                    sys.stdout.flush()
+
+                logger.info(f"🔍 Starting API call for {question_type} questions...")
+                sys.stdout.flush()
 
                 api_filter = ApiFilter(
                     allowed_types=[question_type],
@@ -128,15 +135,17 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                     num_questions=count,
                     randomly_sample=True,
                 )
-                logger.info(f"Successfully fetched {len(questions)} {question_type} questions")
+                logger.info(f"✅ Successfully fetched {len(questions)} {question_type} questions")
                 if questions:
-                    logger.info(f"Sample {question_type} question: {questions[0].question_text[:100]}...")
+                    logger.info(f"📋 Sample {question_type} question: {questions[0].question_text[:100]}...")
                 all_questions.extend(questions)
+                sys.stdout.flush()
             except Exception as e:
-                logger.warning(f"Failed to fetch {question_type} questions: {e}")
+                logger.error(f"❌ Failed to fetch {question_type} questions: {e}")
                 import traceback
 
-                logger.warning(f"Full traceback: {traceback.format_exc()}")
+                logger.error(f"Full traceback: {traceback.format_exc()}")
+                sys.stdout.flush()
 
     # Shuffle to avoid clustering by type
     random.shuffle(all_questions)
@@ -428,19 +437,51 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"),
-        ],
-    )
+    # Create handlers with explicit flushing for real-time output
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.flush = lambda: sys.stdout.flush()
 
-    # Suppress LiteLLM logging
-    litellm_logger = logging.getLogger("LiteLLM")
-    litellm_logger.setLevel(logging.WARNING)
-    litellm_logger.propagate = False
+    file_handler = logging.FileHandler(f"benchmarks/log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
+    file_handler.setLevel(logging.INFO)
+
+    # Set formatter
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.handlers.clear()
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(file_handler)
+
+    # Enable forecasting-tools logging for progress visibility
+    forecasting_logger = logging.getLogger("forecasting_tools")
+    forecasting_logger.setLevel(logging.INFO)
+    forecasting_logger.propagate = True
+
+    # Enable our main modules
+    main_logger = logging.getLogger("__main__")
+    main_logger.setLevel(logging.INFO)
+
+    # Suppress noisy third-party loggers but keep errors visible
+    for noisy_logger in ["LiteLLM", "httpx", "httpcore", "urllib3", "aiohttp"]:
+        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
+        logging.getLogger(noisy_logger).propagate = False
+
+    # Force immediate output
+    import functools
+
+    original_info = logging.Logger.info
+
+    def flushing_info(self, message, *args, **kwargs):
+        result = original_info(self, message, *args, **kwargs)
+        sys.stdout.flush()
+        return result
+
+    logging.Logger.info = flushing_info
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Benchmark a list of bots")
