@@ -27,6 +27,7 @@ from main import TemplateForecaster
 from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+from metaculus_bot.scoring_patches import apply_scoring_patches, log_score_scale_validation
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +223,9 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         "researcher": RESEARCHER_LLM,
     }
 
+    # Apply scoring patches for mixed question types
+    apply_scoring_patches()
+
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
         batch_size = BENCHMARK_BATCH_SIZE
@@ -391,6 +395,9 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 "Fallback is disabled for benchmarks by design."
             ) from ve
         logger.info(f"Total Cost: {cost_manager.current_usage}")
+
+        # Log score scale validation for mixed question types
+        log_score_scale_validation(benchmarks)
 
         # Perform correlation analysis if we have multiple models
         if len(benchmarks) > 1:
