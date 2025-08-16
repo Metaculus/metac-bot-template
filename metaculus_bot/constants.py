@@ -11,7 +11,7 @@ import os
 
 # Concurrency tuning for research providers (e.g., AskNews, Exa)
 # Start conservatively for AskNews; adjust after observing rate limits.
-DEFAULT_MAX_CONCURRENT_RESEARCH: int = 8
+DEFAULT_MAX_CONCURRENT_RESEARCH: int = 1
 
 # Benchmark driver settings
 # Keep the benchmark question batch size aligned with the bot concurrency to
@@ -51,7 +51,7 @@ def _float_env(name: str, default: float) -> float:
 
 # AskNews provider safety limits (global, across all bots in-process)
 # Defaults are conservative for pro plans (1 RPS sustained, 5 RPS burst, 5 concurrency)
-ASKNEWS_MAX_CONCURRENCY: int = max(1, _int_env("ASKNEWS_MAX_CONCURRENCY", 3))
+ASKNEWS_MAX_CONCURRENCY: int = max(1, _int_env("ASKNEWS_MAX_CONCURRENCY", 1))
 # Conservative sustained rate well below pro plan limits (1 RPS sustained)
 ASKNEWS_MAX_RPS: float = max(0.1, _float_env("ASKNEWS_MAX_RPS", 0.8))
 

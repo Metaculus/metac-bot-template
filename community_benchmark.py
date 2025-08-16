@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import atexit
 import logging
+import random
 import sys
 import weakref
 from datetime import datetime, timedelta
@@ -84,9 +85,6 @@ _enable_aiohttp_session_autoclose()
 
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
     """Get mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)."""
-    import random
-
-    from forecasting_tools import MetaculusQuestion
 
     # Calculate counts for each type (50/25/25 distribution)
     binary_count = int(total_questions * 0.5)
@@ -110,9 +108,19 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
     for question_type, count in [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]:
         if count > 0:
             try:
+                logger.info(f"Attempting to fetch {count} {question_type} questions...")
+
+                # Customize filter for each question type
+                filter_kwargs = base_filter_kwargs.copy()
+
+                # Community prediction filter only works for binary questions
+                if question_type != "binary":
+                    filter_kwargs.pop("community_prediction_exists", None)
+                    logger.info(f"Removed community_prediction_exists filter for {question_type} questions")
+
                 api_filter = ApiFilter(
                     allowed_types=[question_type],
-                    **base_filter_kwargs,
+                    **filter_kwargs,
                 )
                 questions = await MetaculusApi.get_questions_matching_filter(
                     api_filter,
@@ -120,9 +128,14 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                     randomly_sample=True,
                 )
                 logger.info(f"Successfully fetched {len(questions)} {question_type} questions")
+                if questions:
+                    logger.info(f"Sample {question_type} question: {questions[0].question_text[:100]}...")
                 all_questions.extend(questions)
             except Exception as e:
                 logger.warning(f"Failed to fetch {question_type} questions: {e}")
+                import traceback
+
+                logger.warning(f"Full traceback: {traceback.format_exc()}")
 
     # Shuffle to avoid clustering by type
     random.shuffle(all_questions)
@@ -198,9 +211,9 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
     MODEL_CONFIG = {
         "temperature": 0.0,
         "top_p": 0.9,
-        "max_tokens": 8000,  # Prevent truncation issues with reasoning models
+        "max_tokens": 16000,  # Prevent truncation issues with reasoning models
         "stream": False,
-        "timeout": 180,
+        "timeout": 240,
         "allowed_tries": 3,
     }
     DEFAULT_HELPER_LLMS = {
@@ -241,20 +254,20 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 max_concurrent_research=batch_size,
                 research_cache=research_cache,
             ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/z-ai/glm-4.5",
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
+            TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                llms={
+                    "forecasters": [
+                        GeneralLlm(
+                            model="openrouter/z-ai/glm-4.5",
+                            **MODEL_CONFIG,
+                        )
+                    ],
+                    **DEFAULT_HELPER_LLMS,
+                },
+                max_concurrent_research=batch_size,
+                research_cache=research_cache,
+            ),
             # TemplateForecaster(
             #     **BENCHMARK_BOT_CONFIG,
             #     llms={
@@ -396,7 +409,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             # Log optimal ensembles for easy reference
             optimal_ensembles = analyzer.find_optimal_ensembles(max_ensemble_size=6, max_cost_per_question=1.0)
             if optimal_ensembles:
-                logger.info(f"\nTop 3 Recommended Ensembles (Cost ≤ $0.50/question):")
+                logger.info(f"\nTop 3 Recommended Ensembles (Cost ≤ $1.0/question):")
                 for i, ensemble in enumerate(optimal_ensembles[:3], 1):
                     models = " + ".join(ensemble.model_names)
                     logger.info(
