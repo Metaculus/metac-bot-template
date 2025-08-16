@@ -21,7 +21,7 @@ MODEL_CONFIG = {
 }
 
 FORECASTER_LLMS = [
-    # TODO: expand suite of LLMs. Likely add Grok4, maybe GLM-4.5, probably not Qwen3-225B
+    # TODO: expand suite of LLMs. Consider e.g. Grok4, maybe GLM-4.5, probably not Qwen3-225B. Maybe o3 adds diversity combined w/ GPT-5? Weight diff models?
     GeneralLlm(
         model="openrouter/openai/gpt-5",
         api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
@@ -49,10 +49,12 @@ FORECASTER_LLMS = [
     ),
 ]
 
-SUMMARIZER_LLM: str = "openrouter/google/gemini-2.5-flash"
+# Trying Qwen 3 a22b 2507 nonthinking, should be smarter + cheaper than gemini flash (tho slower)
+SUMMARIZER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"  # "openrouter/google/gemini-2.5-flash"
 
 # Parser should be a reliable, low-latency model for structure extraction
-PARSER_LLM: str = "openrouter/google/gemini-2.5-flash"
+# Trying Qwen 3 a22b 2507 nonthinking, should be smarter + cheaper than gemini flash (tho slower)
+PARSER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"  # "openrouter/google/gemini-2.5-flash"
 
 # Researcher is only used by the base bot when internal research is invoked.
 # Our implementation uses providers, but we still set it explicitly to avoid silent defaults.
