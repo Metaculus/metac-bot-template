@@ -396,6 +396,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
         )
+
+        # Apply custom clamping to 0.5%/99.5% for multiple choice questions
+        for option in predicted_option_list.predicted_options:
+            option.probability = max(0.005, min(0.995, option.probability))
+
+        # Renormalize to ensure probabilities sum to 1 after clamping
+        total_prob = sum(option.probability for option in predicted_option_list.predicted_options)
+        if total_prob > 0:
+            for option in predicted_option_list.predicted_options:
+                option.probability /= total_prob
+
         logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
         return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
 
