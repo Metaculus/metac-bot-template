@@ -46,7 +46,7 @@ benchmark_run_mini:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 10
 
 benchmark_run_small:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 30
+	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 32
 
 benchmark_display:
 	conda run -n metaculus-bot poetry run python community_benchmark.py --mode display
