@@ -256,6 +256,7 @@ def test_ensemble_candidate_scoring():
         avg_correlation=0.6,
         diversity_score=0.4,
         efficiency_ratio=37.5,
+        aggregation_strategy="mean",
     )
 
     score = candidate.ensemble_score

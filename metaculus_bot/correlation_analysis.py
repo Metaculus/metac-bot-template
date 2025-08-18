@@ -330,8 +330,13 @@ class CorrelationAnalyzer:
         individual model names from the forecasters list.
         """
         try:
-            # Skip the old bot name check - it's not reliable for our new individual model approach
-            # Instead go straight to extracting from LLM config
+            # First, try simple approach: if benchmark name looks like a model name, use it directly
+            simple_name = benchmark.name.strip()
+            # Check if it's a simple model name without complex parsing
+            if (
+                simple_name and not "|" in simple_name and not " " in simple_name and len(simple_name.split("-")) <= 3
+            ):  # Simple model names like "qwen3-235b"
+                return simple_name
 
             # Extract from LLM config - handle both old and new formats
             llms = benchmark.forecast_bot_config.get("llms", {})
