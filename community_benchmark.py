@@ -24,6 +24,7 @@ from forecasting_tools import (
 )
 
 from main import TemplateForecaster
+from metaculus_bot.aggregation_strategies import AggregationStrategy
 from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
@@ -212,7 +213,6 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         "publish_reports_to_metaculus": False,  # Don't publish during benchmarking
         "folder_to_save_reports_to": None,
         "skip_previously_forecasted_questions": False,
-        "numeric_aggregation_method": "mean",
         "research_provider": None,  # Use default provider selection
         "max_questions_per_run": None,  # No limit for benchmarking
         "is_benchmarking": True,  # Exclude prediction markets to avoid data leakage
@@ -242,138 +242,101 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Shared research cache for all bots to avoid duplicate API calls
         research_cache: dict[int, str] = {}
 
-        bots = [
-            # Full ensemble bot using production configuration
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": FORECASTER_LLMS,  # Our current ensemble approach
-            #         "summarizer": SUMMARIZER_LLM,
-            #         "parser": PARSER_LLM,
-            #         "researcher": RESEARCHER_LLM,
-            #     },
-            # ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-                research_cache=research_cache,
-            ),
-            TemplateForecaster(
-                **BENCHMARK_BOT_CONFIG,
-                llms={
-                    "forecasters": [
-                        GeneralLlm(
-                            model="openrouter/z-ai/glm-4.5",
-                            **MODEL_CONFIG,
-                        )
-                    ],
-                    **DEFAULT_HELPER_LLMS,
-                },
-                max_concurrent_research=batch_size,
-                research_cache=research_cache,
-            ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/deepseek/deepseek-r1-0528",
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/anthropic/claude-sonnet-4",
-            #                 reasoning={"max_tokens": 4000},
-            #                 api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/openai/gpt-5",
-            #                 reasoning_effort="high",
-            #                 api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/google/gemini-2.5-pro",
-            #                 reasoning={"max_tokens": 8000},
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/openai/o3",
-            #                 reasoning_effort="high",
-            #                 api_key=get_openrouter_api_key("openrouter/openai/o3"),
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
-            # TemplateForecaster(
-            #     **BENCHMARK_BOT_CONFIG,
-            #     llms={
-            #         "forecasters": [
-            #             GeneralLlm(
-            #                 model="openrouter/x-ai/grok-4",
-            #                 reasoning={"effort": "high"},
-            #                 **MODEL_CONFIG,
-            #             )
-            #         ],
-            #         **DEFAULT_HELPER_LLMS,
-            #     },
-            #     max_concurrent_research=batch_size,
-            #     research_cache=research_cache,
-            # ),
+        # Define individual model configurations -- for sanity checking, can use these free models
+
+        free_r1_0528_model = GeneralLlm(
+            model="openrouter/deepseek/deepseek-r1-0528:free",
+            **MODEL_CONFIG,
+        )
+        free_qwen3_coder_model = GeneralLlm(
+            model="openrouter/qwen/qwen3-coder:free",
+            **MODEL_CONFIG,
+        )
+        free_glm_4p5_air_model = GeneralLlm(
+            model="openrouter/z-ai/glm-4.5-air:free",
+            **MODEL_CONFIG,
+        )
+
+        # optional cheap models, commented out for now for dev:
+        # qwen3_model = GeneralLlm(
+        #     model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+        #     **MODEL_CONFIG,
+        # )
+        # glm_model = GeneralLlm(
+        #     model="openrouter/z-ai/glm-4.5",
+        #     **MODEL_CONFIG,
+        # )
+
+        # Keep these commented for cost control during development:
+        # deepseek_model = GeneralLlm(
+        #     model="openrouter/deepseek/deepseek-r1-0528",
+        #     **MODEL_CONFIG,
+        # )
+        # claude_model = GeneralLlm(
+        #     model="openrouter/anthropic/claude-sonnet-4",
+        #     reasoning={"max_tokens": 4000},
+        #     api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
+        #     **MODEL_CONFIG,
+        # )
+        # gpt5_model = GeneralLlm(
+        #     model="openrouter/openai/gpt-5",
+        #     reasoning_effort="high",
+        #     api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
+        #     **MODEL_CONFIG,
+        # )
+        # gemini_model = GeneralLlm(
+        #     model="openrouter/google/gemini-2.5-pro",
+        #     reasoning={"max_tokens": 8000},
+        #     **MODEL_CONFIG,
+        # )
+        # o3_model = GeneralLlm(
+        #     model="openrouter/openai/o3",
+        #     reasoning_effort="high",
+        #     api_key=get_openrouter_api_key("openrouter/openai/o3"),
+        #     **MODEL_CONFIG,
+        # )
+        # grok_model = GeneralLlm(
+        #     model="openrouter/x-ai/grok-4",
+        #     reasoning={"effort": "high"},
+        #     **MODEL_CONFIG,
+        # )
+
+        # Individual model configurations for benchmarking
+        # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
+        individual_models = [
+            {"name": "r1-0528", "forecaster": free_r1_0528_model},
+            {"name": "qwen3-coder", "forecaster": free_qwen3_coder_model},
+            {"name": "glm-4.5-air", "forecaster": free_glm_4p5_air_model},
+            # {"name": "qwen3-235b", "forecaster": qwen3_model},
+            # {"name": "glm-4.5", "forecaster": glm_model},
+            # Additional models - commented for cost control during development:
+            # {"name": "deepseek-r1", "forecaster": deepseek_model},
+            # {"name": "claude-sonnet-4", "forecaster": claude_model},
+            # {"name": "gpt-5", "forecaster": gpt5_model},
+            # {"name": "gemini-2.5-pro", "forecaster": gemini_model},
+            # {"name": "o3", "forecaster": o3_model},
+            # {"name": "grok-4", "forecaster": grok_model},
         ]
+
+        # Generate individual model bots - ensembles generated by CorrelationAnalyzer.find_optimal_ensembles()
+        bots = []
+        for model_config in individual_models:
+            bot = TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                aggregation_strategy=AggregationStrategy.MEAN,  # Default, not used for single models
+                llms={
+                    "forecasters": [model_config["forecaster"]],
+                    **DEFAULT_HELPER_LLMS,
+                },
+                max_concurrent_research=batch_size,
+                research_cache=research_cache,
+            )
+            bot.name = model_config["name"]
+            bots.append(bot)
+
+        logger.info(
+            f"Created {len(bots)} individual model bots for benchmarking. Ensembles will be generated post-hoc by correlation analysis."
+        )
         bots = typeguard.check_type(bots, list[ForecastBot])
 
         # Log progress info
@@ -399,15 +362,14 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         except ValueError as ve:
             # Provide clearer guidance when no reports exist (likely research provider failures)
             raise RuntimeError(
-                "Benchmark produced no forecast reports. Likely all research calls failed due to AskNews API issues. "
-                "Check AskNews credentials, account status, and API permissions. "
-                "Fallback is disabled for benchmarks by design."
+                "Benchmark produced no forecast reports." "Fallback is disabled for benchmarks by design."
             ) from ve
         logger.info(f"Total Cost: {cost_manager.current_usage}")
 
         # Log score scale validation for mixed question types
         log_score_scale_validation(benchmarks)
 
+        # TODO: refactor out this logic, jank to have here.
         # Perform correlation analysis if we have multiple models
         if len(benchmarks) > 1:
             from metaculus_bot.correlation_analysis import CorrelationAnalyzer
@@ -422,16 +384,31 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             logger.info("=" * 50)
             logger.info(report)
 
-            # Log optimal ensembles for easy reference
+            # Generate all possible ensemble combinations with different aggregation strategies
+            logger.info("\n" + "=" * 50)
+            logger.info("ENSEMBLE GENERATION (Post-hoc)")
+            logger.info("=" * 50)
             optimal_ensembles = analyzer.find_optimal_ensembles(max_ensemble_size=6, max_cost_per_question=1.0)
             if optimal_ensembles:
-                logger.info(f"\nTop 3 Recommended Ensembles (Cost ≤ $1.0/question):")
-                for i, ensemble in enumerate(optimal_ensembles[:3], 1):
+                logger.info(
+                    f"Generated {len(optimal_ensembles)} ensemble combinations from {len(benchmarks)} individual models"
+                )
+                logger.info(f"\nTop 5 Recommended Ensembles (Cost ≤ $1.0/question):")
+                for i, ensemble in enumerate(optimal_ensembles[:5], 1):
                     models = " + ".join(ensemble.model_names)
+                    logger.info(f"{i}. {models}")
                     logger.info(
-                        f"{i}. {models} | Score: {ensemble.avg_performance:.2f} | "
-                        f"Cost: ${ensemble.avg_cost:.3f} | Diversity: {ensemble.diversity_score:.3f}"
+                        f"   Score: {ensemble.avg_performance:.2f} | "
+                        f"Cost: ${ensemble.avg_cost:.3f} | "
+                        f"Diversity: {ensemble.diversity_score:.3f} | "
+                        f"Overall: {ensemble.ensemble_score:.3f}"
                     )
+
+                logger.info(
+                    f"\n💡 Use 'python analyze_correlations.py benchmarks/' to explore all {len(optimal_ensembles)} ensemble combinations"
+                )
+            else:
+                logger.info("No viable ensemble combinations found within cost constraints")
         else:
             logger.info("Skipping correlation analysis (need multiple models)")
 
@@ -470,9 +447,6 @@ if __name__ == "__main__":
     for noisy_logger in ["LiteLLM", "httpx", "httpcore", "urllib3", "aiohttp"]:
         logging.getLogger(noisy_logger).setLevel(logging.WARNING)
         logging.getLogger(noisy_logger).propagate = False
-
-    # Force immediate output
-    import functools
 
     original_info = logging.Logger.info
 

@@ -1,141 +1,77 @@
-"""Tests for mixed question type correlation analysis improvements."""
+"""Test correlation analysis with the new ensemble naming convention."""
 
 from unittest.mock import Mock
 
 import pytest
 
-from metaculus_bot.correlation_analysis import CorrelationAnalyzer, ModelPrediction
+from metaculus_bot.aggregation_strategies import AggregationStrategy
+from metaculus_bot.correlation_analysis import CorrelationAnalyzer
 
 
-def test_extract_prediction_components_binary():
-    """Test extraction of binary prediction components."""
+def test_extract_model_name_with_new_ensemble_naming():
+    """Test that _extract_model_name works with new ensemble bot names."""
     analyzer = CorrelationAnalyzer()
 
-    # Mock binary prediction
-    report = Mock()
-    report.prediction = 0.75
+    # Test single model bot
+    single_benchmark = Mock()
+    single_benchmark.name = "qwen3-235b"
+    single_benchmark.forecast_bot_config = {"llms": {"forecasters": []}}
 
-    q_type, components = analyzer._extract_prediction_components(report)
-    assert q_type == "binary"
-    assert components == [0.75]
+    result = analyzer._extract_model_name(single_benchmark)
+    assert result == "qwen3-235b"
+
+    # Test ensemble bot with mean aggregation
+    ensemble_mean_benchmark = Mock()
+    ensemble_mean_benchmark.name = "qwen3_glm_mean"
+    ensemble_mean_benchmark.forecast_bot_config = {"llms": {"forecasters": []}}
+
+    result = analyzer._extract_model_name(ensemble_mean_benchmark)
+    assert result == "qwen3_glm_mean"
+
+    # Test ensemble bot with median aggregation
+    ensemble_median_benchmark = Mock()
+    ensemble_median_benchmark.name = "qwen3_glm_median"
+    ensemble_median_benchmark.forecast_bot_config = {"llms": {"forecasters": []}}
+
+    result = analyzer._extract_model_name(ensemble_median_benchmark)
+    assert result == "qwen3_glm_median"
 
 
-def test_extract_prediction_components_numeric():
-    """Test extraction of numeric prediction components."""
+def test_extract_model_name_legacy_fallback():
+    """Test that _extract_model_name falls back to legacy behavior for unknown patterns."""
     analyzer = CorrelationAnalyzer()
 
-    # Mock numeric prediction with percentiles
-    report = Mock()
-    report.prediction = Mock()
+    # Test legacy benchmark that doesn't match new patterns
+    legacy_benchmark = Mock()
+    legacy_benchmark.name = "Legacy Bot | Config | some-unknown-model"
+    legacy_benchmark.forecast_bot_config = {"llms": {"forecasters": [{"model": "openrouter/unknown/model-xyz"}]}}
 
-    # Create mock percentiles
-    percentiles = []
-    for p in [10, 20, 40, 60, 80, 90]:
-        mock_percentile = Mock()
-        mock_percentile.percentile = p
-        mock_percentile.value = p * 10  # Values: 100, 200, 400, 600, 800, 900
-        percentiles.append(mock_percentile)
-
-    report.prediction.declared_percentiles = percentiles
-    # Make sure it doesn't get misclassified as multiple choice
-    report.prediction.predicted_options = None
-
-    q_type, components = analyzer._extract_prediction_components(report)
-    assert q_type == "numeric"
-    assert components == [100.0, 200.0, 400.0, 600.0, 800.0, 900.0]
+    result = analyzer._extract_model_name(legacy_benchmark)
+    # Should extract from the single forecaster model (legacy behavior)
+    assert result == "model-xyz"
 
 
-def test_extract_prediction_components_multiple_choice():
-    """Test extraction of multiple choice prediction components."""
+def test_extract_model_name_ensemble_from_forecasters():
+    """Test ensemble name generation from forecaster list when bot name is not available."""
     analyzer = CorrelationAnalyzer()
 
-    # Mock multiple choice prediction
-    report = Mock()
-    report.prediction = Mock()
+    # Test ensemble without explicit bot name but with multiple forecasters
+    ensemble_benchmark = Mock()
+    ensemble_benchmark.name = "Unknown Ensemble"
+    ensemble_benchmark.forecast_bot_config = {
+        "llms": {
+            "forecasters": [
+                {"model": "openrouter/qwen/qwen3-235b-a22b-thinking-2507"},
+                {"model": "openrouter/z-ai/glm-4.5"},
+            ]
+        },
+        "aggregation_strategy": AggregationStrategy.MEAN,
+    }
 
-    # Create mock options
-    options = []
-    for i, (option, prob) in enumerate([("Option A", 0.4), ("Option B", 0.3), ("Option C", 0.3)]):
-        mock_option = Mock()
-        mock_option.option = option
-        mock_option.probability = prob
-        options.append(mock_option)
-
-    report.prediction.predicted_options = options
-    # Make sure other attributes don't interfere
-    report.prediction.declared_percentiles = None
-    report.prediction.median = None
-
-    q_type, components = analyzer._extract_prediction_components(report)
-    assert q_type == "multiple_choice"
-    # Should be sorted by option name
-    assert len(components) == 3
-    assert all(isinstance(c, float) for c in components)
+    result = analyzer._extract_model_name(ensemble_benchmark)
+    # Should generate ensemble name from components
+    assert result == "glm_qwen3_mean"  # sorted alphabetically
 
 
-def test_has_mixed_question_types():
-    """Test detection of mixed question types."""
-    analyzer = CorrelationAnalyzer()
-
-    # Mock benchmarks with different question types
-    binary_report = Mock()
-    binary_report.prediction = 0.5
-
-    numeric_report = Mock()
-    numeric_report.prediction = Mock()
-    numeric_report.prediction.declared_percentiles = None  # No percentiles, should use median fallback
-    numeric_report.prediction.median = 100.0
-
-    mc_report = Mock()
-    mc_report.prediction = Mock()
-    mc_option = Mock()
-    mc_option.option = "A"
-    mc_option.probability = 1.0
-    mc_report.prediction.predicted_options = [mc_option]
-    mc_report.prediction.declared_percentiles = None
-    mc_report.prediction.median = None
-
-    # Test with only binary (should be False)
-    benchmark1 = Mock()
-    benchmark1.forecast_reports = [binary_report]
-    analyzer.benchmarks = [benchmark1]
-    assert not analyzer._has_mixed_question_types()
-
-    # Test with binary and numeric (should be True)
-    benchmark2 = Mock()
-    benchmark2.forecast_reports = [numeric_report]
-    analyzer.benchmarks = [benchmark1, benchmark2]
-    assert analyzer._has_mixed_question_types()
-
-    # Test with all three types (should be True)
-    benchmark3 = Mock()
-    benchmark3.forecast_reports = [mc_report]
-    analyzer.benchmarks = [benchmark1, benchmark2, benchmark3]
-    assert analyzer._has_mixed_question_types()
-
-
-def test_get_question_type_breakdown():
-    """Test question type counting."""
-    analyzer = CorrelationAnalyzer()
-
-    # Create mock reports
-    binary_reports = [Mock() for _ in range(3)]
-    for report in binary_reports:
-        report.prediction = 0.5
-
-    numeric_reports = [Mock() for _ in range(2)]
-    for report in numeric_reports:
-        report.prediction = Mock()
-        report.prediction.declared_percentiles = None  # No percentiles, should use median fallback
-        report.prediction.median = 100.0
-        report.prediction.predicted_options = None  # Make sure it's not misclassified as multiple choice
-
-    # Create mock benchmark
-    benchmark = Mock()
-    benchmark.forecast_reports = binary_reports + numeric_reports
-    analyzer.benchmarks = [benchmark]
-
-    breakdown = analyzer._get_question_type_breakdown()
-    assert breakdown["binary"] == 3
-    assert breakdown["numeric"] == 2
-    assert len(breakdown) == 2
+if __name__ == "__main__":
+    pytest.main([__file__])

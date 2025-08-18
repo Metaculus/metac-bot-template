@@ -39,14 +39,17 @@ run:
 benchmark_run_smoke_test:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 1
 
-benchmark_run_4:
+benchmark_run_smoke_test_all_q_types:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 4 --mixed
 
-benchmark_run_mini:
+benchmark_run_binary_only:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 10
 
 benchmark_run_small:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 32
+
+benchmark_run_large:
+	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 100
 
 benchmark_display:
 	conda run -n metaculus-bot poetry run python community_benchmark.py --mode display

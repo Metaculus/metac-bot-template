@@ -8,6 +8,7 @@ from forecasting_tools.data_models.numeric_report import NumericDistribution, Pe
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from main import TemplateForecaster
+from metaculus_bot.aggregation_strategies import AggregationStrategy
 
 
 @pytest.mark.asyncio
@@ -61,8 +62,8 @@ async def test_numeric_aggregation_configurable():
 
     # Initialize two forecaster instances with different aggregation methods.
     llms_min = {"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"}
-    forecaster_mean = TemplateForecaster(llms=llms_min, numeric_aggregation_method="mean")
-    forecaster_median = TemplateForecaster(llms=llms_min, numeric_aggregation_method="median")
+    forecaster_mean = TemplateForecaster(llms=llms_min, aggregation_strategy=AggregationStrategy.MEAN)
+    forecaster_median = TemplateForecaster(llms=llms_min, aggregation_strategy=AggregationStrategy.MEDIAN)
 
     # 2. Act
     # Run the aggregation for both the 'mean' and 'median' configurations.

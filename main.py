@@ -24,6 +24,12 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
+from metaculus_bot.aggregation_strategies import (
+    AggregationStrategy,
+    aggregate_binary_median,
+    aggregate_multiple_choice_mean,
+    aggregate_multiple_choice_median,
+)
 from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import DEFAULT_MAX_CONCURRENT_RESEARCH
 from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
@@ -49,7 +55,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         folder_to_save_reports_to: str | None = None,
         skip_previously_forecasted_questions: bool = False,
         llms: dict[str, str | GeneralLlm] | None = None,
-        numeric_aggregation_method: Literal["mean", "median"] = "mean",
+        aggregation_strategy: AggregationStrategy = AggregationStrategy.MEAN,
         research_provider: ResearchCallable | None = None,
         max_questions_per_run: int | None = 10,
         is_benchmarking: bool = False,
@@ -86,9 +92,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 f"Missing required LLM purposes: {', '.join(missing)}. Provide these in the 'llms' config."
             )
 
-        if numeric_aggregation_method not in ("mean", "median"):
-            raise ValueError("numeric_aggregation_method must be 'mean' or 'median'")
-        self.numeric_aggregation_method: Literal["mean", "median"] = numeric_aggregation_method
+        if not isinstance(aggregation_strategy, AggregationStrategy):
+            raise ValueError(f"aggregation_strategy must be an AggregationStrategy enum, got {aggregation_strategy}")
+        self.aggregation_strategy: AggregationStrategy = aggregation_strategy
         self._custom_research_provider: ResearchCallable | None = research_provider
         self.research_provider: ResearchCallable | None = research_provider  # For framework config access
         if max_questions_per_run is not None and max_questions_per_run <= 0:
@@ -292,18 +298,38 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if not predictions:
             raise ValueError("Cannot aggregate empty list of predictions")
 
-        # Binary aggregation (floats)
+        # Binary aggregation - strategy-based dispatch
         if isinstance(predictions[0], (int, float)):
             float_preds = [float(p) for p in predictions]  # type: ignore[list-item]
-            return aggregate_binary_mean(float_preds)  # type: ignore[return-value]
 
-        # Numeric aggregation (configurable)
+            if self.aggregation_strategy == AggregationStrategy.MEAN:
+                return aggregate_binary_mean(float_preds)  # type: ignore[return-value]
+            elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
+                return aggregate_binary_median(float_preds)  # type: ignore[return-value]
+            else:
+                raise ValueError(f"Unsupported aggregation strategy for binary questions: {self.aggregation_strategy}")
+
+        # Numeric aggregation - convert strategy to string for existing function
         if isinstance(predictions[0], NumericDistribution) and isinstance(question, NumericQuestion):
             numeric_preds = [p for p in predictions if isinstance(p, NumericDistribution)]
-            return await aggregate_numeric(numeric_preds, question, self.numeric_aggregation_method)  # type: ignore[return-value]
+            strategy_str = self.aggregation_strategy.value  # Convert enum to string
+            return await aggregate_numeric(numeric_preds, question, strategy_str)  # type: ignore[return-value]
 
-        # Delegate remaining types (e.g., multiple-choice) to default
-        return await super()._aggregate_predictions(predictions, question)
+        # Multiple choice aggregation - strategy-based dispatch (NO MORE super() delegation)
+        if isinstance(predictions[0], PredictedOptionList):
+            mc_preds = [p for p in predictions if isinstance(p, PredictedOptionList)]
+
+            if self.aggregation_strategy == AggregationStrategy.MEAN:
+                return aggregate_multiple_choice_mean(mc_preds)  # type: ignore[return-value]
+            elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
+                return aggregate_multiple_choice_median(mc_preds)  # type: ignore[return-value]
+            else:
+                raise ValueError(
+                    f"Unsupported aggregation strategy for multiple choice questions: {self.aggregation_strategy}"
+                )
+
+        # Fallback for unexpected prediction types
+        raise ValueError(f"Unknown prediction type for aggregation: {type(predictions[0])}")
 
     async def _call_perplexity(self, question: str, use_open_router: bool = True) -> str:
         # Exclude prediction markets research when benchmarking to avoid data leakage

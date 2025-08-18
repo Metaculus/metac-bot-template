@@ -13,6 +13,8 @@ import pandas as pd
 from forecasting_tools.data_models.numeric_report import NumericDistribution, NumericReport, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
+from .aggregation_strategies import AggregationStrategy
+
 __all__ = [
     "aggregate_numeric",
     "aggregate_binary_mean",

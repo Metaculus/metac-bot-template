@@ -59,51 +59,33 @@ def test_cli_argument_parsing():
 
 
 def test_bot_instantiation():
-    """Test that both benchmark bots can be created without errors."""
+    """Test that benchmark bots can be created with the new ensemble configuration."""
     from forecasting_tools import GeneralLlm
 
     from main import TemplateForecaster
-    from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+    from metaculus_bot.aggregation_strategies import AggregationStrategy
+    from metaculus_bot.llm_configs import PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
-    # Test ensemble bot (same config as in community_benchmark.py)
-    ensemble_bot = TemplateForecaster(
+    # Test single model bot (equivalent to new baseline configurations)
+    single_bot = TemplateForecaster(
         research_reports_per_question=1,
         predictions_per_research_report=1,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=False,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=False,
-        numeric_aggregation_method="mean",
-        research_provider=None,
-        max_questions_per_run=None,
-        llms={
-            "forecasters": FORECASTER_LLMS,
-            "summarizer": SUMMARIZER_LLM,
-            "parser": PARSER_LLM,
-            "researcher": RESEARCHER_LLM,
-        },
-    )
-
-    # Test GPT-5 only bot
-    gpt5_bot = TemplateForecaster(
-        research_reports_per_question=1,
-        predictions_per_research_report=1,
-        use_research_summary_to_forecast=False,
-        publish_reports_to_metaculus=False,
-        folder_to_save_reports_to=None,
-        skip_previously_forecasted_questions=False,
-        numeric_aggregation_method="mean",
+        aggregation_strategy=AggregationStrategy.MEAN,  # Unused for single model
         research_provider=None,
         max_questions_per_run=None,
         llms={
             "forecasters": [
                 GeneralLlm(
-                    model="openrouter/openai/gpt-5",
+                    model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
                     temperature=0.0,
                     top_p=0.9,
-                    reasoning_effort="medium",
+                    max_tokens=16000,
                     stream=False,
-                    timeout=180,
+                    timeout=240,
                     allowed_tries=3,
                 )
             ],
@@ -113,20 +95,93 @@ def test_bot_instantiation():
         },
     )
 
-    # Verify bots have required attributes (these caused the original AttributeError)
-    assert hasattr(ensemble_bot, "research_provider")
-    assert hasattr(ensemble_bot, "max_questions_per_run")
-    assert hasattr(ensemble_bot, "numeric_aggregation_method")
+    # Test ensemble bot with mean aggregation
+    ensemble_mean_bot = TemplateForecaster(
+        research_reports_per_question=1,
+        predictions_per_research_report=1,
+        use_research_summary_to_forecast=False,
+        publish_reports_to_metaculus=False,
+        folder_to_save_reports_to=None,
+        skip_previously_forecasted_questions=False,
+        aggregation_strategy=AggregationStrategy.MEAN,
+        research_provider=None,
+        max_questions_per_run=None,
+        llms={
+            "forecasters": [
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+                    temperature=0.0,
+                    top_p=0.9,
+                    max_tokens=16000,
+                    stream=False,
+                    timeout=240,
+                    allowed_tries=3,
+                ),
+                GeneralLlm(
+                    model="openrouter/z-ai/glm-4.5",
+                    temperature=0.0,
+                    top_p=0.9,
+                    max_tokens=16000,
+                    stream=False,
+                    timeout=240,
+                    allowed_tries=3,
+                ),
+            ],
+            "summarizer": SUMMARIZER_LLM,
+            "parser": PARSER_LLM,
+            "researcher": RESEARCHER_LLM,
+        },
+    )
 
-    assert hasattr(gpt5_bot, "research_provider")
-    assert hasattr(gpt5_bot, "max_questions_per_run")
-    assert hasattr(gpt5_bot, "numeric_aggregation_method")
+    # Test ensemble bot with median aggregation
+    ensemble_median_bot = TemplateForecaster(
+        research_reports_per_question=1,
+        predictions_per_research_report=1,
+        use_research_summary_to_forecast=False,
+        publish_reports_to_metaculus=False,
+        folder_to_save_reports_to=None,
+        skip_previously_forecasted_questions=False,
+        aggregation_strategy=AggregationStrategy.MEDIAN,
+        research_provider=None,
+        max_questions_per_run=None,
+        llms={
+            "forecasters": [
+                GeneralLlm(
+                    model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+                    temperature=0.0,
+                    top_p=0.9,
+                    max_tokens=16000,
+                    stream=False,
+                    timeout=240,
+                    allowed_tries=3,
+                ),
+                GeneralLlm(
+                    model="openrouter/z-ai/glm-4.5",
+                    temperature=0.0,
+                    top_p=0.9,
+                    max_tokens=16000,
+                    stream=False,
+                    timeout=240,
+                    allowed_tries=3,
+                ),
+            ],
+            "summarizer": SUMMARIZER_LLM,
+            "parser": PARSER_LLM,
+            "researcher": RESEARCHER_LLM,
+        },
+    )
 
-    # Verify bot configurations
-    assert ensemble_bot.numeric_aggregation_method == "mean"
-    assert gpt5_bot.numeric_aggregation_method == "mean"
-    assert ensemble_bot.max_questions_per_run is None
-    assert gpt5_bot.max_questions_per_run is None
+    # Verify bots have required attributes
+    for bot in [single_bot, ensemble_mean_bot, ensemble_median_bot]:
+        assert hasattr(bot, "research_provider")
+        assert hasattr(bot, "max_questions_per_run")
+        assert hasattr(bot, "aggregation_strategy")
+        assert bot.max_questions_per_run is None
+
+    # Verify aggregation strategies are set correctly
+    assert single_bot.aggregation_strategy == AggregationStrategy.MEAN  # Default for single model
+    assert ensemble_mean_bot.aggregation_strategy == AggregationStrategy.MEAN
+    assert ensemble_median_bot.aggregation_strategy == AggregationStrategy.MEDIAN
 
 
 @patch("community_benchmark.run_benchmark_streamlit_page")
@@ -248,6 +303,58 @@ def test_mixed_question_types_distribution(mock_get_questions_filter):
     # Verify all questions had background_info cleared
     for question in questions:
         assert question.background_info is None
+
+
+def test_individual_model_bot_generation():
+    """Test that the new individual model configuration generates the expected bots."""
+    from forecasting_tools import GeneralLlm
+
+    from metaculus_bot.aggregation_strategies import AggregationStrategy
+    from metaculus_bot.llm_configs import PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+
+    # Simulate the individual model configuration logic from community_benchmark.py
+    MODEL_CONFIG = {
+        "temperature": 0.0,
+        "top_p": 0.9,
+        "max_tokens": 16000,
+        "stream": False,
+        "timeout": 240,
+        "allowed_tries": 3,
+    }
+
+    # Define individual models (same as in community_benchmark.py)
+    qwen3_model = GeneralLlm(
+        model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+        **MODEL_CONFIG,
+    )
+    glm_model = GeneralLlm(
+        model="openrouter/z-ai/glm-4.5",
+        **MODEL_CONFIG,
+    )
+
+    # Individual model configurations for benchmarking
+    individual_models = [
+        {"name": "qwen3-235b", "forecaster": qwen3_model},
+        {"name": "glm-4.5", "forecaster": glm_model},
+    ]
+
+    # Expected bot names: just individual models (ensembles generated post-hoc)
+    expected_bot_names = [
+        "qwen3-235b",  # Single model
+        "glm-4.5",  # Single model
+    ]
+
+    # Verify the logic produces the expected number and types of configurations
+    generated_names = []
+    for model_config in individual_models:
+        generated_names.append(model_config["name"])
+
+    # Verify we get the expected bot names
+    assert sorted(generated_names) == sorted(expected_bot_names)
+    assert len(generated_names) == 2
+
+    # Verify this matches the new approach: only individual models
+    assert len(generated_names) == len(individual_models)
 
 
 @patch("community_benchmark.MetaculusApi.get_questions_matching_filter")

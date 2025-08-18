@@ -319,21 +319,86 @@ class CorrelationAnalyzer:
         return candidates
 
     def _extract_model_name(self, benchmark: BenchmarkForBot) -> str:
-        """Extract clean model name from benchmark."""
+        """Extract clean model name from benchmark.
+
+        For the new ensemble configuration, this returns the bot name directly
+        (e.g., 'qwen3_glm_mean', 'qwen3-235b') rather than trying to parse
+        individual model names from the forecasters list.
+        """
         try:
-            # Try to get the forecaster model name
+            # First, check if this is a new-style ensemble benchmark with a clear bot name
+            # New bot names follow patterns like: qwen3_glm_mean, qwen3-235b, glm-4.5
+            if hasattr(benchmark, "name") and benchmark.name:
+                # Check if this looks like our new naming convention
+                bot_name = benchmark.name
+                if any(pattern in bot_name for pattern in ["_mean", "_median", "qwen3-235b", "glm-4.5"]):
+                    return bot_name
+
+            # Legacy approach: try to get the forecaster model name
             llms = benchmark.forecast_bot_config.get("llms", {})
             if "forecasters" in llms and llms["forecasters"]:
-                first_forecaster = llms["forecasters"][0]
-                if isinstance(first_forecaster, dict) and "original_model" in first_forecaster:
-                    return first_forecaster["original_model"].split("/")[-1]
-                elif isinstance(first_forecaster, dict) and "model" in first_forecaster:
-                    return first_forecaster["model"].split("/")[-1]
+                forecasters = llms["forecasters"]
+
+                # For single model bots, use the model name
+                if len(forecasters) == 1:
+                    first_forecaster = forecasters[0]
+                    if isinstance(first_forecaster, dict):
+                        if "original_model" in first_forecaster:
+                            model_name = first_forecaster["original_model"].split("/")[-1]
+                            # Map to our standard naming
+                            if "qwen3-235b" in model_name:
+                                return "qwen3-235b"
+                            elif "glm-4.5" in model_name:
+                                return "glm-4.5"
+                            return model_name
+                        elif "model" in first_forecaster:
+                            model_name = first_forecaster["model"].split("/")[-1]
+                            if "qwen3-235b" in model_name:
+                                return "qwen3-235b"
+                            elif "glm-4.5" in model_name:
+                                return "glm-4.5"
+                            return model_name
+
+                # For multi-model ensembles, generate ensemble name from components
+                elif len(forecasters) > 1:
+                    model_components = []
+                    for forecaster in forecasters:
+                        if isinstance(forecaster, dict):
+                            model_key = "original_model" if "original_model" in forecaster else "model"
+                            if model_key in forecaster:
+                                model_name = forecaster[model_key].split("/")[-1]
+                                if "qwen3" in model_name:
+                                    model_components.append("qwen3")
+                                elif "glm" in model_name:
+                                    model_components.append("glm")
+                                elif "gpt" in model_name:
+                                    model_components.append("gpt5")
+                                elif "claude" in model_name:
+                                    model_components.append("claude")
+                                elif "deepseek" in model_name:
+                                    model_components.append("deepseek")
+                                else:
+                                    # Fallback: use last part of model name
+                                    model_components.append(model_name.split("-")[0])
+
+                    if model_components:
+                        ensemble_base = "_".join(sorted(set(model_components)))
+                        # Try to determine aggregation strategy from benchmark config
+                        if hasattr(benchmark, "forecast_bot_config"):
+                            config = benchmark.forecast_bot_config
+                            if "aggregation_strategy" in config:
+                                strategy = config["aggregation_strategy"]
+                                if hasattr(strategy, "value"):
+                                    return f"{ensemble_base}_{strategy.value}"
+                                elif isinstance(strategy, str):
+                                    return f"{ensemble_base}_{strategy}"
+                        return ensemble_base
 
             # Fallback to benchmark name parsing
             name_parts = benchmark.name.split(" | ")
             if len(name_parts) >= 3:
                 return name_parts[2]  # Model name is usually third part
+
         except Exception as e:
             logger.warning(f"Could not extract model name from benchmark: {e}")
 
@@ -483,7 +548,7 @@ class CorrelationAnalyzer:
             total_cost = benchmark.total_cost
             num_questions = len(benchmark.forecast_reports)
 
-            # Hack: Fix unrealistic costs for premium models
+            # Fix unrealistic costs for premium models and free models
             if model_name in ["gpt-5", "o3"] and total_cost < 0.10:
                 # Estimate based on average reasoning length and known pricing
                 avg_reasoning_length = self._estimate_avg_reasoning_length(benchmark)
@@ -499,6 +564,12 @@ class CorrelationAnalyzer:
                 logger.info(
                     f"Adjusted {model_name} cost from ${benchmark.total_cost:.4f} to ${total_cost:.4f} "
                     f"(avg reasoning: {avg_reasoning_length} chars)"
+                )
+            elif total_cost == 0.0:
+                # Apply minimum cost for free models to enable ensemble calculations
+                total_cost = num_questions * 0.001  # $0.001 per question
+                logger.info(
+                    f"Applied minimum cost to free model {model_name}: ${total_cost:.3f} total (${0.001:.3f}/question)"
                 )
 
             model_stats[model_name] = {
