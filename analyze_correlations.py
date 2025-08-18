@@ -22,6 +22,7 @@ from typing import List, Optional
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 from metaculus_bot.correlation_analysis import CorrelationAnalyzer
+from metaculus_bot.scoring_patches import apply_scoring_patches
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,9 @@ def main():
         logger.error("Need at least 2 benchmark results for correlation analysis")
         sys.exit(1)
 
+    # Apply scoring patches for mixed question types
+    apply_scoring_patches()
+
     # Perform analysis
     analyzer = CorrelationAnalyzer()
     analyzer.add_benchmark_results(benchmarks)
@@ -164,10 +168,10 @@ def main():
     )
 
     if optimal_ensembles:
-        print(f"\nTop 10 Ensembles (Cost ≤ ${args.max_cost}/question):")
+        print(f"\nTop 10 Ensembles (Both Aggregation Strategies, Cost ≤ ${args.max_cost}/question):")
         for i, ensemble in enumerate(optimal_ensembles[:10], 1):
             models = " + ".join(ensemble.model_names)
-            print(f"{i:2}. {models}")
+            print(f"{i:2}. {models} ({ensemble.aggregation_strategy.upper()})")
             print(
                 f"    Score: {ensemble.avg_performance:.2f} | "
                 f"Cost: ${ensemble.avg_cost:.3f} | "

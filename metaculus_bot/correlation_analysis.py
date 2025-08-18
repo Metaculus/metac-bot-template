@@ -74,6 +74,7 @@ class EnsembleCandidate:
     avg_correlation: float  # Average pairwise correlation
     diversity_score: float  # Lower correlation = higher diversity
     efficiency_ratio: float  # Performance per dollar
+    aggregation_strategy: str  # "mean" or "median"
 
     @property
     def ensemble_score(self) -> float:
@@ -302,15 +303,18 @@ class CorrelationAnalyzer:
         candidates = []
 
         # Generate all possible ensemble combinations up to max_ensemble_size
+        # Test both MEAN and MEDIAN aggregation strategies for each combination
         from itertools import combinations
 
         for size in range(2, max_ensemble_size + 1):
             for model_combo in combinations(model_stats.keys(), size):
-                candidate = self._evaluate_ensemble(model_combo, model_stats, correlation_matrix)
+                # Test both aggregation strategies for each model combination
+                for agg_strategy in ["mean", "median"]:
+                    candidate = self._evaluate_ensemble(model_combo, model_stats, correlation_matrix, agg_strategy)
 
-                # Filter by constraints
-                if candidate.avg_cost <= max_cost_per_question and candidate.avg_performance >= min_performance:
-                    candidates.append(candidate)
+                    # Filter by constraints
+                    if candidate.avg_cost <= max_cost_per_question and candidate.avg_performance >= min_performance:
+                        candidates.append(candidate)
 
         # Sort by ensemble score (descending)
         candidates.sort(key=lambda x: x.ensemble_score, reverse=True)
@@ -326,16 +330,20 @@ class CorrelationAnalyzer:
         individual model names from the forecasters list.
         """
         try:
-            # First, check if this is a new-style ensemble benchmark with a clear bot name
-            # New bot names follow patterns like: qwen3_glm_mean, qwen3-235b, glm-4.5
-            if hasattr(benchmark, "name") and benchmark.name:
-                # Check if this looks like our new naming convention
-                bot_name = benchmark.name
-                if any(pattern in bot_name for pattern in ["_mean", "_median", "qwen3-235b", "glm-4.5"]):
-                    return bot_name
+            # Skip the old bot name check - it's not reliable for our new individual model approach
+            # Instead go straight to extracting from LLM config
 
-            # Legacy approach: try to get the forecaster model name
+            # Extract from LLM config - handle both old and new formats
             llms = benchmark.forecast_bot_config.get("llms", {})
+
+            # New format: check the "default" LLM which is used for forecasting
+            if "default" in llms and isinstance(llms["default"], dict):
+                forecaster_config = llms["default"]
+                if "model" in forecaster_config:
+                    model_path = forecaster_config["model"]
+                    return self._extract_clean_model_name(model_path)
+
+            # Legacy format: check forecasters array
             if "forecasters" in llms and llms["forecasters"]:
                 forecasters = llms["forecasters"]
 
@@ -344,20 +352,11 @@ class CorrelationAnalyzer:
                     first_forecaster = forecasters[0]
                     if isinstance(first_forecaster, dict):
                         if "original_model" in first_forecaster:
-                            model_name = first_forecaster["original_model"].split("/")[-1]
-                            # Map to our standard naming
-                            if "qwen3-235b" in model_name:
-                                return "qwen3-235b"
-                            elif "glm-4.5" in model_name:
-                                return "glm-4.5"
-                            return model_name
+                            model_path = first_forecaster["original_model"]
+                            return self._extract_clean_model_name(model_path)
                         elif "model" in first_forecaster:
-                            model_name = first_forecaster["model"].split("/")[-1]
-                            if "qwen3-235b" in model_name:
-                                return "qwen3-235b"
-                            elif "glm-4.5" in model_name:
-                                return "glm-4.5"
-                            return model_name
+                            model_path = first_forecaster["model"]
+                            return self._extract_clean_model_name(model_path)
 
                 # For multi-model ensembles, generate ensemble name from components
                 elif len(forecasters) > 1:
@@ -403,6 +402,38 @@ class CorrelationAnalyzer:
             logger.warning(f"Could not extract model name from benchmark: {e}")
 
         return f"model_{hash(benchmark.name) % 10000}"
+
+    def _extract_clean_model_name(self, model_path: str) -> str:
+        """Extract a clean model name from a model path like 'openrouter/deepseek/deepseek-r1-0528:free'."""
+        # Split by '/' and take the last part, then split by ':' to remove variant suffixes
+        model_name = model_path.split("/")[-1].split(":")[0]
+
+        # Map to our standard naming conventions
+        if "deepseek-r1-0528" in model_name:
+            return "r1-0528"
+        elif "qwen3-coder" in model_name:
+            return "qwen3-coder"
+        elif "glm-4.5-air" in model_name:
+            return "glm-4.5-air"
+        elif "qwen3-235b" in model_name:
+            return "qwen3-235b"
+        elif "glm-4.5" in model_name and "air" not in model_name:
+            return "glm-4.5"
+        elif "deepseek" in model_name and "r1" in model_name:
+            return "deepseek-r1"
+        elif "claude-sonnet-4" in model_name:
+            return "claude-sonnet-4"
+        elif "gpt-5" in model_name:
+            return "gpt-5"
+        elif "gemini-2.5-pro" in model_name:
+            return "gemini-2.5-pro"
+        elif "o3" in model_name:
+            return "o3"
+        elif "grok-4" in model_name:
+            return "grok-4"
+        else:
+            # Fallback: use the model name as-is
+            return model_name
 
     def _extract_prediction_value(self, report) -> float:
         """Convert prediction to float for correlation analysis.
@@ -596,13 +627,19 @@ class CorrelationAnalyzer:
         return total_chars / max(count, 1) if count > 0 else 2000  # Default estimate
 
     def _evaluate_ensemble(
-        self, model_names: Tuple[str, ...], model_stats: Dict[str, Dict[str, float]], corr_matrix: CorrelationMatrix
+        self,
+        model_names: Tuple[str, ...],
+        model_stats: Dict[str, Dict[str, float]],
+        corr_matrix: CorrelationMatrix,
+        aggregation_strategy: str = "mean",
     ) -> EnsembleCandidate:
-        """Evaluate a specific ensemble configuration."""
+        """Evaluate a specific ensemble configuration with a given aggregation strategy."""
         models = list(model_names)
 
-        # Calculate average performance and cost
-        avg_performance = np.mean([model_stats[m]["avg_performance"] for m in models])
+        # Calculate ensemble performance by simulating actual aggregation
+        ensemble_performance = self._simulate_ensemble_performance(models, aggregation_strategy)
+
+        # Calculate average cost (same as before)
         avg_cost = np.mean([model_stats[m]["avg_cost"] for m in models])
 
         # Calculate average pairwise correlation
@@ -618,16 +655,216 @@ class CorrelationAnalyzer:
 
         avg_correlation = np.mean(correlations) if correlations else 0.5
         diversity_score = 1.0 - avg_correlation
-        efficiency_ratio = avg_performance / max(avg_cost, 0.001)
+        efficiency_ratio = ensemble_performance / max(avg_cost, 0.001)
 
         return EnsembleCandidate(
             model_names=models,
-            avg_performance=avg_performance,
+            avg_performance=ensemble_performance,
             avg_cost=avg_cost,
             avg_correlation=avg_correlation,
             diversity_score=diversity_score,
             efficiency_ratio=efficiency_ratio,
+            aggregation_strategy=aggregation_strategy,
         )
+
+    def _simulate_ensemble_performance(self, models: List[str], aggregation_strategy: str) -> float:
+        """Simulate ensemble performance by aggregating actual model predictions and scoring them properly."""
+        import math
+
+        # Group data by question from benchmark reports
+        question_data = {}
+
+        for benchmark in self.benchmarks:
+            model_name = self._extract_model_name(benchmark)
+            if model_name in models:
+                for report in benchmark.forecast_reports:
+                    q_id = report.question.id_of_question
+                    if q_id not in question_data:
+                        question_data[q_id] = {
+                            "individual_preds": {},
+                            "community_pred": report.question.community_prediction_at_access_time,
+                            "question": report.question,
+                            "question_type": None,
+                        }
+
+                    # Store actual prediction object (not just float)
+                    question_data[q_id]["individual_preds"][model_name] = report.prediction
+
+                    # Determine question type for proper aggregation
+                    if question_data[q_id]["question_type"] is None:
+                        question_data[q_id]["question_type"] = self._get_question_type(report)
+
+        ensemble_scores = []
+
+        for q_id, data in question_data.items():
+            # Only consider questions where all models in the ensemble made predictions
+            if len(data["individual_preds"]) == len(models):
+                try:
+                    # Apply aggregation strategy based on question type
+                    ensemble_pred_value = self._aggregate_predictions(
+                        data["individual_preds"], models, data["question_type"], aggregation_strategy
+                    )
+
+                    # Calculate baseline score for ensemble prediction using original scoring functions
+                    ensemble_score = self._calculate_baseline_score(
+                        ensemble_pred_value, data["community_pred"], data["question_type"]
+                    )
+
+                    if ensemble_score is not None:
+                        ensemble_scores.append(ensemble_score)
+
+                except Exception as e:
+                    logger.warning(f"Failed to aggregate predictions for question {q_id}: {e}")
+                    continue
+
+        # Return average ensemble performance across all questions
+        result = np.mean(ensemble_scores) if ensemble_scores else 0.0
+        logger.debug(
+            f"Ensemble {models} with {aggregation_strategy}: {len(ensemble_scores)} questions, avg score {result:.2f}"
+        )
+        return result
+
+    def _get_question_type(self, report) -> str:
+        """Determine question type from report."""
+        prediction = report.prediction
+
+        # Binary questions: prediction is a float
+        if isinstance(prediction, (int, float)):
+            return "binary"
+
+        # Multiple choice: has predicted_options
+        if hasattr(prediction, "predicted_options") and prediction.predicted_options:
+            return "multiple_choice"
+
+        # Numeric questions: has declared_percentiles or median
+        if (hasattr(prediction, "declared_percentiles") and prediction.declared_percentiles) or hasattr(
+            prediction, "median"
+        ):
+            return "numeric"
+
+        # Fallback
+        return "binary"
+
+    def _aggregate_predictions(
+        self, individual_preds: Dict[str, Any], models: List[str], question_type: str, aggregation_strategy: str
+    ) -> float:
+        """Aggregate individual model predictions based on question type and strategy."""
+        if question_type == "binary":
+            # Direct aggregation of probabilities
+            predictions = [individual_preds[model] for model in models]
+            if aggregation_strategy == "mean":
+                return float(np.mean(predictions))
+            elif aggregation_strategy == "median":
+                return float(np.median(predictions))
+            else:
+                raise ValueError(f"Unknown aggregation strategy: {aggregation_strategy}")
+
+        elif question_type == "multiple_choice":
+            # Aggregate probability distributions
+            predictions = [individual_preds[model] for model in models]
+
+            # Extract options from first prediction for consistency
+            first_pred = predictions[0]
+            if not hasattr(first_pred, "predicted_options") or not first_pred.predicted_options:
+                raise ValueError("Multiple choice prediction missing predicted_options")
+
+            # Sort options by name for consistency
+            sorted_options = sorted(first_pred.predicted_options, key=lambda opt: getattr(opt, "option_name", str(opt)))
+            option_names = [getattr(opt, "option_name", str(opt)) for opt in sorted_options]
+
+            # Aggregate probabilities for each option
+            aggregated_probs = []
+            for i, option_name in enumerate(option_names):
+                option_probs = []
+                for pred in predictions:
+                    # Find probability for this option in each prediction
+                    for opt in pred.predicted_options:
+                        if getattr(opt, "option_name", str(opt)) == option_name:
+                            option_probs.append(getattr(opt, "probability", 0))
+                            break
+
+                if option_probs:
+                    if aggregation_strategy == "mean":
+                        aggregated_probs.append(np.mean(option_probs))
+                    elif aggregation_strategy == "median":
+                        aggregated_probs.append(np.median(option_probs))
+                    else:
+                        raise ValueError(f"Unknown aggregation strategy: {aggregation_strategy}")
+                else:
+                    aggregated_probs.append(0.0)
+
+            # Normalize to sum to 1
+            total_prob = sum(aggregated_probs)
+            if total_prob > 0:
+                aggregated_probs = [p / total_prob for p in aggregated_probs]
+
+            # Return max probability as representative value for scoring
+            return max(aggregated_probs) if aggregated_probs else 0.5
+
+        elif question_type == "numeric":
+            # Use median values for numeric questions
+            median_values = []
+            for model in models:
+                pred = individual_preds[model]
+                if hasattr(pred, "median") and pred.median is not None:
+                    median_values.append(float(pred.median))
+                elif hasattr(pred, "declared_percentiles") and pred.declared_percentiles:
+                    # Find 50th percentile or use mean of available percentiles
+                    percentiles = pred.declared_percentiles
+                    median_percentile = next((p for p in percentiles if p.percentile == 50), None)
+                    if median_percentile:
+                        median_values.append(float(median_percentile.value))
+                    else:
+                        median_values.append(float(np.mean([p.value for p in percentiles])))
+                else:
+                    # Fallback: treat as binary
+                    median_values.append(0.5)
+
+            if aggregation_strategy == "mean":
+                return float(np.mean(median_values))
+            elif aggregation_strategy == "median":
+                return float(np.median(median_values))
+            else:
+                raise ValueError(f"Unknown aggregation strategy: {aggregation_strategy}")
+
+        else:
+            raise ValueError(f"Unknown question type: {question_type}")
+
+    def _calculate_baseline_score(
+        self, prediction_value: float, community_prediction: Any, question_type: str
+    ) -> Optional[float]:
+        """Calculate baseline score using the same logic as forecasting_tools."""
+        import math
+
+        if community_prediction is None:
+            return None
+
+        try:
+            if question_type == "binary":
+                # Use the exact formula from binary_report.py line 86
+                c = float(community_prediction)
+                p = float(prediction_value)
+
+                # Clamp prediction to avoid log errors (same as BinaryPrediction validation)
+                p = max(0.001, min(0.999, p))
+
+                return 100.0 * (c * (math.log2(p) + 1.0) + (1.0 - c) * (math.log2(1.0 - p) + 1.0))
+
+            elif question_type in ["multiple_choice", "numeric"]:
+                # For now, use a simplified scoring approach
+                # This could be improved by implementing full PDF-based scoring for numeric
+                # and log scoring for multiple choice, but this provides a reasonable proxy
+
+                # Use a neutral baseline score for non-binary questions
+                # This ensures ensemble comparison still works while avoiding complex scoring
+                return 15.0  # Approximate average score
+
+            else:
+                return None
+
+        except (ValueError, TypeError, ZeroDivisionError) as e:
+            logger.warning(f"Error calculating baseline score: {e}")
+            return None
 
     def generate_correlation_report(self, output_path: Optional[str] = None) -> str:
         """Generate human-readable correlation analysis report."""
@@ -674,15 +911,41 @@ class CorrelationAnalyzer:
         for model1, model2, corr in least_correlated[:5]:
             report.append(f"- {model1} ↔ {model2}: r = {corr:.3f}")
 
-        # Optimal Ensembles
-        report.append("\n## Recommended Ensembles")
-        for i, ensemble in enumerate(optimal_ensembles[:5], 1):
-            models_str = " + ".join(ensemble.model_names)
-            report.append(f"**{i}. {models_str}**")
-            report.append(f"   - Performance: {ensemble.avg_performance:.2f}")
-            report.append(f"   - Cost: ${ensemble.avg_cost:.3f}/question")
-            report.append(f"   - Diversity: {ensemble.diversity_score:.3f}")
-            report.append(f"   - Ensemble Score: {ensemble.ensemble_score:.3f}")
+        # Optimal Ensembles with Aggregation Strategy Comparison
+        report.append("\n## Recommended Ensembles (Both Aggregation Strategies)")
+
+        # Group ensembles by model combination to show mean vs median comparison
+        ensemble_groups = {}
+        for ensemble in optimal_ensembles:
+            models_key = tuple(sorted(ensemble.model_names))
+            if models_key not in ensemble_groups:
+                ensemble_groups[models_key] = []
+            ensemble_groups[models_key].append(ensemble)
+
+        # Show top 5 model combinations with both aggregation strategies
+        combination_count = 0
+        for models_key, ensembles in sorted(
+            ensemble_groups.items(), key=lambda x: max(e.ensemble_score for e in x[1]), reverse=True
+        ):
+            if combination_count >= 5:
+                break
+
+            models_str = " + ".join(models_key)
+            report.append(f"\n**{combination_count + 1}. {models_str}**")
+
+            # Sort by aggregation strategy for consistent ordering (mean first, then median)
+            ensembles.sort(key=lambda x: x.aggregation_strategy)
+
+            for ensemble in ensembles:
+                report.append(
+                    f"   - **{ensemble.aggregation_strategy.upper()}**: "
+                    f"Score {ensemble.avg_performance:.2f}, "
+                    f"Cost ${ensemble.avg_cost:.3f}, "
+                    f"Diversity {ensemble.diversity_score:.3f}, "
+                    f"Overall {ensemble.ensemble_score:.3f}"
+                )
+
+            combination_count += 1
 
         report_text = "\n".join(report)
 

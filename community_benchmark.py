@@ -1,3 +1,7 @@
+"""
+Benchmark treating the community prediction as approximate ground truth.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -393,10 +397,10 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 logger.info(
                     f"Generated {len(optimal_ensembles)} ensemble combinations from {len(benchmarks)} individual models"
                 )
-                logger.info(f"\nTop 5 Recommended Ensembles (Cost ≤ $1.0/question):")
-                for i, ensemble in enumerate(optimal_ensembles[:5], 1):
+                logger.info(f"\nTop 10 Recommended Ensembles (Both Aggregation Strategies, Cost ≤ $1.0/question):")
+                for i, ensemble in enumerate(optimal_ensembles[:10], 1):
                     models = " + ".join(ensemble.model_names)
-                    logger.info(f"{i}. {models}")
+                    logger.info(f"{i}. {models} ({ensemble.aggregation_strategy.upper()})")
                     logger.info(
                         f"   Score: {ensemble.avg_performance:.2f} | "
                         f"Cost: ${ensemble.avg_cost:.3f} | "
