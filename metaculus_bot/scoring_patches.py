@@ -16,6 +16,74 @@ from scipy.interpolate import interp1d
 
 logger = logging.getLogger(__name__)
 
+# Scoring path counters for diagnostics across a run
+_NUMERIC_PMF_ATTEMPTS = 0
+_NUMERIC_PMF_SUCCESSES = 0
+_NUMERIC_FALLBACK_ATTEMPTS = 0
+_NUMERIC_FALLBACK_SUCCESSES = 0
+_MC_ATTEMPTS = 0
+_MC_MISSING_COMMUNITY = 0
+_MC_SUCCESSES = 0
+
+
+def reset_scoring_path_stats() -> None:
+    global _NUMERIC_PMF_ATTEMPTS, _NUMERIC_PMF_SUCCESSES
+    global _NUMERIC_FALLBACK_ATTEMPTS, _NUMERIC_FALLBACK_SUCCESSES
+    global _MC_ATTEMPTS, _MC_MISSING_COMMUNITY, _MC_SUCCESSES
+    _NUMERIC_PMF_ATTEMPTS = 0
+    _NUMERIC_PMF_SUCCESSES = 0
+    _NUMERIC_FALLBACK_ATTEMPTS = 0
+    _NUMERIC_FALLBACK_SUCCESSES = 0
+    _MC_ATTEMPTS = 0
+    _MC_MISSING_COMMUNITY = 0
+    _MC_SUCCESSES = 0
+
+
+def get_scoring_path_stats() -> dict[str, float | int]:
+    total_numeric = _NUMERIC_PMF_ATTEMPTS + _NUMERIC_FALLBACK_ATTEMPTS
+    total_mc = _MC_ATTEMPTS
+    return {
+        "numeric_pmf_attempts": _NUMERIC_PMF_ATTEMPTS,
+        "numeric_pmf_successes": _NUMERIC_PMF_SUCCESSES,
+        "numeric_fallback_attempts": _NUMERIC_FALLBACK_ATTEMPTS,
+        "numeric_fallback_successes": _NUMERIC_FALLBACK_SUCCESSES,
+        "numeric_total": total_numeric,
+        "numeric_fallback_rate": ((_NUMERIC_FALLBACK_ATTEMPTS / total_numeric) if total_numeric > 0 else 0.0),
+        "mc_attempts": total_mc,
+        "mc_successes": _MC_SUCCESSES,
+        "mc_missing_community": _MC_MISSING_COMMUNITY,
+        "mc_missing_rate": ((_MC_MISSING_COMMUNITY / total_mc) if total_mc > 0 else 0.0),
+    }
+
+
+def log_scoring_path_stats() -> None:
+    stats = get_scoring_path_stats()
+    logger.info("=== SCORING PATH SUMMARY ===")
+    logger.info(
+        "Numeric: pmf_attempts=%d pmf_successes=%d fallback_attempts=%d fallback_successes=%d total=%d fallback_rate=%.2f",
+        stats["numeric_pmf_attempts"],
+        stats["numeric_pmf_successes"],
+        stats["numeric_fallback_attempts"],
+        stats["numeric_fallback_successes"],
+        stats["numeric_total"],
+        stats["numeric_fallback_rate"],
+    )
+    logger.info(
+        "MC: attempts=%d successes=%d missing_community=%d missing_rate=%.2f",
+        stats["mc_attempts"],
+        stats["mc_successes"],
+        stats["mc_missing_community"],
+        stats["mc_missing_rate"],
+    )
+
+    # Bright warnings when fallbacks dominate
+    if stats["numeric_total"] and stats["numeric_fallback_rate"] >= 0.8:
+        logger.warning(
+            "⚠️  ALERT: Numeric scoring fallback used for %.0f%% of items. Check that model predictions expose CDFs.",
+            100 * stats["numeric_fallback_rate"],
+        )
+    logger.info("=== END SCORING SUMMARY ===")
+
 
 def validate_community_prediction_count(question: Any) -> bool:
     """
@@ -50,32 +118,15 @@ def validate_community_prediction_count(question: Any) -> bool:
     return False
 
 
-def extract_multiple_choice_probabilities(prediction: Any) -> List[float]:
+def extract_multiple_choice_probabilities(prediction: Any) -> list[float]:
     """
-    Extract probability list from a multiple choice prediction.
-
-    Args:
-        prediction: PredictedOptionList or similar object
-
-    Returns:
-        List of probabilities for each option
+    Safely extracts probabilities from a PredictedOptionList, sorting by option name.
     """
-    try:
-        if hasattr(prediction, "predicted_options") and prediction.predicted_options:
-            # Sort by option name for consistency; robust to mocks by coercing to str
-            def _name(opt: Any) -> str:
-                if hasattr(opt, "option_name") and opt.option_name is not None:
-                    return str(opt.option_name)
-                if hasattr(opt, "option") and opt.option is not None:
-                    return str(opt.option)
-                return str(opt)
-
-            sorted_options = sorted(prediction.predicted_options, key=_name)
-            return [float(getattr(opt, "probability", 0)) for opt in sorted_options]
-    except (TypeError, AttributeError, ValueError) as e:
-        logger.warning(f"Failed to extract MC probabilities: {e}")
-
-    return []
+    if not prediction or not hasattr(prediction, "predicted_options") or prediction.predicted_options is None:
+        return []
+    # Sort by option name to ensure consistent order
+    sorted_options = sorted(prediction.predicted_options, key=lambda o: o.option)
+    return [opt.probability for opt in sorted_options]
 
 
 def extract_numeric_percentiles(prediction: Any) -> List[Tuple[float, float]]:
@@ -131,7 +182,9 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
     Returns:
         Baseline score or None if cannot be calculated
     """
+    global _MC_ATTEMPTS, _MC_MISSING_COMMUNITY, _MC_SUCCESSES
     try:
+        _MC_ATTEMPTS += 1
         # Extract bot prediction probabilities
         bot_probs = extract_multiple_choice_probabilities(report.prediction)
         if not bot_probs:
@@ -143,6 +196,7 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
         # Extract community probabilities
         community_probs = _extract_mc_community_probs(report.question)
         if not community_probs or len(community_probs) != len(bot_probs):
+            _MC_MISSING_COMMUNITY += 1
             logger.info(
                 f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community probabilities"
             )
@@ -168,6 +222,7 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
         for c_i, p_i in zip(community_probs, bot_probs):
             sum_ln += c_i * math.log(max(p_i, eps))
         final_score = 100.0 * (sum_ln / lnK + 1.0)
+        _MC_SUCCESSES += 1
         logger.info(
             f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f}"
         )
@@ -195,41 +250,54 @@ def _extract_numeric_community_cdf(question: Any) -> Optional[List[float]]:
 
 def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
     """
-    Calculate baseline score for numeric questions using percentile comparison.
+    Calculate baseline score for numeric questions using CDF→PMF comparison.
 
-    Simplified approach: compare percentiles and scale to match binary score range.
-    Ideally we would use the official Metaculus method using PDFs.
-    See: https://www.metaculus.com/help/scores-faq/#continuous-log-score
+    Preferred approach: convert both model and community CDFs to discretized PMFs and
+    compute 50 * E_c[ln(p_model / p_baseline)]. This mirrors the continuous log-score
+    style and aligns scale with binary baselines. Falls back to a simple PDF estimate
+    from declared percentiles only when CDFs are unavailable.
 
     Args:
-        report: NumericReport object
+        report: NumericReport-like object with `.prediction.cdf` and question `api_json`.
 
     Returns:
         Baseline score or None if cannot be calculated
     """
+    global _NUMERIC_PMF_ATTEMPTS, _NUMERIC_PMF_SUCCESSES
+    global _NUMERIC_FALLBACK_ATTEMPTS, _NUMERIC_FALLBACK_SUCCESSES
     try:
-        # Build model CDF at uniform bins via NumericDistribution.cdf
+        # Try to obtain model CDF percentiles (list of objects with .percentile in [0,1])
+        model_cdf_percentiles = None
         try:
-            model_cdf_percentiles = report.prediction.cdf  # list of Percentile(value=x, percentile=cdf)
+            candidate_cdf = getattr(report.prediction, "cdf", None)
+            # Validate the CDF looks like a sequence of percentile-like objects
+            if isinstance(candidate_cdf, (list, tuple)) and len(candidate_cdf) >= 2:
+                model_cdf_percentiles = candidate_cdf
+            else:
+                model_cdf_percentiles = None
         except Exception as e:
             logger.warning(
                 f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: cannot compute model CDF: {e}"
             )
-            return None
 
         # Extract community CDF from API JSON
         community_cdf = _extract_numeric_community_cdf(report.question)
-        if not community_cdf or len(community_cdf) < 2:
-            # Fallback to legacy approximate PDF-based scoring to satisfy older tests
+
+        # If either CDF is missing or too short, fall back to a PDF-like approximation
+        if not community_cdf or len(community_cdf) < 2 or model_cdf_percentiles is None:
             logger.info(
-                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community CDF; using legacy PDF fallback"
+                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community/model CDF; using legacy PDF fallback"
             )
             try:
+                _NUMERIC_FALLBACK_ATTEMPTS += 1
                 # Use declared percentiles if available to build interpolation over values
                 declared = getattr(report.prediction, "declared_percentiles", None)
+                if not declared and model_cdf_percentiles:
+                    declared = model_cdf_percentiles[::40]
+
                 if not declared:
-                    # Try to reconstruct from cdf percentiles list (invert mapping)
-                    declared = model_cdf_percentiles[::40]  # sample a few points
+                    return None
+
                 values = [float(p.value) for p in declared]
                 perc = [
                     float(getattr(p, "percentile", 0)) / (100.0 if getattr(p, "percentile", 1) > 1 else 1.0)
@@ -237,22 +305,19 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
                 ]
                 if len(values) < 3:
                     return None
-                # Interpolate CDF(value)->percentile
+
+                # Interpolate CDF(value)->percentile and estimate local PDF near median
                 cdf_func = interp1d(values, perc, bounds_error=False, fill_value=(0, 1), kind="linear")
-                # Evaluate around median of values
                 vmin, vmax = min(values), max(values)
                 dx = (vmax - vmin) / 1000.0 if vmax > vmin else 1.0
                 x0 = np.median(values)
                 cdf_left = float(cdf_func(x0 - dx / 2))
                 cdf_right = float(cdf_func(x0 + dx / 2))
                 pdf = max(1e-10, (cdf_right - cdf_left) / dx)
-                baseline_pdf = 0.05
-                # Clamp to a reasonable range for fallback to satisfy legacy tests
+                baseline_pdf = 1.0 / (vmax - vmin) if vmax > vmin else 1.0
                 final_score = 50.0 * (math.log(pdf / baseline_pdf))
-                if final_score < -100.0:
-                    final_score = -100.0
-                elif final_score > 100.0:
-                    final_score = 100.0
+                final_score = max(min(final_score, 100.0), -100.0)
+                _NUMERIC_FALLBACK_SUCCESSES += 1
                 logger.info(
                     f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (legacy PDF fallback)"
                 )
@@ -261,6 +326,7 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
                 return None
 
         # Convert CDFs to PMFs and normalize
+        _NUMERIC_PMF_ATTEMPTS += 1
         model_cdf_values = np.clip(
             np.array([float(p.percentile) for p in model_cdf_percentiles], dtype=float), 0.0, 1.0
         )
@@ -293,15 +359,27 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
         open_upper = bool(getattr(report.question, "open_upper_bound", False))
         open_lower = bool(getattr(report.question, "open_lower_bound", False))
         open_count = int(open_upper) + int(open_lower)
-        m = len(model_pmf)
-        baseline = np.full(m, (1 - 0.05 * open_count) / max(m - 2, 1))
-        if m >= 1:
+        baseline = np.zeros(m, dtype=float)
+        if m >= 1 and open_lower:
             baseline[0] = 0.05
-        if m >= 2:
+        if m >= 2 and open_upper:
             baseline[-1] = 0.05
+        remaining_mass = max(0.0, 1.0 - 0.05 * open_count)
+        inner_bins = max(m - 2, 0)
+        if inner_bins > 0:
+            baseline[1:-1] = remaining_mass / inner_bins
+        else:
+            # Degenerate tiny grid: put everything into available bin(s)
+            if m == 1:
+                baseline[0] = 1.0
+            elif m == 2:
+                distribute = remaining_mass / 2.0
+                baseline[0] += distribute
+                baseline[1] += distribute
         eps = 1e-12
         terms = community_pmf * (np.log(np.maximum(model_pmf, eps) / np.maximum(baseline, eps)))
         final_score = float(50.0 * terms.sum())
+        _NUMERIC_PMF_SUCCESSES += 1
         logger.info(
             f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (PMF-based vs community)"
         )

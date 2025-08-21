@@ -21,8 +21,8 @@ def _make_mc_question(options, cp_probs):
 
 
 def _make_mc_prediction(options, probs):
-    # Build a minimal predicted_options list with option_name and probability
-    opts = [SimpleNamespace(option_name=o, probability=float(p)) for o, p in zip(options, probs)]
+    # Build a minimal predicted_options list with option and probability
+    opts = [SimpleNamespace(option=o, probability=float(p)) for o, p in zip(options, probs)]
     return SimpleNamespace(predicted_options=opts)
 
 

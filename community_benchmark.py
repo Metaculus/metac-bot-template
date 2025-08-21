@@ -32,7 +32,12 @@ from metaculus_bot.aggregation_strategies import AggregationStrategy
 from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
-from metaculus_bot.scoring_patches import apply_scoring_patches, log_score_scale_validation
+from metaculus_bot.scoring_patches import (
+    apply_scoring_patches,
+    log_score_scale_validation,
+    log_scoring_path_stats,
+    reset_scoring_path_stats,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -236,12 +241,13 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         "researcher": RESEARCHER_LLM,
     }
 
-    # Apply scoring patches for mixed question types
+    # Apply scoring patches for mixed question types and reset counters
     apply_scoring_patches()
+    reset_scoring_path_stats()
 
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
-        batch_size = BENCHMARK_BATCH_SIZE
+        batch_size = 1  # Reduced from BENCHMARK_BATCH_SIZE (4) for diagnostics
 
         # Shared research cache for all bots to avoid duplicate API calls
         research_cache: dict[int, str] = {}
@@ -373,6 +379,9 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
         # Log score scale validation for mixed question types
         log_score_scale_validation(benchmarks)
+
+        # Summarize scoring path usage and flag if fallbacks dominate
+        log_scoring_path_stats()
 
         # TODO: refactor out this logic, jank to have here.
         # Perform correlation analysis if we have multiple models

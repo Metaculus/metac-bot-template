@@ -450,12 +450,30 @@ class TemplateForecaster(CompactLoggingForecastBot):
         percentile_list: list[Percentile] = await structure_output(
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
-        prediction = NumericDistribution.from_question(percentile_list, question)
+
+        # If zero_point is the same as the lower bound, we must override it to None to avoid a ZeroDivisionError in the CDF calculation.
+        zero_point = getattr(question, "zero_point", None)
+        if zero_point is not None and zero_point == question.lower_bound:
+            logger.warning(
+                f"Question {getattr(question, 'id_of_question', 'N/A')}: zero_point ({zero_point}) is equal to lower_bound "
+                f"({question.lower_bound}). Forcing linear scale for CDF generation."
+            )
+            zero_point = None
+
+        prediction = NumericDistribution(
+            declared_percentiles=percentile_list,
+            open_upper_bound=question.open_upper_bound,
+            open_lower_bound=question.open_lower_bound,
+            upper_bound=question.upper_bound,
+            lower_bound=question.lower_bound,
+            zero_point=zero_point,
+            cdf_size=getattr(question, "cdf_size", None),
+        )
 
         # Proactively compute CDF to surface spacing issues and log rich diagnostics
         try:
             _ = prediction.cdf  # force CDF construction
-        except AssertionError as e:
+        except (AssertionError, ZeroDivisionError) as e:
             try:
                 declared = getattr(prediction, "declared_percentiles", [])
                 bounds = {
