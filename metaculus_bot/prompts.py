@@ -123,7 +123,7 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
 
         (2) Reference class (outside view) analysis
             • Candidate reference classes and suitability.
-            • Outside‑view distribution over options; discuss the historical rate of upsets/unexpected outcomes in this domain and how that affects the distribution.
+            • Outside-view distribution over options; discuss the historical rate of upsets/unexpected outcomes in this domain and how that affects the distribution.
 
         (3) Timeframe reasoning
             • Time to resolution; describe how halving/doubling the timeline might reshape the distribution.
@@ -137,7 +137,7 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
         (5) Strongest pro case for the currently most-likely option
             • Use weighted evidence and explicit causal chains.
 
-        (6) Red‑team critique
+        (6) Red-team critique
             • Attack assumptions in (5); highlight hidden premises and data that could flip the conclusion.
 
         (7) Unexpected scenario(s)
@@ -204,33 +204,52 @@ def numeric_prompt(
         {lower_bound_message}
         {upper_bound_message}
 
-        ── Write your analysis in the following numbered sections ────────────
-        (1) **Time to resolution**: how long until we know the answer.
+        -- Analysis --
+        (1) Source analysis
+            - Summarize key sources; note recency, credibility, and scope.
+            - Separate fact and opinion. Prefer opinions from identifiable experts and entities.
 
-        (2) **Status-quo outcome**: what value is implied if current
-            conditions simply persist?
+        (2) Outside view and reference classes
+            - Candidate reference classes and suitability.
+            - State the outside view range and how you anchor to it.
 
-        (3) **Trend continuation**: extrapolate historical data to 
-            the closing date.
+        (3) Timeframe and dynamics
+            - Time to resolution; describe how halving or doubling the timeline might shift percentiles.
+            - Status-quo outcome: what value is implied if current conditions simply persist.
+            - Trend continuation: extrapolate historical data to the closing date.
 
-        (4) **Expert & market priors**: cite ranges or point forecasts from
-            specialists, prediction markets, or peer forecasts.
+        (4) Expert and market priors
+            - Cite ranges or point forecasts from specialists, prediction markets, or peers.
 
-        (5) **Unexpected low scenario**: describe a coherent pathway that
-            would push the result into an unusually *low* tail.
+        (5) Evidence weighting for inside view adjustments
+            - Strong: multiple independent sources, clear causal links, strong precedent
+            - Moderate: one good source, indirect links, weak precedent
+            - Weak: anecdotes, speculative logic, volatile indicators
 
-        (6) **Unexpected high scenario**: analogous pathway for an unusually
-            *high* tail.
+        (6) Tail scenarios
+            - Coherent pathway for unusually low results.
+            - Coherent pathway for unusually high results.
 
-        (7) **Red-team critique & final rationale**: challenge your own
-            assumptions.
-            
-        (8) Finally, state how you weight everything to set each
-            percentile.  Good forecasters:
-            • keep 10 / 90 far apart (unknown unknowns)  
-            • ensure strictly increasing values  
-            • avoid scientific notation  
-            • respect the explicit bounds above.
+        (7) Red team and final rationale
+            - Challenge assumptions and data quality.
+            - Integrate outside to inside view and justify shifts.
+            - Small delta check: would +/- 10 percent on key percentiles still fit the reasoning
+            - Status quo nudge: justify deviations from status quo expectations.
+
+        (8) Calibration and distribution shaping
+            - Think in ranges, not single points.
+            - Keep 10 and 90 far apart to allow for unknown unknowns.
+            - Ensure strictly increasing percentiles.
+            - Avoid scientific notation.
+            - Respect the explicit bounds above.
+
+        -- Brief checklist (keep concise) --
+        - Paraphrase the resolution criteria and units in less than 30 words.
+        - State the outside view baseline used.
+        - Consistency line about which percentile corresponds to the status quo or trend.
+        - Top 3 to 5 evidence items plus a quick factual validity check.
+        - Blind spot scenario and expected effect on tails.
+        - Status quo nudge sanity check.
 
         ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after) ────────────────
         Percentile 10: XX.X
