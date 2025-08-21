@@ -451,6 +451,41 @@ class TemplateForecaster(CompactLoggingForecastBot):
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
         prediction = NumericDistribution.from_question(percentile_list, question)
+
+        # Proactively compute CDF to surface spacing issues and log rich diagnostics
+        try:
+            _ = prediction.cdf  # force CDF construction
+        except AssertionError as e:
+            try:
+                declared = getattr(prediction, "declared_percentiles", [])
+                bounds = {
+                    "lower_bound": getattr(question, "lower_bound", None),
+                    "upper_bound": getattr(question, "upper_bound", None),
+                    "open_lower_bound": getattr(question, "open_lower_bound", None),
+                    "open_upper_bound": getattr(question, "open_upper_bound", None),
+                    "zero_point": getattr(question, "zero_point", None),
+                    "cdf_size": getattr(question, "cdf_size", None),
+                }
+                vals = [float(p.value) for p in declared]
+                prcs = [float(p.percentile) for p in declared]
+                deltas_val = [b - a for a, b in zip(vals, vals[1:])]
+                deltas_pct = [b - a for a, b in zip(prcs, prcs[1:])]
+                logger.error(
+                    "Numeric CDF spacing assertion for Q %s | URL %s | error=%s\n"
+                    "Bounds=%s\n"
+                    "Declared percentiles (p%% -> v): %s\n"
+                    "Value deltas: %s | Percentile deltas: %s",
+                    getattr(question, "id_of_question", None),
+                    getattr(question, "page_url", None),
+                    e,
+                    bounds,
+                    [(p, v) for p, v in zip(prcs, vals)],
+                    deltas_val,
+                    deltas_pct,
+                )
+            except Exception as log_e:
+                logger.error("Failed logging numeric CDF diagnostics: %s", log_e)
+            raise
         # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
         if (
             hasattr(prediction, "declared_percentiles")

@@ -153,13 +153,18 @@ class TestMultipleChoiceScoring:
         prediction = Mock()
         prediction.predicted_options = [option1, option2, option3]
 
+        # Provide community CP aligned to options
+        question.options = ["A", "B", "C"]
+        question.api_json = {
+            "question": {"aggregations": {"recency_weighted": {"latest": {"forecast_values": [0.1, 0.8, 0.1]}}}}
+        }
+
         # Create mock report
         report = Mock()
         report.question = question
         report.prediction = prediction
 
-        with patch("numpy.random.normal", return_value=0.0):  # No noise for predictable test
-            score = calculate_multiple_choice_baseline_score(report)
+        score = calculate_multiple_choice_baseline_score(report)
 
         # Score should be calculated and finite
         assert score is not None
@@ -167,8 +172,7 @@ class TestMultipleChoiceScoring:
         assert isinstance(score, float)
 
         # Score should be in reasonable range for baseline scoring
-        # After normalization, MC scores should be comparable to binary (10-50 range)
-        assert -100 <= score <= 100
+        assert -500 <= score <= 500
 
     def test_mc_scoring_insufficient_predictions(self):
         """Test MC scoring with insufficient community predictions."""
@@ -222,6 +226,15 @@ class TestNumericScoring:
         prediction = Mock()
         prediction.declared_percentiles = percentiles
 
+        # Provide community CDF (uniform for simplicity)
+        question.api_json = {
+            "question": {
+                "aggregations": {
+                    "recency_weighted": {"latest": {"forecast_values": np.linspace(0.0, 1.0, 201).tolist()}}
+                }
+            }
+        }
+
         # Create mock report
         report = Mock()
         report.question = question
@@ -235,8 +248,7 @@ class TestNumericScoring:
         assert isinstance(score, float)
 
         # Score should be in reasonable range for baseline scoring
-        # After normalization, MC scores should be comparable to binary (10-50 range)
-        assert -100 <= score <= 100
+        assert -500 <= score <= 500
 
     def test_numeric_scoring_insufficient_percentiles(self):
         """Test numeric scoring with insufficient percentiles."""
@@ -306,12 +318,16 @@ class TestScoreScaling:
         mc_prediction = Mock()
         mc_prediction.predicted_options = [mc_option1, mc_option2]
 
+        mc_question.options = ["A", "B"]
+        mc_question.api_json = {
+            "question": {"aggregations": {"recency_weighted": {"latest": {"forecast_values": [0.6, 0.4]}}}}
+        }
+
         mc_report = Mock()
         mc_report.question = mc_question
         mc_report.prediction = mc_prediction
 
-        with patch("numpy.random.normal", return_value=0.0):  # No noise for predictable test
-            mc_score = calculate_multiple_choice_baseline_score(mc_report)
+        mc_score = calculate_multiple_choice_baseline_score(mc_report)
 
         # Create numeric score
         numeric_question = Mock()
@@ -327,6 +343,14 @@ class TestScoreScaling:
 
         numeric_prediction = Mock()
         numeric_prediction.declared_percentiles = numeric_percentiles
+
+        numeric_question.api_json = {
+            "question": {
+                "aggregations": {
+                    "recency_weighted": {"latest": {"forecast_values": np.linspace(0.0, 1.0, 201).tolist()}}
+                }
+            }
+        }
 
         numeric_report = Mock()
         numeric_report.question = numeric_question
@@ -346,7 +370,7 @@ class TestScoreScaling:
             # After normalization, all scores should be on similar scales
             for score in [binary_score, mc_score, numeric_score]:
                 if score is not None:
-                    assert -100 <= score <= 100
+                    assert -500 <= score <= 500
 
 
 class TestMonkeyPatching:

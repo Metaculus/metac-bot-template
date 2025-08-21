@@ -675,6 +675,12 @@ class CorrelationAnalyzer:
     def _simulate_ensemble_performance(self, models: List[str], aggregation_strategy: str) -> float:
         """Simulate ensemble performance by aggregating actual model predictions and scoring them properly."""
         import math
+        from types import SimpleNamespace
+
+        from metaculus_bot.scoring_patches import (
+            calculate_multiple_choice_baseline_score,
+            calculate_numeric_baseline_score,
+        )
 
         # Group data by question from benchmark reports
         question_data = {}
@@ -685,11 +691,18 @@ class CorrelationAnalyzer:
                 for report in benchmark.forecast_reports:
                     q_id = report.question.id_of_question
                     if q_id not in question_data:
+                        # Only attach binary community pred; MC/numeric pull CP from api_json during scoring
+                        q_type_tmp = self._get_question_type(report)
+                        bin_cp = (
+                            getattr(report.question, "community_prediction_at_access_time", None)
+                            if q_type_tmp == "binary"
+                            else None
+                        )
                         question_data[q_id] = {
                             "individual_preds": {},
-                            "community_pred": report.question.community_prediction_at_access_time,
+                            "community_pred": bin_cp,
                             "question": report.question,
-                            "question_type": None,
+                            "question_type": q_type_tmp,
                         }
 
                     # Store actual prediction object (not just float)
@@ -703,24 +716,109 @@ class CorrelationAnalyzer:
 
         for q_id, data in question_data.items():
             # Only consider questions where all models in the ensemble made predictions
-            if len(data["individual_preds"]) == len(models):
-                try:
-                    # Apply aggregation strategy based on question type
-                    ensemble_pred_value = self._aggregate_predictions(
-                        data["individual_preds"], models, data["question_type"], aggregation_strategy
+            if len(data["individual_preds"]) != len(models):
+                continue
+
+            q = data["question"]
+            q_type = data["question_type"]
+            preds = [data["individual_preds"][m] for m in models]
+
+            try:
+                if q_type == "binary":
+                    # Aggregate scalar prob and use binary baseline formula
+                    pred_vals = [float(p) for p in preds]
+                    if aggregation_strategy == "mean":
+                        agg_p = float(np.mean(pred_vals))
+                    else:
+                        agg_p = float(np.median(pred_vals))
+                    c = getattr(q, "community_prediction_at_access_time", None)
+                    score = self._calculate_baseline_score(agg_p, c, "binary")
+                    if score is not None:
+                        ensemble_scores.append(score)
+
+                elif q_type == "multiple_choice":
+                    # Aggregate per-option probabilities
+                    # Build option name list from first prediction
+                    first_pred = preds[0]
+                    if not hasattr(first_pred, "predicted_options") or not first_pred.predicted_options:
+                        raise ValueError("Multiple choice prediction missing predicted_options")
+                    option_names = [getattr(opt, "option_name", str(opt)) for opt in first_pred.predicted_options]
+
+                    aggregated = []
+                    for name in option_names:
+                        vals = []
+                        for pred in preds:
+                            for opt in pred.predicted_options:
+                                if getattr(opt, "option_name", str(opt)) == name:
+                                    vals.append(float(getattr(opt, "probability", 0)))
+                                    break
+                        if not vals:
+                            aggregated.append(0.0)
+                        else:
+                            aggregated.append(
+                                float(np.mean(vals)) if aggregation_strategy == "mean" else float(np.median(vals))
+                            )
+                    # Normalize
+                    s = sum(aggregated)
+                    aggregated = [x / s for x in aggregated] if s > 0 else [1.0 / len(aggregated)] * len(aggregated)
+
+                    # Build lightweight report-like object
+                    pred_obj = SimpleNamespace(
+                        predicted_options=[
+                            SimpleNamespace(option_name=n, probability=p) for n, p in zip(option_names, aggregated)
+                        ]
                     )
+                    fake_report = SimpleNamespace(question=q, prediction=pred_obj)
+                    score = calculate_multiple_choice_baseline_score(fake_report)
+                    if score is not None:
+                        ensemble_scores.append(score)
 
-                    # Calculate baseline score for ensemble prediction using original scoring functions
-                    ensemble_score = self._calculate_baseline_score(
-                        ensemble_pred_value, data["community_pred"], data["question_type"]
-                    )
+                elif q_type == "numeric":
+                    # Aggregate CDFs from predictions
+                    # Extract CDF lists from each prediction
+                    cdfs = []
+                    for pred in preds:
+                        if not hasattr(pred, "cdf"):
+                            raise ValueError("Numeric prediction missing cdf")
+                        cdf_list = pred.cdf
+                        cdfs.append(cdf_list)
+                    # Use x-axis from first cdf
+                    x_vals = [pt.value for pt in cdfs[0]]
+                    # Stack cdf percentiles
+                    stacks = np.array([[float(pt.percentile) for pt in c] for c in cdfs])
+                    if aggregation_strategy == "mean":
+                        agg_cdf = stacks.mean(axis=0)
+                    else:
+                        agg_cdf = np.median(stacks, axis=0)
 
-                    if ensemble_score is not None:
-                        ensemble_scores.append(ensemble_score)
+                    # Build lightweight prediction with cdf
+                    class _Perc:
+                        __slots__ = ("value", "percentile")
 
-                except Exception as e:
-                    logger.warning(f"Failed to aggregate predictions for question {q_id}: {e}")
+                        def __init__(self, value: float, percentile: float):
+                            self.value = value
+                            self.percentile = percentile
+
+                    class _NumericPred:
+                        def __init__(self, x: List[float], c: List[float]):
+                            self._cdf = [_Perc(v, p) for v, p in zip(x, c)]
+
+                        @property
+                        def cdf(self):
+                            return self._cdf
+
+                    agg_pred = _NumericPred(x_vals, list(agg_cdf))
+                    fake_report = SimpleNamespace(question=q, prediction=agg_pred)
+                    score = calculate_numeric_baseline_score(fake_report)
+                    if score is not None:
+                        ensemble_scores.append(score)
+
+                else:
                     continue
+
+            except Exception as e:
+                logger.warning(f"Failed to aggregate predictions for question {q_id}: {e}")
+                continue
 
         # Return average ensemble performance across all questions
         result = np.mean(ensemble_scores) if ensemble_scores else 0.0
