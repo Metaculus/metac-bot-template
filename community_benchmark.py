@@ -260,6 +260,10 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             model="openrouter/z-ai/glm-4.5-air:free",
             **MODEL_CONFIG,
         )
+        free_kimi_k2_model = GeneralLlm(
+            model="openrouter/moonshotai/kimi-k2:free",
+            **MODEL_CONFIG,
+        )
 
         # optional cheap models, commented out for now for dev:
         # qwen3_model = GeneralLlm(
@@ -272,10 +276,6 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # )
 
         # Keep these commented for cost control during development:
-        # deepseek_model = GeneralLlm(
-        #     model="openrouter/deepseek/deepseek-r1-0528",
-        #     **MODEL_CONFIG,
-        # )
         # claude_model = GeneralLlm(
         #     model="openrouter/anthropic/claude-sonnet-4",
         #     reasoning={"max_tokens": 4000},
@@ -311,6 +311,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             {"name": "r1-0528", "forecaster": free_r1_0528_model},
             {"name": "qwen3-coder", "forecaster": free_qwen3_coder_model},
             {"name": "glm-4.5-air", "forecaster": free_glm_4p5_air_model},
+            {"name": "kimi-k2", "forecaster": free_kimi_k2_model},
             # {"name": "qwen3-235b", "forecaster": qwen3_model},
             # {"name": "glm-4.5", "forecaster": glm_model},
             # Additional models - commented for cost control during development:
