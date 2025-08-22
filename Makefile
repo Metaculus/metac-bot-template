@@ -36,10 +36,10 @@ run:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python main.py
 
 # Warning: this will fire off requests to OpenRouter and cost (a very small amount) of money.
-benchmark_run_smoke_test:
+benchmark_run_smoke_test_binary:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 1
 
-benchmark_run_smoke_test_all_q_types:
+benchmark_run_smoke_test:
 	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 4 --mixed
 
 benchmark_run_binary_only:
