@@ -30,35 +30,35 @@ format:
 	conda run -n metaculus-bot poetry run isort .
 
 test:
-	conda run -n metaculus-bot PYTHONPATH=. poetry run pytest
+	PYTHONUNBUFFERED=1 conda run -n metaculus-bot PYTHONPATH=. poetry run pytest
 
 run:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python main.py
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u main.py
 
 # Warning: this will fire off requests to OpenRouter and cost (a very small amount) of money.
 benchmark_run_smoke_test_binary:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 1
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode run --num-questions 1
 
 benchmark_run_smoke_test:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 4 --mixed
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 4 --mixed
 
 benchmark_run_binary_only:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode run --num-questions 30
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode run --num-questions 30
 
 benchmark_run_small:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 12 --mixed
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 12 --mixed
 
 benchmark_run_medium:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 32 --mixed
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 32 --mixed
 
 benchmark_run_large:
-	$(ENV_FROM_KEYS) conda run -n metaculus-bot poetry run python community_benchmark.py --mode custom --num-questions 100 --mixed
+	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 100 --mixed
 
 benchmark_display:
-	conda run -n metaculus-bot poetry run python community_benchmark.py --mode display
+	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode display
 
 analyze_correlations:
-	conda run -n metaculus-bot poetry run python analyze_correlations.py $(if $(FILE),$(FILE),benchmarks/)
+	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u analyze_correlations.py $(if $(FILE),$(FILE),benchmarks/)
 
 analyze_correlations_latest:
-	conda run -n metaculus-bot poetry run python analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)
+	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)
