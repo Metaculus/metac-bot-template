@@ -48,7 +48,7 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
 
             Today is {_today_str()}.
 
-            ── Analysis ─────────────────────────────────────────────────────
+            ── Analysis Template ──
             1) Source analysis
                • Briefly summarize the main sources from the briefing; include date, credibility, and scope.
                • Separate facts from opinions. Give more weight to opinions from identifiable experts/entities.
@@ -116,7 +116,7 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
 
         Today's date: {_today_str()}
 
-        ── Analysis ─────────────────────────────────────────────────────────
+        ── Analysis Template ──
         (1) Source analysis
             • Summarize key sources; note recency, credibility, and scope.
             • Separate fact vs opinion; favor opinions from identifiable experts/entities.
@@ -204,7 +204,7 @@ def numeric_prompt(
         {lower_bound_message}
         {upper_bound_message}
 
-        -- Analysis --
+        -- Analysis Template --
         (1) Source analysis
             - Summarize key sources; note recency, credibility, and scope.
             - Separate fact and opinion. Prefer opinions from identifiable experts and entities.
@@ -243,13 +243,13 @@ def numeric_prompt(
             - Avoid scientific notation.
             - Respect the explicit bounds above.
 
-        -- Brief checklist (keep concise) --
-        - Paraphrase the resolution criteria and units in less than 30 words.
-        - State the outside view baseline used.
-        - Consistency line about which percentile corresponds to the status quo or trend.
-        - Top 3 to 5 evidence items plus a quick factual validity check.
-        - Blind spot scenario and expected effect on tails.
-        - Status quo nudge sanity check.
+        (9) Brief checklist
+            - Paraphrase the resolution criteria and units in less than 30 words.
+            - State the outside view baseline used.
+            - Consistency line about which percentile corresponds to the status quo or trend.
+            - Top 3 to 5 evidence items plus a quick factual validity check.
+            - Blind spot scenario and expected effect on tails.
+            - Status quo nudge sanity check.
 
         ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after) ────────────────
         Percentile 10: XX.X

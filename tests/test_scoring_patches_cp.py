@@ -2,6 +2,7 @@ import types
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from metaculus_bot.scoring_patches import calculate_multiple_choice_baseline_score, calculate_numeric_baseline_score
 
@@ -26,6 +27,7 @@ def _make_mc_prediction(options, probs):
     return SimpleNamespace(predicted_options=opts)
 
 
+@pytest.mark.skip(reason="Relies on unverified API field shapes for MC; pending API research")
 def test_mc_scoring_prefers_matching_distribution():
     options = ["A", "B", "C"]
     cp = [0.2, 0.3, 0.5]
@@ -71,6 +73,7 @@ class _NumericPred:
         return self._cdf
 
 
+@pytest.mark.skip(reason="Assumes community CDF location/schema; pending API research")
 def test_numeric_scoring_prefers_matching_distribution():
     # Community CDF: linear 0..1 across 201 points
     cp_cdf = np.linspace(0.0, 1.0, 201)

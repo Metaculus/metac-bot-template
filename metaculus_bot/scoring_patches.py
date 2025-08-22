@@ -24,12 +24,18 @@ _NUMERIC_FALLBACK_SUCCESSES = 0
 _MC_ATTEMPTS = 0
 _MC_MISSING_COMMUNITY = 0
 _MC_SUCCESSES = 0
+# MC diagnostics breakdown
+_MC_MISSING_API_JSON = 0
+_MC_MISSING_QUESTION_NODE = 0
+_MC_MISSING_AGGREGATIONS = 0
+_MC_MISSING_PYC = 0
 
 
 def reset_scoring_path_stats() -> None:
     global _NUMERIC_PMF_ATTEMPTS, _NUMERIC_PMF_SUCCESSES
     global _NUMERIC_FALLBACK_ATTEMPTS, _NUMERIC_FALLBACK_SUCCESSES
     global _MC_ATTEMPTS, _MC_MISSING_COMMUNITY, _MC_SUCCESSES
+    global _MC_MISSING_API_JSON, _MC_MISSING_QUESTION_NODE, _MC_MISSING_AGGREGATIONS, _MC_MISSING_PYC
     _NUMERIC_PMF_ATTEMPTS = 0
     _NUMERIC_PMF_SUCCESSES = 0
     _NUMERIC_FALLBACK_ATTEMPTS = 0
@@ -37,6 +43,10 @@ def reset_scoring_path_stats() -> None:
     _MC_ATTEMPTS = 0
     _MC_MISSING_COMMUNITY = 0
     _MC_SUCCESSES = 0
+    _MC_MISSING_API_JSON = 0
+    _MC_MISSING_QUESTION_NODE = 0
+    _MC_MISSING_AGGREGATIONS = 0
+    _MC_MISSING_PYC = 0
 
 
 def get_scoring_path_stats() -> dict[str, float | int]:
@@ -53,6 +63,11 @@ def get_scoring_path_stats() -> dict[str, float | int]:
         "mc_successes": _MC_SUCCESSES,
         "mc_missing_community": _MC_MISSING_COMMUNITY,
         "mc_missing_rate": ((_MC_MISSING_COMMUNITY / total_mc) if total_mc > 0 else 0.0),
+        # MC breakdown
+        "mc_missing_api_json": _MC_MISSING_API_JSON,
+        "mc_missing_question_node": _MC_MISSING_QUESTION_NODE,
+        "mc_missing_aggregations": _MC_MISSING_AGGREGATIONS,
+        "mc_missing_pyc": _MC_MISSING_PYC,
     }
 
 
@@ -74,6 +89,13 @@ def log_scoring_path_stats() -> None:
         stats["mc_successes"],
         stats["mc_missing_community"],
         stats["mc_missing_rate"],
+    )
+    logger.info(
+        "MC missing breakdown: api_json=%d question_node=%d aggregations=%d pyc=%d",
+        stats["mc_missing_api_json"],
+        stats["mc_missing_question_node"],
+        stats["mc_missing_aggregations"],
+        stats["mc_missing_pyc"],
     )
 
     # Bright warnings when fallbacks dominate
@@ -121,11 +143,17 @@ def validate_community_prediction_count(question: Any) -> bool:
 def extract_multiple_choice_probabilities(prediction: Any) -> list[float]:
     """
     Safely extracts probabilities from a PredictedOptionList, sorting by option name.
+
+    Note: forecasting_tools PredictedOption uses the field `option_name`.
     """
     if not prediction or not hasattr(prediction, "predicted_options") or prediction.predicted_options is None:
         return []
     # Sort by option name to ensure consistent order
-    sorted_options = sorted(prediction.predicted_options, key=lambda o: o.option)
+    try:
+        sorted_options = sorted(prediction.predicted_options, key=lambda o: o.option_name)
+    except AttributeError:
+        # Fallback if mocks used a different attribute during tests
+        sorted_options = sorted(prediction.predicted_options, key=lambda o: getattr(o, "option", ""))
     return [opt.probability for opt in sorted_options]
 
 
@@ -149,23 +177,154 @@ def extract_numeric_percentiles(prediction: Any) -> List[Tuple[float, float]]:
 
 
 def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
+    global _MC_MISSING_API_JSON, _MC_MISSING_QUESTION_NODE, _MC_MISSING_AGGREGATIONS, _MC_MISSING_PYC, _MC_MISSING_COMMUNITY
     """Extract community option probabilities for an MC question from api_json.
 
-    Preferred field is latest.forecast_values, aligned to question.options order.
-    Falls back to probability_yes_per_category if needed.
+    According to the Metaculus API, community MC aggregations expose
+    `probability_yes_per_category` under `aggregations.recency_weighted.latest`.
+    We align the resulting vector to `question.options` order.
     """
     try:
-        api_q = question.api_json.get("question", {}) if hasattr(question, "api_json") else {}
-        latest = api_q.get("aggregations", {}).get("recency_weighted", {}).get("latest", {})
-        fv = latest.get("forecast_values")
-        if isinstance(fv, list) and getattr(question, "options", None) and len(fv) == len(question.options):
-            return [float(x) for x in fv]
+        # Basic fingerprint
+        post_id = getattr(question, "id_of_post", None)
+        qid = getattr(question, "id_of_question", None)
+        api_json = getattr(question, "api_json", None)
+        if not isinstance(api_json, dict):
+            logger.warning(
+                "MC q=%s post=%s: api_json missing or not dict (type=%s)", qid, post_id, type(api_json).__name__
+            )
+            global _MC_MISSING_API_JSON, _MC_MISSING_COMMUNITY
+            _MC_MISSING_API_JSON += 1
+            _MC_MISSING_COMMUNITY += 1
+            return None
 
-        pyc = latest.get("probability_yes_per_category")
-        if isinstance(pyc, dict) and getattr(question, "options", None):
-            return [float(pyc.get(opt, 0.0)) for opt in question.options]
+        # Detect the question node
+        api_has_question = isinstance(api_json.get("question"), dict)
+        question_obj = api_json.get("question") if api_has_question else api_json
+        if not isinstance(question_obj, dict):
+            logger.warning(
+                "MC q=%s post=%s: missing question object (api_has_question=%s, type=%s)",
+                qid,
+                post_id,
+                api_has_question,
+                type(question_obj).__name__,
+            )
+            global _MC_MISSING_QUESTION_NODE
+            _MC_MISSING_QUESTION_NODE += 1
+            _MC_MISSING_COMMUNITY += 1
+            return None
+
+        qtype = question_obj.get("type")
+        options = getattr(question, "options", None)
+        if options is None and isinstance(question_obj.get("options"), list):
+            options = question_obj.get("options")
+
+        aggregations = question_obj.get("aggregations")
+        if not isinstance(aggregations, dict):
+            logger.info(
+                "MC q=%s: aggregations missing (question.type=%s). keys=%s",
+                qid,
+                qtype,
+                list(question_obj.keys()),
+            )
+            global _MC_MISSING_AGGREGATIONS
+            _MC_MISSING_AGGREGATIONS += 1
+            _MC_MISSING_COMMUNITY += 1
+            return None
+
+        rw = aggregations.get("recency_weighted")
+        rw_latest = rw.get("latest") if isinstance(rw, dict) else None
+        rw_keys = list(rw_latest.keys()) if isinstance(rw_latest, dict) else None
+        logger.debug(
+            "MC q=%s: rw.latest keys=%s (agg.keys=%s)",
+            qid,
+            rw_keys,
+            list(aggregations.keys()),
+        )
+
+        if not isinstance(rw_latest, dict):
+            logger.info("MC q=%s: recency_weighted.latest missing", qid)
+            global _MC_MISSING_PYC
+            _MC_MISSING_PYC += 1
+            _MC_MISSING_COMMUNITY += 1
+            return None
+
+        # First, prefer forecast_values aligned by index with options
+        fv = rw_latest.get("forecast_values")
+        if isinstance(fv, list):
+            if not options or not isinstance(options, list):
+                logger.info("MC q=%s: options unavailable; cannot align forecast_values", qid)
+                _MC_MISSING_COMMUNITY += 1
+                return None
+            if len(fv) != len(options):
+                logger.warning(
+                    "MC q=%s: forecast_values length %d != options length %d",
+                    qid,
+                    len(fv),
+                    len(options),
+                )
+                _MC_MISSING_PYC += 1
+                _MC_MISSING_COMMUNITY += 1
+                return None
+            try:
+                probs = [float(x) for x in fv]
+            except Exception as e:
+                logger.warning("MC q=%s: forecast_values cast error: %s", qid, e)
+                _MC_MISSING_PYC += 1
+                _MC_MISSING_COMMUNITY += 1
+                return None
+            within = all(0.0 <= p <= 1.0 for p in probs)
+            total = sum(probs)
+            if not within:
+                logger.warning("MC q=%s: forecast_values contain out-of-range probabilities", qid)
+                _MC_MISSING_PYC += 1
+                _MC_MISSING_COMMUNITY += 1
+                return None
+            if abs(total - 1.0) > 1e-3:
+                logger.warning("MC q=%s: forecast_values sum %.6f far from 1.0", qid, total)
+                _MC_MISSING_PYC += 1
+                _MC_MISSING_COMMUNITY += 1
+                return None
+            if abs(total - 1.0) > 1e-6:
+                logger.info("MC q=%s: normalizing forecast_values (sum=%.6f)", qid, total)
+                probs = [p / total for p in probs]
+            logger.debug("MC q=%s: using rw.latest.forecast_values aligned to options", qid)
+            return probs
+
+        # If forecast_values missing, try probability_yes_per_category dict
+        pyc = rw_latest.get("probability_yes_per_category")
+        if isinstance(pyc, dict):
+            if options and isinstance(options, list):
+                keys = sorted(pyc.keys())
+                missing = [opt for opt in options if opt not in pyc]
+                extra = [k for k in keys if k not in options]
+                if missing or extra:
+                    logger.warning("MC q=%s: option mismatch vs pyc. missing=%s extra=%s", qid, missing, extra)
+                probs = [float(pyc.get(opt, 0.0)) for opt in options]
+                total = sum(probs)
+                if abs(total - 1.0) > 1e-6 and abs(total - 1.0) <= 1e-3:
+                    logger.info("MC q=%s: normalizing pyc (sum=%.6f)", qid, total)
+                    probs = [p / total for p in probs]
+                elif abs(total - 1.0) > 1e-3:
+                    logger.warning("MC q=%s: pyc sum %.6f far from 1.0", qid, total)
+                    _MC_MISSING_PYC += 1
+                    _MC_MISSING_COMMUNITY += 1
+                    return None
+                logger.debug("MC q=%s: using rw.latest.probability_yes_per_category", qid)
+                return probs
+            else:
+                logger.info("MC q=%s: options unavailable; cannot align pyc", qid)
+                _MC_MISSING_COMMUNITY += 1
+                return None
+
+        logger.info("MC q=%s: neither forecast_values nor pyc available in rw.latest (keys=%s)", qid, rw_keys)
+        _MC_MISSING_PYC += 1
+        _MC_MISSING_COMMUNITY += 1
+        return None
+
     except Exception as e:
         logger.warning(f"Failed to extract MC community probabilities: {e}")
+        _MC_MISSING_COMMUNITY += 1
     return None
 
 
@@ -193,12 +352,16 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
             )
             return None
 
-        # Extract community probabilities
+        # Extract community probabilities (extractor logs causes and increments counters)
         community_probs = _extract_mc_community_probs(report.question)
-        if not community_probs or len(community_probs) != len(bot_probs):
-            _MC_MISSING_COMMUNITY += 1
+        if not community_probs:
             logger.info(
                 f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community probabilities"
+            )
+            return None
+        if len(community_probs) != len(bot_probs):
+            logger.warning(
+                f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: community vector length mismatch"
             )
             return None
 
@@ -236,13 +399,79 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
 
 
 def _extract_numeric_community_cdf(question: Any) -> Optional[List[float]]:
-    """Extract 201-length community CDF (latest.forecast_values) from api_json."""
+    """Extract community CDF (forecast_values) from api_json with structured logging; no fallback."""
     try:
-        api_q = question.api_json.get("question", {}) if hasattr(question, "api_json") else {}
-        latest = api_q.get("aggregations", {}).get("recency_weighted", {}).get("latest", {})
-        fv = latest.get("forecast_values")
+        post_id = getattr(question, "id_of_post", None)
+        qid = getattr(question, "id_of_question", None)
+        api_json = getattr(question, "api_json", None)
+        if not isinstance(api_json, dict):
+            logger.warning(
+                "Numeric q=%s post=%s: api_json missing or not dict (type=%s)", qid, post_id, type(api_json).__name__
+            )
+            return None
+
+        api_has_question = isinstance(api_json.get("question"), dict)
+        question_obj = api_json.get("question") if api_has_question else api_json
+        if not isinstance(question_obj, dict):
+            logger.warning(
+                "Numeric q=%s post=%s: missing question object (api_has_question=%s, type=%s)",
+                qid,
+                post_id,
+                api_has_question,
+                type(question_obj).__name__,
+            )
+            return None
+
+        expected_len = None
+        try:
+            scaling = question_obj.get("scaling", {})
+            inbound = scaling.get("inbound_outcome_count")
+            if inbound is not None:
+                expected_len = int(inbound) + 1
+        except Exception:
+            expected_len = None
+
+        aggregations = question_obj.get("aggregations")
+        if not isinstance(aggregations, dict):
+            logger.info(
+                "Numeric q=%s: aggregations missing. keys=%s",
+                qid,
+                list(question_obj.keys()),
+            )
+            return None
+
+        rw = aggregations.get("recency_weighted")
+        rw_latest = rw.get("latest") if isinstance(rw, dict) else None
+        rw_keys = list(rw_latest.keys()) if isinstance(rw_latest, dict) else None
+        logger.debug(
+            "Numeric q=%s: rw.latest keys=%s (agg.keys=%s)",
+            qid,
+            rw_keys,
+            list(aggregations.keys()),
+        )
+        if not isinstance(rw_latest, dict):
+            logger.info("Numeric q=%s: recency_weighted.latest missing", qid)
+            return None
+
+        fv = rw_latest.get("forecast_values")
         if isinstance(fv, list) and len(fv) >= 2:
+            if expected_len and len(fv) != expected_len:
+                logger.warning(
+                    "Numeric q=%s: forecast_values length %d != expected %d",
+                    qid,
+                    len(fv),
+                    expected_len,
+                )
+            logger.debug(
+                "Numeric q=%s: using rw.latest.forecast_values len=%d first=%.5f last=%.5f",
+                qid,
+                len(fv),
+                float(fv[0]),
+                float(fv[-1]),
+            )
             return [float(x) for x in fv]
+
+        logger.info("Numeric q=%s: forecast_values missing in rw.latest (keys=%s)", qid, rw_keys)
     except Exception as e:
         logger.warning(f"Failed to extract numeric community CDF: {e}")
     return None
@@ -290,6 +519,11 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
             )
             try:
                 _NUMERIC_FALLBACK_ATTEMPTS += 1
+                # Log basic context for debugging
+                if community_cdf is None:
+                    logger.debug("Numeric: community_cdf is None")
+                else:
+                    logger.debug("Numeric: community_cdf length=%d", len(community_cdf))
                 # Use declared percentiles if available to build interpolation over values
                 declared = getattr(report.prediction, "declared_percentiles", None)
                 if not declared and model_cdf_percentiles:
