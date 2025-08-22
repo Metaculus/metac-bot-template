@@ -256,7 +256,7 @@ def numeric_prompt(
             - Blind spot scenario and expected effect on tails.
             - Status quo nudge sanity check.
 
-        ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after) ────────────────
+        ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after, strictly increasing) ────────────────
         Percentile 10: XX.X
         Percentile 20: XX.X
         Percentile 40: XX.X
