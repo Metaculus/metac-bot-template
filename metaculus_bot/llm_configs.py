@@ -13,38 +13,35 @@ from metaculus_bot.api_key_utils import get_openrouter_api_key
 __all__ = ["FORECASTER_LLMS", "SUMMARIZER_LLM", "PARSER_LLM", "RESEARCHER_LLM"]
 MODEL_CONFIG = {
     "temperature": 0.0,
-    "top_p": 0.9,
+    "top_p": 0.85,
     "max_tokens": 16_000,  # Prevent truncation issues with reasoning models
     "stream": False,
-    "timeout": 240,
+    "timeout": 300,
     "allowed_tries": 3,
 }
 
 FORECASTER_LLMS = [
-    # TODO: expand suite of LLMs. Consider e.g. Grok4, maybe GLM-4.5, probably not Qwen3-225B. Maybe o3 adds diversity combined w/ GPT-5? Weight diff models?
+    # TODO: consider multiple copies of gpt-5 or o3 w/ diff sampling params
     GeneralLlm(
         model="openrouter/openai/gpt-5",
         api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
+        reasoning={"effort": "high"},
+        **MODEL_CONFIG,
+    ),
+    GeneralLlm(
+        model="openrouter/openai/o3",
+        api_key=get_openrouter_api_key("openrouter/openai/o3"),
+        reasoning={"effort": "high"},
         **MODEL_CONFIG,
     ),
     GeneralLlm(
         model="openrouter/anthropic/claude-sonnet-4",
         api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
+        reasoning={"max_tokens": 8_000},
         **MODEL_CONFIG,
     ),
-    # GeneralLlm(
-    #     model="openrouter/google/gemini-2.5-pro",
-    #     temperature=0.0,
-    #     top_p=0.9,
-    #     max_tokens=16000,  # Prevent truncation issues with reasoning models
-    #     reasoning={"max_tokens": 8000},
-    #     stream=False,
-    #     timeout=180,
-    #     allowed_tries=3,
-    # ),
     GeneralLlm(
-        model="openrouter/deepseek/deepseek-r1-0528",
-        provider={"quantizations": ["fp16", "bf16", "fp8"]},
+        model="openrouter/moonshotai/kimi-k2",
         **MODEL_CONFIG,
     ),
 ]

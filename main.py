@@ -353,10 +353,10 @@ class TemplateForecaster(CompactLoggingForecastBot):
         )  # NOTE: The metac bot in Q1 put everything but the question in the system prompt.
         if use_open_router:
             model_name = (
-                "openrouter/perplexity/sonar-reasoning"  # sonar-reasoning-pro would be slightly better but pricier
+                "openrouter/perplexity/sonar-reasoning-pro"  # sonar-reasoning-pro would be slightly better but pricier
             )
         else:
-            model_name = "perplexity/sonar-reasoning"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
+            model_name = "perplexity/sonar-reasoning-pro"  # perplexity/sonar-reasoning and perplexity/sonar are cheaper, but do only 1 search
         model = GeneralLlm(
             model=model_name,
             temperature=0.1,

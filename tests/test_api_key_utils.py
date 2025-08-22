@@ -43,7 +43,7 @@ class TestApiKeyUtils:
         monkeypatch.setenv("OAI_ANTH_OPENROUTER_KEY", "special_key")
         monkeypatch.setenv("OPENROUTER_API_KEY", "general_key")
 
-        result = get_openrouter_api_key("perplexity/sonar-reasoning")
+        result = get_openrouter_api_key("perplexity/sonar-reasoning-pro")
         assert result == "general_key"
 
     def test_returns_none_when_no_keys_available(self, monkeypatch):
