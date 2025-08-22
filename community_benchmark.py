@@ -94,6 +94,48 @@ def _enable_aiohttp_session_autoclose() -> None:
 _enable_aiohttp_session_autoclose()
 
 
+def _install_benchmarker_heartbeat(interval_seconds: int = 60) -> None:
+    """Add a lightweight heartbeat to Benchmarker batch execution.
+
+    Logs a progress line every ``interval_seconds`` while each batch is running,
+    without changing the forecasting-tools package or internal flow.
+    """
+    try:
+        original_run = Benchmarker._run_a_batch  # type: ignore[attr-defined]
+    except Exception:  # pragma: no cover - defensive: attribute should exist
+        return
+
+    # Avoid double-wrapping if re-imported
+    if getattr(Benchmarker._run_a_batch, "_has_heartbeat", False):  # type: ignore[attr-defined]
+        return
+
+    async def _run_with_heartbeat(self, batch, _orig=original_run):  # type: ignore[no-untyped-def]
+        start_time = datetime.now()
+        task = asyncio.create_task(_orig(self, batch))
+        try:
+            while not task.done():
+                await asyncio.sleep(interval_seconds)
+                elapsed_min = (datetime.now() - start_time).total_seconds() / 60.0
+                try:
+                    logger.info(
+                        f"[HB] {batch.benchmark.name} | {len(batch.questions)} questions | elapsed {elapsed_min:.1f}m"
+                    )
+                except Exception:
+                    # Best-effort logging; do not interfere with main task
+                    pass
+            return await task
+        except Exception:
+            # Bubble up original exceptions unchanged
+            raise
+
+    # Mark wrapper to prevent stacking
+    setattr(_run_with_heartbeat, "_has_heartbeat", True)
+    Benchmarker._run_a_batch = _run_with_heartbeat  # type: ignore[assignment]
+
+
+_install_benchmarker_heartbeat(60)
+
+
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
     """Get mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)."""
 
@@ -272,44 +314,44 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         )
 
         # optional cheap models, commented out for now for dev:
-        # qwen3_model = GeneralLlm(
-        #     model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
-        #     **MODEL_CONFIG,
-        # )
-        # glm_model = GeneralLlm(
-        #     model="openrouter/z-ai/glm-4.5",
-        #     **MODEL_CONFIG,
-        # )
+        qwen3_model = GeneralLlm(
+            model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+            **MODEL_CONFIG,
+        )
+        glm_model = GeneralLlm(
+            model="openrouter/z-ai/glm-4.5",
+            **MODEL_CONFIG,
+        )
 
         # Keep these commented for cost control during development:
-        # claude_model = GeneralLlm(
-        #     model="openrouter/anthropic/claude-sonnet-4",
-        #     reasoning={"max_tokens": 4000},
-        #     api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
-        #     **MODEL_CONFIG,
-        # )
-        # gpt5_model = GeneralLlm(
-        #     model="openrouter/openai/gpt-5",
-        #     reasoning_effort="high",
-        #     api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
-        #     **MODEL_CONFIG,
-        # )
-        # gemini_model = GeneralLlm(
-        #     model="openrouter/google/gemini-2.5-pro",
-        #     reasoning={"max_tokens": 8000},
-        #     **MODEL_CONFIG,
-        # )
-        # o3_model = GeneralLlm(
-        #     model="openrouter/openai/o3",
-        #     reasoning_effort="high",
-        #     api_key=get_openrouter_api_key("openrouter/openai/o3"),
-        #     **MODEL_CONFIG,
-        # )
-        # grok_model = GeneralLlm(
-        #     model="openrouter/x-ai/grok-4",
-        #     reasoning={"effort": "high"},
-        #     **MODEL_CONFIG,
-        # )
+        claude_model = GeneralLlm(
+            model="openrouter/anthropic/claude-sonnet-4",
+            reasoning={"max_tokens": 4000},
+            api_key=get_openrouter_api_key("openrouter/anthropic/claude-sonnet-4"),
+            **MODEL_CONFIG,
+        )
+        gpt5_model = GeneralLlm(
+            model="openrouter/openai/gpt-5",
+            reasoning_effort="high",
+            api_key=get_openrouter_api_key("openrouter/openai/gpt-5"),
+            **MODEL_CONFIG,
+        )
+        gemini_model = GeneralLlm(
+            model="openrouter/google/gemini-2.5-pro",
+            reasoning={"max_tokens": 8000},
+            **MODEL_CONFIG,
+        )
+        o3_model = GeneralLlm(
+            model="openrouter/openai/o3",
+            reasoning_effort="high",
+            api_key=get_openrouter_api_key("openrouter/openai/o3"),
+            **MODEL_CONFIG,
+        )
+        grok_model = GeneralLlm(
+            model="openrouter/x-ai/grok-4",
+            reasoning={"effort": "high"},
+            **MODEL_CONFIG,
+        )
 
         # Individual model configurations for benchmarking
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
@@ -318,15 +360,14 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             {"name": "qwen3-coder", "forecaster": free_qwen3_coder_model},
             {"name": "glm-4.5-air", "forecaster": free_glm_4p5_air_model},
             {"name": "kimi-k2", "forecaster": free_kimi_k2_model},
-            # {"name": "qwen3-235b", "forecaster": qwen3_model},
-            # {"name": "glm-4.5", "forecaster": glm_model},
+            {"name": "qwen3-235b", "forecaster": qwen3_model},
+            {"name": "glm-4.5", "forecaster": glm_model},
             # Additional models - commented for cost control during development:
-            # {"name": "deepseek-r1", "forecaster": deepseek_model},
-            # {"name": "claude-sonnet-4", "forecaster": claude_model},
-            # {"name": "gpt-5", "forecaster": gpt5_model},
-            # {"name": "gemini-2.5-pro", "forecaster": gemini_model},
-            # {"name": "o3", "forecaster": o3_model},
-            # {"name": "grok-4", "forecaster": grok_model},
+            {"name": "claude-sonnet-4", "forecaster": claude_model},
+            {"name": "gpt-5", "forecaster": gpt5_model},
+            {"name": "gemini-2.5-pro", "forecaster": gemini_model},
+            {"name": "o3", "forecaster": o3_model},
+            {"name": "grok-4", "forecaster": grok_model},
         ]
 
         # Generate individual model bots - ensembles generated by CorrelationAnalyzer.find_optimal_ensembles()
