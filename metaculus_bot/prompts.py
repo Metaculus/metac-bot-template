@@ -105,6 +105,8 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
 
         • Options (in resolution order): {question.options}
 
+        
+
         ── Context ───────────────────────────────────────────────────────────
         {question.background_info}
 
@@ -149,7 +151,7 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
             • Blind-spot consideration: if the resolution is unexpected, what would likely be the reason, and how should that affect confidence spreads?
             Remember:
             • Good forecasters leave a little probability on most options and avoid overconfidence.
-            • Use integers 1-99 (no 0 % or 100 %).
+            • Use integers 1%-99% (no 0 % or 100 %).
             • They must sum to 100 %.
 
         ── Brief checklist (keep concise) ───────────────────────────────────
@@ -159,7 +161,10 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
         • Top 3-5 evidence items + quick factual validity check.
         • Blind-spot statement; status-quo nudge sanity check.
 
-        ── OUTPUT FORMAT (must be last lines, nothing after) ────────────────
+        **CRITICAL**: You MUST assign a probability (1-99%) to EVERY single option listed above.
+        Even if an option seems very unlikely, assign it at least 1%. Never skip any option.
+
+        ── Final answer (must be last lines, one line per option, all options included, nothing after) ──
         Option_A: NN%
         Option_B: NN%
         …

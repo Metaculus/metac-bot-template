@@ -140,21 +140,26 @@ def validate_community_prediction_count(question: Any) -> bool:
     return False
 
 
-def extract_multiple_choice_probabilities(prediction: Any) -> list[float]:
+def extract_multiple_choice_probabilities(prediction: Any) -> tuple[list[float], list[str]]:
     """
     Safely extracts probabilities from a PredictedOptionList, sorting by option name.
 
     Note: forecasting_tools PredictedOption uses the field `option_name`.
+
+    Returns:
+        Tuple of (probabilities, option_names) both in sorted order
     """
     if not prediction or not hasattr(prediction, "predicted_options") or prediction.predicted_options is None:
-        return []
+        return [], []
     # Sort by option name to ensure consistent order
     try:
         sorted_options = sorted(prediction.predicted_options, key=lambda o: o.option_name)
+        option_names = [opt.option_name for opt in sorted_options]
     except AttributeError:
         # Fallback if mocks used a different attribute during tests
         sorted_options = sorted(prediction.predicted_options, key=lambda o: getattr(o, "option", ""))
-    return [opt.probability for opt in sorted_options]
+        option_names = [getattr(opt, "option", f"option_{i}") for i, opt in enumerate(sorted_options)]
+    return [opt.probability for opt in sorted_options], option_names
 
 
 def extract_numeric_percentiles(prediction: Any) -> List[Tuple[float, float]]:
@@ -176,7 +181,48 @@ def extract_numeric_percentiles(prediction: Any) -> List[Tuple[float, float]]:
     return []
 
 
-def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
+def log_mc_vector_mismatch(
+    question: Any,
+    bot_probs: list[float],
+    community_probs: list[float],
+    community_source: str,
+    bot_option_names: list[str],
+) -> None:
+    """
+    Log detailed diagnostics for MC vector length mismatches.
+
+    Args:
+        question: MetaculusQuestion object
+        bot_probs: Bot prediction probabilities
+        community_probs: Community prediction probabilities
+        community_source: Source of community data (e.g., "forecast_values", "probability_yes_per_category")
+        bot_option_names: Option names from bot prediction (sorted)
+    """
+    qid = getattr(question, "id_of_question", "unknown")
+    question_options = getattr(question, "options", None)
+
+    logger.warning(f"MC Question {qid} VECTOR MISMATCH:")
+    logger.warning(f"  Bot prediction: {len(bot_probs)} options {bot_option_names}")
+    logger.warning(f"  Community data: {len(community_probs)} options (source: {community_source})")
+
+    if question_options and isinstance(question_options, list):
+        logger.warning(f"  Question options: {len(question_options)} options {question_options}")
+
+        # Analyze potential causes
+        if len(bot_probs) == len(question_options) and len(community_probs) != len(question_options):
+            logger.warning(
+                f"  → Likely cause: Community data missing {len(question_options) - len(community_probs)} options"
+            )
+        elif len(community_probs) == len(question_options) and len(bot_probs) != len(question_options):
+            logger.warning(f"  → Likely cause: Bot prediction missing {len(question_options) - len(bot_probs)} options")
+        else:
+            logger.warning(f"  → Complex mismatch: bot≠question≠community")
+    else:
+        logger.warning(f"  Question options: unavailable (type={type(question_options)})")
+        logger.warning(f"  → Cannot determine root cause without question.options")
+
+
+def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], str]:
     global _MC_MISSING_API_JSON, _MC_MISSING_QUESTION_NODE, _MC_MISSING_AGGREGATIONS, _MC_MISSING_PYC, _MC_MISSING_COMMUNITY
     """Extract community option probabilities for an MC question from api_json.
 
@@ -196,7 +242,7 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
             global _MC_MISSING_API_JSON, _MC_MISSING_COMMUNITY
             _MC_MISSING_API_JSON += 1
             _MC_MISSING_COMMUNITY += 1
-            return None
+            return None, "missing_api_json"
 
         # Detect the question node
         api_has_question = isinstance(api_json.get("question"), dict)
@@ -212,7 +258,7 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
             global _MC_MISSING_QUESTION_NODE
             _MC_MISSING_QUESTION_NODE += 1
             _MC_MISSING_COMMUNITY += 1
-            return None
+            return None, "missing_question_node"
 
         qtype = question_obj.get("type")
         options = getattr(question, "options", None)
@@ -230,7 +276,7 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
             global _MC_MISSING_AGGREGATIONS
             _MC_MISSING_AGGREGATIONS += 1
             _MC_MISSING_COMMUNITY += 1
-            return None
+            return None, "missing_aggregations"
 
         rw = aggregations.get("recency_weighted")
         rw_latest = rw.get("latest") if isinstance(rw, dict) else None
@@ -247,7 +293,7 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
             global _MC_MISSING_PYC
             _MC_MISSING_PYC += 1
             _MC_MISSING_COMMUNITY += 1
-            return None
+            return None, "missing_rw_latest"
 
         # First, prefer forecast_values aligned by index with options
         fv = rw_latest.get("forecast_values")
@@ -255,7 +301,7 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
             if not options or not isinstance(options, list):
                 logger.info("MC q=%s: options unavailable; cannot align forecast_values", qid)
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "forecast_values_no_options"
             if len(fv) != len(options):
                 logger.warning(
                     "MC q=%s: forecast_values length %d != options length %d",
@@ -265,31 +311,31 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
                 )
                 _MC_MISSING_PYC += 1
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "forecast_values_length_mismatch"
             try:
                 probs = [float(x) for x in fv]
             except Exception as e:
                 logger.warning("MC q=%s: forecast_values cast error: %s", qid, e)
                 _MC_MISSING_PYC += 1
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "forecast_values_cast_error"
             within = all(0.0 <= p <= 1.0 for p in probs)
             total = sum(probs)
             if not within:
                 logger.warning("MC q=%s: forecast_values contain out-of-range probabilities", qid)
                 _MC_MISSING_PYC += 1
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "forecast_values_out_of_range"
             if abs(total - 1.0) > 1e-3:
                 logger.warning("MC q=%s: forecast_values sum %.6f far from 1.0", qid, total)
                 _MC_MISSING_PYC += 1
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "forecast_values_bad_sum"
             if abs(total - 1.0) > 1e-6:
                 logger.info("MC q=%s: normalizing forecast_values (sum=%.6f)", qid, total)
                 probs = [p / total for p in probs]
             logger.debug("MC q=%s: using rw.latest.forecast_values aligned to options", qid)
-            return probs
+            return probs, "forecast_values"
 
         # If forecast_values missing, try probability_yes_per_category dict
         pyc = rw_latest.get("probability_yes_per_category")
@@ -309,23 +355,23 @@ def _extract_mc_community_probs(question: Any) -> Optional[List[float]]:
                     logger.warning("MC q=%s: pyc sum %.6f far from 1.0", qid, total)
                     _MC_MISSING_PYC += 1
                     _MC_MISSING_COMMUNITY += 1
-                    return None
+                    return None, "pyc_bad_sum"
                 logger.debug("MC q=%s: using rw.latest.probability_yes_per_category", qid)
-                return probs
+                return probs, "probability_yes_per_category"
             else:
                 logger.info("MC q=%s: options unavailable; cannot align pyc", qid)
                 _MC_MISSING_COMMUNITY += 1
-                return None
+                return None, "pyc_no_options"
 
         logger.info("MC q=%s: neither forecast_values nor pyc available in rw.latest (keys=%s)", qid, rw_keys)
         _MC_MISSING_PYC += 1
         _MC_MISSING_COMMUNITY += 1
-        return None
+        return None, "no_forecast_data"
 
     except Exception as e:
         logger.warning(f"Failed to extract MC community probabilities: {e}")
         _MC_MISSING_COMMUNITY += 1
-    return None
+    return None, "exception"
 
 
 def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
@@ -345,7 +391,7 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
     try:
         _MC_ATTEMPTS += 1
         # Extract bot prediction probabilities
-        bot_probs = extract_multiple_choice_probabilities(report.prediction)
+        bot_probs, bot_option_names = extract_multiple_choice_probabilities(report.prediction)
         if not bot_probs:
             logger.warning(
                 f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: cannot extract bot probabilities"
@@ -353,16 +399,14 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
             return None
 
         # Extract community probabilities (extractor logs causes and increments counters)
-        community_probs = _extract_mc_community_probs(report.question)
+        community_probs, community_source = _extract_mc_community_probs(report.question)
         if not community_probs:
             logger.info(
                 f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community probabilities"
             )
             return None
         if len(community_probs) != len(bot_probs):
-            logger.warning(
-                f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: community vector length mismatch"
-            )
+            log_mc_vector_mismatch(report.question, bot_probs, community_probs, community_source, bot_option_names)
             return None
 
         # Clamp and normalize both

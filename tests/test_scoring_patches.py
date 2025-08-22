@@ -80,23 +80,26 @@ class TestMultipleChoiceExtraction:
         prediction = Mock()
         prediction.predicted_options = [option2, option1]  # Unsorted
 
-        probs = extract_multiple_choice_probabilities(prediction)
+        probs, option_names = extract_multiple_choice_probabilities(prediction)
 
         # Should be sorted by option_name: A, B
         assert probs == [0.3, 0.7]
+        assert option_names == ["Option A", "Option B"]
 
     def test_extract_mc_probabilities_empty(self):
         """Test extraction with empty or invalid data."""
         prediction = Mock()
         prediction.predicted_options = None
 
-        probs = extract_multiple_choice_probabilities(prediction)
+        probs, option_names = extract_multiple_choice_probabilities(prediction)
         assert probs == []
+        assert option_names == []
 
         # Test with empty list
         prediction.predicted_options = []
-        probs = extract_multiple_choice_probabilities(prediction)
+        probs, option_names = extract_multiple_choice_probabilities(prediction)
         assert probs == []
+        assert option_names == []
 
 
 class TestNumericExtraction:
