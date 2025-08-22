@@ -290,7 +290,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
-        batch_size = 1  # Reduced from BENCHMARK_BATCH_SIZE (4) for diagnostics
+        batch_size = 4
 
         # Shared research cache for all bots to avoid duplicate API calls
         research_cache: dict[int, str] = {}
@@ -349,7 +349,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
         individual_models = [
             {"name": "r1-0528", "forecaster": r1_0528_model},
-            {"name": "ds-3.1", "forecaster": ds_v3p1_model},
+            {"name": "deepseek-3.1", "forecaster": ds_v3p1_model},
             {"name": "kimi-k2", "forecaster": kimi_k2_model},
             {"name": "qwen3-235b", "forecaster": qwen3_model},
             {"name": "glm-4.5", "forecaster": glm_model},
