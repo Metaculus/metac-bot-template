@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Any, Coroutine, Literal, Sequence, cast
 
+import numpy as np
 from dotenv import load_dotenv
 from forecasting_tools import (  # AskNewsSearcher,
     BinaryPrediction,
@@ -554,24 +555,126 @@ class TemplateForecaster(CompactLoggingForecastBot):
             )
             zero_point = None
 
-        # TODO Phase 2: Replace with local PCHIP-based CDF construction here
-        # - Use PCHIP (monotone cubic) interpolation for smoother distributions
-        # - Apply min step increase (5e-5) and max jump cap (0.59) constraints
-        # - Handle log-space transforms when all values are positive (continuous only)
-        # - Enforce closed/open bound constraints directly in CDF construction
-        prediction = NumericDistribution(
-            declared_percentiles=percentile_list,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=zero_point,
-            cdf_size=getattr(question, "cdf_size", None),
-        )
+        # Phase 2: Use local PCHIP-based CDF construction for robust interpolation
+        # - PCHIP (monotone cubic) interpolation for smoother distributions
+        # - Applied min step increase (5e-5) and max jump cap (0.59) constraints
+        # - Handles log-space transforms when all values are positive (continuous only)
+        # - Enforces closed/open bound constraints directly in CDF construction
+
+        from metaculus_bot.pchip_cdf import generate_pchip_cdf, percentiles_to_pchip_format
+
+        try:
+            # Convert percentiles to PCHIP input format
+            pchip_percentiles = percentiles_to_pchip_format(percentile_list)
+
+            # Generate robust CDF using PCHIP interpolation
+            pchip_cdf = generate_pchip_cdf(
+                percentile_values=pchip_percentiles,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                min_step=5.0e-5,
+                num_points=201,
+            )
+
+            # Validate PCHIP CDF meets Metaculus requirements
+            if len(pchip_cdf) != 201:
+                raise ValueError(f"PCHIP CDF has {len(pchip_cdf)} points, expected 201")
+
+            if not all(0.0 <= p <= 1.0 for p in pchip_cdf):
+                raise ValueError(
+                    f"PCHIP CDF contains invalid probabilities outside [0,1]: {[p for p in pchip_cdf if not (0.0 <= p <= 1.0)]}"
+                )
+
+            if not all(a <= b for a, b in zip(pchip_cdf[:-1], pchip_cdf[1:])):
+                raise ValueError("PCHIP CDF is not monotonic")
+
+            # Check minimum step requirement (same as forecasting-tools)
+            min_step = np.min(np.diff(pchip_cdf))
+            if min_step < 5e-5 - 1e-10:
+                raise ValueError(f"PCHIP CDF violates minimum step requirement: {min_step:.8f} < 5e-5")
+
+            # Check maximum step requirement
+            max_step = np.max(np.diff(pchip_cdf))
+            if max_step > 0.59 + 1e-6:
+                raise ValueError(f"PCHIP CDF violates maximum step requirement: {max_step:.8f} > 0.59")
+
+            # Check boundary conditions
+            if not question.open_lower_bound and abs(pchip_cdf[0]) > 1e-6:
+                raise ValueError(f"PCHIP CDF closed lower bound violation: {pchip_cdf[0]} != 0.0")
+
+            if not question.open_upper_bound and abs(pchip_cdf[-1] - 1.0) > 1e-6:
+                raise ValueError(f"PCHIP CDF closed upper bound violation: {pchip_cdf[-1]} != 1.0")
+
+            if question.open_lower_bound and pchip_cdf[0] < 0.001:
+                raise ValueError(f"PCHIP CDF open lower bound violation: {pchip_cdf[0]} < 0.001")
+
+            if question.open_upper_bound and pchip_cdf[-1] > 0.999:
+                raise ValueError(f"PCHIP CDF open upper bound violation: {pchip_cdf[-1]} > 0.999")
+
+            logger.debug(
+                f"Question {getattr(question, 'id_of_question', 'N/A')}: Generated valid PCHIP CDF with "
+                f"{len(pchip_cdf)} points, min_step={min_step:.8f}, max_step={max_step:.8f}"
+            )
+
+            # Create custom NumericDistribution subclass that uses our PCHIP CDF
+            class PchipNumericDistribution(NumericDistribution):
+                def __init__(self, pchip_cdf_values, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self._pchip_cdf_values = pchip_cdf_values
+
+                @property
+                def cdf(self) -> list[Percentile]:
+                    """Return PCHIP-generated CDF as Percentile objects."""
+                    # Create the value axis (201 points from lower to upper bound)
+                    x_vals = np.linspace(self.lower_bound, self.upper_bound, len(self._pchip_cdf_values))
+
+                    # Create Percentile objects with correct mapping:
+                    # _pchip_cdf_values contains the probability values (0-1)
+                    # x_vals contains the corresponding question values
+                    return [
+                        Percentile(percentile=prob_val, value=question_val)
+                        for question_val, prob_val in zip(x_vals, self._pchip_cdf_values)
+                    ]
+
+            prediction = PchipNumericDistribution(
+                pchip_cdf_values=pchip_cdf,
+                declared_percentiles=percentile_list,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                cdf_size=getattr(question, "cdf_size", None),
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Question {getattr(question, 'id_of_question', 'N/A')}: PCHIP CDF construction failed ({str(e)}), "
+                "falling back to forecasting-tools default"
+            )
+            # Fallback to original forecasting-tools approach
+            prediction = NumericDistribution(
+                declared_percentiles=percentile_list,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                cdf_size=getattr(question, "cdf_size", None),
+            )
 
         # Proactively compute CDF to surface spacing issues and log rich diagnostics
+        # Skip CDF validation for PCHIP distributions since they enforce constraints internally
         try:
-            _ = prediction.cdf  # force CDF construction
+            if hasattr(prediction, "_pchip_cdf_values"):
+                logger.debug(
+                    f"Question {getattr(question, 'id_of_question', 'N/A')}: Skipping CDF validation for PCHIP distribution"
+                )
+            else:
+                _ = prediction.cdf  # force CDF construction
         except (AssertionError, ZeroDivisionError) as e:
             try:
                 declared = getattr(prediction, "declared_percentiles", [])
