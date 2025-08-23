@@ -102,12 +102,16 @@ class CorrelationAnalyzer:
         self.predictions: List[ModelPrediction] = []
         self.benchmarks: List[BenchmarkForBot] = []
         self._model_stats_cache: Optional[Dict[str, Dict[str, float]]] = None
+        self._baseline_score_cache: Dict[Tuple[int, str], Tuple[float, bool]] = (
+            {}
+        )  # (q_id, q_type) -> (score, diagnostics_logged)
 
     def add_benchmark_results(self, benchmarks: List[BenchmarkForBot]) -> None:
         """Extract predictions from benchmark results."""
         self.benchmarks = benchmarks
         self.predictions.clear()
         self._model_stats_cache = None  # Clear cache when data changes
+        self._baseline_score_cache.clear()  # Clear baseline score cache for new benchmarks
 
         for benchmark in benchmarks:
             model_name = self._extract_model_name(benchmark)
@@ -769,7 +773,7 @@ class CorrelationAnalyzer:
                         ]
                     )
                     fake_report = SimpleNamespace(question=q, prediction=pred_obj)
-                    score = calculate_multiple_choice_baseline_score(fake_report)
+                    score = calculate_multiple_choice_baseline_score(fake_report, self._baseline_score_cache)
                     if score is not None:
                         ensemble_scores.append(score)
 
@@ -809,7 +813,7 @@ class CorrelationAnalyzer:
 
                     agg_pred = _NumericPred(x_vals, list(agg_cdf))
                     fake_report = SimpleNamespace(question=q, prediction=agg_pred)
-                    score = calculate_numeric_baseline_score(fake_report)
+                    score = calculate_numeric_baseline_score(fake_report, self._baseline_score_cache)
                     if score is not None:
                         ensemble_scores.append(score)
 

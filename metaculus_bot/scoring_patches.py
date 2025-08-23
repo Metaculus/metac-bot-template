@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -374,7 +374,7 @@ def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], s
     return None, "exception"
 
 
-def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
+def calculate_multiple_choice_baseline_score(report: Any, cache: Optional[dict] = None) -> Optional[float]:
     """
     Calculate baseline score for multiple choice questions.
 
@@ -383,11 +383,27 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
 
     Args:
         report: MultipleChoiceReport object
+        cache: Optional cache dict to avoid duplicate calculations and logging
+               Format: {(q_id, q_type): (score, diagnostics_logged)}
 
     Returns:
         Baseline score or None if cannot be calculated
     """
     global _MC_ATTEMPTS, _MC_MISSING_COMMUNITY, _MC_SUCCESSES
+
+    # Check cache first to avoid duplicate calculations
+    q_id = getattr(report.question, "id_of_question", None)
+    if cache is not None and q_id is not None:
+        cache_key = (q_id, "multiple_choice")
+        if cache_key in cache:
+            cached_score, diagnostics_logged = cache[cache_key]
+            if cached_score is not None:
+                logger.debug(f"MC Question {q_id}: using cached baseline score {cached_score:.2f}")
+                return cached_score
+            else:
+                # Cached None result (calculation previously failed), but don't re-log vector mismatch
+                return None
+
     try:
         _MC_ATTEMPTS += 1
         # Extract bot prediction probabilities
@@ -406,7 +422,22 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
             )
             return None
         if len(community_probs) != len(bot_probs):
-            log_mc_vector_mismatch(report.question, bot_probs, community_probs, community_source, bot_option_names)
+            # Check if we've already logged diagnostics for this question
+            should_log_diagnostics = True
+            if cache is not None and q_id is not None:
+                cache_key = (q_id, "multiple_choice")
+                if cache_key in cache:
+                    _, diagnostics_logged = cache[cache_key]
+                    should_log_diagnostics = not diagnostics_logged
+
+            if should_log_diagnostics:
+                log_mc_vector_mismatch(report.question, bot_probs, community_probs, community_source, bot_option_names)
+                # Cache the failed result with diagnostics logged
+                if cache is not None and q_id is not None:
+                    cache[(q_id, "multiple_choice")] = (None, True)
+            else:
+                logger.debug(f"MC Question {q_id}: vector mismatch (diagnostics already logged)")
+
             return None
 
         # Clamp and normalize both
@@ -430,9 +461,16 @@ def calculate_multiple_choice_baseline_score(report: Any) -> Optional[float]:
             sum_ln += c_i * math.log(max(p_i, eps))
         final_score = 100.0 * (sum_ln / lnK + 1.0)
         _MC_SUCCESSES += 1
-        logger.info(
-            f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f}"
-        )
+
+        # Cache the result and log appropriately
+        if cache is not None and q_id is not None:
+            cache[(q_id, "multiple_choice")] = (final_score, False)  # Score calculated, no diagnostics needed
+            logger.debug(f"MC Question {q_id}: baseline score {final_score:.2f} (cached for future use)")
+        else:
+            logger.info(
+                f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f}"
+            )
+
         return final_score
 
     except Exception as e:
@@ -521,7 +559,7 @@ def _extract_numeric_community_cdf(question: Any) -> Optional[List[float]]:
     return None
 
 
-def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
+def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) -> Optional[float]:
     """
     Calculate baseline score for numeric questions using CDF→PMF comparison.
 
@@ -532,12 +570,28 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
 
     Args:
         report: NumericReport-like object with `.prediction.cdf` and question `api_json`.
+        cache: Optional cache dict to avoid duplicate calculations and logging
+               Format: {(q_id, q_type): (score, diagnostics_logged)}
 
     Returns:
         Baseline score or None if cannot be calculated
     """
     global _NUMERIC_PMF_ATTEMPTS, _NUMERIC_PMF_SUCCESSES
     global _NUMERIC_FALLBACK_ATTEMPTS, _NUMERIC_FALLBACK_SUCCESSES
+
+    # Check cache first to avoid duplicate calculations
+    q_id = getattr(report.question, "id_of_question", None)
+    if cache is not None and q_id is not None:
+        cache_key = (q_id, "numeric")
+        if cache_key in cache:
+            cached_score, diagnostics_logged = cache[cache_key]
+            if cached_score is not None:
+                logger.debug(f"Numeric Question {q_id}: using cached baseline score {cached_score:.2f}")
+                return cached_score
+            else:
+                # Cached None result (calculation previously failed)
+                return None
+
     try:
         # Try to obtain model CDF percentiles (list of objects with .percentile in [0,1])
         model_cdf_percentiles = None
@@ -596,9 +650,18 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
                 final_score = 50.0 * (math.log(pdf / baseline_pdf))
                 final_score = max(min(final_score, 100.0), -100.0)
                 _NUMERIC_FALLBACK_SUCCESSES += 1
-                logger.info(
-                    f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (legacy PDF fallback)"
-                )
+
+                # Cache the result and log appropriately
+                if cache is not None and q_id is not None:
+                    cache[(q_id, "numeric")] = (final_score, False)  # Score calculated, no diagnostics needed
+                    logger.debug(
+                        f"Numeric Question {q_id}: baseline score {final_score:.2f} (legacy PDF fallback, cached)"
+                    )
+                else:
+                    logger.info(
+                        f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (legacy PDF fallback)"
+                    )
+
                 return final_score
             except Exception:
                 return None
@@ -658,9 +721,16 @@ def calculate_numeric_baseline_score(report: Any) -> Optional[float]:
         terms = community_pmf * (np.log(np.maximum(model_pmf, eps) / np.maximum(baseline, eps)))
         final_score = float(50.0 * terms.sum())
         _NUMERIC_PMF_SUCCESSES += 1
-        logger.info(
-            f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (PMF-based vs community)"
-        )
+
+        # Cache the result and log appropriately
+        if cache is not None and q_id is not None:
+            cache[(q_id, "numeric")] = (final_score, False)  # Score calculated, no diagnostics needed
+            logger.debug(f"Numeric Question {q_id}: baseline score {final_score:.2f} (PMF-based vs community, cached)")
+        else:
+            logger.info(
+                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (PMF-based vs community)"
+            )
+
         return final_score
 
     except Exception as e:
