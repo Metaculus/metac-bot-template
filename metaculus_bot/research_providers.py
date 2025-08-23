@@ -8,9 +8,11 @@ logic lives in one place instead of being in `TemplateForecaster.run_research`.
 """
 
 import asyncio
+import logging
 import os
 import time
-from typing import Awaitable, Callable, Protocol, Tuple
+from typing import Any, Awaitable, Callable, Protocol, Tuple
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from forecasting_tools import AskNewsSearcher, GeneralLlm, SmartSearcher
 
@@ -24,6 +26,7 @@ from metaculus_bot.constants import (
 
 QuestionText = str
 ResearchCallable = Callable[[QuestionText], Awaitable[str]]
+logger = logging.getLogger(__name__)
 
 
 class ResearchProvider(Protocol):
@@ -72,12 +75,9 @@ def _asknews_provider() -> ResearchCallable:
                 await _asknews_rate_gate()
                 try:
                     # Use custom AskNews integration with proper rate limiting between API calls
-                    import logging
                     import os
 
                     from asknews_sdk import AsyncAskNewsSDK
-
-                    logger = logging.getLogger(__name__)
 
                     client_id = os.getenv("ASKNEWS_CLIENT_ID")
                     secret = os.getenv("ASKNEWS_SECRET")
@@ -132,6 +132,18 @@ def _asknews_provider() -> ResearchCallable:
 
                         if not all_articles:
                             return "No articles were found for this query.\n\n"
+
+                        # URL deduplication (best-effort, order-preserving)
+                        try:
+                            before = len(all_articles)
+                            all_articles = _dedup_articles_by_url(all_articles)
+                            removed = before - len(all_articles)
+                            if removed > 0:
+                                logger.info(
+                                    f"AskNews URL dedup: {before} -> {len(all_articles)} (removed {removed} duplicates)"
+                                )
+                        except Exception as dedup_exc:  # pragma: no cover - protective
+                            logger.warning(f"AskNews URL dedup failed; proceeding without dedup: {dedup_exc}")
 
                         # Sort by date and format
                         sorted_articles = sorted(all_articles, key=lambda x: x.pub_date, reverse=True)
@@ -286,3 +298,87 @@ def choose_provider(
         is_benchmarking=is_benchmarking,
     )
     return provider
+
+
+# ---------------------------------------------------------------------------
+# URL normalization and dedup helpers (simple, robust, testable)
+# ---------------------------------------------------------------------------
+
+
+def _normalize_url_for_dedup(url: str) -> str:
+    """Return a canonicalized URL for deduplication.
+
+    - Lowercase scheme and netloc
+    - Drop fragment
+    - Remove common tracking params (utm_*, gclid, fbclid, igshid, ref, mc_cid, mc_eid)
+    - Sort remaining query params
+    - Strip single trailing slash on path
+    - Normalize mobile and AMP variants (m. subdomain, trailing /amp)
+    """
+    if not url:
+        return url
+    parts = urlsplit(url)
+    scheme = (parts.scheme or "").lower()
+    netloc = (parts.netloc or "").lower()
+
+    # Normalize mobile subdomain 'm.' to base domain when present
+    if netloc.startswith("m."):
+        netloc = netloc[2:]
+
+    # Normalize path: drop trailing '/amp' and single trailing slash
+    path = parts.path or ""
+    if path.endswith("/amp"):
+        path = path[:-4]
+    if path != "/" and path.endswith("/"):
+        path = path[:-1]
+
+    # Normalize query: remove tracking keys; sort remaining
+    drop_keys = {"gclid", "fbclid", "igshid", "ref", "mc_cid", "mc_eid"}
+    q = []
+    for k, v in parse_qsl(parts.query, keep_blank_values=True):
+        if k.startswith("utm_") or k in drop_keys:
+            continue
+        # Normalize trivial trailing slashes in parameter values (e.g., b=2/ -> b=2)
+        if isinstance(v, str) and v.endswith("/"):
+            v = v.rstrip("/")
+        q.append((k, v))
+    # Sort for canonical order
+    q.sort()
+    query = urlencode(q, doseq=True)
+
+    # Drop fragment
+    fragment = ""
+
+    return urlunsplit((scheme, netloc, path, query, fragment))
+
+
+def _dedup_articles_by_url(articles: list[Any]) -> list[Any]:
+    """Order-preserving deduplication of articles by normalized URL.
+
+    Articles may be objects with attribute `article_url` or dicts with key `article_url`.
+    Items without a URL are kept.
+    """
+    seen: set[str] = set()
+    result: list[Any] = []
+    for item in articles:
+        url = None
+        # Attribute access first, then mapping
+        if hasattr(item, "article_url"):
+            url = getattr(item, "article_url")
+        elif isinstance(item, dict):  # type: ignore[unreachable]
+            url = item.get("article_url")
+
+        if not url:
+            result.append(item)
+            continue
+
+        norm = _normalize_url_for_dedup(str(url))
+        if norm in seen:
+            continue
+        seen.add(norm)
+        result.append(item)
+
+    # Defensive: ensure not all items were dropped; if so, keep the first
+    if not result and articles:
+        result.append(articles[0])
+    return result

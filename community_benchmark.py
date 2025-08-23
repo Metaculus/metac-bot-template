@@ -10,6 +10,7 @@ import atexit
 import logging
 import random
 import sys
+import time
 import weakref
 from datetime import datetime, timedelta
 from typing import Literal
@@ -26,6 +27,7 @@ from forecasting_tools import (
     MonetaryCostManager,
     run_benchmark_streamlit_page,
 )
+from tqdm import tqdm
 
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
@@ -95,6 +97,10 @@ def _enable_aiohttp_session_autoclose() -> None:
 _enable_aiohttp_session_autoclose()
 
 
+# Global progress tracking state
+_progress_state = {"total_predictions": 0, "start_time": 0, "completed_batches": 0, "total_batches": 0, "pbar": None}
+
+
 def _install_benchmarker_heartbeat(interval_seconds: int = 60) -> None:
     """Add a lightweight heartbeat to Benchmarker batch execution.
 
@@ -118,12 +124,22 @@ def _install_benchmarker_heartbeat(interval_seconds: int = 60) -> None:
                 await asyncio.sleep(interval_seconds)
                 elapsed_min = (datetime.now() - start_time).total_seconds() / 60.0
                 try:
+                    # Update progress tracking
+                    if _progress_state["pbar"] is not None:
+                        _update_progress_estimate(batch)
+
                     logger.info(
                         f"[HB] {batch.benchmark.name} | {len(batch.questions)} questions | elapsed {elapsed_min:.1f}m"
                     )
                 except Exception:
                     # Best-effort logging; do not interfere with main task
                     pass
+
+            # Mark batch as completed
+            _progress_state["completed_batches"] += 1
+            if _progress_state["pbar"] is not None:
+                _update_progress_final()
+
             return await task
         except Exception:
             # Bubble up original exceptions unchanged
@@ -134,11 +150,58 @@ def _install_benchmarker_heartbeat(interval_seconds: int = 60) -> None:
     Benchmarker._run_a_batch = _run_with_heartbeat  # type: ignore[assignment]
 
 
+def _update_progress_estimate(batch) -> None:
+    """Update progress estimate during batch execution."""
+    if _progress_state["total_predictions"] == 0:
+        return
+
+    # Estimate: each completed batch = batch_size questions per bot
+    completed_predictions = _progress_state["completed_batches"] * len(batch.questions) * len(batch.forecast_bots)
+
+    # Add partial progress for current batch (rough estimate)
+    elapsed_total = time.time() - _progress_state["start_time"]
+    if _progress_state["completed_batches"] > 0:
+        avg_batch_time = elapsed_total / (_progress_state["completed_batches"] + 0.5)  # +0.5 for current partial
+        progress_in_current = min(0.8, elapsed_total % avg_batch_time / avg_batch_time)  # Cap at 80% for current batch
+        completed_predictions += int(progress_in_current * len(batch.questions) * len(batch.forecast_bots))
+
+    completed_predictions = min(completed_predictions, _progress_state["total_predictions"])
+
+    # Update progress bar
+    pbar = _progress_state["pbar"]
+    if pbar is not None:
+        pbar.n = completed_predictions
+        pbar.refresh()
+
+
+def _update_progress_final() -> None:
+    """Update progress when a batch completes."""
+    if _progress_state["pbar"] is None or _progress_state["total_predictions"] == 0:
+        return
+
+    # Calculate exact completed predictions
+    completed_predictions = min(
+        _progress_state["completed_batches"]
+        * (_progress_state["total_predictions"] // _progress_state["total_batches"]),
+        _progress_state["total_predictions"],
+    )
+
+    pbar = _progress_state["pbar"]
+    pbar.n = completed_predictions
+    pbar.refresh()
+
+
 _install_benchmarker_heartbeat(60)
 
 
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
-    """Get mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)."""
+    """Get mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice).
+
+    Reliability enhancements:
+    - Add 2 retries with 5s then 15s backoff on transient fetch errors
+    - Sleep 2s between type fetches to reduce burstiness
+    - Fail fast with a clear error if an expected type cannot be fetched
+    """
 
     # Calculate counts for each type (50/25/25 distribution)
     binary_count = int(total_questions * 0.5)
@@ -158,47 +221,87 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
 
     all_questions = []
 
-    # Fetch each question type separately
-    for i, (question_type, count) in enumerate(
-        [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)], 1
-    ):
-        if count > 0:
+    # Helper: fetch with retries and backoff
+    async def _fetch_type_with_retries(question_type: str, count: int) -> list:
+        import http.client
+
+        from requests import exceptions as req_exc  # type: ignore
+        from urllib3 import exceptions as ul3_exc  # type: ignore
+
+        # Build filter per type
+        filter_kwargs = base_filter_kwargs.copy()
+        if question_type != "binary":
+            filter_kwargs.pop("community_prediction_exists", None)
+            logger.info(f"⚠️  Removed community_prediction_exists filter for {question_type} questions")
+            sys.stdout.flush()
+
+        api_filter = ApiFilter(allowed_types=[question_type], **filter_kwargs)
+
+        def _is_retryable_error(err: Exception) -> bool:
+            retryables = (
+                req_exc.ConnectionError,
+                req_exc.Timeout,
+                ul3_exc.ProtocolError,
+                http.client.RemoteDisconnected,
+            )
+            if isinstance(err, retryables):
+                return True
+            # Best-effort string check for common transient statuses when wrapped
+            msg = str(err).lower()
+            return any(tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"])  # type: ignore[return-value]
+
+        attempts = 0
+        backoffs = [5, 15]  # seconds
+        while True:
             try:
-                logger.info(f"[{i}/3] Fetching {count} {question_type} questions...")
-                sys.stdout.flush()  # Force immediate output
-
-                # Customize filter for each question type
-                filter_kwargs = base_filter_kwargs.copy()
-
-                # Community prediction filter only works for binary questions
-                if question_type != "binary":
-                    filter_kwargs.pop("community_prediction_exists", None)
-                    logger.info(f"⚠️  Removed community_prediction_exists filter for {question_type} questions")
-                    sys.stdout.flush()
-
-                logger.info(f"🔍 Starting API call for {question_type} questions...")
+                logger.info(f"🔍 Attempt {attempts + 1}: fetching {count} {question_type} questions...")
                 sys.stdout.flush()
-
-                api_filter = ApiFilter(
-                    allowed_types=[question_type],
-                    **filter_kwargs,
-                )
                 questions = await MetaculusApi.get_questions_matching_filter(
                     api_filter,
                     num_questions=count,
                     randomly_sample=True,
                 )
-                logger.info(f"✅ Successfully fetched {len(questions)} {question_type} questions")
-                if questions:
-                    logger.info(f"📋 Sample {question_type} question: {questions[0].question_text[:100]}...")
-                all_questions.extend(questions)
-                sys.stdout.flush()
-            except Exception as e:
+                if not questions:
+                    raise RuntimeError("API returned 0 questions")
+                return questions
+            except Exception as e:  # Retry on transient errors, otherwise raise
+                if attempts < 2 and _is_retryable_error(e):
+                    sleep_s = backoffs[attempts] if attempts < len(backoffs) else backoffs[-1]
+                    logger.warning(
+                        f"Retryable error fetching {question_type} questions (attempt {attempts + 1}/3): {e}. "
+                        f"Backing off {sleep_s}s before retry."
+                    )
+                    sys.stdout.flush()
+                    await asyncio.sleep(sleep_s)
+                    attempts += 1
+                    continue
+                # Final failure or non-retryable
                 logger.error(f"❌ Failed to fetch {question_type} questions: {e}")
                 import traceback
 
                 logger.error(f"Full traceback: {traceback.format_exc()}")
                 sys.stdout.flush()
+                raise RuntimeError(
+                    f"Aborting benchmark: unable to fetch {question_type} questions after {attempts + 1} attempts"
+                ) from e
+
+    # Fetch each question type separately with pacing and validation
+    types_and_counts = [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]
+    for i, (question_type, count) in enumerate(types_and_counts, 1):
+        if count <= 0:
+            continue
+        logger.info(f"[{i}/3] Fetching {count} {question_type} questions...")
+        sys.stdout.flush()
+        questions = await _fetch_type_with_retries(question_type, count)
+        logger.info(f"✅ Successfully fetched {len(questions)} {question_type} questions")
+        if questions:
+            logger.info(f"📋 Sample {question_type} question: {questions[0].question_text[:100]}...")
+        all_questions.extend(questions)
+        sys.stdout.flush()
+
+        # Intentional pacing between types
+        if i < len(types_and_counts):
+            await asyncio.sleep(2)
 
     # Shuffle to avoid clustering by type
     random.shuffle(all_questions)
@@ -273,7 +376,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
     MODEL_CONFIG = {
         "temperature": 0.0,
         "top_p": 0.9,
-        "max_tokens": 16000,  # Prevent truncation issues with reasoning models
+        "max_tokens": 16_000,  # Prevent truncation issues with reasoning models
         "stream": False,
         "timeout": 240,
         "allowed_tries": 3,
@@ -311,39 +414,39 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             **MODEL_CONFIG,
         )
 
-        # qwen3_model = GeneralLlm(
-        #     model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
-        #     **MODEL_CONFIG,
-        # )
-        # glm_model = GeneralLlm(
-        #     model="openrouter/z-ai/glm-4.5",
-        #     **MODEL_CONFIG,
-        # )
-        # claude_model = build_llm_with_openrouter_fallback(
-        #     model="openrouter/anthropic/claude-sonnet-4",
-        #     reasoning={"max_tokens": 4000},
-        #     **MODEL_CONFIG,
-        # )
-        # gpt5_model = build_llm_with_openrouter_fallback(
-        #     model="openrouter/openai/gpt-5",
-        #     reasoning_effort="high",
-        #     **MODEL_CONFIG,
-        # )
-        # gemini_model = GeneralLlm(
-        #     model="openrouter/google/gemini-2.5-pro",
-        #     reasoning={"max_tokens": 8000},
-        #     **MODEL_CONFIG,
-        # )
-        # o3_model = build_llm_with_openrouter_fallback(
-        #     model="openrouter/openai/o3",
-        #     reasoning_effort="high",
-        #     **MODEL_CONFIG,
-        # )
-        # grok_model = GeneralLlm(
-        #     model="openrouter/x-ai/grok-4",
-        #     reasoning={"effort": "high"},
-        #     **MODEL_CONFIG,
-        # )
+        qwen3_model = GeneralLlm(
+            model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+            **MODEL_CONFIG,
+        )
+        glm_model = GeneralLlm(
+            model="openrouter/z-ai/glm-4.5",
+            **MODEL_CONFIG,
+        )
+        claude_model = build_llm_with_openrouter_fallback(
+            model="openrouter/anthropic/claude-sonnet-4",
+            reasoning={"max_tokens": 4000},
+            **MODEL_CONFIG,
+        )
+        gpt5_model = build_llm_with_openrouter_fallback(
+            model="openrouter/openai/gpt-5",
+            reasoning_effort="high",
+            **MODEL_CONFIG,
+        )
+        gemini_model = GeneralLlm(
+            model="openrouter/google/gemini-2.5-pro",
+            reasoning={"max_tokens": 8000},
+            **MODEL_CONFIG,
+        )
+        o3_model = build_llm_with_openrouter_fallback(
+            model="openrouter/openai/o3",
+            reasoning_effort="high",
+            **MODEL_CONFIG,
+        )
+        grok_model = GeneralLlm(
+            model="openrouter/x-ai/grok-4",
+            reasoning={"effort": "high"},
+            **MODEL_CONFIG,
+        )
 
         # Individual model configurations for benchmarking
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
@@ -389,6 +492,17 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         )
         sys.stdout.flush()  # Ensure this critical message appears immediately
 
+        # Initialize progress tracking
+        _progress_state.update(
+            {
+                "total_predictions": total_predictions,
+                "start_time": time.time(),
+                "completed_batches": 0,
+                "total_batches": len(bots),  # Each bot runs as a separate "batch"
+                "pbar": tqdm(total=total_predictions, desc="Forecasting", unit="predictions"),
+            }
+        )
+
         logger.info("📊 Entering Benchmarker.run_benchmark() - this may take a while...")
         sys.stdout.flush()
 
@@ -398,6 +512,11 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             file_path_to_save_reports="benchmarks/",
             concurrent_question_batch_size=batch_size,
         ).run_benchmark()
+
+        # Close progress bar
+        if _progress_state["pbar"] is not None:
+            _progress_state["pbar"].close()
+            _progress_state["pbar"] = None
 
         logger.info("✅ Benchmarker.run_benchmark() completed, processing results...")
         sys.stdout.flush()

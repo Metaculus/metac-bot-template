@@ -40,11 +40,9 @@ FORECASTER_LLMS = [
     ),
 ]
 
-# Trying Qwen 3 a22b 2507 nonthinking, should be smarter + cheaper than gemini flash (tho slower)
-SUMMARIZER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"  # "openrouter/google/gemini-2.5-flash"
+SUMMARIZER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"
 
 # Parser should be a reliable, low-latency model for structure extraction
-# Trying Qwen 3 a22b 2507 nonthinking, should be smarter + cheaper than gemini flash (tho slower)
 PARSER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"  # "openrouter/google/gemini-2.5-flash"
 
 # Researcher is only used by the base bot when internal research is invoked.

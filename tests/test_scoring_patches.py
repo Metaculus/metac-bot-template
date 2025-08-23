@@ -331,7 +331,6 @@ class TestNumericScoring:
         assert score is None
 
 
-@pytest.mark.skip(reason="Composite scaling relies on MC/numeric assumptions; pending API research")
 class TestScoreScaling:
     """Test that scores are on similar scales across question types."""
 
