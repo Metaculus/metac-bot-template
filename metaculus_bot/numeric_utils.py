@@ -87,10 +87,20 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     """Return upper & lower bound helper messages for numeric prompts.
 
     Tests expect empty strings for open bounds to keep prompts concise.
+    For discrete questions, if nominal bounds are missing, derive them using half-step logic.
     """
 
     nominal_upper = getattr(question, "nominal_upper_bound", None)
     nominal_lower = getattr(question, "nominal_lower_bound", None)
+
+    # For discrete questions, if we don't have nominal bounds, derive them using half-step logic
+    cdf_size = getattr(question, "cdf_size", None)
+    if nominal_upper is None and nominal_lower is None and cdf_size is not None and cdf_size != 201:
+        # This is likely a discrete question - derive nominal bounds from half-step
+        step = (question.upper_bound - question.lower_bound) / (cdf_size - 1)
+        nominal_upper = question.upper_bound - step / 2
+        nominal_lower = question.lower_bound + step / 2
+
     upper_bound_number = nominal_upper if nominal_upper is not None else question.upper_bound
     lower_bound_number = nominal_lower if nominal_lower is not None else question.lower_bound
 

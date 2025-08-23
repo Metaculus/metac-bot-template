@@ -235,7 +235,13 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
             logger.info(f"⚠️  Removed community_prediction_exists filter for {question_type} questions")
             sys.stdout.flush()
 
-        api_filter = ApiFilter(allowed_types=[question_type], **filter_kwargs)
+        # For numeric questions, include discrete types as well
+        if question_type == "numeric":
+            allowed_types = ["numeric", "discrete"]
+        else:
+            allowed_types = [question_type]
+
+        api_filter = ApiFilter(allowed_types=allowed_types, **filter_kwargs)
 
         def _is_retryable_error(err: Exception) -> bool:
             retryables = (

@@ -68,6 +68,52 @@ def test_numeric_prompt_bounds_and_research():
     assert "widgets" in prompt and "num research" in prompt
 
 
+def test_numeric_prompt_includes_p5_and_p95():
+    """Test that numeric prompt includes P5 and P95 in the output format."""
+    question = NumericQuestion(
+        id_of_question=5,
+        id_of_post=5,
+        page_url="example",
+        question_text="Test numeric question",
+        background_info="",
+        resolution_criteria="",
+        fine_print="",
+        published_time=None,
+        close_time=None,
+        lower_bound=0,
+        upper_bound=100,
+        open_lower_bound=False,
+        open_upper_bound=False,
+        unit_of_measure="",
+        zero_point=None,
+    )
+    prompt = numeric_prompt(question, "research", "", "")
+    assert "Percentile 5:" in prompt
+    assert "Percentile 95:" in prompt
+    # Ensure all 8 percentiles are present in order
+    lines = prompt.split("\n")
+    example_section = False
+    percentile_lines = []
+    for line in lines:
+        if "__Example:__" in line:
+            example_section = True
+            continue
+        if example_section and "Percentile" in line and ":" in line:
+            percentile_lines.append(line.strip())
+
+    expected = [
+        "Percentile 5: 10.1",
+        "Percentile 10: 12.3",
+        "Percentile 20: 23.4",
+        "Percentile 40: 34.5",
+        "Percentile 60: 56.7",
+        "Percentile 80: 67.8",
+        "Percentile 90: 78.9",
+        "Percentile 95: 89.0",
+    ]
+    assert percentile_lines == expected
+
+
 # ---------- Numeric utils ---------------------------------------------------
 
 from forecasting_tools.data_models.forecast_report import ForecastReport
@@ -169,6 +215,36 @@ def test_bound_messages_uses_nominal_bounds():
 
     upper, lower = bound_messages(q)
     assert "42" in upper and "5" in lower
+
+
+def test_bound_messages_discrete_fallback():
+    """Test that bound_messages derives nominal bounds for discrete questions when missing."""
+    from forecasting_tools.data_models.questions import NumericQuestion
+
+    # Create a discrete question (cdf_size != 201) without nominal bounds
+    q = NumericQuestion(
+        id_of_question=7,
+        id_of_post=7,
+        page_url="example",
+        question_text="Discrete question",
+        background_info="",
+        resolution_criteria="",
+        fine_print="",
+        published_time=None,
+        close_time=None,
+        lower_bound=-0.5,  # API bounds are typically off by 0.5 for discrete
+        upper_bound=9.5,  # Representing 0-9 discrete values
+        open_lower_bound=False,
+        open_upper_bound=False,
+        unit_of_measure="",
+        zero_point=None,
+        cdf_size=11,  # 10 discrete values + 1 = 11
+    )
+
+    upper, lower = bound_messages(q)
+    # Should derive nominal bounds: step = (9.5 - (-0.5)) / (11 - 1) = 1.0
+    # nominal_lower = -0.5 + 1.0/2 = 0.0, nominal_upper = 9.5 - 1.0/2 = 9.0
+    assert "9.0" in upper and "0.0" in lower
 
 
 from abc import ABC

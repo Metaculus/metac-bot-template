@@ -495,15 +495,70 @@ class TemplateForecaster(CompactLoggingForecastBot):
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
 
-        # If zero_point is the same as the lower bound, we must override it to None to avoid a ZeroDivisionError in the CDF calculation.
+        # Validate we have exactly 8 percentiles with the expected set {5,10,20,40,60,80,90,95}
+        expected_percentiles = {0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95}
+        if len(percentile_list) != 8:
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": percentile_list,
+                        "ctx": {
+                            "error": f"Expected 8 declared percentiles (5,10,20,40,60,80,90,95), got {len(percentile_list)}.",
+                        },
+                    }
+                ],
+            )
+
+        # Validate percentile values are exactly the expected set (with tolerance for rounding)
+        actual_percentiles = {round(p.percentile, 6) for p in percentile_list}
+        expected_rounded = {round(p, 6) for p in expected_percentiles}
+        if actual_percentiles != expected_rounded:
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": percentile_list,
+                        "ctx": {
+                            "error": f"Expected percentile set {{5,10,20,40,60,80,90,95}}, got {sorted(p.percentile * 100 for p in percentile_list)}.",
+                        },
+                    }
+                ],
+            )
+
+        # Sort percentiles by percentile value to ensure proper order
+        percentile_list.sort(key=lambda p: p.percentile)
+
+        # Apply jitter and clamp logic
+        percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+
+        # For discrete questions, force zero_point to None to avoid log-scaling
+        cdf_size = getattr(question, "cdf_size", None)
+        is_discrete = cdf_size is not None and cdf_size != 201
         zero_point = getattr(question, "zero_point", None)
-        if zero_point is not None and zero_point == question.lower_bound:
+
+        if is_discrete:
+            if zero_point is not None:
+                logger.debug(
+                    f"Question {getattr(question, 'id_of_question', 'N/A')}: Forcing zero_point=None for discrete question"
+                )
+            zero_point = None
+        elif zero_point is not None and zero_point == question.lower_bound:
             logger.warning(
                 f"Question {getattr(question, 'id_of_question', 'N/A')}: zero_point ({zero_point}) is equal to lower_bound "
                 f"({question.lower_bound}). Forcing linear scale for CDF generation."
             )
             zero_point = None
 
+        # TODO Phase 2: Replace with local PCHIP-based CDF construction here
+        # - Use PCHIP (monotone cubic) interpolation for smoother distributions
+        # - Apply min step increase (5e-5) and max jump cap (0.59) constraints
+        # - Handle log-space transforms when all values are positive (continuous only)
+        # - Enforce closed/open bound constraints directly in CDF construction
         prediction = NumericDistribution(
             declared_percentiles=percentile_list,
             open_upper_bound=question.open_upper_bound,
@@ -548,28 +603,78 @@ class TemplateForecaster(CompactLoggingForecastBot):
             except Exception as log_e:
                 logger.error("Failed logging numeric CDF diagnostics: %s", log_e)
             raise
-        # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
-        if (
-            hasattr(prediction, "declared_percentiles")
-            and isinstance(prediction.declared_percentiles, list)
-            and len(prediction.declared_percentiles) != 6
-        ):
-            raise ValidationError.from_exception_data(
-                "NumericDistribution",  # title
-                [
-                    {
-                        "type": "value_error",
-                        "loc": ("declared_percentiles",),
-                        "input": prediction.declared_percentiles,
-                        "ctx": {
-                            "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
-                        },
-                    }
-                ],
-            )
+        # Validation of 8 percentiles is now done earlier, before creating NumericDistribution
 
         logger.info(f"Forecasted URL {question.page_url} as {prediction.declared_percentiles}")
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    def _apply_jitter_and_clamp(self, percentile_list: list[Percentile], question: NumericQuestion) -> list[Percentile]:
+        """Apply jitter to ensure strictly increasing percentiles and clamp values to bounds."""
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Calculate buffer for bounds clamping
+        range_size = question.upper_bound - question.lower_bound
+        buffer = 1.0 if range_size > 100 else range_size * 0.01
+
+        # Extract values and check if they're strictly increasing
+        values = [p.value for p in percentile_list]
+        modified_values = list(values)  # Copy for modifications
+
+        # Apply jitter for duplicates and ensure strictly increasing
+        for i in range(1, len(modified_values)):
+            if modified_values[i] <= modified_values[i - 1]:
+                # Apply minimal upward jitter
+                epsilon = max(1e-9 * range_size, 1e-12)
+                modified_values[i] = modified_values[i - 1] + epsilon
+                logger.debug(
+                    f"Applied jitter: percentile {percentile_list[i].percentile} value {values[i]} -> {modified_values[i]}"
+                )
+
+        # Clamp values to bounds if they violate by small amounts
+        corrections_made = False
+        for i in range(len(modified_values)):
+            original_value = modified_values[i]
+
+            # Check lower bound violation
+            if not question.open_lower_bound and modified_values[i] < question.lower_bound:
+                if question.lower_bound - modified_values[i] <= buffer:
+                    modified_values[i] = question.lower_bound + buffer
+                    corrections_made = True
+                    logger.debug(
+                        f"Clamped lower: percentile {percentile_list[i].percentile} value {original_value} -> {modified_values[i]}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Value {original_value} too far below lower bound {question.lower_bound} (tolerance: {buffer})"
+                    )
+
+            # Check upper bound violation
+            if not question.open_upper_bound and modified_values[i] > question.upper_bound:
+                if modified_values[i] - question.upper_bound <= buffer:
+                    modified_values[i] = question.upper_bound - buffer
+                    corrections_made = True
+                    logger.debug(
+                        f"Clamped upper: percentile {percentile_list[i].percentile} value {original_value} -> {modified_values[i]}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Value {original_value} too far above upper bound {question.upper_bound} (tolerance: {buffer})"
+                    )
+
+        # Log warning if corrections were made
+        if corrections_made or any(v != orig for v, orig in zip(modified_values, values)):
+            logger.warning(f"Corrected numeric distribution for question {getattr(question, 'id_of_question', 'N/A')}")
+
+        # Re-ensure strictly increasing after clamping (shouldn't be needed but safety check)
+        for i in range(1, len(modified_values)):
+            if modified_values[i] <= modified_values[i - 1]:
+                epsilon = max(1e-9 * range_size, 1e-12)
+                modified_values[i] = modified_values[i - 1] + epsilon
+
+        # Create new percentile list with corrected values
+        return [Percentile(value=v, percentile=p.percentile) for v, p in zip(modified_values, percentile_list)]
 
     def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         return bound_messages(question)
