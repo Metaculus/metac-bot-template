@@ -164,7 +164,7 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
         **CRITICAL**: You MUST assign a probability (1-99%) to EVERY single option listed above.
         Even if an option seems very unlikely, assign it at least 1%. Never skip any option.
 
-        ── Final answer (must be last lines, one line per option, all options included, nothing after) ──
+        ── Final answer (must be last lines, one line per option, all options included, in same order, nothing after) ──
         Option_A: NN%
         Option_B: NN%
         …
