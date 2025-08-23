@@ -1,15 +1,10 @@
 .PHONY: conda_env install test run benchmark lint analyze_correlations analyze_correlations_latest
 
-# Optionally load secrets from ~/.keys into env for commands that hit APIs.
-# These are best-effort; if files are missing, values stay empty.
-ENV_FROM_KEYS=export METACULUS_TOKEN=$$(cat $$HOME/.keys/metaculus_token 2>/dev/null); \
-              export OPENAI_API_KEY=$$(cat $$HOME/.keys/openai_api_key 2>/dev/null); \
-              export OPENROUTER_API_KEY=$$(cat $$HOME/.keys/openrouter_key 2>/dev/null); \
-              export OAI_ANTH_OPENROUTER_KEY=$$(cat $$HOME/.keys/oai_anth_openrouter_key 2>/dev/null); \
-              export ASKNEWS_CLIENT_ID=$$(cat $$HOME/.keys/asknews_client_id 2>/dev/null); \
-              export ASKNEWS_SECRET=$$(cat $$HOME/.keys/asknews_secret 2>/dev/null); \
-              export ASKNEWS_MAX_CONCURRENCY=$$(cat $$HOME/.keys/asknews_max_concurrency 2>/dev/null); \
-              export ASKNEWS_MAX_RPS=$$(cat $$HOME/.keys/asknews_max_rps 2>/dev/null);
+# Stream logs live from recipes; avoid per-target buffering
+MAKEFLAGS += --output-sync=none
+
+# Absolute Python in conda env (use tilde to avoid hardcoding username)
+PY_ABS := ~/miniconda3/envs/metaculus-bot/bin/python
 
 # for reference, won't actually persist to the shell
 # conda_env:
@@ -30,35 +25,35 @@ format:
 	conda run -n metaculus-bot poetry run isort .
 
 test:
-	PYTHONUNBUFFERED=1 conda run -n metaculus-bot PYTHONPATH=. poetry run pytest
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u -m pytest" /dev/null
 
 run:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u main.py
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u main.py" /dev/null
 
 # Warning: this will fire off requests to OpenRouter and cost (a very small amount) of money.
 benchmark_run_smoke_test_binary:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode run --num-questions 1
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode run --num-questions 1" /dev/null
 
 benchmark_run_smoke_test:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 4 --mixed
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode custom --num-questions 4 --mixed" /dev/null
 
 benchmark_run_binary_only:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode run --num-questions 30
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode run --num-questions 30" /dev/null
 
 benchmark_run_small:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 12 --mixed
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode custom --num-questions 12 --mixed" /dev/null
 
 benchmark_run_medium:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 32 --mixed
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode custom --num-questions 32 --mixed" /dev/null
 
 benchmark_run_large:
-	$(ENV_FROM_KEYS) PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode custom --num-questions 100 --mixed
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode custom --num-questions 100 --mixed" /dev/null
 
 benchmark_display:
-	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u community_benchmark.py --mode display
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u community_benchmark.py --mode display" /dev/null
 
 analyze_correlations:
-	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u analyze_correlations.py $(if $(FILE),$(FILE),benchmarks/)
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u analyze_correlations.py $(if $(FILE),$(FILE),benchmarks/)" /dev/null
 
 analyze_correlations_latest:
-	PYTHONUNBUFFERED=1 conda run -n metaculus-bot poetry run python -u analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)" /dev/null
