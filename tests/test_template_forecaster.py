@@ -148,13 +148,56 @@ async def test_research_and_make_predictions_with_forecasters(mock_binary_questi
 
     bot._get_notepad.assert_called_once_with(mock_binary_question)
     bot.run_research.assert_called_once_with(mock_binary_question)
-    bot.summarize_research.assert_called_once_with(mock_binary_question, "mock research")
+    # summarize_research is NOT called when use_research_summary_to_forecast=False (default)
+    bot.summarize_research.assert_not_called()
     assert bot._make_prediction.call_count == 2  # Called once for each forecaster
     bot._make_prediction.assert_any_call(mock_binary_question, "mock research", mock_general_llm)
     assert isinstance(result, ResearchWithPredictions)
     assert (
         len(result.predictions) == 2
     )  # The mocked _gather_results_and_exceptions returns two ReasonedPrediction objects
+
+
+@pytest.mark.asyncio
+async def test_research_and_make_predictions_with_summarization_enabled(mock_binary_question, mock_general_llm):
+    """Test that summarize_research IS called when use_research_summary_to_forecast=True"""
+    llms_config = {
+        "forecasters": [mock_general_llm, mock_general_llm],
+        "summarizer": "mock_summarizer_model",
+        "parser": "mock_parser_model",
+        "researcher": "mock_researcher_model",
+        "default": "mock_default_model",
+    }
+    bot = TemplateForecaster(llms=llms_config, use_research_summary_to_forecast=True)
+
+    # Mock internal methods
+    bot._get_notepad = AsyncMock(
+        return_value=MagicMock(total_research_reports_attempted=0, total_predictions_attempted=0)
+    )
+    bot.run_research = AsyncMock(return_value="mock research")
+    bot.summarize_research = AsyncMock(return_value="mock summary")
+    bot._make_prediction = AsyncMock(return_value=ReasonedPrediction(prediction_value=0.5, reasoning="test"))
+    bot._gather_results_and_exceptions = AsyncMock(
+        return_value=(
+            [
+                ReasonedPrediction(prediction_value=0.5, reasoning="test"),
+                ReasonedPrediction(prediction_value=0.6, reasoning="test2"),
+            ],
+            [],
+            None,
+        )
+    )
+
+    result = await bot._research_and_make_predictions(mock_binary_question)
+
+    bot._get_notepad.assert_called_once_with(mock_binary_question)
+    bot.run_research.assert_called_once_with(mock_binary_question)
+    # summarize_research IS called when use_research_summary_to_forecast=True
+    bot.summarize_research.assert_called_once_with(mock_binary_question, "mock research")
+    assert bot._make_prediction.call_count == 2  # Called once for each forecaster
+    bot._make_prediction.assert_any_call(mock_binary_question, "mock summary", mock_general_llm)  # Uses summary
+    assert isinstance(result, ResearchWithPredictions)
+    assert len(result.predictions) == 2
 
 
 @pytest.mark.asyncio

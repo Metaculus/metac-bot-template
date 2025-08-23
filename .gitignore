@@ -129,6 +129,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
 .venv
 env/
 venv/
@@ -173,6 +174,8 @@ cython_debug/
 # MacOS
 .DS_Store
 
+*.json
+
 # Agentic coding tool steering files
 AGENTS.md
 AGENTS.md:Zone.Identifier
@@ -181,3 +184,5 @@ AGENTS.md:Zone.Identifier
 GEMINI.md
 CLAUDE.md
 scratch_docs_and_planning/
+.serena/
+GEMINI.md.OLD

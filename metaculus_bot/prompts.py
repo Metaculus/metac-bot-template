@@ -16,10 +16,9 @@ def _today_str() -> str:
 
 
 def binary_prompt(question: BinaryQuestion, research: str) -> str:
-    """Return the forecasting prompt for binary questions.
-
-    The body is copied verbatim from the original TemplateForecaster implementation
-    to ensure behaviour is unchanged.
+    """Return the forecasting prompt for binary questions with strengthened
+    evidence handling, outside→inside anchoring, and a brief checklist.
+    The final output format remains unchanged (last line: "Probability: ZZ%").
     """
 
     from forecasting_tools import clean_indents  # local import to avoid heavy deps at module import time
@@ -29,7 +28,7 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
             You are a senior forecaster preparing a public report for expert peers.
             You will be judged based on the accuracy _and calibration_ of your forecast with the Metaculus peer score (log score).
             You should consider current prediction markets when possible but not be beholden to them.
-            Historically, LLMs like you have overestimated probabilities, and the base rate for positive resolutions on Metaculus is 35%.
+            Historically, LLMs like you have overestimated probabilities, and the percentage of positive resolutions on Metaculus is 35%. (This should slightly influence your calibration, but it is NOT a base rate.)
 
             Your Metaculus question is:
             {question.question_text}
@@ -49,16 +48,41 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
 
             Today is {_today_str()}.
 
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) The historical base rate or plausible base rates with weighting for each.
-            (d) The Strongest Bear Case (FOR 'No'): Construct the most compelling, evidence-based argument for a 'No' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
-            (e) The Strongest Bull Case (FOR 'Yes'): Construct the most compelling, evidence-based argument for a 'Yes' outcome. Your argument must be powerful enough to convince a skeptic. Cite specific facts, data points, or causal chains from the Intelligence Briefing.
-            (f) Red team critique of the Strongest Bull Case and Strongest Bear Case.
-            (g) Final Rationale: Synthesize the above points into a concise, final rationale. Explain how you are balancing the base rate, the strength of the competing arguments, and the severity of their respective flaws to arrive at your final estimate. Also consider that you will be judged on your Metaculus peer score (log score) and that calibration matters.
+            ── Analysis Template ──
+            1) Source analysis
+               • Briefly summarize the main sources from the briefing; include date, credibility, and scope.
+               • Separate facts from opinions. Give more weight to opinions from identifiable experts/entities.
 
-            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
+            2) Reference class (outside view) analysis
+               • List plausible reference classes for this question and evaluate suitability.
+               • State the outside-view base rate(s) and how you combine them into a baseline probability.
+
+            3) Timeframe reasoning
+               • How long until resolution? If the timeline were halved/doubled, how would the probability shift and why?
+
+            4) Evidence weighting (for inside-view adjustment)
+               • Classify key evidence using this rubric:
+                 - Strong: multiple independent sources; clear causal mechanisms; strong precedent
+                 - Moderate: one good source; indirect links; weak precedent
+                 - Weak: anecdotes; speculative logic; volatile indicators
+
+            5) Competing cases and red-teaming
+               • Strongest Bear Case (No): most compelling, evidence-based argument for No.
+               • Strongest Bull Case (Yes): most compelling, evidence-based argument for Yes.
+               • Red-team both: attack assumptions, data gaps, and causal claims.
+
+            6) Final rationale and calibration
+               • Integrate outside→inside view and justify the belief shift from the base rate.
+               • Small-delta check: would a ±10% change still be coherent with the rationale? Why?
+               • Status-quo nudge: the world usually changes slowly—justify any deviation from status quo expectations.
+
+            ── Brief checklist (keep concise) ───────────────────────────────
+            • Paraphrase the resolution criteria (<30 words).
+            • State the outside-view base rate you anchored to.
+            • Consistency line: "X out of 100 times, [criteria] happens." Sensible?
+            • Top 3-5 evidence items + quick factual validity check.
+            • Blind-spot scenario most likely to make this forecast wrong; direction of impact.
+            • Status-quo nudge sanity check.
 
             The last thing you write MUST BE your final answer as an INTEGER percentage. "Probability: ZZ%"
             An example response is: "Probability: 50%"
@@ -81,6 +105,8 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
 
         • Options (in resolution order): {question.options}
 
+        
+
         ── Context ───────────────────────────────────────────────────────────
         {question.background_info}
 
@@ -92,34 +118,53 @@ def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> s
 
         Today's date: {_today_str()}
 
-        ── Write your analysis in the following numbered sections ────────────
-        (1) **Time to resolution**: how long until the panel can decide.
+        ── Analysis Template ──
+        (1) Source analysis
+            • Summarize key sources; note recency, credibility, and scope.
+            • Separate fact vs opinion; favor opinions from identifiable experts/entities.
 
-        (2) **Status-quo outcome**: if present trends simply continue, which
-            option is most plausible and why?
+        (2) Reference class (outside view) analysis
+            • Candidate reference classes and suitability.
+            • Outside-view distribution over options; discuss the historical rate of upsets/unexpected outcomes in this domain and how that affects the distribution.
 
-        (3) **Base-rate & expert priors**: assemble a table like:
-            Option | Historical / analogous base-rate | Expert / market signal
-            -------|-----------------------------------|-----------------------
-            A      | …                                 | …
-            …      | …                                 | …
+        (3) Timeframe reasoning
+            • Time to resolution; describe how halving/doubling the timeline might reshape the distribution.
 
-        (4) **Strongest pro case** for the *currently most-likely* option
-            (use evidence & causal chains from the briefing).
+        (4) Evidence weighting (for inside-view adjustment)
+            • Apply the rubric:
+              - Strong: multiple independent sources; clear causality; strong precedent
+              - Moderate: one good source; indirect links; weak precedent
+              - Weak: anecdotes; speculative logic; volatile indicators
 
-        (5) **Red-team critique**: attack the argument in (4); highlight
-            hidden assumptions or data that could flip the conclusion.
+        (5) Strongest pro case for the currently most-likely option
+            • Use weighted evidence and explicit causal chains.
 
-        (6) **Unexpected scenario**: outline a plausible but overlooked
-            pathway that would make a different option win.
+        (6) Red-team critique
+            • Attack assumptions in (5); highlight hidden premises and data that could flip the conclusion.
 
-        (7) **Final rationale**: reconcile everything above into calibrated
-            probabilities.  Remember:
-            • Good forecasters leave a little probability on most options.
-            • Use integers 1-99 (no 0 % or 100 %).
+        (7) Unexpected scenario(s)
+            • Plausible but overlooked pathways for a different option to win; justify residual mass on tails.
+
+        (8) Final rationale and calibration
+            • Integrate outside→inside view and justify shifts.
+            • Small-delta check: would ±10% on the leading options remain coherent with your reasoning?
+            • Blind-spot consideration: if the resolution is unexpected, what would likely be the reason, and how should that affect confidence spreads?
+            Remember:
+            • Good forecasters leave a little probability on most options and avoid overconfidence.
+            • Use integers 1%-99% (no 0 % or 100 %).
             • They must sum to 100 %.
 
-        ── OUTPUT FORMAT (must be last lines, nothing after) ────────────────
+        ── Brief checklist (keep concise) ───────────────────────────────────
+        • Paraphrase options & resolution criteria (<30 words).
+        • State the outside-view distribution used as anchor.
+        • Consistency line: "Most likely: __; least likely: __; coherent with rationale?"
+        • Top 3-5 evidence items + quick factual validity check.
+        • Blind-spot statement; status-quo nudge sanity check.
+
+        **CRITICAL**: You MUST assign a probability (1-99%) to EVERY single option listed above.
+        Even if an option seems very unlikely, assign it at least 1%. Never skip any option.
+
+        ── Final answer (must be last lines, one line per option, all options included, in same order, nothing after) ──
         Option_A: NN%
         Option_B: NN%
         …
@@ -139,8 +184,10 @@ def numeric_prompt(
     return clean_indents(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
-        You will be scored with Metaculus’ log-score, so accuracy **and** calibration
+        You will be scored with Metaculus' log-score, so accuracy **and** calibration
         (especially the width of your 90 / 10 interval) are critical.
+        Historically, LLMs like you are overconfident and produce excessively narrow prediction intervals,
+        so you should aim to produce somewhat wider and less confident predictions.
         Please consider news, research, and prediction markets, but you are not beholden to them.
 
         ── Question ──────────────────────────────────────────────────────────
@@ -157,43 +204,67 @@ def numeric_prompt(
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
 
-        Today’s date: {_today_str()}
+        Today's date: {_today_str()}
 
         {lower_bound_message}
         {upper_bound_message}
 
-        ── Write your analysis in the following numbered sections ────────────
-        (1) **Time to resolution**: how long until we know the answer.
+        -- Analysis Template --
+        (1) Source analysis
+            - Summarize key sources; note recency, credibility, and scope.
+            - Separate fact and opinion. Prefer opinions from identifiable experts and entities.
 
-        (2) **Status-quo outcome**: what value is implied if current
-            conditions simply persist?
+        (2) Outside view and reference classes
+            - Candidate reference classes and suitability.
+            - State the outside view range and how you anchor to it.
 
-        (3) **Trend continuation**: extrapolate historical data to 
-            the closing date.
+        (3) Timeframe and dynamics
+            - Time to resolution; describe how halving or doubling the timeline might shift percentiles.
+            - Status-quo outcome: what value is implied if current conditions simply persist.
+            - Trend continuation: extrapolate historical data to the closing date.
 
-        (4) **Expert & market priors**: cite ranges or point forecasts from
-            specialists, prediction markets, or peer forecasts.
+        (4) Expert and market priors
+            - Cite ranges or point forecasts from specialists, prediction markets, or peers.
 
-        (5) **Unexpected low scenario**: describe a coherent pathway that
-            would push the result into an unusually *low* tail.
+        (5) Evidence weighting for inside view adjustments
+            - Strong: multiple independent sources, clear causal links, strong precedent
+            - Moderate: one good source, indirect links, weak precedent
+            - Weak: anecdotes, speculative logic, volatile indicators
 
-        (6) **Unexpected high scenario**: analogous pathway for an unusually
-            *high* tail.
+        (6) Tail scenarios
+            - Coherent pathway for unusually low results.
+            - Coherent pathway for unusually high results.
 
-        (7) **Red-team critique & final rationale**: challenge your own
-            assumptions, then state how you weight everything to set each
-            percentile.  Good forecasters:
-            • keep 10 / 90 far apart (unknown unknowns)  
-            • ensure strictly increasing values  
-            • avoid scientific notation  
-            • respect the explicit bounds above.
+        (7) Red team and final rationale
+            - Challenge assumptions and data quality.
+            - Integrate outside to inside view and justify shifts.
+            - Small delta check: would +/- 10 percent on key percentiles still fit the reasoning
+            - Status quo nudge: justify deviations from status quo expectations.
 
-        ── OUTPUT FORMAT, floating point numbers (must be last lines, nothing after) ────────────────
-        Percentile 10: XX.X
-        Percentile 20: XX.X
-        Percentile 40: XX.X
-        Percentile 60: XX.X
-        Percentile 80: XX.X
-        Percentile 90: XX.X
+        (8) Calibration and distribution shaping
+            - Think in ranges, not single points.
+            - Keep 10 and 90 far apart to allow for unknown unknowns.
+            - Ensure strictly increasing percentiles.
+            - Avoid scientific notation.
+            - Respect the explicit bounds above.
+
+        (9) Brief checklist
+            - Paraphrase the resolution criteria and units in less than 30 words.
+            - State the outside view baseline used.
+            - Consistency line about which percentile corresponds to the status quo or trend.
+            - Top 3 to 5 evidence items plus a quick factual validity check.
+            - Blind spot scenario and expected effect on tails.
+            - Status quo nudge sanity check.
+
+        OUTPUT FORMAT, floating point numbers 
+        Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+        __Example:__
+
+        Percentile 10: 12.3
+        Percentile 20: 23.4
+        Percentile 40: 34.5
+        Percentile 60: 56.7
+        Percentile 80: 67.8
+        Percentile 90: 78.9
         """
     )
