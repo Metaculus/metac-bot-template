@@ -311,39 +311,39 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             **MODEL_CONFIG,
         )
 
-        qwen3_model = GeneralLlm(
-            model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
-            **MODEL_CONFIG,
-        )
-        glm_model = GeneralLlm(
-            model="openrouter/z-ai/glm-4.5",
-            **MODEL_CONFIG,
-        )
-        claude_model = build_llm_with_openrouter_fallback(
-            model="openrouter/anthropic/claude-sonnet-4",
-            reasoning={"max_tokens": 4000},
-            **MODEL_CONFIG,
-        )
-        gpt5_model = build_llm_with_openrouter_fallback(
-            model="openrouter/openai/gpt-5",
-            reasoning_effort="high",
-            **MODEL_CONFIG,
-        )
-        gemini_model = GeneralLlm(
-            model="openrouter/google/gemini-2.5-pro",
-            reasoning={"max_tokens": 8000},
-            **MODEL_CONFIG,
-        )
-        o3_model = build_llm_with_openrouter_fallback(
-            model="openrouter/openai/o3",
-            reasoning_effort="high",
-            **MODEL_CONFIG,
-        )
-        grok_model = GeneralLlm(
-            model="openrouter/x-ai/grok-4",
-            reasoning={"effort": "high"},
-            **MODEL_CONFIG,
-        )
+        # qwen3_model = GeneralLlm(
+        #     model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+        #     **MODEL_CONFIG,
+        # )
+        # glm_model = GeneralLlm(
+        #     model="openrouter/z-ai/glm-4.5",
+        #     **MODEL_CONFIG,
+        # )
+        # claude_model = build_llm_with_openrouter_fallback(
+        #     model="openrouter/anthropic/claude-sonnet-4",
+        #     reasoning={"max_tokens": 4000},
+        #     **MODEL_CONFIG,
+        # )
+        # gpt5_model = build_llm_with_openrouter_fallback(
+        #     model="openrouter/openai/gpt-5",
+        #     reasoning_effort="high",
+        #     **MODEL_CONFIG,
+        # )
+        # gemini_model = GeneralLlm(
+        #     model="openrouter/google/gemini-2.5-pro",
+        #     reasoning={"max_tokens": 8000},
+        #     **MODEL_CONFIG,
+        # )
+        # o3_model = build_llm_with_openrouter_fallback(
+        #     model="openrouter/openai/o3",
+        #     reasoning_effort="high",
+        #     **MODEL_CONFIG,
+        # )
+        # grok_model = GeneralLlm(
+        #     model="openrouter/x-ai/grok-4",
+        #     reasoning={"effort": "high"},
+        #     **MODEL_CONFIG,
+        # )
 
         # Individual model configurations for benchmarking
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
@@ -351,8 +351,8 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             {"name": "r1-0528", "forecaster": r1_0528_model},
             {"name": "deepseek-3.1", "forecaster": ds_v3p1_model},
             {"name": "kimi-k2", "forecaster": kimi_k2_model},
-            {"name": "qwen3-235b", "forecaster": qwen3_model},
-            {"name": "glm-4.5", "forecaster": glm_model},
+            # {"name": "qwen3-235b", "forecaster": qwen3_model},
+            # {"name": "glm-4.5", "forecaster": glm_model},
             # Additional models - comment for cost control during development:
             # {"name": "claude-sonnet-4", "forecaster": claude_model},
             # {"name": "gpt-5", "forecaster": gpt5_model},
