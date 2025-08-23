@@ -55,7 +55,8 @@ When asked to diagnose or debug, you should either:
 - **Descriptive Names**: Use detailed variable names even if they're longer - prefer descriptive names over comments
 - **Comments Policy**: Only add comments for clarifying confusing/ambiguous code or complex algorithms. Use `do_specific_thing()` not `# do specific thing foo()`. Don't write comments when descriptive variable names are adequate. Specifically **NEVER USE COMMENTS TO EXPLAIN WHAT YOU'RE DOING IN CODE UNLESS IT IS CONFUSING OR AMBIGUOUS**. So if you are doing a thing, do not say "# Do thing \n do_thing()" and do not annotate code to show your changes, in other words do not do "num_leaves = 5  # changed from 8".
 - **API Research**: As needed, use the web browsing and search tools to research documentation and APIs. DO NOT assume interfaces if your memory is hazy. (Of course, you probably won’t have to look up popular libraries like Pandas, Numpy, and Boto.)
-** Try/Except and Errors**: Typically only handle expected errors; it's fine to catch these. Blanket `except Exception` is almost always a severe code smell. Log/warn clearly. Typically prefer to fail fast. Don't defensively set up a bunch of try/except in case an API varies -- these should be solved by research, not blind guessing.  
+**Try/Except and Errors**: Typically only handle expected errors; it's fine to catch these. Blanket `except Exception` is almost always a severe code smell. Log/warn clearly. Typically prefer to fail fast. Don't defensively set up a bunch of try/except in case an API varies -- these should be solved by research, not blind guessing.  
+**Offensive Programming**: It's often a good idea to validate data and assumptions and fail fast. e.g. shape, not empty, dtype, not NA, min/max, and so on.  
 
 ### Python Specific Standards
 - **Python Version**: 3.12 or higher
