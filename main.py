@@ -121,6 +121,14 @@ class TemplateForecaster(CompactLoggingForecastBot):
             llms=normalized_llms,  # type: ignore[arg-type]
         )
 
+        # Log ensemble + aggregation configuration once on init
+        num_models = len(self._forecaster_llms) if self._forecaster_llms else 1
+        logger.info(
+            "Ensemble configured: %s model(s) | Aggregation: %s",
+            num_models,
+            self.aggregation_strategy.value,
+        )
+
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
@@ -298,14 +306,34 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if not predictions:
             raise ValueError("Cannot aggregate empty list of predictions")
 
+        # High-level aggregation log for clarity
+        qtype = (
+            "binary"
+            if isinstance(predictions[0], (int, float))
+            else (
+                "numeric"
+                if isinstance(predictions[0], NumericDistribution)
+                else (
+                    "multiple-choice"
+                    if isinstance(predictions[0], PredictedOptionList)
+                    else type(predictions[0]).__name__
+                )
+            )
+        )
+        logger.info("Aggregating %s predictions with %s", qtype, self.aggregation_strategy.value)
+
         # Binary aggregation - strategy-based dispatch
         if isinstance(predictions[0], (int, float)):
             float_preds = [float(p) for p in predictions]  # type: ignore[list-item]
 
             if self.aggregation_strategy == AggregationStrategy.MEAN:
-                return aggregate_binary_mean(float_preds)  # type: ignore[return-value]
+                result = aggregate_binary_mean(float_preds)
+                logger.info("Binary mean of %s = %.3f (rounded)", float_preds, result)
+                return result  # type: ignore[return-value]
             elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
-                return aggregate_binary_median(float_preds)  # type: ignore[return-value]
+                result = aggregate_binary_median(float_preds)
+                logger.info("Binary median of %s = %.3f", float_preds, result)
+                return result  # type: ignore[return-value]
             else:
                 raise ValueError(f"Unsupported aggregation strategy for binary questions: {self.aggregation_strategy}")
 
@@ -313,16 +341,32 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if isinstance(predictions[0], NumericDistribution) and isinstance(question, NumericQuestion):
             numeric_preds = [p for p in predictions if isinstance(p, NumericDistribution)]
             strategy_str = self.aggregation_strategy.value  # Convert enum to string
-            return await aggregate_numeric(numeric_preds, question, strategy_str)  # type: ignore[return-value]
+            aggregated = await aggregate_numeric(numeric_preds, question, strategy_str)
+            lb = getattr(question, "lower_bound", None)
+            ub = getattr(question, "upper_bound", None)
+            logger.info(
+                "Numeric aggregation=%s | preserved bounds [%s, %s] | CDF points=%d",
+                strategy_str,
+                lb,
+                ub,
+                len(getattr(aggregated, "cdf", [])),
+            )
+            return aggregated  # type: ignore[return-value]
 
         # Multiple choice aggregation - strategy-based dispatch (NO MORE super() delegation)
         if isinstance(predictions[0], PredictedOptionList):
             mc_preds = [p for p in predictions if isinstance(p, PredictedOptionList)]
 
             if self.aggregation_strategy == AggregationStrategy.MEAN:
-                return aggregate_multiple_choice_mean(mc_preds)  # type: ignore[return-value]
+                aggregated = aggregate_multiple_choice_mean(mc_preds)
+                summary = {o.option_name: round(o.probability, 4) for o in aggregated.predicted_options}
+                logger.info("MC mean aggregation; renormalized to 1.0 | %s", summary)
+                return aggregated  # type: ignore[return-value]
             elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
-                return aggregate_multiple_choice_median(mc_preds)  # type: ignore[return-value]
+                aggregated = aggregate_multiple_choice_median(mc_preds)
+                summary = {o.option_name: round(o.probability, 4) for o in aggregated.predicted_options}
+                logger.info("MC median aggregation; renormalized to 1.0 | %s", summary)
+                return aggregated  # type: ignore[return-value]
             else:
                 raise ValueError(
                     f"Unsupported aggregation strategy for multiple choice questions: {self.aggregation_strategy}"
