@@ -22,7 +22,7 @@ MODEL_CONFIG = {
 }
 
 FORECASTER_LLMS = [
-    # TODO: consider multiple copies of gpt-5 or o3 w/ diff sampling params
+    # TODO: consider adding add'l LLMs to ensemble
     build_llm_with_openrouter_fallback(
         model="openrouter/openai/gpt-5",
         reasoning={"effort": "high"},
