@@ -457,12 +457,12 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Individual model configurations for benchmarking
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
         individual_models = [
-            {"name": "r1-0528", "forecaster": r1_0528_model},
+            {"name": "qwen3-235b", "forecaster": qwen3_model},
             {"name": "deepseek-3.1", "forecaster": ds_v3p1_model},
             {"name": "kimi-k2", "forecaster": kimi_k2_model},
-            # {"name": "qwen3-235b", "forecaster": qwen3_model},
-            # {"name": "glm-4.5", "forecaster": glm_model},
             # Additional models - comment for cost control during development:
+            # {"name": "glm-4.5", "forecaster": glm_model},
+            # {"name": "r1-0528", "forecaster": r1_0528_model},
             # {"name": "claude-sonnet-4", "forecaster": claude_model},
             # {"name": "gpt-5", "forecaster": gpt5_model},
             # {"name": "gemini-2.5-pro", "forecaster": gemini_model},
