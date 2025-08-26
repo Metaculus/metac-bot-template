@@ -17,15 +17,27 @@ jobs:
       # setup repository with all necessary dependencies - keep as is
       - name: Check out repository
         uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
+        id: setup-python
         with:
           python-version: "3.11"
       - name: Install poetry
         uses: snok/install-poetry@v1
+        continue-on-error: true
         with:
+          version: 1.8.4
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+      - name: Ensure Poetry is available (fallback install)
+        run: |
+          poetry --version || (
+            python -m pip install -U pip &&
+            for i in 1 2 3; do
+              python -m pip install "poetry==1.8.4" && break || sleep 10;
+            done &&
+            poetry --version
+          )
       # Use the lockfile env. To update deps, run `poetry lock` to update lockfile, then `poetry install` to install the lockfile pkgs, and finally push to Github.
       - name: Load cached venv
         id: cached-poetry-dependencies
@@ -34,7 +46,16 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 3
+          retry_on: error
+          timeout_minutes: 10
+          command: poetry install --no-interaction --no-root
+        env:
+          POETRY_VIRTUALENVS_CREATE: true
+          POETRY_VIRTUALENVS_IN_PROJECT: true
+          POETRY_INSTALLER_PARALLEL: true
       - name: Run bot
         run: |
           poetry run python main.py --mode test_questions
