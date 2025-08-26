@@ -31,8 +31,13 @@ from tqdm import tqdm
 
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
-from metaculus_bot.api_key_utils import get_openrouter_api_key
-from metaculus_bot.constants import BENCHMARK_BATCH_SIZE
+from metaculus_bot.constants import (
+    BENCHMARK_BATCH_SIZE,
+    FETCH_PACING_SECONDS,
+    FETCH_RETRY_BACKOFFS,
+    HEARTBEAT_INTERVAL,
+    TYPE_MIX,
+)
 from metaculus_bot.fallback_openrouter import build_llm_with_openrouter_fallback
 from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 from metaculus_bot.scoring_patches import (
@@ -101,7 +106,7 @@ _enable_aiohttp_session_autoclose()
 _progress_state = {"total_predictions": 0, "start_time": 0, "completed_batches": 0, "total_batches": 0, "pbar": None}
 
 
-def _install_benchmarker_heartbeat(interval_seconds: int = 60) -> None:
+def _install_benchmarker_heartbeat(interval_seconds: int = HEARTBEAT_INTERVAL) -> None:
     """Add a lightweight heartbeat to Benchmarker batch execution.
 
     Logs a progress line every ``interval_seconds`` while each batch is running,
@@ -191,7 +196,7 @@ def _update_progress_final() -> None:
     pbar.refresh()
 
 
-_install_benchmarker_heartbeat(60)
+_install_benchmarker_heartbeat(HEARTBEAT_INTERVAL)
 
 
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
@@ -204,8 +209,8 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
     """
 
     # Calculate counts for each type (50/25/25 distribution)
-    binary_count = int(total_questions * 0.5)
-    numeric_count = int(total_questions * 0.25)
+    binary_count = int(total_questions * TYPE_MIX[0])
+    numeric_count = int(total_questions * TYPE_MIX[1])
     mc_count = total_questions - binary_count - numeric_count  # Remainder goes to MC
 
     logger.info(f"Fetching mixed questions: {binary_count} binary, {numeric_count} numeric, {mc_count} multiple-choice")
@@ -235,7 +240,13 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
             logger.info(f"⚠️  Removed community_prediction_exists filter for {question_type} questions")
             sys.stdout.flush()
 
-        api_filter = ApiFilter(allowed_types=[question_type], **filter_kwargs)
+        # For numeric questions, include discrete types as well
+        if question_type == "numeric":
+            allowed_types = ["numeric", "discrete"]
+        else:
+            allowed_types = [question_type]
+
+        api_filter = ApiFilter(allowed_types=allowed_types, **filter_kwargs)
 
         def _is_retryable_error(err: Exception) -> bool:
             retryables = (
@@ -251,7 +262,7 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
             return any(tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"])  # type: ignore[return-value]
 
         attempts = 0
-        backoffs = [5, 15]  # seconds
+        backoffs = list(FETCH_RETRY_BACKOFFS)  # seconds
         while True:
             try:
                 logger.info(f"🔍 Attempt {attempts + 1}: fetching {count} {question_type} questions...")
@@ -301,7 +312,7 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
 
         # Intentional pacing between types
         if i < len(types_and_counts):
-            await asyncio.sleep(2)
+            await asyncio.sleep(FETCH_PACING_SECONDS)
 
     # Shuffle to avoid clustering by type
     random.shuffle(all_questions)
@@ -393,7 +404,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
     with MonetaryCostManager() as cost_manager:
         # Keep benchmark and bot research concurrency aligned
-        batch_size = 4
+        batch_size = BENCHMARK_BATCH_SIZE
 
         # Shared research cache for all bots to avoid duplicate API calls
         research_cache: dict[int, str] = {}
@@ -451,12 +462,12 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Individual model configurations for benchmarking
         # Test each model separately - ensembles will be generated post-hoc by analyze_correlations.py
         individual_models = [
-            {"name": "r1-0528", "forecaster": r1_0528_model},
+            {"name": "qwen3-235b", "forecaster": qwen3_model},
             {"name": "deepseek-3.1", "forecaster": ds_v3p1_model},
             {"name": "kimi-k2", "forecaster": kimi_k2_model},
-            # {"name": "qwen3-235b", "forecaster": qwen3_model},
-            # {"name": "glm-4.5", "forecaster": glm_model},
             # Additional models - comment for cost control during development:
+            # {"name": "glm-4.5", "forecaster": glm_model},
+            # {"name": "r1-0528", "forecaster": r1_0528_model},
             # {"name": "claude-sonnet-4", "forecaster": claude_model},
             # {"name": "gpt-5", "forecaster": gpt5_model},
             # {"name": "gemini-2.5-pro", "forecaster": gemini_model},

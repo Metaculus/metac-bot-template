@@ -10,15 +10,18 @@ from typing import Literal, Sequence, cast
 
 import numpy as np
 import pandas as pd
+from forecasting_tools import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution, NumericReport, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from .aggregation_strategies import AggregationStrategy
+from .constants import MC_PROB_MAX, MC_PROB_MIN
 
 __all__ = [
     "aggregate_numeric",
     "aggregate_binary_mean",
     "bound_messages",
+    "clamp_and_renormalize_mc",
 ]
 
 
@@ -87,10 +90,20 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     """Return upper & lower bound helper messages for numeric prompts.
 
     Tests expect empty strings for open bounds to keep prompts concise.
+    For discrete questions, if nominal bounds are missing, derive them using half-step logic.
     """
 
     nominal_upper = getattr(question, "nominal_upper_bound", None)
     nominal_lower = getattr(question, "nominal_lower_bound", None)
+
+    # For discrete questions, if we don't have nominal bounds, derive them using half-step logic
+    cdf_size = getattr(question, "cdf_size", None)
+    if nominal_upper is None and nominal_lower is None and cdf_size is not None and cdf_size != 201:
+        # This is likely a discrete question - derive nominal bounds from half-step
+        step = (question.upper_bound - question.lower_bound) / (cdf_size - 1)
+        nominal_upper = question.upper_bound - step / 2
+        nominal_lower = question.lower_bound + step / 2
+
     upper_bound_number = nominal_upper if nominal_upper is not None else question.upper_bound
     lower_bound_number = nominal_lower if nominal_lower is not None else question.lower_bound
 
@@ -104,3 +117,23 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound_number}."
     return upper_bound_message, lower_bound_message
+
+
+def clamp_and_renormalize_mc(predicted_option_list: PredictedOptionList) -> PredictedOptionList:
+    """Clamp MC option probabilities and renormalize in-place.
+
+    - Clamps each option probability to [MC_PROB_MIN, MC_PROB_MAX].
+    - Renormalizes so that probabilities sum to 1.0 (if total > 0).
+    - Returns the same `PredictedOptionList` for convenience.
+    """
+    # Clamp
+    for option in predicted_option_list.predicted_options:
+        option.probability = max(MC_PROB_MIN, min(MC_PROB_MAX, option.probability))
+
+    # Renormalize
+    total_prob = sum(option.probability for option in predicted_option_list.predicted_options)
+    if total_prob > 0:
+        for option in predicted_option_list.predicted_options:
+            option.probability /= total_prob
+
+    return predicted_option_list

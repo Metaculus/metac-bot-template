@@ -15,6 +15,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Scoring path counters for diagnostics across a run
 _NUMERIC_PMF_ATTEMPTS = 0
@@ -727,7 +728,7 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
             cache[(q_id, "numeric")] = (final_score, False)  # Score calculated, no diagnostics needed
             logger.debug(f"Numeric Question {q_id}: baseline score {final_score:.2f} (PMF-based vs community, cached)")
         else:
-            logger.info(
+            logger.debug(
                 f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (PMF-based vs community)"
             )
 

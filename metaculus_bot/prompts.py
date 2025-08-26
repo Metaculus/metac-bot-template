@@ -260,11 +260,13 @@ def numeric_prompt(
         Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
         __Example:__
 
+        Percentile 5: 10.1
         Percentile 10: 12.3
         Percentile 20: 23.4
         Percentile 40: 34.5
         Percentile 60: 56.7
         Percentile 80: 67.8
         Percentile 90: 78.9
+        Percentile 95: 89.0
         """
     )

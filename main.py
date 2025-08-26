@@ -2,6 +2,7 @@ import asyncio
 import logging
 from typing import Any, Coroutine, Literal, Sequence, cast
 
+import numpy as np
 from dotenv import load_dotenv
 from forecasting_tools import (  # AskNewsSearcher,
     BinaryPrediction,
@@ -11,7 +12,6 @@ from forecasting_tools import (  # AskNewsSearcher,
     MultipleChoiceQuestion,
     NumericDistribution,
     NumericQuestion,
-    Percentile,
     PredictedOptionList,
     ReasonedPrediction,
     SmartSearcher,
@@ -30,9 +30,22 @@ from metaculus_bot.aggregation_strategies import (
     aggregate_multiple_choice_mean,
     aggregate_multiple_choice_median,
 )
-from metaculus_bot.api_key_utils import get_openrouter_api_key
-from metaculus_bot.constants import DEFAULT_MAX_CONCURRENT_RESEARCH
-from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
+from metaculus_bot.constants import (
+    BINARY_PROB_MAX,
+    BINARY_PROB_MIN,
+    DEFAULT_MAX_CONCURRENT_RESEARCH,
+    NUM_MAX_STEP,
+    NUM_MIN_PROB_STEP,
+    NUM_RAMP_K_FACTOR,
+    NUM_SPREAD_DELTA_MULT,
+    NUM_VALUE_EPSILON_MULT,
+)
+from metaculus_bot.numeric_utils import (
+    aggregate_binary_mean,
+    aggregate_numeric,
+    bound_messages,
+    clamp_and_renormalize_mc,
+)
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
@@ -41,6 +54,8 @@ logger.setLevel(logging.DEBUG)
 
 load_dotenv()
 load_dotenv(".env.local", override=True)
+
+# --- Numeric CDF smoothing constants centralized in metaculus_bot.constants ---
 
 
 class TemplateForecaster(CompactLoggingForecastBot):
@@ -328,11 +343,11 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
             if self.aggregation_strategy == AggregationStrategy.MEAN:
                 result = aggregate_binary_mean(float_preds)
-                logger.info("Binary mean of %s = %.3f (rounded)", float_preds, result)
+                logger.info("Binary question ensembling: mean of %s = %.3f (rounded)", float_preds, result)
                 return result  # type: ignore[return-value]
             elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
                 result = aggregate_binary_median(float_preds)
-                logger.info("Binary median of %s = %.3f", float_preds, result)
+                logger.info("Binary question ensembling: median of %s = %.3f", float_preds, result)
                 return result  # type: ignore[return-value]
             else:
                 raise ValueError(f"Unsupported aggregation strategy for binary questions: {self.aggregation_strategy}")
@@ -437,10 +452,19 @@ class TemplateForecaster(CompactLoggingForecastBot):
         prompt = binary_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
         self._log_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
-        binary_prediction: BinaryPrediction = await structure_output(
-            reasoning, BinaryPrediction, model=self.get_llm("parser", "llm")
+        # Provide strict parsing guidance so the parser returns a decimal in [0,1]
+        binary_parse_instructions = (
+            "Return a single JSON object only. Set `prediction_in_decimal` strictly as a decimal in [0,1] "
+            "(e.g., 0.17 for 17%). If the text contains 'Probability: NN%' or 'NN %', set `prediction_in_decimal` to NN/100. "
+            "Do not return percentages, strings, or any extra fields."
         )
-        decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
+        binary_prediction: BinaryPrediction = await structure_output(
+            reasoning,
+            BinaryPrediction,
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=binary_parse_instructions,
+        )
+        decimal_pred = max(BINARY_PROB_MIN, min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal))
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {decimal_pred}")
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
@@ -467,15 +491,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
             additional_instructions=parsing_instructions,
         )
 
-        # Apply custom clamping to 0.5%/99.5% for multiple choice questions
-        for option in predicted_option_list.predicted_options:
-            option.probability = max(0.005, min(0.995, option.probability))
-
-        # Renormalize to ensure probabilities sum to 1 after clamping
-        total_prob = sum(option.probability for option in predicted_option_list.predicted_options)
-        if total_prob > 0:
-            for option in predicted_option_list.predicted_options:
-                option.probability /= total_prob
+        # Apply custom clamping to 0.5%/99.5% and renormalize
+        predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
         return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
@@ -495,28 +512,225 @@ class TemplateForecaster(CompactLoggingForecastBot):
             reasoning, list[Percentile], model=self.get_llm("parser", "llm")
         )
 
-        # If zero_point is the same as the lower bound, we must override it to None to avoid a ZeroDivisionError in the CDF calculation.
+        # Validate we have exactly 8 percentiles with the expected set {5,10,20,40,60,80,90,95}
+        expected_percentiles = {0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95}
+        if len(percentile_list) != 8:
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": percentile_list,
+                        "ctx": {
+                            "error": f"Expected 8 declared percentiles (5,10,20,40,60,80,90,95), got {len(percentile_list)}.",
+                        },
+                    }
+                ],
+            )
+
+        # Validate percentile values are exactly the expected set (with tolerance for rounding)
+        actual_percentiles = {round(p.percentile, 6) for p in percentile_list}
+        expected_rounded = {round(p, 6) for p in expected_percentiles}
+        if actual_percentiles != expected_rounded:
+            raise ValidationError.from_exception_data(
+                "NumericDistribution",
+                [
+                    {
+                        "type": "value_error",
+                        "loc": ("declared_percentiles",),
+                        "input": percentile_list,
+                        "ctx": {
+                            "error": f"Expected percentile set {{5,10,20,40,60,80,90,95}}, got {sorted(p.percentile * 100 for p in percentile_list)}.",
+                        },
+                    }
+                ],
+            )
+
+        # Sort percentiles by percentile value to ensure proper order
+        percentile_list.sort(key=lambda p: p.percentile)
+
+        # Apply jitter and clamp logic
+        percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+
+        # For discrete questions, force zero_point to None to avoid log-scaling
+        cdf_size = getattr(question, "cdf_size", None)
+        is_discrete = cdf_size is not None and cdf_size != 201
         zero_point = getattr(question, "zero_point", None)
-        if zero_point is not None and zero_point == question.lower_bound:
+
+        if is_discrete:
+            if zero_point is not None:
+                logger.debug(
+                    f"Question {getattr(question, 'id_of_question', 'N/A')}: Forcing zero_point=None for discrete question"
+                )
+            zero_point = None
+        elif zero_point is not None and zero_point == question.lower_bound:
             logger.warning(
                 f"Question {getattr(question, 'id_of_question', 'N/A')}: zero_point ({zero_point}) is equal to lower_bound "
                 f"({question.lower_bound}). Forcing linear scale for CDF generation."
             )
             zero_point = None
 
-        prediction = NumericDistribution(
-            declared_percentiles=percentile_list,
-            open_upper_bound=question.open_upper_bound,
-            open_lower_bound=question.open_lower_bound,
-            upper_bound=question.upper_bound,
-            lower_bound=question.lower_bound,
-            zero_point=zero_point,
-            cdf_size=getattr(question, "cdf_size", None),
-        )
+        # Phase 2: Use local PCHIP-based CDF construction for robust interpolation
+        # - PCHIP (monotone cubic) interpolation for smoother distributions
+        # - Applied min step increase (5e-5) and max jump cap (0.59) constraints
+        # - Handles log-space transforms when all values are positive (continuous only)
+        # - Enforces closed/open bound constraints directly in CDF construction
+
+        from metaculus_bot.pchip_cdf import generate_pchip_cdf, percentiles_to_pchip_format
+
+        try:
+            # Convert percentiles to PCHIP input format
+            pchip_percentiles = percentiles_to_pchip_format(percentile_list)
+
+            # Generate robust CDF using PCHIP interpolation
+            pchip_cdf = generate_pchip_cdf(
+                percentile_values=pchip_percentiles,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                min_step=NUM_MIN_PROB_STEP,
+                num_points=201,
+            )
+
+            # Optional probability-side ramp smoothing to enforce minimum step
+            smoothing_applied = False
+            try:
+                diffs_before = np.diff(pchip_cdf)
+                min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
+                if min_delta_before < NUM_MIN_PROB_STEP:
+                    ramp = np.linspace(0.0, NUM_MIN_PROB_STEP * NUM_RAMP_K_FACTOR, len(pchip_cdf))
+                    pchip_cdf = np.maximum.accumulate(np.array(pchip_cdf) + ramp).tolist()
+                    smoothing_applied = True
+
+                    # Re-pin endpoints to respect open/closed bounds semantics
+                    if not question.open_lower_bound:
+                        pchip_cdf[0] = 0.0
+                    else:
+                        pchip_cdf[0] = max(pchip_cdf[0], 0.001)
+                    if not question.open_upper_bound:
+                        pchip_cdf[-1] = 1.0
+                    else:
+                        pchip_cdf[-1] = min(pchip_cdf[-1], 0.999)
+
+                    diffs_after = np.diff(pchip_cdf)
+                    min_delta_after = float(np.min(diffs_after)) if len(diffs_after) else 1.0
+                    logger.warning(
+                        "CDF ramp smoothing for Q %s | URL %s | min_prob_delta_before=%.8f | min_prob_delta_after=%.8f | k_factor=%.1f",
+                        getattr(question, "id_of_question", None),
+                        getattr(question, "page_url", None),
+                        min_delta_before,
+                        min_delta_after,
+                        NUM_RAMP_K_FACTOR,
+                    )
+            except Exception as smooth_e:
+                logger.error("Ramp smoothing skipped due to error: %s", smooth_e)
+
+            # Validate PCHIP CDF meets Metaculus requirements
+            if len(pchip_cdf) != 201:
+                raise ValueError(f"PCHIP CDF has {len(pchip_cdf)} points, expected 201")
+
+            if not all(0.0 <= p <= 1.0 for p in pchip_cdf):
+                raise ValueError(
+                    f"PCHIP CDF contains invalid probabilities outside [0,1]: {[p for p in pchip_cdf if not (0.0 <= p <= 1.0)]}"
+                )
+
+            if not all(a <= b for a, b in zip(pchip_cdf[:-1], pchip_cdf[1:])):
+                raise ValueError("PCHIP CDF is not monotonic")
+
+            # Check minimum step requirement (same as forecasting-tools)
+            min_step = np.min(np.diff(pchip_cdf))
+            if min_step < NUM_MIN_PROB_STEP - 1e-10:
+                raise ValueError(f"PCHIP CDF violates minimum step requirement: {min_step:.8f} < 5e-5")
+
+            # Check maximum step requirement
+            max_step = np.max(np.diff(pchip_cdf))
+            if max_step > NUM_MAX_STEP + 1e-6:
+                raise ValueError(f"PCHIP CDF violates maximum step requirement: {max_step:.8f} > 0.59")
+
+            # Check boundary conditions
+            if not question.open_lower_bound and abs(pchip_cdf[0]) > 1e-6:
+                raise ValueError(f"PCHIP CDF closed lower bound violation: {pchip_cdf[0]} != 0.0")
+
+            if not question.open_upper_bound and abs(pchip_cdf[-1] - 1.0) > 1e-6:
+                raise ValueError(f"PCHIP CDF closed upper bound violation: {pchip_cdf[-1]} != 1.0")
+
+            if question.open_lower_bound and pchip_cdf[0] < 0.001:
+                raise ValueError(f"PCHIP CDF open lower bound violation: {pchip_cdf[0]} < 0.001")
+
+            if question.open_upper_bound and pchip_cdf[-1] > 0.999:
+                raise ValueError(f"PCHIP CDF open upper bound violation: {pchip_cdf[-1]} > 0.999")
+
+            # Emit INFO to make success clearly visible in smoke logs
+            logger.info(
+                "PCHIP OK for Q %s | points=%d | min_step=%.8f | max_step=%.8f | smoothing=%s | open_bounds=(%s,%s)",
+                getattr(question, "id_of_question", "N/A"),
+                len(pchip_cdf),
+                min_step,
+                max_step,
+                smoothing_applied,
+                question.open_lower_bound,
+                question.open_upper_bound,
+            )
+
+            # Create custom NumericDistribution subclass that uses our PCHIP CDF
+            class PchipNumericDistribution(NumericDistribution):
+                def __init__(self, pchip_cdf_values, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self._pchip_cdf_values = pchip_cdf_values
+
+                @property
+                def cdf(self) -> list[Percentile]:
+                    """Return PCHIP-generated CDF as Percentile objects."""
+                    # Create the value axis (201 points from lower to upper bound)
+                    x_vals = np.linspace(self.lower_bound, self.upper_bound, len(self._pchip_cdf_values))
+
+                    # Create Percentile objects with correct mapping:
+                    # _pchip_cdf_values contains the probability values (0-1)
+                    # x_vals contains the corresponding question values
+                    return [
+                        Percentile(percentile=prob_val, value=question_val)
+                        for question_val, prob_val in zip(x_vals, self._pchip_cdf_values)
+                    ]
+
+            prediction = PchipNumericDistribution(
+                pchip_cdf_values=pchip_cdf,
+                declared_percentiles=percentile_list,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                cdf_size=getattr(question, "cdf_size", None),
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Question {getattr(question, 'id_of_question', 'N/A')}: PCHIP CDF construction failed ({str(e)}), "
+                "falling back to forecasting-tools default"
+            )
+            # Fallback to original forecasting-tools approach
+            prediction = NumericDistribution(
+                declared_percentiles=percentile_list,
+                open_upper_bound=question.open_upper_bound,
+                open_lower_bound=question.open_lower_bound,
+                upper_bound=question.upper_bound,
+                lower_bound=question.lower_bound,
+                zero_point=zero_point,
+                cdf_size=getattr(question, "cdf_size", None),
+            )
 
         # Proactively compute CDF to surface spacing issues and log rich diagnostics
+        # Skip CDF validation for PCHIP distributions since they enforce constraints internally
         try:
-            _ = prediction.cdf  # force CDF construction
+            if hasattr(prediction, "_pchip_cdf_values"):
+                logger.debug(
+                    f"Question {getattr(question, 'id_of_question', 'N/A')}: Skipping CDF validation for PCHIP distribution"
+                )
+            else:
+                _ = prediction.cdf  # force CDF construction
         except (AssertionError, ZeroDivisionError) as e:
             try:
                 declared = getattr(prediction, "declared_percentiles", [])
@@ -548,28 +762,199 @@ class TemplateForecaster(CompactLoggingForecastBot):
             except Exception as log_e:
                 logger.error("Failed logging numeric CDF diagnostics: %s", log_e)
             raise
-        # Ensure we extracted all 6 required percentiles (10,20,40,60,80,90).
-        if (
-            hasattr(prediction, "declared_percentiles")
-            and isinstance(prediction.declared_percentiles, list)
-            and len(prediction.declared_percentiles) != 6
-        ):
-            raise ValidationError.from_exception_data(
-                "NumericDistribution",  # title
-                [
-                    {
-                        "type": "value_error",
-                        "loc": ("declared_percentiles",),
-                        "input": prediction.declared_percentiles,
-                        "ctx": {
-                            "error": "Expected 6 declared percentiles (10,20,40,60,80,90).",
-                        },
-                    }
-                ],
-            )
+        # Validation of 8 percentiles is now done earlier, before creating NumericDistribution
 
         logger.info(f"Forecasted URL {question.page_url} as {prediction.declared_percentiles}")
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    def _apply_jitter_and_clamp(self, percentile_list: list[Percentile], question: NumericQuestion) -> list[Percentile]:
+        """Apply jitter to ensure strictly increasing percentiles and clamp values to bounds.
+
+        Enhancements:
+        - Detect clusters of near-equal declared values and spread them minimally and symmetrically.
+        - Preserve cluster intent while ensuring strictly increasing sequence before CDF construction.
+        """
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        # Calculate buffer for bounds clamping
+        range_size = question.upper_bound - question.lower_bound
+        buffer = 1.0 if range_size > 100 else range_size * 0.01
+
+        # Extract values
+        values = [p.value for p in percentile_list]
+        modified_values = list(values)  # Copy for modifications
+
+        # Detect count-like patterns (all near integers)
+        count_like = False
+        try:
+            if values:
+                count_like = all(abs(v - round(v)) <= 1e-6 for v in values)
+        except Exception:
+            count_like = False
+
+        # Detect and spread clusters of near-equal values
+        value_eps = max(range_size * NUM_VALUE_EPSILON_MULT, 1e-12)
+        base_delta = max(range_size * NUM_SPREAD_DELTA_MULT, 1e-12)
+        spread_delta = max(base_delta, 1.0 if count_like else base_delta)
+
+        # Compute pre-spread min delta for logging
+        pre_deltas = [b - a for a, b in zip(values, values[1:])]
+        min_value_delta_before = min(pre_deltas) if pre_deltas else float("inf")
+
+        clusters_applied = 0
+        i = 0
+        while i < len(modified_values) - 1:
+            j = i
+            # Grow cluster while adjacent values within epsilon
+            while j + 1 < len(modified_values) and abs(modified_values[j + 1] - modified_values[j]) <= value_eps:
+                j += 1
+            if j > i:
+                # We have a cluster from i..j inclusive
+                clusters_applied += 1
+                k = j - i + 1
+                # Base center value: mean of the cluster
+                center = float(np.mean(modified_values[i : j + 1]))
+                # Offsets: symmetric around center
+                # Example for k=3: -d, 0, +d; for k=4: -1.5d, -0.5d, +0.5d, +1.5d
+                offsets = [((idx - (k - 1) / 2.0) * spread_delta) for idx in range(k)]
+                new_vals = [center + off for off in offsets]
+                # Enforce bounds softly during spread to avoid later large clamps
+                tiny = max(1e-9 * range_size, 1e-12)
+                if not question.open_lower_bound:
+                    new_vals = [max(v, question.lower_bound + tiny) for v in new_vals]
+                if not question.open_upper_bound:
+                    new_vals = [min(v, question.upper_bound - tiny) for v in new_vals]
+                # Apply while preserving non-decreasing relation to neighbors
+                # If previous value exists and is >= first new, shift all up minimally
+                if i - 1 >= 0 and new_vals[0] <= modified_values[i - 1]:
+                    shift = (modified_values[i - 1] + max(1e-12, value_eps)) - new_vals[0]
+                    new_vals = [v + shift for v in new_vals]
+                # If next value exists and last new exceeds it, compress offsets
+                if j + 1 < len(modified_values) and new_vals[-1] >= modified_values[j + 1]:
+                    # Compress spread to fit in available gap
+                    available = max(modified_values[j + 1] - (new_vals[0]), max(value_eps, 1e-12))
+                    if k > 1:
+                        step = available / k
+                        new_vals = [new_vals[0] + step * idx for idx in range(k)]
+                # Assign
+                for t in range(k):
+                    modified_values[i + t] = new_vals[t]
+                i = j + 1
+            else:
+                i += 1
+
+        # Apply jitter for duplicates and ensure increasing without breaching bounds
+        for i in range(1, len(modified_values)):
+            if modified_values[i] <= modified_values[i - 1]:
+                epsilon = max(1e-9 * range_size, 1e-12)
+                target = modified_values[i - 1] + epsilon
+                if not question.open_upper_bound:
+                    target = min(target, question.upper_bound - epsilon)
+                # Increase if possible; otherwise allow equality (PCHIP will handle de-dup)
+                new_val = max(modified_values[i], target)
+                # Also respect lower bound on closed lower
+                if not question.open_lower_bound:
+                    new_val = max(new_val, question.lower_bound + epsilon)
+                modified_values[i] = new_val
+                logger.debug(
+                    f"Applied jitter: percentile {percentile_list[i].percentile} value {values[i]} -> {modified_values[i]}"
+                )
+
+        # Clamp values to bounds if they violate by small amounts
+        corrections_made = False
+        for i in range(len(modified_values)):
+            original_value = modified_values[i]
+
+            # Check lower bound violation
+            if not question.open_lower_bound and modified_values[i] < question.lower_bound:
+                if question.lower_bound - modified_values[i] <= buffer:
+                    modified_values[i] = question.lower_bound + buffer
+                    corrections_made = True
+                    logger.debug(
+                        f"Clamped lower: percentile {percentile_list[i].percentile} value {original_value} -> {modified_values[i]}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Value {original_value} too far below lower bound {question.lower_bound} (tolerance: {buffer})"
+                    )
+
+            # Check upper bound violation
+            if not question.open_upper_bound and modified_values[i] > question.upper_bound:
+                if modified_values[i] - question.upper_bound <= buffer:
+                    modified_values[i] = question.upper_bound - buffer
+                    corrections_made = True
+                    logger.debug(
+                        f"Clamped upper: percentile {percentile_list[i].percentile} value {original_value} -> {modified_values[i]}"
+                    )
+                else:
+                    raise ValueError(
+                        f"Value {original_value} too far above upper bound {question.upper_bound} (tolerance: {buffer})"
+                    )
+
+        # Log warnings/diagnostics
+        post_deltas = [b - a for a, b in zip(modified_values, modified_values[1:])]
+        min_value_delta_after = min(post_deltas) if post_deltas else float("inf")
+
+        if clusters_applied > 0:
+            logger.warning(
+                "Cluster spread applied for Q %s | URL %s | clusters=%d | delta_used=%.6g | min_value_delta_before=%.6g | min_value_delta_after=%.6g | count_like=%s",
+                getattr(question, "id_of_question", None),
+                getattr(question, "page_url", None),
+                clusters_applied,
+                spread_delta,
+                min_value_delta_before,
+                min_value_delta_after,
+                count_like,
+            )
+
+        if corrections_made or any(v != orig for v, orig in zip(modified_values, values)):
+            logger.warning(f"Corrected numeric distribution for question {getattr(question, 'id_of_question', 'N/A')}")
+
+        # Optional heavy bound clamping diagnostic
+        if len(values) > 0:
+            tol = 1e-9
+            clamped_lower = sum(
+                1 for v in modified_values if not question.open_lower_bound and v <= question.lower_bound + buffer + tol
+            )
+            clamped_upper = sum(
+                1 for v in modified_values if not question.open_upper_bound and v >= question.upper_bound - buffer - tol
+            )
+            if clamped_lower / len(values) > 0.5 or clamped_upper / len(values) > 0.5:
+                logger.warning(
+                    "Heavy bound clamping for Q %s | URL %s | clamped_to_lower=%d%% | clamped_to_upper=%d%% | bounds=[%s, %s]",
+                    getattr(question, "id_of_question", None),
+                    getattr(question, "page_url", None),
+                    int(100 * clamped_lower / len(values)),
+                    int(100 * clamped_upper / len(values)),
+                    question.lower_bound,
+                    question.upper_bound,
+                )
+
+        # Re-ensure increasing after clamping, bounded (left-to-right)
+        for i in range(1, len(modified_values)):
+            if modified_values[i] <= modified_values[i - 1]:
+                epsilon = max(1e-9 * range_size, 1e-12)
+                target = modified_values[i - 1] + epsilon
+                if not question.open_upper_bound:
+                    target = min(target, question.upper_bound - epsilon)
+                if not question.open_lower_bound:
+                    target = max(target, question.lower_bound + epsilon)
+                modified_values[i] = max(modified_values[i], target)
+
+        # Additional pass (right-to-left) to make room near closed upper bound
+        # If upper bound is closed and strict increase is capped, slide earlier values down by epsilon
+        epsilon = max(1e-9 * range_size, 1e-12)
+        for i in range(len(modified_values) - 2, -1, -1):
+            if modified_values[i] >= modified_values[i + 1]:
+                target = modified_values[i + 1] - epsilon
+                if not question.open_lower_bound:
+                    target = max(target, question.lower_bound + epsilon)
+                modified_values[i] = min(modified_values[i], target)
+
+        # Create new percentile list with corrected values
+        return [Percentile(value=v, percentile=p.percentile) for v, p in zip(modified_values, percentile_list)]
 
     def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         return bound_messages(question)

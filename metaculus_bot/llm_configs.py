@@ -22,7 +22,7 @@ MODEL_CONFIG = {
 }
 
 FORECASTER_LLMS = [
-    # TODO: consider multiple copies of gpt-5 or o3 w/ diff sampling params
+    # TODO: consider adding add'l LLMs to ensemble
     build_llm_with_openrouter_fallback(
         model="openrouter/openai/gpt-5",
         reasoning={"effort": "high"},
@@ -40,10 +40,10 @@ FORECASTER_LLMS = [
     ),
 ]
 
-SUMMARIZER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"
+SUMMARIZER_LLM: str = "openrouter/openai/gpt-5-mini"
 
 # Parser should be a reliable, low-latency model for structure extraction
-PARSER_LLM: str = "openrouter/qwen/qwen3-235b-a22b-2507"  # "openrouter/google/gemini-2.5-flash"
+PARSER_LLM: str = "openrouter/openai/gpt-5-mini"
 
 # Researcher is only used by the base bot when internal research is invoked.
 # Our implementation uses providers, but we still set it explicitly to avoid silent defaults.
