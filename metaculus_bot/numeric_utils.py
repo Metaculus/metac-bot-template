@@ -10,15 +10,18 @@ from typing import Literal, Sequence, cast
 
 import numpy as np
 import pandas as pd
+from forecasting_tools import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import NumericDistribution, NumericReport, Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from .aggregation_strategies import AggregationStrategy
+from .constants import MC_PROB_MAX, MC_PROB_MIN
 
 __all__ = [
     "aggregate_numeric",
     "aggregate_binary_mean",
     "bound_messages",
+    "clamp_and_renormalize_mc",
 ]
 
 
@@ -114,3 +117,23 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound_number}."
     return upper_bound_message, lower_bound_message
+
+
+def clamp_and_renormalize_mc(predicted_option_list: PredictedOptionList) -> PredictedOptionList:
+    """Clamp MC option probabilities and renormalize in-place.
+
+    - Clamps each option probability to [MC_PROB_MIN, MC_PROB_MAX].
+    - Renormalizes so that probabilities sum to 1.0 (if total > 0).
+    - Returns the same `PredictedOptionList` for convenience.
+    """
+    # Clamp
+    for option in predicted_option_list.predicted_options:
+        option.probability = max(MC_PROB_MIN, min(MC_PROB_MAX, option.probability))
+
+    # Renormalize
+    total_prob = sum(option.probability for option in predicted_option_list.predicted_options)
+    if total_prob > 0:
+        for option in predicted_option_list.predicted_options:
+            option.probability /= total_prob
+
+    return predicted_option_list

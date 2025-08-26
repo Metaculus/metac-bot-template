@@ -12,7 +12,6 @@ from forecasting_tools import (  # AskNewsSearcher,
     MultipleChoiceQuestion,
     NumericDistribution,
     NumericQuestion,
-    Percentile,
     PredictedOptionList,
     ReasonedPrediction,
     SmartSearcher,
@@ -31,9 +30,22 @@ from metaculus_bot.aggregation_strategies import (
     aggregate_multiple_choice_mean,
     aggregate_multiple_choice_median,
 )
-from metaculus_bot.api_key_utils import get_openrouter_api_key
-from metaculus_bot.constants import DEFAULT_MAX_CONCURRENT_RESEARCH
-from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
+from metaculus_bot.constants import (
+    BINARY_PROB_MAX,
+    BINARY_PROB_MIN,
+    DEFAULT_MAX_CONCURRENT_RESEARCH,
+    NUM_MAX_STEP,
+    NUM_MIN_PROB_STEP,
+    NUM_RAMP_K_FACTOR,
+    NUM_SPREAD_DELTA_MULT,
+    NUM_VALUE_EPSILON_MULT,
+)
+from metaculus_bot.numeric_utils import (
+    aggregate_binary_mean,
+    aggregate_numeric,
+    bound_messages,
+    clamp_and_renormalize_mc,
+)
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
@@ -43,15 +55,7 @@ logger.setLevel(logging.DEBUG)
 load_dotenv()
 load_dotenv(".env.local", override=True)
 
-# --- Numeric CDF smoothing constants (tunable) ---
-# Minimal threshold to detect nearly-equal declared values (relative to range)
-VALUE_EPSILON_MULT = 1e-9
-# Base minimal spread applied within a detected cluster (relative to range)
-SPREAD_DELTA_MULT = 1e-6
-# Target minimum adjacent probability step for numeric CDFs
-MIN_PROB_STEP = 5.0e-5
-# Factor to scale the injected ramp when smoothing probabilities
-RAMP_K_FACTOR = 3.0
+# --- Numeric CDF smoothing constants centralized in metaculus_bot.constants ---
 
 
 class TemplateForecaster(CompactLoggingForecastBot):
@@ -460,7 +464,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             model=self.get_llm("parser", "llm"),
             additional_instructions=binary_parse_instructions,
         )
-        decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
+        decimal_pred = max(BINARY_PROB_MIN, min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal))
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {decimal_pred}")
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
@@ -487,15 +491,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
             additional_instructions=parsing_instructions,
         )
 
-        # Apply custom clamping to 0.5%/99.5% for multiple choice questions
-        for option in predicted_option_list.predicted_options:
-            option.probability = max(0.005, min(0.995, option.probability))
-
-        # Renormalize to ensure probabilities sum to 1 after clamping
-        total_prob = sum(option.probability for option in predicted_option_list.predicted_options)
-        if total_prob > 0:
-            for option in predicted_option_list.predicted_options:
-                option.probability /= total_prob
+        # Apply custom clamping to 0.5%/99.5% and renormalize
+        predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
         return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
@@ -594,7 +591,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 upper_bound=question.upper_bound,
                 lower_bound=question.lower_bound,
                 zero_point=zero_point,
-                min_step=5.0e-5,
+                min_step=NUM_MIN_PROB_STEP,
                 num_points=201,
             )
 
@@ -603,8 +600,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
             try:
                 diffs_before = np.diff(pchip_cdf)
                 min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
-                if min_delta_before < MIN_PROB_STEP:
-                    ramp = np.linspace(0.0, MIN_PROB_STEP * RAMP_K_FACTOR, len(pchip_cdf))
+                if min_delta_before < NUM_MIN_PROB_STEP:
+                    ramp = np.linspace(0.0, NUM_MIN_PROB_STEP * NUM_RAMP_K_FACTOR, len(pchip_cdf))
                     pchip_cdf = np.maximum.accumulate(np.array(pchip_cdf) + ramp).tolist()
                     smoothing_applied = True
 
@@ -626,7 +623,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                         getattr(question, "page_url", None),
                         min_delta_before,
                         min_delta_after,
-                        RAMP_K_FACTOR,
+                        NUM_RAMP_K_FACTOR,
                     )
             except Exception as smooth_e:
                 logger.error("Ramp smoothing skipped due to error: %s", smooth_e)
@@ -645,12 +642,12 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
             # Check minimum step requirement (same as forecasting-tools)
             min_step = np.min(np.diff(pchip_cdf))
-            if min_step < 5e-5 - 1e-10:
+            if min_step < NUM_MIN_PROB_STEP - 1e-10:
                 raise ValueError(f"PCHIP CDF violates minimum step requirement: {min_step:.8f} < 5e-5")
 
             # Check maximum step requirement
             max_step = np.max(np.diff(pchip_cdf))
-            if max_step > 0.59 + 1e-6:
+            if max_step > NUM_MAX_STEP + 1e-6:
                 raise ValueError(f"PCHIP CDF violates maximum step requirement: {max_step:.8f} > 0.59")
 
             # Check boundary conditions
@@ -798,8 +795,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
             count_like = False
 
         # Detect and spread clusters of near-equal values
-        value_eps = max(range_size * VALUE_EPSILON_MULT, 1e-12)
-        base_delta = max(range_size * SPREAD_DELTA_MULT, 1e-12)
+        value_eps = max(range_size * NUM_VALUE_EPSILON_MULT, 1e-12)
+        base_delta = max(range_size * NUM_SPREAD_DELTA_MULT, 1e-12)
         spread_delta = max(base_delta, 1.0 if count_like else base_delta)
 
         # Compute pre-spread min delta for logging
