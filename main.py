@@ -42,20 +42,20 @@ class WobblyBot2025Q3(ForecastBot):
         parser.add_argument(
             "--mode",
             type=str,
-            choices=["tournament", "metaculus_cup", "mini_bench", "test_questions"],
-            default="tournament",
-            help="Specify the run mode (default: tournament)",
+            choices=["aib_tournament", "metaculus_cup", "mini_bench", "test_questions"],
+            default="test_questions",
+            help="Specify the run mode (default: test_questions)",
         )
         args = parser.parse_args()
-        run_mode: Literal["tournament", "metaculus_cup", "mini_bench", "test_questions"] = args.mode
+        run_mode: Literal["aib_tournament", "metaculus_cup", "mini_bench", "test_questions"] = args.mode
         assert run_mode in [
-            "tournament",
+            "aib_tournament",
             "metaculus_cup",
             "mini_bench",
             "test_questions",
         ], "Invalid run mode"
 
-    if run_mode == "tournament":
+    if run_mode == "aib_tournament":
         logger.info("Tournament mode not implemented yet") #TODO
     elif run_mode == "metaculus_cup":
         logger.info("Metaculus cup mode not implemented yet") #TODO
