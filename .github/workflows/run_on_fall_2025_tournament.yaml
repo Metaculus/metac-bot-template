@@ -1,0 +1,44 @@
+name: Forecast on the Fall 2025 AI tournament questions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *" # Runs every 5 minutes, the Github Actions' minimum frequency, but it checks if a prediction was already made today
+
+# Concurrency group to prevent parallel runs and leave at most 1 job run queued after the current job finishes
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+
+# Job that runs every 2 minutes to check for new questions in the AIB tournament and predicts
+jobs:
+  forecast_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      # Adding the below will make the workflow faster, but will mean you don't automatically get updates from forecasting-tools and other packages
+      # - name: Load cached venv
+      #   id: cached-poetry-dependencies
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: .venv
+      #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Run bot
+        run: |
+          poetry run python main.py
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
