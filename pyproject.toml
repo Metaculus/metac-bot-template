@@ -1,26 +1,30 @@
-[tool.poetry]
+[project]
 name = "metac-bot-template"
 version = "0.1.0"
 description = ""
-authors = ["Vasile Popescu <elisescu@elisescu.com>"]
+authors = [{name = "Vasile Popescu", email = "elisescu@elisescu.com"}]
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.11"
+dependencies = [
+    "python-decouple>=3.8",
+    "requests>=2.32.3",
+    "asknews>=0.9.1",
+    "numpy>=1.26.0",
+    "openai>=1.57.4",
+    "python-dotenv>=1.0.1",
+    "forecasting-tools>=0.2.23",
+    "exa-py>=1.15.4",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-python-decouple = "^3.8"
-requests = "^2.32.3"
-asknews = "^0.9.1"
-numpy = "^1.26.0"
-openai = "^1.57.4"
-python-dotenv = "^1.0.1"
-forecasting-tools = "^0.2.23"
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.29.5",
+]
 
-
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
+[tool.hatch.build.targets.wheel]
+packages = ["."]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
