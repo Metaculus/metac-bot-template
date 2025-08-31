@@ -1,6 +1,9 @@
+import re
 from exa_py import Exa
 from prompts import SEARCH_QUERIES_PROMPT
 from config import EXA_API_KEY
+
+NUM_SEARCH_QUERIES = 5
 
 
 async def generate_search_queries(question: str, num_queries: int = 3) -> tuple[list[str], str]:
@@ -51,8 +54,10 @@ def call_exa_search(query: str, start_published_date: str = "2023-01-01T00:00:00
         start_published_date=start_published_date,
         num_results=5,
         category="news",
-        text=True,
-        type="auto",
+        type = "auto",
+        summary = {
+          "query": "You are tasked with creating a clean, concise summary by combining and cleaning multiple content sources from a web article. This summary will be used by a professional forecaster to make predictions about future events. Focus on factual information, key points, and relevant details that would be valuable for forecasting. If the content is not substantially relevant for forecasting purposes or is mostly noise, return \"No relevant content found.\""
+        }
     )
     return response
 
@@ -66,9 +71,7 @@ async def run_exa_research(question: str) -> str:
         return "Exa API key not provided."
     
     # Generate optimized search queries and get suggested start date using OpenAI
-    search_queries, start_date = await generate_search_queries(question, num_queries=3)
-
-    search_queries.append(question)  # Always include the original question as a query
+    search_queries, start_date = await generate_search_queries(question, num_queries=NUM_SEARCH_QUERIES)
     
     print(f"Generated {len(search_queries)} search queries with start date: {start_date}")
     
@@ -113,7 +116,11 @@ async def run_exa_research(question: str) -> str:
                         result_dict = result
                     
                     url = result_dict.get('url', '')
-                    if url and url not in seen_urls:
+                    summary = result_dict.get('summary', '')
+                    
+                    # Filter out results with no relevant content and avoid duplicates
+                    # Use regex to catch variations of "no relevant content found"
+                    if url and url not in seen_urls and not re.search(r'no\s+relevant\s+content\s+found', summary.lower()):
                         seen_urls.add(url)
                         result_dict['source_query'] = query
                         result_dict['query_number'] = i
@@ -132,9 +139,10 @@ async def run_exa_research(question: str) -> str:
         
         # Format the deduplicated results
         formatted_results = f"Here are {len(all_unique_results)} unique search results (duplicates removed):\n\n"
-        
-        for i, result in enumerate(all_unique_results[:15], 1):  # Limit to top 15 unique results
-            formatted_results += f"[Result {i}] (from query: '{result['source_query']}'):\n"
+
+        for i, result in enumerate(all_unique_results[:20], 1):  # Limit to top 20 unique results
+            # formatted_results += f"[Source {i}] (from query: '{result['source_query']}'):\n"
+            formatted_results += f"[Source {i}]:\n"
             formatted_results += f"Title: {result.get('title', 'No title')}\n"
             formatted_results += f"URL: {result.get('url', 'No URL')}\n"
 
@@ -143,83 +151,10 @@ async def run_exa_research(question: str) -> str:
             
             if result.get('summary'):
                 formatted_results += f"Summary: {result['summary']}\n"
-            
-            if result.get('highlights'):
-                highlights_text = '; '.join(result['highlights'][:3]) if isinstance(result['highlights'], list) else result['highlights']
-                formatted_results += f"Highlights: {highlights_text}\n"
-            
-            if result.get('text'):
-                text_snippet = result['text'][:300] + "..." if len(result['text']) > 300 else result['text']
-                formatted_results += f"Text: {text_snippet}\n"
-            
+          
             formatted_results += "\n"
         
         return formatted_results
         
     except Exception as e:
         return f"Error in smart search: {str(e)}"
-
-
-def call_exa_research(question: str) -> str:
-    """
-    Use the Exa Research API to create a comprehensive research task.
-    """
-    if not EXA_API_KEY:
-        return "Exa API key not provided."
-    
-    import requests
-    
-    url = "https://api.exa.ai/research"
-    headers = {
-        "accept": "application/json",
-        "content-type": "application/json",
-        "x-api-key": EXA_API_KEY
-    }
-    
-    payload = {
-        "query": question,
-        "type": "keyword",
-        "useAutoprompt": True,
-        "numResults": 10,
-        "contents": {
-            "text": True,
-            "highlights": True,
-            "summary": True
-        },
-        "category": "news",
-        "startPublishedDate": "2023-01-01T00:00:00.000Z"
-    }
-    
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        if not response.ok:
-            return f"Exa Research API error: {response.status_code} - {response.text}"
-        
-        data = response.json()
-        
-        if "results" not in data:
-            return "No research results found."
-        
-        formatted_results = "Here are the research findings:\n\n"
-        
-        for i, result in enumerate(data["results"][:10], 1):
-            formatted_results += f"[Research Result {i}]:\n"
-            formatted_results += f"Title: {result.get('title', 'No title')}\n"
-            formatted_results += f"URL: {result.get('url', 'No URL')}\n"
-            
-            if result.get('summary'):
-                formatted_results += f"Summary: {result['summary']}\n"
-            
-            if result.get('highlights'):
-                formatted_results += f"Highlights: {'; '.join(result['highlights'][:3])}\n"
-            
-            if result.get('text'):
-                text_snippet = result['text'][:300] + "..." if len(result['text']) > 300 else result['text']
-                formatted_results += f"Text: {text_snippet}\n"
-            
-            formatted_results += "\n"
-        
-        return formatted_results
-        
-    except Exception as e:
-        return f"Error calling Exa Research API: {str(e)}"

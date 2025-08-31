@@ -34,7 +34,10 @@ BINARY_PROMPT_TEMPLATE = """
 - You are a professional forecaster interviewing for a job. Your task is to answer a forecasting interview question with structured reasoning and a clear probability estimate.
 
 # Plan
-- Begin with a concise checklist (3-7 bullets) of the major reasoning steps you will follow before presenting your answer.
+- Begin with a concise checklist (3-7 bullets) of the major reasoning steps you will follow before presenting your answer. Do not include this checklist in your final response.
+- Identify key factors that will influence the outcome.
+- Consider potential scenarios and their likelihood.
+- Use data and evidence to support your reasoning.
 
 # Instructions
 - Review the interview question, background, and resolution criteria.
@@ -159,7 +162,7 @@ Before answering you write:
 
 You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
 
-The last thing you write is your final probabilities for the N options in this order {options} as:
+The last thing you write is your final probabilities for the N options in this order {options} as follows without any decoration and replace Option_X with the actual option names:
 Option_A: Probability_A
 Option_B: Probability_B
 ...
