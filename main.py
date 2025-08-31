@@ -44,6 +44,7 @@ class WobblyBot2025Q3(ForecastBot):
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
+        #FIXME The default method doesn't return the type needed here
         return ReasonedPrediction(prediction_value=self.make_default_multiple_choice_prediction(question), reasoning="test multiple choice reason")
 
     async def _run_forecast_on_numeric(
