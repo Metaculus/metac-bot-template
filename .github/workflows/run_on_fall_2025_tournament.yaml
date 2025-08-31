@@ -56,5 +56,5 @@ jobs:
       - name: Upload data artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-data-artifact
-          path: latest_prediction_dates.txt
+          name: latest_prediction_dates_aib_tournament_artifact
+          path: latest_prediction_dates_aib_tournament.txt

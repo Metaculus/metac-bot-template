@@ -35,5 +35,5 @@ jobs:
       - name: Upload data artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-data-artifact
+          name: latest_prediction_dates_test_questions_artifact
           path: latest_prediction_dates_test_questions.txt

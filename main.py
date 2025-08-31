@@ -58,14 +58,33 @@ class WobblyBot2025Q3(ForecastBot):
     async def forecast_questions(
         self,
         questions: Sequence[MetaculusQuestion],
+        prediction_date_dict: dict,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        #TODO Make the bot skip questions already predicted today, like it was done for the binary questions in test_questions mode
+
+        today = date.today().isoformat()
+
+        questions_to_forecast = []
+        for q in questions:
+            # if q.question_text.startswith("[PRACTICE]"):
+            #     logger.info(f"Skipping practice question {q.id_of_question}: {q.question_text}")
+            #     continue
+            if q.already_forecasted and prediction_date_dict.get(str(q.id_of_question)) == today:
+                logger.info(f"Already made a prediction today on question {q.id_of_question}: {q.question_text}")
+                continue        
+            questions_to_forecast.append(q)
+
+        if not questions_to_forecast:
+            logger.info("No new tournament questions to forecast at this time")
+            return []
+
+        logger.info(f"Found {len(questions_to_forecast)} new or outdated questions to forecast")
+
         reports: list[ForecastReport | BaseException] = []
         reports = await asyncio.gather(
             *[
                 self._run_individual_question_with_error_propagation(question)
-                for question in questions
+                for question in questions_to_forecast
             ],
             return_exceptions=return_exceptions,
         )
@@ -132,7 +151,7 @@ class WobblyBot2025Q3(ForecastBot):
                         data[key] = value
         except FileNotFoundError:
             # If the file doesn't exist, just return an empty dictionary
-            logger.error(f"'{filepath}' not found. Starting with an empty dataset.")
+            logger.error(f"'{filepath}' not found. Starting with an empty dataset")
         return data
     
     @staticmethod
@@ -140,7 +159,7 @@ class WobblyBot2025Q3(ForecastBot):
         with open(filepath, "w") as f:
             for key, value in data.items():
                 f.write(f"{key}:{value}\n")
-        print(f"Successfully saved data to '{filepath}'.")
+        print(f"Successfully saved data to '{filepath}'")
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -206,8 +225,21 @@ if __name__ == "__main__":
 if run_mode == "aib_tournament":
     logger.info("Running Wobbly Bot in AIB tournament mode")
 
+    prediction_file = "latest_prediction_dates_aib_tournament.txt"
+    prediction_date_dict = bot.load_data_from_file(prediction_file)
+    today = date.today().isoformat()
+
     questions = MetaculusApi.get_all_open_questions_from_tournament(MetaculusApi.CURRENT_AI_COMPETITION_ID)
-    asyncio.run(bot.forecast_questions(questions, return_exceptions=True))
+    reports = asyncio.run(bot.forecast_questions(questions, prediction_date_dict, return_exceptions=True))
+
+    # Only updates the status of successful predictions
+    for report in reports:
+        if isinstance(report, ForecastReport):
+            question_id = str(report.question.id_of_question)
+            prediction_date_dict[question_id] = today
+            logger.info(f"Successfully processed and logged today's date for question ID: {question_id}")
+
+    bot.save_data_to_file(prediction_date_dict, prediction_file)
 
 elif run_mode == "metaculus_cup":
     logger.info("Metaculus Cup mode not implemented yet") #TODO
