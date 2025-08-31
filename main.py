@@ -30,7 +30,7 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 class WobblyBot2025Q3(ForecastBot):
-    _max_concurrent_questions = (1)
+    _max_concurrent_questions = (5)
     _concurrency_limiter = asyncio.Semaphore(_max_concurrent_questions)
 
     async def run_research(self, question: MetaculusQuestion) -> str:
@@ -57,7 +57,7 @@ class WobblyBot2025Q3(ForecastBot):
         questions: Sequence[MetaculusQuestion],
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        #TODO Make the bot skip questions already predicted today
+        #TODO Make the bot skip questions already predicted today, like it was done for the binary questions in test_questions mode
         reports: list[ForecastReport | BaseException] = []
         reports = await asyncio.gather(
             *[
@@ -66,6 +66,7 @@ class WobblyBot2025Q3(ForecastBot):
             ],
             return_exceptions=return_exceptions,
         )
+
         return reports
 
     def make_default_binary_prediction(self):
@@ -103,6 +104,29 @@ class WobblyBot2025Q3(ForecastBot):
         probability_per_option = 1.0 / num_options
         probabilities: dict[str, float] = dict.fromkeys(question.options, probability_per_option)
         return probabilities
+    
+    @staticmethod
+    def load_data_from_file(filepath) -> dict:
+        data = {}
+        try:
+            with open(filepath, "r") as f:
+                for line in f:
+                    # Skip empty lines
+                    if line.strip():
+                        # Split only on the first colon to handle values that might contain colons
+                        key, value = line.strip().split(":", 1)
+                        data[key] = value
+        except FileNotFoundError:
+            # If the file doesn't exist, just return an empty dictionary
+            logger.error(f"'{filepath}' not found. Starting with an empty dataset.")
+        return data
+    
+    @staticmethod
+    def save_data_to_file(data: dict, filepath):
+        with open(filepath, "w") as f:
+            for key, value in data.items():
+                f.write(f"{key}:{value}\n")
+        print(f"Successfully saved data to '{filepath}'.")
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -130,7 +154,7 @@ if __name__ == "__main__":
     ], "Invalid run mode"
 
     bot = WobblyBot2025Q3(
-        research_reports_per_question=1,
+        research_reports_per_question=2,
         predictions_per_research_report=2,
         enable_summarize_research=False,
         use_research_summary_to_forecast=False,
@@ -167,6 +191,7 @@ if __name__ == "__main__":
 
 if run_mode == "aib_tournament":
     logger.info("Running Wobbly Bot in AIB tournament mode")
+
     questions = MetaculusApi.get_all_open_questions_from_tournament(MetaculusApi.CURRENT_AI_COMPETITION_ID)
     asyncio.run(bot.forecast_questions(questions, return_exceptions=True))
 
@@ -190,10 +215,24 @@ elif run_mode == "test_questions":
         "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/",
     ]
 
+    prediction_date_dict = bot.load_data_from_file("latest_prediction_dates_test_questions.txt")
+    today = date.today().isoformat()
+
     for question_url in EXAMPLE_QUESTIONS:
         question = MetaculusApi.get_question_by_url(question_url)
         if question.question_type == "binary":
-            MetaculusApi.post_binary_question_prediction(question.id_of_question,bot.make_default_binary_prediction())           
+            if question.already_forecasted:
+                if (today == prediction_date_dict.get(str(question.id_of_question))):
+                    logger.info("Already made a prediction today on question " + str(question.id_of_question) + ": " + question.question_text)
+                    continue
+                logger.info("Updating the prediction on question " + str(question.id_of_question) + ": " + question.question_text)
+                MetaculusApi.post_binary_question_prediction(question.id_of_question,bot.make_default_binary_prediction())
+                prediction_date_dict[str(question.id_of_question)] = today
+            else:
+                logger.info("Making the first prediction on question " + str(question.id_of_question) + ": " + question.question_text)
+                MetaculusApi.post_binary_question_prediction(question.id_of_question,bot.make_default_binary_prediction())
+                prediction_date_dict[str(question.id_of_question)] = today
+         
         elif question.question_type == "numeric":
             prediction = bot.make_default_numeric_prediction(question)
             cdf = [percentile.percentile for percentile in prediction.cdf]
@@ -206,4 +245,5 @@ elif run_mode == "test_questions":
             #TODO make the code for disctrete questions more specialized
             prediction = bot.make_default_numeric_prediction(question)
             cdf = [percentile.percentile for percentile in prediction.cdf]
-            MetaculusApi.post_numeric_question_prediction(question.id_of_question, cdf)
+            MetaculusApi.post_numeric_question_prediction(question.id_of_question, cdf)        
+    bot.save_data_to_file(prediction_date_dict, "latest_prediction_dates_test_questions.txt")

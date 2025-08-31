@@ -10,7 +10,7 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: false
 
-# Job that runs every 2 minutes to check for new questions in the AIB tournament and predicts
+# Job that runs every 5 minutes to check for new questions in the AIB tournament and predicts
 jobs:
   forecast_job:
     runs-on: ubuntu-latest
@@ -53,3 +53,8 @@ jobs:
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      - name: Upload data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-data-artifact
+          path: latest_prediction_dates.txt
