@@ -24,8 +24,36 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+      # - name: Cache prediction log
+      #   id: cached-prediction-log
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: latest_prediction_dates_test_questions.txt
+      #     key: prediction-log-${{ github.ref }}-${{ github.run_id }}
+      #     restore-keys: |
+      #       prediction-log-${{ github.ref }}
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
+      
+      - name: Download previous data
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          name: latest_prediction_dates_test_questions_artifact
+          path: ./
+          use_unzip: true
+          if_no_artifact_found: warn
+        continue-on-error: true
+      - name: Check downloaded file
+        run: |
+          echo "Files in current directory:"
+          ls -la
+    
+          if [ -f "latest_prediction_dates_test_questions.txt" ]; then
+            echo "Previous data file found"
+            cat latest_prediction_dates_test_questions.txt
+          else
+            echo "No previous data file found"
+          fi
       - name: Run bot
         run: |
           poetry run python main.py --mode test_questions

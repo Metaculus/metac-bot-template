@@ -255,6 +255,8 @@ elif run_mode == "test_questions":
         "https://www.metaculus.com/questions/8632/total-yield-of-nuc-det-1000mt-by-2050/",
         #38667: US Undergrad Enrollment Decline from 2024 to 2030 - Binary
         "https://www.metaculus.com/questions/39314/us-undergraduate-enrollment-decline-by-10-from-2024-to-2030",
+        #26268: 5Y After AGI - AI Philosophical Competence - Binary
+        "https://www.metaculus.com/questions/26268/5y-after-agi-ai-philosophical-competence/",
         #14333: Age of Oldest Human - Numeric
         "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",
         #22427: Number of New Leading AI Labs - Multiple Choice  

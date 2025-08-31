@@ -43,6 +43,25 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 15
           command: poetry install --no-interaction --no-root
+      - name: Download previous data
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          name: latest_prediction_dates_aib_tournament_artifact
+          path: ./
+          use_unzip: true
+          if_no_artifact_found: warn
+        continue-on-error: true
+      - name: Check downloaded file
+        run: |
+          echo "Files in current directory:"
+          ls -la
+    
+          if [ -f "latest_prediction_dates_aib_tournament.txt" ]; then
+            echo "Previous data file found"
+            cat latest_prediction_dates_aib_tournament.txt
+          else
+            echo "No previous data file found"
+          fi
       - name: Run bot
         uses: nick-invision/retry@v2
         with:
