@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 import logging
-from datetime import date
+from datetime import date, datetime
 from typing import Literal, List, Sequence
 
 from forecasting_tools import (
@@ -22,7 +22,10 @@ from forecasting_tools import (
     SmartSearcher,
     clean_indents,
     structure_output,
+    ApiFilter,
 )
+
+import json
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -68,6 +71,17 @@ class WobblyBot2025Q3(ForecastBot):
         )
 
         return reports
+    
+    def verify_community_prediction_exists(
+        self,
+        question: MetaculusQuestion,
+    ) -> bool:
+        res = json.loads(question.model_dump_json())
+        try:
+            reveal_time = datetime.fromisoformat(res["cp_reveal_time"])
+            return reveal_time < datetime.now()
+        except (KeyError, TypeError, ValueError):
+            return False
 
     def make_default_binary_prediction(self):
         return 0.5
@@ -207,6 +221,8 @@ elif run_mode == "test_questions":
         "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  
         #8632: Total Yield of Nuc Det 1000MT by 2050 - Binary
         "https://www.metaculus.com/questions/8632/total-yield-of-nuc-det-1000mt-by-2050/",
+        #38667: US Undergrad Enrollment Decline from 2024 to 2030 - Binary
+        "https://www.metaculus.com/questions/39314/us-undergraduate-enrollment-decline-by-10-from-2024-to-2030",
         #14333: Age of Oldest Human - Numeric
         "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",
         #22427: Number of New Leading AI Labs - Multiple Choice  
@@ -220,6 +236,9 @@ elif run_mode == "test_questions":
 
     for question_url in EXAMPLE_QUESTIONS:
         question = MetaculusApi.get_question_by_url(question_url)
+        has_community_prediction = bot.verify_community_prediction_exists(question)
+        logger.info(f"QID: {question.id_of_question} of type: <{question.question_type}> has community prediction: {has_community_prediction}")
+        
         if question.question_type == "binary":
             if question.already_forecasted:
                 if (today == prediction_date_dict.get(str(question.id_of_question))):
