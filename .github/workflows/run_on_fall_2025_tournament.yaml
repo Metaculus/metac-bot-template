@@ -39,12 +39,14 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         uses: nick-invision/retry@v2
         with:
+          timeout_minutes: 4
           max_attempts: 3
           retry_wait_seconds: 15
           command: poetry install --no-interaction --no-root
       - name: Run bot
         uses: nick-invision/retry@v2
         with:
+          timeout_minutes: 30
           max_attempts: 3
           retry_wait_seconds: 15
           command: poetry run python main.py --mode aib_tournament
