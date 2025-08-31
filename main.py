@@ -26,6 +26,7 @@ from forecasting_tools import (
 )
 
 import json
+import utils
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -137,6 +138,16 @@ class WobblyBot2025Q3(ForecastBot):
         probability_per_option = 1.0 / num_options
         probabilities: dict[str, float] = dict.fromkeys(question.options, probability_per_option)
         return probabilities
+    
+    def community_prediction_divergence(self, question: MetaculusQuestion) -> tuple[float, float]:
+        if question.question_type in ["binary"]:
+            prediction = utils.get_binary_community_prediction(question)
+            if prediction is not None:
+                return prediction * 0.7, prediction * 1.3
+                # return prediction - 0.25, (prediction / (1 - prediction)) / (0.25 / (1 - 0.25))
+
+        return 0.0, 0.0
+
     
     @staticmethod
     def load_data_from_file(filepath) -> dict:
@@ -274,6 +285,11 @@ elif run_mode == "test_questions":
         logger.info(f"QID: {question.id_of_question} of type: <{question.question_type}> has community prediction: {has_community_prediction}")
         
         if question.question_type == "binary":
+            ## TESTING - Log default values (includes forecasted questions)
+            # if has_community_prediction:
+            #     dist_1, dist_2 = bot.community_prediction_divergence(question)
+            #     print(f">>> divergence_1 = {dist_1}, divergence_2 = {dist_2}")
+
             if question.already_forecasted:
                 if (today == prediction_date_dict.get(str(question.id_of_question))):
                     logger.info("Already made a prediction today on question " + str(question.id_of_question) + ": " + question.question_text)
@@ -282,6 +298,10 @@ elif run_mode == "test_questions":
                 MetaculusApi.post_binary_question_prediction(question.id_of_question,bot.make_default_binary_prediction())
                 prediction_date_dict[str(question.id_of_question)] = today
             else:
+                if has_community_prediction:
+                    dist_1, dist_2 = bot.community_prediction_divergence(question)
+                    print(f">>> divergence_1 = {dist_1}, divergence_2 = {dist_2}")
+
                 logger.info("Making the first prediction on question " + str(question.id_of_question) + ": " + question.question_text)
                 MetaculusApi.post_binary_question_prediction(question.id_of_question,bot.make_default_binary_prediction())
                 prediction_date_dict[str(question.id_of_question)] = today
