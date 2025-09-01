@@ -246,9 +246,6 @@ class WobblyBot2025Q3(ForecastBot):
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
 
-            {lower_bound_message}
-            {upper_bound_message}
-
             Formatting Instructions:
             - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
             - Never use scientific notation.
@@ -265,7 +262,10 @@ class WobblyBot2025Q3(ForecastBot):
             If data from prediction markets was not available, make your prediction based on the base rates, if available, and your independent rationale.
             Less importantly, also take into account the all the recent news from the report.
             If base rates and prediction markets data are unavailable, make your prediction based on the recent news.
-            Good forecasters also leave room for unknown unknowns, so make sure your Percentile 10 is not below {question.lower_bound} and your Percentile 90 is not above {question.upper_bound}. Also make sure that your range is not narrow and that you leave some values outside of the {question.lower_bound} to {question.upper_bound} range.
+            Good forecasters also leave room for unknown unknowns, so follow the instructions below:
+            {lower_bound_message}
+            {upper_bound_message}               
+            Also make sure that your range is not too narrow to account for many different possible values.
             
             Explain how you're following each of those steps.
 
@@ -273,7 +273,9 @@ class WobblyBot2025Q3(ForecastBot):
 
             The last thing you write is your final answer as:
             "
+            Percentile 5: XX
             Percentile 10: XX
+            Percentile 15: XX
             Percentile 20: XX
             Percentile 30: XX
             Percentile 40: XX
@@ -281,7 +283,9 @@ class WobblyBot2025Q3(ForecastBot):
             Percentile 60: XX
             Percentile 70: XX
             Percentile 80: XX
+            Percentile 85: XX
             Percentile 90: XX
+            Percentile 95: XX
             "
             """
         )
@@ -309,17 +313,21 @@ class WobblyBot2025Q3(ForecastBot):
             lower_bound_number = question.lower_bound
 
         if question.open_upper_bound:
-            upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number}."
+            upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number}, so make your Percentile 40 not higher than {upper_bound_number}, but make sure your Percentiles 85, 90 and 95 are higher than or equal to {upper_bound_number}."
         else:
             upper_bound_message = (
-                f"The outcome can not be higher than {upper_bound_number}."
+                f"The outcome can not be higher than {upper_bound_number}, so make your Percentile 70 lower than{upper_bound_number}, but make your Percentiles 90 and 95 equal to {upper_bound_number}."
             )
+            if question.question_type == "discrete":
+                upper_bound_message = (
+                    f"The outcome can not be higher than {upper_bound_number}, so make your Percentile 60 lower than {upper_bound_number}, but make your Percentiles 85, 90 and 95 equal to {upper_bound_number}."
+                )
 
         if question.open_lower_bound:
-            lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number}."
+            lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number}, so make your Percentile 70 higher than {lower_bound_number}, but make sure your Percentiles 15, 10 and 5 are lower than or equal to {lower_bound_number}."
         else:
             lower_bound_message = (
-                f"The outcome can not be lower than {lower_bound_number}."
+                f"The outcome can not be lower than {lower_bound_number}, so make your Percentile 60 higher than {lower_bound_number}, but make your Percentiles 10 and 5 equal to {lower_bound_number}."
             )
         return upper_bound_message, lower_bound_message
 
@@ -329,18 +337,24 @@ class WobblyBot2025Q3(ForecastBot):
         prediction_date_dict: dict,
         return_exceptions: bool = False,
     ) -> list[ForecastReport] | list[ForecastReport | BaseException]:
-        
-        # qturl = "https://www.metaculus.com/c/diffusion-community/38880" # discrete ai protests
-        # qt = MetaculusApi.get_question_by_url(qturl)
-        # questions_to_forecast = []
-        # questions_to_forecast.append(qt)
 
+        #TODO move the commented tests below to a new test mode
         # qturl = "https://www.metaculus.com/questions/39056/" # binary ishiba
         # qt = MetaculusApi.get_question_by_url(qturl)
         # questions_to_forecast = []
         # questions_to_forecast.append(qt)
 
         # qturl = "https://www.metaculus.com/questions/37322/" #multiple choice 2028 democrats
+        # qt = MetaculusApi.get_question_by_url(qturl)
+        # questions_to_forecast = []
+        # questions_to_forecast.append(qt)
+
+        # qturl = "https://www.metaculus.com/questions/26718/" #numeric 5 years after agi happiness
+        # qt = MetaculusApi.get_question_by_url(qturl)
+        # questions_to_forecast = []
+        # questions_to_forecast.append(qt)
+
+        # qturl = "https://www.metaculus.com/c/diffusion-community/38880" # discrete ai protests
         # qt = MetaculusApi.get_question_by_url(qturl)
         # questions_to_forecast = []
         # questions_to_forecast.append(qt)
@@ -481,7 +495,7 @@ if __name__ == "__main__":
 
     bot = WobblyBot2025Q3(
         research_reports_per_question=2,
-        predictions_per_research_report=3,
+        predictions_per_research_report=2,
         enable_summarize_research=False,
         use_research_summary_to_forecast=False,
         publish_reports_to_metaculus=True,
@@ -496,6 +510,7 @@ if __name__ == "__main__":
             ),
             "forecaster": GeneralLlm(
                 model="openrouter/openai/gpt-5",
+                # model="openrouter/openai/o3",
                 # model="openrouter/openai/gpt-5-mini",
                 temperature=0.3,
                 timeout=40,
@@ -509,7 +524,15 @@ if __name__ == "__main__":
                 allowed_tries=2,
             ),
             "parser": GeneralLlm(
-                model="openrouter/openai/gpt-5-mini",
+                # model="openrouter/openai/gpt-5-mini",
+                model="openrouter/openai/gpt-4o-mini",
+                temperature=0.3,
+                timeout=40,
+                allowed_tries=2,
+            ),
+            "summarizer": GeneralLlm(
+                # model="openrouter/openai/gpt-5-mini",
+                model="openrouter/openai/gpt-4o-mini",
                 temperature=0.3,
                 timeout=40,
                 allowed_tries=2,
@@ -554,7 +577,7 @@ elif run_mode == "test_questions":
         "https://www.metaculus.com/questions/26268/5y-after-agi-ai-philosophical-competence/",
         #14333: Age of Oldest Human - Numeric
         "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",
-        #22427: Number of New Leading AI Labs - Multiple Choice  
+        #22427: Number of New Leading AI Labs - Multiple Choice
         "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",
         #38880: Number of US Labor Strikes Due to AI in 2029 - Discrete  
         "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/",
