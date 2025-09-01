@@ -13,10 +13,10 @@ from config import METACULUS_TOKEN, ASKNEWS_CLIENT_ID, ASKNEWS_SECRET, EXA_API_K
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+SUBMIT_PREDICTION = False  # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 
 
 # The tournament IDs below can be used for testing your bot.
@@ -35,8 +35,8 @@ CURRENT_MINIBENCH_ID = "minibench"  # MiniBench tournament (The project ID for t
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (39110, 39110), # Numeric - [PRACTICE] What will be the score ratio of the highest performing bot compared to the top 5 participants in the Summer 2025 Metaculus Cup?
-    # (39056, 39056), # Binary - [PRACTICE] Will Shigeru Ishiba cease to be Prime Minister of Japan before September 2025?
+    # (39110, 39110), # Numeric - [PRACTICE] What will be the score ratio of the highest performing bot compared to the top 5 participants in the Summer 2025 Metaculus Cup?
+    (39056, 39056), # Binary - [PRACTICE] Will Shigeru Ishiba cease to be Prime Minister of Japan before September 2025?
     # (39109, 39109), # Multi-choice - [PRACTICE] Which party will lead the 2025 Tasmanian government?
 ]
 
@@ -191,24 +191,42 @@ def get_post_details(post_id: int) -> dict:
 
 
 
-async def run_research(question: str) -> str:
+async def run_research(question: str) -> tuple[str, list[str]]:
+    """
+    Run research and return both the research text and list of source URLs.
+    Returns (research_text, source_urls)
+    """
     research = ""
+    source_urls = []
+    
     # Check for AskNews credentials
     if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
         research = call_asknews(question)
+        # Extract URLs from AskNews research (they're in markdown format)
+        import re
+        urls = re.findall(r'\[(.*?)\]\((https?://[^\)]+)\)', research)
+        source_urls = [url[1] for url in urls]
     # Check for Exa API key
     elif EXA_API_KEY:
         # Use the smart searcher with OpenAI-generated queries
         research = await run_exa_research(question)
+        # Extract URLs from Exa research
+        import re
+        urls = re.findall(r'URL: (https?://[^\n\s]+)', research)
+        source_urls = list(set(urls))  # Remove duplicates
     # Check for Perplexity API key
     elif PERPLEXITY_API_KEY:
         research = call_perplexity(question)
+        # Perplexity doesn't provide direct URLs in the response
+        source_urls = ["Perplexity AI (sources embedded in response)"]
     else:
         research = "No research done"
+        source_urls = []
 
     print(f"########################\nResearch Found:\n{research}\n########################")
+    print(f"Source URLs ({len(source_urls)}): {source_urls}")
 
-    return research
+    return research, source_urls
 
 
 ################### FORECASTING ###################

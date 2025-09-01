@@ -168,3 +168,27 @@ Option_B: Probability_B
 ...
 Option_N: Probability_N
 """
+
+RATIONALE_SUMMARY_PROMPT_TEMPLATE = """
+You are analyzing multiple forecasting rationales for the same question to create a consolidated summary. 
+
+Question: {question_title}
+Question Type: {question_type}
+Final Aggregated Prediction: {final_prediction}
+Number of Rationales: {num_rationales}
+
+All Rationales:
+{combined_rationales}
+
+Please create a comprehensive summary that includes:
+
+1. **Key Consistent Themes**: What points do most rationales agree on?
+2. **Main Supporting Evidence**: What are the strongest pieces of evidence mentioned across rationales?
+3. **Contradictions & Disagreements**: Where do the rationales disagree and why?
+4. **Confidence Factors**: What factors increase or decrease confidence in the prediction?
+5. **Critical Assumptions**: What key assumptions are the rationales based on?
+6. **Final Justification**: How do the combined insights justify the final aggregated prediction?
+
+Keep the summary concise but comprehensive (300-500 words). Focus on insights that would be valuable to a professional forecaster reviewing this analysis.
+
+Consolidated Summary:"""
