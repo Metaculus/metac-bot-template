@@ -10,6 +10,15 @@ need to be shared across modules.
 import os
 from typing import Sequence, Tuple
 
+# Load .env early so ASKNEWS_* values are read correctly at import time in local runs
+try:  # pragma: no cover - best-effort convenience for local dev
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    load_dotenv(".env.local", override=True)
+except Exception:
+    pass
+
 # Concurrency tuning for research providers (e.g., AskNews, Exa)
 # Start conservatively for AskNews; adjust after observing rate limits.
 DEFAULT_MAX_CONCURRENT_RESEARCH: int = 1
