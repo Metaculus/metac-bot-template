@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Coroutine, Literal, Sequence, cast
+from typing import Any, Coroutine, Sequence, cast
 
 import numpy as np
 from dotenv import load_dotenv
@@ -30,6 +30,7 @@ from metaculus_bot.aggregation_strategies import (
     aggregate_multiple_choice_mean,
     aggregate_multiple_choice_median,
 )
+from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.constants import (
     BINARY_PROB_MAX,
     BINARY_PROB_MIN,
@@ -497,6 +498,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
         return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
 
+    # TODO: current monolithic numeric logic is disgusting and needs to be refactored
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str, llm_to_use: GeneralLlm
     ) -> ReasonedPrediction[NumericDistribution]:
@@ -972,9 +974,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
 ========================================
 LLM OUTPUT | Model: {model_name} | Question: {question_id} | Length: {len(reasoning)} chars
 ========================================
-
 {reasoning}
-
 ========================================
 END LLM OUTPUT | {model_name}
 ========================================
