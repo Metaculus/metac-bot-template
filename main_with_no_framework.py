@@ -29,7 +29,9 @@ GIVEWELL_ID = 3600
 RESPIRATORY_OUTLOOK_ID = 3411
 FALL_2025_AI_BENCHMARKING_ID = 32813
 
-TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
+# Current tournament IDs (these should match the ones used in main.py)
+CURRENT_AI_COMPETITION_ID = FALL_2025_AI_BENCHMARKING_ID  # Main AI competition
+CURRENT_MINIBENCH_ID = "minibench"  # MiniBench tournament (The project ID for the currently active minibench is always "minibench")
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
@@ -122,7 +124,7 @@ def create_forecast_payload(
 
 
 def list_posts_from_tournament(
-    tournament_id: int = TOURNAMENT_ID, offset: int = 0, count: int = 50
+    tournament_id: int = CURRENT_AI_COMPETITION_ID, offset: int = 0, count: int = 50
 ) -> list[dict]:
     """
     List (all details) {count} posts from the {tournament_id}
@@ -150,8 +152,8 @@ def list_posts_from_tournament(
     return data
 
 
-def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
-    posts = list_posts_from_tournament()
+def get_open_question_ids_from_tournament(tournament_id: int = CURRENT_AI_COMPETITION_ID) -> list[tuple[int, int]]:
+    posts = list_posts_from_tournament(tournament_id)
 
     post_dict = dict()
     for post in posts["results"]:
@@ -335,14 +337,35 @@ async def forecast_questions(
 if __name__ == "__main__":
     if USE_EXAMPLE_QUESTIONS:
         open_question_id_post_id = EXAMPLE_QUESTIONS
-    else:
-        open_question_id_post_id = get_open_question_ids_from_tournament()
-
-    asyncio.run(
-        forecast_questions(
-            open_question_id_post_id,
-            SUBMIT_PREDICTION,
-            NUM_RUNS_PER_QUESTION,
-            SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+        
+        asyncio.run(
+            forecast_questions(
+                open_question_id_post_id,
+                SUBMIT_PREDICTION,
+                NUM_RUNS_PER_QUESTION,
+                SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+            )
         )
-    )
+    else:
+        # Forecast on both AI Competition and MiniBench tournaments (like main.py)
+        print("Forecasting on AI Competition tournament...")
+        ai_competition_questions = get_open_question_ids_from_tournament(CURRENT_AI_COMPETITION_ID)
+        
+        print("Forecasting on MiniBench tournament...")  
+        minibench_questions = get_open_question_ids_from_tournament(CURRENT_MINIBENCH_ID)
+        
+        # Combine questions from both tournaments
+        all_questions = ai_competition_questions + minibench_questions
+        print(f"Total questions from both tournaments: {len(all_questions)}")
+        
+        if all_questions:
+            asyncio.run(
+                forecast_questions(
+                    all_questions,
+                    SUBMIT_PREDICTION,
+                    NUM_RUNS_PER_QUESTION,
+                    SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+                )
+            )
+        else:
+            print("No open questions found in either tournament.")
