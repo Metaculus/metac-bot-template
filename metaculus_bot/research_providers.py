@@ -96,7 +96,7 @@ def _asknews_provider() -> ResearchCallable:
                 last_exc: Exception | None = None
                 hot_attempt_used = 0
                 # Hack: despite including rate limits in our asknews logic, we still get rate limits; manually massage addl waits to handle
-                WAIT_FOR_HOT_SEC = 5
+                WAIT_FOR_HOT_SEC = 10.1
                 logger.info(f"AskNews: Waiting {WAIT_FOR_HOT_SEC}s before hot news call...")
                 await asyncio.sleep(WAIT_FOR_HOT_SEC)
                 for hot_attempt in range(1, tries + 1):
@@ -117,7 +117,7 @@ def _asknews_provider() -> ResearchCallable:
                         if not _is_retryable(e):
                             raise
                         if hot_attempt < tries:
-                            sleep_for = backoff * (2 ** (hot_attempt))
+                            sleep_for = backoff * (3 ** (hot_attempt))
                             await asyncio.sleep(sleep_for)
                         else:
                             assert last_exc is not None
@@ -126,7 +126,7 @@ def _asknews_provider() -> ResearchCallable:
                 assert hot_articles is not None
 
                 # Phase 2: HISTORICAL (news knowledge), reuse HOT results; do not re-call HOT on retries
-                WAIT_FOR_HISTORICAL_SEC = 5
+                WAIT_FOR_HISTORICAL_SEC = 10.1
                 logger.info(f"AskNews: Waiting {WAIT_FOR_HISTORICAL_SEC}s before historical news call...")
                 await asyncio.sleep(WAIT_FOR_HISTORICAL_SEC)
 
@@ -154,7 +154,7 @@ def _asknews_provider() -> ResearchCallable:
                         if not _is_retryable(e):
                             raise
                         if hist_attempt < remaining_hist_tries:
-                            sleep_for = backoff * (2 ** (hist_attempt))
+                            sleep_for = backoff * (3 ** (hist_attempt))
                             await asyncio.sleep(sleep_for)
                         else:
                             assert last_exc is not None
