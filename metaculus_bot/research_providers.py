@@ -69,105 +69,137 @@ def _asknews_provider() -> ResearchCallable:
         assert _ASKNEWS_GLOBAL_SEMAPHORE is not None
         tries = max(1, int(ASKNEWS_MAX_TRIES))
         backoff = float(ASKNEWS_BACKOFF_SECS)
-        last_exc: Exception | None = None
-        for attempt in range(1, tries + 1):
-            async with _ASKNEWS_GLOBAL_SEMAPHORE:
-                await _asknews_rate_gate()
-                try:
-                    # Use custom AskNews integration with proper rate limiting between API calls
-                    import os
 
-                    from asknews_sdk import AsyncAskNewsSDK
+        # Retry helper: only retry on known transient rate/concurrency errors
+        def _is_retryable(err: Exception) -> bool:
+            msg = str(err).lower()
+            return ("429" in msg) or ("rate limit" in msg) or ("concurrency limit" in msg)
 
-                    client_id = os.getenv("ASKNEWS_CLIENT_ID")
-                    secret = os.getenv("ASKNEWS_SECRET")
-                    if not client_id or not secret:
-                        raise ValueError("ASKNEWS_CLIENT_ID and ASKNEWS_SECRET environment variables must be set")
+        async with _ASKNEWS_GLOBAL_SEMAPHORE:
+            # Use custom AskNews integration with proper rate limiting between API calls
+            from asknews_sdk import AsyncAskNewsSDK
 
-                    logger.info(
-                        f"AskNews attempt {attempt}/{tries}: Using custom integration, client_id={client_id[:8]}..."
-                    )
+            client_id = os.getenv("ASKNEWS_CLIENT_ID")
+            secret = os.getenv("ASKNEWS_SECRET")
+            if not client_id or not secret:
+                raise ValueError("ASKNEWS_CLIENT_ID and ASKNEWS_SECRET environment variables must be set")
 
-                    async with AsyncAskNewsSDK(
-                        client_id=client_id,
-                        client_secret=secret,
-                        scopes=set(["news"]),
-                    ) as sdk:
-                        # Make first call for latest news
-                        logger.info(f"AskNews attempt {attempt}/{tries}: Calling latest news...")
+            logger.info(f"AskNews: Using custom integration, client_id={client_id[:8]}...")
+
+            async with AsyncAskNewsSDK(
+                client_id=client_id,
+                client_secret=secret,
+                scopes=set(["news"]),
+            ) as sdk:
+                # Phase 1: HOT (latest news) with its own retry loop, consuming from total budget
+                hot_articles = None
+                last_exc: Exception | None = None
+                hot_attempt_used = 0
+                # Hack: despite including rate limits in our asknews logic, we still get rate limits; manually massage addl waits to handle
+                WAIT_FOR_HOT_SEC = 10.1
+                logger.info(f"AskNews: Waiting {WAIT_FOR_HOT_SEC}s before hot news call...")
+                await asyncio.sleep(WAIT_FOR_HOT_SEC)
+                for hot_attempt in range(1, tries + 1):
+                    hot_attempt_used = hot_attempt
+                    try:
+                        logger.info(f"AskNews HOT attempt {hot_attempt}/{tries}: Calling latest news...")
+                        await _asknews_rate_gate()
                         hot_response = await sdk.news.search_news(
                             query=question_text,
                             n_articles=6,
                             return_type="both",
                             strategy="latest news",
                         )
+                        hot_articles = hot_response.as_dicts
+                        break
+                    except Exception as e:
+                        last_exc = e
+                        if not _is_retryable(e):
+                            raise
+                        if hot_attempt < tries:
+                            sleep_for = backoff * (3 ** (hot_attempt))
+                            await asyncio.sleep(sleep_for)
+                        else:
+                            assert last_exc is not None
+                            raise last_exc
 
-                        # Wait to respect 1 RPS rate limit before second call
-                        logger.info(f"AskNews attempt {attempt}/{tries}: Waiting 1.2s before historical news call...")
-                        await asyncio.sleep(1.2)
+                assert hot_articles is not None
 
-                        # Make second call for historical news
-                        logger.info(f"AskNews attempt {attempt}/{tries}: Calling historical news...")
+                # Phase 2: HISTORICAL (news knowledge), reuse HOT results; do not re-call HOT on retries
+                WAIT_FOR_HISTORICAL_SEC = 10.1
+                logger.info(f"AskNews: Waiting {WAIT_FOR_HISTORICAL_SEC}s before historical news call...")
+                await asyncio.sleep(WAIT_FOR_HISTORICAL_SEC)
+
+                remaining_hist_tries = max(1, tries - (hot_attempt_used - 1))
+                historical_articles = None
+                for hist_attempt in range(1, remaining_hist_tries + 1):
+                    try:
+                        logger.info(
+                            f"AskNews HIST attempt {hist_attempt}/{remaining_hist_tries}: Passing rate gate before historical news call..."
+                        )
+                        await _asknews_rate_gate()
+                        logger.info(
+                            f"AskNews HIST attempt {hist_attempt}/{remaining_hist_tries}: Calling historical news..."
+                        )
                         historical_response = await sdk.news.search_news(
                             query=question_text,
                             n_articles=10,
                             return_type="both",
                             strategy="news knowledge",
                         )
-
-                        # Combine and format articles like forecasting-tools does
-                        hot_articles = hot_response.as_dicts
                         historical_articles = historical_response.as_dicts
+                        break
+                    except Exception as e:
+                        last_exc = e
+                        if not _is_retryable(e):
+                            raise
+                        if hist_attempt < remaining_hist_tries:
+                            sleep_for = backoff * (3 ** (hist_attempt))
+                            await asyncio.sleep(sleep_for)
+                        else:
+                            assert last_exc is not None
+                            raise last_exc
 
+                assert historical_articles is not None
+
+                # Combine and format articles like forecasting-tools does
+                logger.info(
+                    f"AskNews: Got {len(hot_articles)} hot articles, {len(historical_articles)} historical articles"
+                )
+                formatted_articles = "Here are the relevant news articles:\n\n"
+
+                all_articles = []
+                if hot_articles:
+                    all_articles.extend(hot_articles)
+                if historical_articles:
+                    all_articles.extend(historical_articles)
+
+                if not all_articles:
+                    return "No articles were found for this query.\n\n"
+
+                # URL deduplication (best-effort, order-preserving)
+                try:
+                    before = len(all_articles)
+                    all_articles = _dedup_articles_by_url(all_articles)
+                    removed = before - len(all_articles)
+                    if removed > 0:
                         logger.info(
-                            f"AskNews attempt {attempt}/{tries}: Got {len(hot_articles)} hot articles, {len(historical_articles)} historical articles"
+                            f"AskNews URL dedup: {before} -> {len(all_articles)} (removed {removed} duplicates)"
                         )
-                        formatted_articles = "Here are the relevant news articles:\n\n"
+                except Exception as dedup_exc:  # pragma: no cover - protective
+                    logger.warning(f"AskNews URL dedup failed; proceeding without dedup: {dedup_exc}")
 
-                        all_articles = []
-                        if hot_articles:
-                            all_articles.extend(hot_articles)
-                        if historical_articles:
-                            all_articles.extend(historical_articles)
+                # Sort by date and format
+                sorted_articles = sorted(all_articles, key=lambda x: x.pub_date, reverse=True)
 
-                        if not all_articles:
-                            return "No articles were found for this query.\n\n"
+                for article in sorted_articles:
+                    pub_date = article.pub_date.strftime("%B %d, %Y %I:%M %p")
+                    formatted_articles += f"**{article.eng_title}**\n{article.summary}\nOriginal language: {article.language}\nPublish date: {pub_date}\nSource:[{article.source_id}]({article.article_url})\n\n"
 
-                        # URL deduplication (best-effort, order-preserving)
-                        try:
-                            before = len(all_articles)
-                            all_articles = _dedup_articles_by_url(all_articles)
-                            removed = before - len(all_articles)
-                            if removed > 0:
-                                logger.info(
-                                    f"AskNews URL dedup: {before} -> {len(all_articles)} (removed {removed} duplicates)"
-                                )
-                        except Exception as dedup_exc:  # pragma: no cover - protective
-                            logger.warning(f"AskNews URL dedup failed; proceeding without dedup: {dedup_exc}")
-
-                        # Sort by date and format
-                        sorted_articles = sorted(all_articles, key=lambda x: x.pub_date, reverse=True)
-
-                        for article in sorted_articles:
-                            pub_date = article.pub_date.strftime("%B %d, %Y %I:%M %p")
-                            formatted_articles += f"**{article.eng_title}**\n{article.summary}\nOriginal language: {article.language}\nPublish date: {pub_date}\nSource:[{article.source_id}]({article.article_url})\n\n"
-
-                        logger.info(
-                            f"AskNews attempt {attempt}/{tries}: Success, got {len(formatted_articles)} chars from {len(hot_articles)} hot + {len(historical_articles)} historical articles"
-                        )
-                        return formatted_articles
-                except Exception as e:
-                    last_exc = e
-                    # Only retry on rate/limit errors
-                    msg = str(e).lower()
-                    if not ("429" in msg or "rate limit" in msg or "concurrency limit" in msg):
-                        raise
-            if attempt < tries:
-                # Exponential backoff with linear floor
-                sleep_for = backoff * (2 ** (attempt - 1))
-                await asyncio.sleep(sleep_for)
-        assert last_exc is not None
-        raise last_exc
+                logger.info(
+                    f"AskNews: Success, got {len(formatted_articles)} chars from {len(hot_articles)} hot + {len(historical_articles)} historical articles"
+                )
+                return formatted_articles
 
     return _fetch
 

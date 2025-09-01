@@ -35,7 +35,7 @@ def main() -> None:
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["tournament", "quarterly_cup", "test_questions"],
+        choices=["tournament", "minibench", "quarterly_cup", "test_questions"],
         default="tournament",
         help="Specify the run mode (default: tournament)",
     )
@@ -62,6 +62,11 @@ def main() -> None:
         template_bot.skip_previously_forecasted_questions = True  # to not risk explosive spend, we won't update preds
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(MetaculusApi.CURRENT_AI_COMPETITION_ID, return_exceptions=True)
+        )
+    elif run_mode == "minibench":
+        template_bot.skip_previously_forecasted_questions = True  # to not risk explosive spend, we won't update preds
+        forecast_reports = asyncio.run(
+            template_bot.forecast_on_tournament(MetaculusApi.CURRENT_MINIBENCH_ID, return_exceptions=True)
         )
     elif run_mode == "quarterly_cup":
         # The quarterly cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564
