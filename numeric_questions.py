@@ -2,7 +2,7 @@ import re
 import datetime
 import numpy as np
 from prompts import NUMERIC_PROMPT_TEMPLATE
-from llm_calls import call_openAI
+from llm_calls import call_openAI, create_rationale_summary
 
 
 def extract_percentiles_from_response(forecast_text: str) -> dict:
@@ -183,7 +183,7 @@ async def get_numeric_gpt_prediction(
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound}."
 
-    summary_report = await run_research_func(title)
+    summary_report, source_urls = await run_research_func(title)
 
     content = NUMERIC_PROMPT_TEMPLATE.format(
         title=title,
@@ -231,9 +231,27 @@ async def get_numeric_gpt_prediction(
     all_cdfs = np.array(cdfs)
     median_cdf: list[float] = np.median(all_cdfs, axis=0).tolist()
 
-    final_comment = f"Median CDF: `{str(median_cdf)[:100]}...`\n\n" + "\n\n".join(
-        final_comment_sections
-    )
+    # Create consolidated summary if multiple runs
+    consolidated_summary = ""
+    if num_runs > 1:
+        rationales = [pair[1].split("GPT's Answer: ", 1)[1] if "GPT's Answer: " in pair[1] else pair[1] for pair in cdf_and_comment_pairs]
+        consolidated_summary = await create_rationale_summary(
+            rationales=rationales,
+            question_title=title,
+            question_type="numeric",
+            final_prediction=f"Median CDF with {len(median_cdf)} points",
+            source_urls=source_urls
+        )
+
+    # Build final comment with consolidated summary if available
+    final_comment_parts = [f"Median CDF: `{str(median_cdf)[:100]}...`"]
+    
+    if consolidated_summary:
+        final_comment_parts.append(f"\n## Consolidated Analysis\n{consolidated_summary}")
+    
+    final_comment_parts.append("\n" + "\n\n".join(final_comment_sections))
+    
+    final_comment = "\n\n".join(final_comment_parts)
     return median_cdf, final_comment
 
 

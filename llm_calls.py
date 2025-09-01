@@ -34,3 +34,50 @@ async def call_openAI(prompt: str, model: str = "gpt-4.1", temperature: float = 
         if answer is None:
             raise ValueError("No answer returned from OpenAI")
         return answer
+
+
+async def create_rationale_summary(rationales: list[str], question_title: str, question_type: str, final_prediction: str, source_urls: list[str] = None) -> str:
+    """
+    Create a consolidated summary of multiple rationales for a forecasting question.
+    
+    Args:
+        rationales: List of individual rationales from multiple runs
+        question_title: The forecasting question title
+        question_type: Type of question (binary, numeric, multiple_choice)
+        final_prediction: The final aggregated prediction
+        source_urls: List of source URLs used in research (optional)
+    
+    Returns:
+        A consolidated summary highlighting key insights, contradictions, and justification
+    """
+    if len(rationales) <= 1:
+        return ""  # No summary needed for single rationale
+    
+    # Import the prompt template
+    from prompts import RATIONALE_SUMMARY_PROMPT_TEMPLATE
+    
+    # Combine all rationales for analysis
+    combined_rationales = "\n\n---RATIONALE SEPARATOR---\n\n".join([f"Rationale {i+1}:\n{rationale}" for i, rationale in enumerate(rationales)])
+    
+    prompt = RATIONALE_SUMMARY_PROMPT_TEMPLATE.format(
+        question_title=question_title,
+        question_type=question_type,
+        final_prediction=final_prediction,
+        num_rationales=len(rationales),
+        combined_rationales=combined_rationales
+    )
+
+    try:
+        summary = await call_openAI(prompt, model="gpt-4.1-mini", temperature=0.2)
+        
+        # Add source URLs section if available
+        if source_urls:
+            sources_section = f"\n\n## Sources Used\nThe following sources were used in this analysis:\n"
+            for i, url in enumerate(source_urls, 1):
+                sources_section += f"{i}. {url}\n"
+            summary += sources_section
+        
+        return summary.strip()
+    except Exception as e:
+        print(f"Error creating rationale summary: {str(e)}")
+        return "Failed to generate consolidated summary."
