@@ -51,7 +51,6 @@ class DummyLLM:
 
 
 class TestNumericCDFSmoothing:
-    @pytest.mark.asyncio
     def test_cluster_spread_basic(self, caplog):
         f = _make_forecaster()
         q = _make_question()
@@ -78,7 +77,6 @@ class TestNumericCDFSmoothing:
         # Warn about cluster spread
         assert any("Cluster spread applied" in rec.message for rec in caplog.records)
 
-    @pytest.mark.asyncio
     def test_count_like_spread_uses_larger_delta(self, caplog):
         f = _make_forecaster()
         q = _make_question(lower=0.0, upper=100.0)
@@ -107,7 +105,6 @@ class TestNumericCDFSmoothing:
         assert any(d >= 0.5 for d in diffs), diffs
         assert any("Cluster spread applied" in rec.message for rec in caplog.records)
 
-    @pytest.mark.asyncio
     def test_bound_adjacent_cluster(self, caplog):
         f = _make_forecaster()
         # Closed upper bound; cluster near upper
@@ -144,7 +141,7 @@ class TestNumericCDFSmoothing:
         # Construct a CDF with very tiny min delta to trigger smoothing
         base = np.linspace(0.0, 1.0, 201)
         base[100:105] = base[100] + np.linspace(0, 1e-8, 5)  # tiny steps
-        mock_generate.return_value = base.tolist()
+        mock_generate.return_value = (base.tolist(), False)
         mock_format.return_value = {}
 
         percentiles = [

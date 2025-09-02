@@ -117,7 +117,7 @@ class TestGeneratePchipCdf:
         """Test basic CDF generation with simple percentiles."""
         percentiles = {10.0: 1.0, 50.0: 5.0, 90.0: 9.0}
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -135,7 +135,7 @@ class TestGeneratePchipCdf:
         """Test CDF generation with open bounds."""
         percentiles = {10.0: 1.0, 50.0: 5.0, 90.0: 9.0}
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=True,
             open_lower_bound=True,
@@ -154,7 +154,7 @@ class TestGeneratePchipCdf:
         percentiles = {10.0: 1.0, 50.0: 5.0, 90.0: 9.0}
         min_step = 5e-5
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -180,7 +180,7 @@ class TestGeneratePchipCdf:
             95.0: 195.0,
         }
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -205,7 +205,7 @@ class TestGeneratePchipCdf:
         percentiles = {10.0: 1.0, 50.0: 10.0, 90.0: 100.0}  # All positive, good for log
 
         # Should work without error and produce smooth results
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -221,7 +221,7 @@ class TestGeneratePchipCdf:
         """Test that zero_point prevents log transform."""
         percentiles = {10.0: 1.0, 50.0: 10.0, 90.0: 100.0}
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -237,7 +237,7 @@ class TestGeneratePchipCdf:
         """Test handling of duplicate percentile values."""
         percentiles = {10.0: 5.0, 50.0: 5.0, 90.0: 5.0}  # All same value
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,
@@ -296,7 +296,7 @@ class TestGeneratePchipCdf:
             95.0: 1095.0,  # P95: 3 years
         }
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=True,
             open_lower_bound=True,
@@ -320,7 +320,7 @@ class TestGeneratePchipCdf:
         """Test with discrete-style distribution (integer values)."""
         percentiles = {5.0: 1.0, 10.0: 2.0, 20.0: 3.0, 40.0: 5.0, 60.0: 7.0, 80.0: 10.0, 90.0: 12.0, 95.0: 15.0}
 
-        cdf = generate_pchip_cdf(
+        cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,
             open_upper_bound=False,
             open_lower_bound=False,

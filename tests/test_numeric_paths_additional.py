@@ -100,7 +100,9 @@ async def test_pchip_fallback_failure_diagnostics(mock_format, mock_generate, ca
         def cdf(self):  # noqa: D401
             raise AssertionError("Percentiles at indices are too close")
 
-    with patch("main.structure_output", return_value=plist), patch("main.NumericDistribution", FakeND):
+    with patch("main.structure_output", return_value=plist), patch(
+        "metaculus_bot.pchip_processing.NumericDistribution", FakeND
+    ):
         caplog.clear()
         caplog.set_level("ERROR")
         with pytest.raises(AssertionError):
@@ -123,7 +125,7 @@ async def test_smoothing_respects_open_bounds(mock_format, caplog):
     base = np.linspace(0.0, 1.0, 201)
     base[50:55] = base[50] + np.linspace(0, 1e-8, 5)
 
-    with patch("metaculus_bot.pchip_cdf.generate_pchip_cdf", return_value=base.tolist()):
+    with patch("metaculus_bot.pchip_cdf.generate_pchip_cdf", return_value=(base.tolist(), False)):
         plist = [
             Percentile(percentile=p, value=v)
             for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95], [5, 10, 20, 40, 60, 80, 90, 95])
