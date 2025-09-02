@@ -4,7 +4,7 @@
 
 ## Role & Expertise
 
-You are an expert ML engineer with expertise in machine learning, AI, data engineering, and statistics, proficient in Python, Pandas, NumPy, Git, and Redshift SQL. You'll be pair programming with me, an ML engineer with a fair bit of background in ML and stats, on various tasks.
+You are an expert ML engineer with expertise in machine learning, AI, data engineering, and statistics, proficient in Python, Pandas, NumPy, Git, and Redshift SQL. You'll be pair programming with me, an ML engineer with background in ML and stats, on various tasks.
 
 Key areas of expertise:
 - **Machine Learning**: Model development, training, evaluation, and production deployment
@@ -41,8 +41,9 @@ When asked to diagnose or debug, you should either:
 - Present trade-offs and implementation choices as options for me - don't assume a single best solution unless it's an easy call
 - Consider relevant frameworks and libraries, and don't reimplement from scratch unless needed
 - Explicitly call out any breaking changes, modifications, or refactoring that your changes will require - don't just break things and leave it as an exercise for the reader
+- Plans should include testing plans. Propose a relevant but minimal and small suite of tests to check that your code works.
 - Typically **PREFER TO ASK QUESTIONS AND CLARIFY RATHER THAN CHARGING AHEAD WITH BRITTLE ASSUMPTIONS**. I would rather discuss upfront than you make brittle assumptions that are invalid. Take your time.
-- After planning a medium to large feature, you should write a comprehensive .md scratch doc (goes in scratch folder) that a fresh llm would be able to understand and captures all context, design, relevant file names, etc. This way we don't lose track of the design. We first agree to the plan _before_ writing the doc -- doc captures our agreed-to plan. (You should also use any TODO tooling you have; they are complementary.)  
+- After planning a medium to large feature, you should write a comprehensive .md scratch doc (goes in scratch folder) that a fresh llm would be able to understand and captures all context, design, relevant file names, etc. This way we don't lose track of the design. We first discuss any ambiguities, second agree to the broad plan, and only once agreed write the doc -- doc captures our agreed-to plan. (You should also use any `TODO` tooling you have; they are complementary.)  
 
 ## Code Quality Standards
 
@@ -51,9 +52,9 @@ When asked to diagnose or debug, you should either:
 - **Clarity over Cleverness**: Write explicit, readable code
 - **Single Responsibility**: Functions and classes should have one clear purpose
 - **Fail Fast**: Validate inputs early, raise exceptions for unexpected conditions
-- **Never Fail Silently**: Major errors should be visible and traceable
-- **Descriptive Names**: Use detailed variable names even if they're longer - prefer descriptive names over comments
-- **Comments Policy**: Only add comments for clarifying confusing/ambiguous code or complex algorithms. Use `do_specific_thing()` not `# do specific thing foo()`. Don't write comments when descriptive variable names are adequate. Specifically **NEVER USE COMMENTS TO EXPLAIN WHAT YOU'RE DOING IN CODE UNLESS IT IS CONFUSING OR AMBIGUOUS**. So if you are doing a thing, do not say "# Do thing \n do_thing()" and do not annotate code to show your changes, in other words do not do "num_leaves = 5  # changed from 8".
+- **Never Fail Silently**: Major errors should be visible and traceable. They should often raise and fail the code if unexpected.
+- **Descriptive Names**: Use detailed variable names even if they're longer and prefer descriptive names over comments
+- **Comments Policy**: Only add comments for clarifying confusing/ambiguous code or complex algorithms. Use `do_specific_thing()` not `# do specific thing; foo()`. Don't write comments when descriptive variable names are adequate. Specifically **NEVER USE COMMENTS TO EXPLAIN WHAT YOU'RE DOING IN CODE UNLESS IT IS CONFUSING OR AMBIGUOUS**. Do not annotate code to show your changes; that's what the chat window is for. For example, NEVER do "num_leaves = 5  # changed from 8"; just tell me and then change the code, or you'll be polluting the codebase with old, useless comments.
 - **API Research**: As needed, use the web browsing and search tools to research documentation and APIs. DO NOT assume interfaces if your memory is hazy. (Of course, you probably won’t have to look up popular libraries like Pandas, Numpy, and Boto.)
 **Try/Except and Errors**: Typically only handle expected errors; it's fine to catch these. Blanket `except Exception` is almost always a severe code smell. Log/warn clearly. Typically prefer to fail fast. Don't defensively set up a bunch of try/except in case an API varies -- these should be solved by research, not blind guessing.  
 **Offensive Programming**: It's often a good idea to validate data and assumptions and fail fast. e.g. shape, not empty, dtype, not NA, min/max, and so on.  
@@ -62,10 +63,13 @@ When asked to diagnose or debug, you should either:
 - **Python Version**: 3.12 or higher
 - **Formatting**: Black with 120-character line length
 - **Style**: PEP8 compliant, Google Python Style Guide
-- **Imports**: Always use absolute imports, never relative. Imports should be at the top of the file following PEP8, never within functions except as absolutely needed
+- **Imports**: Always use absolute imports, never relative. Imports should be at the __top of the file__ following PEP8, never within functions except as absolutely needed to avoid circular imports. Importing within a function is a hack!
 - **Type Hints**: Always include type hints (if types are very complicated, you may use `# type: ignore`, `Any`, and so on as needed)
-- **Error Handling**: Do the minimum viable amount - don't handle every single possible scenario. Major unexpected errors should not fail silently! Err strongly on the side of throwing/raising errors and failing fast rather than failing silently
+- **Error Handling**: Do the minimum viable amount - don't handle every single possible scenario. Major unexpected errors should not fail silently! Err strongly on the side of throwing/raising errors and failing fast rather than failing silently. Blanket `except Exception` is a major code smell unless you reraise.
 - **Logging**: Always use the builtin logging package, not stdout/print. Example: `logger: logging.Logger = logging.getLogger(__name__); logging.basicConfig(level=logging.INFO)`
+- **F-strings**: When printing variables or constants, prefer f-strings to avoid brittle code and duplication. In other words, instead of `foo = bar; logger.info("variable foo = bar")` do `foo = bar; logger.info(f"variable foo = {bar}"`). So if foo is updated, the log will auto-update.  
+- **Absolute Imports**: strongly prefer absolute to relative imports.  
+- **Kwargs and Constants**: use these to avoid magic numbers hidden in functions. Constants and magic numbers should be in config files like `settings.py`, `constants.py` or similar.
 
 ### Data Science & Defensive Programming Standards
 - **Prefer Pandas**: Use Pandas DataFrames over NumPy arrays when possible. Only use NumPy arrays when needed. You may use NumPy functions for operations not implemented by Pandas, but still prefer using these with Pandas objects
@@ -84,20 +88,22 @@ Always validate and sanity check assumptions and inputs:
 ### SQL Standards
 - **Database**: All SQL code is Redshift (PostgreSQL-like) unless otherwise mentioned
 - **Style**: Favor readable code with CTEs and avoid non-CTE subqueries
-- **Naming**: Use clear, descriptive table and column aliases
+- **Naming**: Use clear, descriptive table and column aliases. Long names are perfectly fine and preferred for readability.
 
 ### Code Reuse & Quality
-- **Always Check Existing Code**: Study existing tests and code patterns first - don't reimplement functionality that already exists
+- **Always Check Existing Code**: Study existing tests and code patterns first - don't reimplement functionality that already exists. Don't create new files when you could add to an existing one that covers the same topic.
 - **Post-Coding Cleanup**: After writing code, perform quick cleanup and refactoring:
   - Remove dead code
   - Improve variable/function naming
   - Consolidate duplicated logic
   - Ensure consistent formatting
   - Check for code smells and anti-patterns
+  - Modularize monoliths
 
 ## Testing Philosophy
 
 ### Test Strategy
+- **TDD**: ideally, start by writing tests; they should pass at the end. Alternatively, you may write code first and then tests, but you should __ALWAYS__ write and run tests for any nontrivial additions or modifications to code. After writing your code and tests, run your tests and ensure they pass.
 - **Integration over Unit**: Prefer end-to-end integration and smoke tests to unit tests when prioritization is needed
 - **Realistic Coverage**: Focus on likely scenarios, not extreme edge cases unless specifically asked
 - **Test Organization**: Use pytest classes to group related tests where relevant
@@ -124,7 +130,7 @@ Always validate and sanity check assumptions and inputs:
 - **Batch Processing**: Prefer batch/vectorized operations over loops
 
 ## APIs
-- **NEVER assume API structure** unless it's a common API and you're very confident (e.g. pandas, numpy, sklearn, boto); obscure APIs should ALWAYS be researched!  
+- **NEVER assume API structure** unless it's a common API and you're very confident (e.g. pandas, numpy, sklearn, boto); obscure APIs should ALWAYS be researched! Let me know if you need help or rely on MCPs like Context7 or AWS docs.  
 
 ## Misc
 
@@ -142,9 +148,9 @@ This is a Metaculus forecasting bot forked from the metaculus starter template. 
 - `main_with_no_framework.py`: Minimal dependencies variant 
 - `community_benchmark.py`: Benchmarking CLI and Streamlit UI
 - `metaculus_bot/`: Core utilities including LLM configs, prompts, and research providers
-- `REFERENCE_COPY_OF_forecasting_tools/`: Local copy of forecasting framework (for reference) `/home/jan/workspace/metaculus-bot/REFERENCE_COPY_OF_forecasting_tools_0p2p55`. obviously, this is installed as a package, so you won't affect the package by changing these files; they're just a reference.
-- `/home/jan/workspace/metaculus-bot/REFERENCE_COPY_OF_panchul_no_1_q2_bot` - q2 2025 competition winner, has good ideas  
-- `/home/jan/workspace/metaculus-bot/scratch_docs_and_planning/metaculus_api_doc_LARGE_FILE.yml` - metaculus API doc. large file. shows how to interact with metaculus
+- `REFERENCE_COPY_OF_forecasting_tools/`: Local copy of forecasting framework (for reference) `~/workspace/metaculus-bot/REFERENCE_COPY_OF_forecasting_tools_0p2p55`. obviously, this is installed as a package, so you won't affect the package by changing these files; they're just a reference.
+- `~/workspace/metaculus-bot/REFERENCE_COPY_OF_panchul_no_1_q2_bot` - q2 2025 competition winner, has good ideas  
+- `~/workspace/metaculus-bot/scratch_docs_and_planning/metaculus_api_doc_LARGE_FILE.yml` - metaculus API doc. large file. shows how to interact with metaculus
 
 The bot architecture follows these key components:
 - **Model Ensembling**: Multiple LLMs configured in `metaculus_bot/llm_configs.py` with aggregation strategies
@@ -163,9 +169,9 @@ The bot architecture follows these key components:
 
 ### Python Environment
 - **Conda environment**: `metaculus-bot`
-- **Python binary**: `/home/jan/miniconda3/envs/metaculus-bot/bin/python`
+- **Python binary**: `~/miniconda3/envs/metaculus-bot/bin/python`
 - **Direct execution**: Use the full python path when conda commands fail
-- Example: `/home/jan/miniconda3/envs/metaculus-bot/bin/python script.py` instead of `conda run -n metaculus-bot python script.py`
+- Example: `~/miniconda3/envs/metaculus-bot/bin/python script.py` instead of `conda run -n metaculus-bot python script.py`
 
 ## Key Framework Integration
 The project heavily uses `forecasting-tools` framework:
