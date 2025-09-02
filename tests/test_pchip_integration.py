@@ -37,7 +37,7 @@ class TestPchipIntegration:
 
         # Generate PCHIP CDF
         pchip_percentiles = percentiles_to_pchip_format(percentiles)
-        pchip_cdf = generate_pchip_cdf(
+        pchip_cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=pchip_percentiles,
             open_upper_bound=question.open_upper_bound,
             open_lower_bound=question.open_lower_bound,
@@ -82,7 +82,7 @@ class TestPchipIntegration:
 
         # Generate PCHIP CDF
         pchip_percentiles = percentiles_to_pchip_format(percentiles)
-        pchip_cdf = generate_pchip_cdf(
+        pchip_cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=pchip_percentiles,
             open_upper_bound=question.open_upper_bound,
             open_lower_bound=question.open_lower_bound,
@@ -110,7 +110,7 @@ class TestPchipIntegration:
         )
 
         pchip_percentiles = percentiles_to_pchip_format(percentiles)
-        pchip_cdf = generate_pchip_cdf(
+        pchip_cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=pchip_percentiles,
             open_upper_bound=question.open_upper_bound,
             open_lower_bound=question.open_lower_bound,
@@ -180,7 +180,7 @@ class TestPchipIntegration:
 
         # This should work with PCHIP even though values are close
         pchip_percentiles = percentiles_to_pchip_format(percentiles)
-        pchip_cdf = generate_pchip_cdf(
+        pchip_cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=pchip_percentiles,
             open_upper_bound=question.open_upper_bound,
             open_lower_bound=question.open_lower_bound,

@@ -117,7 +117,7 @@ def _asknews_provider() -> ResearchCallable:
                         if not _is_retryable(e):
                             raise
                         if hot_attempt < tries:
-                            sleep_for = backoff * (3 ** (hot_attempt))
+                            sleep_for = backoff * (10 + 3 ** (hot_attempt))
                             await asyncio.sleep(sleep_for)
                         else:
                             assert last_exc is not None
@@ -154,7 +154,7 @@ def _asknews_provider() -> ResearchCallable:
                         if not _is_retryable(e):
                             raise
                         if hist_attempt < remaining_hist_tries:
-                            sleep_for = backoff * (3 ** (hist_attempt))
+                            sleep_for = backoff * (10 + 3 ** (hist_attempt))
                             await asyncio.sleep(sleep_for)
                         else:
                             assert last_exc is not None

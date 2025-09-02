@@ -41,8 +41,8 @@ async def test_asknews_rate_limiting_delay():
 
             # Verify there was a delay between calls (should be ~1.2 seconds)
             time_diff = call_times[1] - call_times[0]
-            assert time_diff >= 1.2, f"Expected delay >= 1.2s, got {time_diff:.2f}s"
-            assert time_diff <= 6.1, f"Expected delay <= 10.1s, got {time_diff:.2f}s"
+            assert time_diff >= 10.0, f"Expected delay >= 10.0s, got {time_diff:.2f}s"
+            assert time_diff <= 11.1, f"Expected delay <= 11.1s, got {time_diff:.2f}s"
 
 
 @pytest.mark.asyncio

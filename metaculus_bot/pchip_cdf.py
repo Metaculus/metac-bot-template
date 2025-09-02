@@ -5,10 +5,13 @@ Based on the battle-tested implementation from panchul (Q2 2025 competition winn
 Provides smooth, monotonic CDF construction with strict constraints enforcement.
 """
 
+import logging
 from typing import Dict, List, Optional, Union
 
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_cdf_bounds(cdf: np.ndarray, open_lower: bool, open_upper: bool, min_step: float) -> np.ndarray:
@@ -62,7 +65,9 @@ def generate_pchip_cdf(
     *,
     min_step: float = 5.0e-5,
     num_points: int = 201,
-) -> List[float]:
+    question_id: Optional[Union[int, str]] = None,
+    question_url: Optional[str] = None,
+) -> tuple[List[float], bool]:
     """
     Generate a robust continuous CDF using PCHIP interpolation with strict constraint enforcement.
 
@@ -77,9 +82,13 @@ def generate_pchip_cdf(
         zero_point: Reference point for non-linear scaling (optional)
         min_step: Minimum step size between adjacent CDF points (default: 5.0e-5)
         num_points: Number of points in the output CDF (default: 201)
+        question_id: Optional question identifier for logging context
+        question_url: Optional question URL for logging context
 
     Returns:
-        List of CDF values with strictly enforced monotonicity and step size
+        Tuple of (CDF values, aggressive_enforcement_used) where:
+        - CDF values: List of probability values with strictly enforced monotonicity and step size
+        - aggressive_enforcement_used: True if aggressive step enforcement was required
 
     Raises:
         ValueError: If input validation fails
@@ -246,9 +255,26 @@ def generate_pchip_cdf(
 
     # Double-check minimum step size requirement
     steps = np.diff(cdf_y)
+    aggressive_enforcement_used = False
     if np.any(steps < min_step):
-        # If still violated, use a more aggressive approach
-        print(f"Warning: Minimum step size still violated. Using aggressive step enforcement.")
+        aggressive_enforcement_used = True
+        # Log detailed context before aggressive enforcement
+        violated_steps = np.sum(steps < min_step)
+        min_violated_step = np.min(steps)
+        violation_percentage = 100.0 * violated_steps / len(steps)
+
+        logger.warning(
+            "PCHIP minimum step enforcement required for Q %s | URL %s | violated_steps=%d/%d (%.1f%%) | min_step_found=%.8f | min_step_required=%.8f | available_range=%.6f | required_range=%.6f",
+            question_id or "N/A",
+            question_url or "N/A",
+            violated_steps,
+            len(steps),
+            violation_percentage,
+            min_violated_step,
+            min_step,
+            available_range,
+            required_range,
+        )
 
         # Create a strictly monotonic sequence
         if not open_lower_bound:
@@ -301,6 +327,21 @@ def generate_pchip_cdf(
 
         cdf_y = new_cdf
 
+        # Log successful aggressive enforcement
+        new_steps = np.diff(cdf_y)
+        new_min_step = np.min(new_steps)
+        new_max_step = np.max(new_steps)
+        total_range_redistributed = available_range
+
+        logger.info(
+            "PCHIP aggressive enforcement completed for Q %s | URL %s | new_min_step=%.8f | new_max_step=%.8f | total_range_redistributed=%.6f | shape_preserved=True",
+            question_id or "N/A",
+            question_url or "N/A",
+            new_min_step,
+            new_max_step,
+            total_range_redistributed,
+        )
+
     # Final checks
     if np.any(np.diff(cdf_y) < min_step - 1e-10):
         problematic_indices = np.where(np.diff(cdf_y) < min_step - 1e-10)[0]
@@ -316,7 +357,7 @@ def generate_pchip_cdf(
     if not open_upper_bound and abs(cdf_y[-1] - 1.0) > 1e-10:
         raise RuntimeError(f"Failed to enforce upper bound: {cdf_y[-1]}")
 
-    return cdf_y.tolist()
+    return cdf_y.tolist(), aggressive_enforcement_used
 
 
 def percentiles_to_pchip_format(percentiles: List) -> Dict[float, float]:
