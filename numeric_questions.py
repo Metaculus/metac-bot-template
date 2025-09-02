@@ -56,6 +56,7 @@ def generate_continuous_cdf(
     upper_bound: float,
     lower_bound: float,
     zero_point: float | None,
+    cdf_size: int,
 ) -> list[float]:
     """
     Returns: list[float]: A list of 201 float values representing the CDF.
@@ -111,7 +112,7 @@ def generate_continuous_cdf(
             scale = lambda x: range_min + (range_max - range_min) * (
                 deriv_ratio**x - 1
             ) / (deriv_ratio - 1)
-        return [scale(x) for x in np.linspace(0, 1, 201)]
+        return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
 
@@ -165,6 +166,7 @@ async def get_numeric_gpt_prediction(
     resolution_criteria = question_details["resolution_criteria"]
     background = question_details["description"]
     fine_print = question_details["fine_print"]
+    question_type = question_details["type"]
     scaling = question_details["scaling"]
     open_upper_bound = question_details["open_upper_bound"]
     open_lower_bound = question_details["open_lower_bound"]
@@ -172,6 +174,11 @@ async def get_numeric_gpt_prediction(
     upper_bound = scaling["range_max"]
     lower_bound = scaling["range_min"]
     zero_point = scaling["zero_point"]
+    if question_type == "discrete":
+        outcome_count = question_details["scaling"]["inbound_outcome_count"]
+        cdf_size = outcome_count + 1
+    else:
+        cdf_size = 201
 
     # Create messages about the bounds that are passed in the LLM prompt
     if open_upper_bound:
@@ -208,12 +215,13 @@ async def get_numeric_gpt_prediction(
 
         cdf = generate_continuous_cdf(
             percentile_values,
-            question_details["type"],
+            question_type,
             open_upper_bound,
             open_lower_bound,
             upper_bound,
             lower_bound,
             zero_point,
+            cdf_size,
         )
 
         return cdf, comment

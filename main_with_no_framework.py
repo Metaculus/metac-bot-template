@@ -14,9 +14,9 @@ from config import METACULUS_TOKEN, ASKNEWS_CLIENT_ID, ASKNEWS_SECRET, EXA_API_K
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = True  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 
 
 # The tournament IDs below can be used for testing your bot.
@@ -35,9 +35,10 @@ CURRENT_MINIBENCH_ID = "minibench"  # MiniBench tournament (The project ID for t
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    # (39110, 39110), # Numeric - [PRACTICE] What will be the score ratio of the highest performing bot compared to the top 5 participants in the Summer 2025 Metaculus Cup?
-    (39056, 39056), # Binary - [PRACTICE] Will Shigeru Ishiba cease to be Prime Minister of Japan before September 2025?
-    # (39109, 39109), # Multi-choice - [PRACTICE] Which party will lead the 2025 Tasmanian government?
+    # (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
 # Also, we realize the below code could probably be cleaned up a bit in a few places
@@ -138,6 +139,7 @@ def list_posts_from_tournament(
                 "binary",
                 "multiple_choice",
                 "numeric",
+                "discrete",
             ]
         ),
         "tournaments": [tournament_id],
@@ -283,6 +285,10 @@ async def forecast_individual_question(
         forecast, comment = await get_numeric_gpt_prediction(
             question_details, num_runs_per_question, run_research
         )
+    elif question_type == "discrete":
+        forecast, comment = await get_numeric_gpt_prediction(
+            question_details, num_runs_per_question, run_research
+        )
     elif question_type == "multiple_choice":
         forecast, comment = await get_multiple_choice_gpt_prediction(
             question_details, num_runs_per_question, run_research
@@ -294,7 +300,7 @@ async def forecast_individual_question(
     print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
     print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
 
-    if question_type == "numeric":
+    if question_type == "numeric" or question_type == "discrete":
         summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
     else:
         summary_of_forecast += f"Forecast: {forecast}\n"
