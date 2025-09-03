@@ -124,7 +124,7 @@ Before providing your forecast, write:
 
 Remind yourself to adopt humility and set broad 90/10 confidence intervals to capture unknown unknowns, as good forecasters do.
 
-The last thing you write is your final answer as:
+The last thing you write is your final answer as follows without any decoration and replacing XX with actual numbers without units:
 "
 Percentile 10: XX
 Percentile 20: XX
