@@ -1,0 +1,302 @@
+📊 Forecast Run 20250902-182854
+Timestamp: 2025-09-02 18:28:55 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ Question: Will humans go extinct before 2100?
+🔗 URL: https://www.metaculus.com/questions/578/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Will humans go extinct before 2100?
+*Final Prediction*: 11.26%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+### Reference class & base rates
+- **Global Catastrophic Risks**: Historical estimates suggest a 19% chance of human extinction by 2100, but this is likely biased due to selection effects.
+- **Climate Change Models**: Some models predict severe climate impacts by 2100, but extinction-level events are not typically included.
+- **Technological Risks**: AI and bioterrorism are considered significant risks, with some experts estimating a 10-50% chance of catastrophic outcomes.
+
+### Recent developments (timeline bullets)
+- [2025-09-02] ↑ — AMOC collapse risk higher than expected, potentially leading to severe climate disruptions.
+- [2025-09-01] ↑ — Security leaders warn climate change could lead to social collapse, increasing extinction risk.
+- [2025-09-01] ↓ — Arctic ice loss slowing, suggesting some climate impacts may be less severe than feared.
+
+### Mechanisms & drivers (causal levers)
+- **Climate Change**: Large — Potential for severe environmental disruptions and resource scarcity.
+- **Technological Risks**: Moderate to large — AI and bioterrorism could lead to catastrophic outcomes.
+- **Geopolitical Instability**: Moderate — Conflicts and wars could exacerbate extinction risks.
+- **Pandemics**: Moderate — Emerging diseases could pose existential threats.
+- **Nuclear Risks**: Small to moderate — Though reduced post-Cold War, nuclear conflict remains a risk.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Increased Climate Awareness**: More focus on climate risks compared to past assessments.
+- **Technological Advancements**: Rapid AI development introduces new existential risks.
+- **Global Cooperation**: Mixed progress on international agreements to mitigate risks.
+- **Public Perception**: Growing awareness but also skepticism about catastrophic risk predictions.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: 19% chance of extinction by 2100, based on biased expert polls.
+- **Evidence mapping**:
+  - ↑ Large — AMOC collapse risk suggests severe climate impacts.
+  - ↑ Moderate — Security warnings about climate-induced social collapse.
+  - ↓ Small — Slowing Arctic ice loss suggests some climate impacts may be less severe.
+- **Net effect**: Posterior should move slightly up due to increased climate and security risks.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - New climate models showing increased risk of catastrophic events.
+  - Advances in AI with potential existential risks.
+  - Geopolitical tensions escalating.
+- **DOWN indicators**:
+  - Successful international climate agreements.
+  - Advances in AI safety measures.
+  - Stabilization of geopolitical conflicts.
+
+### Caveats & pitfalls
+- **Selection Bias**: Expert opinions may not represent broader scientific consensus.
+- **Model Uncertainty**: Climate and AI models have inherent uncertainties.
+- **Data Gaps**: Limited data on long-term existential risks.
+- **Definitional Challenges**: Ambiguities in defining "human extinction."
+
+Final Research Summary: Recent developments in climate and security risks suggest a slight increase in the probability of human extinction by 2100, but uncertainties and potential mitigating factors remain significant.
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 0.16506756330517006,
+  "p10": 0.009578154252223865,
+  "p50": 0.11264611610014871,
+  "p90": 0.40381473288483605,
+  "posterior_alpha": 0.69,
+  "posterior_beta": 3.51
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## OpenRouter-Default [openai/gpt-4o] Reasoning
+```
+1. **Base Rate (Prior) Selection**
+   - The base rate for human extinction by 2100, as derived from the 2008 Global Catastrophic Risk Conference, is 19%. However, this figure is likely inflated due to selection bias, as the conference attendees may have been predisposed to believe in higher risks of extinction. A more conservative base rate might be derived from historical data on existential risks, which is generally much lower. However, given the lack of precise historical data on human extinction probabilities, we'll start with the 19% as a prior, acknowledging its potential bias.
+
+2. **Comparison to Base Case**
+   - Similarities: The base case considers a variety of existential risks, including climate change, technological risks, and geopolitical instability, which are still relevant today.
+   - Differences: Recent developments, such as increased awareness of climate risks and rapid technological advancements, particularly in AI, suggest a potentially higher risk environment than in 2008. These differences warrant a reassessment of the prior probability.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - **AMOC Collapse Risk**: The increased risk of AMOC collapse suggests severe climate disruptions, which could lead to significant societal impacts. This evidence increases the likelihood of extinction (P(E | H) > P(E | ~H)), suggesting a likelihood ratio greater than 1.
+   - **Security Warnings on Climate**: Warnings about climate-induced social collapse also increase the likelihood of extinction, further supporting a likelihood ratio greater than 1.
+   - **Slowing Arctic Ice Loss**: This evidence suggests some climate impacts may be less severe, decreasing the likelihood of extinction (P(E | H) < P(E | ~H)), with a likelihood ratio less than 1.
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Prior odds = 19% / 81% = 0.2346
+   - Considering the evidence:
+     - AMOC and security warnings increase the odds, while Arctic ice loss decreases them. Assuming a net likelihood ratio slightly greater than 1 (e.g., 1.1 for simplicity), the posterior odds become 0.2346 × 1.1 = 0.2581.
+   - Posterior probability = 0.2581 / (1 + 0.2581) ≈ 20.5%
+   - The resulting posterior probability suggests a slight increase from the prior, reflecting the increased risks from climate and security developments.
+
+5. **Red Team Thinking**
+   - Overconfidence could arise from overestimating the impact of recent developments without considering mitigating factors like international cooperation and technological advancements in safety.
+   - Tail risks include unforeseen technological breakthroughs or geopolitical shifts that could drastically alter the risk landscape.
+   - An alternative forecast might emphasize the potential for successful mitigation efforts, suggesting a lower probability. However, given the current evidence, the slight increase seems justified.
+   - Adjustments: Consider the possibility of underestimating the impact of mitigating factors, leading to a slight downward adjustment.
+
+6. **Final Forecast**
+   - After considering the base rate, evidence, and potential biases, the final forecast reflects a slightly increased probability of human extinction by 2100, accounting for both heightened risks and uncertainties.
+
+Final: 20%
+```
+
+## Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet] Reasoning
+```
+# Will humans go extinct before 2100?
+
+## 1. Base Rate (Prior) Selection
+
+For a base rate on human extinction by 2100, I need to consider several reference classes:
+
+- The Oxford Global Catastrophic Risk Conference poll yielded a 19% median probability, but this likely suffers from selection bias as noted.
+- The Stern Review on climate change estimated extinction risks at less than 0.1%.
+- The Biological Anthropology literature suggests that the average mammalian species lasts about 1-2 million years, giving a roughly 0.01% chance of extinction in a 75-year period.
+- Toby Ord's book "The Precipice" estimated a 1/6 (≈17%) chance of existential catastrophe this century.
+
+Given the selection bias in the Oxford poll and considering more mainstream scientific estimates, I'll use a prior of 5%. This is higher than background extinction rates for species but lower than the potentially biased expert estimates, reflecting the unique technological and environmental risks humans face.
+
+Prior probability: 5% (1:19 odds against extinction)
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- Humans still face the same fundamental existential risks: nuclear war, climate change, pandemics, and emerging technologies.
+- Historical resilience of human populations across multiple continents provides robustness.
+
+**Differences from base case:**
+- Climate change appears to be accelerating faster than previously modeled (AMOC collapse risk).
+- Security leaders are increasingly concerned about climate-induced social collapse.
+- Technological risks, particularly from AI, may be higher than in previous assessments.
+- Some climate indicators (Arctic ice loss slowing) suggest potential moderation of certain risks.
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: AMOC collapse risk higher than expected**
+- P(E|H): Very high (~0.9) - If humans go extinct, severe climate disruptions like AMOC collapse would likely be contributing factors.
+- P(E|~H): Moderate (~0.3) - Even without extinction, we might still see AMOC disruption but with adaptation.
+- Likelihood ratio: ~3.0
+- This evidence increases the probability of extinction.
+
+**Evidence 2: Security leaders warning about climate-induced social collapse**
+- P(E|H): High (~0.8) - Expert warnings would precede actual extinction events.
+- P(E|~H): Moderate (~0.4) - Experts often warn about severe risks that don't materialize into extinction.
+- Likelihood ratio: ~2.0
+- This evidence moderately increases the probability.
+
+**Evidence 3: Arctic ice loss slowing**
+- P(E|H): Low (~0.2) - If extinction occurs, we'd expect accelerating, not slowing, climate impacts.
+- P(E|~H): Moderate (~0.5) - This is more consistent with a future where humans adapt to climate change.
+- Likelihood ratio: ~0.4
+- This evidence decreases the probability.
+
+## 4. Bayesian Updating
+
+Starting with prior odds of 5:95 (0.053 probability):
+
+**Update on AMOC collapse risk:**
+- Prior odds: 5:95 = 0.053
+- Likelihood ratio: 3.0
+- Posterior odds: 0.053 × 3.0 = 0.159
+- Posterior probability: 0.159/(1+0.159) ≈ 13.7%
+
+**Update on security leaders' warnings:**
+- Prior odds: 0.159
+- Likelihood ratio: 2.0
+- Posterior odds: 0.159 × 2.0 = 0.318
+- Posterior probability: 0.318/(1+0.318) ≈ 24.1%
+
+**Update on Arctic ice loss slowing:**
+- Prior odds: 0.318
+- Likelihood ratio: 0.4
+- Posterior odds: 0.318 × 0.4 = 0.127
+- Posterior probability: 0.127/(1+0.127) ≈ 11.3%
+
+## 5. Red Team Thinking
+
+**Potential overconfidence:**
+- I may be overweighting recent climate news relative to long-term technological safeguards.
+- The evidence about AMOC collapse is still preliminary and may not translate to extinction-level events.
+- I might be underestimating human adaptability, which has been demonstrated throughout history.
+
+**Alternative scenarios:**
+- Technological breakthroughs could mitigate climate risks substantially.
+- International cooperation might increase in response to clear climate threats.
+- The definition of "human" might evolve with technology, making extinction less clear-cut.
+
+**Best alternative forecast:**
+A much lower probability (1-3%) could be justified by arguing that:
+- Human populations are distributed globally, making complete extinction unlikely even from severe catastrophes.
+- Historical evidence suggests humans are extremely adaptable to environmental changes.
+- Technological progress is likely to provide solutions to existential threats.
+
+**Rebuttal to alternative:**
+While humans are adaptable, the combination of multiple simultaneous threats (climate, AI, bioterrorism) creates unprecedented risks that historical resilience may not address.
+
+After considering these points, I should adjust my estimate slightly downward to account for human adaptability and the preliminary nature of some climate evidence.
+
+## 6. Final Forecast
+
+Considering the base rate, the evidence presented, and critical evaluation of my reasoning, I arrive at a final probability of 10% for human extinction before 2100.
+
+Final: 10%
+```
+
+## Gemini [gemini-2.5-pro] Reasoning
+```
+Here is my probabilistic forecast, following the specified reasoning steps.
+
+### 1. Base Rate (Prior) Selection
+-   **Base Rate Selection**: I will use a prior probability of 8% for human extinction by 2100.
+-   **Reasoning**: The background material provides a median estimate of 19% from a 2008 expert poll at a Global Catastrophic Risk Conference. However, the material rightly points out a high risk of selection bias, as attendees of such a conference are likely predisposed to assign higher probabilities to such events. Therefore, the 19% figure should be treated as an informed but likely inflated upper bound from a specific sub-community. A simple historical base rate (zero extinctions in any 75-year period) is inappropriate because current technological and environmental risks (nuclear weapons, AI, climate change) are unprecedented. My prior of 8% is an attempt to correct the 19% figure downwards to account for selection bias, while still acknowledging that expert consensus places the risk far higher than the near-zero probability a layperson might assume.
+-   **Initial Prior**: P(H) = 8%, which corresponds to prior odds of 0.08 / 0.92, or approximately 1 to 11.5.
+
+### 2. Comparison to Base Case
+-   **Similarities**: The reference class for my prior is the general understanding of existential risks in the 21st century. The current situation shares the same fundamental risk categories: technological (AI, biotech), environmental (climate change), and geopolitical (nuclear conflict).
+-   **Differences**: The current situation differs in crucial ways. First, the pace of AI development has accelerated dramatically, moving it from a theoretical to a more tangible risk. Second, climate change impacts and associated "tipping point" risks like AMOC collapse are perceived as more immediate and severe than in the past. These differences suggest that the risk level is likely higher now than it was when earlier estimates were formulated.
+
+### 3. Evidence Evaluation (Likelihoods)
+I will evaluate the three recent developments provided in the research report. Let H be the hypothesis "humans go extinct by 2100."
+
+-   **Evidence 1 (E1)**: "AMOC collapse risk higher than expected."
+    -   This evidence suggests a key climate system is less stable than previously thought. Such negative surprises are more probable if we are on a trajectory towards a climate-induced collapse (H) than if we are on a trajectory where we successfully manage the climate crisis (~H).
+    -   Likelihood Ratio P(E1|H) / P(E1|~H) is greater than 1.
+    -   This evidence **increases** the probability.
+
+-   **Evidence 2 (E2)**: "Security leaders warn climate change could lead to social collapse."
+    -   Social collapse is a primary mechanism through which climate change could become an existential threat. Warnings from typically conservative security establishments indicate the threat is becoming more concrete and severe. This is more likely to happen in a world heading for extinction (H) than one that successfully navigates the crisis (~H).
+    -   Likelihood Ratio P(E2|H) / P(E2|~H) is greater than 1.
+    -   This evidence **increases** the probability.
+
+-   **Evidence 3 (E3)**: "Arctic ice loss slowing."
+    -   This is a piece of positive news, suggesting at least one climate indicator is not as bad as feared. Such positive developments are less likely if we are on a path to extinction (H) and more likely if we are on a path to survival (~H).
+    -   Likelihood Ratio P(E3|H) / P(E3|~H) is less than 1.
+    -   This evidence **decreases** the probability.
+
+### 4. Bayesian Updating (Posterior Probability)
+-   **Conceptual Update**: The prior starts at 8%. The two pieces of negative evidence (AMOC risk, security warnings) are significant and push the probability upwards. The single piece of positive evidence (slowing ice loss) is a smaller counter-update, pulling the probability back down, but not to its original level. The net effect is an increase in the overall probability.
+-   **Explicit Update Step**:
+    -   Start with Prior Odds = 1 to 11.5 (for 8% probability).
+    -   Update with E1 and E2. Let's assign a combined likelihood ratio of ~2.0 for these two related, negative pieces of news.
+    -   New Odds = (1 / 11.5) * 2.0 ≈ 0.174 (or 1 to 5.75). This corresponds to a probability of 0.174 / 1.174 ≈ 14.8%.
+    -   Now, update with E3. Let's assign a likelihood ratio of ~0.8 for this smaller, positive piece of news.
+    -   Final Odds = 0.174 * 0.8 ≈ 0.139 (or 1 to 7.2).
+    -   This results in a Posterior Probability = 0.139 / 1.139 ≈ **12.2%**.
+
+### 5. Red Team Thinking
+-   **Critique**: My main concern is the strictness of the resolution criteria: "no known humans alive." Many scenarios that are considered "existential catastrophes" (e.g., a nuclear war killing 99% of the population, global civilization collapse) would not meet this bar, as small, isolated groups of humans would likely survive. My updated probability of ~12% feels more appropriate for a "civilizational collapse" than for complete extinction. The final step from catastrophe to the extinction of the last human is an additional barrier that needs to be accounted for.
+-   **Alternative Forecast**: A plausible alternative forecast would be much lower, perhaps 2-3%. This forecast would argue that human resilience, geographic distribution across an entire planet, and ingenuity make eliminating *every last person* exceedingly difficult for most plausible threats, including climate change and nuclear war. This forecast would view risks like AI as too speculative to warrant a high probability.
+-   **Rebuttal and Adjustment**: While the resilience argument is strong for many risks, it may be weaker for novel technological risks like an unaligned superintelligence or an engineered pandemic designed for maximum lethality and transmissibility. However, the point about the high bar for *complete extinction* is valid and requires a downward adjustment from my calculated posterior. I will adjust my 12.2% figure down to reflect the difference between a civilization-ending catastrophe and the complete extinction of the species. A reduction of a few percentage points seems warranted. I will adjust my final forecast to 9%. This remains higher than my initial prior, reflecting the net negative evidence, but is tempered by the difficulty of achieving total extinction.
+
+### 6. Final Forecast
+My final forecast is based on a de-biased expert prior, updated with recent evidence suggesting an increase in climate-related risks, and then adjusted downward to account for the very high bar of complete extinction versus civilizational collapse.
+
+Final: 9%
+```
+
+## Grok [grok-4] Reasoning
+```
+### 1. Base Rate (Prior) Selection
+An appropriate base rate for human extinction by 2100 is the median estimate from the 2008 Global Catastrophic Risk Conference poll, which was 19%. This is drawn from experts in global risks, providing a reference class of informed opinions on existential threats like nuclear war, pandemics, climate change, and emerging technologies. However, as noted in the background and research report, this estimate is likely biased upward due to selection effects (attendees were predisposed to high-risk views). Despite this, it's a useful starting point as it's one of the few aggregated expert forecasts specifically on human extinction, and broader reference classes (e.g., historical human survival over millennia) are less relevant given modern, unprecedented risks. I'll use P(H) = 19% as the prior, but flag the bias for later adjustment. In odds form: 19:81 or approximately 0.235:1.
+
+### 2. Comparison to Base Case
+The base case (2008 poll) assumed risks from nuclear threats, pandemics, climate change, and early tech concerns, with a focus on post-Cold War stability reducing some geopolitical tensions. The current situation (2025) is similar in the persistence of these core risks: nuclear threats remain (though reduced), pandemics are still a moderate driver, and geopolitical instability continues. However, it differs in key ways: recent developments show heightened climate risks (e.g., AMOC collapse warnings and security alerts on social collapse), but also some mitigation (e.g., slowing Arctic ice loss). Additionally, technological risks like AI have accelerated significantly since 2008, introducing new existential threats not as prominent then. These differences matter because they suggest a net increase in risk—climate evidence is mixed but leans negative, and AI advancements add novel, high-impact pathways to extinction—potentially justifying an upward adjustment from the base rate.
+
+### 3. Evidence Evaluation (Likelihoods)
+- **AMOC collapse risk higher than expected (↑ large, from research report)**: This evidence of severe climate disruptions is more likely if extinction occurs (P(E|H) ≈ 70%, as extinction scenarios often involve cascading environmental failures), than if it does not (P(E|~H) ≈ 40%, as non-extinction could still include warnings without total collapse). Likelihood ratio ≈ 1.75 (increases probability significantly, as it points to underestimated climate levers).
+- **Security leaders warn of climate-induced social collapse (↑ moderate)**: More likely under extinction (P(E|H) ≈ 60%, fitting narratives of societal breakdown leading to extinction), than non-extinction (P(E|~H) ≈ 40%). Likelihood ratio ≈ 1.5 (increases probability moderately, amplifying geopolitical and resource scarcity drivers).
+- **Arctic ice loss slowing (↓ small)**: Less likely under extinction (P(E|H) ≈ 30%, as extinction via climate would likely involve accelerating ice melt), than non-extinction (P(E|~H) ≈ 50%). Likelihood ratio ≈ 0.6 (decreases probability slightly, suggesting some climate impacts may be overstated).
+- **Rapid AI development and bioterrorism risks (moderate to large, per report)**: More likely under extinction (P(E|H) ≈ 50%, as tech risks are key mechanisms), than non-extinction (P(E|~H) ≈ 35%). Likelihood ratio ≈ 1.4 (increases probability, reflecting new tech advancements since 2008).
+
+Net effect: The upward evidence dominates, with a qualitative net likelihood ratio >1, pushing probability higher, though tempered by the small downward piece.
+
+### 4. Bayesian Updating (Posterior Probability)
+Using Bayes' Rule conceptually: Posterior odds = Prior odds × Likelihood ratio, then Posterior P = Posterior odds / (1 + Posterior odds).
+
+Start with prior odds = 0.235.
+
+For an explicit update, group the climate evidence (AMOC, security warnings, Arctic ice) into one net LR ≈ 1.3 (upward factors outweigh the downward: 1.75 × 1.5 × 0.6 ≈ 1.575, conservatively adjusted to 1.3 for qualitative netting). Intermediate odds = 0.235 × 1.3 ≈ 0.306. Intermediate P ≈ 0.306 / 1.306 ≈ 23.4%.
+
+Now update for tech risks (AI/bioterrorism, LR ≈ 1.4): Posterior odds = 0.306 × 1.4 ≈ 0.428. Posterior P ≈ 0.428 / 1.428 ≈ 23%.
+
+This reflects a slight upward shift from the prior due to new evidence, but uncertainty remains high due to model gaps, definitional ambiguities, and mixed signals (e.g., potential for global cooperation). The posterior is somewhat confident in a modest increase but acknowledges wide error bars from data limitations.
+
+### 5. Red Team Thinking
+My forecast may be overconfident by anchoring too heavily to the biased 19% prior; a blind spot is underweighting human resilience and mitigation (e.g., AI safety progress or climate agreements could drastically reduce risks, as noted in DOWN indicators). Tail risks include positive black swans like breakthrough tech solving climate issues (low-prob but could skew distribution downward) or unforeseen escalations (e.g., AI arms race). Best alternative forecast: 5%, plausible if extinction is rarer than catastrophic risks (e.g., many scenarios leave survivors, per resolution criteria; broader surveys like Metaculus often show ~1% medians for similar questions, dismissing poll bias entirely). Rebuttal: The report's evidence (e.g., AMOC risks) and expert aggregates justify higher odds, as risks are cumulative and unprecedented. To account for bias and overconfidence, I adjust downward slightly to a more conservative 20% (widening implicit uncertainty to avoid tail overestimation).
+
+### 6. Final Forecast
+Final: 20%
+```

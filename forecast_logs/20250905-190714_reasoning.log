@@ -1,0 +1,355 @@
+📊 Forecast Run 20250905-190714
+Timestamp: 2025-09-05 19:07:14 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ Question: Will humans go extinct before 2100?
+🔗 URL: https://www.metaculus.com/questions/578/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Will humans go extinct before 2100?
+*Final Prediction*: 1.36%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+
+### Reference class & base rates
+- **Global Catastrophic Risks**: Historical base rate for human extinction events is effectively zero, but expert estimates suggest a 19% chance by 2100 (selection bias noted).
+- **Nuclear War**: No full-scale nuclear wars have occurred; hypothetical models predict catastrophic outcomes.
+- **Climate Change**: Severe climate events are increasing, but extinction-level impacts are speculative.
+
+### Recent developments (timeline bullets)
+- [2025-09-05] ↑ — AI experts warn of a 20% chance of AI-induced extinction within 30 years.
+- [2025-09-05] ↑ — Study shows a 70% chance of Gulf Stream collapse by 2035, potentially triggering severe climate shifts.
+- [2025-09-04] ↑ — Article highlights nuclear war risks, with potential for massive human casualties.
+
+### Mechanisms & drivers (causal levers)
+- **Artificial Intelligence**: Large — Potential for AI to surpass human control.
+- **Nuclear Conflict**: Large — Geopolitical tensions could escalate into nuclear war.
+- **Climate Change**: Moderate — Extreme weather could destabilize ecosystems and societies.
+- **Pandemics**: Moderate — New diseases could emerge with high mortality rates.
+- **Technological Advances**: Small — Could mitigate or exacerbate risks.
+
+### Differences vs. the base rate (what’s unusual now)
+- **AI Development**: Rapid advancements increase existential risk, unlike historical technological changes.
+- **Climate Instability**: Accelerating climate change presents new, unpredictable risks.
+- **Geopolitical Tensions**: Current multipolar world order increases nuclear conflict risk.
+- **Global Connectivity**: Increases pandemic spread potential compared to historical outbreaks.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Assume a low prior probability (e.g., 1%) with moderate strength (equivalent n = 10).
+- **Evidence mapping**:
+  - ↑ AI risk (large)
+  - ↑ Climate change impacts (moderate)
+  - ↑ Nuclear tensions (large)
+  - ↓ Historical extinction events (small)
+- **Net effect**: Posterior probability should increase moderately given recent evidence.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - Escalation in AI capabilities without regulation.
+  - Increased geopolitical tensions.
+  - Accelerating climate anomalies.
+- **DOWN indicators**:
+  - Successful international disarmament treaties.
+  - Breakthroughs in climate mitigation.
+  - Effective global AI governance frameworks.
+
+### Caveats & pitfalls
+- **Uncertainty in AI timelines**: Predictions vary widely.
+- **Data gaps**: Limited historical data on extinction-level events.
+- **Deception risks**: Potential misinformation in geopolitical contexts.
+- **Regime changes**: Political shifts could alter risk landscapes.
+- **Definitional gotchas**: Ambiguities in defining "human extinction."
+
+Final Research Summary: Recent developments in AI, climate change, and geopolitical tensions suggest a moderate increase in the probability of human extinction by 2100. However, significant uncertainties and potential mitigating factors remain.
+
+---
+### Market Consensus Snapshot
+_Captured 2025-09-05 19:07:40 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Will humans go extinct before 2100? — binary — 1.0% YES — [link](https://www.metaculus.com/questions/578/)
+
+**Manifold (play-money odds):**
+- Will humans go extinct before 2100? [Resolves to Metaculus in 2027] — binary — 4.5% YES — [link](https://manifold.markets/jack/will-humans-go-extinct-before-2100)
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+# GTMC1 DETAILS
+GTMC1 activated: No (not a strategic question or actor extraction failed).
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 0.06156620952612545,
+  "p10": 2.9799669986542574e-05,
+  "p50": 0.013616337130120393,
+  "p90": 0.19237924034789713,
+  "posterior_alpha": 0.26,
+  "posterior_beta": 3.9399999999999995
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## OpenRouter-Default [openai/gpt-4o] Reasoning
+```
+1. **Base Rate (Prior) Selection**
+   - The historical base rate for human extinction events is effectively zero, as there have been no known extinction events in human history. However, expert estimates, such as the 19% probability from the Global Catastrophic Risk Conference, suggest a higher risk. Due to potential selection bias in that estimate, a more conservative prior of 1% is chosen, reflecting the historical absence of extinction events but acknowledging non-zero risk factors.
+
+2. **Comparison to Base Case**
+   - Similarities: The current situation shares the absence of historical extinction events with the base case.
+   - Differences: Recent developments in AI, climate change, and geopolitical tensions introduce new risks not present in historical contexts, warranting an upward adjustment from the historical base rate.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - AI Risk: The warning of a 20% chance of AI-induced extinction within 30 years suggests a significant likelihood ratio, increasing the probability.
+   - Climate Change: The 70% chance of Gulf Stream collapse by 2035 indicates severe potential impacts, moderately increasing the probability.
+   - Nuclear Tensions: Highlighted risks of nuclear war further increase the probability due to potential for catastrophic outcomes.
+   - Historical Extinction Events: The absence of past extinction events slightly decreases the probability.
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Prior odds: 1% probability = 0.01 odds.
+   - Considering the evidence, particularly the AI and nuclear risks, the likelihood ratio is significantly greater than 1, suggesting a moderate increase in probability.
+   - Posterior odds = Prior odds × Likelihood ratio (qualitatively assessed as >1).
+   - Posterior probability = (Posterior odds) / (1 + Posterior odds).
+   - Given the evidence, the posterior probability is adjusted upward from the prior.
+
+5. **Red Team Thinking**
+   - Overconfidence is mitigated by considering the low historical base rate and potential mitigating factors like technological advances and international cooperation.
+   - Tail risks, such as unforeseen technological breakthroughs or geopolitical shifts, could alter the risk landscape.
+   - An alternative forecast might argue for a lower probability, emphasizing the historical absence of extinction events and potential for mitigation.
+
+6. **Final Forecast**
+   - Balancing the base rate with recent evidence and considering uncertainties, the final probability is adjusted to reflect a moderate increase from the prior.
+
+Final: 5%
+```
+
+## Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet] Reasoning
+```
+# Will humans go extinct before 2100?
+
+## 1. Base Rate (Prior) Selection
+
+For human extinction by 2100, I need to establish an appropriate base rate. This is challenging since human extinction has never occurred, so I'll consider several reference points:
+
+- The Metaculus community prediction is 1.0%
+- The Manifold market shows 4.5%
+- The Global Catastrophic Risk Conference yielded 19% (with acknowledged selection bias)
+- The human species has existed for roughly 300,000 years without extinction
+
+Given these considerations, I'll use a conservative prior of 2%, which:
+- Acknowledges the Metaculus/Manifold predictions
+- Accounts for the selection bias in the Oxford conference
+- Recognizes that human extinction is an unprecedented event
+- Reflects that extinction risks may be higher now than in previous centuries due to technological developments
+
+Prior probability: 2% (or odds of 1:49)
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- Humans have demonstrated remarkable adaptability and survival across various catastrophes
+- Global cooperation exists for some existential threats
+- Technology continues to advance, potentially providing solutions to threats
+
+**Differences from base case:**
+- Unprecedented technological risks (especially AI) that didn't exist historically
+- Climate change occurring at rates not seen in human history
+- Nuclear weapons and other WMDs create extinction possibilities that didn't exist before
+- Global interconnectedness potentially increases vulnerability to pandemics
+- Multiple simultaneous threats could interact in unpredictable ways
+
+These differences suggest the extinction risk may be higher than historical patterns would indicate.
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: AI development risks**
+- P(AI risk warning | Extinction): Very high, experts would certainly warn about risks
+- P(AI risk warning | No Extinction): Moderate, as warnings could be overblown
+- Likelihood ratio: Moderately increases probability of extinction
+
+**Evidence 2: Climate change acceleration**
+- P(Gulf Stream collapse warning | Extinction): High, as this would be a precursor to catastrophic climate change
+- P(Gulf Stream collapse warning | No Extinction): Moderate, as models could be wrong or adaptation might occur
+- Likelihood ratio: Slightly increases probability of extinction
+
+**Evidence 3: Nuclear conflict risks**
+- P(Nuclear tension | Extinction): Very high, as nuclear war is a plausible extinction pathway
+- P(Nuclear tension | No Extinction): High, as tensions have existed without causing extinction
+- Likelihood ratio: Slightly increases probability of extinction
+
+**Evidence 4: Historical resilience of humanity**
+- P(Past survival | Extinction): High, as past survival doesn't guarantee future survival
+- P(Past survival | No Extinction): Very high, as it demonstrates adaptability
+- Likelihood ratio: Moderately decreases probability of extinction
+
+## 4. Bayesian Updating (Posterior Probability)
+
+Starting with prior odds of 1:49 (2%), I'll update based on the evidence:
+
+**Update on AI risks:**
+- Likelihood ratio: ~2:1 (moderately favors extinction)
+- Updated odds: 1:49 × 2:1 = 2:49 ≈ 3.9%
+
+**Update on climate change:**
+- Likelihood ratio: ~1.5:1 (slightly favors extinction)
+- Updated odds: 2:49 × 1.5:1 = 3:49 ≈ 5.8%
+
+**Update on nuclear risks:**
+- Likelihood ratio: ~1.2:1 (slightly favors extinction)
+- Updated odds: 3:49 × 1.2:1 = 3.6:49 ≈ 6.8%
+
+**Update on historical resilience:**
+- Likelihood ratio: ~1:2 (moderately favors non-extinction)
+- Updated odds: 3.6:49 × 1:2 = 3.6:98 ≈ 3.5%
+
+Converting to probability: 3.5% / (1 + 3.5%) ≈ 3.4%
+
+## 5. Red Team Thinking
+
+**Potential overconfidence:**
+- I may be underestimating unprecedented risks like superintelligent AI
+- Interaction effects between multiple catastrophes could be worse than expected
+- Unknown unknowns could present extinction risks we haven't considered
+
+**Alternative scenarios:**
+- The 19% estimate from Oxford experts might be more accurate if they have specialized knowledge
+- Technological progress might accelerate faster than expected, creating unforeseen risks
+- Climate tipping points might be closer than models suggest
+
+**Counterarguments:**
+- Humans have demonstrated remarkable adaptability
+- Technological progress could also create solutions to existential risks
+- Global awareness of extinction risks is increasing, potentially leading to preventative measures
+
+Given these considerations, I should adjust my estimate slightly upward to account for unknown risks and interaction effects, but still remain closer to the Metaculus/Manifold predictions than the Oxford conference estimate.
+
+## 6. Final Forecast
+
+After considering the base rate, evidence, and potential biases, I believe the probability of human extinction before 2100 is approximately 4%.
+
+Final: 4%
+```
+
+## Gemini [gemini-2.5-pro] Reasoning
+```
+Here is my probabilistic forecast reasoning:
+
+### 1. Base Rate (Prior) Selection
+The event in question, human extinction, has no historical precedent. A base rate based on historical frequency would be zero, which is unhelpful as it ignores novel, 21st-century risks (the "black swan" problem).
+
+Instead, I will use the Metaculus community forecast as a starting point. This forecast aggregates the predictions of many informed individuals and has a strong track record. It represents a "wisdom of the crowds" baseline that has already incorporated a wide range of public information.
+
+- **Base Rate Source**: Metaculus community forecast.
+- **Chosen Prior**: P(H) = 1.0%
+- **Reasoning**: This is a low but non-zero probability, acknowledging that human extinction is an extraordinary event, yet plausible due to modern technological and environmental risks. It avoids the extreme selection bias of the 19% figure from the 2008 expert poll while still taking the possibility seriously.
+- **Prior Odds**: 1:99.
+
+### 2. Comparison to Base Case
+The base case implied by the prior is a general understanding of 21st-century risks. The provided research report contains specific, recent developments that may not be fully incorporated into this baseline. The key differences from a "business as usual" risk environment are:
+
+- **AI Risk Crystallization**: The risk is moving from theoretical to concrete, with specific warnings and timelines from experts.
+- **Climate Tipping Points**: The evidence points to a high probability of a specific, major climate system collapse (Gulf Stream) within the next decade, which is more acute than a general concern about climate change.
+- **Geopolitical Instability**: The report notes that the current multipolar world may be more prone to miscalculation than the bipolar Cold War era, increasing nuclear risk.
+
+These factors suggest the current situation is more dangerous than a generic 20th-century baseline and potentially more dangerous than the "average" day on which the 1% Metaculus forecast was made.
+
+### 3. Evidence Evaluation (Likelihoods)
+I will evaluate the key new pieces of information from the research report.
+
+- **Evidence 1: AI experts warn of a 20% chance of AI-induced extinction within 30 years.**
+    - This is a very strong piece of evidence pointing toward a specific mechanism for extinction.
+    - P(E | H): If humans go extinct by 2100 (H), it is highly likely that a primary cause would be a novel technological risk like AI. Therefore, seeing experts in that field issue dire warnings would be very probable.
+    - P(E | ~H): If humans do not go extinct (~H), it's still possible experts would be worried (perhaps the risk is real but we mitigate it, or they are simply alarmist). However, a specific 20% figure is a very strong claim. It is less likely we would see such a high estimate if the true risk were negligible.
+    - **Likelihood Ratio**: P(E|H)/P(E|~H) is significantly greater than 1. This evidence strongly increases the probability of extinction.
+
+- **Evidence 2: Study shows a 70% chance of Gulf Stream collapse by 2035.**
+    - This points to a major climate destabilization event, which is a potential driver of cascading societal collapse that could lead to extinction.
+    - P(E | H): If extinction occurs, a major climate catastrophe is a plausible contributing factor. Seeing a high-confidence prediction of a key tipping point would be consistent with this outcome.
+    - P(E | ~H): If we survive, this tipping point might not be crossed, the study could be wrong, or the consequences might be severe but not lead to extinction.
+    - **Likelihood Ratio**: P(E|H)/P(E|~H) is greater than 1, but likely less strong than the AI evidence, as the link from "Gulf Stream collapse" to "total human extinction" is less direct. This evidence moderately increases the probability.
+
+### 4. Bayesian Updating (Posterior Probability)
+I will update my 1% prior based on the evidence.
+
+- **Prior Odds**: 1:99.
+- **Evidence**: The combined weight of the new evidence, especially the AI expert warnings, suggests a significant update is necessary. The AI evidence alone could have a likelihood ratio of 3-4x. The climate evidence adds to this.
+- **Conceptual Update**:
+    - Start with prior odds of 1:99 (1%).
+    - The AI evidence is very strong. Let's apply a likelihood ratio of 3.5. New odds become 3.5:99, or approximately 1:28. This corresponds to a probability of ~3.4%.
+    - The climate evidence provides a further, smaller push. A likelihood ratio of 1.5 would take the odds to (3.5 * 1.5):99 = 5.25:99, or approximately 1:19. This corresponds to a probability of ~5.0%.
+- **Posterior Probability**: The calculation suggests the probability should be in the 3-5% range. This aligns with the Manifold market forecast of 4.5%, which provides external validation for this level of update.
+
+### 5. Red Team Thinking
+- **Argument for a Lower Forecast (<4%)**: My primary anchor is the 1% Metaculus forecast. A 4x increase is a very large update. I might be overreacting to alarming headlines. Humanity is incredibly resilient, and the bar for *total* extinction (zero humans) is extraordinarily high. Even catastrophic events often leave survivors.
+- **Argument for a Higher Forecast (>4%)**: The risks from AI are unprecedented. Unlike nuclear weapons, which are controlled by states, advanced AI development is diffuse and competitive, making it harder to govern. The interaction between risks (e.g., climate change causing instability that makes AI safety cooperation impossible) could be multiplicative. Perhaps even 4% is understating the "Great Filter" we are approaching.
+- **Conclusion**: My 4% forecast attempts to balance these views. It acknowledges that the specific evidence presented is alarming and warrants a significant departure from the 1% baseline, but it remains a low absolute probability, respecting the high bar for complete extinction and the possibility of successful mitigation.
+
+### 6. Final Forecast
+After starting with a 1% prior based on the aggregated forecast from Metaculus, I have updated significantly based on specific, high-impact evidence regarding AI risk and climate tipping points. The resulting probability is higher than the Metaculus baseline but remains in the low single digits, reflecting the profound difficulty of causing the extinction of every human.
+
+Final: 4%
+```
+
+## Grok [grok-4] Reasoning
+```
+### 1. Base Rate (Prior) Selection
+For human extinction before 2100, an appropriate base rate is drawn from historical data on species-level extinctions and expert assessments of existential risks. Historically, there have been no instances of human extinction (by definition, since we're here), and anatomically modern humans have survived for ~300,000 years through various catastrophes like ice ages, pandemics (e.g., Black Death killing ~30-50% of Europe), and world wars. Broader reference classes include mass extinction events on Earth (e.g., five major ones over 500 million years, wiping out 75-96% of species, but none for hominids in recent epochs). Expert surveys, like the 2008 Oxford poll (median 19%), are biased toward high-risk views due to selection effects among attendees focused on global catastrophic risks. More balanced aggregates, like Metaculus community forecasts, hover around 1-2% for this timeframe, aligning with low-probability tail risks in fields like insurance or futurism (e.g., asteroid impacts at ~1 in 700,000 per year). I choose a conservative prior of 1% (or odds of 1:99), reflecting the near-zero historical frequency but acknowledging rare, unprecedented risks in a reference class of "technologically advanced civilizations facing novel threats" (of which we have a sample size of 1).
+
+### 2. Comparison to Base Case
+The current situation is similar to the base case (historical human survival through crises) in that humanity has repeatedly demonstrated resilience: we've mitigated pandemics (e.g., via vaccines), avoided nuclear war during the Cold War, and adapted to environmental changes. Global cooperation (e.g., treaties like the Paris Agreement) mirrors past efforts. However, differences amplify risks: rapid AI development introduces unprecedented "control loss" scenarios absent in history; accelerating climate change (e.g., potential Gulf Stream collapse) exceeds past variability; and modern geopolitical tensions in a multipolar world (e.g., with nuclear states like Russia, China, and North Korea) differ from bipolar Cold War dynamics, increasing escalation odds. Global connectivity also heightens pandemic spread compared to isolated historical outbreaks. These differences matter because they introduce novel, high-impact drivers (e.g., AI misalignment) that could overwhelm adaptive capacities, justifying an upward adjustment from the base rate, though not dramatically due to historical precedents of mitigation.
+
+### 3. Evidence Evaluation (Likelihoods)
+Key pieces from the research report and background:
+
+- **AI risks (↑ large)**: Evidence of experts warning of 20% AI-induced extinction risk within 30 years. P(E | H) is high (~80%) because extinction scenarios often involve runaway AI; P(E | ~H) is moderate (~40%) as warnings could be hype without catastrophe. Likelihood ratio: ~2 (doubles odds), increasing probability.
+  
+- **Climate change (↑ moderate)**: 70% chance of Gulf Stream collapse by 2035, potentially causing severe shifts. P(E | H) high (~70%) as such events could cascade to extinction; P(E | ~H) lower (~30%) since collapses might be survivable with adaptation. Likelihood ratio: ~2.3 (increases probability moderately).
+
+- **Nuclear war risks (↑ large)**: Recent articles on geopolitical tensions and potential casualties. P(E | H) high (~60%) as nuclear winter fits extinction paths; P(E | ~H) moderate (~30%) due to ongoing deterrence. Likelihood ratio: ~2 (increases probability).
+
+- **Historical lack of extinction (↓ small)**: No prior events. P(E | H) low (~10%) as extinction would preclude observation; P(E | ~H) very high (~99%) since survival is observed. Likelihood ratio: ~0.1 (strongly decreases probability, but weighted lightly due to anthropic bias).
+
+- **Pandemics and other drivers (moderate)**: Increased connectivity raises risks, but mitigations (e.g., vaccines) exist. Net likelihood ratio: ~1.5 (slight increase).
+
+Overall, evidence leans toward increase (net likelihood ratio ~3-4 from combined ups, tempered by historical down).
+
+### 4. Bayesian Updating (Posterior Probability)
+Starting with prior probability P(H) = 1% (prior odds = 1:99).
+
+Apply net likelihood ratio from evidence (~3.5, conservatively aggregating ups in AI/nuclear/climate against historical down): Posterior odds = 1:99 × 3.5 = 3.5:99 ≈ 1:28.3.
+
+Posterior probability = 1 / (1 + 28.3) ≈ 3.4%.
+
+This update reflects a moderate nudge upward due to recent developments (e.g., AI warnings and climate studies), but uncertainty remains high—extinction is a tail event with sparse data, so the posterior is still low (confidence interval roughly 1-10%, acknowledging wide expert variance).
+
+### 5. Red Team Thinking
+My forecast might be overconfident in upward adjustments, as recent "↑" developments could be alarmist noise (e.g., AI warnings often overestimate timelines, and Gulf Stream studies have high uncertainty). Blind spots include underweighting mitigation: humans have innovated out of crises (e.g., ozone hole fixes), and indicators like AI governance progress could downshift risks. Tail risks: Black swans like asteroid impacts (~0.01% chance) or lab-leak super-pandemics could spike probability, but overfocusing on them risks paranoia. Alternative forecast: A pessimistic 10-20% (per biased Oxford poll) is plausible if assuming rapid AI doom, but rebutted by market consensus (1-4.5%) and historical survival trends. Optimistic 0.1% ignores novel threats. To adjust for overconfidence, I widen implied uncertainty but keep the point estimate grounded—no big swings per calibration advice. This tempers my posterior slightly downward to avoid undue alarmism.
+
+### Final Forecast
+Final: 3%
+```

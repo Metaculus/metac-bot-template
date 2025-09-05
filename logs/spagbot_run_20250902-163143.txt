@@ -1,0 +1,19 @@
+2025-09-02 16:31:56,559 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 16:32:59,428 INFO httpx: HTTP Request: POST https://api.x.ai/v1/chat/completions "HTTP/1.1 200 OK"
+🚀 Spagbot ensemble starting…
+Mode: test_questions | METACULUS_TOKEN set: True
+USE_OPENROUTER=1 | USE_GOOGLE=1 | ENABLE_GROK=1
+OPENAI_BASE_URL=https://openrouter.ai/api/v1/ | GEMINI_MODEL=gemini-2.5-pro | XAI_GROK_ID=grok-4
+⚡ Limiter active: running only the first 1 question(s).
+
+------------------------------------------------------------------------------------------
+🚀 Question: Will humans go extinct before 2100?
+URL: https://www.metaculus.com/questions/578/ | Type: binary
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+[Error on qid=578 pid=578] cannot unpack non-iterable NoneType object
+🚀 Completed run. See log: logs\spagbot_run_20250902-163143.txt
+✅ forecasts.csv (or fallback) updated
+✅ forecasts_by_model.csv (or fallback) updated
+✅ Detailed reasoning log created: forecast_logs\20250902-163143_reasoning.log
+🗂️ Logs directory: forecast_logs

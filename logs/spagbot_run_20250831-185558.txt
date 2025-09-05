@@ -1,0 +1,37 @@
+2025-08-31 18:56:01,360 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2025-08-31 18:56:49,255 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2025-08-31 18:57:17,005 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 400 Bad Request"
+2025-08-31 18:58:02,675 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 400 Bad Request"
+🚀 Spagbot ensemble starting…
+Mode: test_questions | METACULUS_TOKEN set: True
+USE_OPENROUTER=1 | USE_GOOGLE=1 | ENABLE_GROK=1
+OPENAI_BASE_URL=https://openrouter.ai/api/v1/ | GEMINI_MODEL=gemini-2.5-pro | XAI_GROK_ID=grok-4-latest
+
+------------------------------------------------------------------------------------------
+🚀 Question: Will humans go extinct before 2100?
+URL: https://www.metaculus.com/questions/578/ | Type: binary
+⏱️  Grok unavailable ([error] xAI: TimeoutError()…); disabling for the rest of this run.
+bayes_mc.py process started
+📈 Forecast (binary): 31.29%
+bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: How old will the oldest living person be in 2100?
+URL: https://www.metaculus.com/questions/14333/ | Type: numeric
+bayes_mc.py process started
+📐 Forecast (numeric/discrete): P10=16.5, P50=49.9, P90=153
+bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+URL: https://www.metaculus.com/questions/22427/ | Type: multiple_choice
+bayes_mc.py process started
+📊 Forecast (MCQ): 0 or 1=16.5%, 2 or 3=16.8%, 4 or 5=16.8%, 6 or 7=16.6%, 8 or 9=16.6%, 10 or more=16.7%
+bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+URL: https://www.metaculus.com/questions/38880/ | Type: discrete
+bayes_mc.py process started
+📐 Forecast (numeric/discrete): P10=16.5, P50=49.9, P90=153
+bayes_mc.py process complete

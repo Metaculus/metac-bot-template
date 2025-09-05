@@ -1,0 +1,360 @@
+📊 Forecast Run 20250901-162059
+Timestamp: 2025-09-01 16:20:59 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ Question: Will humans go extinct before 2100?
+🔗 URL: https://www.metaculus.com/questions/578/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Will humans go extinct before 2100?
+*Final Prediction*: 31.46%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+[error] OpenRouter: BadRequestError("Error code: 400 - {'error': {'message': 'openrouter/openai/gpt-5 is not a valid model ID', 'code': 400}, 'user_id': 'user_2yQGELhZHDx79ZY0bzj4Hel6Bm4'}")
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 0.35437473358379873,
+  "p10": 0.05970999727503196,
+  "p50": 0.3145622683587869,
+  "p90": 0.7148667010017278,
+  "posterior_alpha": 1.04275,
+  "posterior_beta": 1.90725
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Answer: No, probably not.
+
+Rationale:
+- The 2008 Oxford poll’s 19% median for extinction by 2100 likely overstates true risk due to strong selection effects (attendees were unusually concerned about global catastrophic risks).
+- The “Research Report” provided is an error message, so no additional evidence was available from it.
+- Extinction (zero humans alive) is a far stronger condition than “civilizational collapse.” Many severe catastrophes leave small pockets of survivors (bunkers, remote regions, islands), and coordination/biology make total eradication difficult.
+
+Cause-specific rough decomposition (by 2100):
+- Unaligned or misused advanced AI: ~2.0% (could actively seek out and eliminate all humans; governance and alignment work counterbalance).
+- Engineered pandemics: ~0.9% (extinction requires extreme lethality, transmission, persistence, and overcoming refugia and countermeasures).
+- Nuclear war and fallout/famine: ~0.2% (devastating but full extinction unlikely).
+- Climate/ecosystem collapse: ~0.1% (severe impacts but not extinction-level by 2100).
+- Natural catastrophes (asteroids, supervolcanoes, GRBs): ~0.03% (very low over this timeframe).
+- Other anthropogenic tech risks (nanotech/replicators, geoengineering gone wrong): ~0.5%.
+- Unknown unknowns: ~0.3%.
+Sum ≈ 4%.
+
+This corresponds to an average annual hazard on the order of ~0.05% over the next ~75 years, with wide uncertainty but substantially below the 2008 poll’s median.
+
+Final: 4%
+```
+
+## Gemini Reasoning
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+
+```
+
+## Grok Reasoning
+```
+Final: 5%
+```
+------------------------------------------------------------
+
+❓ Question: How old will the oldest living person be in 2100?
+🔗 URL: https://www.metaculus.com/questions/14333/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: How old will the oldest living person be in 2100?
+*Final Prediction*: Probability distribution:
+- P10: 16.52
+- P50: 49.93
+- P90: 153
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+[error] OpenRouter: BadRequestError("Error code: 400 - {'error': {'message': 'openrouter/openai/gpt-5 is not a valid model ID', 'code': 400}, 'user_id': 'user_2yQGELhZHDx79ZY0bzj4Hel6Bm4'}")
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 72.76130933983734,
+  "p10": 16.522935445789393,
+  "p50": 49.92659887814058,
+  "p90": 153.01284579221237
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+P10: 116
+P20: 118
+P40: 121
+P60: 124
+P80: 128
+P90: 133
+```
+
+## Gemini Reasoning
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+
+```
+
+## Grok Reasoning
+```
+[error] xAI: TimeoutError()
+```
+------------------------------------------------------------
+
+❓ Question: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 URL: https://www.metaculus.com/questions/22427/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+*Final Prediction*:
+- 0 or 1: 18.5%
+- 2 or 3: 20.6%
+- 4 or 5: 16.8%
+- 6 or 7: 15.1%
+- 8 or 9: 14.5%
+- 10 or more: 14.4%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+No external research provider succeeded. Proceed using the question background and general knowledge. (LLM research fallback failed.)
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": [
+    0.1853313555778138,
+    0.20556285349074985,
+    0.16843170987330858,
+    0.15098466164513524,
+    0.1453320031973932,
+    0.14435741621559925
+  ],
+  "p10": [
+    0.03464121869331133,
+    0.04440898862328778,
+    0.026684880099680078,
+    0.020473338249900393,
+    0.017838876392471278,
+    0.017413137241445
+  ],
+  "p50": [
+    0.15395121601600925,
+    0.17709704891165576,
+    0.13540730365803053,
+    0.11694372626100658,
+    0.11212222217878863,
+    0.11105676357308676
+  ],
+  "p90": [
+    0.383657887963669,
+    0.40722437381551296,
+    0.3585272320106741,
+    0.332039440389729,
+    0.32377061996297474,
+    0.32226862327485595
+  ],
+  "posterior_alpha": [
+    1.2873949579831931,
+    1.43109243697479,
+    1.1596638655462186,
+    1.0478991596638656,
+    1.0143697478991596,
+    1.0095798319327731
+  ]
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Reasoning:
+- Constraint tightness: To count, a lab must be founded after question launch and reach top-5-by-lab on Chatbot Arena within 2 years, before 2030. This is a high bar requiring both rapid capability scaling and public Arena availability.
+- Top-5 scarcity: As of 2025, the top-5 distinct labs are largely entrenched (OpenAI, Anthropic, Google DeepMind, plus one or two of DeepSeek, xAI, Qwen/Alibaba, occasionally Mistral). Displacing them is hard, especially repeatedly.
+- Recent base rates: 2021–2025 saw several fast risers (Anthropic, Mistral, DeepSeek, xAI), but most were founded before mid-2024 and thus don’t count as “new” here.
+- Pipeline: Notable post-mid-2024 entrants (e.g., SSI; possible new elite spinouts including a potential DeepMind spinoff; well-funded EU/US code/agent labs; future China entrants) give a real chance for 1–3 successes by 2030, but many will keep models closed or miss Arena top-5.
+- Risks both ways: Cheaper compute and algorithmic leaps could boost churn (raising counts), while regulation, data/compute access constraints, or closed releases could lower it.
+
+Overall, I expect 2–3 such labs to succeed, with meaningful probability of only 0–1, and a smaller tail for 4–5.
+
+Option_1: 30%
+Option_2: 45%
+Option_3: 18%
+Option_4: 5%
+Option_5: 1.5%
+Option_6: 0.5%
+```
+
+## Gemini Reasoning
+```
+This is a forecast about the rate of formation of new, elite AI labs in a highly dynamic and capital-intensive environment. I will analyze the key drivers and constraints to build a probability distribution across the given options.
+
+### Analysis of Drivers and Constraints
+
+**1. Historical Precedent (The "Base Rate"):**
+The prompt provides two excellent recent examples of labs that would have met this question's criteria:
+*   **Anthropic:** Founded in 2021. By 2023, with the release of Claude, it was firmly in the top tier. This fits the "leading within 2 years" criterion.
+*   **Mistral AI:** Founded in April 2023. By early 2024, its models were highly ranked on the Chatbot Arena, placing it in the top 5. This is an even faster example of the phenomenon.
+
+These two examples in the 2021-2024 period suggest a base rate of roughly one such lab forming every 1-2 years. The question covers the period from September 2025 to the end of 2029, a little over four years.
+
+**2. Factors Favoring a Higher Number of New Labs (Pro-Competition):**
+*   **Talent Splintering:** This is a primary driver. The background highlights this with Anthropic (ex-OpenAI), Udio (ex-Google), and the potential for Demis Hassabis to leave Google. Top researchers often feel constrained by corporate bureaucracy or disagree with the direction/safety practices of their parent company.
+*   **Capital Availability:** There is an unprecedented amount of venture capital, corporate, and sovereign wealth fund money eager to back credible teams. A team of star researchers from an incumbent lab can raise hundreds of millions, or even billions, very quickly.
+*   **Open-Source Ecosystem:** The success of open-source models (from Meta and Mistral) provides an alternative path to prominence. A new lab could gain rapid recognition by releasing a powerful open-source model, which would perform well on benchmarks like the Chatbot Arena.
+
+**3. Factors Favoring a Lower Number of New Labs (Pro-Consolidation):**
+*   **The "Top 5" is a Very High Bar:** A new lab must not only be good, but it must displace an existing top-5 player. The current leaders (OpenAI, Google, Anthropic, Mistral) are not static; they are investing tens of billions of dollars to maintain their lead. The performance required to enter the top 5 in 2027 will be significantly higher than it is today.
+*   **Extreme Compute Costs:** Training a state-of-the-art foundation model is astronomically expensive and requires access to vast clusters of scarce GPUs. This is a significant barrier to entry that favors the largest incumbents (Microsoft/OpenAI, Google, Amazon/Anthropic, Meta). While new labs can raise capital, securing the actual hardware or cloud credits is a major logistical and strategic challenge.
+*   **The 2-Year Window:** This is a very strict constraint. It requires a new lab to go from incorporation to having a top-5 model on a public leaderboard in just 24 months. This involves fundraising, team-building, securing compute, data acquisition, training, and fine-tuning. It is an exceptionally fast pace that few can achieve.
+
+### Synthesis and Probabilistic Assessment
+
+The core tension is between the immense, rising cost of competing at the frontier and the powerful incentives for top talent to spin out and create new labs.
+
+*   **The "2 or 3" option seems like the most probable outcome.** This would represent a continuation of the recent trend, with a new successful lab emerging every 1.5-2 years. For example, one major splinter from Google and another from OpenAI or Meta over the next four years. This feels like a solid baseline scenario.
+
+*   **The "0 or 1" option is also highly plausible.** This scenario would occur if the incumbents successfully leverage their scale to create a "compute moat" that is simply too wide for any new startup to cross within two years, regardless of funding. The pace of progress could accelerate such that by the time a new lab trains its first model, the frontier has already moved too far ahead.
+
+*   **The "4 or 5" option represents an acceleration of the current trend.** This would likely require a "Cambrian explosion" moment, perhaps triggered by a major architectural breakthrough that lowers the cost of training, or simultaneous, large-scale exoduses from multiple top labs. While possible, it's less likely than the baseline.
+
+*   **Higher options ("6 or more") are very unlikely.** This would mean more than one new top-5 lab appearing per year, on average. Given the concentration of talent and the extreme resource requirements, this rate seems unsustainable.
+
+### Final Probability Distribution
+
+I will assign the highest probability to the '2 or 3' bin, reflecting a continuation of the status quo. I will assign the second-highest probability to '0 or 1', acknowledging the powerful forces of consolidation. The remaining probability will be distributed with a steep drop-off for higher numbers.
+
+0 or 1: 35%
+2 or 3: 45%
+4 or 5: 15%
+6 or 7: 3%
+8 or 9: 1%
+10 or more: 1%
+```
+
+## Grok Reasoning
+```
+[error] Model disabled
+```
+------------------------------------------------------------
+
+❓ Question: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+🔗 URL: https://www.metaculus.com/questions/38880/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+*Final Prediction*: Probability distribution:
+- P10: 8.409e-07
+- P50: 2.451
+- P90: 8.645e+06
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+No external research provider succeeded. Proceed using the question background and general knowledge. (LLM research fallback failed.)
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 9.84198356479223e+16,
+  "p10": 8.409241957826187e-07,
+  "p50": 2.451046707186459,
+  "p90": 8644645.4573474
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Rationale (brief):
+- Base rate for major US work stoppages is in the low dozens annually, but only a small subset are AI-centric.
+- Entertainment is the most likely source: WGA and SAG-AFTRA will likely be back at the table in 2026; if they sign three-year agreements, next expirations and potential disputes align with 2029. Either could strike again with AI protections as a primary demand.
+- Other possibilities (news/media unions, animation/VFX, video games) could add a case, but ≥1,000-worker AI-focused stoppages outside entertainment remain less common.
+- Net: substantial chance of zero, mode at one, meaningful tail to two; three or more is a low-probability tail.
+
+P10: 0
+P20: 0
+P40: 1
+P60: 1
+P80: 2
+P90: 2
+```
+
+## Gemini Reasoning
+```
+This forecast considers the drivers for and against an increase in major labor strikes where generative AI is a primary cause.
+
+**Key Drivers for an Increase (Higher Number of Strikes):**
+1.  **Accelerating AI Capabilities and Adoption:** By 2029, generative AI will be more powerful and integrated into more industries beyond entertainment, such as journalism, software development, customer service, and logistics. This expands the pool of workers who feel threatened.
+2.  **Precedent and Awareness:** The successful 2023 WGA and SAG-AFTRA strikes created a playbook and raised awareness. Other unions will be more likely to see striking as a viable option to secure protections.
+3.  **Contract Cycles:** Many union contracts last 3-5 years. Contracts negotiated before 2023-2024 are unlikely to have strong AI protections. As these expire leading up to 2029, AI will become a central and contentious bargaining point, increasing the potential for standoffs.
+4.  **Economic Pressure:** Companies will be under pressure to adopt AI to cut costs, while workers will be facing increased job insecurity, creating a classic setup for labor conflict.
+
+**Key Drivers for a Decrease (Lower Number of Strikes):**
+1.  **Proactive Agreements:** The high-profile nature of the 2023 strikes may lead many employers and unions to negotiate AI terms proactively to *avoid* a strike. The WGA/SAG-AFTRA agreements can serve as a template.
+2.  **High Bar for "Major Strike":** The threshold of 1,000+ workers is high. AI's impact might initially be felt in smaller departments or companies that cannot mount a strike of this scale.
+3.  **Government Regulation:** By 2029, there may be federal or state-level legislation that addresses some of labor's core concerns about AI, reducing the need for strikes to achieve those protections.
+
+**Forecast Rationale:**
+My distribution is centered around 2-3 strikes. This reflects the high likelihood that the trend seen in the entertainment industry will have spread to at least one or two other large, unionized sectors by 2029 (e.g., transportation, communications, media).
+
+*   The lower percentiles (P10=0, P20=1) account for the possibility that proactive negotiations become the norm or that the major contract expirations in 2029 happen to be in sectors less immediately affected by generative AI. A single strike is highly plausible, continuing the trend.
+*   The median is between 2 and 3, suggesting that the most likely scenario involves the conflict expanding beyond Hollywood into other sectors.
+*   The upper percentiles (P80=5, P90=7) model a future where AI adoption is rapid and aggressive across multiple industries, and unions in several of those sectors (e.g., Teamsters, CWA, NewsGuild) are forced to strike simultaneously over the issue, leading to a significant wave of AI-related labor action.
+
+P10: 0
+P20: 1
+P40: 2
+P60: 3
+P80: 5
+P90: 7
+```
+
+## Grok Reasoning
+```
+[error] Model disabled
+```

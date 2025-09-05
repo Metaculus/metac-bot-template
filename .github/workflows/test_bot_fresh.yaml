@@ -1,9 +1,7 @@
-name: Forecast on AIB Tournament (fresh research + fresh GTMC1 actors)
+name: Test Bot (fresh research + fresh GTMC1 actors)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "*/20 * * * *" # every 20 minutes (adjust if needed)
 
 concurrency:
   group: ${{ github.workflow }}
@@ -32,17 +30,15 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: Purge research + actor caches (tournament runs only)
-        # This guarantees fresh LLM research and fresh GTMC1 actor extraction.
+      - name: Purge research + actor caches (test fresh)
         run: |
           rm -f cache/research_llm__*.json || true
           rm -f cache/actors__*.json || true
 
-      - name: Run Spagbot (fresh research + actors)
+      - name: Run Spagbot test set (fresh)
         run: |
-          poetry run python spagbot.py --mode run --fresh-research
+          poetry run python spagbot.py --mode test_questions --fresh-research --limit 3
         env:
-          SUBMIT_PREDICTION: "1"
           # Required
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
 
@@ -79,3 +75,6 @@ jobs:
           ENABLE_MARKET_SNAPSHOT: "1"
           MARKET_SNAPSHOT_MAX_MATCHES: "3"
           METACULUS_INCLUDE_RESOLVED: "1"
+        
+
+   

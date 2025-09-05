@@ -1,0 +1,25 @@
+2025-09-03 18:14:56,972 INFO httpx: HTTP Request: POST https://auth.asknews.app/oauth2/token "HTTP/1.1 200 OK"
+2025-09-03 18:14:57,911 INFO httpx: HTTP Request: GET https://api.asknews.app/v1/news/search?query=Will+humans+go+extinct+before+2100%3F%0A%0AWhile+the+general+feeling+of+most+people%2C+especially+now+that+the+cold+war+is+%28mostly%29+over%2C+is+that+the+risk+of+human+extinction+is+extremely+small%2C+experts+have+assigned+a+significantly+higher+probability+to+the+event.%0A%0AIn+2008+an+%5Binformal+poll+at+the+Global+Catastrophic+Risk+Conference+at+the+University+of+Oxford%5D%28https%3A%2F%2Fwww.webcitation.org%2F6YxiCAV0p%3Furl%3Dhttp%3A%2F%2Fwww.fhi.ox.ac.uk%2Fgcr-report.pdf%29+yielded+a+median+probability+of+human+extinction+by+2100+of+19%25.+Yet%2C+one+might+want+to+be+cautious+when+using+this+result+as+a+good+estimate+of+the+true+probability+of+human+extinction%2C+as+there+may+be+a+powerful+selection+effect+at+play.+Only+those+who+assign+a+high+probability+to+human+extinction+are+likely+to+attend+the+Global+Catastrophic+Risk+Conference+in+the+first+place%2C+meaning+that+the+survey+was+effectively+sampling+opinions+from+one+extreme+tail+of+the+opinion+distribution+on+the+subject.+Indeed%2C+the+conference+report+itself+stated+that+the+findings+should+be+taken+%27with+a+grain+of+salt%27.&n_articles=8&time_filter=crawl_date&return_type=both&method=kw&historical=False&offset=0&categories=All&similarity_score_threshold=0.5&doc_start_delimiter=%3Cdoc%3E&doc_end_delimiter=%3C%2Fdoc%3E&provocative=all&diversify_sources=False&strategy=latest+news&hours_back=24&string_guarantee_op=OR&entity_guarantee_op=OR&return_graphs=False&return_geo=False&premium=False "HTTP/1.1 200 OK"
+2025-09-03 18:14:59,988 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-03 18:15:24,706 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-03 18:15:26,235 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-03 18:16:12,804 INFO httpx: HTTP Request: POST https://api.x.ai/v1/chat/completions "HTTP/1.1 200 OK"
+🚀 Spagbot ensemble starting…
+Mode: test_questions | METACULUS_TOKEN set: True
+USE_OPENROUTER=1 | USE_GOOGLE=1 | ENABLE_GROK=1
+OPENAI_BASE_URL=https://openrouter.ai/api/v1/ | GEMINI_MODEL=gemini-2.5-pro | XAI_GROK_ID=grok-4
+⚡ Limiter active: running only the first 1 question(s).
+
+------------------------------------------------------------------------------------------
+🚀 Question: Will humans go extinct before 2100?
+URL: https://www.metaculus.com/questions/578/ | Type: binary
+Research by: openai/gpt-4o
+Prediction markets found: Yes (Metaculus: 1, Manifold: 0)
+Ensemble Status: ChatGPT: ok | Claude: ok | Grok: ok | Google: failed: overloaded
+GTMC1 activated: No (not a strategic question)
+Final Forecast (binary): 18.83%
+
+🚀 Completed run. See master log: logs\spagbot_run_20250903-181454.txt
+✅ forecasts.csv updated
+✅ forecasts_by_model.csv updated
+✅ Detailed reasoning log created: forecast_logs\20250903-181454_reasoning.log

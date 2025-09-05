@@ -18,7 +18,7 @@ from forecasting_tools import (
     run_benchmark_streamlit_page,
 )
 
-from main import TemplateForecaster
+from Depreciated.main import TemplateForecaster
 
 logger = logging.getLogger(__name__)
 

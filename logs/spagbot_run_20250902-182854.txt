@@ -1,0 +1,26 @@
+2025-09-02 18:28:57,791 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 18:28:58,643 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 18:31:23,801 INFO httpx: HTTP Request: POST https://api.x.ai/v1/chat/completions "HTTP/1.1 200 OK"
+🚀 Spagbot ensemble starting…
+Mode: test_questions | METACULUS_TOKEN set: True
+USE_OPENROUTER=1 | USE_GOOGLE=1 | ENABLE_GROK=1
+OPENAI_BASE_URL=https://openrouter.ai/api/v1/ | GEMINI_MODEL=gemini-2.5-pro | XAI_GROK_ID=grok-4
+⚡ Limiter active: running only the first 1 question(s).
+
+------------------------------------------------------------------------------------------
+🚀 Question: Will humans go extinct before 2100?
+URL: https://www.metaculus.com/questions/578/ | Type: binary
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+3 ChatGPT <ok>
+4 Grok <ok>
+5 Google <ok>
+6 GTMC1 process not relevant
+8 bayes_mc.py process started
+9 📈 Forecast (binary): 11.26%
+10 bayes_mc.py process complete
+🚀 Completed run. See log: logs\spagbot_run_20250902-182854.txt
+✅ forecasts.csv (or fallback) updated
+✅ forecasts_by_model.csv (or fallback) updated
+✅ Detailed reasoning log created: forecast_logs\20250902-182854_reasoning.log
+🗂️ Logs directory: forecast_logs

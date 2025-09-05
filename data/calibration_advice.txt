@@ -1,0 +1,12 @@
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).

@@ -1,0 +1,62 @@
+2025-09-02 12:28:13,766 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 12:28:56,860 INFO httpx: HTTP Request: POST https://api.x.ai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 12:29:34,370 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 12:32:35,338 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-09-02 12:34:04,675 INFO httpx: HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+🚀 Spagbot ensemble starting…
+Mode: test_questions | METACULUS_TOKEN set: True
+USE_OPENROUTER=1 | USE_GOOGLE=1 | ENABLE_GROK=1
+OPENAI_BASE_URL=https://openrouter.ai/api/v1/ | GEMINI_MODEL=gemini-2.5-pro | XAI_GROK_ID=grok-4
+
+------------------------------------------------------------------------------------------
+🚀 Question: Will humans go extinct before 2100?
+URL: https://www.metaculus.com/questions/578/ | Type: binary
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+3 ChatGPT <not enabled>
+4 Grok <ok>
+5 Google <ok>
+6 GTMC1 process not relevant
+8 bayes_mc.py process started
+9 📈 Forecast (binary): 7.28%
+10 bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: How old will the oldest living person be in 2100?
+URL: https://www.metaculus.com/questions/14333/ | Type: numeric
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+⏱️  Grok unavailable ([error] xAI: TimeoutError()…); disabling for the rest of this run.
+3 ChatGPT <not enabled>
+4 Grok <failed: timeout>
+5 Google <ok>
+6 GTMC1 process not relevant
+8 bayes_mc.py process started
+9 📐 Forecast (numeric/discrete): P10=113, P50=119, P90=126
+10 bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+URL: https://www.metaculus.com/questions/22427/ | Type: multiple_choice
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+3 ChatGPT <not enabled>
+4 Grok <failed: error>
+5 Google <ok>
+6 GTMC1 process not relevant
+8 bayes_mc.py process started
+9 📊 Forecast (MCQ): 0 or 1=31.1%, 2 or 3=36.9%, 4 or 5=15.9%, 6 or 7=6.8%, 8 or 9=4.9%, 10 or more=4.4%
+10 bayes_mc.py process complete
+
+------------------------------------------------------------------------------------------
+🚀 Question: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+URL: https://www.metaculus.com/questions/38880/ | Type: discrete
+1 Research report started | Primary=ChatGPT-4o (OpenRouter) | Fallback=Google Gemini 2.5 Pro | AskNews=enabled
+2 Research report complete
+3 ChatGPT <not enabled>
+4 Grok <failed: error>
+5 Google <ok>
+6 GTMC1 process not relevant
+8 bayes_mc.py process started
+9 📐 Forecast (numeric/discrete): P10=0.792, P50=3.88, P90=7.48
+10 bayes_mc.py process complete

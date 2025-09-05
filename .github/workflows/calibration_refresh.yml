@@ -1,0 +1,59 @@
+name: Weekly Calibration Refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every Monday at 06:00 UTC (09:00 Istanbul)
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: write   # allow the action to push changes
+  actions: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Configure Poetry to not use virtualenvs (CI convenience)
+        run: poetry config virtualenvs.create false
+
+      - name: Install deps
+        run: poetry install --no-interaction --no-ansi
+
+      # --- Run your calibration refresh ---
+      - name: Run calibration update
+        run: poetry run python update_calibration.py
+
+      # --- OPTIONAL: run trajectory and CSV exports (new script below) ---
+      - name: Run trajectory & export CSVs
+        run: poetry run python tools/analyze_trajectory.py
+
+      - name: Git commit any changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: weekly calibration + trajectory exports [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi

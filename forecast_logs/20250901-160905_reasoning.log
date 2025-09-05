@@ -1,0 +1,351 @@
+📊 Forecast Run 20250901-160905
+Timestamp: 2025-09-01 16:09:05 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ Question: Will humans go extinct before 2100?
+🔗 URL: https://www.metaculus.com/questions/578/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Will humans go extinct before 2100?
+*Final Prediction*: 34.50%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+[error] OpenRouter: BadRequestError("Error code: 400 - {'error': {'message': 'openrouter/openai/gpt-5 is not a valid model ID', 'code': 400}, 'user_id': 'user_2yQGELhZHDx79ZY0bzj4Hel6Bm4'}")
+
+------------------------------------------------------------
+
+# GTMC1 DETAILS
+{
+  "coalition_rate": 1.0,
+  "dispersion": "medium",
+  "median_of_final_medians": 47.9,
+  "median_rounds": 28,
+  "runs_csv": "gtmc_logs/20250901-161110_q578_runs.csv"
+}
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 0.3718814840878301,
+  "p10": 0.08856750714208156,
+  "p50": 0.3449692414854116,
+  "p90": 0.70161166623612,
+  "posterior_alpha": 1.31103,
+  "posterior_beta": 2.20897
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Forecast: No, extinction by 2100 is unlikely.
+
+Reasoning summary
+- Background context: The 2008 Oxford GCR conference’s 19% median for extinction by 2100 likely overstates true risk due to strong selection effects (attendees are more concerned about catastrophic risks than the general expert population).
+- Research report: The provided “recent/contextual” research report could not be accessed (error), so no additional update from that source.
+
+Key considerations (disjunctive risks; extinction requires zero surviving humans, which is harder than “civilization collapse”)
+- Advanced AI: Nontrivial chance that misaligned AI leads to human extinction by 2100, but far from certain. Many AI catastrophe scenarios don’t require extinction, and timelines/trajectory remain uncertain. My contribution: ~2.5%.
+- Engineered pandemics: Future biotech could enable highly lethal, engineered agents, but achieving literal extinction is hard (heterogeneous susceptibility, refuges, countermeasures). My contribution: ~1.0%.
+- Nuclear war and follow-on collapse to extinction: Severe but extinction is unlikely given geographic diversity, refugia, and adaptability. My contribution: ~0.3%.
+- Climate/ecosystem collapse to extinction: Catastrophic harms plausible, extinction very unlikely by 2100. My contribution: ~0.05%.
+- Natural risks (asteroids, supervolcanoes, GRBs, nearby supernova): Extremely low base rates over this horizon. My contribution: ~0.05%.
+- Other/unknowns: Residual mass for unforeseen mechanisms. ~0.1%.
+
+Adjusting for overlap/dependence among scenarios, total ≈ 4%.
+
+What would move this forecast
+- Up: Rapid AGI with weak alignment/governance, widespread access to advanced bio with poor controls, large nuclear conflict, severe global de-coupling of scientific and safety norms.
+- Down: Robust global AI and bio governance, technical alignment breakthroughs, improved surveillance and response for bio, strong great-power stability and risk-reduction treaties, credible refuges and resilience investments.
+
+Point estimate
+- Probability humans go extinct before 2100: 4%
+
+Final: 4%
+```
+
+## Gemini Reasoning
+```
+Based on the provided information, I will construct a probabilistic forecast. My analysis is constrained by the absence of the "Research Report," which was indicated as an error. Therefore, my forecast relies solely on the provided background, the resolution criteria, and my general knowledge of existential risks.
+
+### 1. Deconstruction of the Provided Information
+
+*   **The Anchor Point:** The 2008 Global Catastrophic Risk Conference poll provides a median probability of 19% for human extinction by 2100.
+*   **The Critical Caveat:** The background text immediately and correctly points out the powerful selection bias inherent in this poll. Attendees of such a conference are, by definition, more likely to be concerned about and assign higher probabilities to catastrophic risks than the general expert population. The report itself advised taking the finding "with a grain of salt." Therefore, the 19% figure should be treated as an informed but likely high-end estimate from a specific, concerned sub-community. It is an anchor, but one we must significantly adjust downwards.
+*   **Timeframe:** The question is for the period up to January 1, 2100. As of today (2025-09-01), this is a ~74-year window.
+*   **Resolution Criteria:** The bar for a "Yes" resolution is extremely high: *zero* known biological humans alive. This is a crucial distinction. A civilizational collapse, a nuclear winter that kills 99% of the population, or a new dark age would all resolve as "No." The event must be a true extinction-level event.
+
+### 2. Analysis of Extinction Risks
+
+To forecast the probability, I will consider the primary plausible drivers of extinction within this century.
+
+*   **Natural Risks (Asteroids, Supervolcanoes, Natural Pandemics):**
+    *   **Impact Event:** The probability of a Chicxulub-sized impactor (the kind that could cause extinction) in any given century is extremely low, typically estimated at far less than 0.01%.
+    *   **Supervolcano:** A major eruption could trigger a volcanic winter and global famine. However, human adaptability and geographic distribution make complete extinction unlikely. Pockets of humanity, especially in the Southern Hemisphere, would likely survive.
+    *   **Natural Pandemic:** A natural pathogen would need an unprecedented combination of lethality, transmissibility, and long incubation period to threaten every human community on the planet. This is biologically constrained and highly improbable.
+    *   **Conclusion on Natural Risks:** The combined probability from these sources causing *complete extinction* by 2100 is very low, likely well under 1%.
+
+*   **Anthropogenic Risks (Human-Caused):** These are widely considered the dominant existential threats in the 21st century.
+    *   **Nuclear War:** A full-scale nuclear exchange is a major threat to civilization. However, it is unlikely to cause direct human extinction. While a nuclear winter would be catastrophic, models suggest that some regions (e.g., New Zealand, parts of South America) would remain habitable, and a fraction of the population would survive. The bar is extinction, not collapse.
+    *   **Engineered Pandemic:** Unlike a natural pandemic, a pathogen could be deliberately designed for maximum destructive potential. This represents a more plausible extinction scenario. The increasing accessibility of biotechnology (e.g., CRISPR, gene synthesis) is a significant risk factor.
+    *   **Unaligned Artificial General Intelligence (AGI):** This is often cited by experts as the most significant existential risk. If a superintelligent AI is developed before 2100 with goals that are misaligned with human survival, it could potentially eliminate humanity with high efficiency and totality. The timeline for AGI is highly uncertain, but many leading researchers believe it is plausible within our timeframe.
+    *   **Other Risks:** Catastrophic climate change is a massive threat multiplier but is unlikely to be a direct cause of *extinction* by 2100. Other, more speculative risks (e.g., physics experiment disaster, nanotechnology) are difficult to quantify but are generally considered lower probability than AGI or engineered pandemics.
+
+### 3. Synthesis and Final Probability
+
+1.  **Adjusting the Anchor:** The 19% figure from the 2008 poll is our starting point. The selection bias is severe, suggesting a large downward correction is necessary. A simple halving to ~10% might not be enough to account for this bias. A reduction by a factor of 3 to 5 seems more appropriate, bringing the estimate into the 4-6% range.
+
+2.  **Considering Developments Since 2008:** The primary risks discussed at that conference, particularly AI and biotechnology, have advanced significantly faster than many anticipated in 2008. The perceived risk from AGI, in particular, has grown substantially. Geopolitical tensions have also increased, raising the background risk of great power conflict. These factors push the probability *up* from where it might have been in 2008, counteracting some of the downward adjustment from selection bias.
+
+3.  **Balancing Resilience and Risk:** Humanity is resilient and geographically dispersed. Eradicating every last human is a difficult task. Even the most severe catastrophes would likely leave survivors. However, AGI and engineered pandemics are unique in that they could, in principle, be globally comprehensive and overcome human resilience in ways that nuclear war or natural disasters cannot.
+
+4.  **Final Calculation:**
+    *   Start with the 19% anchor.
+    *   Apply a strong downward adjustment for selection bias, bringing it to a baseline of perhaps 4-6%.
+    *   Acknowledge that the underlying technological risks (especially AGI and biotech) have increased since 2008, which prevents me from discounting the number further.
+    *   The extremely high bar of *complete extinction* (zero humans) provides a strong reason to remain in the low single digits. A civilizational collapse is far more probable than total extinction.
+    *   Considering these factors, a probability in the low single digits seems the most defensible. A value of 1% feels slightly too dismissive of the novel risks from AGI and biotech, while a value of 10% or more feels too high, underestimating human resilience and over-relying on the biased 2008 poll. A number between 2% and 5% seems to strike the right balance.
+
+I will select a point estimate within this range that reflects the severity of the novel risks while still heavily discounting the biased anchor.
+
+Final: 4%
+```
+
+## Grok Reasoning
+```
+Final: 3%
+```
+------------------------------------------------------------
+
+❓ Question: How old will the oldest living person be in 2100?
+🔗 URL: https://www.metaculus.com/questions/14333/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: How old will the oldest living person be in 2100?
+*Final Prediction*: Probability distribution:
+- P10: 16.52
+- P50: 49.93
+- P90: 153
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+[error] OpenRouter: BadRequestError("Error code: 400 - {'error': {'message': 'openrouter/openai/gpt-5 is not a valid model ID', 'code': 400}, 'user_id': 'user_2yQGELhZHDx79ZY0bzj4Hel6Bm4'}")
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 72.76130933983734,
+  "p10": 16.522935445789393,
+  "p50": 49.92659887814058,
+  "p90": 153.01284579221237
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Interpreting the resolution as the age of the oldest living human at 0:00 on January 1, 2100 (per Guinness World Records), not the maximum lifespan ever attained. Life expectancy has risen roughly linearly, but extreme ages follow different dynamics; the oldest living age tends to move slowly, with a heavy-tailed but thin-probability chance of breakthroughs.
+
+P10: 114
+P20: 115
+P40: 118
+P60: 121
+P80: 125
+P90: 129
+```
+
+## Gemini Reasoning
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+
+```
+
+## Grok Reasoning
+```
+[error] xAI: TimeoutError()
+```
+------------------------------------------------------------
+
+❓ Question: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 URL: https://www.metaculus.com/questions/22427/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+*Final Prediction*:
+- 0 or 1: 16.5%
+- 2 or 3: 16.8%
+- 4 or 5: 16.8%
+- 6 or 7: 16.6%
+- 8 or 9: 16.6%
+- 10 or more: 16.7%
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+No external research provider succeeded. Proceed using the question background and general knowledge. (LLM research fallback failed.)
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": [
+    0.16509258596224866,
+    0.16760568957074157,
+    0.16772674973797985,
+    0.16641832485805522,
+    0.16620487074247126,
+    0.1669517791285036
+  ],
+  "p10": [
+    0.025723393607150258,
+    0.02711836850476487,
+    0.02684364295182434,
+    0.025984549596992212,
+    0.026639761313426033,
+    0.025043304640363587
+  ],
+  "p50": [
+    0.13241418885073142,
+    0.13533597377967946,
+    0.1351624865429559,
+    0.13349047480597176,
+    0.13314655610275195,
+    0.13400446274478056
+  ],
+  "p90": [
+    0.3527000687175678,
+    0.3550411374344033,
+    0.3583821738616554,
+    0.3566199775771792,
+    0.3560364943554723,
+    0.3579035815830896
+  ],
+  "posterior_alpha": [
+    1.1583333333333334,
+    1.1583333333333334,
+    1.1583333333333334,
+    1.1583333333333334,
+    1.1583333333333334,
+    1.1583333333333334
+  ]
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Reasoning:
+- Two-year runway is short for frontier models given rising capex (likely multi-$B by 2027–2029), data/compute bottlenecks, and hiring needs, so only very well-funded spin-outs or sovereign-backed efforts are plausible entrants.
+- The top-5 by Chatbot Arena ELO is typically anchored by OpenAI, Anthropic, and Google DeepMind, leaving at most 2 slots subject to churn among established challengers (e.g., Mistral, Cohere, Qwen/xAI/Meta, etc.). Displacing multiple incumbents repeatedly before 2030 is unlikely.
+- “Before 2030” plus “within 2 years of founding” further limits eligible cohorts (labs founded after launch and mostly by end-2028). Some possibility remains for 1–3 high-profile spin-outs or sovereign-backed labs to surge quickly; larger counts would require unusually high churn and cooperation with Arena listings.
+
+Option_1: 58%
+Option_2: 34%
+Option_3: 6%
+Option_4: 1.2%
+Option_5: 0.5%
+Option_6: 0.3%
+```
+
+## Gemini Reasoning
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+
+```
+
+## Grok Reasoning
+```
+[error] Model disabled
+```
+------------------------------------------------------------
+
+❓ Question: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+🔗 URL: https://www.metaculus.com/questions/38880/
+
+📝 Full Reasoning:
+# SUMMARY
+*Question*: How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+*Final Prediction*: Probability distribution:
+- P10: 16.52
+- P50: 49.93
+- P90: 153
+
+------------------------------------------------------------
+
+# RESEARCH
+## Research Report
+No external research provider succeeded. Proceed using the question background and general knowledge. (LLM research fallback failed.)
+
+------------------------------------------------------------
+
+# BAYES-MC DETAILS
+{
+  "mean": 72.76130933983734,
+  "p10": 16.522935445789393,
+  "p50": 49.92659887814058,
+  "p90": 153.01284579221237
+}
+
+------------------------------------------------------------
+
+# MODEL REASONING (RAW)
+
+## GPT-5-Thinking Reasoning
+```
+Rationale: Since 2023, only a small share of BLS “major work stoppages” have listed generative AI among primary demands (notably WGA and SAG-AFTRA in 2023). Contract cycles for entertainment unions likely put some large agreements back up in 2029, creating a nontrivial chance of one AI-related strike, but repeat multi-guild strikes remain unlikely. Outside entertainment, union density and bargaining agendas make AI-focused primary demands possible but still uncommon at the 1,000+ worker threshold. Most years should see zero; the right tail allows for 1–2 if a major entertainment union strikes.
+
+P10: 0
+P20: 0
+P40: 0
+P60: 0
+P80: 1
+P90: 2
+```
+
+## Gemini Reasoning
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+
+```
+
+## Grok Reasoning
+```
+[error] Model disabled
+```
