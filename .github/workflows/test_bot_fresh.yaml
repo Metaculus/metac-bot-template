@@ -38,6 +38,20 @@ jobs:
       - name: Run Spagbot test set (fresh)
         run: |
           poetry run python spagbot.py --mode test_questions --fresh-research --limit 3
+      - name: Upload Spagbot outputs (logs, CSVs, calibration)
+        if: always()  # capture even on failures
+        uses: actions/upload-artifact@v4
+        with:
+          name: spagbot-run-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 180
+          path: |
+            forecast_logs/**
+            logs/**
+            forecasts.csv
+            forecasts_by_model.csv
+            data/calibration_advice.txt
+
         env:
           # Required
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
