@@ -24,6 +24,7 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
 from pydantic import ValidationError
 
+from metaculus_bot import stacking as stacking
 from metaculus_bot.aggregation_strategies import (
     AggregationStrategy,
     aggregate_binary_median,
@@ -87,14 +88,7 @@ from metaculus_bot.pchip_processing import (
     log_pchip_summary,
     reset_pchip_stats,
 )
-from metaculus_bot.prompts import (
-    binary_prompt,
-    multiple_choice_prompt,
-    numeric_prompt,
-    stacking_binary_prompt,
-    stacking_multiple_choice_prompt,
-    stacking_numeric_prompt,
-)
+from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
@@ -108,7 +102,6 @@ load_dotenv(".env.local", override=True)
 
 
 class TemplateForecaster(CompactLoggingForecastBot):
-
     def __init__(
         self,
         *,
@@ -266,15 +259,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             raise ValueError("No stacker LLM configured")
 
         # Strip model names from reasoning and prepare base predictions
-        base_predictions = []
-        for pred in reasoned_predictions:
-            reasoning = pred.reasoning
-            # Remove "Model: {model_name}\n\n" prefix if present
-            if reasoning.startswith("Model: "):
-                lines = reasoning.split("\n", 2)
-                if len(lines) >= 3 and lines[1] == "":
-                    reasoning = lines[2]  # Skip "Model: ..." and empty line
-            base_predictions.append(reasoning)
+        base_predictions = [stacking.strip_model_tag(pred.reasoning) for pred in reasoned_predictions]
 
         # Optionally randomize order to avoid position bias
         if self.stacking_randomize_order:
@@ -284,116 +269,74 @@ class TemplateForecaster(CompactLoggingForecastBot):
             base_predictions = list(base_predictions)
             reasoned_predictions = list(reasoned_predictions)
 
-        # Generate appropriate stacking prompt based on question type
+        # Generate appropriate stacking call based on question type
         if isinstance(question, BinaryQuestion):
-            prompt = stacking_binary_prompt(question, research, base_predictions)
-            return await self._run_stacking_binary(question, prompt)
-        elif isinstance(question, MultipleChoiceQuestion):
-            prompt = stacking_multiple_choice_prompt(question, research, base_predictions)
-            return await self._run_stacking_multiple_choice(question, prompt)
-        elif isinstance(question, NumericQuestion):
-            upper_bound_message, lower_bound_message = self._create_upper_and_lower_bound_messages(question)
-            prompt = stacking_numeric_prompt(
-                question, research, base_predictions, lower_bound_message, upper_bound_message
+            value, meta_text = await stacking.run_stacking_binary(
+                self._stacker_llm,
+                self.get_llm("parser", "llm"),
+                question,
+                research,
+                base_predictions,
             )
-            return await self._run_stacking_numeric(question, prompt)
+            self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
+            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+            logger.info(f"Stacked binary prediction for {getattr(question, 'page_url', '<unknown>')}: {value}")
+            return value
+        elif isinstance(question, MultipleChoiceQuestion):
+            pol, meta_text = await stacking.run_stacking_mc(
+                self._stacker_llm,
+                self.get_llm("parser", "llm"),
+                question,
+                research,
+                base_predictions,
+            )
+            self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
+            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+            logger.info(f"Stacked multiple choice prediction for {getattr(question, 'page_url', '<unknown>')}: {pol}")
+            return pol
+        elif isinstance(question, NumericQuestion):
+            lower_msg, upper_msg = self._create_upper_and_lower_bound_messages(question)
+            perc_list, meta_text = await stacking.run_stacking_numeric(
+                self._stacker_llm,
+                self.get_llm("parser", "llm"),
+                question,
+                research,
+                base_predictions,
+                lower_msg,
+                upper_msg,
+            )
+            self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
+            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+
+            # Use same validation and processing logic as base numeric forecasting
+            from metaculus_bot.numeric_validation import sort_percentiles_by_value, validate_percentile_count_and_values
+
+            validate_percentile_count_and_values(perc_list)
+            percentile_list = sort_percentiles_by_value(perc_list)
+            percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+
+            from metaculus_bot.numeric_validation import check_discrete_question_properties
+
+            is_discrete, should_force_zero_point_none = check_discrete_question_properties(question, PCHIP_CDF_POINTS)
+            zero_point = getattr(question, "zero_point", None)
+            if should_force_zero_point_none:
+                zero_point = None
+
+            try:
+                pchip_cdf, smoothing_applied, aggressive_enforcement_used = generate_pchip_cdf_with_smoothing(
+                    percentile_list, question, zero_point
+                )
+                prediction = create_pchip_numeric_distribution(pchip_cdf, percentile_list, question, zero_point)
+            except Exception as e:
+                log_pchip_fallback(question, e)
+                prediction = create_fallback_numeric_distribution(percentile_list, question, zero_point)
+
+            validate_cdf_construction(prediction, question)
+            log_final_prediction(prediction, question)
+            logger.info(f"Stacked numeric prediction for {getattr(question, 'page_url', '<unknown>')}")
+            return prediction
         else:
             raise ValueError(f"Unsupported question type for stacking: {type(question)}")
-
-    async def _run_stacking_binary(self, question: BinaryQuestion, prompt: str) -> float:
-        """Run stacking for binary questions."""
-        reasoning = await self._stacker_llm.invoke(prompt)
-        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
-        # Store meta-analysis text for later inclusion in report
-        self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = reasoning
-
-        # Use same parsing logic as base binary forecasting
-        binary_parse_instructions = (
-            "Return a single JSON object only. Set `prediction_in_decimal` strictly as a decimal in [0,1] "
-            "(e.g., 0.17 for 17%). If the text contains 'Probability: NN%' or 'NN %', set `prediction_in_decimal` to NN/100. "
-            "Do not return percentages, strings, or any extra fields."
-        )
-        binary_prediction: BinaryPrediction = await structure_output(
-            reasoning,
-            BinaryPrediction,
-            model=self.get_llm("parser", "llm"),
-            additional_instructions=binary_parse_instructions,
-        )
-        decimal_pred = max(BINARY_PROB_MIN, min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal))
-        logger.info(f"Stacked binary prediction for {question.page_url}: {decimal_pred}")
-        return decimal_pred
-
-    async def _run_stacking_multiple_choice(self, question: MultipleChoiceQuestion, prompt: str) -> PredictedOptionList:
-        """Run stacking for multiple choice questions."""
-        reasoning = await self._stacker_llm.invoke(prompt)
-        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
-
-        parsing_instructions = clean_indents(
-            f"""
-            Make sure that all option names are one of the following:
-            {question.options}
-            The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
-            """
-        )
-        predicted_option_list: PredictedOptionList = await structure_output(
-            text_to_structure=reasoning,
-            output_type=PredictedOptionList,
-            model=self.get_llm("parser", "llm"),
-            additional_instructions=parsing_instructions,
-        )
-
-        # Apply custom clamping to 0.5%/99.5% and renormalize
-        predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
-
-        logger.info(f"Stacked multiple choice prediction for {question.page_url}: {predicted_option_list}")
-        # Store meta-analysis text for later inclusion in report
-        self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = reasoning
-        return predicted_option_list
-
-    async def _run_stacking_numeric(self, question: NumericQuestion, prompt: str) -> NumericDistribution:
-        """Run stacking for numeric questions."""
-        reasoning = await self._stacker_llm.invoke(prompt)
-        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
-        # Store meta-analysis text for later inclusion in report
-        self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = reasoning
-
-        percentile_list: list[Percentile] = await structure_output(
-            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
-        )
-
-        # Use same validation and processing logic as base numeric forecasting
-        from metaculus_bot.numeric_validation import sort_percentiles_by_value, validate_percentile_count_and_values
-
-        validate_percentile_count_and_values(percentile_list)
-        percentile_list = sort_percentiles_by_value(percentile_list)
-        percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
-
-        # For discrete questions, force zero_point to None to avoid log-scaling
-        from metaculus_bot.numeric_validation import check_discrete_question_properties
-
-        is_discrete, should_force_zero_point_none = check_discrete_question_properties(question, PCHIP_CDF_POINTS)
-        zero_point = getattr(question, "zero_point", None)
-
-        if should_force_zero_point_none:
-            zero_point = None
-
-        # Generate PCHIP CDF with validation and smoothing
-        try:
-            pchip_cdf, smoothing_applied, aggressive_enforcement_used = generate_pchip_cdf_with_smoothing(
-                percentile_list, question, zero_point
-            )
-            prediction = create_pchip_numeric_distribution(pchip_cdf, percentile_list, question, zero_point)
-        except Exception as e:
-            log_pchip_fallback(question, e)
-            prediction = create_fallback_numeric_distribution(percentile_list, question, zero_point)
-
-        # Validate CDF construction for non-PCHIP distributions
-        validate_cdf_construction(prediction, question)
-
-        # Log final prediction
-        log_final_prediction(prediction, question)
-        logger.info(f"Stacked numeric prediction for {question.page_url}")
-        return prediction
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         # Check cache first (only during benchmarking)
@@ -416,7 +359,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 provider = self._custom_research_provider
                 provider_name = "custom"
             else:
-                default_llm = self.get_llm("default", "llm") if hasattr(self, "get_llm") else None  # type: ignore[attr-defined]
+                default_llm = (
+                    self.get_llm("default", "llm") if hasattr(self, "get_llm") else None
+                )  # type: ignore[attr-defined]
                 provider, provider_name = choose_provider_with_name(
                     default_llm,
                     exa_callback=self._call_exa_smart_searcher,
@@ -494,7 +439,11 @@ class TemplateForecaster(CompactLoggingForecastBot):
             list[Coroutine[Any, Any, ReasonedPrediction[Any]]],
             [self._make_prediction(question, research_to_use, llm_instance) for llm_instance in self._forecaster_llms],
         )
-        valid_predictions, errors, exception_group = await self._gather_results_and_exceptions(tasks)
+        (
+            valid_predictions,
+            errors,
+            exception_group,
+        ) = await self._gather_results_and_exceptions(tasks)
         if errors:
             logger.warning(f"Encountered errors while predicting: {errors}")
         if len(valid_predictions) == 0:
@@ -515,7 +464,10 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 pass
             prediction_values = [pred.prediction_value for pred in valid_predictions]
             aggregated_value = await self._aggregate_predictions(
-                prediction_values, question, research=research_to_use, reasoned_predictions=valid_predictions
+                prediction_values,
+                question,
+                research=research_to_use,
+                reasoned_predictions=valid_predictions,
             )
             # Create a single aggregated prediction, preserving the stacker meta-analysis when available
             meta_text = self._stack_meta_reasoning.pop(
@@ -673,11 +625,19 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
             if self.aggregation_strategy == AggregationStrategy.MEAN:
                 result = aggregate_binary_mean(float_preds)
-                logger.info("Binary question ensembling: mean of %s = %.3f (rounded)", float_preds, result)
+                logger.info(
+                    "Binary question ensembling: mean of %s = %.3f (rounded)",
+                    float_preds,
+                    result,
+                )
                 return result  # type: ignore[return-value]
             elif self.aggregation_strategy == AggregationStrategy.MEDIAN:
                 result = aggregate_binary_median(float_preds)
-                logger.info("Binary question ensembling: median of %s = %.3f", float_preds, result)
+                logger.info(
+                    "Binary question ensembling: median of %s = %.3f",
+                    float_preds,
+                    result,
+                )
                 return result  # type: ignore[return-value]
             else:
                 raise ValueError(f"Unsupported aggregation strategy for binary questions: {self.aggregation_strategy}")
@@ -792,7 +752,10 @@ class TemplateForecaster(CompactLoggingForecastBot):
             model=self.get_llm("parser", "llm"),
             additional_instructions=binary_parse_instructions,
         )
-        decimal_pred = max(BINARY_PROB_MIN, min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal))
+        decimal_pred = max(
+            BINARY_PROB_MIN,
+            min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal),
+        )
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {decimal_pred}")
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
@@ -911,7 +874,14 @@ class TemplateForecaster(CompactLoggingForecastBot):
         modified_values, corrections_made = clamp_values_to_bounds(modified_values, percentile_list, question, buffer)
 
         # Log diagnostics and warnings
-        log_cluster_spreading_summary(modified_values, values, question, clusters_applied, spread_delta, count_like)
+        log_cluster_spreading_summary(
+            modified_values,
+            values,
+            question,
+            clusters_applied,
+            spread_delta,
+            count_like,
+        )
         log_corrections_summary(modified_values, values, question, corrections_made)
         log_heavy_clamping_diagnostics(modified_values, values, question, buffer)
 

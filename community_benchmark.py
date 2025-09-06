@@ -31,6 +31,8 @@ from tqdm import tqdm
 
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
+from metaculus_bot.benchmark.heartbeat import install_benchmarker_heartbeat
+from metaculus_bot.benchmark.logging import log_benchmarker_headline_note, log_bot_lineup, log_stacking_summaries
 from metaculus_bot.constants import (
     BENCHMARK_BATCH_SIZE,
     FETCH_PACING_SECONDS,
@@ -103,100 +105,16 @@ _enable_aiohttp_session_autoclose()
 
 
 # Global progress tracking state
-_progress_state = {"total_predictions": 0, "start_time": 0, "completed_batches": 0, "total_batches": 0, "pbar": None}
+_progress_state = {
+    "total_predictions": 0,
+    "start_time": 0,
+    "completed_batches": 0,
+    "total_batches": 0,
+    "pbar": None,
+}
 
 
-def _install_benchmarker_heartbeat(interval_seconds: int = HEARTBEAT_INTERVAL) -> None:
-    """Add a lightweight heartbeat to Benchmarker batch execution.
-
-    Logs a progress line every ``interval_seconds`` while each batch is running,
-    without changing the forecasting-tools package or internal flow.
-    """
-    try:
-        original_run = Benchmarker._run_a_batch  # type: ignore[attr-defined]
-    except Exception:  # pragma: no cover - defensive: attribute should exist
-        return
-
-    # Avoid double-wrapping if re-imported
-    if getattr(Benchmarker._run_a_batch, "_has_heartbeat", False):  # type: ignore[attr-defined]
-        return
-
-    async def _run_with_heartbeat(self, batch, _orig=original_run):  # type: ignore[no-untyped-def]
-        start_time = datetime.now()
-        task = asyncio.create_task(_orig(self, batch))
-        try:
-            while not task.done():
-                await asyncio.sleep(interval_seconds)
-                elapsed_min = (datetime.now() - start_time).total_seconds() / 60.0
-                try:
-                    # Update progress tracking
-                    if _progress_state["pbar"] is not None:
-                        _update_progress_estimate(batch)
-
-                    logger.info(
-                        f"[HB] {batch.benchmark.name} | {len(batch.questions)} questions | elapsed {elapsed_min:.1f}m"
-                    )
-                except Exception:
-                    # Best-effort logging; do not interfere with main task
-                    pass
-
-            # Mark batch as completed
-            _progress_state["completed_batches"] += 1
-            if _progress_state["pbar"] is not None:
-                _update_progress_final()
-
-            return await task
-        except Exception:
-            # Bubble up original exceptions unchanged
-            raise
-
-    # Mark wrapper to prevent stacking
-    setattr(_run_with_heartbeat, "_has_heartbeat", True)
-    Benchmarker._run_a_batch = _run_with_heartbeat  # type: ignore[assignment]
-
-
-def _update_progress_estimate(batch) -> None:
-    """Update progress estimate during batch execution."""
-    if _progress_state["total_predictions"] == 0:
-        return
-
-    # Estimate: each completed batch = batch_size questions per bot
-    completed_predictions = _progress_state["completed_batches"] * len(batch.questions) * len(batch.forecast_bots)
-
-    # Add partial progress for current batch (rough estimate)
-    elapsed_total = time.time() - _progress_state["start_time"]
-    if _progress_state["completed_batches"] > 0:
-        avg_batch_time = elapsed_total / (_progress_state["completed_batches"] + 0.5)  # +0.5 for current partial
-        progress_in_current = min(0.8, elapsed_total % avg_batch_time / avg_batch_time)  # Cap at 80% for current batch
-        completed_predictions += int(progress_in_current * len(batch.questions) * len(batch.forecast_bots))
-
-    completed_predictions = min(completed_predictions, _progress_state["total_predictions"])
-
-    # Update progress bar
-    pbar = _progress_state["pbar"]
-    if pbar is not None:
-        pbar.n = completed_predictions
-        pbar.refresh()
-
-
-def _update_progress_final() -> None:
-    """Update progress when a batch completes."""
-    if _progress_state["pbar"] is None or _progress_state["total_predictions"] == 0:
-        return
-
-    # Calculate exact completed predictions
-    completed_predictions = min(
-        _progress_state["completed_batches"]
-        * (_progress_state["total_predictions"] // _progress_state["total_batches"]),
-        _progress_state["total_predictions"],
-    )
-
-    pbar = _progress_state["pbar"]
-    pbar.n = completed_predictions
-    pbar.refresh()
-
-
-_install_benchmarker_heartbeat(HEARTBEAT_INTERVAL)
+install_benchmarker_heartbeat(HEARTBEAT_INTERVAL, _progress_state)
 
 
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
@@ -259,7 +177,9 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                 return True
             # Best-effort string check for common transient statuses when wrapped
             msg = str(err).lower()
-            return any(tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"])  # type: ignore[return-value]
+            return any(
+                tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"]
+            )  # type: ignore[return-value]
 
         attempts = 0
         backoffs = list(FETCH_RETRY_BACKOFFS)  # seconds
@@ -297,7 +217,11 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                 ) from e
 
     # Fetch each question type separately with pacing and validation
-    types_and_counts = [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]
+    types_and_counts = [
+        ("binary", binary_count),
+        ("numeric", numeric_count),
+        ("multiple_choice", mc_count),
+    ]
     for i, (question_type, count) in enumerate(types_and_counts, 1):
         if count <= 0:
             continue
@@ -561,43 +485,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
         # Pre-run per-bot overview for clarity
         try:
-            total_bots = len(bots)
-            logger.info("📋 Bot lineup (%d total):", total_bots)
-            for idx, b in enumerate(bots, 1):
-                try:
-                    strat = getattr(b, "aggregation_strategy", None)
-                    strat_val = strat.value if strat else "(framework default)"
-                    r = getattr(b, "research_reports_per_question", "?")
-                    p = getattr(b, "predictions_per_research_report", "?")
-                    if strat_val == "stacking":
-                        # Access TemplateForecaster-specific attributes if present
-                        stacker = getattr(getattr(b, "_stacker_llm", None), "model", "<missing>")
-                        base_f = getattr(b, "_forecaster_llms", [])
-                        base_names = [getattr(m, "model", "<unknown>") for m in base_f]
-                        short = base_names if len(base_names) <= 6 else base_names[:6] + ["..."]
-                        logger.info(
-                            "- Bot %d/%d | name=%s | strategy=STACKING | R×P=%s×%s | stacker=%s | base_forecasters(%d)=%s | final_outputs_per_q=1",
-                            idx,
-                            total_bots,
-                            getattr(b, "name", f"bot-{idx}"),
-                            r,
-                            p,
-                            stacker,
-                            len(base_names),
-                            short,
-                        )
-                    else:
-                        logger.info(
-                            "- Bot %d/%d | name=%s | strategy=%s | R×P=%s×%s",
-                            idx,
-                            total_bots,
-                            getattr(b, "name", f"bot-{idx}"),
-                            strat_val,
-                            r,
-                            p,
-                        )
-                except Exception as be:
-                    logger.warning("Failed to log bot %d overview: %s", idx, be)
+            log_bot_lineup(bots)
         except Exception:
             pass
 
@@ -620,15 +508,13 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         sys.stdout.flush()
         try:
             for i, benchmark in enumerate(benchmarks):
-                logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
+                logger.info(f"Benchmark {i + 1} of {len(benchmarks)}: {benchmark.name}")
                 logger.info(
                     f"- Final Metaculus Baseline Score: {benchmark.average_expected_baseline_score:.4f} (based on log score, 0=always predict same, https://www.metaculus.com/help/scores-faq/#baseline-score )"
                 )
                 logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
                 logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
-            logger.info(
-                "Note: 'Class | R × P | Model' means research_reports_per_question × predictions_per_research_report; Model is the default (stacker for STACKING)."
-            )
+            log_benchmarker_headline_note()
         except ValueError as ve:
             # Provide clearer guidance when no reports exist (likely research provider failures)
             raise RuntimeError(
@@ -687,21 +573,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
         # Summarize any STACKING fallbacks and guard triggers encountered
         try:
-            for sb in stacking_bots:
-                count = getattr(sb, "_stacking_fallback_count", 0)
-                guard_count = getattr(sb, "_stacking_guard_trigger_count", 0)
-                if count:
-                    logger.warning(
-                        "STACKING fallback summary | bot=%s | fallbacks=%d (fell back to MEAN due to errors)",
-                        getattr(sb, "name", "<unnamed>"),
-                        count,
-                    )
-                if guard_count:
-                    logger.warning(
-                        "STACKING guard summary | bot=%s | guard_triggers=%d (base-aggregator combine across research reports)",
-                        getattr(sb, "name", "<unnamed>"),
-                        guard_count,
-                    )
+            log_stacking_summaries(stacking_bots)
         except Exception:
             pass
 
