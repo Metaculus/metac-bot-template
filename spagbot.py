@@ -1219,10 +1219,11 @@ async def run_ensemble_numeric(prompt: str, ensemble: List[ModelSpec]) -> Ensemb
 # =====================================================================================
 
 AGG_HEADERS = [
-    "RunID","RunTime","Type","Model","URL","QuestionID","Question",
+    "RunID","RunTime","Type","Model","Pool","Collection","URL","QuestionID","Question",
     "Binary_Prob","MCQ_Probs","Numeric_P10","Numeric_P50","Numeric_P90",
     "GTMC1","GTMC1_Signal","BMC_Summary","Explanation_Short"
 ]
+
 PER_HEADERS = [
     "RunID","RunTime","Type","QuestionID","Question","ModelName","Parsed","OK","Note"
 ]
@@ -1736,8 +1737,17 @@ async def forecast_one(question_id: int, post_id: int, run_id: str, detailed_log
         numeric_p50 = bmc_summary.get("p50")
         numeric_p90 = bmc_summary.get("p90")
 
+    pool = os.getenv("RUN_PLAYLIST", os.getenv("TOURNAMENT_ID", "tournament"))
+    collection = (
+        os.getenv("TOURNAMENT_ID")  # you already use this for posts API
+        or (os.getenv("METACULUS_COLLECTION_SLUG_CUP") if pool == "cup" else os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT"))
+        or "unknown"
+    )
+
     agg_row = {
+        
         "RunID": run_id, "RunTime": now, "Type": qtype, "Model": "ensemble+gtmc1+bmc",
+        "Pool": pool, "Collection": collection,
         "URL": url, "QuestionID": str(question_id), "Question": title,
         "Binary_Prob": _fmt_float_or_blank(locals().get("final_p")),
         "MCQ_Probs": json.dumps(locals().get("final_dict")) if "final_dict" in locals() else "",
@@ -1790,10 +1800,93 @@ async def forecast_one(question_id: int, post_id: int, run_id: str, detailed_log
 # Runner
 # =====================================================================================
 
+# === Metaculus playlist fetch ===============================================
+def _metaculus_fetch_open_ids_for_collection(collection_slug: str, *, limit: int = 200) -> list[tuple[int, str]]:
+    """
+    Returns a list of (qid, url) for OPEN questions in a given Metaculus collection.
+    Uses APIv2. Requires METACULUS_TOKEN in env.
+    """
+    token = os.getenv("METACULUS_TOKEN", "").strip()
+    headers = {"Authorization": f"Token {token}"} if token else {}
+    # status=open ensures we don't fetch resolved/closed
+    url = "https://www.metaculus.com/api2/questions/"
+    params = {"collection": collection_slug, "status": "open", "limit": limit}
+    try:
+        r = requests.get(url, headers=headers, params=params, timeout=20)
+        if not r.ok:
+            print(f"[metaculus] fetch collection '{collection_slug}' HTTP {r.status_code}: {r.text[:200]}")
+            return []
+        data = r.json()
+        results = data.get("results", [])
+        out = []
+        for it in results:
+            qid = it.get("id")
+            url = it.get("url") or it.get("page_url") or f"https://www.metaculus.com/questions/{qid}/"
+            if isinstance(qid, int):
+                out.append((qid, url))
+        return out
+    except Exception as e:
+        print(f"[metaculus] error fetching collection '{collection_slug}': {e}")
+        return []
+
+
+def get_playlist_question_ids(playlist: str) -> list[tuple[int, str]]:
+    """
+    Resolves the chosen playlist ('tournament'/'cup'/'all') to a list of (qid, url).
+    Uses env slugs:
+      METACULUS_COLLECTION_SLUG_TOURNAMENT
+      METACULUS_COLLECTION_SLUG_CUP
+    """
+    if playlist == "all":
+        # Merge both lists (de-dup by qid)
+        t_slug = os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT", "").strip()
+        c_slug = os.getenv("METACULUS_COLLECTION_SLUG_CUP", "").strip()
+        ids = []
+        if t_slug:
+            ids.extend(_metaculus_fetch_open_ids_for_collection(t_slug))
+        if c_slug:
+            ids.extend(_metaculus_fetch_open_ids_for_collection(c_slug))
+        # de-dup by qid, preserve first URL seen
+        seen, uniq = set(), []
+        for qid, u in ids:
+            if qid not in seen:
+                uniq.append((qid, u))
+                seen.add(qid)
+        return uniq
+
+    if playlist == "cup":
+        c_slug = os.getenv("METACULUS_COLLECTION_SLUG_CUP", "").strip()
+        return _metaculus_fetch_open_ids_for_collection(c_slug) if c_slug else []
+
+    # default: tournament
+    t_slug = os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT", "").strip()
+    return _metaculus_fetch_open_ids_for_collection(t_slug) if t_slug else []
+
 async def main_async(mode: str, limit: int = 0):
     ts = ist_stamp()
     os.makedirs(RUN_LOG_DIR, exist_ok=True)
     run_log_path = os.path.join(RUN_LOG_DIR, f"{spagbot_safe_filename('spagbot_run_'+ts)}.txt") if 'spagbot_safe_filename' in globals() else os.path.join(RUN_LOG_DIR, f"spagbot_run_{ts}.txt")
+
+    # ANCHOR: "playlist selection"
+    # Determine playlist from env (set by CLI --playlist or workflow RUN_PLAYLIST)
+    playlist = os.getenv("RUN_PLAYLIST", "tournament")
+    ids = get_playlist_question_ids(playlist)
+    if not ids:
+        print(f"[WARN] No open questions found for playlist='{playlist}'. "
+                f"Check collection slugs and token.")
+        return
+
+        # If you already have a function that iterates over questions, adapt:
+        # Here we build a minimal iterator that matches your forecast loop:
+        questions = []
+        for qid, url in ids:
+            # minimal shape needed downstream
+            questions.append({
+                "id": qid,
+                "url": url,
+                "type": "binary",  # will be overwritten by fetch_post_details if needed
+                "title": None,     # lazy-fill later
+            })
 
     fh = logging.FileHandler(run_log_path, encoding="utf-8")
     fh.setLevel(logging.INFO)
@@ -1893,16 +1986,57 @@ async def main_async(mode: str, limit: int = 0):
         sys.stderr = sys.__stderr__
 
 def main():
+    """
+    CLI entrypoint for Spagbot.
+    Parses CLI args, sets environment flags for downstream functions,
+    and dispatches to the async main loop.
+    """
     parser = argparse.ArgumentParser(description="Run Spagbot (Ensemble + GTMC1 + Bayes-MC).")
-    parser.add_argument("--mode", type=str, default="test_questions", choices=["test_questions","run"])
-    parser.add_argument("--limit", type=int, default=0, help="Limit number of questions to run (0 = no limit; run all).")
-    parser.add_argument("--fresh-research", action="store_true",
-                        help="Ignore cached research and fetch anew for every question")
+
+    # Required/standard args
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="test_questions",
+        choices=["test_questions", "run"],
+        help="Which overall run mode to use. 'test_questions' runs the built-in test set; 'run' performs a full run.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Limit number of questions to run (0 = no limit; run all).",
+    )
+    parser.add_argument(
+        "--fresh-research",
+        action="store_true",
+        help="Ignore cached research and fetch anew for every question.",
+    )
+
+    # ANCHOR: "playlist CLI"
+    # New optional selector; defaults to env RUN_PLAYLIST (else 'tournament').
+    # This *only* sets an environment variable that downstream code can read.
+    parser.add_argument(
+        "--playlist",
+        choices=["tournament", "cup", "all"],
+        default=os.getenv("RUN_PLAYLIST", "tournament"),
+        help="Which question pool to run against. Overrides RUN_PLAYLIST env if provided.",
+    )
+
     args = parser.parse_args()
+
+    # Resolve the playlist, print it for visibility, and expose via env
+    playlist = getattr(args, "playlist", os.getenv("RUN_PLAYLIST", "tournament"))
+    print(f"Playlist: {playlist}")
+    os.environ["RUN_PLAYLIST"] = playlist  # make available to all called functions
+
+    # Optional: disable research cache if explicitly requested
     if args.fresh_research:
         os.environ["SPAGBOT_DISABLE_RESEARCH_CACHE"] = "1"
         global DISABLE_RESEARCH_CACHE
         DISABLE_RESEARCH_CACHE = True
+
+    # Dispatch to async entrypoint (signature unchanged)
     asyncio.run(main_async(args.mode, args.limit))
 
 if __name__ == "__main__":

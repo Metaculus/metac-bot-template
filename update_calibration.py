@@ -63,6 +63,24 @@ def _read_csv_rows(path: str) -> List[dict]:
         reader = csv.DictReader(f)
         return [row for row in reader]
 
+def _filter_rows_by_collection(rows: list[dict]) -> list[dict]:
+    """
+    If 'Collection' is present, filter rows to CALIBRATION_ALLOWED_COLLECTIONS
+    (comma-separated slugs, default 'fall-aib-2025,metaculus-cup').
+    If column missing, return rows unchanged (backward-compatible).
+    """
+    if not rows:
+        return rows
+    if "Collection" not in rows[0]:
+        return rows
+
+    allowed = os.getenv("CALIBRATION_ALLOWED_COLLECTIONS", "fall-aib-2025,metaculus-cup")
+    allowed_set = {s.strip() for s in allowed.split(",") if s.strip()}
+    if not allowed_set:
+        return rows
+
+    return [r for r in rows if r.get("Collection") in allowed_set]
+
 def _get_resolution_dt(mq) -> Optional[datetime]:
     aj = getattr(mq, "api_json", {}) or {}
     # Try actual_resolve_time (most reliable)
@@ -289,6 +307,8 @@ def _crps_mc(pcts: Dict[str, float], x: float, n_samples: int = 2000) -> Optiona
 
 def build_calibration_note() -> str:
     rows = _read_csv_rows(CSV_PATH)
+    rows = _filter_rows_by_collection(rows)
+
     if not rows:
         return ("No forecast history found yet. Keep using conservative updates. "
                 "Re-run the calibration updater after questions begin resolving.")

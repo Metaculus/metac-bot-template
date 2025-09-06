@@ -1,4 +1,4 @@
-name: Run Bot on Metaculus Cup (every 2 days @ 00:00 UTC)
+name: Forecast on Metaculus Cup (every 2 days @ 00:00 UTC)
 
 on:
   schedule:
@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Routing
+      RUN_PLAYLIST: "cup"
+      METACULUS_COLLECTION_SLUG_CUP: "metaculus-cup"
+      TOURNAMENT_ID: "metaculus-cup"
+      SUBMIT_PREDICTION: "1"
+
       # Required
       METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
 
@@ -70,37 +76,28 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: "Preflight: verify METACULUS_TOKEN is present and valid"
+      - name: Purge research + actor caches (Cup runs only)
+        run: |
+          rm -f cache/research_llm__*.json || true
+          rm -f cache/actors__*.json || true
+
+      - name: "Preflight: verify collection slug returns open questions"
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${METACULUS_TOKEN:-}" ]; then
-            echo "❌ METACULUS_TOKEN is not set in env. Check your workflow env: and repo secrets."
-            exit 1
+          COLL="${METACULUS_COLLECTION_SLUG_CUP}"
+          code=$(curl -s -o /tmp/coll.json -w "%{http_code}" \
+            -H "Authorization: Token ${METACULUS_TOKEN}" \
+            "https://www.metaculus.com/api2/questions/?collection=${COLL}&status=open&limit=1")
+          echo "HTTP: $code"
+          if [ "$code" != "200" ]; then
+            echo "❌ Bad response:"; cat /tmp/coll.json; exit 1
           fi
-          ENDPOINTS=(
-            "https://www.metaculus.com/api/users/me/"
-            "https://www.metaculus.com/api2/users/me/"
-            "https://www.metaculus.com/api/me/"
-          )
-          OK=0
-          for URL in "${ENDPOINTS[@]}"; do
-            code=$(curl -s -o /tmp/me.json -w "%{http_code}" \
-              -H "Authorization: Token ${METACULUS_TOKEN}" \
-              "$URL" || true)
-            echo "Tried $URL → HTTP $code"
-            if [ "$code" = "200" ]; then
-              OK=1; break
-            fi
-          done
-          if [ "$OK" -ne 1 ]; then
-            echo "❌ Could not validate token on any endpoint. Last body:"; cat /tmp/me.json || true; exit 1
-          fi
-          echo "✅ Metaculus token looks good."
+          jq .results[0].id /tmp/coll.json || true
 
-      - name: Run Spagbot (Metaculus Cup)
+      - name: Run Spagbot on Metaculus Cup (fresh)
         run: |
-          poetry run python spagbot.py --mode metaculus_cup
+          poetry run python spagbot.py --mode run --fresh-research
 
       - name: Upload Spagbot outputs (logs, CSVs, calibration)
         if: always()

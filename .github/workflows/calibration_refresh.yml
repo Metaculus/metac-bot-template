@@ -18,6 +18,13 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
 
+    env:
+      # Keep only these collections in the calibration pass
+      CALIBRATION_ALLOWED_COLLECTIONS: "fall-aib-2025,metaculus-cup"
+
+      # Needed because update_calibration fetches question objects via forecasting_tools.MetaculusApi
+      METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -57,3 +64,4 @@ jobs:
           else
             echo "No changes to commit."
           fi
+
