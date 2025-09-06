@@ -1,4 +1,4 @@
-.PHONY: conda_env install test run benchmark lint analyze_correlations analyze_correlations_latest
+.PHONY: conda_env install test run benchmark lint format precommit precommit_all precommit_install analyze_correlations analyze_correlations_latest
 
 # Stream logs live from recipes; avoid per-target buffering
 MAKEFLAGS += --output-sync=none
@@ -17,12 +17,21 @@ lock:
 	conda run -n metaculus-bot poetry lock
 
 lint:
-	conda run -n metaculus-bot poetry run black --check .
-	conda run -n metaculus-bot poetry run isort --check .
+	conda run -n metaculus-bot poetry run ruff check .
 
 format:
-	conda run -n metaculus-bot poetry run black .
-	conda run -n metaculus-bot poetry run isort .
+	conda run -n metaculus-bot poetry run ruff format .
+	conda run -n metaculus-bot poetry run ruff check . --fix
+
+# Pre-commit helpers (use local cache to avoid readonly home cache)
+precommit_install:
+	PRE_COMMIT_HOME=.pre-commit-cache conda run -n metaculus-bot poetry run pre-commit install
+
+precommit:
+	PRE_COMMIT_HOME=.pre-commit-cache conda run -n metaculus-bot poetry run pre-commit run
+
+precommit_all:
+	PRE_COMMIT_HOME=.pre-commit-cache conda run -n metaculus-bot poetry run pre-commit run -a
 
 test:
 	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u -m pytest" /dev/null

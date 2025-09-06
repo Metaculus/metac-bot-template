@@ -14,5 +14,15 @@ rough changelog:
 Coding agents: for coding standards, local commands, testing, and PR expectations, see [AGENTS.md — Repository Guidelines](AGENTS.md#repository-guidelines).
 See also: `starter_guide.md` for some basic info from the template's creators and `forecasting_tools_readme.md` for info on the forecasting-tools pkg used to interact w/ Metaculus.
 
+## Formatting & Linting
+- Lint: `make lint` (Ruff check)
+- Format: `make format` (Ruff format + autofix)
+- Pre-commit hooks:
+  - Install: `make precommit_install`
+  - Run on staged files: `make precommit`
+  - Run on all files: `make precommit_all`
+
+Ruff is configured in `pyproject.toml` with `line-length = 120`. The linter ignores `E501` since formatting is handled by `ruff-format`.
+
 # Archived starter info
 See starter_guide.md for verbose setup instructions.

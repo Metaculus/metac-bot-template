@@ -25,14 +25,15 @@ pytest = "^8.4.1"
 pytest-asyncio = "^1.0.0"
 
 pre-commit = "^4.3.0"
+ruff = "^0.5.7"
 
 [tool.ruff]
 line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+ignore = ["E501"]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-

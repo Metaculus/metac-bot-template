@@ -200,7 +200,9 @@ LLM ensemble configured in `metaculus_bot/llm_configs.py`:
 - **Benchmark**: `conda run -n metaculus-bot poetry run python community_benchmark.py` (or `make benchmark`)
 
 ### Code Quality
-- **Lint/format**: `conda run -n metaculus-bot poetry run black . && conda run -n metaculus-bot poetry run isort .` (or `make lint`)
+- **Lint**: `make lint` (Ruff check)
+- **Format**: `make format` (Ruff format + autofix)
+- **Pre-commit**: `make precommit_install` then `make precommit` or `make precommit_all`
 - **Test single file**: `conda run -n metaculus-bot PYTHONPATH=. poetry run pytest tests/test_specific.py`
 
 ### Important commands
@@ -210,8 +212,8 @@ LLM ensemble configured in `metaculus_bot/llm_configs.py`:
 
 ## Coding Style & Naming Conventions
 - Python 3.11+, PEP 8, absolute imports only.
-- Black with 120-char lines (see `[tool.black]` in `pyproject.toml`).
-- isort for import ordering.
+- Ruff formatting with 120-char line length (`[tool.ruff].line-length = 120`).
+- Import ordering via Ruff (I rules), no separate isort.
 - Naming: functions/variables `snake_case`, classes `PascalCase`, constants `UPPER_SNAKE_CASE`, modules `snake_case`.
 - Type hints required; prefer clear, explicit variable names over comments.
 
