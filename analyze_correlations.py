@@ -84,9 +84,16 @@ def load_benchmarks_from_path(benchmark_path: str) -> List[BenchmarkForBot]:
 def main():
     parser = argparse.ArgumentParser(description="Analyze model correlations from benchmark results")
     parser.add_argument("benchmark_path", help="Path to benchmark file (.json/.jsonl) or directory")
-    parser.add_argument("--output", "-o", help="Output file for correlation report (default: correlation_analysis.md)")
     parser.add_argument(
-        "--max-cost", type=float, default=1.0, help="Maximum cost per question for ensemble recommendations"
+        "--output",
+        "-o",
+        help="Output file for correlation report (default: correlation_analysis.md)",
+    )
+    parser.add_argument(
+        "--max-cost",
+        type=float,
+        default=1.0,
+        help="Maximum cost per question for ensemble recommendations",
     )
     parser.add_argument("--max-size", type=int, default=5, help="Maximum ensemble size")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
@@ -187,9 +194,9 @@ def main():
         corr_matrix = analyzer.calculate_correlation_matrix_by_components()
     else:
         corr_matrix = analyzer.calculate_correlation_matrix()
-    print(f"\n{'-'*40}")
+    print(f"\n{'-' * 40}")
     print("CORRELATION HIGHLIGHTS")
-    print(f"{'-'*40}")
+    print(f"{'-' * 40}")
 
     least_correlated = corr_matrix.get_least_correlated_pairs(threshold=0.8)
     print("\nMost Independent Model Pairs:")

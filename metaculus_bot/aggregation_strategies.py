@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import statistics
 from enum import Enum
 from typing import Sequence
@@ -43,7 +41,9 @@ def aggregate_binary_median(predictions: Sequence[float]) -> float:
     return round(median_prediction, 3)
 
 
-def aggregate_multiple_choice_mean(predictions: Sequence[PredictedOptionList]) -> PredictedOptionList:
+def aggregate_multiple_choice_mean(
+    predictions: Sequence[PredictedOptionList],
+) -> PredictedOptionList:
     """Aggregate multiple choice predictions using mean pooling across option probabilities.
 
     This extracts the logic that was previously handled by the framework's
@@ -97,7 +97,9 @@ def aggregate_multiple_choice_mean(predictions: Sequence[PredictedOptionList]) -
     return PredictedOptionList(predicted_options=aggregated_options)
 
 
-def aggregate_multiple_choice_median(predictions: Sequence[PredictedOptionList]) -> PredictedOptionList:
+def aggregate_multiple_choice_median(
+    predictions: Sequence[PredictedOptionList],
+) -> PredictedOptionList:
     """Aggregate multiple choice predictions using median pooling across option probabilities.
 
     Parameters

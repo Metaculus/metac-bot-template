@@ -5,9 +5,6 @@ import os
 import re
 
 import dotenv
-
-dotenv.load_dotenv()
-
 import forecasting_tools
 import numpy as np
 import requests
@@ -74,7 +71,10 @@ TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (
+        578,
+        578,
+    ),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     (
         14333,
         14333,
@@ -321,7 +321,7 @@ def call_exa_smart_searcher(question: str) -> str:
         prioritized_highlights = highlights[:10]
         combined_highlights = ""
         for i, highlight in enumerate(prioritized_highlights):
-            combined_highlights += f'[Highlight {i+1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
+            combined_highlights += f'[Highlight {i + 1}]:\nTitle: {highlight.source.title}\nURL: {highlight.source.url}\nText: "{highlight.highlight_text}"\n\n'
         response = combined_highlights
     else:
         searcher = forecasting_tools.SmartSearcher(
@@ -444,13 +444,12 @@ def extract_probability_from_response_as_percentage_not_decimal(
 
 
 async def get_binary_gpt_prediction(question_details: dict, num_runs: int) -> tuple[float, str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
     background = question_details["description"]
     fine_print = question_details["fine_print"]
-    question_type = question_details["type"]
+    question_details["type"]
 
     summary_report = run_research(title)
 
@@ -467,14 +466,14 @@ async def get_binary_gpt_prediction(question_details: dict, num_runs: int) -> tu
         rationale = await call_llm(content)
 
         probability = extract_probability_from_response_as_percentage_not_decimal(rationale)
-        comment = f"Extracted Probability: {probability}%\n\nGPT's Answer: " f"{rationale}\n\n\n"
+        comment = f"Extracted Probability: {probability}%\n\nGPT's Answer: {rationale}\n\n\n"
         return probability, comment
 
     probability_and_comment_pairs = await asyncio.gather(
         *[get_rationale_and_probability(content) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_and_comment_pairs]
-    final_comment_sections = [f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)]
+    final_comment_sections = [f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)]
     probabilities = [pair[0] for pair in probability_and_comment_pairs]
     median_probability = float(np.median(probabilities)) / 100
 
@@ -536,7 +535,6 @@ Percentile 90: XX
 
 
 def extract_percentiles_from_response(forecast_text: str) -> dict:
-
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_percentile_numbers(text) -> dict:
         pattern = r"^.*(?:P|p)ercentile.*$"
@@ -627,10 +625,15 @@ def generate_continuous_cdf(
     # function for log scaled questions
     def generate_cdf_locations(range_min, range_max, zero_point):
         if zero_point is None:
-            scale = lambda x: range_min + (range_max - range_min) * x
+
+            def scale(x):
+                return range_min + (range_max - range_min) * x
         else:
             deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-            scale = lambda x: range_min + (range_max - range_min) * (deriv_ratio**x - 1) / (deriv_ratio - 1)
+
+            def scale(x):
+                return range_min + (range_max - range_min) * (deriv_ratio**x - 1) / (deriv_ratio - 1)
+
         return [scale(x) for x in np.linspace(0, 1, cdf_size)]
 
     cdf_xaxis = generate_cdf_locations(range_min, range_max, zero_point)
@@ -656,8 +659,6 @@ def generate_continuous_cdf(
                 while i < len(known_x) and known_x[i] < x:
                     i += 1
 
-                list_index_2 = i
-
                 # If x is outside the range of known x-values, use the nearest endpoint
                 if i == 0:
                     y_values.append(known_y[0])
@@ -679,7 +680,6 @@ def generate_continuous_cdf(
 
 
 async def get_numeric_gpt_prediction(question_details: dict, num_runs: int) -> tuple[list[float], str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
@@ -744,7 +744,7 @@ async def get_numeric_gpt_prediction(question_details: dict, num_runs: int) -> t
 
     cdf_and_comment_pairs = await asyncio.gather(*[ask_llm_to_get_cdf(content) for _ in range(num_runs)])
     comments = [pair[1] for pair in cdf_and_comment_pairs]
-    final_comment_sections = [f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)]
+    final_comment_sections = [f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)]
     cdfs: list[list[float]] = [pair[0] for pair in cdf_and_comment_pairs]
     all_cdfs = np.array(cdfs)
     median_cdf: list[float] = np.median(all_cdfs, axis=0).tolist()
@@ -794,10 +794,8 @@ Option_N: Probability_N
 
 
 def extract_option_probabilities_from_response(forecast_text: str, options) -> float:
-
     # Helper function that returns a list of tuples with numbers for all lines with Percentile
     def extract_option_probabilities(text):
-
         # Number extraction pattern
         number_pattern = r"-?\d+(?:,\d{3})*(?:\.\d+)?"
 
@@ -872,13 +870,12 @@ async def get_multiple_choice_gpt_prediction(
     question_details: dict,
     num_runs: int,
 ) -> tuple[dict[str, float], str]:
-
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     title = question_details["title"]
     resolution_criteria = question_details["resolution_criteria"]
     background = question_details["description"]
     fine_print = question_details["fine_print"]
-    question_type = question_details["type"]
+    question_details["type"]
     options = question_details["options"]
 
     summary_report = run_research(title)
@@ -909,7 +906,7 @@ async def get_multiple_choice_gpt_prediction(
         *[ask_llm_for_multiple_choice_probabilities(content) for _ in range(num_runs)]
     )
     comments = [pair[1] for pair in probability_yes_per_category_and_comment_pairs]
-    final_comment_sections = [f"## Rationale {i+1}\n{comment}" for i, comment in enumerate(comments)]
+    final_comment_sections = [f"## Rationale {i + 1}\n{comment}" for i, comment in enumerate(comments)]
     probability_yes_per_category_dicts: list[dict[str, float]] = [
         pair[0] for pair in probability_yes_per_category_and_comment_pairs
     ]
@@ -963,8 +960,8 @@ async def forecast_individual_question(
         options = question_details["options"]
         summary_of_forecast += f"options: {options}\n"
 
-    if forecast_is_already_made(post_details) and skip_previously_forecasted_questions == True:
-        summary_of_forecast += f"Skipped: Forecast already made\n"
+    if forecast_is_already_made(post_details) and skip_previously_forecasted_questions is True:
+        summary_of_forecast += "Skipped: Forecast already made\n"
         return summary_of_forecast
 
     if question_type == "binary":
@@ -989,7 +986,7 @@ async def forecast_individual_question(
 
     summary_of_forecast += f"Comment:\n```\n{comment[:200]}...\n```\n\n"
 
-    if submit_prediction == True:
+    if submit_prediction is True:
         forecast_payload = create_forecast_payload(forecast, question_type)
         post_question_prediction(question_id, forecast_payload)
         post_question_comment(post_id, comment)
@@ -1037,6 +1034,7 @@ async def forecast_questions(
 
 ######################## FINAL RUN #########################
 if __name__ == "__main__":
+    dotenv.load_dotenv()
     if USE_EXAMPLE_QUESTIONS:
         open_question_id_post_id = EXAMPLE_QUESTIONS
     else:

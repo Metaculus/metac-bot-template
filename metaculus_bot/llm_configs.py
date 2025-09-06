@@ -1,14 +1,9 @@
-from __future__ import annotations
-
 """Centralised model configuration for TemplateForecaster.
 
 Keeping these objects in a single module avoids merge-conflicts and makes it
 possible to tweak/benchmark models without touching application code.
 """
 
-from forecasting_tools import GeneralLlm
-
-from metaculus_bot.api_key_utils import get_openrouter_api_key
 from metaculus_bot.fallback_openrouter import build_llm_with_openrouter_fallback
 
 __all__ = ["FORECASTER_LLMS", "SUMMARIZER_LLM", "PARSER_LLM", "RESEARCHER_LLM"]

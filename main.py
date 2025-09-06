@@ -22,7 +22,6 @@ from forecasting_tools.data_models.data_organizer import PredictionTypes
 from forecasting_tools.data_models.forecast_report import ForecastReport, ResearchWithPredictions
 from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import DateQuestion
-from pydantic import ValidationError
 
 from metaculus_bot import stacking as stacking
 from metaculus_bot.aggregation_strategies import (
@@ -50,24 +49,9 @@ from metaculus_bot.constants import (
     BINARY_PROB_MAX,
     BINARY_PROB_MIN,
     DEFAULT_MAX_CONCURRENT_RESEARCH,
-    NUM_MAX_STEP,
-    NUM_MIN_PROB_STEP,
-    NUM_RAMP_K_FACTOR,
-    NUM_SPREAD_DELTA_MULT,
-    NUM_VALUE_EPSILON_MULT,
 )
 from metaculus_bot.numeric_config import (
-    BOUNDARY_SAFETY_MARGIN,
-    CLUSTER_DETECTION_ATOL,
-    CLUSTER_DETECTION_RTOL,
-    CLUSTER_SPREAD_BASE_DELTA,
-    COUNT_LIKE_DELTA_MULTIPLIER,
-    COUNT_LIKE_THRESHOLD,
-    EXPECTED_PERCENTILE_COUNT,
-    MIN_BOUNDARY_DISTANCE,
     PCHIP_CDF_POINTS,
-    STANDARD_PERCENTILES,
-    STRICT_ORDERING_EPSILON,
 )
 from metaculus_bot.numeric_diagnostics import log_final_prediction, log_pchip_fallback, validate_cdf_construction
 from metaculus_bot.numeric_utils import (
@@ -176,7 +160,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self.stacking_fallback_on_failure: bool = stacking_fallback_on_failure
         self.stacking_randomize_order: bool = stacking_randomize_order
         # Per-question storage for stacker meta-analysis reasoning text
-        self._stack_meta_reasoning: dict[tuple[int | None, int], str] = {}
+        self._stack_meta_reasoning: dict[int, str] = {}
         # Diagnostics counters for STACKING behavior
         self._stacking_guard_trigger_count: int = 0
         self._stacking_fallback_count: int = 0
@@ -279,7 +263,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 base_predictions,
             )
             self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
-            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+            self._stack_meta_reasoning[question.id_of_question] = meta_text
             logger.info(f"Stacked binary prediction for {getattr(question, 'page_url', '<unknown>')}: {value}")
             return value
         elif isinstance(question, MultipleChoiceQuestion):
@@ -291,7 +275,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 base_predictions,
             )
             self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
-            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+            self._stack_meta_reasoning[question.id_of_question] = meta_text
             logger.info(f"Stacked multiple choice prediction for {getattr(question, 'page_url', '<unknown>')}: {pol}")
             return pol
         elif isinstance(question, NumericQuestion):
@@ -306,7 +290,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 upper_msg,
             )
             self._log_llm_output(self._stacker_llm, question.id_of_question, meta_text)  # type: ignore
-            self._stack_meta_reasoning[(getattr(question, "id_of_question", None), id(question))] = meta_text
+            self._stack_meta_reasoning[question.id_of_question] = meta_text
 
             # Use same validation and processing logic as base numeric forecasting
             from metaculus_bot.numeric_validation import sort_percentiles_by_value, validate_percentile_count_and_values
@@ -359,9 +343,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 provider = self._custom_research_provider
                 provider_name = "custom"
             else:
-                default_llm = (
-                    self.get_llm("default", "llm") if hasattr(self, "get_llm") else None
-                )  # type: ignore[attr-defined]
+                default_llm = self.get_llm("default", "llm") if hasattr(self, "get_llm") else None  # type: ignore[attr-defined]
                 provider, provider_name = choose_provider_with_name(
                     default_llm,
                     exa_callback=self._call_exa_smart_searcher,
@@ -471,7 +453,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             )
             # Create a single aggregated prediction, preserving the stacker meta-analysis when available
             meta_text = self._stack_meta_reasoning.pop(
-                (getattr(question, "id_of_question", None), id(question)),
+                question.id_of_question,
                 "Stacked prediction aggregated from multiple models",
             )
             aggregated_prediction = ReasonedPrediction(prediction_value=aggregated_value, reasoning=meta_text)
@@ -504,11 +486,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
         actual_llm = llm_to_use if llm_to_use else self.get_llm("default", "llm")
 
         if isinstance(question, BinaryQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_binary(q, r, llm)
+
+            def forecast_function(q, r, llm):
+                return self._run_forecast_on_binary(q, r, llm)
         elif isinstance(question, MultipleChoiceQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_multiple_choice(q, r, llm)
+
+            def forecast_function(q, r, llm):
+                return self._run_forecast_on_multiple_choice(q, r, llm)
         elif isinstance(question, NumericQuestion):
-            forecast_function = lambda q, r, llm: self._run_forecast_on_numeric(q, r, llm)
+
+            def forecast_function(q, r, llm):
+                return self._run_forecast_on_numeric(q, r, llm)
         elif isinstance(question, DateQuestion):
             raise NotImplementedError("Date questions not supported yet")
         else:
@@ -842,7 +830,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
         """
         import logging
 
-        logger = logging.getLogger(__name__)
+        logging.getLogger(__name__)
 
         # Calculate buffer for bounds clamping
         range_size = question.upper_bound - question.lower_bound
@@ -860,7 +848,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         # Compute pre-spread min delta for logging
         pre_deltas = [b - a for a, b in zip(values, values[1:])]
-        min_value_delta_before = min(pre_deltas) if pre_deltas else float("inf")
+        min(pre_deltas) if pre_deltas else float("inf")
 
         # Apply cluster spreading to ensure strictly increasing values
         modified_values, clusters_applied = apply_cluster_spreading(

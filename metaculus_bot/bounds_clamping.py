@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Bounds clamping utilities for numeric percentile processing.
 
@@ -33,7 +31,10 @@ def calculate_bounds_buffer(question: NumericQuestion) -> float:
 
 
 def clamp_values_to_bounds(
-    modified_values: List[float], percentile_list: List[Percentile], question: NumericQuestion, buffer: float
+    modified_values: List[float],
+    percentile_list: List[Percentile],
+    question: NumericQuestion,
+    buffer: float,
 ) -> Tuple[List[float], bool]:
     """
     Clamp values to bounds if they violate by small amounts.
@@ -82,7 +83,10 @@ def clamp_values_to_bounds(
 
 
 def log_heavy_clamping_diagnostics(
-    modified_values: List[float], original_values: List[float], question: NumericQuestion, buffer: float
+    modified_values: List[float],
+    original_values: List[float],
+    question: NumericQuestion,
+    buffer: float,
 ) -> None:
     """
     Log diagnostics if too many values were clamped to bounds.
@@ -118,7 +122,10 @@ def log_heavy_clamping_diagnostics(
 
 
 def log_corrections_summary(
-    modified_values: List[float], original_values: List[float], question: NumericQuestion, corrections_made: bool
+    modified_values: List[float],
+    original_values: List[float],
+    question: NumericQuestion,
+    corrections_made: bool,
 ) -> None:
     """
     Log summary of corrections made to the distribution.

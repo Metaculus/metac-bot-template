@@ -2,8 +2,6 @@
 Benchmark treating the community prediction as approximate ground truth.
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import atexit
@@ -41,7 +39,7 @@ from metaculus_bot.constants import (
     TYPE_MIX,
 )
 from metaculus_bot.fallback_openrouter import build_llm_with_openrouter_fallback
-from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+from metaculus_bot.llm_configs import PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 from metaculus_bot.scoring_patches import (
     apply_scoring_patches,
     log_score_scale_validation,
@@ -177,9 +175,7 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                 return True
             # Best-effort string check for common transient statuses when wrapped
             msg = str(err).lower()
-            return any(
-                tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"]
-            )  # type: ignore[return-value]
+            return any(tok in msg for tok in ["429", "too many requests", "502", "503", "504", "timeout"])  # type: ignore[return-value]
 
         attempts = 0
         backoffs = list(FETCH_RETRY_BACKOFFS)  # seconds
@@ -336,7 +332,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Define individual model configurations -- for sanity checking, can use these free models
 
         # Cheapies; avoid free models due to rate limits (very slow)
-        r1_0528_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/deepseek/deepseek-r1-0528",
             **MODEL_CONFIG,
         )
@@ -353,31 +349,31 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
             **MODEL_CONFIG,
         )
-        glm_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/z-ai/glm-4.5",
             **MODEL_CONFIG,
         )
-        claude_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/anthropic/claude-sonnet-4",
             reasoning={"max_tokens": 4000},
             **MODEL_CONFIG,
         )
-        gpt5_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/openai/gpt-5",
             reasoning_effort="high",
             **MODEL_CONFIG,
         )
-        gemini_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/google/gemini-2.5-pro",
             reasoning={"max_tokens": 8000},
             **MODEL_CONFIG,
         )
-        o3_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/openai/o3",
             reasoning_effort="high",
             **MODEL_CONFIG,
         )
-        grok_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/x-ai/grok-4",
             reasoning={"effort": "high"},
             **MODEL_CONFIG,
@@ -518,7 +514,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         except ValueError as ve:
             # Provide clearer guidance when no reports exist (likely research provider failures)
             raise RuntimeError(
-                "Benchmark produced no forecast reports." "Fallback is disabled for benchmarks by design."
+                "Benchmark produced no forecast reports.Fallback is disabled for benchmarks by design."
             ) from ve
         logger.info(f"Total Cost: {cost_manager.current_usage}")
 
@@ -552,7 +548,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 logger.info(
                     f"Generated {len(optimal_ensembles)} ensemble combinations from {len(benchmarks)} individual models"
                 )
-                logger.info(f"\nTop 10 Recommended Ensembles (Both Aggregation Strategies, Cost ≤ $1.0/question):")
+                logger.info("\nTop 10 Recommended Ensembles (Both Aggregation Strategies, Cost ≤ $1.0/question):")
                 for i, ensemble in enumerate(optimal_ensembles[:10], 1):
                     models = " + ".join(ensemble.model_names)
                     logger.info(f"{i}. {models} ({ensemble.aggregation_strategy.upper()})")

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Configuration constants for numeric forecasting pipeline.
 

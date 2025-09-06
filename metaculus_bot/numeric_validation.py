@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Percentile validation and processing utilities for numeric forecasting.
 
@@ -8,7 +6,7 @@ Contains validation logic for percentile sets and value processing.
 """
 
 import logging
-from typing import List, Set
+from typing import List
 
 from forecasting_tools.data_models.numeric_report import Percentile
 from pydantic import ValidationError

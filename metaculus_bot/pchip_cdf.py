@@ -40,7 +40,9 @@ def _safe_cdf_bounds(cdf: np.ndarray, open_lower: bool, open_upper: bool, min_st
     return cdf
 
 
-def enforce_strict_increasing(percentile_dict: Dict[Union[int, float], float]) -> Dict[Union[int, float], float]:
+def enforce_strict_increasing(
+    percentile_dict: Dict[Union[int, float], float],
+) -> Dict[Union[int, float], float]:
     """Ensure strictly increasing values by adding tiny jitter if necessary."""
     sorted_items = sorted(percentile_dict.items())
     last_val = -float("inf")
@@ -165,7 +167,9 @@ def generate_pchip_cdf(
     except Exception as e:
         # Fallback to linear interpolation
         print(f"PchipInterpolator failed ({str(e)}), falling back to linear interpolation")
-        spline = lambda x: np.interp(x, x_vals, percentiles)
+
+        def spline(x):
+            return np.interp(x, x_vals, percentiles)
 
     # Generate evaluation grid based on zero_point
     def create_grid(num_points: int) -> np.ndarray:
@@ -226,7 +230,10 @@ def generate_pchip_cdf(
 
                 for i in range(overflow_idx, len(result)):
                     t = (i - overflow_idx) / max(1, steps_remaining - 1)
-                    result[i] = min(1.0, result[overflow_idx - 1] + (1.0 - result[overflow_idx - 1]) * t)
+                    result[i] = min(
+                        1.0,
+                        result[overflow_idx - 1] + (1.0 - result[overflow_idx - 1]) * t,
+                    )
 
                 # Final check for minimum steps
                 for i in range(overflow_idx, len(result)):

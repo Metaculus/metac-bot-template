@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Numeric aggregation and helper utilities used by TemplateForecaster.
 
 This module centralises logic for combining numeric forecasts and constructing
@@ -8,13 +6,15 @@ user-friendly bound messages so that the core forecaster class stays small.
 
 from typing import Literal, Sequence, cast
 
-import numpy as np
 import pandas as pd
 from forecasting_tools import PredictedOptionList
-from forecasting_tools.data_models.numeric_report import NumericDistribution, NumericReport, Percentile
+from forecasting_tools.data_models.numeric_report import (
+    NumericDistribution,
+    NumericReport,
+    Percentile,
+)
 from forecasting_tools.data_models.questions import NumericQuestion
 
-from .aggregation_strategies import AggregationStrategy
 from .constants import MC_PROB_MAX, MC_PROB_MIN
 
 __all__ = [
@@ -119,7 +119,9 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     return upper_bound_message, lower_bound_message
 
 
-def clamp_and_renormalize_mc(predicted_option_list: PredictedOptionList) -> PredictedOptionList:
+def clamp_and_renormalize_mc(
+    predicted_option_list: PredictedOptionList,
+) -> PredictedOptionList:
     """Clamp MC option probabilities and renormalize in-place.
 
     - Clamps each option probability to [MC_PROB_MIN, MC_PROB_MAX].

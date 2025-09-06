@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 PCHIP CDF processing utilities for numeric forecasting.
 
@@ -17,7 +15,9 @@ from forecasting_tools.data_models.questions import NumericQuestion
 
 from metaculus_bot.constants import NUM_MAX_STEP, NUM_MIN_PROB_STEP, NUM_RAMP_K_FACTOR
 
-from .numeric_config import CDF_RAMP_K_FACTOR, MAX_CDF_PROB_STEP, MIN_CDF_PROB_STEP, PCHIP_CDF_POINTS
+from .numeric_config import (
+    PCHIP_CDF_POINTS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,9 @@ def log_pchip_summary() -> None:
 
 
 def generate_pchip_cdf_with_smoothing(
-    percentile_list: List[Percentile], question: NumericQuestion, zero_point: Optional[float]
+    percentile_list: List[Percentile],
+    question: NumericQuestion,
+    zero_point: Optional[float],
 ) -> tuple[List[float], bool, bool]:
     """
     Generate PCHIP CDF with optional ramp smoothing.
@@ -117,7 +119,7 @@ def generate_pchip_cdf_with_smoothing(
         else:
             _pchip_stats["successful_without_enforcement"] += 1
 
-    except (ValueError, RuntimeError) as e:
+    except (ValueError, RuntimeError):
         _pchip_stats["failed_entirely"] += 1
         raise
 
@@ -255,7 +257,10 @@ def _log_pchip_success(pchip_cdf: List[float], question: NumericQuestion, smooth
 
 
 def create_pchip_numeric_distribution(
-    pchip_cdf: List[float], percentile_list: List[Percentile], question: NumericQuestion, zero_point: Optional[float]
+    pchip_cdf: List[float],
+    percentile_list: List[Percentile],
+    question: NumericQuestion,
+    zero_point: Optional[float],
 ) -> NumericDistribution:
     """
     Create a custom NumericDistribution that uses PCHIP CDF.
@@ -302,7 +307,9 @@ def create_pchip_numeric_distribution(
 
 
 def create_fallback_numeric_distribution(
-    percentile_list: List[Percentile], question: NumericQuestion, zero_point: Optional[float]
+    percentile_list: List[Percentile],
+    question: NumericQuestion,
+    zero_point: Optional[float],
 ) -> NumericDistribution:
     """
     Create fallback NumericDistribution when PCHIP fails.

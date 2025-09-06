@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Diagnostic utilities for numeric forecasting.
 
@@ -8,9 +6,8 @@ Contains logging and diagnostic functions for numeric predictions.
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any
 
-from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 logger = logging.getLogger(__name__)
@@ -91,7 +88,9 @@ def log_final_prediction(prediction: Any, question: NumericQuestion) -> None:
         prediction: NumericDistribution with final prediction
         question: NumericQuestion for context
     """
-    logger.info(f"Forecasted URL {question.page_url} as {prediction.declared_percentiles}")
+    logger.info(
+        f"Forecasted URL {getattr(question, 'page_url', '<unknown>')} as {getattr(prediction, 'declared_percentiles', [])}"
+    )
 
 
 def log_pchip_fallback(question: NumericQuestion, error: Exception) -> None:

@@ -1,8 +1,11 @@
-from __future__ import annotations
-
 from datetime import datetime
 
-from forecasting_tools import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, clean_indents
+from forecasting_tools import (
+    BinaryQuestion,
+    MultipleChoiceQuestion,
+    NumericQuestion,
+    clean_indents,
+)
 
 __all__ = [
     "binary_prompt",
@@ -271,7 +274,7 @@ def numeric_prompt(
 
 def stacking_binary_prompt(question: BinaryQuestion, research: str, base_predictions: list[str]) -> str:
     """Return the stacking prompt for binary questions that takes multiple model predictions as input."""
-    predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(
         f"""
@@ -335,7 +338,7 @@ def stacking_multiple_choice_prompt(
     question: MultipleChoiceQuestion, research: str, base_predictions: list[str]
 ) -> str:
     """Return the stacking prompt for multiple choice questions."""
-    predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(
         f"""
@@ -413,7 +416,7 @@ def stacking_numeric_prompt(
     upper_bound_message: str,
 ) -> str:
     """Return the stacking prompt for numeric questions."""
-    predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(
         f"""

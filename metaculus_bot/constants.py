@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Central configuration constants to avoid magic numbers and strings.
 
@@ -8,7 +6,7 @@ need to be shared across modules.
 """
 
 import os
-from typing import Sequence, Tuple
+from typing import Tuple
 
 # Load .env early so ASKNEWS_* values are read correctly at import time in local runs
 try:  # pragma: no cover - best-effort convenience for local dev

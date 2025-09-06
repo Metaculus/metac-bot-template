@@ -153,14 +153,19 @@ def test_argument_parsing():
     """Test CLI argument parsing."""
     import argparse
 
-    import analyze_correlations
-
     # Create parser similar to main function
     parser = argparse.ArgumentParser(description="Analyze model correlations from benchmark results")
     parser.add_argument("benchmark_path", help="Path to benchmark file (.json/.jsonl) or directory")
-    parser.add_argument("--output", "-o", help="Output file for correlation report (default: correlation_analysis.md)")
     parser.add_argument(
-        "--max-cost", type=float, default=1.0, help="Maximum cost per question for ensemble recommendations"
+        "--output",
+        "-o",
+        help="Output file for correlation report (default: correlation_analysis.md)",
+    )
+    parser.add_argument(
+        "--max-cost",
+        type=float,
+        default=1.0,
+        help="Maximum cost per question for ensemble recommendations",
     )
     parser.add_argument("--max-size", type=int, default=5, help="Maximum ensemble size")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
@@ -232,7 +237,6 @@ def test_main_with_insufficient_benchmarks(mock_load):
 
 def test_timestamped_output_filename():
     """Test that output filename includes timestamp from input file."""
-    from pathlib import Path
 
     from analyze_correlations import extract_timestamp_from_filename
 

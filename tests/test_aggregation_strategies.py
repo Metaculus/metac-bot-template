@@ -1,5 +1,8 @@
 import pytest
-from forecasting_tools.data_models.multiple_choice_report import PredictedOption, PredictedOptionList
+from forecasting_tools.data_models.multiple_choice_report import (
+    PredictedOption,
+    PredictedOptionList,
+)
 
 from metaculus_bot.aggregation_strategies import (
     AggregationStrategy,

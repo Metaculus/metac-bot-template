@@ -3,12 +3,12 @@ Test research caching functionality for TemplateForecaster.
 
 This test verifies that:
 1. Research cache is used when enabled in benchmarking mode
-2. Research cache is ignored when not in benchmarking mode  
+2. Research cache is ignored when not in benchmarking mode
 3. Cache sharing works between multiple bot instances
 4. Double-check pattern prevents race conditions
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

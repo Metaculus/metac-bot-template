@@ -2,7 +2,6 @@
 
 import argparse
 import asyncio
-import sys
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -10,7 +9,6 @@ import pytest
 
 def test_import_community_benchmark():
     """Test that the module can be imported without errors."""
-    import community_benchmark  # Should not raise any import errors
 
 
 def test_cli_argument_parsing():
@@ -40,18 +38,18 @@ def test_cli_argument_parsing():
     args = parser.parse_args([])
     assert args.mode == "display"
     assert args.num_questions == 2
-    assert args.mixed == False
+    assert args.mixed is False
 
     # Test custom args
     args = parser.parse_args(["--mode", "run", "--num-questions", "5"])
     assert args.mode == "run"
     assert args.num_questions == 5
-    assert args.mixed == False
+    assert args.mixed is False
 
     # Test mixed flag
     args = parser.parse_args(["--mode", "custom", "--mixed"])
     assert args.mode == "custom"
-    assert args.mixed == True
+    assert args.mixed is True
 
     # Test edge cases
     args = parser.parse_args(["--num-questions", "1"])
@@ -308,9 +306,6 @@ def test_mixed_question_types_distribution(mock_get_questions_filter):
 def test_individual_model_bot_generation():
     """Test that the new individual model configuration generates the expected bots."""
     from forecasting_tools import GeneralLlm
-
-    from metaculus_bot.aggregation_strategies import AggregationStrategy
-    from metaculus_bot.llm_configs import PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 
     # Simulate the individual model configuration logic from community_benchmark.py
     MODEL_CONFIG = {

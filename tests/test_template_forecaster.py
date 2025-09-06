@@ -1,8 +1,12 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from forecasting_tools import BinaryQuestion, GeneralLlm, MetaculusQuestion, ReasonedPrediction
-from forecasting_tools.data_models.data_organizer import PredictionTypes
+from forecasting_tools import (
+    BinaryQuestion,
+    GeneralLlm,
+    MetaculusQuestion,
+    ReasonedPrediction,
+)
 from forecasting_tools.data_models.forecast_report import ResearchWithPredictions
 
 from main import TemplateForecaster
@@ -290,7 +294,8 @@ async def test_run_forecast_on_binary_uses_provided_llm(mock_binary_question, mo
 
     # Mock structured_output to avoid external parsing LLM calls
     with patch(
-        "main.structure_output", return_value=type("_Bin", (), {"prediction_in_decimal": 0.65})()
+        "main.structure_output",
+        return_value=type("_Bin", (), {"prediction_in_decimal": 0.65})(),
     ) as mock_struct:
         result = await bot._run_forecast_on_binary(mock_binary_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
@@ -344,9 +349,10 @@ async def test_run_forecast_on_numeric_uses_provided_llm(mock_metaculus_question
     mock_metaculus_question.zero_point = None
     mock_metaculus_question.cdf_size = 201
 
-    with patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds, patch(
-        "main.structure_output", return_value=fake_percentiles
-    ) as mock_struct:
+    with (
+        patch.object(bot, "_create_upper_and_lower_bound_messages", return_value=("", "")) as mock_bounds,
+        patch("main.structure_output", return_value=fake_percentiles) as mock_struct,
+    ):
         result = await bot._run_forecast_on_numeric(mock_metaculus_question, "some research", mock_general_llm)
         mock_general_llm.invoke.assert_called_once()
         mock_bounds.assert_called_once()

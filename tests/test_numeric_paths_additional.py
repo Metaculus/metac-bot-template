@@ -62,7 +62,10 @@ async def test_pchip_fallback_success(mock_format, mock_generate, caplog):
     # Valid 8-percentile set
     plist = [
         Percentile(percentile=p, value=v)
-        for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95], [5, 10, 20, 40, 60, 80, 90, 95])
+        for p, v in zip(
+            [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
+            [5, 10, 20, 40, 60, 80, 90, 95],
+        )
     ]
 
     with patch("main.structure_output", return_value=plist):
@@ -100,8 +103,9 @@ async def test_pchip_fallback_failure_diagnostics(mock_format, mock_generate, ca
         def cdf(self):  # noqa: D401
             raise AssertionError("Percentiles at indices are too close")
 
-    with patch("main.structure_output", return_value=plist), patch(
-        "metaculus_bot.pchip_processing.NumericDistribution", FakeND
+    with (
+        patch("main.structure_output", return_value=plist),
+        patch("metaculus_bot.pchip_processing.NumericDistribution", FakeND),
     ):
         caplog.clear()
         caplog.set_level("ERROR")
@@ -125,10 +129,16 @@ async def test_smoothing_respects_open_bounds(mock_format, caplog):
     base = np.linspace(0.0, 1.0, 201)
     base[50:55] = base[50] + np.linspace(0, 1e-8, 5)
 
-    with patch("metaculus_bot.pchip_cdf.generate_pchip_cdf", return_value=(base.tolist(), False)):
+    with patch(
+        "metaculus_bot.pchip_cdf.generate_pchip_cdf",
+        return_value=(base.tolist(), False),
+    ):
         plist = [
             Percentile(percentile=p, value=v)
-            for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95], [5, 10, 20, 40, 60, 80, 90, 95])
+            for p, v in zip(
+                [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
+                [5, 10, 20, 40, 60, 80, 90, 95],
+            )
         ]
         with patch("main.structure_output", return_value=plist):
             caplog.clear()
@@ -153,7 +163,10 @@ async def test_numeric_percentile_set_validation():
     # 8 items but wrong set (0.50 instead of 0.60)
     bad = [
         Percentile(percentile=p, value=v)
-        for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.50, 0.80, 0.90, 0.95], [5, 10, 20, 40, 50, 80, 90, 95])
+        for p, v in zip(
+            [0.05, 0.10, 0.20, 0.40, 0.50, 0.80, 0.90, 0.95],
+            [5, 10, 20, 40, 50, 80, 90, 95],
+        )
     ]
 
     with patch("main.structure_output", return_value=bad):
@@ -174,7 +187,10 @@ async def test_discrete_zero_point_override(mock_format, mock_generate):
 
     plist = [
         Percentile(percentile=p, value=v)
-        for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95], [5, 10, 20, 40, 60, 80, 90, 95])
+        for p, v in zip(
+            [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
+            [5, 10, 20, 40, 60, 80, 90, 95],
+        )
     ]
 
     with patch("main.structure_output", return_value=plist):
@@ -186,11 +202,14 @@ async def test_discrete_zero_point_override(mock_format, mock_generate):
 
 
 def test_lower_bound_adjacent_cluster(caplog):
-    from main import TemplateForecaster
-
     f = _make_forecaster()
     # Closed lower bound; cluster near lower
-    q = _make_question(open_upper_bound=False, open_lower_bound=False, lower_bound=0.0, upper_bound=100.0)
+    q = _make_question(
+        open_upper_bound=False,
+        open_lower_bound=False,
+        lower_bound=0.0,
+        upper_bound=100.0,
+    )
     raw = [
         Percentile(percentile=0.05, value=0.0),
         Percentile(percentile=0.10, value=0.0),

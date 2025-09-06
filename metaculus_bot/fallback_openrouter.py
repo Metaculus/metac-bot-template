@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import os
 from typing import Any
@@ -117,7 +115,10 @@ def build_llm_with_openrouter_fallback(model: str, **kwargs: Any) -> GeneralLlm:
         # If both keys exist and are distinct, use the fallback wrapper
         if special_key and general_key and special_key != general_key:
             return FallbackOpenRouterLlm(
-                model=model, primary_api_key=special_key, secondary_api_key=general_key, **kwargs
+                model=model,
+                primary_api_key=special_key,
+                secondary_api_key=general_key,
+                **kwargs,
             )
 
         # Else fall back to whichever key is available (no runtime fallback possible)

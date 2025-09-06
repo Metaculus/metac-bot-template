@@ -1,11 +1,10 @@
 """Unit tests for stacking functionality."""
 
 import asyncio
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from forecasting_tools import (
-    BinaryPrediction,
     BinaryQuestion,
     GeneralLlm,
     MultipleChoiceQuestion,
@@ -19,7 +18,11 @@ from forecasting_tools.data_models.numeric_report import Percentile
 
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
-from metaculus_bot.prompts import stacking_binary_prompt, stacking_multiple_choice_prompt, stacking_numeric_prompt
+from metaculus_bot.prompts import (
+    stacking_binary_prompt,
+    stacking_multiple_choice_prompt,
+    stacking_numeric_prompt,
+)
 
 
 class TestStackingConfiguration:
@@ -76,7 +79,6 @@ class TestStackingConfiguration:
         assert bot._stacker_llm is None
 
         # The error should occur when trying to aggregate predictions
-        import asyncio
 
         with pytest.raises(ValueError, match="STACKING aggregation strategy requires a stacker LLM"):
             asyncio.run(
@@ -128,8 +130,8 @@ class TestStackingConfiguration:
             },
         )
 
-        assert bot1.stacking_fallback_on_failure == True
-        assert bot1.stacking_randomize_order == True
+        assert bot1.stacking_fallback_on_failure is True
+        assert bot1.stacking_randomize_order is True
 
         # Test custom values
         bot2 = TemplateForecaster(
@@ -146,8 +148,8 @@ class TestStackingConfiguration:
             stacking_randomize_order=False,
         )
 
-        assert bot2.stacking_fallback_on_failure == False
-        assert bot2.stacking_randomize_order == False
+        assert bot2.stacking_fallback_on_failure is False
+        assert bot2.stacking_randomize_order is False
 
 
 class TestStackingPrompts:
@@ -248,7 +250,7 @@ class TestModelNameStripping:
         """Test that model names are properly stripped from reasoning."""
         test_llm = GeneralLlm(model="test-model", temperature=0.0)
 
-        bot = TemplateForecaster(
+        TemplateForecaster(
             aggregation_strategy=AggregationStrategy.STACKING,
             llms={
                 "forecasters": [test_llm],
@@ -264,10 +266,12 @@ class TestModelNameStripping:
         # Create test predictions with model names
         reasoned_predictions = [
             ReasonedPrediction(
-                prediction_value=0.6, reasoning="Model: gpt-4\n\nThis is my analysis of the situation..."
+                prediction_value=0.6,
+                reasoning="Model: gpt-4\n\nThis is my analysis of the situation...",
             ),
             ReasonedPrediction(
-                prediction_value=0.4, reasoning="Model: claude-3\n\nI disagree with the above analysis..."
+                prediction_value=0.4,
+                reasoning="Model: claude-3\n\nI disagree with the above analysis...",
             ),
         ]
 
@@ -303,7 +307,7 @@ class TestModelNameStripping:
             },
             stacking_randomize_order=True,
         )
-        assert bot1.stacking_randomize_order == True
+        assert bot1.stacking_randomize_order is True
 
         # Test randomization disabled
         bot2 = TemplateForecaster(
@@ -318,7 +322,7 @@ class TestModelNameStripping:
             },
             stacking_randomize_order=False,
         )
-        assert bot2.stacking_randomize_order == False
+        assert bot2.stacking_randomize_order is False
 
 
 class TestStackingIntegration:
@@ -354,7 +358,10 @@ class TestStackingIntegration:
         bot._stacker_llm = test_llm
 
         # Test missing reasoned predictions
-        with pytest.raises(ValueError, match="STACKING aggregation strategy requires reasoned predictions"):
+        with pytest.raises(
+            ValueError,
+            match="STACKING aggregation strategy requires reasoned predictions",
+        ):
             await bot._aggregate_predictions(
                 predictions=[0.5],
                 question=Mock(),
@@ -394,7 +401,10 @@ class TestStackingIntegration:
         with patch.object(bot, "_run_stacking", side_effect=RuntimeError("Stacking failed")):
             with patch.object(bot, "aggregation_strategy", AggregationStrategy.STACKING):
                 # Mock the mean aggregation path
-                with patch("metaculus_bot.numeric_utils.aggregate_binary_mean", return_value=0.5):
+                with patch(
+                    "metaculus_bot.numeric_utils.aggregate_binary_mean",
+                    return_value=0.5,
+                ):
                     result = await bot._aggregate_predictions(
                         predictions=[0.4, 0.6],
                         question=Mock(spec=BinaryQuestion),
@@ -454,13 +464,30 @@ class TestStackingMethods:
 
         reasoned_preds = [ReasonedPrediction(prediction_value=0.6, reasoning="test")]
 
-        # Mock all the stacking methods to check they're called - with return values to test
-        with patch.object(bot, "_run_stacking_binary", return_value=0.5) as mock_binary, patch.object(
-            bot, "_run_stacking_multiple_choice", return_value=Mock()
-        ) as mock_mc, patch.object(bot, "_run_stacking_numeric", return_value=123.0) as mock_numeric:
-
+        # Mock the stacking helper functions to check routing and return values
+        with (
+            patch("metaculus_bot.stacking.run_stacking_binary", return_value=(0.5, "meta")) as mock_binary,
+            patch("metaculus_bot.stacking.run_stacking_mc", return_value=(Mock(), "meta")) as mock_mc,
+            patch(
+                "metaculus_bot.stacking.run_stacking_numeric",
+                return_value=(
+                    [
+                        Percentile(value=5.0, percentile=0.05),
+                        Percentile(value=10.0, percentile=0.10),
+                        Percentile(value=20.0, percentile=0.20),
+                        Percentile(value=40.0, percentile=0.40),
+                        Percentile(value=60.0, percentile=0.60),
+                        Percentile(value=80.0, percentile=0.80),
+                        Percentile(value=90.0, percentile=0.90),
+                        Percentile(value=95.0, percentile=0.95),
+                    ],
+                    "meta",
+                ),
+            ) as mock_numeric,
+        ):
             # Test binary question routing
             binary_question = Mock(spec=BinaryQuestion)
+            binary_question.id_of_question = 101
             binary_question.question_text = "Test binary question?"
             binary_question.background_info = "Test background"
             binary_question.resolution_criteria = "Test resolution criteria"
@@ -471,10 +498,11 @@ class TestStackingMethods:
             mock_numeric.assert_not_called()
             assert result == 0.5
 
-            # Verify the call arguments (question, prompt)
+            # Verify the call arguments for helper (stacker_llm, parser_llm, question, research, base_texts)
             call_args = mock_binary.call_args[0]
-            assert call_args[0] == binary_question
-            assert isinstance(call_args[1], str)  # Should be the prompt
+            assert call_args[2] == binary_question
+            assert call_args[3] == "research"
+            assert call_args[4] == ["test"]
 
             # Reset mocks
             mock_binary.reset_mock()
@@ -483,6 +511,7 @@ class TestStackingMethods:
 
             # Test multiple choice question routing
             mc_question = Mock(spec=MultipleChoiceQuestion)
+            mc_question.id_of_question = 102
             mc_question.question_text = "Test MC question?"
             mc_question.background_info = "Test background"
             mc_question.resolution_criteria = "Test resolution criteria"
@@ -500,6 +529,7 @@ class TestStackingMethods:
 
             # Test numeric question routing
             numeric_question = Mock(spec=NumericQuestion)
+            numeric_question.id_of_question = 103
             numeric_question.question_text = "Test numeric question?"
             numeric_question.background_info = "Test background"
             numeric_question.resolution_criteria = "Test resolution criteria"
@@ -513,7 +543,12 @@ class TestStackingMethods:
             mock_binary.assert_not_called()
             mock_mc.assert_not_called()
             mock_numeric.assert_called_once()
-            assert result == 123.0
+            # Numeric path returns a NumericDistribution
+            from forecasting_tools.data_models.numeric_report import (
+                NumericDistribution as FTNumericDistribution,
+            )
+
+            assert isinstance(result, FTNumericDistribution)
 
     @pytest.mark.asyncio
     async def test_run_stacking_unsupported_question_type(self):
@@ -592,12 +627,12 @@ class TestStackingResearchAndMakePredictions:
         question = Mock()
 
         # Mock the necessary methods
-        with patch.object(bot, "_get_notepad") as mock_notepad, patch.object(
-            bot, "run_research", return_value="test research"
-        ) as mock_research, patch.object(bot, "_gather_results_and_exceptions") as mock_gather, patch.object(
-            bot, "_aggregate_predictions", return_value=0.7
-        ) as mock_aggregate:
-
+        with (
+            patch.object(bot, "_get_notepad") as mock_notepad,
+            patch.object(bot, "run_research", return_value="test research"),
+            patch.object(bot, "_gather_results_and_exceptions") as mock_gather,
+            patch.object(bot, "_aggregate_predictions", return_value=0.7) as mock_aggregate,
+        ):
             # Setup mock returns
             mock_notepad.return_value = Mock(total_research_reports_attempted=0)
 
@@ -641,10 +676,11 @@ class TestStackingResearchAndMakePredictions:
 
         question = Mock()
 
-        with patch.object(bot, "_get_notepad") as mock_notepad, patch.object(
-            bot, "run_research", return_value="test research"
-        ), patch.object(bot, "_gather_results_and_exceptions") as mock_gather:
-
+        with (
+            patch.object(bot, "_get_notepad") as mock_notepad,
+            patch.object(bot, "run_research", return_value="test research"),
+            patch.object(bot, "_gather_results_and_exceptions") as mock_gather,
+        ):
             mock_notepad.return_value = Mock(total_research_reports_attempted=0)
             pred1 = ReasonedPrediction(prediction_value=0.6, reasoning="Analysis 1")
             pred2 = ReasonedPrediction(prediction_value=0.8, reasoning="Analysis 2")
@@ -702,9 +738,9 @@ class TestStackingBenchmarkConfiguration:
         assert stacking_bot.aggregation_strategy == AggregationStrategy.STACKING
         assert len(stacking_bot._forecaster_llms) == 3  # All base models
         assert stacking_bot._stacker_llm is not None
-        assert stacking_bot.stacking_fallback_on_failure == False
-        assert stacking_bot.stacking_randomize_order == True
-        assert stacking_bot.is_benchmarking == True
+        assert stacking_bot.stacking_fallback_on_failure is False
+        assert stacking_bot.stacking_randomize_order is True
+        assert stacking_bot.is_benchmarking is True
 
 
 class TestStackingGuardsAndReasoning:
@@ -798,8 +834,14 @@ class TestStackingGuardsAndReasoning:
         num_q.zero_point = None
         num_q.cdf_size = 201
 
-        pcts1 = [Percentile(value=10.0, percentile=0.1), Percentile(value=90.0, percentile=0.9)]
-        pcts2 = [Percentile(value=20.0, percentile=0.1), Percentile(value=80.0, percentile=0.9)]
+        pcts1 = [
+            Percentile(value=10.0, percentile=0.1),
+            Percentile(value=90.0, percentile=0.9),
+        ]
+        pcts2 = [
+            Percentile(value=20.0, percentile=0.1),
+            Percentile(value=80.0, percentile=0.9),
+        ]
         d1 = NumericDistribution(
             declared_percentiles=pcts1,
             open_upper_bound=False,
@@ -844,18 +886,19 @@ class TestStackingGuardsAndReasoning:
         setattr(question, "id_of_question", 999)
 
         # Mock internals to avoid network
-        with patch.object(bot, "_get_notepad") as mock_notepad, patch.object(
-            bot, "run_research", return_value="test research"
-        ), patch.object(bot, "_gather_results_and_exceptions") as mock_gather, patch.object(
-            bot, "_run_stacking", return_value=0.7
-        ) as mock_stacking:
+        with (
+            patch.object(bot, "_get_notepad") as mock_notepad,
+            patch.object(bot, "run_research", return_value="test research"),
+            patch.object(bot, "_gather_results_and_exceptions") as mock_gather,
+            patch.object(bot, "_run_stacking", return_value=0.7),
+        ):
             mock_notepad.return_value = Mock(total_research_reports_attempted=0, total_predictions_attempted=0)
             pred1 = ReasonedPrediction(prediction_value=0.6, reasoning="Analysis 1")
             pred2 = ReasonedPrediction(prediction_value=0.8, reasoning="Analysis 2")
             mock_gather.return_value = ([pred1, pred2], [], None)
 
             # Pre-store meta-analysis as if produced by stacker LLM
-            bot._stack_meta_reasoning[(999, id(question))] = "Meta-analysis text"
+            bot._stack_meta_reasoning[999] = "Meta-analysis text"
 
             result = await bot._research_and_make_predictions(question)
 

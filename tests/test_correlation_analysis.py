@@ -1,10 +1,7 @@
 """Minimal tests for correlation analysis functionality."""
 
 from datetime import datetime
-from typing import List
-from unittest.mock import Mock
 
-import pytest
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 from forecasting_tools.data_models.binary_report import BinaryReport
 from forecasting_tools.data_models.questions import BinaryQuestion
@@ -84,7 +81,11 @@ def create_mock_benchmark(model_name: str, total_cost: float, num_questions: int
 
 def test_import_correlation_analysis():
     """Test that the module can be imported without errors."""
-    from metaculus_bot.correlation_analysis import CorrelationAnalyzer, CorrelationMatrix, EnsembleCandidate
+    from metaculus_bot.correlation_analysis import (
+        CorrelationAnalyzer,
+        CorrelationMatrix,
+        EnsembleCandidate,
+    )
 
     # Should not raise any import errors
     assert CorrelationAnalyzer is not None

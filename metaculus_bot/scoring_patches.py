@@ -5,11 +5,9 @@ This module monkey patches the forecasting-tools library to add scoring support
 for numeric and multiple choice questions that currently have NotImplementedError.
 """
 
-from __future__ import annotations
-
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -141,7 +139,9 @@ def validate_community_prediction_count(question: Any) -> bool:
     return False
 
 
-def extract_multiple_choice_probabilities(prediction: Any) -> tuple[list[float], list[str]]:
+def extract_multiple_choice_probabilities(
+    prediction: Any,
+) -> tuple[list[float], list[str]]:
     """
     Safely extracts probabilities from a PredictedOptionList, sorting by option name.
 
@@ -217,14 +217,19 @@ def log_mc_vector_mismatch(
         elif len(community_probs) == len(question_options) and len(bot_probs) != len(question_options):
             logger.warning(f"  → Likely cause: Bot prediction missing {len(question_options) - len(bot_probs)} options")
         else:
-            logger.warning(f"  → Complex mismatch: bot≠question≠community")
+            logger.warning("  → Complex mismatch: bot≠question≠community")
     else:
         logger.warning(f"  Question options: unavailable (type={type(question_options)})")
-        logger.warning(f"  → Cannot determine root cause without question.options")
+        logger.warning("  → Cannot determine root cause without question.options")
 
 
 def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], str]:
-    global _MC_MISSING_API_JSON, _MC_MISSING_QUESTION_NODE, _MC_MISSING_AGGREGATIONS, _MC_MISSING_PYC, _MC_MISSING_COMMUNITY
+    global \
+        _MC_MISSING_API_JSON, \
+        _MC_MISSING_QUESTION_NODE, \
+        _MC_MISSING_AGGREGATIONS, \
+        _MC_MISSING_PYC, \
+        _MC_MISSING_COMMUNITY
     """Extract community option probabilities for an MC question from api_json.
 
     According to the Metaculus API, community MC aggregations expose
@@ -238,7 +243,10 @@ def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], s
         api_json = getattr(question, "api_json", None)
         if not isinstance(api_json, dict):
             logger.warning(
-                "MC q=%s post=%s: api_json missing or not dict (type=%s)", qid, post_id, type(api_json).__name__
+                "MC q=%s post=%s: api_json missing or not dict (type=%s)",
+                qid,
+                post_id,
+                type(api_json).__name__,
             )
             global _MC_MISSING_API_JSON, _MC_MISSING_COMMUNITY
             _MC_MISSING_API_JSON += 1
@@ -346,7 +354,12 @@ def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], s
                 missing = [opt for opt in options if opt not in pyc]
                 extra = [k for k in keys if k not in options]
                 if missing or extra:
-                    logger.warning("MC q=%s: option mismatch vs pyc. missing=%s extra=%s", qid, missing, extra)
+                    logger.warning(
+                        "MC q=%s: option mismatch vs pyc. missing=%s extra=%s",
+                        qid,
+                        missing,
+                        extra,
+                    )
                 probs = [float(pyc.get(opt, 0.0)) for opt in options]
                 total = sum(probs)
                 if abs(total - 1.0) > 1e-6 and abs(total - 1.0) <= 1e-3:
@@ -364,7 +377,11 @@ def _extract_mc_community_probs(question: Any) -> tuple[Optional[List[float]], s
                 _MC_MISSING_COMMUNITY += 1
                 return None, "pyc_no_options"
 
-        logger.info("MC q=%s: neither forecast_values nor pyc available in rw.latest (keys=%s)", qid, rw_keys)
+        logger.info(
+            "MC q=%s: neither forecast_values nor pyc available in rw.latest (keys=%s)",
+            qid,
+            rw_keys,
+        )
         _MC_MISSING_PYC += 1
         _MC_MISSING_COMMUNITY += 1
         return None, "no_forecast_data"
@@ -432,7 +449,13 @@ def calculate_multiple_choice_baseline_score(report: Any, cache: Optional[dict] 
                     should_log_diagnostics = not diagnostics_logged
 
             if should_log_diagnostics:
-                log_mc_vector_mismatch(report.question, bot_probs, community_probs, community_source, bot_option_names)
+                log_mc_vector_mismatch(
+                    report.question,
+                    bot_probs,
+                    community_probs,
+                    community_source,
+                    bot_option_names,
+                )
                 # Cache the failed result with diagnostics logged
                 if cache is not None and q_id is not None:
                     cache[(q_id, "multiple_choice")] = (None, True)
@@ -465,7 +488,10 @@ def calculate_multiple_choice_baseline_score(report: Any, cache: Optional[dict] 
 
         # Cache the result and log appropriately
         if cache is not None and q_id is not None:
-            cache[(q_id, "multiple_choice")] = (final_score, False)  # Score calculated, no diagnostics needed
+            cache[(q_id, "multiple_choice")] = (
+                final_score,
+                False,
+            )  # Score calculated, no diagnostics needed
             logger.debug(f"MC Question {q_id}: baseline score {final_score:.2f} (cached for future use)")
         else:
             logger.info(
@@ -489,7 +515,10 @@ def _extract_numeric_community_cdf(question: Any) -> Optional[List[float]]:
         api_json = getattr(question, "api_json", None)
         if not isinstance(api_json, dict):
             logger.warning(
-                "Numeric q=%s post=%s: api_json missing or not dict (type=%s)", qid, post_id, type(api_json).__name__
+                "Numeric q=%s post=%s: api_json missing or not dict (type=%s)",
+                qid,
+                post_id,
+                type(api_json).__name__,
             )
             return None
 
@@ -654,7 +683,10 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
 
                 # Cache the result and log appropriately
                 if cache is not None and q_id is not None:
-                    cache[(q_id, "numeric")] = (final_score, False)  # Score calculated, no diagnostics needed
+                    cache[(q_id, "numeric")] = (
+                        final_score,
+                        False,
+                    )  # Score calculated, no diagnostics needed
                     logger.debug(
                         f"Numeric Question {q_id}: baseline score {final_score:.2f} (legacy PDF fallback, cached)"
                     )
@@ -670,7 +702,9 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
         # Convert CDFs to PMFs and normalize
         _NUMERIC_PMF_ATTEMPTS += 1
         model_cdf_values = np.clip(
-            np.array([float(p.percentile) for p in model_cdf_percentiles], dtype=float), 0.0, 1.0
+            np.array([float(p.percentile) for p in model_cdf_percentiles], dtype=float),
+            0.0,
+            1.0,
         )
         model_pmf = np.diff(model_cdf_values)
         model_pmf = np.maximum(model_pmf, 0.0)
@@ -725,7 +759,10 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
 
         # Cache the result and log appropriately
         if cache is not None and q_id is not None:
-            cache[(q_id, "numeric")] = (final_score, False)  # Score calculated, no diagnostics needed
+            cache[(q_id, "numeric")] = (
+                final_score,
+                False,
+            )  # Score calculated, no diagnostics needed
             logger.debug(f"Numeric Question {q_id}: baseline score {final_score:.2f} (PMF-based vs community, cached)")
         else:
             logger.debug(
@@ -744,7 +781,9 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
 def patch_multiple_choice_scoring():
     """Monkey patch MultipleChoiceReport.expected_baseline_score"""
     try:
-        from forecasting_tools.data_models.multiple_choice_report import MultipleChoiceReport
+        from forecasting_tools.data_models.multiple_choice_report import (
+            MultipleChoiceReport,
+        )
 
         def expected_baseline_score_mc(self) -> Optional[float]:
             return calculate_multiple_choice_baseline_score(self)
@@ -833,7 +872,11 @@ def log_score_scale_validation(benchmarks: List[Any]) -> None:
         benchmarks: List of BenchmarkForBot objects
     """
     try:
-        from forecasting_tools.data_models.questions import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion
+        from forecasting_tools.data_models.questions import (
+            BinaryQuestion,
+            MultipleChoiceQuestion,
+            NumericQuestion,
+        )
 
         binary_scores = []
         numeric_scores = []

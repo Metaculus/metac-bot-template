@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Cluster detection and spreading utilities for numeric percentile processing.
 
@@ -65,7 +63,11 @@ def compute_cluster_parameters(range_size: float, count_like: bool) -> Tuple[flo
 
 
 def apply_cluster_spreading(
-    modified_values: List[float], question: NumericQuestion, value_eps: float, spread_delta: float, range_size: float
+    modified_values: List[float],
+    question: NumericQuestion,
+    value_eps: float,
+    spread_delta: float,
+    range_size: float,
 ) -> Tuple[List[float], int]:
     """
     Apply cluster spreading to ensure strictly increasing values.
@@ -118,7 +120,10 @@ def apply_cluster_spreading(
             # If next value exists and last new exceeds it, compress offsets
             if j + 1 < len(modified_values) and new_vals[-1] >= modified_values[j + 1]:
                 # Compress spread to fit in available gap
-                available = max(modified_values[j + 1] - (new_vals[0]), max(value_eps, STRICT_ORDERING_EPSILON))
+                available = max(
+                    modified_values[j + 1] - (new_vals[0]),
+                    max(value_eps, STRICT_ORDERING_EPSILON),
+                )
                 if k > 1:
                     step = available / k
                     new_vals = [new_vals[0] + step * idx for idx in range(k)]
@@ -135,7 +140,10 @@ def apply_cluster_spreading(
 
 
 def apply_jitter_for_duplicates(
-    modified_values: List[float], question: NumericQuestion, range_size: float, percentile_list: List[Percentile]
+    modified_values: List[float],
+    question: NumericQuestion,
+    range_size: float,
+    percentile_list: List[Percentile],
 ) -> List[float]:
     """
     Apply jitter to eliminate any remaining duplicate values.

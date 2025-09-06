@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import List, Sequence, Tuple
 
 from forecasting_tools import (
@@ -11,7 +9,6 @@ from forecasting_tools import (
     PredictedOptionList,
     structure_output,
 )
-from forecasting_tools.data_models.multiple_choice_report import PredictedOption
 from forecasting_tools.data_models.numeric_report import Percentile
 
 from .constants import BINARY_PROB_MAX, BINARY_PROB_MIN

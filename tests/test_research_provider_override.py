@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +12,12 @@ async def test_run_research_prefers_custom_provider(mock_os_getenv):
         return "Custom Research"
 
     bot = TemplateForecaster(
-        llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"},
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        },
         research_provider=custom_provider,
     )
     q = MetaculusQuestion(question_text="Test", page_url="http://example.com")

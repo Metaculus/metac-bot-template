@@ -7,7 +7,10 @@ Tests that probabilities are correctly clamped after LLM extraction:
 """
 
 import pytest
-from forecasting_tools.data_models.multiple_choice_report import PredictedOption, PredictedOptionList
+from forecasting_tools.data_models.multiple_choice_report import (
+    PredictedOption,
+    PredictedOptionList,
+)
 
 
 class TestProbabilityClamping:
