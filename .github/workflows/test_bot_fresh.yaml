@@ -77,20 +77,43 @@ jobs:
       - name: "Preflight: verify METACULUS_TOKEN is present and valid"
         shell: bash
         run: |
+          set -euo pipefail
+
           if [ -z "${METACULUS_TOKEN:-}" ]; then
             echo "❌ METACULUS_TOKEN is not set in env. Check your workflow env: and repo secrets."
             exit 1
           fi
-          code=$(curl -s -o /tmp/me.json -w "%{http_code}" \
-            -H "Authorization: Token ${METACULUS_TOKEN}" \
-            https://www.metaculus.com/api2/users/me/)
-          echo "Metaculus /users/me status: $code"
-          if [ "$code" != "200" ]; then
-            echo "❌ Metaculus refused the token. Body follows:"
-            cat /tmp/me.json
+
+          # Try several 'who am I' endpoints; accept the first 200
+          ENDPOINTS=(
+            "https://www.metaculus.com/api/users/me/"
+            "https://www.metaculus.com/api2/users/me/"
+            "https://www.metaculus.com/api/me/"
+          )
+
+          OK=0
+          for URL in "${ENDPOINTS[@]}"; do
+            code=$(curl -s -o /tmp/me.json -w "%{http_code}" \
+              -H "Authorization: Token ${METACULUS_TOKEN}" \
+              "$URL" || true)
+            echo "Tried $URL → HTTP $code"
+            if [ "$code" = "200" ]; then
+              OK=1
+              break
+            fi
+          done
+
+          if [ "$OK" -ne 1 ]; then
+            echo "❌ Could not validate token on any endpoint. Last body:"
+            cat /tmp/me.json || true
+            echo
+            echo "Tips:"
+            echo "  • Re-save the METACULUS_TOKEN secret with no quotes and no trailing spaces/newlines."
+            echo "  • Ensure this run is on your repo (secrets don't pass from forks)."
             exit 1
           fi
-          echo "✅ Metaculus token OK"
+
+          echo "✅ Metaculus token looks good."
 
       - name: Run Spagbot test set (fresh)
         run: |
