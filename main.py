@@ -184,6 +184,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self.stacking_randomize_order: bool = stacking_randomize_order
         # Per-question storage for stacker meta-analysis reasoning text
         self._stack_meta_reasoning: dict[tuple[int | None, int], str] = {}
+        # Diagnostics counters for STACKING behavior
+        self._stacking_guard_trigger_count: int = 0
+        self._stacking_fallback_count: int = 0
 
         if max_concurrent_research <= 0:
             raise ValueError("max_concurrent_research must be a positive integer")
@@ -209,6 +212,16 @@ class TemplateForecaster(CompactLoggingForecastBot):
             num_models,
             self.aggregation_strategy.value,
         )
+        if self.aggregation_strategy == AggregationStrategy.STACKING:
+            stacker_name = getattr(self._stacker_llm, "model", "<missing>") if self._stacker_llm else "<missing>"
+            base_models = [getattr(m, "model", "<unknown>") for m in self._forecaster_llms]
+            short_list = base_models if len(base_models) <= 6 else base_models[:6] + ["..."]
+            logger.info(
+                "STACKING config | stacker=%s | base_forecasters(%d)=%s | final_outputs_per_question=1",
+                stacker_name,
+                len(base_models),
+                short_list,
+            )
 
     async def forecast_questions(
         self,
@@ -573,13 +586,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
             and reasoned_predictions is None
             and research is None
         ):
+            try:
+                self._stacking_guard_trigger_count += 1
+            except Exception:
+                pass
             # Single pre-stacked prediction – return as-is
             if len(predictions) == 1:
-                logger.warning("STACKING: pre-stacked single prediction detected; returning as-is")
+                logger.warning("STACKING guard: pre-stacked single prediction detected; returning as-is")
                 return predictions[0]
             # Multiple research reports produced multiple stacked predictions – average by MEAN
             logger.warning(
-                "STACKING: multiple pre-stacked predictions detected (%d); averaging by mean for final output",
+                "STACKING guard: %d pre-stacked predictions; averaging by mean for final output",
                 len(predictions),
             )
             first = predictions[0]
