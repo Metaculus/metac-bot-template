@@ -1,9 +1,9 @@
-name: Forecast on AIB Tournament (fresh research + fresh GTMC1 actors)
+name: Run Bot on Tournament (every 20 min)
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "*/20 * * * *" # every 20 minutes (adjust if needed)
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}
@@ -12,6 +12,44 @@ concurrency:
 jobs:
   forecast_job:
     runs-on: ubuntu-latest
+
+    env:
+      # Required
+      METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+
+      # GPT-* via OpenRouter (only this leg via OR)
+      USE_OPENROUTER: "1"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL: "https://openrouter.ai/api/v1"
+      OPENROUTER_GPT5_ID: "openai/gpt-4o"
+      OPENROUTER_GPT5_THINK_ID: "openai/gpt-4o"
+      OPENROUTER_FALLBACK_ID: "openai/gpt-4o"
+
+      # Anthropic Claude via OpenRouter
+      USE_ANTHROPIC: "1"
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_BASE_URL: "https://openrouter.ai/api/v1"
+      OPENROUTER_CLAUDE37_ID: "anthropic/claude-3.7-sonnet"
+
+      # Google Gemini (direct)
+      USE_GOOGLE: "1"
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      GEMINI_MODEL: "gemini-2.5-pro"
+
+      # xAI Grok (direct)
+      ENABLE_GROK: "1"
+      XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+      XAI_GROK_ID: "grok-4"
+
+      # AskNews (for research)
+      enable_asknews: "1"
+      ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+
+      # Market snapshot tuning
+      ENABLE_MARKET_SNAPSHOT: "1"
+      MARKET_SNAPSHOT_MAX_MATCHES: "3"
+      METACULUS_INCLUDE_RESOLVED: "1"
 
     steps:
       - name: Check out repository
@@ -32,17 +70,40 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
 
-      - name: Purge research + actor caches (tournament runs only)
-        # This guarantees fresh LLM research and fresh GTMC1 actor extraction.
+      - name: "Preflight: verify METACULUS_TOKEN is present and valid"
+        shell: bash
         run: |
-          rm -f cache/research_llm__*.json || true
-          rm -f cache/actors__*.json || true
+          set -euo pipefail
+          if [ -z "${METACULUS_TOKEN:-}" ]; then
+            echo "❌ METACULUS_TOKEN is not set in env. Check your workflow env: and repo secrets."
+            exit 1
+          fi
+          ENDPOINTS=(
+            "https://www.metaculus.com/api/users/me/"
+            "https://www.metaculus.com/api2/users/me/"
+            "https://www.metaculus.com/api/me/"
+          )
+          OK=0
+          for URL in "${ENDPOINTS[@]}"; do
+            code=$(curl -s -o /tmp/me.json -w "%{http_code}" \
+              -H "Authorization: Token ${METACULUS_TOKEN}" \
+              "$URL" || true)
+            echo "Tried $URL → HTTP $code"
+            if [ "$code" = "200" ]; then
+              OK=1; break
+            fi
+          done
+          if [ "$OK" -ne 1 ]; then
+            echo "❌ Could not validate token on any endpoint. Last body:"; cat /tmp/me.json || true; exit 1
+          fi
+          echo "✅ Metaculus token looks good."
 
-      - name: Run Spagbot (fresh research + actors)
+      - name: Run Spagbot (tournament)
         run: |
-          poetry run python spagbot.py --mode run --fresh-research
+          poetry run python spagbot.py --mode tournament
+
       - name: Upload Spagbot outputs (logs, CSVs, calibration)
-        if: always()  # capture even on failures
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: spagbot-run-${{ github.run_id }}
@@ -54,42 +115,3 @@ jobs:
             forecasts.csv
             forecasts_by_model.csv
             data/calibration_advice.txt
-
-        env:
-          SUBMIT_PREDICTION: "1"
-          # Required
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-
-          # GPT-* via OpenRouter (only this leg via OR)
-          USE_OPENROUTER: "1"
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: "https://openrouter.ai/api/v1"
-          OPENROUTER_GPT5_ID: "openai/gpt-4o"
-          OPENROUTER_GPT5_THINK_ID: "openai/gpt-4o"
-          OPENROUTER_FALLBACK_ID: "openai/gpt-4o"
-
-          # Anthropic Claude via OpenRouter
-          USE_ANTHROPIC: "1"
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_BASE_URL: "https://openrouter.ai/api/v1"
-          OPENROUTER_CLAUDE37_ID: "anthropic/claude-3.7-sonnet"
-
-          # Google Gemini (direct)
-          USE_GOOGLE: "1"
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL: "gemini-2.5-pro"
-
-          # xAI Grok (direct)
-          ENABLE_GROK: "1"
-          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-          XAI_GROK_ID: "grok-4"
-
-          # AskNews (for research)
-          enable_asknews: "1"
-          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-
-          # Market snapshot tuning
-          ENABLE_MARKET_SNAPSHOT: "1"
-          MARKET_SNAPSHOT_MAX_MATCHES: "3"
-          METACULUS_INCLUDE_RESOLVED: "1"
