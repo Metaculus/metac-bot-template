@@ -50,6 +50,7 @@ from metaculus_bot.constants import (
     BINARY_PROB_MIN,
     DEFAULT_MAX_CONCURRENT_RESEARCH,
 )
+from metaculus_bot.mc_processing import build_mc_prediction
 from metaculus_bot.numeric_config import (
     PCHIP_CDF_POINTS,
 )
@@ -58,10 +59,10 @@ from metaculus_bot.numeric_utils import (
     aggregate_binary_mean,
     aggregate_numeric,
     bound_messages,
-    clamp_and_renormalize_mc,
 )
 from metaculus_bot.numeric_validation import (
     check_discrete_question_properties,
+    filter_to_standard_percentiles,
     sort_percentiles_by_value,
     validate_percentile_count_and_values,
 )
@@ -74,6 +75,7 @@ from metaculus_bot.pchip_processing import (
 )
 from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
+from metaculus_bot.simple_types import OptionProbability
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
 logger = logging.getLogger(__name__)
@@ -754,22 +756,24 @@ class TemplateForecaster(CompactLoggingForecastBot):
         prompt = multiple_choice_prompt(question, research)
         reasoning = await llm_to_use.invoke(prompt)
         self._log_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
+
         parsing_instructions = clean_indents(
             f"""
-            Make sure that all option names are one of the following:
+            Output a JSON array of objects with exactly these two keys per item: `option_name` (string) and `probability` (decimal in [0,1]).
+            Use option names exactly from this list (case-insensitive match is OK, but prefer canonical spelling):
             {question.options}
-            The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
+            Do not include any options beyond this list. If the source text prefixes with words like 'Option A:' remove the prefix.
+            Ensure the probabilities approximately sum to 1.0; slight floating-point drift is OK.
             """
         )
-        predicted_option_list: PredictedOptionList = await structure_output(
+        raw_options: list[OptionProbability] = await structure_output(
             text_to_structure=reasoning,
-            output_type=PredictedOptionList,
+            output_type=list[OptionProbability],
             model=self.get_llm("parser", "llm"),
             additional_instructions=parsing_instructions,
         )
 
-        # Apply custom clamping to 0.5%/99.5% and renormalize
-        predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
+        predicted_option_list = build_mc_prediction(raw_options, list(question.options))
 
         logger.info(f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}")
         return ReasonedPrediction(prediction_value=predicted_option_list, reasoning=reasoning)
@@ -784,9 +788,20 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         self._log_llm_output(llm_to_use, question.id_of_question, reasoning)  # type: ignore
 
-        percentile_list: list[Percentile] = await structure_output(
-            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
+        parse_notes = (
+            "Return exactly these 8 percentiles and no others: 5,10,20,40,60,80,90,95. "
+            "Do not include 0, 50, or 100. Use keys 'percentile' (as a decimal) and 'value' only."
         )
+        percentile_list: list[Percentile] = await structure_output(
+            reasoning,
+            list[Percentile],
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parse_notes,
+        )
+
+        # Filter to the standard set in case the parser emitted extras
+
+        percentile_list = filter_to_standard_percentiles(percentile_list)
 
         # Validate we have exactly 8 percentiles with the expected set {5,10,20,40,60,80,90,95}
         validate_percentile_count_and_values(percentile_list)

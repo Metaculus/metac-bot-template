@@ -76,6 +76,23 @@ def sort_percentiles_by_value(percentile_list: List[Percentile]) -> List[Percent
     return sorted(percentile_list, key=lambda p: p.percentile)
 
 
+def filter_to_standard_percentiles(percentile_list: List[Percentile]) -> List[Percentile]:
+    """Keep only the standard 8 percentiles {5,10,20,40,60,80,90,95}.
+
+    If extras like 50th percentile are present, drop them before validation.
+    If duplicates occur (same percentile repeated), keep the first occurrence.
+    """
+    allowed = {round(p, 6) for p in STANDARD_PERCENTILES}
+    seen: set[float] = set()
+    filtered: List[Percentile] = []
+    for p in percentile_list:
+        key = round(float(p.percentile), 6)
+        if key in allowed and key not in seen:
+            filtered.append(p)
+            seen.add(key)
+    return filtered
+
+
 def check_discrete_question_properties(question, cdf_points: int) -> tuple[bool, bool]:
     """
     Check if a question is discrete and determine zero_point handling.

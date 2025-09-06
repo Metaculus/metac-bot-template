@@ -12,8 +12,9 @@ from forecasting_tools import (
 from forecasting_tools.data_models.numeric_report import Percentile
 
 from .constants import BINARY_PROB_MAX, BINARY_PROB_MIN
-from .numeric_utils import clamp_and_renormalize_mc
+from .mc_processing import build_mc_prediction
 from .prompts import stacking_binary_prompt, stacking_multiple_choice_prompt, stacking_numeric_prompt
+from .simple_types import OptionProbability
 
 
 def strip_model_tag(text: str) -> str:
@@ -72,17 +73,18 @@ async def run_stacking_mc(
     meta_reasoning = await stacker_llm.invoke(prompt)
 
     parsing_instructions = (
-        f"Make sure that all option names are one of the following:\n{question.options}\n"
-        'The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.'
+        "Output a JSON array of objects with exactly these two keys per item: `option_name` (string) and "
+        "`probability` (decimal in [0,1]). Use option names exactly from this list (case-insensitive accepted):\n"
+        f"{question.options}\nDo not include any other options. Remove prefixes like 'Option X:' if present."
     )
-    predicted_option_list: PredictedOptionList = await structure_output(
+    raw_options: List[OptionProbability] = await structure_output(
         text_to_structure=meta_reasoning,
-        output_type=PredictedOptionList,
+        output_type=list[OptionProbability],
         model=parser_llm,
         additional_instructions=parsing_instructions,
     )
 
-    predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
+    predicted_option_list = build_mc_prediction(raw_options, list(question.options))
     return predicted_option_list, meta_reasoning
 
 
@@ -103,5 +105,11 @@ async def run_stacking_numeric(
     prompt = stacking_numeric_prompt(question, research, list(base_texts), lower_bound_message, upper_bound_message)
     meta_reasoning = await stacker_llm.invoke(prompt)
 
-    percentile_list: List[Percentile] = await structure_output(meta_reasoning, list[Percentile], model=parser_llm)
+    parse_notes = (
+        "Return exactly these 8 percentiles and no others: 5,10,20,40,60,80,90,95. "
+        "Do not include 0, 50, or 100. Use keys 'percentile' (as a decimal) and 'value' only."
+    )
+    percentile_list: List[Percentile] = await structure_output(
+        meta_reasoning, list[Percentile], model=parser_llm, additional_instructions=parse_notes
+    )
     return percentile_list, meta_reasoning
