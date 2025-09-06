@@ -28,9 +28,6 @@ from forecasting_tools import (
 import json
 import utils
 
-from dotenv import load_dotenv
-
-load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +125,7 @@ class WobblyBot2025Q3(ForecastBot):
             """
         )
 
-        if bot.verify_community_prediction_exists(question):
+        if utils.verify_community_prediction_exists(question):
             logger.info(f"Question {question.id_of_question} has community prediction")
             lower_bound, upper_bound = self.community_prediction_divergence(question)
 
@@ -397,17 +394,6 @@ class WobblyBot2025Q3(ForecastBot):
 
         return reports
 
-    def verify_community_prediction_exists(
-        self,
-        question: MetaculusQuestion,
-    ) -> bool:
-        res = json.loads(question.model_dump_json())
-        try:
-            reveal_time = datetime.fromisoformat(res["cp_reveal_time"])
-            return reveal_time < datetime.now()
-        except (KeyError, TypeError, ValueError):
-            return False
-
     def make_default_binary_prediction(self):
         return 0.5
 
@@ -477,11 +463,9 @@ class WobblyBot2025Q3(ForecastBot):
                 for line in f:
                     # Skip empty lines
                     if line.strip():
-                        # Split only on the first colon to handle values that might contain colons
                         key, value = line.strip().split(":", 1)
                         data[key] = value
         except FileNotFoundError:
-            # If the file doesn't exist, just return an empty dictionary
             logger.error(f"'{filepath}' not found. Starting with an empty dataset")
         return data
 
@@ -535,14 +519,12 @@ if __name__ == "__main__":
             ),
             "forecaster": GeneralLlm(
                 model="openrouter/openai/gpt-5",
-                # model="openrouter/openai/o3",
                 # model="openrouter/openai/gpt-5-mini",
                 temperature=0.3,
                 timeout=40,
                 allowed_tries=2,
             ),
             "researcher": GeneralLlm(
-                # model="openrouter/openai/gpt-5:online",
                 model="openrouter/openai/gpt-4o-search-preview",
                 temperature=0.3,
                 timeout=40,
@@ -621,7 +603,7 @@ elif run_mode == "test_questions":
 
     for question_url in EXAMPLE_QUESTIONS:
         question = MetaculusApi.get_question_by_url(question_url)
-        has_community_prediction = bot.verify_community_prediction_exists(question)
+        has_community_prediction = utils.verify_community_prediction_exists(question)
         logger.info(
             f"QID: {question.id_of_question} of type: <{question.question_type}> has community prediction: {has_community_prediction}"
         )
