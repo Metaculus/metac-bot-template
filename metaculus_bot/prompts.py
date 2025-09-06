@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from forecasting_tools import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion
+from forecasting_tools import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion, clean_indents
 
 __all__ = [
     "binary_prompt",
@@ -23,8 +23,6 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
     evidence handling, outside→inside anchoring, and a brief checklist.
     The final output format remains unchanged (last line: "Probability: ZZ%").
     """
-
-    from forecasting_tools import clean_indents  # local import to avoid heavy deps at module import time
 
     return clean_indents(
         f"""
@@ -94,8 +92,6 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
 
 
 def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> str:
-    from forecasting_tools import clean_indents
-
     return clean_indents(
         f"""
         You are a **senior forecaster** preparing a rigorous public report for expert peers.
@@ -182,8 +178,6 @@ def numeric_prompt(
     lower_bound_message: str,
     upper_bound_message: str,
 ) -> str:
-    from forecasting_tools import clean_indents
-
     return clean_indents(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
@@ -277,8 +271,6 @@ def numeric_prompt(
 
 def stacking_binary_prompt(question: BinaryQuestion, research: str, base_predictions: list[str]) -> str:
     """Return the stacking prompt for binary questions that takes multiple model predictions as input."""
-    from forecasting_tools import clean_indents
-
     predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(
@@ -343,8 +335,6 @@ def stacking_multiple_choice_prompt(
     question: MultipleChoiceQuestion, research: str, base_predictions: list[str]
 ) -> str:
     """Return the stacking prompt for multiple choice questions."""
-    from forecasting_tools import clean_indents
-
     predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(
@@ -423,8 +413,6 @@ def stacking_numeric_prompt(
     upper_bound_message: str,
 ) -> str:
     """Return the stacking prompt for numeric questions."""
-    from forecasting_tools import clean_indents
-
     predictions_text = "\n".join([f"Model {i+1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
 
     return clean_indents(

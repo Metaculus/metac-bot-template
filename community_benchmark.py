@@ -421,7 +421,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             **MODEL_CONFIG,
         )
         kimi_k2_model = GeneralLlm(
-            model="openrouter/moonshotai/kimi-k2",
+            model="openrouter/moonshotai/kimi-k2-0905",
             **MODEL_CONFIG,
         )
 
@@ -502,6 +502,12 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
 
         # Generate stacking bots - each gets ALL base model forecasters as input
         base_forecasters = [config["forecaster"] for config in individual_models]
+        if len(base_forecasters) < 2:
+            logger.warning(
+                "STACKING configuration: fewer than 2 base forecasters (%d). Stacking quality may suffer.",
+                len(base_forecasters),
+            )
+        stacking_bots: list[TemplateForecaster] = []
         for stacker_config in stacking_models:
             stacking_bot = TemplateForecaster(
                 **BENCHMARK_BOT_CONFIG,
@@ -517,7 +523,17 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 stacking_randomize_order=True,  # Avoid position bias
             )
             stacking_bot.name = stacker_config["name"]
+            # Benchmark-time validations and warnings
+            try:
+                if getattr(stacking_bot, "research_reports_per_question", 1) != 1:
+                    logger.warning(
+                        "STACKING benchmark: research_reports_per_question=%s; final results will average per-report stacked outputs by mean.",
+                        getattr(stacking_bot, "research_reports_per_question", 1),
+                    )
+            except Exception:
+                pass
             bots.append(stacking_bot)
+            stacking_bots.append(stacking_bot)
 
         logger.info(
             f"Created {len(bots)} total bots for benchmarking: {len(individual_models)} individual models + {len(stacking_models)} stacking models. "
@@ -623,6 +639,19 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 logger.info("No viable ensemble combinations found within cost constraints")
         else:
             logger.info("Skipping correlation analysis (need multiple models)")
+
+        # Summarize any STACKING fallbacks encountered
+        try:
+            for sb in stacking_bots:
+                count = getattr(sb, "_stacking_fallback_count", 0)
+                if count:
+                    logger.warning(
+                        "STACKING fallback summary | bot=%s | fallbacks=%d (fell back to MEAN due to errors)",
+                        getattr(sb, "name", "<unnamed>"),
+                        count,
+                    )
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

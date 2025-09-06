@@ -705,3 +705,160 @@ class TestStackingBenchmarkConfiguration:
         assert stacking_bot.stacking_fallback_on_failure == False
         assert stacking_bot.stacking_randomize_order == True
         assert stacking_bot.is_benchmarking == True
+
+
+class TestStackingGuardsAndReasoning:
+    """Additional tests for STACKING guard path and reasoning propagation."""
+
+    @pytest.mark.asyncio
+    async def test_stacking_guard_single_element(self):
+        """STACKING base aggregator returns pre-stacked single prediction as-is."""
+        test_llm = GeneralLlm(model="test-model", temperature=0.0)
+        bot = TemplateForecaster(
+            aggregation_strategy=AggregationStrategy.STACKING,
+            llms={
+                "default": test_llm,
+                "parser": test_llm,
+                "researcher": test_llm,
+                "summarizer": test_llm,
+            },
+        )
+
+        result = await bot._aggregate_predictions(predictions=[0.42], question=Mock())
+        assert result == 0.42
+
+    @pytest.mark.asyncio
+    async def test_stacking_guard_multi_element_mean_binary(self):
+        """STACKING guard averages multiple pre-stacked binary predictions by mean."""
+        test_llm = GeneralLlm(model="test-model", temperature=0.0)
+        bot = TemplateForecaster(
+            aggregation_strategy=AggregationStrategy.STACKING,
+            llms={
+                "default": test_llm,
+                "parser": test_llm,
+                "researcher": test_llm,
+                "summarizer": test_llm,
+            },
+        )
+
+        result = await bot._aggregate_predictions(predictions=[0.4, 0.6], question=Mock())
+        assert result == pytest.approx(0.5)
+
+    @pytest.mark.asyncio
+    async def test_stacking_guard_multi_element_mean_mc(self):
+        """STACKING guard mean-aggregates multiple pre-stacked MC predictions."""
+        test_llm = GeneralLlm(model="test-model", temperature=0.0)
+        bot = TemplateForecaster(
+            aggregation_strategy=AggregationStrategy.STACKING,
+            llms={
+                "default": test_llm,
+                "parser": test_llm,
+                "researcher": test_llm,
+                "summarizer": test_llm,
+            },
+        )
+        pred1 = PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="A", probability=0.7),
+                PredictedOption(option_name="B", probability=0.3),
+            ]
+        )
+        pred2 = PredictedOptionList(
+            predicted_options=[
+                PredictedOption(option_name="A", probability=0.5),
+                PredictedOption(option_name="B", probability=0.5),
+            ]
+        )
+        result = await bot._aggregate_predictions(predictions=[pred1, pred2], question=Mock())
+        # Expect mean: A=(0.7+0.5)/2=0.6, B=0.4
+        a_prob = next(o.probability for o in result.predicted_options if o.option_name == "A")
+        b_prob = next(o.probability for o in result.predicted_options if o.option_name == "B")
+        assert a_prob == pytest.approx(0.6)
+        assert b_prob == pytest.approx(0.4)
+
+    @pytest.mark.asyncio
+    async def test_stacking_guard_multi_element_mean_numeric(self):
+        """STACKING guard mean-aggregates numeric distributions."""
+        test_llm = GeneralLlm(model="test-model", temperature=0.0)
+        bot = TemplateForecaster(
+            aggregation_strategy=AggregationStrategy.STACKING,
+            llms={
+                "default": test_llm,
+                "parser": test_llm,
+                "researcher": test_llm,
+                "summarizer": test_llm,
+            },
+        )
+        # Build a minimal numeric question and two distributions on same bounds
+        num_q = Mock(spec=NumericQuestion)
+        num_q.open_upper_bound = False
+        num_q.open_lower_bound = False
+        num_q.upper_bound = 100.0
+        num_q.lower_bound = 0.0
+        num_q.zero_point = None
+        num_q.cdf_size = 201
+
+        pcts1 = [Percentile(value=10.0, percentile=0.1), Percentile(value=90.0, percentile=0.9)]
+        pcts2 = [Percentile(value=20.0, percentile=0.1), Percentile(value=80.0, percentile=0.9)]
+        d1 = NumericDistribution(
+            declared_percentiles=pcts1,
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
+            cdf_size=201,
+        )
+        d2 = NumericDistribution(
+            declared_percentiles=pcts2,
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
+            cdf_size=201,
+        )
+
+        result = await bot._aggregate_predictions(predictions=[d1, d2], question=num_q)
+        # The result should be a NumericDistribution on same bounds with a CDF of 201 points
+        assert isinstance(result, NumericDistribution)
+        assert len(result.cdf) == 201
+
+    @pytest.mark.asyncio
+    async def test_stacker_reasoning_propagated(self):
+        """Stacker meta-analysis reasoning should be preserved in final ReasonedPrediction."""
+        test_llm = GeneralLlm(model="test-model", temperature=0.0)
+        bot = TemplateForecaster(
+            aggregation_strategy=AggregationStrategy.STACKING,
+            llms={
+                "forecasters": [test_llm, test_llm],
+                "stacker": test_llm,
+                "default": test_llm,
+                "parser": test_llm,
+                "researcher": test_llm,
+                "summarizer": test_llm,
+            },
+        )
+
+        question = Mock(spec=BinaryQuestion)
+        setattr(question, "id_of_question", 999)
+
+        # Mock internals to avoid network
+        with patch.object(bot, "_get_notepad") as mock_notepad, patch.object(
+            bot, "run_research", return_value="test research"
+        ), patch.object(bot, "_gather_results_and_exceptions") as mock_gather, patch.object(
+            bot, "_run_stacking", return_value=0.7
+        ) as mock_stacking:
+            mock_notepad.return_value = Mock(total_research_reports_attempted=0, total_predictions_attempted=0)
+            pred1 = ReasonedPrediction(prediction_value=0.6, reasoning="Analysis 1")
+            pred2 = ReasonedPrediction(prediction_value=0.8, reasoning="Analysis 2")
+            mock_gather.return_value = ([pred1, pred2], [], None)
+
+            # Pre-store meta-analysis as if produced by stacker LLM
+            bot._stack_meta_reasoning[(999, id(question))] = "Meta-analysis text"
+
+            result = await bot._research_and_make_predictions(question)
+
+            assert len(result.predictions) == 1
+            assert result.predictions[0].prediction_value == 0.7
+            assert result.predictions[0].reasoning == "Meta-analysis text"
