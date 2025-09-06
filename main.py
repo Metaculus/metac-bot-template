@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 from typing import Any, Coroutine, Sequence, cast
 
 import numpy as np
@@ -118,6 +119,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
         max_concurrent_research: int = DEFAULT_MAX_CONCURRENT_RESEARCH,
         allow_research_fallback: bool = True,
         research_cache: dict[int, str] | None = None,
+        stacking_fallback_on_failure: bool = True,
+        stacking_randomize_order: bool = True,
     ) -> None:
         # Validate and normalize llm configs BEFORE calling super().__init__ to avoid defaulting/warnings.
         if llms is None:
@@ -140,6 +143,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
             # Remove 'forecasters' before delegating to base to avoid spurious warnings.
             normalized_llms.pop("forecasters", None)
 
+        # Setup optional stacker LLM for stacking aggregation
+        self._stacker_llm: GeneralLlm | None = None
+        if "stacker" in normalized_llms:
+            value = normalized_llms["stacker"]
+            if isinstance(value, GeneralLlm):
+                self._stacker_llm = value
+            else:
+                logger.warning("'stacker' key in llms must be a GeneralLlm object.")
+            # Remove 'stacker' before delegating to base to avoid spurious warnings.
+            normalized_llms.pop("stacker", None)
+
         # Fail fast if critical LLM purposes are missing. We require parser and researcher explicitly.
         required_keys = {"default", "parser", "researcher", "summarizer"}
         missing = sorted(k for k in required_keys if k not in normalized_llms)
@@ -159,6 +173,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self.is_benchmarking: bool = is_benchmarking
         self.allow_research_fallback: bool = allow_research_fallback
         self.research_cache: dict[int, str] | None = research_cache
+        self.stacking_fallback_on_failure: bool = stacking_fallback_on_failure
+        self.stacking_randomize_order: bool = stacking_randomize_order
 
         if max_concurrent_research <= 0:
             raise ValueError("max_concurrent_research must be a positive integer")
@@ -216,6 +232,148 @@ class TemplateForecaster(CompactLoggingForecastBot):
         log_pchip_summary()
 
         return results
+
+    async def _run_stacking(
+        self,
+        question: MetaculusQuestion,
+        research: str,
+        reasoned_predictions: list[ReasonedPrediction[PredictionTypes]],
+    ) -> PredictionTypes:
+        """Run stacking to aggregate multiple model predictions using a meta-model."""
+        if self._stacker_llm is None:
+            raise ValueError("No stacker LLM configured")
+
+        # Strip model names from reasoning and prepare base predictions
+        base_predictions = []
+        for pred in reasoned_predictions:
+            reasoning = pred.reasoning
+            # Remove "Model: {model_name}\n\n" prefix if present
+            if reasoning.startswith("Model: "):
+                lines = reasoning.split("\n", 2)
+                if len(lines) >= 3 and lines[1] == "":
+                    reasoning = lines[2]  # Skip "Model: ..." and empty line
+            base_predictions.append(reasoning)
+
+        # Optionally randomize order to avoid position bias
+        if self.stacking_randomize_order:
+            combined = list(zip(base_predictions, reasoned_predictions))
+            random.shuffle(combined)
+            base_predictions, reasoned_predictions = zip(*combined)
+            base_predictions = list(base_predictions)
+            reasoned_predictions = list(reasoned_predictions)
+
+        # Generate appropriate stacking prompt based on question type
+        if isinstance(question, BinaryQuestion):
+            from metaculus_bot.prompts import stacking_binary_prompt
+
+            prompt = stacking_binary_prompt(question, research, base_predictions)
+            return await self._run_stacking_binary(question, prompt)
+        elif isinstance(question, MultipleChoiceQuestion):
+            from metaculus_bot.prompts import stacking_multiple_choice_prompt
+
+            prompt = stacking_multiple_choice_prompt(question, research, base_predictions)
+            return await self._run_stacking_multiple_choice(question, prompt)
+        elif isinstance(question, NumericQuestion):
+            from metaculus_bot.prompts import stacking_numeric_prompt
+
+            upper_bound_message, lower_bound_message = self._create_upper_and_lower_bound_messages(question)
+            prompt = stacking_numeric_prompt(
+                question, research, base_predictions, lower_bound_message, upper_bound_message
+            )
+            return await self._run_stacking_numeric(question, prompt)
+        else:
+            raise ValueError(f"Unsupported question type for stacking: {type(question)}")
+
+    async def _run_stacking_binary(self, question: BinaryQuestion, prompt: str) -> float:
+        """Run stacking for binary questions."""
+        reasoning = await self._stacker_llm.invoke(prompt)
+        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
+
+        # Use same parsing logic as base binary forecasting
+        binary_parse_instructions = (
+            "Return a single JSON object only. Set `prediction_in_decimal` strictly as a decimal in [0,1] "
+            "(e.g., 0.17 for 17%). If the text contains 'Probability: NN%' or 'NN %', set `prediction_in_decimal` to NN/100. "
+            "Do not return percentages, strings, or any extra fields."
+        )
+        binary_prediction: BinaryPrediction = await structure_output(
+            reasoning,
+            BinaryPrediction,
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=binary_parse_instructions,
+        )
+        decimal_pred = max(BINARY_PROB_MIN, min(BINARY_PROB_MAX, binary_prediction.prediction_in_decimal))
+        logger.info(f"Stacked binary prediction for {question.page_url}: {decimal_pred}")
+        return decimal_pred
+
+    async def _run_stacking_multiple_choice(self, question: MultipleChoiceQuestion, prompt: str) -> PredictedOptionList:
+        """Run stacking for multiple choice questions."""
+        reasoning = await self._stacker_llm.invoke(prompt)
+        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
+
+        parsing_instructions = clean_indents(
+            f"""
+            Make sure that all option names are one of the following:
+            {question.options}
+            The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
+            """
+        )
+        predicted_option_list: PredictedOptionList = await structure_output(
+            text_to_structure=reasoning,
+            output_type=PredictedOptionList,
+            model=self.get_llm("parser", "llm"),
+            additional_instructions=parsing_instructions,
+        )
+
+        # Apply custom clamping to 0.5%/99.5% and renormalize
+        from metaculus_bot.numeric_utils import clamp_and_renormalize_mc
+
+        predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
+
+        logger.info(f"Stacked multiple choice prediction for {question.page_url}: {predicted_option_list}")
+        return predicted_option_list
+
+    async def _run_stacking_numeric(self, question: NumericQuestion, prompt: str) -> NumericDistribution:
+        """Run stacking for numeric questions."""
+        reasoning = await self._stacker_llm.invoke(prompt)
+        self._log_llm_output(self._stacker_llm, question.id_of_question, reasoning)  # type: ignore
+
+        percentile_list: list[Percentile] = await structure_output(
+            reasoning, list[Percentile], model=self.get_llm("parser", "llm")
+        )
+
+        # Use same validation and processing logic as base numeric forecasting
+        from metaculus_bot.numeric_validation import sort_percentiles_by_value, validate_percentile_count_and_values
+
+        validate_percentile_count_and_values(percentile_list)
+        percentile_list = sort_percentiles_by_value(percentile_list)
+        percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+
+        # For discrete questions, force zero_point to None to avoid log-scaling
+        from metaculus_bot.numeric_validation import check_discrete_question_properties
+
+        is_discrete, should_force_zero_point_none = check_discrete_question_properties(question, PCHIP_CDF_POINTS)
+        zero_point = getattr(question, "zero_point", None)
+
+        if should_force_zero_point_none:
+            zero_point = None
+
+        # Generate PCHIP CDF with validation and smoothing
+        try:
+            pchip_cdf, smoothing_applied, aggressive_enforcement_used = generate_pchip_cdf_with_smoothing(
+                percentile_list, question, zero_point
+            )
+            prediction = create_pchip_numeric_distribution(pchip_cdf, percentile_list, question, zero_point)
+        except Exception as e:
+            log_pchip_fallback(question, e)
+            prediction = create_fallback_numeric_distribution(percentile_list, question, zero_point)
+
+        # Validate CDF construction for non-PCHIP distributions
+        validate_cdf_construction(prediction, question)
+
+        # Log final prediction
+        log_final_prediction(prediction, question)
+        logger.info(f"Stacked numeric prediction for {question.page_url}")
+        return prediction
 
     async def run_research(self, question: MetaculusQuestion) -> str:
         # Check cache first (only during benchmarking)
@@ -325,12 +483,29 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 exception_group,
                 "Error while running research and predictions",
             )
-        return ResearchWithPredictions(
-            research_report=research,
-            summary_report=summary_report,
-            errors=errors,
-            predictions=valid_predictions,
-        )
+        # If using stacking, aggregate the predictions here
+        if self.aggregation_strategy == AggregationStrategy.STACKING:
+            prediction_values = [pred.prediction_value for pred in valid_predictions]
+            aggregated_value = await self._aggregate_predictions(
+                prediction_values, question, research=research_to_use, reasoned_predictions=valid_predictions
+            )
+            # Create a single aggregated prediction
+            aggregated_prediction = ReasonedPrediction(
+                prediction_value=aggregated_value, reasoning="Stacked prediction aggregated from multiple models"
+            )
+            return ResearchWithPredictions(
+                research_report=research,
+                summary_report=summary_report,
+                errors=errors,
+                predictions=[aggregated_prediction],
+            )
+        else:
+            return ResearchWithPredictions(
+                research_report=research,
+                summary_report=summary_report,
+                errors=errors,
+                predictions=valid_predictions,
+            )
 
     async def _make_prediction(
         self,
@@ -366,9 +541,36 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self,
         predictions: list[PredictionTypes],
         question: MetaculusQuestion,
+        research: str | None = None,
+        reasoned_predictions: list[ReasonedPrediction[PredictionTypes]] | None = None,
     ) -> PredictionTypes:
         if not predictions:
             raise ValueError("Cannot aggregate empty list of predictions")
+
+        # Handle stacking strategy
+        if self.aggregation_strategy == AggregationStrategy.STACKING:
+            if self._stacker_llm is None:
+                raise ValueError("STACKING aggregation strategy requires a stacker LLM to be configured")
+            if reasoned_predictions is None:
+                raise ValueError("STACKING aggregation strategy requires reasoned predictions")
+            if research is None:
+                raise ValueError("STACKING aggregation strategy requires research context")
+
+            try:
+                return await self._run_stacking(question, research, reasoned_predictions)
+            except Exception as e:
+                if self.stacking_fallback_on_failure:
+                    logger.warning(f"Stacking failed ({type(e).__name__}: {e}), falling back to MEAN aggregation")
+                    # Temporarily switch to MEAN for fallback
+                    original_strategy = self.aggregation_strategy
+                    self.aggregation_strategy = AggregationStrategy.MEAN
+                    try:
+                        result = await self._aggregate_predictions(predictions, question)
+                        return result
+                    finally:
+                        self.aggregation_strategy = original_strategy
+                else:
+                    raise
 
         # High-level aggregation log for clarity
         qtype = (

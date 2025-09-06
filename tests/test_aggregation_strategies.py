@@ -132,8 +132,10 @@ def test_aggregation_strategy_enum():
     """Test that AggregationStrategy enum has expected values."""
     assert AggregationStrategy.MEAN.value == "mean"
     assert AggregationStrategy.MEDIAN.value == "median"
+    assert AggregationStrategy.STACKING.value == "stacking"
 
-    # Ensure we have the expected strategies
+    # Ensure we have all expected strategies
     strategies = [s.value for s in AggregationStrategy]
     assert "mean" in strategies
     assert "median" in strategies
+    assert "stacking" in strategies

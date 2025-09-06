@@ -13,6 +13,7 @@ class AggregationStrategy(Enum):
 
     MEAN = "mean"
     MEDIAN = "median"
+    STACKING = "stacking"
     # Future: GEOMETRIC_MEAN = "geometric_mean"
     # Future: TRIMMED_MEAN = "trimmed_mean"
 
