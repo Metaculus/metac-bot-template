@@ -164,8 +164,13 @@ class TemplateForecaster(CompactLoggingForecastBot):
         self.stacking_randomize_order: bool = stacking_randomize_order
         # Per-question storage for stacker meta-analysis reasoning text
         self._stack_meta_reasoning: dict[int, str] = {}
-        # Diagnostics counters for STACKING behavior
-        self._stacking_guard_trigger_count: int = 0
+        # Diagnostics + state for STACKING base aggregation behavior
+        # Tracks per-question expectation that the base aggregator will be called to combine
+        # per-research-report, already-stacked outputs.
+        self._stack_expected_base_combine: set[int] = set()
+        # Counters for expected vs unexpected base-combine calls during STACKING
+        self._stacking_expected_combine_count: int = 0
+        self._stacking_unexpected_combine_count: int = 0
         self._stacking_fallback_count: int = 0
 
         if max_concurrent_research <= 0:
@@ -474,6 +479,15 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 "Stacked prediction aggregated from multiple models",
             )
             aggregated_prediction = ReasonedPrediction(prediction_value=aggregated_value, reasoning=meta_text)
+            # Mark that we expect the framework's base aggregator to combine pre-stacked outputs across
+            # research reports for this question.
+            try:
+                qkey = getattr(question, "id_of_question", None)
+                if qkey is None:
+                    qkey = id(question)
+                self._stack_expected_base_combine.add(qkey)
+            except Exception:
+                pass
             return ResearchWithPredictions(
                 research_report=research,
                 summary_report=summary_report,
@@ -534,49 +548,77 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if not predictions:
             raise ValueError("Cannot aggregate empty list of predictions")
 
-        # Guard for base aggregator calls when using STACKING.
+        # Base aggregator calls when using STACKING.
         # If the base class calls aggregation after we've already stacked per research-report,
         # there will be no reasoned_predictions/research context provided here.
-        # Only trigger guard when both reasoned_predictions and research are absent (base aggregator call)
+        # Treat this as a base-combine. Distinguish expected vs unexpected for logging.
         if (
             self.aggregation_strategy == AggregationStrategy.STACKING
             and reasoned_predictions is None
             and research is None
         ):
+            # Determine question key for expectedness tracking
             try:
-                self._stacking_guard_trigger_count += 1
+                qkey = getattr(question, "id_of_question", None)
+                if qkey is None:
+                    # Fallback to object id if missing
+                    qkey = id(question)
             except Exception:
+                qkey = id(question)
+
+            expected = False
+            try:
+                if qkey in self._stack_expected_base_combine:
+                    expected = True
+                    self._stack_expected_base_combine.discard(qkey)
+                    self._stacking_expected_combine_count += 1
+                else:
+                    self._stacking_unexpected_combine_count += 1
+            except Exception:
+                # Best-effort accounting; do not fail aggregation
                 pass
+
             # Single pre-stacked prediction – return as-is
             if len(predictions) == 1:
-                logger.warning("STACKING guard: pre-stacked single prediction detected; returning as-is")
+                if expected:
+                    logger.info("STACKING base combine: single pre-stacked output; returning as-is")
+                else:
+                    logger.warning(
+                        "Unexpected STACKING combine: single input without stacking context; returning as-is"
+                    )
                 return predictions[0]
             # Multiple research reports produced multiple stacked predictions – average by MEAN
-            logger.warning(
-                "STACKING guard: %d pre-stacked predictions; averaging by mean for final output",
-                len(predictions),
-            )
+            if expected:
+                logger.info(
+                    "STACKING base combine: %d pre-stacked outputs; aggregating by mean for final output",
+                    len(predictions),
+                )
+            else:
+                logger.warning(
+                    "Unexpected STACKING combine: %d inputs without stacking context; aggregating by mean",
+                    len(predictions),
+                )
             first = predictions[0]
             if isinstance(first, (int, float)):
                 values = [float(p) for p in predictions]  # type: ignore[list-item]
                 result = aggregate_binary_mean(values)
-                logger.warning("STACKING guard: binary mean of %s = %.3f", values, result)
+                logger.info("STACKING base combine: binary mean of %s = %.3f", values, result)
                 return result  # type: ignore[return-value]
             if isinstance(first, PredictedOptionList):
                 mc_preds = [p for p in predictions if isinstance(p, PredictedOptionList)]
                 aggregated = aggregate_multiple_choice_mean(mc_preds)
                 summary = {o.option_name: round(o.probability, 4) for o in aggregated.predicted_options}
-                logger.warning("STACKING guard: MC mean aggregation | %s", summary)
+                logger.info("STACKING base combine: MC mean aggregation | %s", summary)
                 return aggregated  # type: ignore[return-value]
             if isinstance(first, NumericDistribution) and isinstance(question, NumericQuestion):
                 numeric_preds = [p for p in predictions if isinstance(p, NumericDistribution)]
                 aggregated = await aggregate_numeric(numeric_preds, question, "mean")
-                logger.warning(
-                    "STACKING guard: numeric mean aggregation | CDF points=%d",
+                logger.info(
+                    "STACKING base combine: numeric mean aggregation | CDF points=%d",
                     len(getattr(aggregated, "cdf", [])),
                 )
                 return aggregated  # type: ignore[return-value]
-            raise ValueError(f"Unsupported prediction type for STACKING guard: {type(first)}")
+            raise ValueError(f"Unsupported prediction type for STACKING base combine: {type(first)}")
 
         # Handle stacking strategy
         if self.aggregation_strategy == AggregationStrategy.STACKING:

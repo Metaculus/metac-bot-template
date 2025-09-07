@@ -54,16 +54,18 @@ def log_benchmarker_headline_note() -> None:
 def log_stacking_summaries(stacking_bots: Sequence[object]) -> None:
     for sb in stacking_bots:
         count = getattr(sb, "_stacking_fallback_count", 0)
-        guard_count = getattr(sb, "_stacking_guard_trigger_count", 0)
+        expected_combines = getattr(sb, "_stacking_expected_combine_count", 0)
+        unexpected_combines = getattr(sb, "_stacking_unexpected_combine_count", 0)
         if count:
             logger.warning(
                 "STACKING fallback summary | bot=%s | fallbacks=%d (fell back to MEAN due to errors)",
                 getattr(sb, "name", "<unnamed>"),
                 count,
             )
-        if guard_count:
-            logger.warning(
-                "STACKING guard summary | bot=%s | guard_triggers=%d (base-aggregator combine across research reports)",
+        if expected_combines or unexpected_combines:
+            logger.info(
+                "Stacking combine summary | bot=%s | expected=%d | unexpected=%d (base-aggregator combine across research reports)",
                 getattr(sb, "name", "<unnamed>"),
-                guard_count,
+                expected_combines,
+                unexpected_combines,
             )

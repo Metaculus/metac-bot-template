@@ -102,6 +102,8 @@ class CorrelationAnalyzer:
         self._baseline_score_cache: Dict[
             Tuple[int, str], Tuple[float, bool]
         ] = {}  # (q_id, q_type) -> (score, diagnostics_logged)
+        # Map cleaned model names to benchmark objects for later filtering (e.g., exclude stacking bots)
+        self._model_name_to_benchmark: Dict[str, BenchmarkForBot] = {}
 
     def add_benchmark_results(self, benchmarks: List[BenchmarkForBot]) -> None:
         """Extract predictions from benchmark results."""
@@ -112,6 +114,8 @@ class CorrelationAnalyzer:
 
         for benchmark in benchmarks:
             model_name = self._extract_model_name(benchmark)
+            # Track the mapping for later filtering
+            self._model_name_to_benchmark[model_name] = benchmark
 
             for report in benchmark.forecast_reports:
                 # Convert prediction to float for correlation analysis
@@ -128,6 +132,25 @@ class CorrelationAnalyzer:
                 self.predictions.append(prediction)
 
         logger.info(f"Loaded {len(self.predictions)} predictions from {len(benchmarks)} models")
+
+    def _is_stacking_benchmark(self, benchmark: Optional[BenchmarkForBot]) -> bool:
+        """Return True if the provided benchmark used STACKING aggregation.
+
+        Single canonical detection: forecast_bot_config['aggregation_strategy'] == 'stacking'
+        (supports enum-like objects with .value or plain strings).
+        """
+        if benchmark is None:
+            return False
+        try:
+            cfg = getattr(benchmark, "forecast_bot_config", {}) or {}
+            strat = cfg.get("aggregation_strategy")
+            if hasattr(strat, "value"):
+                strat = strat.value
+            if isinstance(strat, str):
+                return strat.lower() == "stacking"
+        except Exception:
+            pass
+        return False
 
     def calculate_correlation_matrix(self) -> CorrelationMatrix:
         """Calculate Pearson and Spearman correlations between all model pairs."""
@@ -287,11 +310,19 @@ class CorrelationAnalyzer:
         self,
         max_ensemble_size: int = 5,
         max_cost_per_question: float = 1.0,
-        min_performance: float = 10.0,
+        min_performance: float = -100.0,
         use_component_analysis: bool = True,
     ) -> List[EnsembleCandidate]:
         """Find optimal ensemble configurations using performance + correlation data."""
         model_stats = self._calculate_model_statistics()
+
+        # Exclude stacking bots from ensemble candidates using a single detection path
+        if self._model_name_to_benchmark:
+            model_stats = {
+                name: stats
+                for name, stats in model_stats.items()
+                if not self._is_stacking_benchmark(self._model_name_to_benchmark.get(name))
+            }
 
         # Use component-wise analysis for mixed question types if available
         if use_component_analysis and self._has_mixed_question_types():
