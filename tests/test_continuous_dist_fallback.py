@@ -73,7 +73,11 @@ async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
         result = await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]
 
     values = [p.value for p in result.prediction_value.declared_percentiles]  # type: ignore
-    assert values == [95.0, 100.0, 110.0, 120.0, 130.0, 135.0, 140.0, 150.0, 160.0, 170.0, 175.0]
+    # Basic sanity with tail widening enabled: monotone, median unchanged, tails not narrower
+    assert len(values) == 11
+    assert all(b > a for a, b in zip(values, values[1:])), values
+    assert values[5] == pytest.approx(135.0)
+    assert values[0] <= 95.0 and values[-1] >= 175.0
 
 
 @pytest.mark.asyncio

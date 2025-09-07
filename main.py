@@ -53,6 +53,10 @@ from metaculus_bot.constants import (
 from metaculus_bot.mc_processing import build_mc_prediction
 from metaculus_bot.numeric_config import (
     PCHIP_CDF_POINTS,
+    TAIL_WIDEN_K_TAIL,
+    TAIL_WIDEN_SPAN_FLOOR_GAMMA,
+    TAIL_WIDEN_TAIL_START,
+    TAIL_WIDENING_ENABLE,
 )
 from metaculus_bot.numeric_diagnostics import log_final_prediction, log_pchip_fallback, validate_cdf_construction
 from metaculus_bot.numeric_utils import (
@@ -77,6 +81,7 @@ from metaculus_bot.pchip_processing import (
 from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
 from metaculus_bot.research_providers import ResearchCallable, choose_provider_with_name
 from metaculus_bot.simple_types import OptionProbability
+from metaculus_bot.tail_widening import widen_declared_percentiles
 from metaculus_bot.utils.logging_utils import CompactLoggingForecastBot
 
 logger = logging.getLogger(__name__)
@@ -320,6 +325,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
                 )
 
             percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+            percentile_list = self._maybe_widen_tails(percentile_list, question)
 
             from metaculus_bot.numeric_validation import check_discrete_question_properties
 
@@ -892,8 +898,9 @@ class TemplateForecaster(CompactLoggingForecastBot):
         # Sort percentiles by percentile value to ensure proper order
         percentile_list = sort_percentiles_by_value(percentile_list)
 
-        # Apply jitter and clamp logic
+        # Apply jitter/clamp then optional tail widening
         percentile_list = self._apply_jitter_and_clamp(percentile_list, question)
+        percentile_list = self._maybe_widen_tails(percentile_list, question)
 
         # For discrete questions, force zero_point to None to avoid log-scaling
         is_discrete, should_force_zero_point_none = check_discrete_question_properties(question, PCHIP_CDF_POINTS)
@@ -994,6 +1001,17 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
     def _create_upper_and_lower_bound_messages(self, question: NumericQuestion) -> tuple[str, str]:
         return bound_messages(question)
+
+    def _maybe_widen_tails(self, percentile_list: list[Percentile], question: NumericQuestion) -> list[Percentile]:
+        if not TAIL_WIDENING_ENABLE:
+            return percentile_list
+        return widen_declared_percentiles(
+            percentile_list,
+            question,
+            k_tail=TAIL_WIDEN_K_TAIL,
+            tail_start=TAIL_WIDEN_TAIL_START,
+            span_floor_gamma=TAIL_WIDEN_SPAN_FLOOR_GAMMA,
+        )
 
     def _log_llm_output(self, llm_to_use: GeneralLlm, question_id: int | None, reasoning: str) -> None:
         try:

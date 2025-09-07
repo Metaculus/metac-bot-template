@@ -113,3 +113,20 @@ BOUND_VALIDATION_TOLERANCE: float = 1e-8
 
 # Maximum relative error allowed in percentile values
 MAX_PERCENTILE_RELATIVE_ERROR: float = 1e-6
+
+# --- Tail Widening (disabled by default) ---
+
+# Enable/disable transform-space tail widening of declared percentiles before CDF generation
+TAIL_WIDENING_ENABLE: bool = True
+
+# Tail widening stretch factor applied in transformed space around the median in tails
+# e.g., 1.25 means 25% stretch at deepest tails, ramping to 0% near the center
+TAIL_WIDEN_K_TAIL: float = 1.25
+
+# Tail start region (fraction of percentile distance from median where widening begins)
+# Example: 0.2 means no widening for p in [0.3, 0.7], linearly ramp to full widening by p<=0.1 or p>=0.9
+TAIL_WIDEN_TAIL_START: float = 0.2
+
+# Span floor gamma to ensure tail spans are at least gamma times adjacent inner spans
+# Applies to (p05 - p02.5) vs (p10 - p05) and (p97.5 - p95) vs (p95 - p90)
+TAIL_WIDEN_SPAN_FLOOR_GAMMA: float = 1.0
