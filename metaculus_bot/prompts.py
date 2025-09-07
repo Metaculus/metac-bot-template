@@ -191,21 +191,24 @@ def numeric_prompt(
         so you should aim to produce wider and less confident predictions. Given the mathematics of log score, penalties for narrow intervals are severe.
         Please consider news, research, and prediction markets, but you are not beholden to them.
 
-        ── Question ──────────────────────────────────────────────────────────
+        ── Question ──
         {question.question_text}
 
-        ── Context ───────────────────────────────────────────────────────────
+        ── Context ──
         {question.background_info}
 
         {question.resolution_criteria}
         {question.fine_print}
 
-        ── Units & Bounds (must follow) ─────────────────────────────────────
+        ── Units & Bounds (must follow) ──
         • Base units for output values: {unit_str}
         • Allowed range (in base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
         • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
-        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes, just numbers.
+        • If your reasoning uses billions/millions/thousands, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes or scientific notation, just numbers.
+
+        ── Scoring Rule ──
+        Metaculus continuous questions use a log density score: score = ln f(x*), where f is your forecasted PDF evaluated at the realized value x*. A uniform 0.01 floor is added to every PDF to avoid −∞; excluding the truth yields ln(0.01) ≈ -4.605, while sharp accuracy is rewarded (e.g., f(x*) = 10 → +2.303). Probability mass below/above the bounds is scored as a binary event;  PDF sharpness is capped (about 0.01 ≤ f ≤ ~35), so spiky tricks don't pay. This is a proper scoring rule—to maximize expected score, report your true uncertainty and resist overconfident, narrow shapes.
 
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
@@ -451,6 +454,9 @@ def stacking_numeric_prompt(
         • Allowed range (base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
+
+        ── Scoring Rule ──
+        Metaculus continuous questions use a log density score: score = ln f(x*), where f is your forecasted PDF evaluated at the realized value x*. A uniform 0.01 floor is added to every PDF to avoid −∞; excluding the truth yields ln(0.01) ≈ -4.605, while sharp accuracy is rewarded (e.g., f(x*) = 10 → +2.303). Probability mass below/above the bounds is scored as a binary event;  PDF sharpness is capped (about 0.01 ≤ f ≤ ~35), so spiky tricks don't pay. This is a proper scoring rule—to maximize expected score, report your true uncertainty and resist overconfident, narrow shapes.
         
         ── Intelligence Briefing ────────────────────────────────
         {research}
