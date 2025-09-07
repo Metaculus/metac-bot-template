@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import types
 from typing import Callable
 
@@ -39,7 +37,9 @@ def _install_asknews_stub(monkeypatch: pytest.MonkeyPatch, on_search: Callable[[
 
 
 @pytest.mark.asyncio
-async def test_asknews_rate_gate_runs_before_both_calls(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_asknews_rate_gate_runs_before_both_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     # Ensure AskNews is selected and globals are reset
     monkeypatch.setenv("ASKNEWS_CLIENT_ID", "id")
     monkeypatch.setenv("ASKNEWS_SECRET", "secret")
@@ -77,7 +77,9 @@ async def test_asknews_rate_gate_runs_before_both_calls(monkeypatch: pytest.Monk
 
 
 @pytest.mark.asyncio
-async def test_global_semaphore_serializes_concurrent_requests(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_global_semaphore_serializes_concurrent_requests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("ASKNEWS_CLIENT_ID", "id")
     monkeypatch.setenv("ASKNEWS_SECRET", "secret")
 
@@ -120,7 +122,9 @@ async def test_global_semaphore_serializes_concurrent_requests(monkeypatch: pyte
 
 
 @pytest.mark.asyncio
-async def test_rps_gate_sleeps_before_historical_call(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_rps_gate_sleeps_before_historical_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("ASKNEWS_CLIENT_ID", "id")
     monkeypatch.setenv("ASKNEWS_SECRET", "secret")
     monkeypatch.setenv("RESEARCH_PROVIDER", "asknews")

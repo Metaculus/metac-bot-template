@@ -61,7 +61,12 @@ async def test_numeric_aggregation_configurable():
     predictions: list[PredictionTypes] = [pred1, pred2, pred3]
 
     # Initialize two forecaster instances with different aggregation methods.
-    llms_min = {"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"}
+    llms_min = {
+        "default": "mock",
+        "parser": "mock",
+        "researcher": "mock",
+        "summarizer": "mock",
+    }
     forecaster_mean = TemplateForecaster(llms=llms_min, aggregation_strategy=AggregationStrategy.MEAN)
     forecaster_median = TemplateForecaster(llms=llms_min, aggregation_strategy=AggregationStrategy.MEDIAN)
 

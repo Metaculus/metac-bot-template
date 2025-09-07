@@ -1,13 +1,19 @@
-from __future__ import annotations
-
 from datetime import datetime
 
-from forecasting_tools import BinaryQuestion, MultipleChoiceQuestion, NumericQuestion
+from forecasting_tools import (
+    BinaryQuestion,
+    MultipleChoiceQuestion,
+    NumericQuestion,
+    clean_indents,
+)
 
 __all__ = [
     "binary_prompt",
     "multiple_choice_prompt",
     "numeric_prompt",
+    "stacking_binary_prompt",
+    "stacking_multiple_choice_prompt",
+    "stacking_numeric_prompt",
 ]
 
 
@@ -20,8 +26,6 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
     evidence handling, outside→inside anchoring, and a brief checklist.
     The final output format remains unchanged (last line: "Probability: ZZ%").
     """
-
-    from forecasting_tools import clean_indents  # local import to avoid heavy deps at module import time
 
     return clean_indents(
         f"""
@@ -91,8 +95,6 @@ def binary_prompt(question: BinaryQuestion, research: str) -> str:
 
 
 def multiple_choice_prompt(question: MultipleChoiceQuestion, research: str) -> str:
-    from forecasting_tools import clean_indents
-
     return clean_indents(
         f"""
         You are a **senior forecaster** preparing a rigorous public report for expert peers.
@@ -179,8 +181,7 @@ def numeric_prompt(
     lower_bound_message: str,
     upper_bound_message: str,
 ) -> str:
-    from forecasting_tools import clean_indents
-
+    unit_str = question.unit_of_measure or "unknown units, assume unitless (e.g. raw count)"
     return clean_indents(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
@@ -199,7 +200,12 @@ def numeric_prompt(
         {question.resolution_criteria}
         {question.fine_print}
 
-        Units: {question.unit_of_measure or "Not stated: infer if possible"}
+        ── Units & Bounds (must follow) ─────────────────────────────────────
+        • Base units for output values: {unit_str}
+        • Allowed range (in base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
+        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes, just numbers.
 
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
@@ -268,5 +274,234 @@ def numeric_prompt(
         Percentile 80: 67.8
         Percentile 90: 78.9
         Percentile 95: 89.0
+        """
+    )
+
+
+def stacking_binary_prompt(question: BinaryQuestion, research: str, base_predictions: list[str]) -> str:
+    """Return the stacking prompt for binary questions that takes multiple model predictions as input."""
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+
+    return clean_indents(
+        f"""
+        You are a senior meta-forecaster specializing in combining predictions from multiple expert models.
+        You will be judged based on the accuracy and calibration of your final forecast using the Metaculus peer score (log score).
+        
+        Your task is to synthesize multiple expert analyses into a single, well-calibrated probability.
+        
+        Your Metaculus question is:
+        {question.question_text}
+        
+        Question background:
+        {question.background_info}
+        
+        This question's outcome will be determined by the specific criteria below:
+        {question.resolution_criteria}
+        
+        {question.fine_print}
+        
+        Your research assistant provided this context:
+        {research}
+        
+        Today is {_today_str()}.
+        
+        ── Multiple Expert Analyses ──
+        {predictions_text}
+        
+        ── Meta-Analysis Framework ──
+        1) Model agreement analysis
+           • Where do the models agree? What shared evidence drives consensus?
+           • Where do they disagree? What causes divergent reasoning?
+           • Are disagreements due to different evidence weighting or different evidence sources?
+        
+        2) Evidence synthesis
+           • Which evidence appears most frequently across analyses? Is this justified?
+           • What unique evidence does each model bring? How credible is it?
+           • Are there systematic biases visible across models (overconfidence, anchoring, etc.)?
+        
+        3) Reasoning quality assessment
+           • Which models demonstrate strongest analytical rigor?
+           • Which models best incorporate reference class reasoning?
+           • Which models show appropriate uncertainty calibration?
+        
+        4) Meta-level adjustments
+           • Should I weight models equally or give more weight to better-reasoned analyses?
+           • Are there blind spots that all models missed?
+           • How should I account for model correlation vs independence?
+        
+        5) Final synthesis
+           • What probability best integrates all the evidence and reasoning?
+           • Does this probability appropriately reflect the uncertainty in the question?
+           • Sanity check: does this probability make sense given the base rate and evidence?
+        
+        The last thing you write MUST BE your final answer as an INTEGER percentage. "Probability: ZZ%"
+        An example response is: "Probability: 50%"
+        """
+    )
+
+
+def stacking_multiple_choice_prompt(
+    question: MultipleChoiceQuestion, research: str, base_predictions: list[str]
+) -> str:
+    """Return the stacking prompt for multiple choice questions."""
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+
+    return clean_indents(
+        f"""
+        You are a senior meta-forecaster specializing in combining predictions from multiple expert models.
+        Your accuracy and calibration will be scored with Metaculus' log-score, so avoid over-confidence 
+        and make sure your probabilities sum to **100%**.
+        
+        ── Question ──────────────────────────────────────────────────────────
+        {question.question_text}
+        
+        • Options (in resolution order): {question.options}
+        
+        ── Context ───────────────────────────────────────────────────────────
+        {question.background_info}
+        
+        {question.resolution_criteria}
+        {question.fine_print}
+        
+        ── Intelligence Briefing ────────────────────────────────
+        {research}
+        
+        Today's date: {_today_str()}
+        
+        ── Multiple Expert Analyses ──
+        {predictions_text}
+        
+        ── Meta-Analysis Framework ──
+        1) Model agreement analysis
+           • Which options show consensus vs divergence across models?
+           • What shared reasoning drives agreement on likely/unlikely options?
+           • Where models disagree, what drives the different assessments?
+        
+        2) Evidence synthesis across models
+           • What evidence appears consistently? Is this justified by source quality?
+           • What unique insights does each model contribute?
+           • Are there systematic biases (overconfidence on favorites, neglect of tails)?
+        
+        3) Probability distribution analysis
+           • Which models show appropriate uncertainty (avoid 0%/100%)?
+           • How do the models differ in their tail probability allocation?
+           • Are there systematic patterns in how models distribute probability?
+        
+        4) Reasoning quality assessment
+           • Which analyses demonstrate strongest logical coherence?
+           • Which models best incorporate reference class reasoning?
+           • Which show most appropriate calibration for this question type?
+        
+        5) Meta-level synthesis
+           • Should models be weighted equally or by reasoning quality?
+           • Are there overlooked scenarios that all models missed?
+           • How should I account for correlation vs independence in model errors?
+        
+        6) Final distribution calibration
+           • What probability distribution best synthesizes all analyses?
+           • Does my distribution appropriately reflect uncertainty?
+           • Are my tail probabilities justified given the evidence?
+        
+        **CRITICAL**: You MUST assign a probability (1-99%) to EVERY single option listed above.
+        Even if an option seems very unlikely, assign it at least 1%. Never skip any option.
+        
+        ── Final answer (must be last lines, one line per option, all options included, in same order, nothing after) ──
+        Option_A: NN%
+        Option_B: NN%
+        …
+        Option_N: NN%
+        """
+    )
+
+
+def stacking_numeric_prompt(
+    question: NumericQuestion,
+    research: str,
+    base_predictions: list[str],
+    lower_bound_message: str,
+    upper_bound_message: str,
+) -> str:
+    """Return the stacking prompt for numeric questions."""
+    predictions_text = "\n".join([f"Model {i + 1} Analysis:\n{pred}\n" for i, pred in enumerate(base_predictions)])
+
+    return clean_indents(
+        f"""
+        You are a senior meta-forecaster specializing in combining predictions from multiple expert models.
+        You will be scored with Metaculus' log-score, so accuracy **and** calibration 
+        (especially the width of your 90/10 interval) are critical.
+        
+        ── Question ──────────────────────────────────────────────────────────
+        {question.question_text}
+        
+        ── Context ───────────────────────────────────────────────────────────
+        {question.background_info}
+        
+        {question.resolution_criteria}
+        {question.fine_print}
+        
+        Units: {question.unit_of_measure or "Not stated: infer if possible"}
+        
+        ── Units & Bounds (must follow) ─────────────────────────────────────
+        • Base unit for output values: {question.unit_of_measure or "base unit"}
+        • Allowed range (base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
+        
+        ── Intelligence Briefing ────────────────────────────────
+        {research}
+        
+        Today's date: {_today_str()}
+        
+        {lower_bound_message}
+        {upper_bound_message}
+        
+        ── Multiple Expert Analyses ──
+        {predictions_text}
+        
+        ── Meta-Analysis Framework ──
+        1) Distribution comparison
+           • Compare the central tendencies (medians) across models - what explains differences?
+           • Compare uncertainty ranges (90% intervals) - which models show appropriate calibration?
+           • Are there systematic patterns in how models approach this forecasting problem?
+        
+        2) Evidence synthesis
+           • What evidence/approaches appear across multiple analyses?
+           • What unique insights or data does each model contribute?
+           • Which models demonstrate strongest analytical rigor for this question type?
+        
+        3) Calibration assessment
+           • Which models show appropriate uncertainty given the available evidence?
+           • Are any models systematically overconfident (too narrow ranges)?
+           • Which uncertainty ranges seem most justified by the evidence quality?
+        
+        4) Reference class integration
+           • How do models differ in their reference class selection?
+           • Which outside view approaches seem most appropriate?
+           • Should I favor models with stronger reference class reasoning?
+        
+        5) Meta-level synthesis
+           • Should I weight models equally or by reasoning quality?
+           • Are there blind spots or scenarios all models missed?
+           • How should I account for correlation vs independence in model approaches?
+        
+        6) Final distribution calibration
+           • What percentiles best synthesize all the evidence and reasoning?
+           • Does my final distribution appropriately reflect epistemic uncertainty?
+           • Are my tails justified given the potential for unknown unknowns?
+        
+        Remember: Think in ranges, not points. Keep 10th and 90th percentiles appropriately wide.
+        Ensure strictly increasing percentiles and respect the bounds above.
+        
+        OUTPUT FORMAT, floating point numbers 
+        Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+        
+        Percentile 5: [value]
+        Percentile 10: [value]
+        Percentile 20: [value]
+        Percentile 40: [value]
+        Percentile 60: [value]
+        Percentile 80: [value]
+        Percentile 90: [value]
+        Percentile 95: [value]
         """
     )

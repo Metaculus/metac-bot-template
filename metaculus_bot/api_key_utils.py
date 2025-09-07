@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Utility functions for API key management."""
 
 import os

@@ -5,7 +5,7 @@ Tests the monkey patching and scoring logic for mixed question types.
 """
 
 import math
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pytest

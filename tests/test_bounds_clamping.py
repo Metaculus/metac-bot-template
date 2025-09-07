@@ -186,7 +186,12 @@ class TestBoundsClamping:
         caplog.clear()
         caplog.set_level("WARNING")
         log_cluster_spreading_summary(
-            modified_values, original_values, question, clusters_applied=1, spread_delta=0.1, count_like=False
+            modified_values,
+            original_values,
+            question,
+            clusters_applied=1,
+            spread_delta=0.1,
+            count_like=False,
         )
 
         assert any("Cluster spread applied" in record.message for record in caplog.records)
@@ -197,6 +202,13 @@ class TestBoundsClamping:
         question = _make_question()
 
         caplog.clear()
-        log_cluster_spreading_summary(values, values, question, clusters_applied=0, spread_delta=0.1, count_like=False)
+        log_cluster_spreading_summary(
+            values,
+            values,
+            question,
+            clusters_applied=0,
+            spread_delta=0.1,
+            count_like=False,
+        )
 
         assert not any("Cluster spread applied" in record.message for record in caplog.records)

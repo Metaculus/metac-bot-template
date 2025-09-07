@@ -4,8 +4,6 @@ Tests for PCHIP-based CDF construction.
 Based on the panchul implementation with comprehensive validation.
 """
 
-from typing import Dict, List
-
 import numpy as np
 import pytest
 from forecasting_tools.data_models.numeric_report import Percentile
@@ -48,7 +46,16 @@ class TestPercentilesToPchipFormat:
         ]
 
         result = percentiles_to_pchip_format(percentiles)
-        expected = {5.0: 5.0, 10.0: 10.0, 20.0: 20.0, 40.0: 40.0, 60.0: 60.0, 80.0: 80.0, 90.0: 90.0, 95.0: 95.0}
+        expected = {
+            5.0: 5.0,
+            10.0: 10.0,
+            20.0: 20.0,
+            40.0: 40.0,
+            60.0: 60.0,
+            80.0: 80.0,
+            90.0: 90.0,
+            95.0: 95.0,
+        }
 
         assert result == expected
 
@@ -253,7 +260,11 @@ class TestGeneratePchipCdf:
         """Test error handling for empty percentiles."""
         with pytest.raises(ValueError, match="Empty percentile values dictionary"):
             generate_pchip_cdf(
-                percentile_values={}, open_upper_bound=False, open_lower_bound=False, upper_bound=10.0, lower_bound=0.0
+                percentile_values={},
+                open_upper_bound=False,
+                open_lower_bound=False,
+                upper_bound=10.0,
+                lower_bound=0.0,
             )
 
     def test_error_handling_invalid_bounds(self):
@@ -318,7 +329,16 @@ class TestGeneratePchipCdf:
 
     def test_discrete_style_distribution(self):
         """Test with discrete-style distribution (integer values)."""
-        percentiles = {5.0: 1.0, 10.0: 2.0, 20.0: 3.0, 40.0: 5.0, 60.0: 7.0, 80.0: 10.0, 90.0: 12.0, 95.0: 15.0}
+        percentiles = {
+            5.0: 1.0,
+            10.0: 2.0,
+            20.0: 3.0,
+            40.0: 5.0,
+            60.0: 7.0,
+            80.0: 10.0,
+            90.0: 12.0,
+            95.0: 15.0,
+        }
 
         cdf, aggressive_enforcement = generate_pchip_cdf(
             percentile_values=percentiles,

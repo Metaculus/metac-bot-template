@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Cluster detection and spreading utilities for numeric percentile processing.
 
@@ -16,8 +14,7 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from metaculus_bot.constants import NUM_SPREAD_DELTA_MULT, NUM_VALUE_EPSILON_MULT
-
-from .numeric_config import (
+from metaculus_bot.numeric_config import (
     CLUSTER_DETECTION_ATOL,
     CLUSTER_SPREAD_BASE_DELTA,
     COUNT_LIKE_DELTA_MULTIPLIER,
@@ -47,7 +44,9 @@ def detect_count_like_pattern(values: List[float]) -> bool:
         return False
 
 
-def compute_cluster_parameters(range_size: float, count_like: bool) -> Tuple[float, float, float]:
+def compute_cluster_parameters(
+    range_size: float, count_like: bool, span: float | None = None
+) -> Tuple[float, float, float]:
     """
     Compute parameters for cluster detection and spreading.
 
@@ -60,12 +59,21 @@ def compute_cluster_parameters(range_size: float, count_like: bool) -> Tuple[flo
     """
     value_eps = max(range_size * NUM_VALUE_EPSILON_MULT, CLUSTER_DETECTION_ATOL)
     base_delta = max(range_size * NUM_SPREAD_DELTA_MULT, CLUSTER_SPREAD_BASE_DELTA)
-    spread_delta = max(base_delta, COUNT_LIKE_DELTA_MULTIPLIER if count_like else base_delta)
+    # Prefer a spread relative to the raw span when available to avoid range-driven explosions
+    if span is not None and span > 0:
+        span_based = max(0.02 * span, CLUSTER_SPREAD_BASE_DELTA)
+    else:
+        span_based = base_delta
+    spread_delta = max(base_delta, span_based, COUNT_LIKE_DELTA_MULTIPLIER if count_like else base_delta)
     return value_eps, base_delta, spread_delta
 
 
 def apply_cluster_spreading(
-    modified_values: List[float], question: NumericQuestion, value_eps: float, spread_delta: float, range_size: float
+    modified_values: List[float],
+    question: NumericQuestion,
+    value_eps: float,
+    spread_delta: float,
+    range_size: float,
 ) -> Tuple[List[float], int]:
     """
     Apply cluster spreading to ensure strictly increasing values.
@@ -118,7 +126,10 @@ def apply_cluster_spreading(
             # If next value exists and last new exceeds it, compress offsets
             if j + 1 < len(modified_values) and new_vals[-1] >= modified_values[j + 1]:
                 # Compress spread to fit in available gap
-                available = max(modified_values[j + 1] - (new_vals[0]), max(value_eps, STRICT_ORDERING_EPSILON))
+                available = max(
+                    modified_values[j + 1] - (new_vals[0]),
+                    max(value_eps, STRICT_ORDERING_EPSILON),
+                )
                 if k > 1:
                     step = available / k
                     new_vals = [new_vals[0] + step * idx for idx in range(k)]
@@ -135,7 +146,10 @@ def apply_cluster_spreading(
 
 
 def apply_jitter_for_duplicates(
-    modified_values: List[float], question: NumericQuestion, range_size: float, percentile_list: List[Percentile]
+    modified_values: List[float],
+    question: NumericQuestion,
+    range_size: float,
+    percentile_list: List[Percentile],
 ) -> List[float]:
     """
     Apply jitter to eliminate any remaining duplicate values.

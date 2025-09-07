@@ -2,8 +2,6 @@
 Benchmark treating the community prediction as approximate ground truth.
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import atexit
@@ -31,6 +29,8 @@ from tqdm import tqdm
 
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
+from metaculus_bot.benchmark.heartbeat import install_benchmarker_heartbeat
+from metaculus_bot.benchmark.logging import log_benchmarker_headline_note, log_bot_lineup, log_stacking_summaries
 from metaculus_bot.constants import (
     BENCHMARK_BATCH_SIZE,
     FETCH_PACING_SECONDS,
@@ -39,7 +39,7 @@ from metaculus_bot.constants import (
     TYPE_MIX,
 )
 from metaculus_bot.fallback_openrouter import build_llm_with_openrouter_fallback
-from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+from metaculus_bot.llm_configs import PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
 from metaculus_bot.scoring_patches import (
     apply_scoring_patches,
     log_score_scale_validation,
@@ -103,100 +103,16 @@ _enable_aiohttp_session_autoclose()
 
 
 # Global progress tracking state
-_progress_state = {"total_predictions": 0, "start_time": 0, "completed_batches": 0, "total_batches": 0, "pbar": None}
+_progress_state = {
+    "total_predictions": 0,
+    "start_time": 0,
+    "completed_batches": 0,
+    "total_batches": 0,
+    "pbar": None,
+}
 
 
-def _install_benchmarker_heartbeat(interval_seconds: int = HEARTBEAT_INTERVAL) -> None:
-    """Add a lightweight heartbeat to Benchmarker batch execution.
-
-    Logs a progress line every ``interval_seconds`` while each batch is running,
-    without changing the forecasting-tools package or internal flow.
-    """
-    try:
-        original_run = Benchmarker._run_a_batch  # type: ignore[attr-defined]
-    except Exception:  # pragma: no cover - defensive: attribute should exist
-        return
-
-    # Avoid double-wrapping if re-imported
-    if getattr(Benchmarker._run_a_batch, "_has_heartbeat", False):  # type: ignore[attr-defined]
-        return
-
-    async def _run_with_heartbeat(self, batch, _orig=original_run):  # type: ignore[no-untyped-def]
-        start_time = datetime.now()
-        task = asyncio.create_task(_orig(self, batch))
-        try:
-            while not task.done():
-                await asyncio.sleep(interval_seconds)
-                elapsed_min = (datetime.now() - start_time).total_seconds() / 60.0
-                try:
-                    # Update progress tracking
-                    if _progress_state["pbar"] is not None:
-                        _update_progress_estimate(batch)
-
-                    logger.info(
-                        f"[HB] {batch.benchmark.name} | {len(batch.questions)} questions | elapsed {elapsed_min:.1f}m"
-                    )
-                except Exception:
-                    # Best-effort logging; do not interfere with main task
-                    pass
-
-            # Mark batch as completed
-            _progress_state["completed_batches"] += 1
-            if _progress_state["pbar"] is not None:
-                _update_progress_final()
-
-            return await task
-        except Exception:
-            # Bubble up original exceptions unchanged
-            raise
-
-    # Mark wrapper to prevent stacking
-    setattr(_run_with_heartbeat, "_has_heartbeat", True)
-    Benchmarker._run_a_batch = _run_with_heartbeat  # type: ignore[assignment]
-
-
-def _update_progress_estimate(batch) -> None:
-    """Update progress estimate during batch execution."""
-    if _progress_state["total_predictions"] == 0:
-        return
-
-    # Estimate: each completed batch = batch_size questions per bot
-    completed_predictions = _progress_state["completed_batches"] * len(batch.questions) * len(batch.forecast_bots)
-
-    # Add partial progress for current batch (rough estimate)
-    elapsed_total = time.time() - _progress_state["start_time"]
-    if _progress_state["completed_batches"] > 0:
-        avg_batch_time = elapsed_total / (_progress_state["completed_batches"] + 0.5)  # +0.5 for current partial
-        progress_in_current = min(0.8, elapsed_total % avg_batch_time / avg_batch_time)  # Cap at 80% for current batch
-        completed_predictions += int(progress_in_current * len(batch.questions) * len(batch.forecast_bots))
-
-    completed_predictions = min(completed_predictions, _progress_state["total_predictions"])
-
-    # Update progress bar
-    pbar = _progress_state["pbar"]
-    if pbar is not None:
-        pbar.n = completed_predictions
-        pbar.refresh()
-
-
-def _update_progress_final() -> None:
-    """Update progress when a batch completes."""
-    if _progress_state["pbar"] is None or _progress_state["total_predictions"] == 0:
-        return
-
-    # Calculate exact completed predictions
-    completed_predictions = min(
-        _progress_state["completed_batches"]
-        * (_progress_state["total_predictions"] // _progress_state["total_batches"]),
-        _progress_state["total_predictions"],
-    )
-
-    pbar = _progress_state["pbar"]
-    pbar.n = completed_predictions
-    pbar.refresh()
-
-
-_install_benchmarker_heartbeat(HEARTBEAT_INTERVAL)
+install_benchmarker_heartbeat(HEARTBEAT_INTERVAL, _progress_state)
 
 
 async def _get_mixed_question_types(total_questions: int, one_year_from_now: datetime) -> list:
@@ -297,7 +213,11 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
                 ) from e
 
     # Fetch each question type separately with pacing and validation
-    types_and_counts = [("binary", binary_count), ("numeric", numeric_count), ("multiple_choice", mc_count)]
+    types_and_counts = [
+        ("binary", binary_count),
+        ("numeric", numeric_count),
+        ("multiple_choice", mc_count),
+    ]
     for i, (question_type, count) in enumerate(types_and_counts, 1):
         if count <= 0:
             continue
@@ -412,7 +332,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         # Define individual model configurations -- for sanity checking, can use these free models
 
         # Cheapies; avoid free models due to rate limits (very slow)
-        r1_0528_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/deepseek/deepseek-r1-0528",
             **MODEL_CONFIG,
         )
@@ -421,7 +341,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             **MODEL_CONFIG,
         )
         kimi_k2_model = GeneralLlm(
-            model="openrouter/moonshotai/kimi-k2",
+            model="openrouter/moonshotai/kimi-k2-0905",
             **MODEL_CONFIG,
         )
 
@@ -429,31 +349,31 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
             **MODEL_CONFIG,
         )
-        glm_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/z-ai/glm-4.5",
             **MODEL_CONFIG,
         )
-        claude_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/anthropic/claude-sonnet-4",
             reasoning={"max_tokens": 4000},
             **MODEL_CONFIG,
         )
-        gpt5_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/openai/gpt-5",
             reasoning_effort="high",
             **MODEL_CONFIG,
         )
-        gemini_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/google/gemini-2.5-pro",
             reasoning={"max_tokens": 8000},
             **MODEL_CONFIG,
         )
-        o3_model = build_llm_with_openrouter_fallback(
+        build_llm_with_openrouter_fallback(
             model="openrouter/openai/o3",
             reasoning_effort="high",
             **MODEL_CONFIG,
         )
-        grok_model = GeneralLlm(
+        GeneralLlm(
             model="openrouter/x-ai/grok-4",
             reasoning={"effort": "high"},
             **MODEL_CONFIG,
@@ -475,6 +395,15 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             # {"name": "grok-4", "forecaster": grok_model},
         ]
 
+        # Stacking model configurations - these will aggregate predictions from ALL base models
+        stacking_models = [
+            {"name": "stack-qwen3", "stacker": qwen3_model},
+            # Additional stackers - comment for cost control during development:
+            # {"name": "stack-o3", "stacker": o3_model},
+            # {"name": "stack-claude4", "stacker": claude_model},
+            # {"name": "stack-gpt5", "stacker": gpt5_model},
+        ]
+
         # Generate individual model bots - ensembles generated by CorrelationAnalyzer.find_optimal_ensembles()
         bots = []
         for model_config in individual_models:
@@ -491,8 +420,44 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             bot.name = model_config["name"]
             bots.append(bot)
 
+        # Generate stacking bots - each gets ALL base model forecasters as input
+        base_forecasters = [config["forecaster"] for config in individual_models]
+        if len(base_forecasters) < 2:
+            logger.warning(
+                "STACKING configuration: fewer than 2 base forecasters (%d). Stacking quality may suffer.",
+                len(base_forecasters),
+            )
+        stacking_bots: list[TemplateForecaster] = []
+        for stacker_config in stacking_models:
+            stacking_bot = TemplateForecaster(
+                **BENCHMARK_BOT_CONFIG,
+                aggregation_strategy=AggregationStrategy.STACKING,
+                llms={
+                    "forecasters": base_forecasters,  # All base models
+                    "stacker": stacker_config["stacker"],  # The stacking model
+                    **DEFAULT_HELPER_LLMS,
+                },
+                max_concurrent_research=batch_size,
+                research_cache=research_cache,
+                stacking_fallback_on_failure=False,  # Fail in benchmarking
+                stacking_randomize_order=True,  # Avoid position bias
+            )
+            stacking_bot.name = stacker_config["name"]
+            # Benchmark-time validations and warnings
+            try:
+                if getattr(stacking_bot, "research_reports_per_question", 1) != 1:
+                    logger.warning(
+                        "STACKING benchmark: research_reports_per_question=%s; final results will average per-report stacked outputs by mean.",
+                        getattr(stacking_bot, "research_reports_per_question", 1),
+                    )
+            except Exception:
+                pass
+            bots.append(stacking_bot)
+            stacking_bots.append(stacking_bot)
+
         logger.info(
-            f"Created {len(bots)} individual model bots for benchmarking. Ensembles will be generated post-hoc by correlation analysis."
+            f"Created {len(bots)} total bots for benchmarking: {len(individual_models)} individual models + {len(stacking_models)} stacking models. "
+            f"Traditional ensembles will be generated post-hoc by correlation analysis."
         )
         bots = typeguard.check_type(bots, list[ForecastBot])
 
@@ -514,6 +479,12 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             }
         )
 
+        # Pre-run per-bot overview for clarity
+        try:
+            log_bot_lineup(bots)
+        except Exception:
+            pass
+
         logger.info("📊 Entering Benchmarker.run_benchmark() - this may take a while...")
         sys.stdout.flush()
 
@@ -533,16 +504,17 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
         sys.stdout.flush()
         try:
             for i, benchmark in enumerate(benchmarks):
-                logger.info(f"Benchmark {i+1} of {len(benchmarks)}: {benchmark.name}")
+                logger.info(f"Benchmark {i + 1} of {len(benchmarks)}: {benchmark.name}")
                 logger.info(
                     f"- Final Metaculus Baseline Score: {benchmark.average_expected_baseline_score:.4f} (based on log score, 0=always predict same, https://www.metaculus.com/help/scores-faq/#baseline-score )"
                 )
                 logger.info(f"- Total Cost: {benchmark.total_cost:.2f}")
                 logger.info(f"- Time taken: {benchmark.time_taken_in_minutes:.4f}")
+            log_benchmarker_headline_note()
         except ValueError as ve:
             # Provide clearer guidance when no reports exist (likely research provider failures)
             raise RuntimeError(
-                "Benchmark produced no forecast reports." "Fallback is disabled for benchmarks by design."
+                "Benchmark produced no forecast reports.Fallback is disabled for benchmarks by design."
             ) from ve
         logger.info(f"Total Cost: {cost_manager.current_usage}")
 
@@ -576,7 +548,7 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 logger.info(
                     f"Generated {len(optimal_ensembles)} ensemble combinations from {len(benchmarks)} individual models"
                 )
-                logger.info(f"\nTop 10 Recommended Ensembles (Both Aggregation Strategies, Cost ≤ $1.0/question):")
+                logger.info("\nTop 10 Recommended Ensembles (Both Aggregation Strategies, Cost ≤ $1.0/question):")
                 for i, ensemble in enumerate(optimal_ensembles[:10], 1):
                     models = " + ".join(ensemble.model_names)
                     logger.info(f"{i}. {models} ({ensemble.aggregation_strategy.upper()})")
@@ -594,6 +566,12 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
                 logger.info("No viable ensemble combinations found within cost constraints")
         else:
             logger.info("Skipping correlation analysis (need multiple models)")
+
+        # Summarize any STACKING fallbacks and guard triggers encountered
+        try:
+            log_stacking_summaries(stacking_bots)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

@@ -6,7 +6,6 @@ Tests for cluster detection and spreading functions extracted from main.py.
 
 from types import SimpleNamespace
 
-import pytest
 from forecasting_tools.data_models.numeric_report import Percentile
 
 from metaculus_bot.cluster_processing import (

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -13,7 +11,14 @@ from main import TemplateForecaster
 
 @pytest.mark.asyncio
 async def test_binary_parsing_clamps_extremes():
-    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
+    bot = TemplateForecaster(
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        }
+    )
 
     # Minimal binary question
     q = MagicMock(spec=BinaryQuestion)
@@ -45,7 +50,14 @@ async def test_binary_parsing_clamps_extremes():
 
 @pytest.mark.asyncio
 async def test_numeric_parsing_raises_on_wrong_count():
-    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
+    bot = TemplateForecaster(
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        }
+    )
 
     q = SimpleNamespace(
         question_text="num?",
@@ -79,11 +91,20 @@ async def test_numeric_parsing_raises_on_wrong_count():
 
 @pytest.mark.asyncio
 async def test_parser_llm_used_for_structured_output():
-    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
+    bot = TemplateForecaster(
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        }
+    )
 
     sentinel_parser_model = object()
     original_get_llm = bot.get_llm
-    bot.get_llm = MagicMock(side_effect=lambda purpose, *_: sentinel_parser_model if purpose == "parser" else original_get_llm(purpose))  # type: ignore[method-assign]
+    bot.get_llm = MagicMock(
+        side_effect=lambda purpose, *_: sentinel_parser_model if purpose == "parser" else original_get_llm(purpose)
+    )  # type: ignore[method-assign]
 
     captured = {}
 
@@ -158,7 +179,14 @@ async def test_parser_llm_used_for_structured_output():
 
 @pytest.mark.asyncio
 async def test_mc_additional_instructions_include_options():
-    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
+    bot = TemplateForecaster(
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        }
+    )
     q = MagicMock(spec=MultipleChoiceQuestion)
     q.page_url = "url"
     q.question_text = "who?"

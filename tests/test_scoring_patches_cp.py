@@ -1,10 +1,11 @@
-import types
 from types import SimpleNamespace
 
 import numpy as np
-import pytest
 
-from metaculus_bot.scoring_patches import calculate_multiple_choice_baseline_score, calculate_numeric_baseline_score
+from metaculus_bot.scoring_patches import (
+    calculate_multiple_choice_baseline_score,
+    calculate_numeric_baseline_score,
+)
 
 
 def _make_mc_question(options, cp_probs):
@@ -50,7 +51,11 @@ def _make_numeric_question(cdf_values, range_min=0.0, range_max=1.0, zero_point=
     latest = {"forecast_values": list(cdf_values)}
     api_q = {
         "aggregations": {"recency_weighted": {"latest": latest}},
-        "scaling": {"range_min": float(range_min), "range_max": float(range_max), "zero_point": zero_point},
+        "scaling": {
+            "range_min": float(range_min),
+            "range_max": float(range_max),
+            "zero_point": zero_point,
+        },
     }
     return SimpleNamespace(id_of_question=456, api_json={"question": api_q})
 

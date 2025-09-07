@@ -1,11 +1,9 @@
-import asyncio
-from typing import Any, cast
-
 # type: ignore
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from forecasting_tools.data_models.numeric_report import NumericDistribution
+from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
 from pydantic import ValidationError
 
 # from forecasting_tools.data_models.questions import NumericQuestion
@@ -22,9 +20,6 @@ class DummyLLM:  # minimal async LLM for tests
 
 
 # Lightweight dummy object with the attrs _run_forecast_on_numeric needs.
-from types import SimpleNamespace
-
-
 def make_dummy_numeric_question():
     return SimpleNamespace(
         question_text="dummy numeric",
@@ -66,11 +61,12 @@ async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
     q = make_dummy_numeric_question()
     llm = DummyLLM(rationale)
 
-    from forecasting_tools.data_models.numeric_report import Percentile as FTPercentile
-
     fake_percentiles = [
         FTPercentile(value=v, percentile=p)
-        for v, p in zip([100, 110, 120, 130, 140, 150, 160, 170], [0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95])
+        for v, p in zip(
+            [100, 110, 120, 130, 140, 150, 160, 170],
+            [0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95],
+        )
     ]
 
     with patch("main.structure_output", return_value=fake_percentiles):
@@ -86,6 +82,9 @@ async def test_fallback_reraises_when_insufficient_numbers(dummy_forecaster):
 
     q = make_dummy_numeric_question()
     llm = DummyLLM(rationale)
-    with patch("main.structure_output", side_effect=ValidationError.from_exception_data("NumericDistribution", [])):
+    with patch(
+        "main.structure_output",
+        side_effect=ValidationError.from_exception_data("NumericDistribution", []),
+    ):
         with pytest.raises(ValidationError):
             await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]

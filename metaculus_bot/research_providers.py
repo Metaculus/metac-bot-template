@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Research provider strategy abstraction.
 
 `choose_provider` returns an async callable that, given a question text, returns
@@ -11,10 +9,10 @@ import asyncio
 import logging
 import os
 import time
-from typing import Any, Awaitable, Callable, Protocol, Tuple
+from typing import Any, Awaitable, Callable, Protocol
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from forecasting_tools import AskNewsSearcher, GeneralLlm, SmartSearcher
+from forecasting_tools import GeneralLlm, SmartSearcher
 
 from metaculus_bot.constants import (
     ASKNEWS_BACKOFF_SECS,

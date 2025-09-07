@@ -15,8 +15,6 @@ numpy = "^2.3.0"
 openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.54"
-black = "^25.1.0"
-isort = "^6.0.1"
 litellm = {extras = ["proxy"], version = "^1.0.0"}
 aiohttp = "^3.12.15"
 
@@ -26,16 +24,16 @@ ipykernel = "^6.29.5"
 pytest = "^8.4.1"
 pytest-asyncio = "^1.0.0"
 
-# Black configuration to enforce 120-character line length
 pre-commit = "^4.3.0"
-[tool.black]
+ruff = "^0.5.7"
+
+[tool.ruff]
 line-length = 120
 
-[tool.isort]
-profile = "black"
-line_length = 120
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-

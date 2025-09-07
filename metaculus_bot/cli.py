@@ -10,7 +10,12 @@ from forecasting_tools import MetaculusApi
 # NOTE: TemplateForecaster is still defined in main.py during the first refactor phase.
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
-from metaculus_bot.llm_configs import FORECASTER_LLMS, PARSER_LLM, RESEARCHER_LLM, SUMMARIZER_LLM
+from metaculus_bot.llm_configs import (
+    FORECASTER_LLMS,
+    PARSER_LLM,
+    RESEARCHER_LLM,
+    SUMMARIZER_LLM,
+)
 
 
 def main() -> None:

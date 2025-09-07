@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Test real ensemble prediction aggregation."""
 
-import numpy as np
-
 from metaculus_bot.correlation_analysis import CorrelationAnalyzer
 
 

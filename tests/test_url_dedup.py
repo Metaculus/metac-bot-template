@@ -1,8 +1,9 @@
 from datetime import datetime
 
-import pytest
-
-from metaculus_bot.research_providers import _dedup_articles_by_url, _normalize_url_for_dedup
+from metaculus_bot.research_providers import (
+    _dedup_articles_by_url,
+    _normalize_url_for_dedup,
+)
 
 
 class DummyArticle:

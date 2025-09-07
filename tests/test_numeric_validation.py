@@ -17,7 +17,14 @@ from metaculus_bot.numeric_validation import (
 )
 
 
-def _make_question(open_upper=False, open_lower=False, lower=0.0, upper=100.0, zero_point=None, cdf_size=None):
+def _make_question(
+    open_upper=False,
+    open_lower=False,
+    lower=0.0,
+    upper=100.0,
+    zero_point=None,
+    cdf_size=None,
+):
     return SimpleNamespace(
         open_upper_bound=open_upper,
         open_lower_bound=open_lower,

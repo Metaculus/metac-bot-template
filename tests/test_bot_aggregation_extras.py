@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,7 +8,14 @@ from main import TemplateForecaster
 
 @pytest.mark.asyncio
 async def test_bot_binary_aggregate_rounding():
-    bot = TemplateForecaster(llms={"default": "mock", "parser": "mock", "researcher": "mock", "summarizer": "mock"})
+    bot = TemplateForecaster(
+        llms={
+            "default": "mock",
+            "parser": "mock",
+            "researcher": "mock",
+            "summarizer": "mock",
+        }
+    )
     preds = [0.3331, 0.3332]
     q = MagicMock(spec=BinaryQuestion)
     agg = await bot._aggregate_predictions(preds, q)

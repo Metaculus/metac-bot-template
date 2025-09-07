@@ -5,8 +5,6 @@ Tracks inter-model correlations to optimize ensemble composition by balancing
 performance with diversity.
 """
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
@@ -14,8 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
-from forecasting_tools.data_models.questions import MetaculusQuestion
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -102,9 +99,11 @@ class CorrelationAnalyzer:
         self.predictions: List[ModelPrediction] = []
         self.benchmarks: List[BenchmarkForBot] = []
         self._model_stats_cache: Optional[Dict[str, Dict[str, float]]] = None
-        self._baseline_score_cache: Dict[Tuple[int, str], Tuple[float, bool]] = (
-            {}
-        )  # (q_id, q_type) -> (score, diagnostics_logged)
+        self._baseline_score_cache: Dict[
+            Tuple[int, str], Tuple[float, bool]
+        ] = {}  # (q_id, q_type) -> (score, diagnostics_logged)
+        # Map cleaned model names to benchmark objects for later filtering (e.g., exclude stacking bots)
+        self._model_name_to_benchmark: Dict[str, BenchmarkForBot] = {}
 
     def add_benchmark_results(self, benchmarks: List[BenchmarkForBot]) -> None:
         """Extract predictions from benchmark results."""
@@ -115,6 +114,8 @@ class CorrelationAnalyzer:
 
         for benchmark in benchmarks:
             model_name = self._extract_model_name(benchmark)
+            # Track the mapping for later filtering
+            self._model_name_to_benchmark[model_name] = benchmark
 
             for report in benchmark.forecast_reports:
                 # Convert prediction to float for correlation analysis
@@ -131,6 +132,25 @@ class CorrelationAnalyzer:
                 self.predictions.append(prediction)
 
         logger.info(f"Loaded {len(self.predictions)} predictions from {len(benchmarks)} models")
+
+    def _is_stacking_benchmark(self, benchmark: Optional[BenchmarkForBot]) -> bool:
+        """Return True if the provided benchmark used STACKING aggregation.
+
+        Single canonical detection: forecast_bot_config['aggregation_strategy'] == 'stacking'
+        (supports enum-like objects with .value or plain strings).
+        """
+        if benchmark is None:
+            return False
+        try:
+            cfg = getattr(benchmark, "forecast_bot_config", {}) or {}
+            strat = cfg.get("aggregation_strategy")
+            if hasattr(strat, "value"):
+                strat = strat.value
+            if isinstance(strat, str):
+                return strat.lower() == "stacking"
+        except Exception:
+            pass
+        return False
 
     def calculate_correlation_matrix(self) -> CorrelationMatrix:
         """Calculate Pearson and Spearman correlations between all model pairs."""
@@ -244,7 +264,7 @@ class CorrelationAnalyzer:
                             try:
                                 corr_val, _ = pearsonr(components1, components2)
                                 corr = corr_val if not np.isnan(corr_val) else 0.0
-                            except:
+                            except Exception:
                                 corr = 0.0
                         else:
                             corr = 0.0
@@ -290,11 +310,19 @@ class CorrelationAnalyzer:
         self,
         max_ensemble_size: int = 5,
         max_cost_per_question: float = 1.0,
-        min_performance: float = 10.0,
+        min_performance: float = -100.0,
         use_component_analysis: bool = True,
     ) -> List[EnsembleCandidate]:
         """Find optimal ensemble configurations using performance + correlation data."""
         model_stats = self._calculate_model_statistics()
+
+        # Exclude stacking bots from ensemble candidates using a single detection path
+        if self._model_name_to_benchmark:
+            model_stats = {
+                name: stats
+                for name, stats in model_stats.items()
+                if not self._is_stacking_benchmark(self._model_name_to_benchmark.get(name))
+            }
 
         # Use component-wise analysis for mixed question types if available
         if use_component_analysis and self._has_mixed_question_types():
@@ -338,7 +366,7 @@ class CorrelationAnalyzer:
             simple_name = benchmark.name.strip()
             # Check if it's a simple model name without complex parsing
             if (
-                simple_name and not "|" in simple_name and not " " in simple_name and len(simple_name.split("-")) <= 3
+                simple_name and "|" not in simple_name and " " not in simple_name and len(simple_name.split("-")) <= 3
             ):  # Simple model names like "qwen3-235b"
                 return simple_name
 
@@ -500,13 +528,17 @@ class CorrelationAnalyzer:
             try:
                 # Sort by option name for consistency across models
                 sorted_options = sorted(
-                    prediction.predicted_options, key=lambda opt: getattr(opt, "option", "") or str(opt)
+                    prediction.predicted_options,
+                    key=lambda opt: getattr(opt, "option", "") or str(opt),
                 )
                 option_probs = [float(getattr(opt, "probability", 0)) for opt in sorted_options]
                 return ("multiple_choice", option_probs)
             except (TypeError, AttributeError):
                 # Handle case where predicted_options is not iterable (e.g., in tests)
-                return ("multiple_choice", [0.5, 0.5])  # Default equal probability for 2 options
+                return (
+                    "multiple_choice",
+                    [0.5, 0.5],
+                )  # Default equal probability for 2 options
 
         # Numeric questions: extract all percentiles
         if (
@@ -546,7 +578,10 @@ class CorrelationAnalyzer:
             # Fallback for numeric with only median
             try:
                 median_val = float(prediction.median)
-                return ("numeric", [median_val] * 6)  # Repeat median for all percentiles
+                return (
+                    "numeric",
+                    [median_val] * 6,
+                )  # Repeat median for all percentiles
             except (TypeError, ValueError):
                 # Handle case where median is a Mock or invalid
                 return ("numeric", [0.0] * 6)
@@ -678,7 +713,6 @@ class CorrelationAnalyzer:
 
     def _simulate_ensemble_performance(self, models: List[str], aggregation_strategy: str) -> float:
         """Simulate ensemble performance by aggregating actual model predictions and scoring them properly."""
-        import math
         from types import SimpleNamespace
 
         from metaculus_bot.scoring_patches import (
@@ -698,7 +732,11 @@ class CorrelationAnalyzer:
                         # Only attach binary community pred; MC/numeric pull CP from api_json during scoring
                         q_type_tmp = self._get_question_type(report)
                         bin_cp = (
-                            getattr(report.question, "community_prediction_at_access_time", None)
+                            getattr(
+                                report.question,
+                                "community_prediction_at_access_time",
+                                None,
+                            )
                             if q_type_tmp == "binary"
                             else None
                         )
@@ -853,7 +891,11 @@ class CorrelationAnalyzer:
         return "binary"
 
     def _aggregate_predictions(
-        self, individual_preds: Dict[str, Any], models: List[str], question_type: str, aggregation_strategy: str
+        self,
+        individual_preds: Dict[str, Any],
+        models: List[str],
+        question_type: str,
+        aggregation_strategy: str,
     ) -> float:
         """Aggregate individual model predictions based on question type and strategy."""
         if question_type == "binary":
@@ -876,7 +918,10 @@ class CorrelationAnalyzer:
                 raise ValueError("Multiple choice prediction missing predicted_options")
 
             # Sort options by name for consistency
-            sorted_options = sorted(first_pred.predicted_options, key=lambda opt: getattr(opt, "option_name", str(opt)))
+            sorted_options = sorted(
+                first_pred.predicted_options,
+                key=lambda opt: getattr(opt, "option_name", str(opt)),
+            )
             option_names = [getattr(opt, "option_name", str(opt)) for opt in sorted_options]
 
             # Aggregate probabilities for each option
@@ -1000,7 +1045,7 @@ class CorrelationAnalyzer:
             report.append("## Question Type Distribution")
             for q_type, count in sorted(type_counts.items()):
                 report.append(f"- **{q_type.title()}**: {count} questions")
-            report.append(f"- **Analysis Method**: Component-wise correlation (improved for mixed types)\n")
+            report.append("- **Analysis Method**: Component-wise correlation (improved for mixed types)\n")
 
         # Model Performance Summary
         report.append("## Individual Model Performance")
@@ -1032,7 +1077,9 @@ class CorrelationAnalyzer:
         # Show top 5 model combinations with both aggregation strategies
         combination_count = 0
         for models_key, ensembles in sorted(
-            ensemble_groups.items(), key=lambda x: max(e.ensemble_score for e in x[1]), reverse=True
+            ensemble_groups.items(),
+            key=lambda x: max(e.ensemble_score for e in x[1]),
+            reverse=True,
         ):
             if combination_count >= 5:
                 break

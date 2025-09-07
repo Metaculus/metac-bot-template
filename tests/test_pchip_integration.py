@@ -32,7 +32,11 @@ class TestPchipIntegration:
 
         # Create a mock question
         question = SimpleNamespace(
-            open_upper_bound=False, open_lower_bound=False, upper_bound=100.0, lower_bound=0.0, zero_point=None
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
         )
 
         # Generate PCHIP CDF
@@ -77,7 +81,11 @@ class TestPchipIntegration:
         ]
 
         question = SimpleNamespace(
-            open_upper_bound=False, open_lower_bound=False, upper_bound=100.0, lower_bound=0.0, zero_point=None
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
         )
 
         # Generate PCHIP CDF
@@ -106,7 +114,11 @@ class TestPchipIntegration:
 
         # Generate PCHIP CDF (simulating our main.py logic)
         question = SimpleNamespace(
-            open_upper_bound=False, open_lower_bound=False, upper_bound=100.0, lower_bound=0.0, zero_point=None
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
         )
 
         pchip_percentiles = percentiles_to_pchip_format(percentiles)
@@ -175,7 +187,11 @@ class TestPchipIntegration:
         ]
 
         question = SimpleNamespace(
-            open_upper_bound=False, open_lower_bound=False, upper_bound=100.0, lower_bound=0.0, zero_point=None
+            open_upper_bound=False,
+            open_lower_bound=False,
+            upper_bound=100.0,
+            lower_bound=0.0,
+            zero_point=None,
         )
 
         # This should work with PCHIP even though values are close

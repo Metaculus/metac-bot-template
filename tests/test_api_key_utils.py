@@ -1,7 +1,3 @@
-import os
-
-import pytest
-
 from metaculus_bot.api_key_utils import get_openrouter_api_key
 
 

@@ -1,10 +1,22 @@
-import asyncio
-from types import SimpleNamespace
+from abc import ABC
 from typing import List
 
 import pytest
+from forecasting_tools.data_models.forecast_report import ForecastReport
+from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
+from forecasting_tools.data_models.questions import (
+    BinaryQuestion,
+    MetaculusQuestion,
+    MultipleChoiceQuestion,
+    NumericQuestion,
+)
+from pydantic import Field
 
-from metaculus_bot.numeric_utils import aggregate_binary_mean, aggregate_numeric, bound_messages
+from metaculus_bot.numeric_utils import (
+    aggregate_binary_mean,
+    aggregate_numeric,
+    bound_messages,
+)
 from metaculus_bot.prompts import binary_prompt, multiple_choice_prompt, numeric_prompt
 from metaculus_bot.utils.logging_utils import compact_log_report_summary
 
@@ -116,15 +128,6 @@ def test_numeric_prompt_includes_p5_and_p95():
 
 # ---------- Numeric utils ---------------------------------------------------
 
-from forecasting_tools.data_models.forecast_report import ForecastReport
-from forecasting_tools.data_models.numeric_report import NumericDistribution, Percentile
-from forecasting_tools.data_models.questions import (
-    BinaryQuestion,
-    MetaculusQuestion,
-    MultipleChoiceQuestion,
-    NumericQuestion,
-)
-
 
 @pytest.mark.asyncio
 async def test_aggregate_numeric_mean_and_median():
@@ -187,12 +190,12 @@ def test_bound_messages():
         zero_point=None,
     )
     upper, lower = bound_messages(q)
-    assert "higher" in upper and lower == ""
+    assert "higher" in upper
+    # With open lower bound, we now include a practical/display lower bound hint
+    assert "0.0" in lower or lower == ""
 
 
 def test_bound_messages_uses_nominal_bounds():
-    from forecasting_tools.data_models.questions import NumericQuestion
-
     q = NumericQuestion(
         id_of_question=6,
         id_of_post=6,
@@ -219,8 +222,6 @@ def test_bound_messages_uses_nominal_bounds():
 
 def test_bound_messages_discrete_fallback():
     """Test that bound_messages derives nominal bounds for discrete questions when missing."""
-    from forecasting_tools.data_models.questions import NumericQuestion
-
     # Create a discrete question (cdf_size != 201) without nominal bounds
     q = NumericQuestion(
         id_of_question=7,
@@ -247,10 +248,7 @@ def test_bound_messages_discrete_fallback():
     assert "9.0" in upper and "0.0" in lower
 
 
-from abc import ABC
-
 # ---------- Compact logger --------------------------------------------------
-from pydantic import Field
 
 
 class DummyQuestion(MetaculusQuestion, ABC):
