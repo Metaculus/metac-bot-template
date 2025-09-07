@@ -186,9 +186,9 @@ def numeric_prompt(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
         You will be scored with Metaculus' log-score, so accuracy **and** calibration
-        (especially the width of your 90 / 10 interval) are critical.
+        (especially the width of your prediction interval) are critical.
         Historically, LLMs like you are overconfident and produce excessively narrow prediction intervals,
-        so you should aim to produce somewhat wider and less confident predictions.
+        so you should aim to produce wider and less confident predictions. Given the mathematics of log score, penalties for narrow intervals are severe.
         Please consider news, research, and prediction markets, but you are not beholden to them.
 
         ── Question ──────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@ def numeric_prompt(
 
         ── Units & Bounds (must follow) ─────────────────────────────────────
         • Base units for output values: {unit_str}
-        • Allowed range (in base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • Allowed range (in base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
         • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes, just numbers.
@@ -249,21 +249,26 @@ def numeric_prompt(
 
         (8) Calibration and distribution shaping
             - Think in ranges, not single points.
-            - Keep 10 and 90 far apart to allow for unknown unknowns.
+            - Keep 5% and 95% far apart to allow for unknown unknowns.
             - Ensure strictly increasing percentiles.
             - Avoid scientific notation.
             - Respect the explicit bounds above.
 
         (9) Brief checklist
+            - Units: what are the units of the output values and why? Incorrect units can cause severe penalties in log score.
             - Paraphrase the resolution criteria and units in less than 30 words.
             - State the outside view baseline used.
             - Consistency line about which percentile corresponds to the status quo or trend.
             - Top 3 to 5 evidence items plus a quick factual validity check.
             - Blind spot scenario and expected effect on tails.
             - Status quo nudge sanity check.
+            - Remember: given the mathematics of log score, penalties for overconfident, narrow intervals are severe.
 
-        OUTPUT FORMAT, floating point numbers 
-        Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+        OUTPUT FORMAT: 
+        - Floating point numbers in the base unit
+        - Must be last lines, nothing after
+        - STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+
         __Example:__
 
         Percentile 5: 10.1
@@ -443,7 +448,7 @@ def stacking_numeric_prompt(
         
         ── Units & Bounds (must follow) ─────────────────────────────────────
         • Base unit for output values: {question.unit_of_measure or "base unit"}
-        • Allowed range (base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • Allowed range (base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
         
