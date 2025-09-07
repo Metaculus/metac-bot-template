@@ -14,8 +14,7 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from metaculus_bot.constants import NUM_SPREAD_DELTA_MULT, NUM_VALUE_EPSILON_MULT
-
-from .numeric_config import (
+from metaculus_bot.numeric_config import (
     CLUSTER_DETECTION_ATOL,
     CLUSTER_SPREAD_BASE_DELTA,
     COUNT_LIKE_DELTA_MULTIPLIER,

@@ -4,8 +4,8 @@ from typing import List, Sequence
 
 from forecasting_tools import PredictedOptionList
 
-from .constants import MC_PROB_MAX, MC_PROB_MIN
-from .simple_types import OptionProbability
+from metaculus_bot.constants import MC_PROB_MAX, MC_PROB_MIN
+from metaculus_bot.simple_types import OptionProbability
 
 
 def _normalize_name(name: str) -> str:

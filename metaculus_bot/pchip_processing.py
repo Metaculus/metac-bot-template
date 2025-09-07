@@ -14,8 +14,7 @@ from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from metaculus_bot.constants import NUM_MAX_STEP, NUM_MIN_PROB_STEP, NUM_RAMP_K_FACTOR
-
-from .numeric_config import (
+from metaculus_bot.numeric_config import (
     PCHIP_CDF_POINTS,
 )
 

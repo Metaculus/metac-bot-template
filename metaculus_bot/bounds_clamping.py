@@ -11,7 +11,7 @@ from typing import List, Tuple
 from forecasting_tools.data_models.numeric_report import Percentile
 from forecasting_tools.data_models.questions import NumericQuestion
 
-from .numeric_config import BOUNDARY_SAFETY_MARGIN, MIN_BOUNDARY_DISTANCE
+from metaculus_bot.numeric_config import BOUNDARY_SAFETY_MARGIN, MIN_BOUNDARY_DISTANCE
 
 logger = logging.getLogger(__name__)
 

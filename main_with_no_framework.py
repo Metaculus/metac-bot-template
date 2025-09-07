@@ -213,7 +213,7 @@ def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
     for post_id, questions in post_dict.items():
         for question in questions:
             if question.get("status") == "open":
-                print(f"ID: {question['id']}\nQ: {question['title']}\nCloses: " f"{question['scheduled_close_time']}")
+                print(f"ID: {question['id']}\nQ: {question['title']}\nCloses: {question['scheduled_close_time']}")
                 open_question_id_post_id.append((question["id"], post_id))
 
     return open_question_id_post_id
@@ -727,7 +727,7 @@ async def get_numeric_gpt_prediction(question_details: dict, num_runs: int) -> t
         rationale = await call_llm(content)
         percentile_values = extract_percentiles_from_response(rationale)
 
-        comment = f"Extracted Percentile_values: {percentile_values}\n\nGPT's Answer: " f"{rationale}\n\n\n"
+        comment = f"Extracted Percentile_values: {percentile_values}\n\nGPT's Answer: {rationale}\n\n\n"
 
         cdf = generate_continuous_cdf(
             percentile_values,
@@ -897,7 +897,7 @@ async def get_multiple_choice_gpt_prediction(
 
         option_probabilities = extract_option_probabilities_from_response(rationale, options)
 
-        comment = f"EXTRACTED_PROBABILITIES: {option_probabilities}\n\nGPT's Answer: " f"{rationale}\n\n\n"
+        comment = f"EXTRACTED_PROBABILITIES: {option_probabilities}\n\nGPT's Answer: {rationale}\n\n\n"
 
         probability_yes_per_category = generate_multiple_choice_forecast(options, option_probabilities)
         return probability_yes_per_category, comment

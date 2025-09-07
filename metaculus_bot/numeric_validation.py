@@ -11,7 +11,7 @@ from typing import List, Tuple
 from forecasting_tools.data_models.numeric_report import Percentile
 from pydantic import ValidationError
 
-from .numeric_config import EXPECTED_PERCENTILE_COUNT, STANDARD_PERCENTILES
+from metaculus_bot.numeric_config import EXPECTED_PERCENTILE_COUNT, STANDARD_PERCENTILES
 
 logger = logging.getLogger(__name__)
 
