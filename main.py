@@ -22,10 +22,8 @@ from forecasting_tools import (
     SmartSearcher,
     clean_indents,
     structure_output,
-    ApiFilter,
 )
 
-import json
 import utils
 from prompts import loader
 from prompts import loader
@@ -88,6 +86,7 @@ class WobblyBot2025Q3(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {decimal_pred}"
         )
+
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
 
     async def _run_forecast_on_multiple_choice(
@@ -124,6 +123,7 @@ class WobblyBot2025Q3(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {predicted_option_list}"
         )
+
         return ReasonedPrediction(
             prediction_value=predicted_option_list, reasoning=reasoning
         )
@@ -157,6 +157,7 @@ class WobblyBot2025Q3(ForecastBot):
         logger.info(
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}"
         )
+        
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
     def _create_upper_and_lower_bound_messages(
@@ -284,6 +285,7 @@ class WobblyBot2025Q3(ForecastBot):
                 ),
                 Percentile(percentile=1, value=question.upper_bound),
             ]
+
         return NumericDistribution.from_question(percentile_list, question)
 
     def make_default_multiple_choice_prediction(self, question: MultipleChoiceQuestion):
@@ -311,12 +313,12 @@ class WobblyBot2025Q3(ForecastBot):
         try:
             with open(filepath, "r") as f:
                 for line in f:
-                    # Skip empty lines
                     if line.strip():
                         key, value = line.strip().split(":", 1)
                         data[key] = value
         except FileNotFoundError:
             logger.error(f"'{filepath}' not found. Starting with an empty dataset")
+
         return data
 
     @staticmethod
