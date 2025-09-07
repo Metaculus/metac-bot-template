@@ -41,47 +41,15 @@ class WobblyBot2025Q3(ForecastBot):
         async with self._concurrency_limiter:
             researcher = self.get_llm("researcher")
 
-            # prompt = clean_indents(
-            #     f"""
-            #     You are an assistant to a superforecaster.
-            #     The superforecaster will give you a question they intend to forecast on.
-            #     You do not produce forecasts yourself.
-
-            #     Question:
-            #     {question.question_text}
-
-            #     This question's outcome will be determined by the specific criteria below:
-            #     {question.resolution_criteria}
-
-            #     {question.fine_print}
-
-            #     Your most important job is to search polymarket.com, then kalshi.com, then metaculus.com, then manifold.markets for their predictions and report their predictions as percentages. If a question exists on those websites, the percentages there will always be available and you should report their value.
-                
-            #     You'll always be able to find the same question on metaculus.com because you're given a question from there, so keep trying until you find it.
-                
-            #     If it's a question about a sporting event, also search betting markets such as betfair.com and oddschecker.com and calculate the implied probabilities from the odds.
-                
-            #     Complement by searching and reporting on other websites that could have predictions by superforecasters or other types of professional forecasts and give the values of their predictions.
-                                
-            #     Then, if applicable for this question, search and report the base rates. Your should inform how many times the event happened in the last (up to) 40 years and what the period considered was. 
-                
-            #     After that, report on the current status of the situation as of the current date.
-
-            #     Finally, generate a concise but detailed rundown of the most relevant recent news, including if the question would resolve Yes or No based on current information. Report as many news as possible.
-                
-            #     For each task and for each one of the 6 websites listed before, report their predictions separately or report that you couldn't find anything there or that they're not applicable for the question.
-
-            #     Explain how you're following each of those steps.
-
-            #     Finish by delivering the full final report. There won't be another follow-up prompt, so do as much as asked now.
-            #     """
-            # )
+            context = {
+                "question_text": question.question_text,
+                "resolution_criteria": question.resolution_criteria,
+                "fine_print": question.fine_print
+            }
 
             prompt = loader.load_prompt(
                 "research.yaml",
-                question_text=question.question_text,
-                resolution_criteria=question.resolution_criteria,
-                fine_print=question.fine_print
+                **context
             )
 
             research = ""
