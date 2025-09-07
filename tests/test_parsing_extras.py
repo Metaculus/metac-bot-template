@@ -123,7 +123,10 @@ async def test_parser_llm_used_for_structured_output():
         if out_type.__name__ == "list":  # list[Percentile]
             return [
                 Percentile(value=v, percentile=p)
-                for v, p in zip([1, 2, 3, 4, 5, 6, 7, 8], [0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95])
+                for v, p in zip(
+                    [0.5, 1, 2, 4, 6, 7, 8, 10, 12, 13, 14],
+                    [0.025, 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95, 0.975],
+                )
             ]
         return MagicMock()
 

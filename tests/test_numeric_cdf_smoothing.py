@@ -145,14 +145,17 @@ class TestNumericCDFSmoothing:
         mock_format.return_value = {}
 
         percentiles = [
+            Percentile(percentile=0.025, value=3.0),
             Percentile(percentile=0.05, value=5.0),
             Percentile(percentile=0.10, value=10.0),
             Percentile(percentile=0.20, value=20.0),
             Percentile(percentile=0.40, value=40.0),
+            Percentile(percentile=0.50, value=50.0),
             Percentile(percentile=0.60, value=60.0),
             Percentile(percentile=0.80, value=80.0),
             Percentile(percentile=0.90, value=90.0),
             Percentile(percentile=0.95, value=95.0),
+            Percentile(percentile=0.975, value=97.0),
         ]
 
         caplog.clear()
@@ -172,18 +175,21 @@ class TestNumericCDFSmoothing:
         q = _make_question(open_upper=False, open_lower=False)
 
         good = np.linspace(0.0, 1.0, 201).tolist()
-        mock_generate.return_value = good
+        mock_generate.return_value = (good, False)
         mock_format.return_value = {}
 
         percentiles = [
+            Percentile(percentile=0.025, value=3.0),
             Percentile(percentile=0.05, value=5.0),
             Percentile(percentile=0.10, value=10.0),
             Percentile(percentile=0.20, value=20.0),
             Percentile(percentile=0.40, value=40.0),
+            Percentile(percentile=0.50, value=50.0),
             Percentile(percentile=0.60, value=60.0),
             Percentile(percentile=0.80, value=80.0),
             Percentile(percentile=0.90, value=90.0),
             Percentile(percentile=0.95, value=95.0),
+            Percentile(percentile=0.975, value=97.0),
         ]
 
         caplog.clear()

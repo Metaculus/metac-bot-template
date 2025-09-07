@@ -186,26 +186,29 @@ def numeric_prompt(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
         You will be scored with Metaculus' log-score, so accuracy **and** calibration
-        (especially the width of your 90 / 10 interval) are critical.
+        (especially the width of your prediction interval) are critical.
         Historically, LLMs like you are overconfident and produce excessively narrow prediction intervals,
-        so you should aim to produce somewhat wider and less confident predictions.
+        so you should aim to produce wider and less confident predictions. Given the mathematics of log score, penalties for narrow intervals are severe.
         Please consider news, research, and prediction markets, but you are not beholden to them.
 
-        ── Question ──────────────────────────────────────────────────────────
+        ── Question ──
         {question.question_text}
 
-        ── Context ───────────────────────────────────────────────────────────
+        ── Context ──
         {question.background_info}
 
         {question.resolution_criteria}
         {question.fine_print}
 
-        ── Units & Bounds (must follow) ─────────────────────────────────────
+        ── Units & Bounds (must follow) ──
         • Base units for output values: {unit_str}
-        • Allowed range (in base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • Allowed range (in base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
-        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
-        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes, just numbers.
+        • All 11 percentiles you output must be numeric values in the base unit and fall within that range.
+        • If your reasoning uses billions/millions/thousands, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes or scientific notation, just numbers.
+
+        ── Scoring Rule ──
+        Metaculus continuous questions use a log density score: score = ln f(x*), where f is your forecasted PDF evaluated at the realized value x*. A uniform 0.01 floor is added to every PDF to avoid −∞; excluding the truth yields ln(0.01) ≈ -4.605, while sharp accuracy is rewarded (e.g., f(x*) = 10 → +2.303). Probability mass below/above the bounds is scored as a binary event;  PDF sharpness is capped (about 0.01 ≤ f ≤ ~35), so spiky tricks don't pay. This is a proper scoring rule—to maximize expected score, report your true uncertainty and resist overconfident, narrow shapes.
 
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
@@ -249,31 +252,39 @@ def numeric_prompt(
 
         (8) Calibration and distribution shaping
             - Think in ranges, not single points.
-            - Keep 10 and 90 far apart to allow for unknown unknowns.
+            - Keep 2.5% and 97.5% far apart to allow for unknown unknowns.
             - Ensure strictly increasing percentiles.
             - Avoid scientific notation.
             - Respect the explicit bounds above.
 
         (9) Brief checklist
+            - Units: what are the units of the output values and why? Incorrect units can cause severe penalties in log score.
             - Paraphrase the resolution criteria and units in less than 30 words.
             - State the outside view baseline used.
             - Consistency line about which percentile corresponds to the status quo or trend.
             - Top 3 to 5 evidence items plus a quick factual validity check.
             - Blind spot scenario and expected effect on tails.
             - Status quo nudge sanity check.
+            - Remember: given the mathematics of log score, penalties for overconfident, narrow intervals are severe.
 
-        OUTPUT FORMAT, floating point numbers 
-        Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+        OUTPUT FORMAT: 
+        - Floating point numbers in the base unit
+        - Must be last lines, nothing after
+        - STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
+
         __Example:__
 
+        Percentile 2.5: 8.0
         Percentile 5: 10.1
         Percentile 10: 12.3
         Percentile 20: 23.4
         Percentile 40: 34.5
+        Percentile 50: 45.6
         Percentile 60: 56.7
         Percentile 80: 67.8
         Percentile 90: 78.9
         Percentile 95: 89.0
+        Percentile 97.5: 93.0
         """
     )
 
@@ -443,9 +454,12 @@ def stacking_numeric_prompt(
         
         ── Units & Bounds (must follow) ─────────────────────────────────────
         • Base unit for output values: {question.unit_of_measure or "base unit"}
-        • Allowed range (base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
-        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • Allowed range (base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
+        • All 11 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
+
+        ── Scoring Rule ──
+        Metaculus continuous questions use a log density score: score = ln f(x*), where f is your forecasted PDF evaluated at the realized value x*. A uniform 0.01 floor is added to every PDF to avoid −∞; excluding the truth yields ln(0.01) ≈ -4.605, while sharp accuracy is rewarded (e.g., f(x*) = 10 → +2.303). Probability mass below/above the bounds is scored as a binary event;  PDF sharpness is capped (about 0.01 ≤ f ≤ ~35), so spiky tricks don't pay. This is a proper scoring rule—to maximize expected score, report your true uncertainty and resist overconfident, narrow shapes.
         
         ── Intelligence Briefing ────────────────────────────────
         {research}
@@ -489,19 +503,22 @@ def stacking_numeric_prompt(
            • Does my final distribution appropriately reflect epistemic uncertainty?
            • Are my tails justified given the potential for unknown unknowns?
         
-        Remember: Think in ranges, not points. Keep 10th and 90th percentiles appropriately wide.
+        Remember: Think in ranges, not points. Keep 2.5th and 97.5th percentiles appropriately wide.
         Ensure strictly increasing percentiles and respect the bounds above.
         
         OUTPUT FORMAT, floating point numbers 
         Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
         
+        Percentile 2.5: [value]
         Percentile 5: [value]
         Percentile 10: [value]
         Percentile 20: [value]
         Percentile 40: [value]
+        Percentile 50: [value]
         Percentile 60: [value]
         Percentile 80: [value]
         Percentile 90: [value]
         Percentile 95: [value]
+        Percentile 97.5: [value]
         """
     )

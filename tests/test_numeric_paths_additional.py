@@ -59,12 +59,12 @@ async def test_pchip_fallback_success(mock_format, mock_generate, caplog):
     f = _make_forecaster()
     q = _make_question()
 
-    # Valid 8-percentile set
+    # Valid 11-percentile set
     plist = [
         Percentile(percentile=p, value=v)
         for p, v in zip(
-            [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
-            [5, 10, 20, 40, 60, 80, 90, 95],
+            [0.025, 0.05, 0.10, 0.20, 0.40, 0.50, 0.60, 0.80, 0.90, 0.95, 0.975],
+            [2.5, 5, 10, 20, 40, 50, 60, 80, 90, 95, 97.5],
         )
     ]
 
@@ -91,7 +91,10 @@ async def test_pchip_fallback_failure_diagnostics(mock_format, mock_generate, ca
 
     plist = [
         Percentile(percentile=p, value=v)
-        for p, v in zip([0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95], [1, 1, 1, 1, 1, 1, 1, 1])
+        for p, v in zip(
+            [0.025, 0.05, 0.10, 0.20, 0.40, 0.50, 0.60, 0.80, 0.90, 0.95, 0.975],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        )
     ]
 
     # Force fallback NumericDistribution.cdf to raise via a fake class
@@ -136,8 +139,8 @@ async def test_smoothing_respects_open_bounds(mock_format, caplog):
         plist = [
             Percentile(percentile=p, value=v)
             for p, v in zip(
-                [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
-                [5, 10, 20, 40, 60, 80, 90, 95],
+                [0.025, 0.05, 0.10, 0.20, 0.40, 0.50, 0.60, 0.80, 0.90, 0.95, 0.975],
+                [2.5, 5, 10, 20, 40, 50, 60, 80, 90, 95, 97.5],
             )
         ]
         with patch("main.structure_output", return_value=plist):
@@ -160,12 +163,12 @@ async def test_numeric_percentile_set_validation():
     f = _make_forecaster()
     q = _make_question()
 
-    # 8 items but wrong set (0.50 instead of 0.60)
+    # 11 items but wrong set (0.03 instead of 0.025)
     bad = [
         Percentile(percentile=p, value=v)
         for p, v in zip(
-            [0.05, 0.10, 0.20, 0.40, 0.50, 0.80, 0.90, 0.95],
-            [5, 10, 20, 40, 50, 80, 90, 95],
+            [0.03, 0.05, 0.10, 0.20, 0.40, 0.50, 0.60, 0.80, 0.90, 0.95, 0.975],
+            [3, 5, 10, 20, 40, 50, 60, 80, 90, 95, 97.5],
         )
     ]
 
@@ -183,13 +186,13 @@ async def test_discrete_zero_point_override(mock_format, mock_generate):
     q = _make_question(cdf_size=101, zero_point=0.0)
 
     # Return a valid CDF to avoid fallback
-    mock_generate.return_value = np.linspace(0.0, 1.0, 201).tolist()
+    mock_generate.return_value = (np.linspace(0.0, 1.0, 201).tolist(), False)
 
     plist = [
         Percentile(percentile=p, value=v)
         for p, v in zip(
-            [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95],
-            [5, 10, 20, 40, 60, 80, 90, 95],
+            [0.025, 0.05, 0.10, 0.20, 0.40, 0.50, 0.60, 0.80, 0.90, 0.95, 0.975],
+            [2.5, 5, 10, 20, 40, 50, 60, 80, 90, 95, 97.5],
         )
     ]
 
@@ -211,14 +214,17 @@ def test_lower_bound_adjacent_cluster(caplog):
         upper_bound=100.0,
     )
     raw = [
+        Percentile(percentile=0.025, value=0.0),
         Percentile(percentile=0.05, value=0.0),
         Percentile(percentile=0.10, value=0.0),
-        Percentile(percentile=0.20, value=0.0),
-        Percentile(percentile=0.40, value=0.1),
-        Percentile(percentile=0.60, value=10.0),
+        Percentile(percentile=0.20, value=0.1),
+        Percentile(percentile=0.40, value=5.0),
+        Percentile(percentile=0.50, value=10.0),
+        Percentile(percentile=0.60, value=15.0),
         Percentile(percentile=0.80, value=20.0),
         Percentile(percentile=0.90, value=30.0),
         Percentile(percentile=0.95, value=40.0),
+        Percentile(percentile=0.975, value=50.0),
     ]
 
     caplog.clear()
