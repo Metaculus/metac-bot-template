@@ -35,7 +35,7 @@ template: |
   Explain how you're following each of those steps.
 
   {% if has_cp %}
-  Make sure your prediction is not below {lower_bound} and not above {upper_bound}.
+  Make sure your prediction is not below {{ lower_bound }} and not above {{ upper_bound }}.
   {% endif %}
 
   You write your rationale remembering that good forecasters put large weight on the status quo outcome since the world changes slowly most of the time.
