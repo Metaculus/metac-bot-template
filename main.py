@@ -100,48 +100,17 @@ class WobblyBot2025Q3(ForecastBot):
     async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job. Think very carefully before answering.
+        context = utils.get_prompt_context()
+        context.update({
+            "background_info": question.background_info,
+            "research": research,
+            "date_now": datetime.now().strftime("%Y-%m-%d"),
+            "options": question.options
+        })
 
-            Your interview question is:
-            {question.question_text}
-
-            The options are: {question.options}
-
-            Background:
-            {question.background_info}
-
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Your research assistant says:
-            {research}
-
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in the most probable choices.
-            
-            If the research was able to find probabilities from prediction markets, your prediction should mostly be based on that, with few adjustements to account for recent news.
-            If data from prediction markets was not available, make your prediction based on the base rates, if available, and your independent rationale.
-            Less importantly, also take into account all the recent news from the report.
-
-            If base rates and prediction markets data are unavailable, make your prediction based on the recent news.
-            Good forecasters also leave room for unknown unknowns, so make sure to never predict anything below 2% or above 98% for each of the options.
-            Explain how you're following each of those steps.
-            
-            You write your rationale remembering that good forecasters put large weight on the status quo outcome since the world changes slowly most of the time.
-
-            The last thing you write is your final probabilities for the N options in this order {question.options} as:
-            Option_A: Probability_A
-            Option_B: Probability_B
-            ...
-            Option_N: Probability_N
-            """
+        prompt = loader.load_prompt(
+            "mcq.yaml",
+            **context
         )
 
         parsing_instructions = clean_indents(
