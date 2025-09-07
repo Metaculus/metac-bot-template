@@ -4,8 +4,10 @@ This module centralises logic for combining numeric forecasts and constructing
 user-friendly bound messages so that the core forecaster class stays small.
 """
 
-from typing import Literal, Sequence, cast
+import logging
+from typing import Literal, Sequence
 
+import numpy as np
 import pandas as pd
 from forecasting_tools import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import (
@@ -15,6 +17,9 @@ from forecasting_tools.data_models.numeric_report import (
 )
 from forecasting_tools.data_models.questions import NumericQuestion
 
+from metaculus_bot.constants import NUM_MIN_PROB_STEP, NUM_RAMP_K_FACTOR
+from metaculus_bot.pchip_processing import create_pchip_numeric_distribution
+
 from .constants import MC_PROB_MAX, MC_PROB_MIN
 
 __all__ = [
@@ -23,6 +28,9 @@ __all__ = [
     "bound_messages",
     "clamp_and_renormalize_mc",
 ]
+
+
+logger = logging.getLogger(__name__)
 
 
 def aggregate_binary_mean(predictions: Sequence[float]) -> float:
@@ -60,28 +68,77 @@ async def aggregate_numeric(
 
     if method == "median":
         # Delegate to helper from forecasting_tools – preserves previous behaviour.
+        # NOTE: For median we keep framework behaviour to minimise changes.
         return await NumericReport.aggregate_predictions(list(predictions), question)  # type: ignore[arg-type]
 
     if method != "mean":
         raise ValueError(f"Invalid aggregation method: {method}")
 
-    # ---- Mean aggregation (matches previous in-class implementation) ----
+    # ---- Mean aggregation (robust ensemble on common x-grid) ----
     numeric_predictions = list(predictions)
 
-    # We now use the full interpolated CDF for aggregation, same as the median method.
+    # Build a combined dataframe of all model CDFs (each row: {value, percentile})
     cdfs_as_dfs = [pd.DataFrame([p.model_dump() for p in pred.cdf]) for pred in numeric_predictions]
-    combined_cdf = pd.concat(cdfs_as_dfs)
-    mean_series = combined_cdf.groupby("value")["percentile"].mean()
+    combined_cdf = pd.concat(cdfs_as_dfs, ignore_index=True)
 
-    mean_cdf = [Percentile(value=cast(float, v), percentile=cast(float, p)) for v, p in mean_series.items()]
+    # Average the probability at each x, preserving the shared x-grid order
+    mean_series = combined_cdf.groupby("value", sort=True)["percentile"].mean()
+    x_vals = mean_series.index.to_numpy(dtype=float)
+    p_vals = mean_series.to_numpy(dtype=float)
 
-    return NumericDistribution(
-        declared_percentiles=mean_cdf,
-        open_upper_bound=question.open_upper_bound,
-        open_lower_bound=question.open_lower_bound,
-        # DO NOT INFER UPPER AND LOWER BOUNDS FROM THE CDF! that will break b/c each model's CDF will not be aligned.
-        upper_bound=question.upper_bound,
-        lower_bound=question.lower_bound,
+    # Validate and enforce probability-side constraints at the ensemble level
+    # 1) Clamp to [0,1]
+    p_vals = np.clip(p_vals, 0.0, 1.0)
+
+    # 2) Ensure monotonic non-decreasing
+    p_vals = np.maximum.accumulate(p_vals)
+
+    # 3) Re-pin endpoints according to open/closed bound semantics
+    if question.open_lower_bound:
+        p_vals[0] = max(p_vals[0], 0.001)
+    else:
+        p_vals[0] = 0.0
+    if question.open_upper_bound:
+        p_vals[-1] = min(p_vals[-1], 0.999)
+    else:
+        p_vals[-1] = 1.0
+
+    # 4) Enforce minimum step if necessary using a gentle ramp (mirrors PCHIP smoothing semantics)
+    diffs_before = np.diff(p_vals)
+    min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
+    if min_delta_before < NUM_MIN_PROB_STEP:
+        ramp = np.linspace(0.0, NUM_MIN_PROB_STEP * NUM_RAMP_K_FACTOR, len(p_vals))
+        p_vals = np.maximum.accumulate(p_vals + ramp)
+        # Re-pin endpoints after smoothing
+        if question.open_lower_bound:
+            p_vals[0] = max(p_vals[0], 0.001)
+        else:
+            p_vals[0] = 0.0
+        if question.open_upper_bound:
+            p_vals[-1] = min(p_vals[-1], 0.999)
+        else:
+            p_vals[-1] = 1.0
+
+        diffs_after = np.diff(p_vals)
+        min_delta_after = float(np.min(diffs_after)) if len(diffs_after) else 1.0
+        logger.warning(
+            "Ensemble CDF ramp smoothing | Q %s | URL %s | min_prob_delta_before=%.8f | min_prob_delta_after=%.8f",
+            getattr(question, "id_of_question", None),
+            getattr(question, "page_url", None),
+            min_delta_before,
+            min_delta_after,
+        )
+
+    # 5) Use the full 201-point grid as declared percentiles (preserves prior behaviour and tests)
+    declared_percentiles: list[Percentile] = [
+        Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_vals, p_vals)
+    ]
+
+    # 6) Return a PCHIP-backed NumericDistribution so downstream does not reprocess the CDF
+    return create_pchip_numeric_distribution(
+        pchip_cdf=list(map(float, p_vals)),
+        percentile_list=declared_percentiles,
+        question=question,
         zero_point=question.zero_point,
     )
 
