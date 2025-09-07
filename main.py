@@ -142,72 +142,21 @@ class WobblyBot2025Q3(ForecastBot):
         upper_bound_message, lower_bound_message = (
             self._create_upper_and_lower_bound_messages(question)
         )
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job. Think very carefully before answering
-
-            Your interview question is:
-            {question.question_text}
-
-            Background:
-            {question.background_info}
-
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Units for answer: {question.unit_of_measure if question.unit_of_measure else "Not stated (please infer this)"}
-
-            Your research assistant says:
-            {research}
-
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            Formatting Instructions:
-            - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
-            - Never use scientific notation.
-            - Always start with a smaller number (more negative if negative) and then increase from there
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The outcome if nothing changed.
-            (c) The outcome if the current trend continued.
-            (d) A brief description of an scenario that results in a low outcome.
-            (e) A brief description of an scenario that results in a high outcome.
-
-            If the research was able to find probabilities from prediction markets, your prediction should mostly be based on that, with few adjustments to account for recent news.
-            If data from prediction markets was not available, make your prediction based on the base rates, if available, and your independent rationale.
-            Less importantly, also take into account all the recent news from the report.
-
-            If base rates and prediction markets data are unavailable, make your prediction based on the recent news.
-            Good forecasters also leave room for unknown unknowns, so follow the instructions below:
-            {lower_bound_message}
-            {upper_bound_message}
-
-            Also make sure that your range is not too narrow to account for many different possible values.
-            
-            Explain how you're following each of those steps.
-
-            You write your rationale remembering that good forecasters put large weight on the status quo outcome since the world changes slowly most of the time.
-
-            The last thing you write is your final answer as:
-            "
-            Percentile 5: XX
-            Percentile 10: XX
-            Percentile 15: XX
-            Percentile 20: XX
-            Percentile 30: XX
-            Percentile 40: XX
-            Percentile 50: XX
-            Percentile 60: XX
-            Percentile 70: XX
-            Percentile 80: XX
-            Percentile 85: XX
-            Percentile 90: XX
-            Percentile 95: XX
-            "
-            """
+        context = utils.get_prompt_context()
+        context.update({
+            "background_info": question.background_info,
+            "research": research,
+            "date_now": datetime.now().strftime("%Y-%m-%d"),
+            "unit_of_measure": question.unit_of_measure,
+            "upper_bound_message": upper_bound_message,
+            "lower_bound_message": lower_bound_message
+        })
+        
+        prompt = loader.load_prompt(
+            "numeric.yaml",
+            **context
         )
+
         reasoning = await self.get_llm("forecaster", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         percentile_list: list[Percentile] = await structure_output(

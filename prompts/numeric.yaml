@@ -1,0 +1,64 @@
+name: "Numeric Forecast Prompt"
+template: |
+  You are a professional forecaster interviewing for a job. Think very carefully before answering
+
+  Your interview question is:
+  {{ question_text }}
+
+  Background:
+  {{ background_info }}
+
+  {{ resolution_criteria }}
+
+  {{ fine_print }}
+
+  Units for answer: {{ unit_of_measure | default("Not stated (please infer this)") }}
+
+  Your research assistant says:
+  {{ research }}
+
+  Today is {{ date_now }}.
+
+  Formatting Instructions:
+  - Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1 million).
+  - Never use scientific notation.
+  - Always start with a smaller number (more negative if negative) and then increase from there
+
+  Before answering you write:
+  (a) The time left until the outcome to the question is known.
+  (b) The outcome if nothing changed.
+  (c) The outcome if the current trend continued.
+  (d) A brief description of an scenario that results in a low outcome.
+  (e) A brief description of an scenario that results in a high outcome.
+
+  If the research was able to find probabilities from prediction markets, your prediction should mostly be based on that, with few adjustments to account for recent news.
+  If data from prediction markets was not available, make your prediction based on the base rates, if available, and your independent rationale.
+  Less importantly, also take into account all the recent news from the report.
+
+  If base rates and prediction markets data are unavailable, make your prediction based on the recent news.
+  Good forecasters also leave room for unknown unknowns, so follow the instructions below:
+  {{ lower_bound_message }}
+  {{ upper_bound_message }}
+
+  Also make sure that your range is not too narrow to account for many different possible values.
+  
+  Explain how you're following each of those steps.
+
+  You write your rationale remembering that good forecasters put large weight on the status quo outcome since the world changes slowly most of the time.
+
+  The last thing you write is your final answer as:
+  "
+  Percentile 5: XX
+  Percentile 10: XX
+  Percentile 15: XX
+  Percentile 20: XX
+  Percentile 30: XX
+  Percentile 40: XX
+  Percentile 50: XX
+  Percentile 60: XX
+  Percentile 70: XX
+  Percentile 80: XX
+  Percentile 85: XX
+  Percentile 90: XX
+  Percentile 95: XX
+  "
