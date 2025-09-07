@@ -121,6 +121,7 @@ Always validate and sanity check assumptions and inputs:
 - **Custom Exceptions**: Create domain-specific exception classes when beneficial
 - **Logging**: Log errors with appropriate severity levels using the logging package
 - **Recovery**: Implement retry logic for transient failures (e.g., API rate limits)
+- **getattr**: Avoid getattr in most cases as it's a smell for not understanding or guessing at the API. just call `foo.bar` instead.
 
 ### Performance Considerations
 - **Profile First**: Measure before optimizing - avoid premature optimization

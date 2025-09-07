@@ -12,12 +12,12 @@ import pandas as pd
 from forecasting_tools import PredictedOptionList
 from forecasting_tools.data_models.numeric_report import (
     NumericDistribution,
-    NumericReport,
     Percentile,
 )
 from forecasting_tools.data_models.questions import NumericQuestion
 
 from metaculus_bot.constants import NUM_MIN_PROB_STEP, NUM_RAMP_K_FACTOR
+from metaculus_bot.pchip_cdf import generate_pchip_cdf
 from metaculus_bot.pchip_processing import create_pchip_numeric_distribution
 
 from .constants import MC_PROB_MAX, MC_PROB_MIN
@@ -46,6 +46,7 @@ def aggregate_binary_mean(predictions: Sequence[float]) -> float:
     return round(mean_prediction, 3)
 
 
+# TODO: modularize this function; split mean/median logic is gross
 async def aggregate_numeric(
     predictions: Sequence[NumericDistribution],
     question: NumericQuestion,
@@ -67,9 +68,102 @@ async def aggregate_numeric(
         raise ValueError("Cannot aggregate empty list of numeric predictions")
 
     if method == "median":
-        # Delegate to helper from forecasting_tools – preserves previous behaviour.
-        # NOTE: For median we keep framework behaviour to minimise changes.
-        return await NumericReport.aggregate_predictions(list(predictions), question)  # type: ignore[arg-type]
+        # ---- Median aggregation (robust ensemble on common x-grid) ----
+        numeric_predictions = list(predictions)
+
+        cdfs_as_dfs = [pd.DataFrame([p.model_dump() for p in pred.cdf]) for pred in numeric_predictions]
+        combined_cdf = pd.concat(cdfs_as_dfs, ignore_index=True)
+        median_series = combined_cdf.groupby("value", sort=True)["percentile"].median()
+
+        x_vals = median_series.index.to_numpy(dtype=float)
+        p_vals = median_series.to_numpy(dtype=float)
+
+        # Clamp and monotonic
+        p_vals = np.clip(p_vals, 0.0, 1.0)
+        p_vals = np.maximum.accumulate(p_vals)
+
+        # Re-pin endpoints
+        if question.open_lower_bound:
+            p_vals[0] = max(p_vals[0], 0.001)
+        else:
+            p_vals[0] = 0.0
+        if question.open_upper_bound:
+            p_vals[-1] = min(p_vals[-1], 0.999)
+        else:
+            p_vals[-1] = 1.0
+
+        # Determine target size and min-step
+        target_cdf_size = int(getattr(question, "cdf_size", len(x_vals)) or len(x_vals))
+        is_discrete = target_cdf_size != len(x_vals)
+        min_step_required = max(NUM_MIN_PROB_STEP, 0.01 / max(1, (target_cdf_size - 1)))
+
+        if not is_discrete:
+            # Smooth if needed
+            diffs_before = np.diff(p_vals)
+            min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
+            if min_delta_before < min_step_required:
+                ramp = np.linspace(0.0, min_step_required * NUM_RAMP_K_FACTOR, len(p_vals))
+                p_vals = np.maximum.accumulate(p_vals + ramp)
+                # Re-pin endpoints after smoothing
+                if question.open_lower_bound:
+                    p_vals[0] = max(p_vals[0], 0.001)
+                else:
+                    p_vals[0] = 0.0
+                if question.open_upper_bound:
+                    p_vals[-1] = min(p_vals[-1], 0.999)
+                else:
+                    p_vals[-1] = 1.0
+
+                diffs_after = np.diff(p_vals)
+                min_delta_after = float(np.min(diffs_after)) if len(diffs_after) else 1.0
+                logger.warning(
+                    "Ensemble CDF ramp smoothing (median) | Q %s | URL %s | min_prob_delta_before=%.8f | min_prob_delta_after=%.8f",
+                    getattr(question, "id_of_question", None),
+                    getattr(question, "page_url", None),
+                    min_delta_before,
+                    min_delta_after,
+                )
+            declared_percentiles = [Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_vals, p_vals)]
+            return create_pchip_numeric_distribution(
+                pchip_cdf=list(map(float, p_vals)),
+                percentile_list=declared_percentiles,
+                question=question,
+                zero_point=question.zero_point,
+            )
+
+        # Discrete: resample and enforce min-step
+        logger.info(
+            "Discrete aggregation detected (median) | Q %s | URL %s | target_cdf_size=%d | min_step_required=%.8f",
+            getattr(question, "id_of_question", None),
+            getattr(question, "page_url", None),
+            target_cdf_size,
+            min_step_required,
+        )
+
+        percentile_values = {float(prob * 100.0): float(val) for val, prob in zip(x_vals, p_vals)}
+        pchip_cdf_values, _ = generate_pchip_cdf(
+            percentile_values=percentile_values,
+            open_upper_bound=question.open_upper_bound,
+            open_lower_bound=question.open_lower_bound,
+            upper_bound=question.upper_bound,
+            lower_bound=question.lower_bound,
+            zero_point=question.zero_point,
+            min_step=min_step_required,
+            num_points=target_cdf_size,
+            question_id=getattr(question, "id_of_question", None),
+            question_url=getattr(question, "page_url", None),
+        )
+
+        x_disc = np.linspace(question.lower_bound, question.upper_bound, target_cdf_size)
+        declared_percentiles = [
+            Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_disc, pchip_cdf_values)
+        ]
+        return create_pchip_numeric_distribution(
+            pchip_cdf=list(map(float, pchip_cdf_values)),
+            percentile_list=declared_percentiles,
+            question=question,
+            zero_point=question.zero_point,
+        )
 
     if method != "mean":
         raise ValueError(f"Invalid aggregation method: {method}")
@@ -103,40 +197,83 @@ async def aggregate_numeric(
     else:
         p_vals[-1] = 1.0
 
-    # 4) Enforce minimum step if necessary using a gentle ramp (mirrors PCHIP smoothing semantics)
-    diffs_before = np.diff(p_vals)
-    min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
-    if min_delta_before < NUM_MIN_PROB_STEP:
-        ramp = np.linspace(0.0, NUM_MIN_PROB_STEP * NUM_RAMP_K_FACTOR, len(p_vals))
-        p_vals = np.maximum.accumulate(p_vals + ramp)
-        # Re-pin endpoints after smoothing
-        if question.open_lower_bound:
-            p_vals[0] = max(p_vals[0], 0.001)
-        else:
-            p_vals[0] = 0.0
-        if question.open_upper_bound:
-            p_vals[-1] = min(p_vals[-1], 0.999)
-        else:
-            p_vals[-1] = 1.0
+    # 4) Determine target CDF size and min-step based on discrete/continuous
+    target_cdf_size = int(getattr(question, "cdf_size", len(x_vals)) or len(x_vals))
+    is_discrete = target_cdf_size != len(x_vals)
+    # Metaculus backend effectively enforces total available probability range >= 0.01.
+    # Therefore per-step minimum is ~0.01/(N-1). Use at least NUM_MIN_PROB_STEP for continuous.
+    min_step_required = max(NUM_MIN_PROB_STEP, 0.01 / max(1, (target_cdf_size - 1)))
 
-        diffs_after = np.diff(p_vals)
-        min_delta_after = float(np.min(diffs_after)) if len(diffs_after) else 1.0
-        logger.warning(
-            "Ensemble CDF ramp smoothing | Q %s | URL %s | min_prob_delta_before=%.8f | min_prob_delta_after=%.8f",
-            getattr(question, "id_of_question", None),
-            getattr(question, "page_url", None),
-            min_delta_before,
-            min_delta_after,
+    if not is_discrete:
+        # Continuous path: optional gentle ramp smoothing if needed
+        diffs_before = np.diff(p_vals)
+        min_delta_before = float(np.min(diffs_before)) if len(diffs_before) else 1.0
+        if min_delta_before < min_step_required:
+            ramp = np.linspace(0.0, min_step_required * NUM_RAMP_K_FACTOR, len(p_vals))
+            p_vals = np.maximum.accumulate(p_vals + ramp)
+            # Re-pin endpoints after smoothing
+            if question.open_lower_bound:
+                p_vals[0] = max(p_vals[0], 0.001)
+            else:
+                p_vals[0] = 0.0
+            if question.open_upper_bound:
+                p_vals[-1] = min(p_vals[-1], 0.999)
+            else:
+                p_vals[-1] = 1.0
+
+            diffs_after = np.diff(p_vals)
+            min_delta_after = float(np.min(diffs_after)) if len(diffs_after) else 1.0
+            logger.warning(
+                "Ensemble CDF ramp smoothing | Q %s | URL %s | min_prob_delta_before=%.8f | min_prob_delta_after=%.8f",
+                getattr(question, "id_of_question", None),
+                getattr(question, "page_url", None),
+                min_delta_before,
+                min_delta_after,
+            )
+        # Declared percentiles: full 201-point grid
+        declared_percentiles: list[Percentile] = [
+            Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_vals, p_vals)
+        ]
+        # Return PCHIP-backed distribution using the continuous-length CDF
+        return create_pchip_numeric_distribution(
+            pchip_cdf=list(map(float, p_vals)),
+            percentile_list=declared_percentiles,
+            question=question,
+            zero_point=question.zero_point,
         )
 
-    # 5) Use the full 201-point grid as declared percentiles (preserves prior behaviour and tests)
-    declared_percentiles: list[Percentile] = [
-        Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_vals, p_vals)
-    ]
+    # Discrete path: resample to question.cdf_size and strictly enforce min-step
+    logger.info(
+        "Discrete aggregation detected | Q %s | URL %s | target_cdf_size=%d | min_step_required=%.8f",
+        getattr(question, "id_of_question", None),
+        getattr(question, "page_url", None),
+        target_cdf_size,
+        min_step_required,
+    )
 
-    # 6) Return a PCHIP-backed NumericDistribution so downstream does not reprocess the CDF
+    # Build percentile mapping from ensemble CDF (probability→value), scaled to [0,100] keys
+    percentile_values = {float(prob * 100.0): float(val) for val, prob in zip(x_vals, p_vals)}
+
+    # Use the robust PCHIP generator to resample to the discrete grid and enforce min-step
+    pchip_cdf_values, _ = generate_pchip_cdf(
+        percentile_values=percentile_values,
+        open_upper_bound=question.open_upper_bound,
+        open_lower_bound=question.open_lower_bound,
+        upper_bound=question.upper_bound,
+        lower_bound=question.lower_bound,
+        zero_point=question.zero_point,
+        min_step=min_step_required,
+        num_points=target_cdf_size,
+        question_id=getattr(question, "id_of_question", None),
+        question_url=getattr(question, "page_url", None),
+    )
+
+    # Declared percentiles: full discrete grid after enforcement
+    x_disc = np.linspace(question.lower_bound, question.upper_bound, target_cdf_size)
+    declared_percentiles = [Percentile(percentile=float(p), value=float(v)) for v, p in zip(x_disc, pchip_cdf_values)]
+
     return create_pchip_numeric_distribution(
-        pchip_cdf=list(map(float, p_vals)),
+        pchip_cdf=list(map(float, pchip_cdf_values)),
         percentile_list=declared_percentiles,
         question=question,
         zero_point=question.zero_point,

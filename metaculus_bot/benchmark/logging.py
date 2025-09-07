@@ -47,7 +47,7 @@ def log_bot_lineup(bots: Sequence[ForecastBot]) -> None:
 
 def log_benchmarker_headline_note() -> None:
     logger.info(
-        "Note: 'Class | R × P | Model' means research_reports_per_question × predictions_per_research_report; Model is the default (stacker for STACKING)."
+        "Note: 'Class | R x P | Model' means research_reports_per_question x predictions_per_research_report; Model is the default (stacker for STACKING)."
     )
 
 
