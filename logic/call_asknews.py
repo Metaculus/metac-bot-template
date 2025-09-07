@@ -56,7 +56,7 @@ async def call_asknews(question_details: Dict[str, str], use_hyde: bool = True) 
     # get context from the "historical" database that contains a news archive going back to 2023
     historical_response = ask.news.search_news(
         query=query,
-        n_articles=15,
+        n_articles=10,
         return_type="both",
         strategy="news knowledge",  # looks for relevant news within the past 60 days
     )
