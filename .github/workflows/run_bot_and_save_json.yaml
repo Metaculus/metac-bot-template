@@ -2,6 +2,8 @@ name: Regularly forecast new questions and save JSON
 
 on:
   workflow_dispatch:
+    schedule:
+      - cron: "*/30 * * * *"      # every 30 minutes
 
 concurrency:
   group: forecast-workflow
@@ -63,13 +65,13 @@ jobs:
 
       # 4 – zip & upload forecasts (only if something was produced)
       - name: Create forecasts zip
-        if: ${{ hashFiles('forecasts/q2/**') != '' }}
+        if: ${{ hashFiles('forecasts/fall/**') != '' }}
         run: |
           mkdir -p artifacts
           zip -r artifacts/forecasts.zip forecasts
 
       - name: Upload forecasts
-        if: ${{ hashFiles('forecasts/q2/**') != '' }}
+        if: ${{ hashFiles('forecasts/fall/**') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: forecasts
@@ -77,7 +79,7 @@ jobs:
 
       # 5 – commit results back to repo (q2 only)
       - name: Check for changes in forecasts/q2
-        if: ${{ hashFiles('forecasts/q2/**') != '' }}
+        if: ${{ hashFiles('forecasts/fall/**') != '' }}
         id: changes_check
         run: |
           # Stage just the q2 forecasts
