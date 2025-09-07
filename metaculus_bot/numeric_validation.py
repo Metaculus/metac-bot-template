@@ -6,7 +6,7 @@ Contains validation logic for percentile sets and value processing.
 """
 
 import logging
-from typing import List
+from typing import List, Tuple
 
 from forecasting_tools.data_models.numeric_report import Percentile
 from pydantic import ValidationError
@@ -91,6 +91,62 @@ def filter_to_standard_percentiles(percentile_list: List[Percentile]) -> List[Pe
             filtered.append(p)
             seen.add(key)
     return filtered
+
+
+def detect_unit_mismatch(
+    percentile_list: List[Percentile],
+    question,
+    *,
+    span_ratio_threshold: float = 1e-5,
+    min_step_ratio_threshold: float = 1e-8,
+    max_magnitude_ratio_threshold: float = 1e-5,
+) -> Tuple[bool, str]:
+    """
+    Heuristically detect likely unit/scale mismatch.
+
+    Returns (is_mismatch, reason). No network or community stats required.
+    - span_ratio_threshold: flag if (p95 - p05) / range < threshold
+    - min_step_ratio_threshold: flag if min adjacent diff / range < threshold
+    - max_magnitude_ratio_threshold: flag if max(|value|) / range < threshold
+    """
+    try:
+        values = [float(p.value) for p in percentile_list]
+        if not values:
+            return True, "empty percentile values"
+        values_sorted = sorted(values)
+        lower = float(getattr(question, "lower_bound", 0.0))
+        upper = float(getattr(question, "upper_bound", 0.0))
+        rng = max(upper - lower, 1e-12)
+
+        # Span between p95 and p05 (use indices of sorted by percentile, but we
+        # receive list sorted by percentile earlier in flow; still compute robustly)
+        v05 = values_sorted[0]
+        v95 = values_sorted[-1]
+        span = v95 - v05
+
+        # Min adjacent diff
+        diffs = [b - a for a, b in zip(values_sorted, values_sorted[1:])]
+        min_step = min(diffs) if diffs else 0.0
+
+        # Max magnitude
+        vmax = max(abs(v) for v in values_sorted)
+
+        span_ratio = span / rng
+        min_step_ratio = (min_step / rng) if rng > 0 else 0.0
+        vmax_ratio = (vmax / rng) if rng > 0 else 0.0
+
+        # Any of these triggers → mismatch
+        if span_ratio < span_ratio_threshold:
+            return True, f"tiny span vs range (span_ratio={span_ratio:.3e} < {span_ratio_threshold:.1e})"
+        if min_step_ratio < min_step_ratio_threshold:
+            return True, f"near-duplicate values (min_step_ratio={min_step_ratio:.3e} < {min_step_ratio_threshold:.1e})"
+        if vmax_ratio < max_magnitude_ratio_threshold:
+            return True, f"values tiny vs range (max_mag_ratio={vmax_ratio:.3e} < {max_magnitude_ratio_threshold:.1e})"
+
+        return False, ""
+    except Exception as e:  # robust: if detector fails, do not block
+        logger.warning(f"Unit mismatch detection failed: {e}")
+        return False, ""
 
 
 def check_discrete_question_properties(question, cdf_points: int) -> tuple[bool, bool]:

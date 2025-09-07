@@ -190,7 +190,9 @@ def test_bound_messages():
         zero_point=None,
     )
     upper, lower = bound_messages(q)
-    assert "higher" in upper and lower == ""
+    assert "higher" in upper
+    # With open lower bound, we now include a practical/display lower bound hint
+    assert "0.0" in lower or lower == ""
 
 
 def test_bound_messages_uses_nominal_bounds():

@@ -181,6 +181,7 @@ def numeric_prompt(
     lower_bound_message: str,
     upper_bound_message: str,
 ) -> str:
+    unit_str = question.unit_of_measure or "unknown units, assume unitless (e.g. raw count)"
     return clean_indents(
         f"""
         You are a **senior forecaster** writing a public report for expert peers.
@@ -199,7 +200,12 @@ def numeric_prompt(
         {question.resolution_criteria}
         {question.fine_print}
 
-        Units: {question.unit_of_measure or "Not stated: infer if possible"}
+        ── Units & Bounds (must follow) ─────────────────────────────────────
+        • Base units for output values: {unit_str}
+        • Allowed range (in base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
+        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes, just numbers.
 
         ── Intelligence Briefing (assistant research) ────────────────────────
         {research}
@@ -434,6 +440,12 @@ def stacking_numeric_prompt(
         {question.fine_print}
         
         Units: {question.unit_of_measure or "Not stated: infer if possible"}
+        
+        ── Units & Bounds (must follow) ─────────────────────────────────────
+        • Base unit for output values: {question.unit_of_measure or "base unit"}
+        • Allowed range (base units): [{getattr(question, "lower_bound", "?")}, {getattr(question, "upper_bound", "?")}]
+        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
         
         ── Intelligence Briefing ────────────────────────────────
         {research}

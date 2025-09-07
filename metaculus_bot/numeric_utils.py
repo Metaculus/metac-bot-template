@@ -89,7 +89,6 @@ async def aggregate_numeric(
 def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     """Return upper & lower bound helper messages for numeric prompts.
 
-    Tests expect empty strings for open bounds to keep prompts concise.
     For discrete questions, if nominal bounds are missing, derive them using half-step logic.
     """
 
@@ -108,12 +107,12 @@ def bound_messages(question: NumericQuestion) -> tuple[str, str]:
     lower_bound_number = nominal_lower if nominal_lower is not None else question.lower_bound
 
     if question.open_upper_bound:
-        upper_bound_message = ""
+        upper_bound_message = f"Practical upper bound / display range is {upper_bound_number}."
     else:
         upper_bound_message = f"The outcome can not be higher than {upper_bound_number}."
 
     if question.open_lower_bound:
-        lower_bound_message = ""
+        lower_bound_message = f"Practical lower bound / display range is {lower_bound_number}."
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound_number}."
     return upper_bound_message, lower_bound_message

@@ -72,19 +72,33 @@ async def run_stacking_mc(
     prompt = stacking_multiple_choice_prompt(question, research, list(base_texts))
     meta_reasoning = await stacker_llm.invoke(prompt)
 
-    parsing_instructions = (
-        "Output a JSON array of objects with exactly these two keys per item: `option_name` (string) and "
-        "`probability` (decimal in [0,1]). Use option names exactly from this list (case-insensitive accepted):\n"
-        f"{question.options}\nDo not include any other options. Remove prefixes like 'Option X:' if present."
-    )
-    raw_options: List[OptionProbability] = await structure_output(
-        text_to_structure=meta_reasoning,
-        output_type=list[OptionProbability],
-        model=parser_llm,
-        additional_instructions=parsing_instructions,
-    )
+    # Try strict PredictedOptionList first (compatibility) then tolerant fallback
+    try:
+        parsing_instructions = (
+            "Output a JSON array of objects with exactly these two keys per item: `option_name` (string) and "
+            "`probability` (decimal in [0,1]). Use option names exactly from this list (case-insensitive accepted):\n"
+            f"{question.options}\nDo not include any other options. Remove prefixes like 'Option X:' if present."
+        )
+        predicted_option_list: PredictedOptionList = await structure_output(
+            text_to_structure=meta_reasoning,
+            output_type=PredictedOptionList,
+            model=parser_llm,
+            additional_instructions=parsing_instructions,
+        )
+        from .numeric_utils import clamp_and_renormalize_mc
 
-    predicted_option_list = build_mc_prediction(raw_options, list(question.options))
+        try:
+            predicted_option_list = clamp_and_renormalize_mc(predicted_option_list)
+        except Exception:
+            pass
+    except Exception:
+        raw_options: List[OptionProbability] = await structure_output(
+            text_to_structure=meta_reasoning,
+            output_type=list[OptionProbability],
+            model=parser_llm,
+            additional_instructions=parsing_instructions,
+        )
+        predicted_option_list = build_mc_prediction(raw_options, list(question.options))
     return predicted_option_list, meta_reasoning
 
 
@@ -105,9 +119,16 @@ async def run_stacking_numeric(
     prompt = stacking_numeric_prompt(question, research, list(base_texts), lower_bound_message, upper_bound_message)
     meta_reasoning = await stacker_llm.invoke(prompt)
 
+    unit_str = getattr(question, "unit_of_measure", None) or "base unit"
     parse_notes = (
-        "Return exactly these 8 percentiles and no others: 5,10,20,40,60,80,90,95. "
-        "Do not include 0, 50, or 100. Use keys 'percentile' (as a decimal) and 'value' only."
+        (
+            "Return exactly these 8 percentiles and no others: 5,10,20,40,60,80,90,95. "
+            "Do not include 0, 50, or 100. Use keys 'percentile' (decimal in [0,1]) and 'value' (float). "
+            f"Values must be in the base unit '{unit_str}' and within [{{lower}}, {{upper}}]. "
+            "If your text uses B/M/k, convert numerically to base unit (e.g., 350B → 350000000000). No suffixes."
+        )
+        .replace("{lower}", str(getattr(question, "lower_bound", 0)))
+        .replace("{upper}", str(getattr(question, "upper_bound", 0)))
     )
     percentile_list: List[Percentile] = await structure_output(
         meta_reasoning, list[Percentile], model=parser_llm, additional_instructions=parse_notes

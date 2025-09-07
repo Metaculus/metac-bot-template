@@ -45,7 +45,9 @@ def detect_count_like_pattern(values: List[float]) -> bool:
         return False
 
 
-def compute_cluster_parameters(range_size: float, count_like: bool) -> Tuple[float, float, float]:
+def compute_cluster_parameters(
+    range_size: float, count_like: bool, span: float | None = None
+) -> Tuple[float, float, float]:
     """
     Compute parameters for cluster detection and spreading.
 
@@ -58,7 +60,12 @@ def compute_cluster_parameters(range_size: float, count_like: bool) -> Tuple[flo
     """
     value_eps = max(range_size * NUM_VALUE_EPSILON_MULT, CLUSTER_DETECTION_ATOL)
     base_delta = max(range_size * NUM_SPREAD_DELTA_MULT, CLUSTER_SPREAD_BASE_DELTA)
-    spread_delta = max(base_delta, COUNT_LIKE_DELTA_MULTIPLIER if count_like else base_delta)
+    # Prefer a spread relative to the raw span when available to avoid range-driven explosions
+    if span is not None and span > 0:
+        span_based = max(0.02 * span, CLUSTER_SPREAD_BASE_DELTA)
+    else:
+        span_based = base_delta
+    spread_delta = max(base_delta, span_based, COUNT_LIKE_DELTA_MULTIPLIER if count_like else base_delta)
     return value_eps, base_delta, spread_delta
 
 
