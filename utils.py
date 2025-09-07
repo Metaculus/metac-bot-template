@@ -28,3 +28,12 @@ def get_binary_community_prediction(question: MetaculusQuestion) -> float | None
     prediction = get_latest_data(question).get("centers", [])
     print(f">>> binary_comm_prediction: {prediction}")
     return prediction[0] if prediction else None
+
+
+def get_prompt_context(question: MetaculusQuestion) -> dict:
+    context = {
+        "question_text": question.question_text,
+        "resolution_criteria": question.resolution_criteria,
+        "fine_print": question.fine_print
+    }
+    return context

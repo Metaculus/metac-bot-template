@@ -41,11 +41,7 @@ class WobblyBot2025Q3(ForecastBot):
         async with self._concurrency_limiter:
             researcher = self.get_llm("researcher")
 
-            context = {
-                "question_text": question.question_text,
-                "resolution_criteria": question.resolution_criteria,
-                "fine_print": question.fine_print
-            }
+            context = utils.get_prompt_context(question)
 
             prompt = loader.load_prompt(
                 "research.yaml",
@@ -64,60 +60,30 @@ class WobblyBot2025Q3(ForecastBot):
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        prompt = clean_indents(
-            f"""
-            You are a professional forecaster interviewing for a job. Think very carefully before answering.
-
-            Your interview question is:
-            {question.question_text}
-
-            Question background:
-            {question.background_info}
-
-            Your research assistant says:
-            {research}
-
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
-            {question.resolution_criteria}
-
-            {question.fine_print}
-
-            Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
-
-            If the research was able to find probabilities from prediction markets, your prediction should mostly be based on that, with few adjustments to account for recent news.
-            If data from prediction markets was not available, make your prediction based on the base rates, if available, and your independent rationale.
-            Less importantly, also take into account all the recent news from the report.
-
-            If base rates and prediction markets data are unavailable, make your prediction based on the recent news.
-            Make sure that, if the event being forecasted can happen any time, then assume that the probability of the event happening decays linearly over time, so that if not a lot of time if left until resolution, you would give a very low probability. For this, first estimate a prediction of the event happening in the next 12 months and then convert that probability considering how many days until the resolution are in fact left. If not many days are left, make sure the result is a low probability. This is not applicable for events that only happen once at a specified date, such as an election.
-            
-            Good forecasters also leave room for unknown unknowns, so make sure to never predict anything below 4% or above 96%
-            Explain how you're following each of those steps.
-            """
-        )
+        
+        context = utils.get_prompt_context()
+        context.update({
+            "background_info": question.background_info,
+            "research": research,
+            "date_now": datetime.now().strftime("%Y-%m-%d"),
+            "has_cp": False
+        })
 
         if utils.verify_community_prediction_exists(question):
             logger.info(f"Question {question.id_of_question} has community prediction")
             lower_bound, upper_bound = self.community_prediction_divergence(question)
 
-            cp_prompt = f"""
-            Make sure your prediction is not below {lower_bound} and not above {upper_bound}.
-            """
-            prompt += cp_prompt
+            context.update({
+                "has_cp": True,
+                "lower_bound": lower_bound,
+                "upper_bound": upper_bound
+            })
 
-        final_instructions = f"""
-            You write your rationale remembering that good forecasters put large weight on the status quo outcome since the world changes slowly most of the time.
+        prompt = loader.load_prompt(
+            "binary.yaml",
+            **context
+        )
 
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
-        """
-
-        prompt += final_instructions
         reasoning = await self.get_llm("forecaster", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
         binary_prediction: BinaryPrediction = await structure_output(
