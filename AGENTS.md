@@ -56,19 +56,20 @@ When asked to diagnose or debug, you should either:
 - **Descriptive Names**: Use detailed variable names even if they're longer and prefer descriptive names over comments
 - **Comments Policy**: Only add comments for clarifying confusing/ambiguous code or complex algorithms. Use `do_specific_thing()` not `# do specific thing; foo()`. Don't write comments when descriptive variable names are adequate. Specifically **NEVER USE COMMENTS TO EXPLAIN WHAT YOU'RE DOING IN CODE UNLESS IT IS CONFUSING OR AMBIGUOUS**. Do not annotate code to show your changes; that's what the chat window is for. For example, NEVER do "num_leaves = 5  # changed from 8"; just tell me and then change the code, or you'll be polluting the codebase with old, useless comments.
 - **API Research**: As needed, use the web browsing and search tools to research documentation and APIs. DO NOT assume interfaces if your memory is hazy. (Of course, you probably won’t have to look up popular libraries like Pandas, Numpy, and Boto.)
-**Try/Except and Errors**: Typically only handle expected errors; it's fine to catch these. Blanket `except Exception` is almost always a severe code smell. Log/warn clearly. Typically prefer to fail fast. Don't defensively set up a bunch of try/except in case an API varies -- these should be solved by research, not blind guessing.  
-**Offensive Programming**: It's often a good idea to validate data and assumptions and fail fast. e.g. shape, not empty, dtype, not NA, min/max, and so on.  
+**Try/Except and Errors**: Typically only handle expected errors; it's fine to catch these. Blanket `except Exception` is almost always a severe code smell. Log/warn clearly. Typically prefer to fail fast. Don't defensively set up a bunch of try/except in case an API varies -- these should be solved by research, not blind guessing. For the same reason, getattr is a code smell.  
+- **Offensive Programming**: It's often a good idea to validate data and assumptions and fail fast. e.g. shape, not empty, dtype, not NA, min/max, and so on.  
+- **Modular Code**: keep things DRY, refactor out logic from monoliths after making them. Don't treat code like a hacky research notebook. It's fine when you have a complex task to have a func that does A, B, C, D, and E within one function top avoid nested functions, but each of those should be a function call. (Better to have foo with bar, baz, etc. in it than deeply nested functions, which are less readable.)
 
 ### Python Specific Standards
 - **Python Version**: 3.12 or higher
 - **Formatting**: Black with 120-character line length
 - **Style**: PEP8 compliant, Google Python Style Guide
-- **Imports**: Always use absolute imports, never relative. Imports should be at the __top of the file__ following PEP8, never within functions except as absolutely needed to avoid circular imports. Importing within a function is a hack!
+- **Imports**: _Always_ use absolute imports, never relative. Imports should be at the __top of the file__ following PEP8, never within functions except as absolutely needed to avoid circular imports. Importing within a function is a hack!
 - **Type Hints**: Always include type hints (if types are very complicated, you may use `# type: ignore`, `Any`, and so on as needed)
 - **Error Handling**: Do the minimum viable amount - don't handle every single possible scenario. Major unexpected errors should not fail silently! Err strongly on the side of throwing/raising errors and failing fast rather than failing silently. Blanket `except Exception` is a major code smell unless you reraise.
 - **Logging**: Always use the builtin logging package, not stdout/print. Example: `logger: logging.Logger = logging.getLogger(__name__); logging.basicConfig(level=logging.INFO)`
-- **F-strings**: When printing variables or constants, prefer f-strings to avoid brittle code and duplication. In other words, instead of `foo = bar; logger.info("variable foo = bar")` do `foo = bar; logger.info(f"variable foo = {bar}"`). So if foo is updated, the log will auto-update.  
-- **Absolute Imports**: strongly prefer absolute to relative imports.  
+- **F-strings**: When printing variables or constants, prefer f-strings to avoid brittle code and duplication. In other words, instead of `foo = bar; logger.info("variable foo = bar")` do `foo = bar; logger.info(f"variable foo = {bar}")`. So if foo is updated, the log will auto-update.  
+- **Absolute Imports**: use absolute imports. Do  not use relative imports.  
 - **Kwargs and Constants**: use these to avoid magic numbers hidden in functions. Constants and magic numbers should be in config files like `settings.py`, `constants.py` or similar.
 
 ### Data Science & Defensive Programming Standards
