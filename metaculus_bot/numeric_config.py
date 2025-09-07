@@ -10,10 +10,23 @@ from typing import List
 # --- Percentile Processing Constants ---
 
 # Number of standard percentiles expected in a complete distribution
-EXPECTED_PERCENTILE_COUNT: int = 8
+EXPECTED_PERCENTILE_COUNT: int = 11
 
 # Standard percentile values that should be present in a complete forecast
-STANDARD_PERCENTILES: List[float] = [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 0.90, 0.95]
+# Expressed as decimals in [0,1]
+STANDARD_PERCENTILES: List[float] = [
+    0.025,
+    0.05,
+    0.10,
+    0.20,
+    0.40,
+    0.50,
+    0.60,
+    0.80,
+    0.90,
+    0.95,
+    0.975,
+]
 
 # Minimum required number of percentiles to proceed with processing
 MIN_PERCENTILES_REQUIRED: int = 3

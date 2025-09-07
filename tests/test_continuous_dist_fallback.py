@@ -64,8 +64,8 @@ async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
     fake_percentiles = [
         FTPercentile(value=v, percentile=p)
         for v, p in zip(
-            [100, 110, 120, 130, 140, 150, 160, 170],
-            [0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95],
+            [95, 100, 110, 120, 130, 135, 140, 150, 160, 170, 175],
+            [0.025, 0.05, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.95, 0.975],
         )
     ]
 
@@ -73,7 +73,7 @@ async def test_numeric_parsing_success_without_fallback(dummy_forecaster):
         result = await dummy_forecaster._run_forecast_on_numeric(q, "", llm)  # type: ignore[arg-type]
 
     values = [p.value for p in result.prediction_value.declared_percentiles]  # type: ignore
-    assert values == [100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0]
+    assert values == [95.0, 100.0, 110.0, 120.0, 130.0, 135.0, 140.0, 150.0, 160.0, 170.0, 175.0]
 
 
 @pytest.mark.asyncio

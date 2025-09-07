@@ -38,7 +38,7 @@ def validate_percentile_count_and_values(percentile_list: List[Percentile]) -> N
                     "loc": ("declared_percentiles",),
                     "input": percentile_list,
                     "ctx": {
-                        "error": f"Expected {EXPECTED_PERCENTILE_COUNT} declared percentiles (5,10,20,40,60,80,90,95), got {len(percentile_list)}.",
+                        "error": f"Expected {EXPECTED_PERCENTILE_COUNT} declared percentiles (2.5,5,10,20,40,50,60,80,90,95,97.5), got {len(percentile_list)}.",
                     },
                 }
             ],
@@ -56,7 +56,7 @@ def validate_percentile_count_and_values(percentile_list: List[Percentile]) -> N
                     "loc": ("declared_percentiles",),
                     "input": percentile_list,
                     "ctx": {
-                        "error": f"Expected percentile set {{5,10,20,40,60,80,90,95}}, got {sorted(p.percentile * 100 for p in percentile_list)}.",
+                        "error": f"Expected percentile set {{2.5,5,10,20,40,50,60,80,90,95,97.5}}, got {sorted(p.percentile * 100 for p in percentile_list)}.",
                     },
                 }
             ],
@@ -77,10 +77,10 @@ def sort_percentiles_by_value(percentile_list: List[Percentile]) -> List[Percent
 
 
 def filter_to_standard_percentiles(percentile_list: List[Percentile]) -> List[Percentile]:
-    """Keep only the standard 8 percentiles {5,10,20,40,60,80,90,95}.
+    """Keep only the standard 11 percentiles {2.5,5,10,20,40,50,60,80,90,95,97.5}.
 
-    If extras like 50th percentile are present, drop them before validation.
-    If duplicates occur (same percentile repeated), keep the first occurrence.
+    If extras are present, drop them before validation. If duplicates occur (same percentile
+    repeated), keep the first occurrence.
     """
     allowed = {round(p, 6) for p in STANDARD_PERCENTILES}
     seen: set[float] = set()
@@ -105,7 +105,7 @@ def detect_unit_mismatch(
     Heuristically detect likely unit/scale mismatch.
 
     Returns (is_mismatch, reason). No network or community stats required.
-    - span_ratio_threshold: flag if (p95 - p05) / range < threshold
+    - span_ratio_threshold: flag if (highest_declared - lowest_declared) / range < threshold
     - min_step_ratio_threshold: flag if min adjacent diff / range < threshold
     - max_magnitude_ratio_threshold: flag if max(|value|) / range < threshold
     """
@@ -118,7 +118,7 @@ def detect_unit_mismatch(
         upper = float(getattr(question, "upper_bound", 0.0))
         rng = max(upper - lower, 1e-12)
 
-        # Span between p95 and p05 (use indices of sorted by percentile, but we
+        # Span between lowest and highest declared percentiles (use indices of sorted by percentile, but we
         # receive list sorted by percentile earlier in flow; still compute robustly)
         v05 = values_sorted[0]
         v95 = values_sorted[-1]

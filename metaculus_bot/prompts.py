@@ -204,7 +204,7 @@ def numeric_prompt(
         • Base units for output values: {unit_str}
         • Allowed range (in base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
         • Note: allowed range is suggestive of units! If needed, you may use it to infer units.
-        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • All 11 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses billions/millions/thousands, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes or scientific notation, just numbers.
 
         ── Scoring Rule ──
@@ -252,7 +252,7 @@ def numeric_prompt(
 
         (8) Calibration and distribution shaping
             - Think in ranges, not single points.
-            - Keep 5% and 95% far apart to allow for unknown unknowns.
+            - Keep 2.5% and 97.5% far apart to allow for unknown unknowns.
             - Ensure strictly increasing percentiles.
             - Avoid scientific notation.
             - Respect the explicit bounds above.
@@ -274,14 +274,17 @@ def numeric_prompt(
 
         __Example:__
 
+        Percentile 2.5: 8.0
         Percentile 5: 10.1
         Percentile 10: 12.3
         Percentile 20: 23.4
         Percentile 40: 34.5
+        Percentile 50: 45.6
         Percentile 60: 56.7
         Percentile 80: 67.8
         Percentile 90: 78.9
         Percentile 95: 89.0
+        Percentile 97.5: 93.0
         """
     )
 
@@ -452,7 +455,7 @@ def stacking_numeric_prompt(
         ── Units & Bounds (must follow) ─────────────────────────────────────
         • Base unit for output values: {question.unit_of_measure or "base unit"}
         • Allowed range (base units): [{getattr(question, "lower_bound", "???")}, {getattr(question, "upper_bound", "???")}]
-        • All 8 percentiles you output must be numeric values in the base unit and fall within that range.
+        • All 11 percentiles you output must be numeric values in the base unit and fall within that range.
         • If your reasoning uses B/M/k, convert to base unit numerically (e.g., 350B → 350000000000). No suffixes.
 
         ── Scoring Rule ──
@@ -500,19 +503,22 @@ def stacking_numeric_prompt(
            • Does my final distribution appropriately reflect epistemic uncertainty?
            • Are my tails justified given the potential for unknown unknowns?
         
-        Remember: Think in ranges, not points. Keep 10th and 90th percentiles appropriately wide.
+        Remember: Think in ranges, not points. Keep 2.5th and 97.5th percentiles appropriately wide.
         Ensure strictly increasing percentiles and respect the bounds above.
         
         OUTPUT FORMAT, floating point numbers 
         Must be last lines, nothing after, STRICTLY INCREASING percentiles meaning e.g. p20 > p10 and not equal.
         
+        Percentile 2.5: [value]
         Percentile 5: [value]
         Percentile 10: [value]
         Percentile 20: [value]
         Percentile 40: [value]
+        Percentile 50: [value]
         Percentile 60: [value]
         Percentile 80: [value]
         Percentile 90: [value]
         Percentile 95: [value]
+        Percentile 97.5: [value]
         """
     )

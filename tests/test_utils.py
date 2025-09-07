@@ -102,7 +102,7 @@ def test_numeric_prompt_includes_p5_and_p95():
     prompt = numeric_prompt(question, "research", "", "")
     assert "Percentile 5:" in prompt
     assert "Percentile 95:" in prompt
-    # Ensure all 8 percentiles are present in order
+    # Ensure all 11 percentiles are present in order
     lines = prompt.split("\n")
     example_section = False
     percentile_lines = []
@@ -114,14 +114,17 @@ def test_numeric_prompt_includes_p5_and_p95():
             percentile_lines.append(line.strip())
 
     expected = [
+        "Percentile 2.5: 8.0",
         "Percentile 5: 10.1",
         "Percentile 10: 12.3",
         "Percentile 20: 23.4",
         "Percentile 40: 34.5",
+        "Percentile 50: 45.6",
         "Percentile 60: 56.7",
         "Percentile 80: 67.8",
         "Percentile 90: 78.9",
         "Percentile 95: 89.0",
+        "Percentile 97.5: 93.0",
     ]
     assert percentile_lines == expected
 

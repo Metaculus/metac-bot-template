@@ -42,14 +42,17 @@ class TestPercentileValidation:
     def test_validate_percentile_count_and_values_success(self):
         """Test successful validation of correct percentiles."""
         percentiles = [
+            Percentile(percentile=0.025, value=2.5),
             Percentile(percentile=0.05, value=5.0),
             Percentile(percentile=0.10, value=10.0),
             Percentile(percentile=0.20, value=20.0),
             Percentile(percentile=0.40, value=40.0),
+            Percentile(percentile=0.50, value=50.0),
             Percentile(percentile=0.60, value=60.0),
             Percentile(percentile=0.80, value=80.0),
             Percentile(percentile=0.90, value=90.0),
             Percentile(percentile=0.95, value=95.0),
+            Percentile(percentile=0.975, value=97.5),
         ]
 
         # Should not raise any exception
@@ -58,27 +61,30 @@ class TestPercentileValidation:
     def test_validate_percentile_count_wrong_count(self):
         """Test validation fails with wrong number of percentiles."""
         percentiles = [
+            Percentile(percentile=0.025, value=2.5),
             Percentile(percentile=0.05, value=5.0),
             Percentile(percentile=0.10, value=10.0),
-            Percentile(percentile=0.20, value=20.0),
         ]
 
         with pytest.raises(ValidationError) as exc_info:
             validate_percentile_count_and_values(percentiles)
 
-        assert "Expected 8 declared percentiles" in str(exc_info.value)
+        assert "Expected 11 declared percentiles" in str(exc_info.value)
 
     def test_validate_percentile_wrong_values(self):
         """Test validation fails with wrong percentile values."""
         percentiles = [
+            Percentile(percentile=0.03, value=3.0),  # Wrong (should be 0.025)
             Percentile(percentile=0.05, value=5.0),
-            Percentile(percentile=0.15, value=15.0),  # Wrong percentile (should be 0.10)
+            Percentile(percentile=0.10, value=10.0),
             Percentile(percentile=0.20, value=20.0),
             Percentile(percentile=0.40, value=40.0),
+            Percentile(percentile=0.50, value=50.0),
             Percentile(percentile=0.60, value=60.0),
             Percentile(percentile=0.80, value=80.0),
             Percentile(percentile=0.90, value=90.0),
             Percentile(percentile=0.95, value=95.0),
+            Percentile(percentile=0.975, value=97.5),
         ]
 
         with pytest.raises(ValidationError) as exc_info:

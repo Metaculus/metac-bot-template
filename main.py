@@ -867,8 +867,8 @@ class TemplateForecaster(CompactLoggingForecastBot):
         unit_str = getattr(question, "unit_of_measure", None) or "base unit"
         parse_notes = (
             (
-                "Return exactly these 8 percentiles and no others: 5,10,20,40,60,80,90,95. "
-                "Do not include 0, 50, or 100. Use keys 'percentile' (decimal in [0,1]) and 'value' (float). "
+                "Return exactly these 11 percentiles and no others: 2.5,5,10,20,40,50,60,80,90,95,97.5. "
+                "Do not include 0 or 100. Use keys 'percentile' (decimal in [0,1]) and 'value' (float). "
                 f"Values must be in the base unit '{unit_str}' and within [{{lower}}, {{upper}}]. "
                 "If your text uses B/M/k, convert numerically to base unit (e.g., 350B → 350000000000). No suffixes."
             )
@@ -886,7 +886,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
 
         percentile_list = filter_to_standard_percentiles(percentile_list)
 
-        # Validate we have exactly 8 percentiles with the expected set {5,10,20,40,60,80,90,95}
+        # Validate we have exactly 11 percentiles with the expected set {2.5,5,10,20,40,50,60,80,90,95,97.5}
         validate_percentile_count_and_values(percentile_list)
 
         # Sort percentiles by percentile value to ensure proper order
