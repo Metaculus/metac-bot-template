@@ -44,46 +44,39 @@ class WobblyBot2025Q3(ForecastBot):
 
             context = utils.get_prompt_context(question)
 
-            prompt = loader.load_prompt(
-                "research.yaml",
-                **context
-            )
+            prompt = loader.load_prompt("research.yaml", **context)
 
             research = ""
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
             else:
                 research = await self.get_llm("researcher", "llm").invoke(prompt)
-                
+
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
 
     async def _run_forecast_on_binary(
         self, question: BinaryQuestion, research: str
     ) -> ReasonedPrediction[float]:
-        
         context = utils.get_prompt_context()
-        context.update({
-            "background_info": question.background_info,
-            "research": research,
-            "date_now": datetime.now().strftime("%Y-%m-%d"),
-            "has_cp": False
-        })
+        context.update(
+            {
+                "background_info": question.background_info,
+                "research": research,
+                "date_now": datetime.now().strftime("%Y-%m-%d"),
+                "has_cp": False,
+            }
+        )
 
         if utils.verify_community_prediction_exists(question):
             logger.info(f"Question {question.id_of_question} has community prediction")
             lower_bound, upper_bound = self.community_prediction_divergence(question)
 
-            context.update({
-                "has_cp": True,
-                "lower_bound": lower_bound,
-                "upper_bound": upper_bound
-            })
+            context.update(
+                {"has_cp": True, "lower_bound": lower_bound, "upper_bound": upper_bound}
+            )
 
-        prompt = loader.load_prompt(
-            "binary.yaml",
-            **context
-        )
+        prompt = loader.load_prompt("binary.yaml", **context)
 
         reasoning = await self.get_llm("forecaster", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -101,17 +94,16 @@ class WobblyBot2025Q3(ForecastBot):
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
         context = utils.get_prompt_context()
-        context.update({
-            "background_info": question.background_info,
-            "research": research,
-            "date_now": datetime.now().strftime("%Y-%m-%d"),
-            "options": question.options
-        })
-
-        prompt = loader.load_prompt(
-            "mcq.yaml",
-            **context
+        context.update(
+            {
+                "background_info": question.background_info,
+                "research": research,
+                "date_now": datetime.now().strftime("%Y-%m-%d"),
+                "options": question.options,
+            }
         )
+
+        prompt = loader.load_prompt("mcq.yaml", **context)
 
         parsing_instructions = clean_indents(
             f"""
@@ -143,19 +135,18 @@ class WobblyBot2025Q3(ForecastBot):
             self._create_upper_and_lower_bound_messages(question)
         )
         context = utils.get_prompt_context()
-        context.update({
-            "background_info": question.background_info,
-            "research": research,
-            "date_now": datetime.now().strftime("%Y-%m-%d"),
-            "unit_of_measure": question.unit_of_measure,
-            "upper_bound_message": upper_bound_message,
-            "lower_bound_message": lower_bound_message
-        })
-        
-        prompt = loader.load_prompt(
-            "numeric.yaml",
-            **context
+        context.update(
+            {
+                "background_info": question.background_info,
+                "research": research,
+                "date_now": datetime.now().strftime("%Y-%m-%d"),
+                "unit_of_measure": question.unit_of_measure,
+                "upper_bound_message": upper_bound_message,
+                "lower_bound_message": lower_bound_message,
+            }
         )
+
+        prompt = loader.load_prompt("numeric.yaml", **context)
 
         reasoning = await self.get_llm("forecaster", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
@@ -171,14 +162,17 @@ class WobblyBot2025Q3(ForecastBot):
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion
     ) -> tuple[str, str]:
-        if question.nominal_upper_bound is not None:
-            upper_bound_number = question.nominal_upper_bound
-        else:
-            upper_bound_number = question.upper_bound
-        if question.nominal_lower_bound is not None:
-            lower_bound_number = question.nominal_lower_bound
-        else:
-            lower_bound_number = question.lower_bound
+        upper_bound_number = (
+            question.nominal_upper_bound
+            if question.nominal_upper_bound is not None
+            else question.upper_bound
+        )
+
+        lower_bound_number = (
+            question.nominal_lower_bound
+            if question.nominal_lower_bound is not None
+            else question.lower_bound
+        )
 
         if question.open_upper_bound:
             upper_bound_message = f"The question creator thinks the number is likely not higher than {upper_bound_number}, so make your Percentile 40 not higher than {upper_bound_number}, but make sure your Percentiles 85, 90 and 95 are higher than or equal to {upper_bound_number}."
@@ -191,6 +185,7 @@ class WobblyBot2025Q3(ForecastBot):
             lower_bound_message = f"The question creator thinks the number is likely not lower than {lower_bound_number}, so make your Percentile 70 higher than {lower_bound_number}, but make sure your Percentiles 15, 10 and 5 are lower than or equal to {lower_bound_number}."
         else:
             lower_bound_message = f"The outcome can not be lower than {lower_bound_number}, so make your Percentile 60 higher than {lower_bound_number}, but make your Percentiles 10 and 5 equal to {lower_bound_number}."
+
         return upper_bound_message, lower_bound_message
 
     async def forecast_questions(
@@ -222,20 +217,13 @@ class WobblyBot2025Q3(ForecastBot):
 
         today = date.today().isoformat()
 
-        questions_to_forecast = []
-        for q in questions:
-            # if q.question_text.startswith("[PRACTICE]"):
-            #     logger.info(f"Skipping practice question {q.id_of_question}: {q.question_text}")
-            #     continue
-            if (
-                q.already_forecasted
+        questions_to_forecast = [
+            q for q in questions
+            if not (
+                q.already_forecasted 
                 and prediction_date_dict.get(str(q.id_of_question)) == today
-            ):
-                logger.info(
-                    f"Already made a prediction today on question {q.id_of_question}: {q.question_text}"
-                )
-                continue
-            questions_to_forecast.append(q)
+            )
+        ]
 
         if not questions_to_forecast:
             logger.info("No new tournament questions to forecast at this time")
