@@ -2,8 +2,8 @@ name: Regularly forecast new questions and save JSON
 
 on:
   workflow_dispatch:
-    schedule:
-      - cron: "*/30 * * * *"      # every 30 minutes
+  schedule:
+    - cron: "*/30 * * * *"      # every 30 minutes
 
 concurrency:
   group: forecast-workflow
