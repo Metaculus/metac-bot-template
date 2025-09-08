@@ -16,6 +16,7 @@ This build updates Bayesian aggregation:
 
 from __future__ import annotations
 import argparse, asyncio, csv, json, math, os, re, sys, logging
+from seen_guard import SeenGuard, extract_metaculus_id  # DEDUPE GUARD
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timezone, timedelta
@@ -1865,29 +1866,29 @@ def get_playlist_question_ids(playlist: str) -> list[tuple[int, str]]:
 async def main_async(mode: str, limit: int = 0):
     ts = ist_stamp()
     os.makedirs(RUN_LOG_DIR, exist_ok=True)
-    run_log_path = os.path.join(RUN_LOG_DIR, f"{spagbot_safe_filename('spagbot_run_'+ts)}.txt") if 'spagbot_safe_filename' in globals() else os.path.join(RUN_LOG_DIR, f"spagbot_run_{ts}.txt")
+    run_log_path = os.path.join(
+        RUN_LOG_DIR,
+        f"{spagbot_safe_filename('spagbot_run_'+ts)}.txt" if 'spagbot_safe_filename' in globals()
+        else f"spagbot_run_{ts}.txt"
+    )
 
-    # ANCHOR: "playlist selection"
+    # --- SeenGuard (dedupe protection) ---
+    # Namespace by RUN_PLAYLIST so "tournament" and "cup" keep separate seen registries.
+    # (We re-create inside the detailed-log 'with' as well to keep scope explicit.)
+    seen_guard = SeenGuard(namespace=os.getenv("RUN_PLAYLIST", "tournament"))
+
+    # ============ playlist selection ============
     # Determine playlist from env (set by CLI --playlist or workflow RUN_PLAYLIST)
     playlist = os.getenv("RUN_PLAYLIST", "tournament")
     ids = get_playlist_question_ids(playlist)
     if not ids:
         print(f"[WARN] No open questions found for playlist='{playlist}'. "
-                f"Check collection slugs and token.")
+              f"Check collection slugs and token.")
         return
 
-        # If you already have a function that iterates over questions, adapt:
-        # Here we build a minimal iterator that matches your forecast loop:
-        questions = []
-        for qid, url in ids:
-            # minimal shape needed downstream
-            questions.append({
-                "id": qid,
-                "url": url,
-                "type": "binary",  # will be overwritten by fetch_post_details if needed
-                "title": None,     # lazy-fill later
-            })
+    # (Optional) If you use a separate "questions" structure, you can adapt here.
 
+    # --- file logger + console tee ---
     fh = logging.FileHandler(run_log_path, encoding="utf-8")
     fh.setLevel(logging.INFO)
     fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
@@ -1929,11 +1930,13 @@ async def main_async(mode: str, limit: int = 0):
         print(f"{PRINT_PREFIX} Spagbot ensemble starting…")
         os.makedirs(FORECAST_LOG_DIR, exist_ok=True)
 
+        # Build the question list
         if mode == "test_questions":
             open_qs = [(578, 578), (14333, 14333), (22427, 22427), (38880, 38880)]
         else:
             open_qs = get_open_question_ids_from_tournament()
 
+        # Mini-bench one-shot guard (independent of dedupe)
         if is_mini_bench():
             already = _load_one_shot_ids()
             if already:
@@ -1943,6 +1946,7 @@ async def main_async(mode: str, limit: int = 0):
                 if skipped > 0:
                     print(f"Mini-Bench one-shot guard: skipping {skipped} already-submitted question(s).")
 
+        # Optional limiter
         if isinstance(limit, int) and limit > 0:
             open_qs = open_qs[:limit]
             print(f"\n⚡ Limiter active: running only the first {limit} question(s).")
@@ -1950,17 +1954,37 @@ async def main_async(mode: str, limit: int = 0):
         run_id = ts
         detailed_log_filename = os.path.join(FORECAST_LOG_DIR, f"{run_id}_reasoning.log")
         with open(detailed_log_filename, "w", encoding="utf-8") as detailed_log_f:
+            # Header
             detailed_log_f.write(f"📊 Forecast Run {run_id}\n")
             detailed_log_f.write(f"Timestamp: {ist_iso()}\n")
             detailed_log_f.write("=" * 60 + "\n")
 
+            # === DEDUPE INIT (inside the log 'with' block) ===
+            seen_guard = SeenGuard(namespace=os.getenv("RUN_PLAYLIST", "tournament"))
+            reforecast = (os.getenv("SPAGBOT_REFORECAST", "0").lower() in ("1", "true", "yes"))
+            msg = f"🧮 Dedupe init | ns={seen_guard.ns} | reforecast={reforecast}"
+            print(msg); detailed_log_f.write(msg + "\n")
+
+            # Main loop (single, authoritative copy)
             for qid, pid in open_qs:
+                # --- DEDUPE: skip if already seen (unless --reforecast) ---
+                if not reforecast and seen_guard.has_seen(str(qid)):
+                    msg = f"⏭️  SKIP (seen) qid={qid} pid={pid} ns={seen_guard.ns}"
+                    print(msg); logger.info(msg)
+                    detailed_log_f.write(f"[{ist_iso()}] {msg}\n")
+                    continue
+
                 try:
+                    # Run the forecaster
                     await forecast_one(qid, pid, run_id=run_id, detailed_log_handle=detailed_log_f)
-                    try:
-                        detailed_log_f.flush()
-                    except Exception:
-                        pass
+
+                    # --- Mark as seen only after successful forecast ---
+                    seen_guard.mark_seen(str(qid), metadata={"pid": pid, "ts": ist_iso()})
+                    msg_ok = f"✅ MARKED (seen) qid={qid} pid={pid} ns={seen_guard.ns}"
+                    print(msg_ok); logger.info(msg_ok)
+                    detailed_log_f.write(f"[{ist_iso()}] {msg_ok}\n")
+
+                    detailed_log_f.flush()
                 except Exception as e:
                     print(f"[Error on qid={qid} pid={pid}] {e}")
                     try:
@@ -1972,18 +1996,29 @@ async def main_async(mode: str, limit: int = 0):
                     except Exception:
                         pass
 
+        # Footer (console + append to detailed log)
         print("\n✅ forecasts.csv updated")
         print("✅ forecasts_by_model.csv updated")
         print(f"✅ Detailed reasoning log created: {detailed_log_filename}")
 
+        try:
+            footer = f"[{ist_iso()}] RUN COMPLETE (dedupe ns={seen_guard.ns})"
+            print("🏁 " + footer)
+            with open(detailed_log_filename, "a", encoding="utf-8") as df:
+                df.write(footer + "\n")
+        except Exception:
+            pass
+
     finally:
         try:
-            tee.flush()
             tee.close()
         except Exception:
             pass
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+        try:
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+        except Exception:
+            pass
 
 def main():
     """
@@ -2023,7 +2058,25 @@ def main():
         help="Which question pool to run against. Overrides RUN_PLAYLIST env if provided.",
     )
 
+    parser.add_argument(
+        "--reforecast",
+        action="store_true",
+        help="Ignore seen-registry and re-forecast even if this question was seen before."
+    )
+
     args = parser.parse_args()
+
+    # Expose --reforecast to async code via env (read in main_async)
+    if getattr(args, "reforecast", False):
+        os.environ["SPAGBOT_REFORECAST"] = "1"
+    else:
+        os.environ["SPAGBOT_REFORECAST"] = "0"
+
+    # Make --reforecast visible to async code via env
+    if getattr(args, "reforecast", False):
+        os.environ["SPAGBOT_REFORECAST"] = "1"
+    else:
+        os.environ["SPAGBOT_REFORECAST"] = "0"
 
     # Resolve the playlist, print it for visibility, and expose via env
     playlist = getattr(args, "playlist", os.getenv("RUN_PLAYLIST", "tournament"))
