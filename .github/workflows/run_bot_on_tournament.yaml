@@ -100,6 +100,18 @@ jobs:
         run: |
           poetry run python spagbot.py --mode run --fresh-research
 
+      - name: Git commit any changes
+        run: |
+                git config user.name "github-actions[bot]"
+                git config user.email "github-actions[bot]@users.noreply.github.com"
+                git add forecasts.csv forecasts_by_model.csv forecasts_mcq_wide.csv
+                if ! git diff --cached --quiet; then
+                  git commit -m "chore: update forecast data from spagbot run [skip ci]"
+                  git push
+                else
+                  echo "No new forecast data to commit."
+                fi
+                
       - name: Upload Spagbot outputs (logs, CSVs, calibration)
         if: always()
         uses: actions/upload-artifact@v4
