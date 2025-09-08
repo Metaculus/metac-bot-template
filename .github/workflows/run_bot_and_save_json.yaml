@@ -77,13 +77,13 @@ jobs:
           name: forecasts
           path: artifacts/forecasts.zip
 
-      # 5 – commit results back to repo (q2 only)
-      - name: Check for changes in forecasts/q2
+      # 5 – commit results back to repo (fall only)
+      - name: Check for changes in forecasts/fall
         if: ${{ hashFiles('forecasts/fall/**') != '' }}
         id: changes_check
         run: |
-          # Stage just the q2 forecasts
-          git add forecasts/q2 || true
+          # Stage just the fall forecasts
+          git add forecasts/fall || true
       
           # Flag whether anything is staged
           if git diff --cached --quiet; then
@@ -98,8 +98,8 @@ jobs:
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Commit only the staged q2 forecasts
-          git commit -m "Update forecasts/q2 files"
+          # Commit only the staged fall forecasts
+          git commit -m "Update forecasts/fall files"
       
           # Safest update sequence: rebase w/ autostash, atomic + protected push
           git pull --rebase --autostash origin main
