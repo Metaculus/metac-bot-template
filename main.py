@@ -48,7 +48,7 @@ RESPIRATORY_OUTLOOK_ID = 3411
 
 CACHE_SEED = 42
 
-TOURNAMENT_ID = MetaculusApi.CURRENT_AI_COMPETITION_ID
+TOURNAMENT_ID = 32813
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
