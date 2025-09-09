@@ -28,9 +28,9 @@ def extract_question_details(question_details: dict) -> Tuple[str, str, str, str
     return title, description, fine_print, resolution_criteria, forecast_date
 
 
-def create_prompt(question_details: Dict[str, str], news: str) -> str:
+def create_prompt(question_details: Dict[str, str], news: str,system_message = FIRST_PHASE_INSTRUCTIONS) -> str:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    full_prompt = FIRST_PHASE_INSTRUCTIONS + (
+    full_prompt = system_message + (
         f"##Forecast Date: {forecast_date}\n\n##Question:\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
         f"{fine_print}\n\n##Resolution Criteria:\n{resolution_criteria}\n\n##News Articles:\n{news}")
     return full_prompt
@@ -53,14 +53,15 @@ def strip_title_to_filename(title: str) -> str:
 
 
 async def perform_forecasting_phase(experts, question_details: Dict[str, str], news=None, is_multiple_choice=False,
-                                    options=None) -> Dict[str, Dict[str, Dict[str, str]]]:
+                                    options=None, system_message = FIRST_PHASE_INSTRUCTIONS) -> Dict[str, Dict[str, Dict[str, str]]]:
     results = {}
-    prompt = create_prompt(question_details, news)
+    prompt = create_prompt(question_details, news, system_message)
     tasks = [forecast_for_expert(expert, run_first_stage_forecasters, prompt=prompt,
                                  options=options) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
     for expert, result in results_list:
-        results[expert.name] = result
+        key = getattr(expert, "display_name", expert.name)
+        results[key] = result
 
     return results
 
@@ -73,7 +74,8 @@ async def perform_revised_forecasting_step(experts, question_details: Dict[str, 
                                  options=options) for expert in experts]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
     for expert, result in results_list:
-        results[expert.name] = result
+        key = getattr(expert, "display_name", expert.name)
+        results[key] = result
 
     return results
 
@@ -204,8 +206,9 @@ def get_probabilities(first_step_results, revision_results, group_results, is_mu
     return probabilities
 
 
-def enrich_probabilities(probabilities, question_details, news, forecast_date, summarization):
+def enrich_probabilities(probabilities, question_details, news, forecast_date, summarization, forecasters):
     probabilities["question_details"] = question_details
     probabilities["news"] = news
     probabilities["date"] = forecast_date
     probabilities["summary"] = summarization
+    probabilities["forecasters"] = forecasters

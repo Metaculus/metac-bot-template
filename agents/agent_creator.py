@@ -22,7 +22,9 @@ def create_agent(config: Dict[str, Any], expertise: str, specialty_expertise: st
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}'
     name = name[:63] # Limit to 63 characters for autogen purposes
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
-    return AssistantAgent(name=name, system_message=system_message, model_client=client)
+    agent = AssistantAgent(name=name, system_message=system_message, model_client=client)
+    agent.display_name = expertise_and_specialty_framework
+    return agent
 
 
 def create_openai_agent(config: Dict[str, Any], expertise: str, specialty_expertise: str,
@@ -30,8 +32,10 @@ def create_openai_agent(config: Dict[str, Any], expertise: str, specialty_expert
     expertise_and_specialty_framework = f"{expertise} ({specialty_expertise})"
     name = f'{to_camel_case(expertise)}{to_camel_case(specialty_expertise)}'
     system_message = prompt.format(expertise=expertise_and_specialty_framework)
-    return OpenAIAssistantAgent(client=OPEN_AI_CLIENT, name=name, description="You are an expert forecaster",
+    agent = OpenAIAssistantAgent(client=OPEN_AI_CLIENT, name=name, description="You are an expert forecaster",
                                 instructions=system_message, model="gpt-4.1", temperature=config["temperature"])
+    agent.display_name = expertise_and_specialty_framework
+    return agent
 
 
 def create_group(agents: List) -> RoundRobinGroupChat:
