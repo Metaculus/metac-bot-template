@@ -1,7 +1,7 @@
 # Spagbot 1.0: An AI Ensemble Forecaster
 
 Date: 08 September 2025
-Contact: kevin.wyjad@gmail.com
+Contact: kevin dot wyjad at gmail dot com
 Written by GPT-5
 
 ---
