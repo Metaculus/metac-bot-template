@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      
       # Routing
       RUN_PLAYLIST: "cup"
       METACULUS_COLLECTION_SLUG_CUP: "metaculus-cup"
@@ -56,6 +57,12 @@ jobs:
       ENABLE_MARKET_SNAPSHOT: "1"
       MARKET_SNAPSHOT_MAX_MATCHES: "3"
       METACULUS_INCLUDE_RESOLVED: "1"
+
+      #Model temperature tuning
+      FORECAST_TEMP: "0.00"
+      FORECAST_TOP_P: "0.10"
+      RESEARCH_TEMP: "0.10"
+      RESEARCH_TOP_P: "1.00"
 
     steps:
       - name: Check out repository

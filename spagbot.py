@@ -108,6 +108,14 @@ GPT5_CALL_TIMEOUT_SEC     = float(os.getenv("GPT5_CALL_TIMEOUT_SEC", 120))
 GEMINI_CALL_TIMEOUT_SEC   = float(os.getenv("GEMINI_CALL_TIMEOUT_SEC", 120))
 GROK_CALL_TIMEOUT_SEC     = float(os.getenv("GROK_CALL_TIMEOUT_SEC", 180))
 
+# === Decoding controls (separate knobs for research vs. forecasting) ===
+FORECAST_TEMP = float(os.getenv("FORECAST_TEMP", "0.00"))   # 0.00 is near-deterministic
+RESEARCH_TEMP = float(os.getenv("RESEARCH_TEMP", "0.20"))   # research may stay a bit creative
+
+# Optional nucleus clamp; if provider ignores it, no harm done
+FORECAST_TOP_P = float(os.getenv("FORECAST_TOP_P", "0.20"))  # try 0.10–0.30
+RESEARCH_TOP_P = float(os.getenv("RESEARCH_TOP_P", "1.00"))  # default no clamp for research
+
 # Ensemble concurrency
 NUM_RUNS_PER_QUESTION     = int(os.getenv("NUM_RUNS_PER_QUESTION", 3))
 CONCURRENT_REQUESTS_LIMIT = 5
@@ -532,14 +540,14 @@ async def run_research_async(
         )
 
         # Preferred: OpenRouter (ChatGPT-4o), then Gemini
-        spec_gpt4o = ModelSpec(name="ChatGPT-Research-4o", provider="openrouter", model_id=OPENROUTER_FALLBACK_ID, temperature=0.2, timeout_s=GPT5_CALL_TIMEOUT_SEC)
+        spec_gpt4o = ModelSpec(name="ChatGPT-Research-4o", provider="openrouter", model_id=OPENROUTER_FALLBACK_ID, temperature=RESEARCH_TEMP, timeout_s=GPT5_CALL_TIMEOUT_SEC)
         text1 = await _call_openrouter(spec_gpt4o, prompt)
         if not text1.startswith("[error]") and text1.strip():
             llm_text = (text1 or "").strip()
             _write_cache("research_llm", slug, {"text": llm_text, "provider": spec_gpt4o.model_id})
             print(f"Research by: {spec_gpt4o.model_id}")
         else:
-            spec_gem = ModelSpec(name="Gemini-Research", provider="google", model_id=GEMINI_MODEL, temperature=0.2, timeout_s=GEMINI_CALL_TIMEOUT_SEC)
+            spec_gem = ModelSpec(name="Gemini-Research", provider="google", model_id=GEMINI_MODEL, temperature=RESEARCH_TEMP, timeout_s=GEMINI_CALL_TIMEOUT_SEC)
             text2 = await _call_google(spec_gem, prompt)
             if not text2.startswith("[error]") and text2.strip():
                 llm_text = (text2 or "").strip()
@@ -614,7 +622,7 @@ if USE_OPENROUTER:
             "OpenRouter-Default",
             "openrouter",
             OPENROUTER_GPT5_THINK_ID,   # maps to openai/gpt-4o in your .env
-            0.2,
+            FORECAST_TEMP,
             GPT5_CALL_TIMEOUT_SEC,
             True,
             1.0,
@@ -628,7 +636,7 @@ if USE_OPENROUTER:
             "Claude-3.7-Sonnet (OR)",
             "openrouter",
             OPENROUTER_CLAUDE37_ID,
-            0.2,
+            FORECAST_TEMP,
             GPT5_CALL_TIMEOUT_SEC,
             True,
             1.0,
@@ -637,10 +645,10 @@ if USE_OPENROUTER:
 
 # Gemini via Google (direct)
 if USE_GOOGLE:
-    DEFAULT_ENSEMBLE.append(ModelSpec("Gemini", "google", GEMINI_MODEL, 0.2, GEMINI_CALL_TIMEOUT_SEC, True, 0.9))
+    DEFAULT_ENSEMBLE.append(ModelSpec("Gemini", "google", GEMINI_MODEL, FORECAST_TEMP, GEMINI_CALL_TIMEOUT_SEC, True, 0.9))
 # Grok via xAI (direct)
 if ENABLE_GROK:
-    DEFAULT_ENSEMBLE.append(ModelSpec("Grok", "xai", XAI_GROK_ID, 0.2, GROK_CALL_TIMEOUT_SEC, True, 0.8))
+    DEFAULT_ENSEMBLE.append(ModelSpec("Grok", "xai", XAI_GROK_ID, FORECAST_TEMP, GROK_CALL_TIMEOUT_SEC, True, 0.8))
 
 # ---- Provider-specific call helpers ----
 
@@ -649,12 +657,15 @@ async def _call_openrouter(spec: ModelSpec, prompt: str) -> str:
     if client is None:
         return "[error] OpenRouter client not available"
     try:
+        # Heuristic: choose top_p by whether this looks like a research call (same temp as RESEARCH_TEMP)
+        top_p = RESEARCH_TOP_P if abs(spec.temperature - RESEARCH_TEMP) < 1e-6 else FORECAST_TOP_P
         async with llm_semaphore:
             resp = await asyncio.wait_for(
                 client.chat.completions.create(
                     model=spec.model_id,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=spec.temperature,
+                    top_p=top_p,
                     stream=False,
                 ),
                 timeout=spec.timeout_s,
@@ -670,6 +681,7 @@ async def _call_openrouter(spec: ModelSpec, prompt: str) -> str:
                             model=OPENROUTER_FALLBACK_ID,
                             messages=[{"role": "user", "content": prompt}],
                             temperature=spec.temperature,
+                            top_p=top_p,
                             stream=False,
                         ),
                         timeout=spec.timeout_s,
@@ -681,9 +693,11 @@ async def _call_openrouter(spec: ModelSpec, prompt: str) -> str:
 
 def _google_blocking_call(model_id: str, api_key: str, prompt: str, temperature: float, timeout_s: float) -> str:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={api_key}"
+    # Decide topP using the same heuristic (compare to RESEARCH_TEMP)
+    top_p = RESEARCH_TOP_P if abs(temperature - RESEARCH_TEMP) < 1e-6 else FORECAST_TOP_P
     payload = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": float(temperature)}
+        "generationConfig": {"temperature": float(temperature), "topP": float(top_p)}
     }
     try:
         r = requests.post(url, json=payload, timeout=timeout_s)
@@ -710,12 +724,14 @@ async def _call_xai(spec: ModelSpec, prompt: str) -> str:
     if client is None:
         return "[error] xAI client not available (missing XAI_API_KEY or SDK)"
     try:
+        top_p = RESEARCH_TOP_P if abs(spec.temperature - RESEARCH_TEMP) < 1e-6 else FORECAST_TOP_P
         async with llm_semaphore:
             resp = await asyncio.wait_for(
                 client.chat.completions.create(
                     model=spec.model_id,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=spec.temperature,
+                    top_p=top_p,
                     stream=False,
                 ),
                 timeout=spec.timeout_s,
@@ -1095,13 +1111,13 @@ INSTRUCTIONS
    - "salience" (0–100)
    - "risk_threshold" (0.00–0.10)
 4) OUTPUT STRICT JSON ONLY; NO commentary; schema:
-{{
+{
   "policy_continuum": "Short one-sentence description of the 0–100 axis.",
   "actors": [
-    {{"name":"Government","position":62,"capability":70,"salience":80,"risk_threshold":0.04}},
-    {{"name":"Opposition","position":35,"capability":60,"salience":85,"risk_threshold":0.05}}
+    {"name":"Government","position":62,"capability":70,"salience":80,"risk_threshold":0.04},
+    {"name":"Opposition","position":35,"capability":60,"salience":85,"risk_threshold":0.05}
   ]
-}}
+}
 Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 """
 
@@ -1344,754 +1360,422 @@ def append_detailed_forecast_log(
         content.append("```")
     else:
         content.append("GTMC1 activated: No (not a strategic question or actor extraction failed).")
+    content
     content.append("\n" + ("-" * 60) + "\n")
 
-    if bmc_summary:
-        content.append("# BAYES-MC DETAILS")
-        summary_to_log = {k: v for k, v in bmc_summary.items() if k != "samples"}
-        content.append(json.dumps(summary_to_log, indent=2))
-        content.append("\n" + ("-" * 60) + "\n")
+    # ENSEMBLE DETAILS
+    content.append("# ENSEMBLE OUTPUTS (Raw → Parsed)")
+    for m in (ensemble_result.members or []):
+        content.append(f"## {m.name}")
+        content.append("```text")
+        content.append(m.raw_text if isinstance(m.raw_text, str) else str(m.raw_text))
+        content.append("```")
+        content.append(f"- parsed: {m.parsed!r} | ok={m.ok} | note={m.note or '—'}")
+        content.append("")
 
-    content.append("# MODEL REASONING (RAW)")
-    if hasattr(ensemble_result, "members"):
-        for member in ensemble_result.members:
-            content.append(f"\n## {member.name} Reasoning")
-            content.append("```")
-            content.append(member.raw_text)
-            content.append("```")
-
+    # BMC SUMMARY (always present)
+    content.append("\n" + ("-" * 60) + "\n")
+    content.append("# BAYES-MC AGGREGATION (Summary)")
     try:
-        log_file_handle.write("\n".join(content))
-    except Exception as e:
-        logger.error(f"Failed to append detailed forecast log for {slug}: {e}")
+        content.append("```json")
+        content.append(json.dumps(bmc_summary, indent=2))
+        content.append("```")
+    except Exception:
+        content.append("(unavailable)")
+
+    # Write to the open handle
+    try:
+        log_file_handle.write("\n".join(content) + "\n")
+        log_file_handle.flush()
+    except Exception:
+        pass
+
 
 # =====================================================================================
-# Forecast pipeline
+# Prompt builders for different question types
 # =====================================================================================
 
-def _stage_label(model_name: str) -> str:
-    name = (model_name or "").lower()
-    if "gpt" in name: return "ChatGPT"
-    if "claude" in name: return "Claude"
-    if "grok" in name: return "Grok"
-    if "gemini" in name or "google" in name: return "Google"
-    return model_name or "Model"
-
-def _short_reason(error_text: str) -> str:
-    t = (error_text or "").lower()
-    for key in ["timeout", "404", "not found", "overloaded", "model_not_found", "no allowed providers", "bad request", "api key", "missing"]:
-        if key in t:
-            return key
-    return "error"
-
-def _collect_stage_statuses(er) -> dict[str, str]:
-    out = {"ChatGPT": "absent", "Claude": "absent", "Grok": "absent", "Google": "absent"}
-    for m in getattr(er, "members", []):
-        label = _stage_label(m.name)
-        if label not in out: continue
-        if m.ok:
-            out[label] = "ok"
-        else:
-            raw = getattr(m, "raw_text", "") or ""
-            out[label] = f"failed: {_short_reason(raw)}"
-    return out
-
-async def forecast_one(question_id: int, post_id: int, run_id: str, detailed_log_handle) -> None:
-    post_details = get_post_details(post_id)
-    q = post_details["question"]
-    qtype = q["type"]
-    title = q["title"]
-    desc  = q.get("description") or ""
-    crit  = q.get("resolution_criteria") or (q.get("fine_print") or "")
-    units = q.get("unit") or ""
-    url   = f"https://www.metaculus.com/questions/{post_id}/"
-    now   = ist_iso()
-    slug  = _slug_for_post(post_id)
-
-    # Pre-init so Python never sees these as 'unbound' on binary/MCQ code paths.
-    bmc_summary: dict = {}
-    y = np.array([])
-
-    print("\n" + "-"*90)
-    print(f"{PRINT_PREFIX} Question: {title}")
-    print(f"URL: {url} | Type: {qtype}")
-
-    # ----- 1. Research Report -----
-    research = await run_research_async(
+def build_binary_prompt(title: str, background: str, research_text: str, criteria: str) -> str:
+    return BINARY_PROMPT.format(
         title=title,
-        description=desc,
-        criteria=crit,
-        qtype=qtype,
-        options=q.get("options") if isinstance(q.get("options"), list) else [],
-        units=units,
-        slug=slug,
+        background=(background or "N/A"),
+        research=(research_text or "N/A"),
+        criteria=(criteria or "N/A"),
+        today=ist_date(),
     )
-    # --- Append community/market consensus to the research brief ---------------
-    try:
-        snapshot_md = await asyncio.to_thread(
-            build_market_consensus_snapshot,
-            title=title,
-            post=post_details,
-            similarity_threshold=0.60,
-            include_manifold=True,
-        )
-        research = (research or "") + "\n\n---\n" + snapshot_md
 
-        manifold_found = "No sufficiently similar market found" not in snapshot_md
-        metaculus_found = "error extracting forecast" not in snapshot_md
-        print(f"Prediction markets found: Yes (Metaculus: {'1' if metaculus_found else '0'}, Manifold: {'1' if manifold_found else '0'})")
+def build_mcq_prompt(title: str, options: list[str], background: str, research_text: str, criteria: str) -> str:
+    return MCQ_PROMPT.format(
+        title=title,
+        options="\n".join([str(o) for o in (options or [])]) or "N/A",
+        background=(background or "N/A"),
+        research=(research_text or "N/A"),
+        criteria=(criteria or "N/A"),
+        today=ist_date(),
+    )
 
-    except Exception as e:
-        print(f"Prediction markets found: No (Error: {e})")
+def build_numeric_prompt(title: str, units: str, background: str, research_text: str, criteria: str) -> str:
+    return NUMERIC_PROMPT.format(
+        title=title,
+        units=(units or "N/A"),
+        background=(background or "N/A"),
+        research=(research_text or "N/A"),
+        criteria=(criteria or "N/A"),
+        today=ist_date(),
+    )
 
-    research_for_prompt = research
-    today = ist_date()
-    per_rows: List[Dict[str, str]] = []
 
-    # ----- 2. Ensemble Forecasting -----
-    if qtype == "binary":
-        prompt = BINARY_PROMPT.format(title=title, background=desc, criteria=crit, today=today, research=research_for_prompt)
-        er = await run_ensemble_binary(prompt, DEFAULT_ENSEMBLE)
-        binary_evidences: List[BMC.BinaryEvidence] = []
-        for m in er.members:
-            if m.ok and m.parsed is not None:
-                binary_evidences.append(BMC.BinaryEvidence(p=float(m.parsed), w=1.0))
-            per_rows.append({"RunID": run_id, "RunTime": now, "Type": "binary", "QuestionID": str(question_id), "Question": title, "ModelName": m.name, "Parsed": _fmt_float_or_blank(m.parsed), "OK": "1" if m.ok else "0", "Note": m.note})
-        exp_short = f"Binary ensemble ({len(binary_evidences)}/{len(er.members)} models OK)"
+# =====================================================================================
+# Aggregators (core pipeline, GTMC1 ignored in this pass)
+# =====================================================================================
 
-    elif qtype == "multiple_choice":
-        opts: List[str] = q["options"]
-        prompt = MCQ_PROMPT.format(title=title, options=opts, background=desc, criteria=crit, today=today, research=research_for_prompt)
-        er = await run_ensemble_mcq(prompt, n_options=len(opts), ensemble=DEFAULT_ENSEMBLE)
-        mcq_evidences: List[BMC.MCQEvidence] = []
-        for m in er.members:
-            if m.ok and m.parsed is not None:
-                mcq_evidences.append(BMC.MCQEvidence(probs=sanitize_mcq_vector(m.parsed), w=1.0))
-            per_rows.append({"RunID": run_id, "RunTime": now, "Type": "multiple_choice", "QuestionID": str(question_id), "Question": title, "ModelName": m.name, "Parsed": json.dumps(m.parsed), "OK": "1" if m.ok else "0", "Note": m.note})
-        exp_short = f"MCQ ensemble ({len(mcq_evidences)}/{len(er.members)} models OK)"
+def _weighted_mean(values: list[float], weights: list[float]) -> float:
+    v = np.array(values, dtype=float)
+    w = np.array(weights, dtype=float)
+    w = np.clip(w, 0.0, np.inf)
+    if float(w.sum()) <= 0.0:
+        return float(np.mean(v)) if len(v) else 0.5
+    return float((v * w).sum() / w.sum())
 
-    else:  # numeric / discrete
-        prompt = NUMERIC_PROMPT.format(title=title, units=units or "N/A", background=desc, criteria=crit, today=today, research=research_for_prompt)
-        er = await run_ensemble_numeric(prompt, DEFAULT_ENSEMBLE)
-        numeric_evidences: List[BMC.NumericEvidence] = []
-        for m in er.members:
-            if m.ok and m.parsed:
+def aggregate_binary_core(ensemble_res: EnsembleResult, weights: list[float] | None = None) -> tuple[float, dict]:
+    """
+    Deterministic core aggregation for binary:
+    1) Take parsed YES probabilities from members that parsed ok; fallback to 0.5 if none.
+    2) Weighted mean (weights from ModelSpec if provided), clipped to [0.01, 0.99].
+    3) Return (p_yes, summary_dict).
+    """
+    vals, oks, names = [], [], []
+    for m in ensemble_res.members:
+        if m.ok and isinstance(m.parsed, (int, float)):
+            vals.append(float(m.parsed))
+        oks.append(m.ok)
+        names.append(m.name)
+
+    if not vals:
+        p = 0.5
+    else:
+        if weights and len(weights) == len(ensemble_res.members):
+            # build aligned weights (0 for bad parses)
+            aligned = []
+            j = 0
+            for k, m in enumerate(ensemble_res.members):
+                if m.ok and isinstance(m.parsed, (int, float)):
+                    aligned.append(float(weights[k]))
+                    j += 1
+                else:
+                    aligned.append(0.0)
+            p = _weighted_mean(vals, [w for w, m in zip(aligned, ensemble_res.members) if m.ok and isinstance(m.parsed, (int, float))])
+        else:
+            p = float(np.mean(vals))
+
+    p = _clip01(p)
+    summary = {
+        "method": "weighted_mean(core)",
+        "n_ok": int(sum(1 for m in ensemble_res.members if m.ok)),
+        "members": [{"name": m.name, "ok": m.ok, "parsed": m.parsed} for m in ensemble_res.members],
+        "p_core": p,
+    }
+    return p, summary
+
+def aggregate_mcq_core(ensemble_res: EnsembleResult, n_options: int, weights: list[float] | None = None) -> tuple[list[float], dict]:
+    """
+    For MCQ:
+    - Take each member's probability vector (fallback_equal when parsing failed).
+    - Average (weighted if weights supplied), renormalize.
+    """
+    mat = []
+    for m in ensemble_res.members:
+        v = m.parsed if (isinstance(m.parsed, dict) or isinstance(m.parsed, list)) else None
+        if isinstance(v, dict):
+            # If dict, assume {label: prob} — convert to list order by option index
+            # But our upstream parser returns list; keep simple here
+            v = list(v.values())
+        if not isinstance(v, list):
+            v = [1.0 / n_options] * n_options
+        if len(v) != n_options:
+            v = (v + [0.0] * n_options)[:n_options]
+        mat.append(np.array(v, dtype=float))
+
+    if not mat:
+        vec = np.array([1.0 / n_options] * n_options, dtype=float)
+    else:
+        stack = np.stack(mat, axis=0)
+        if weights and len(weights) == len(mat):
+            w = np.clip(np.array(weights, dtype=float), 0.0, np.inf)
+            if float(w.sum()) > 0:
+                vec = (stack * w[:, None]).sum(axis=0) / float(w.sum())
+            else:
+                vec = stack.mean(axis=0)
+        else:
+            vec = stack.mean(axis=0)
+
+    vec = sanitize_mcq_vector(vec.tolist())
+    summary = {
+        "method": "weighted_mean(core)",
+        "n_members": len(ensemble_res.members),
+        "vector": vec,
+    }
+    return vec, summary
+
+def aggregate_numeric_core(ensemble_res: EnsembleResult) -> tuple[dict, dict]:
+    """
+    Numeric:
+    - Each member provides some subset of {P10,P20,P40,P50,P60,P80,P90}.
+    - We build robust aggregates per percentile using the median across members (trimmed mean alternative).
+    - Return (percentiles_dict, summary_dict).
+    """
+    # Collect per-key values
+    keys = ["P10","P20","P40","P50","P60","P80","P90"]
+    bag: dict[str, list[float]] = {k: [] for k in keys}
+    for m in ensemble_res.members:
+        d = m.parsed if isinstance(m.parsed, dict) else {}
+        for k in keys:
+            if k in d:
                 try:
-                    p10, p50, p90 = _coerce_p10_p50_p90(dict(m.parsed))
-                    numeric_evidences.append(BMC.NumericEvidence(p10=p10, p50=p50, p90=p90, w=1.0))
+                    bag[k].append(float(d[k]))
                 except Exception:
                     pass
-            per_rows.append({"RunID": run_id, "RunTime": now, "Type": qtype, "QuestionID": str(question_id), "Question": title, "ModelName": m.name, "Parsed": json.dumps(m.parsed), "OK": "1" if m.ok else "0", "Note": m.note})
-        exp_short = f"Numeric ensemble ({len(numeric_evidences)}/{len(er.members)} models OK)"
 
-    statuses = _collect_stage_statuses(er)
-    status_line = " | ".join([f"{model}: {status}" for model, status in statuses.items() if status != 'absent'])
-    print(f"\nEnsemble Status: {status_line}")
-
-    # ----- 3. GTMC1 (strategic + binary only) -----
-    used_gtmc1 = 0
-    gtmc1_signal: Dict[str, str | float | int | None] = {}
-    actors: Optional[List[Dict[str, float]]] = None
-    if qtype == "binary" and looks_strategic(title):
-        actors, fail_reason = await extract_actors_via_llm(title, desc, research_for_prompt, slug)
-        if actors:
-            try:
-                sig, _df = GTMC1.run_monte_carlo_from_actor_table(
-                    actors, num_runs=40, log_dir="gtmc_logs", run_slug=slug
-                )
-                gtmc1_signal = {
-                    "coalition_rate": float(sig.get("coalition_rate", 0.0)),
-                    "dispersion": str(sig.get("dispersion", "n/a")),
-                    "median_of_final_medians": (
-                        None if sig.get("median_of_final_medians") is None 
-                        else float(sig["median_of_final_medians"])
-                    ),
-                    "median_rounds": (
-                        None if sig.get("median_rounds") is None 
-                        else int(sig["median_rounds"])
-                    ),
-                    "exceedance_ge_50": (None if sig.get("exceedance_ge_50") is None else float(sig["exceedance_ge_50"])),
-                    "iqr": (None if sig.get("iqr") is None else float(sig["iqr"])),
-                    "runs_csv": sig.get("runs_csv"),
-                }
-                used_gtmc1 = 1
-
-                if used_gtmc1 and qtype == "binary":
-                    pos  = gtmc1_signal.get("median_of_final_medians")
-                    disp = gtmc1_signal.get("dispersion", "n/a")
-                    rnds = gtmc1_signal.get("median_rounds", "n/a")
-
-                    def _as01_local(x):
-                        try:
-                            if x is None:
-                                return 0.0
-                            if isinstance(x, str):
-                                xs = x.strip()
-                                if xs.endswith("%"):
-                                    return max(0.0, min(1.0, float(xs[:-1]) / 100.0))
-                                val = float(xs)
-                                return val if val <= 1.0 else val / 100.0
-                            val = float(x)
-                            return val if val <= 1.0 else val / 100.0
-                        except Exception:
-                            return 0.0
-
-                    coal_p = _as01_local(gtmc1_signal.get("coalition_rate"))
-                    ex_p = gtmc1_signal.get("exceedance_ge_50")
-                    try:
-                        ex_str = f"{float(ex_p):.2%}"
-                    except (TypeError, ValueError):
-                        ex_str = "n/a"
-
-                    gtmc_brief = (
-                        "### GTMC1 Game-Theoretic Signal\n"
-                        f"- Coalition rate (YES): {coal_p:.2%}\n"
-                        f"- Exceedance (median ≥ 50): {ex_str}\n"
-                        f"- Median equilibrium position: {pos if pos is not None else 'n/a'} on 0–100 axis\n"
-                        f"- Dispersion: {disp}\n"
-                        f"- Rounds to converge (median): {rnds}\n"
-                        "Interpretation: treat as bargaining-outcome evidence. If this contradicts your earlier view, explain why and update."
-                    )
-
-                    prompt = BINARY_PROMPT.format(
-                        title=title, background=desc, criteria=crit, today=today,
-                        research=research_for_prompt + "\n\n---\n" + gtmc_brief
-                    )
-                    er = await run_ensemble_binary(prompt, DEFAULT_ENSEMBLE)
-
-                    binary_evidences = []
-                    for m in er.members:
-                        if m.ok and m.parsed is not None:
-                            binary_evidences.append(BMC.BinaryEvidence(p=float(m.parsed), w=1.0))
-                        per_rows.append({
-                            "RunID": run_id,
-                            "RunTime": now,
-                            "Type": "binary",
-                            "QuestionID": str(question_id),
-                            "Question": title,
-                            "ModelName": m.name,
-                            "Parsed": _fmt_float_or_blank(m.parsed),
-                            "OK": "1" if m.ok else "0",
-                            "Note": m.note,
-                        })
-                    exp_short = f"Binary ensemble+GTMC1 brief ({len(binary_evidences)}/{len(er.members)} models OK)"
-
-                # Console prints
-                lines = []
-                lines.append("")  # newline
-                lines.append("GTMC1 activated: Yes")
-
-                pos  = gtmc1_signal.get("median_of_final_medians")
-                coal = gtmc1_signal.get("coalition_rate")
-                iqr  = gtmc1_signal.get("iqr", "n/a")
-                disp = gtmc1_signal.get("dispersion", "n/a")
-                rnds = gtmc1_signal.get("median_rounds", "n/a")
-                runs = gtmc1_signal.get("runs_csv", "n/a")
-                ex_p = gtmc1_signal.get("exceedance_ge_50")
-
-                def _as01_local2(x):
-                    if x is None:
-                        return None
-                    try:
-                        return (x / 100.0) if (isinstance(x, (int, float)) and x > 1) else float(x)
-                    except Exception:
-                        return None
-
-                ex_p01 = _as01_local2(ex_p)
-                coal01 = _as01_local2(coal)
-
-                lines.append(f"  exceedance_ge_50 (P[YES]): {ex_p01:.2%}" if ex_p01 is not None else "  exceedance_ge_50 (P[YES]): n/a")
-                lines.append(f"  coalition_rate: {coal01:.2%}" if coal01 is not None else "  coalition_rate: n/a")
-                lines.append(f"  median_of_final_medians: {pos if pos is not None else 'n/a'}")
-                lines.append(f"  dispersion (IQR): {disp} (iqr={iqr})")
-                lines.append(f"  median_rounds: {rnds}")
-                lines.append(f"  runs_csv: {runs}")
-
-                print("\n".join(lines))
-            except Exception as e:
-                print(f"\nGTMC1 activated: No (simulation error: {e})")
+    agg: dict[str, float] = {}
+    for k in keys:
+        vals = sorted(bag[k])
+        if not vals:
+            continue
+        # robust center: median (or trimmed mean if 4+)
+        if len(vals) >= 4:
+            lo = vals[int(0.1 * (len(vals)-1))]
+            hi = vals[int(0.9 * (len(vals)-1))]
+            trimmed = [x for x in vals if lo <= x <= hi]
+            agg[k] = float(np.mean(trimmed)) if trimmed else float(np.median(vals))
         else:
-            print(f"\nGTMC1 activated: No (actor extraction failed: {fail_reason})")
-    else:
-        print("\nGTMC1 activated: No (not a strategic question)")
+            agg[k] = float(np.median(vals))
 
-    # ----- 4. Bayes-MC Aggregation -----
-    if qtype == "binary":
-        base_evidences = binary_evidences if "binary_evidences" in locals() else []
-        evidences = list(base_evidences)
+    # Coerce to P10,P50,P90 and sanity
+    p10, p50, p90 = _coerce_p10_p50_p90(agg)
+    if p10 > p50: p10, p50 = p50, p10
+    if p50 > p90: p50, p90 = p90, p50
+    if p10 > p50: p10, p50 = p50, p10
 
-        if used_gtmc1:
-            def _as01(x):
-                if x is None:
-                    return None
-                try:
-                    return (x / 100.0) if (isinstance(x, (int, float)) and x > 1) else float(x)
-                except Exception:
-                    return None
+    agg_out = {"P10": p10, "P50": p50, "P90": p90}
+    summary = {
+        "method": "percentile-wise median (trimmed)",
+        "n_members": len(ensemble_res.members),
+        "available_counts": {k: len(bag[k]) for k in keys},
+        "p10": p10, "p50": p50, "p90": p90,
+    }
+    return agg_out, summary
 
-            ex_p  = gtmc1_signal.get("exceedance_ge_50")
-            pos   = gtmc1_signal.get("median_of_final_medians")
-            coal  = gtmc1_signal.get("coalition_rate")
 
-            ex_p01, pos_p01, coal_p01 = _as01(ex_p), _as01(pos), _as01(coal)
+# =====================================================================================
+# One-question orchestration (no GTMC1 in this pass)
+# =====================================================================================
 
-            if ex_p01 is not None:
-                gtmc_raw_p = _clip01(ex_p01)
-            elif pos_p01 is not None:
-                gtmc_raw_p = _clip01(pos_p01)
-            elif coal_p01 is not None:
-                gtmc_raw_p = _clip01(coal_p01)
-            else:
-                gtmc_raw_p = 0.5
+async def run_one_question_core(post: dict, *, run_id: str, seen_guard: Optional[SeenGuard] = None) -> None:
+    q = post.get("question") or {}
+    post_id = int(post.get("id") or post.get("post_id") or 0)
+    question_id = int(q.get("id") or 0)
+    title = str(q.get("title") or post.get("title") or "").strip()
+    url = f"https://www.metaculus.com/questions/{question_id}/" if question_id else ""
+    qtype = (q.get("type") or "binary").strip()
+    description = str(q.get("description", "") or post.get("description", "") or "")
+    criteria = str(q.get("resolution_criteria", "") or q.get("resolution") or "")
+    units = q.get("unit") or q.get("units") or ""
+    options = q.get("options") or []
+    slug = _slug_for_post(post_id or question_id or 0)
 
-            gtmc1_signal["p_used_for_aggregation"] = gtmc_raw_p
+    # Optional: skip if already submitted in "mini_bench" mode (one-shot)
+    mark_submitted_if_mini(question_id)
 
-            gtmc_base_w = 0.6
-            gtmc_cal_w = _APPLY_CAL_W(
-                raw_weight=gtmc_base_w,
-                question_type="binary",
-                top_prob=gtmc_raw_p
-            )
-            evidences.append(BMC.BinaryEvidence(p=gtmc_raw_p, w=gtmc_cal_w))
-
-        post = BMC.update_binary_with_mc(
-            prior=BMC.BinaryPrior(alpha=0.1, beta=0.1),
-            evidences=evidences,
-            n_samples=20000,
-            seed=42
-        )
-        final_p = float(post["p50"])
-        bmc_summary = {k: v for k, v in post.items() if k != "samples"}
-        final_payload = create_forecast_payload(final_p, "binary")
-        print(f"\nFinal Forecast (binary): {final_p:.2%}")
-
-    elif qtype == "multiple_choice":
-        opts: List[str] = q["options"]
-        K = len(opts)
-        evs = locals().get("mcq_evidences", [])
-        post = BMC.update_mcq_with_mc(
-            prior=BMC.DirichletPrior(alphas=[0.1] * K),
-            evidences=evs, n_samples=20000, seed=42
-        )
-        mean_vec = sanitize_mcq_vector([float(x) for x in post["mean"]])
-        final_dict = {opts[i]: mean_vec[i] for i in range(K)}
-        bmc_summary = {k: v for k, v in post.items() if k != "samples"}
-        final_vec = [final_dict[o] for o in opts]
-        final_payload = create_forecast_payload(final_vec, "multiple_choice")
-        print("\nFinal Forecast (MCQ): " + ", ".join([f"{k}={v:.1%}" for k, v in final_dict.items()]))
-
-        option_labels = list(final_dict.keys())
-        option_probs = [final_dict[k] for k in option_labels]
-        ensure_mcq_wide_csv()
-        write_mcq_wide_row(
-            run_id=run_id, run_time=now, url=url, question_id=question_id,
-            question_title=title, option_labels=option_labels, option_probs=option_probs,
-        )
-
-    else:  # numeric / discrete
-        evs = locals().get("numeric_evidences", [])
-        post = BMC.update_numeric_with_mc(evidences=evs, n_samples=20000, seed=42)
-        bmc_summary = {k: v for k, v in post.items() if k != "samples"}
-        print(f"\nFinal Forecast (numeric): P10={bmc_summary.get('p10', 0):.3g}, "
-              f"P50={bmc_summary.get('p50', 0):.3g}, P90={bmc_summary.get('p90', 0):.3g}")
-        y = np.asarray(post["samples"])
-
-    # ----- Build CDF payload for numeric/discrete -----
-    if y.size > 0:
-        if qtype == "discrete":
-            K = (
-                q.get("inbound_outcome_count")
-                or (len(q.get("options", [])) if isinstance(q.get("options"), list) else None)
-                or q.get("num_outcomes")
-                or 0
-            )
-            try:
-                K = int(K)
-            except Exception:
-                K = 0
-
-            if K <= 1:
-                lo, hi = float(np.percentile(y, 0.5)), float(np.percentile(y, 99.5))
-                xs = np.linspace(lo, hi, 201).tolist()
-                ys = (np.searchsorted(np.sort(y), xs, side="right") / len(y)).tolist()
-                final_payload = create_forecast_payload({"xs": xs, "ys": ys}, "discrete")
-            else:
-                cats = np.clip(np.rint(y).astype(int), 0, K - 1)
-                counts = np.bincount(cats, minlength=K)
-                cdf_vals = np.cumsum(counts) / float(len(y))
-                xs = list(range(K + 1))
-                ys = [0.0] + cdf_vals.tolist()
-                final_payload = create_forecast_payload({"xs": xs, "ys": ys}, "discrete")
-
-        else:
-            lo, hi = float(np.percentile(y, 0.5)), float(np.percentile(y, 99.5))
-            xs = np.linspace(lo, hi, 201).tolist()
-            ys = (np.searchsorted(np.sort(y), xs, side="right") / len(y)).tolist()
-            final_payload = create_forecast_payload({"xs": xs, "ys": ys}, "numeric")
-    else:
-        final_payload = create_forecast_payload({"xs": [-1, 0, 1], "ys": [0, 0.5, 1]}, "numeric")
-
-    # ----- 5. Logging and Submission -----
-    numeric_p10, numeric_p50, numeric_p90 = (None, None, None)
-    if qtype in ("numeric", "discrete"):
-        numeric_p10 = bmc_summary.get("p10")
-        numeric_p50 = bmc_summary.get("p50")
-        numeric_p90 = bmc_summary.get("p90")
-
-    pool = os.getenv("RUN_PLAYLIST", os.getenv("TOURNAMENT_ID", "tournament"))
-    collection = (
-        os.getenv("TOURNAMENT_ID")  # you already use this for posts API
-        or (os.getenv("METACULUS_COLLECTION_SLUG_CUP") if pool == "cup" else os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT"))
-        or "unknown"
+    # 1) RESEARCH (cached unless user forces fresh)
+    research_text = await run_research_async(
+        title=title, description=description, criteria=criteria,
+        qtype=qtype, options=options if isinstance(options, list) else None,
+        units=str(units) if units else None, slug=slug
     )
 
-    agg_row = {
-        
-        "RunID": run_id, "RunTime": now, "Type": qtype, "Model": "ensemble+gtmc1+bmc",
-        "Pool": pool, "Collection": collection,
-        "URL": url, "QuestionID": str(question_id), "Question": title,
-        "Binary_Prob": _fmt_float_or_blank(locals().get("final_p")),
-        "MCQ_Probs": json.dumps(locals().get("final_dict")) if "final_dict" in locals() else "",
-        "Numeric_P10": _fmt_float_or_blank(numeric_p10),
-        "Numeric_P50": _fmt_float_or_blank(numeric_p50),
-        "Numeric_P90": _fmt_float_or_blank(numeric_p90),
-        "GTMC1": str(int(used_gtmc1)),
-        "GTMC1_Signal": json.dumps(gtmc1_signal),
-        "BMC_Summary": json.dumps({k: v for k, v in (bmc_summary or {}).items() if k != "samples"}),
-        "Explanation_Short": exp_short,
-    }
+    # 1b) Optionally append market snapshot
+    if ENABLE_MARKET_SNAPSHOT:
+        try:
+            snap = build_market_consensus_snapshot(title=title, post=post, similarity_threshold=0.60, include_manifold=True)
+            research_text = (research_text or "") + "\n\n" + snap
+        except Exception:
+            pass
+
+    # 2) Build prompt & run ensemble
+    if qtype == "binary":
+        prompt = build_binary_prompt(title, description, research_text, criteria)
+        ensemble_res = await run_ensemble_binary(prompt, DEFAULT_ENSEMBLE)
+    elif qtype == "multiple_choice":
+        opt_labels = [str(o) for o in (options or [])]
+        prompt = build_mcq_prompt(title, opt_labels, description, research_text, criteria)
+        ensemble_res = await run_ensemble_mcq(prompt, len(opt_labels), DEFAULT_ENSEMBLE)
+    else:  # 'numeric' or 'discrete' — treat both via numeric prompt/parse
+        prompt = build_numeric_prompt(title, str(units or ""), description, research_text, criteria)
+        ensemble_res = await run_ensemble_numeric(prompt, DEFAULT_ENSEMBLE)
+
+    # 3) Aggregate (core)
+    per_rows: list[dict[str, str]] = []
+    for m in ensemble_res.members:
+        per_rows.append({
+            "RunID": run_id,
+            "RunTime": ist_iso(),
+            "Type": qtype,
+            "QuestionID": str(question_id),
+            "Question": title,
+            "ModelName": m.name,
+            "Parsed": json.dumps(m.parsed) if not isinstance(m.parsed, (float,int)) else f"{float(m.parsed):.6f}",
+            "OK": str(bool(m.ok)),
+            "Note": m.note or "",
+        })
+
+    if qtype == "binary":
+        weights = [getattr(ms, "weight", 1.0) for ms in DEFAULT_ENSEMBLE]
+        p_core, bmc_summary = aggregate_binary_core(ensemble_res, weights)
+        final_forecast = p_core
+        agg_row = {
+            "RunID": run_id, "RunTime": ist_iso(), "Type": "binary",
+            "Model": "core-ensemble", "Pool": TOURNAMENT_ID, "Collection": "core",
+            "URL": url, "QuestionID": str(question_id), "Question": title,
+            "Binary_Prob": f"{p_core:.6f}",
+            "MCQ_Probs": "", "Numeric_P10": "", "Numeric_P50": "", "Numeric_P90": "",
+            "GTMC1": "0", "GTMC1_Signal": "", "BMC_Summary": json.dumps(bmc_summary),
+            "Explanation_Short": "core weighted mean of ensemble",
+        }
+    elif qtype == "multiple_choice":
+        weights = [getattr(ms, "weight", 1.0) for ms in DEFAULT_ENSEMBLE]
+        vec, bmc_summary = aggregate_mcq_core(ensemble_res, len(options or []), weights)
+        final_forecast = {str(options[i]): float(vec[i]) for i in range(len(options))}
+        agg_row = {
+            "RunID": run_id, "RunTime": ist_iso(), "Type": "multiple_choice",
+            "Model": "core-ensemble", "Pool": TOURNAMENT_ID, "Collection": "core",
+            "URL": url, "QuestionID": str(question_id), "Question": title,
+            "Binary_Prob": "", "MCQ_Probs": json.dumps(final_forecast),
+            "Numeric_P10": "", "Numeric_P50": "", "Numeric_P90": "",
+            "GTMC1": "0", "GTMC1_Signal": "", "BMC_Summary": json.dumps(bmc_summary),
+            "Explanation_Short": "core average of ensemble vectors",
+        }
+        # also write MCQ wide row for convenience
+        write_mcq_wide_row(run_id, ist_iso(), url, question_id, title, [str(o) for o in options], list(vec))
+    else:
+        agg_percentiles, bmc_summary = aggregate_numeric_core(ensemble_res)
+        final_forecast = agg_percentiles
+        agg_row = {
+            "RunID": run_id, "RunTime": ist_iso(), "Type": "numeric",
+            "Model": "core-ensemble", "Pool": TOURNAMENT_ID, "Collection": "core",
+            "URL": url, "QuestionID": str(question_id), "Question": title,
+            "Binary_Prob": "", "MCQ_Probs": "",
+            "Numeric_P10": _fmt_float_or_blank(agg_percentiles.get("P10")),
+            "Numeric_P50": _fmt_float_or_blank(agg_percentiles.get("P50")),
+            "Numeric_P90": _fmt_float_or_blank(agg_percentiles.get("P90")),
+            "GTMC1": "0", "GTMC1_Signal": "", "BMC_Summary": json.dumps(bmc_summary),
+            "Explanation_Short": "percentile-wise median (trimmed)",
+        }
+
+    # 4) LOG FILE (detailed)
+    os.makedirs(FORECAST_LOG_DIR, exist_ok=True)
+    log_path = os.path.join(FORECAST_LOG_DIR, f"{run_id}__q{question_id}.md")
+    with open(log_path, "w", encoding="utf-8") as lf:
+        append_detailed_forecast_log(
+            log_file_handle=lf, run_id=run_id, now=ist_iso(),
+            post_id=post_id, question_id=question_id, title=title, url=url,
+            qtype=qtype, slug=slug, research_text=research_text,
+            ensemble_result=ensemble_res, used_gtmc1=False, actors=None,
+            gtmc1_signal={}, bmc_summary=bmc_summary, final_forecast=final_forecast
+        )
+
+    # 5) CSV(s)
     write_rows(agg_row, per_rows)
 
-    final_forecast_for_log = {}
-    if qtype == "binary":
-        final_forecast_for_log = final_p
-    elif qtype == "multiple_choice":
-        final_forecast_for_log = final_dict
-    else:
-        final_forecast_for_log = bmc_summary
-
-    append_detailed_forecast_log(
-        log_file_handle=detailed_log_handle,
-        run_id=run_id,
-        now=now,
-        post_id=post_id,
-        question_id=question_id,
-        title=title,
-        url=url,
-        qtype=qtype,
-        slug=slug,
-        research_text=research,
-        ensemble_result=er,
-        used_gtmc1=bool(used_gtmc1),
-        actors=actors,
-        gtmc1_signal=gtmc1_signal,
-        bmc_summary=bmc_summary,
-        final_forecast=final_forecast_for_log,
-    )
-
+    # 6) Optional submit to Metaculus (binary & MCQ & numeric)
     if SUBMIT_PREDICTION:
         try:
-            post_question_prediction(question_id, final_payload)
-            post_question_comment(post_id, f"Automated forecast by Spagbot.\n\n{exp_short}")
-            mark_submitted_if_mini(question_id)
+            if qtype == "binary":
+                payload = create_forecast_payload(float(final_forecast), "binary")
+            elif qtype == "multiple_choice":
+                # Metaculus expects probabilities per category in *order*
+                pm = [float(final_forecast[str(opt)]) for opt in options]
+                payload = create_forecast_payload(pm, "multiple_choice")
+            else:
+                # For numeric, submit a continuous CDF: Metaculus supports a discretized CDF; here we
+                # provide three points (P10,P50,P90) to a simple piecewise CDF; if your API wrapper
+                # expects a dense CDF, adapt this to your in-repo format.
+                pf = final_forecast  # dict
+                cdf = {"p10": float(pf["P10"]), "p50": float(pf["P50"]), "p90": float(pf["P90"])}
+                payload = create_forecast_payload(cdf, "numeric")
+            post_question_prediction(question_id, payload)
+            print(f"Submitted forecast for Q{question_id}.")
         except Exception as e:
-            logger.warning(f"POST failed: {e}")
+            print(f"[submit] failed for Q{question_id}: {e!r}")
+
 
 # =====================================================================================
-# Runner
+# CLI / main
 # =====================================================================================
 
-# === Metaculus playlist fetch ===============================================
-def _metaculus_fetch_open_ids_for_collection(collection_slug: str, *, limit: int = 200) -> list[tuple[int, str]]:
-    """
-    Returns a list of (qid, url) for OPEN questions in a given Metaculus collection.
-    Uses APIv2. Requires METACULUS_TOKEN in env.
-    """
-    token = os.getenv("METACULUS_TOKEN", "").strip()
-    headers = {"Authorization": f"Token {token}"} if token else {}
-    # status=open ensures we don't fetch resolved/closed
-    url = "https://www.metaculus.com/api2/questions/"
-    params = {"collection": collection_slug, "status": "open", "limit": limit}
-    try:
-        r = requests.get(url, headers=headers, params=params, timeout=20)
-        if not r.ok:
-            print(f"[metaculus] fetch collection '{collection_slug}' HTTP {r.status_code}: {r.text[:200]}")
-            return []
-        data = r.json()
-        results = data.get("results", [])
-        out = []
-        for it in results:
-            qid = it.get("id")
-            url = it.get("url") or it.get("page_url") or f"https://www.metaculus.com/questions/{qid}/"
-            if isinstance(qid, int):
-                out.append((qid, url))
-        return out
-    except Exception as e:
-        print(f"[metaculus] error fetching collection '{collection_slug}': {e}")
-        return []
+def _print_start_banner(limit: int):
+    print("🚀 Spagbot ensemble starting…")
+    print(f"Mode: test_questions | METACULUS_TOKEN set: {bool(METACULUS_TOKEN)}")
+    print(f"USE_OPENROUTER={int(USE_OPENROUTER)} | USE_GOOGLE={int(USE_GOOGLE)} | ENABLE_GROK={int(ENABLE_GROK)}")
+    base = OPENAI_BASE_URL or "[default]"
+    print(f"OPENAI_BASE_URL={base} | GEMINI_MODEL={GEMINI_MODEL} | XAI_GROK_ID={XAI_GROK_ID}")
+    print(f"FORECAST_TEMP={FORECAST_TEMP} | FORECAST_TOP_P={FORECAST_TOP_P} | RESEARCH_TEMP={RESEARCH_TEMP} | RESEARCH_TOP_P={RESEARCH_TOP_P}")
+    print(f"Limit: {limit}\n" + "-"*90)
 
+def parse_args():
+    ap = argparse.ArgumentParser(description="Spagbot — core ensemble forecaster")
+    ap.add_argument("--mode", choices=["test_questions","tournament"], default="test_questions")
+    ap.add_argument("--limit", type=int, default=5, help="Max number of questions to run")
+    ap.add_argument("--fresh-research", action="store_true", help="Bypass research cache")
+    ap.add_argument("--submit", action="store_true", help="Submit forecasts to Metaculus")
+    return ap.parse_args()
 
-def get_playlist_question_ids(playlist: str) -> list[tuple[int, str]]:
-    """
-    Resolves the chosen playlist ('tournament'/'cup'/'all') to a list of (qid, url).
-    Uses env slugs:
-      METACULUS_COLLECTION_SLUG_TOURNAMENT
-      METACULUS_COLLECTION_SLUG_CUP
-    """
-    if playlist == "all":
-        # Merge both lists (de-dup by qid)
-        t_slug = os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT", "").strip()
-        c_slug = os.getenv("METACULUS_COLLECTION_SLUG_CUP", "").strip()
-        ids = []
-        if t_slug:
-            ids.extend(_metaculus_fetch_open_ids_for_collection(t_slug))
-        if c_slug:
-            ids.extend(_metaculus_fetch_open_ids_for_collection(c_slug))
-        # de-dup by qid, preserve first URL seen
-        seen, uniq = set(), []
-        for qid, u in ids:
-            if qid not in seen:
-                uniq.append((qid, u))
-                seen.add(qid)
-        return uniq
+async def main_async():
+    args = parse_args()
+    limit = int(args.limit or 5)
 
-    if playlist == "cup":
-        c_slug = os.getenv("METACULUS_COLLECTION_SLUG_CUP", "").strip()
-        return _metaculus_fetch_open_ids_for_collection(c_slug) if c_slug else []
-
-    # default: tournament
-    t_slug = os.getenv("METACULUS_COLLECTION_SLUG_TOURNAMENT", "").strip()
-    return _metaculus_fetch_open_ids_for_collection(t_slug) if t_slug else []
-
-async def main_async(mode: str, limit: int = 0):
-    ts = ist_stamp()
-    os.makedirs(RUN_LOG_DIR, exist_ok=True)
-    run_log_path = os.path.join(
-        RUN_LOG_DIR,
-        f"{spagbot_safe_filename('spagbot_run_'+ts)}.txt" if 'spagbot_safe_filename' in globals()
-        else f"spagbot_run_{ts}.txt"
-    )
-
-    # --- SeenGuard (dedupe protection) ---
-    # Namespace by RUN_PLAYLIST so "tournament" and "cup" keep separate seen registries.
-    # (We re-create inside the detailed-log 'with' as well to keep scope explicit.)
-    seen_guard = SeenGuard(namespace=os.getenv("RUN_PLAYLIST", "tournament"))
-
-    # ============ playlist selection ============
-    # Determine playlist from env (set by CLI --playlist or workflow RUN_PLAYLIST)
-    playlist = os.getenv("RUN_PLAYLIST", "tournament")
-    ids = get_playlist_question_ids(playlist)
-    if not ids:
-        print(f"[WARN] No open questions found for playlist='{playlist}'. "
-              f"Check collection slugs and token.")
-        return
-
-    # (Optional) If you use a separate "questions" structure, you can adapt here.
-
-    # --- file logger + console tee ---
-    fh = logging.FileHandler(run_log_path, encoding="utf-8")
-    fh.setLevel(logging.INFO)
-    fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-    logging.getLogger().addHandler(fh)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-
-    class Tee:
-        def __init__(self, path):
-            self.f = open(path, "a", encoding="utf-8")
-        def write(self, s: str):
-            try:
-                sys.__stdout__.write(s)
-            except Exception:
-                pass
-            try:
-                self.f.write(s)
-            except Exception:
-                pass
-        def flush(self):
-            try:
-                sys.__stdout__.flush()
-            except Exception:
-                pass
-            try:
-                self.f.flush()
-            except Exception:
-                pass
-        def close(self):
-            try:
-                self.f.close()
-            except Exception:
-                pass
-
-    tee = Tee(run_log_path)
-    sys.stdout = tee
-    sys.stderr = tee
-
-    try:
-        print(f"{PRINT_PREFIX} Spagbot ensemble starting…")
-        os.makedirs(FORECAST_LOG_DIR, exist_ok=True)
-
-        # Build the question list
-        if mode == "test_questions":
-            open_qs = [(578, 578), (14333, 14333), (22427, 22427), (38880, 38880)]
-        else:
-            open_qs = get_open_question_ids_from_tournament()
-
-        # Mini-bench one-shot guard (independent of dedupe)
-        if is_mini_bench():
-            already = _load_one_shot_ids()
-            if already:
-                before = len(open_qs)
-                open_qs = [(q, p) for (q, p) in open_qs if q not in already]
-                skipped = before - len(open_qs)
-                if skipped > 0:
-                    print(f"Mini-Bench one-shot guard: skipping {skipped} already-submitted question(s).")
-
-        # Optional limiter
-        if isinstance(limit, int) and limit > 0:
-            open_qs = open_qs[:limit]
-            print(f"\n⚡ Limiter active: running only the first {limit} question(s).")
-
-        run_id = ts
-        detailed_log_filename = os.path.join(FORECAST_LOG_DIR, f"{run_id}_reasoning.log")
-        with open(detailed_log_filename, "w", encoding="utf-8") as detailed_log_f:
-            # Header
-            detailed_log_f.write(f"📊 Forecast Run {run_id}\n")
-            detailed_log_f.write(f"Timestamp: {ist_iso()}\n")
-            detailed_log_f.write("=" * 60 + "\n")
-
-            # === DEDUPE INIT (inside the log 'with' block) ===
-            seen_guard = SeenGuard(namespace=os.getenv("RUN_PLAYLIST", "tournament"))
-            reforecast = (os.getenv("SPAGBOT_REFORECAST", "0").lower() in ("1", "true", "yes"))
-            msg = f"🧮 Dedupe init | ns={seen_guard.ns} | reforecast={reforecast}"
-            print(msg); detailed_log_f.write(msg + "\n")
-
-            # Main loop (single, authoritative copy)
-            for qid, pid in open_qs:
-                # --- DEDUPE: skip if already seen (unless --reforecast) ---
-                if not reforecast and seen_guard.has_seen(str(qid)):
-                    msg = f"⏭️  SKIP (seen) qid={qid} pid={pid} ns={seen_guard.ns}"
-                    print(msg); logger.info(msg)
-                    detailed_log_f.write(f"[{ist_iso()}] {msg}\n")
-                    continue
-
-                try:
-                    # Run the forecaster
-                    await forecast_one(qid, pid, run_id=run_id, detailed_log_handle=detailed_log_f)
-
-                    # --- Mark as seen only after successful forecast ---
-                    seen_guard.mark_seen(str(qid), metadata={"pid": pid, "ts": ist_iso()})
-                    msg_ok = f"✅ MARKED (seen) qid={qid} pid={pid} ns={seen_guard.ns}"
-                    print(msg_ok); logger.info(msg_ok)
-                    detailed_log_f.write(f"[{ist_iso()}] {msg_ok}\n")
-
-                    detailed_log_f.flush()
-                except Exception as e:
-                    print(f"[Error on qid={qid} pid={pid}] {e}")
-                    try:
-                        detailed_log_f.write("\n" + ("-" * 60) + "\n")
-                        detailed_log_f.write(f"❌ FAILED Question (qid={qid}, pid={pid})\n")
-                        detailed_log_f.write(f"Error: {e}\n")
-                        detailed_log_f.write("No detailed reasoning captured due to exception.\n")
-                        detailed_log_f.flush()
-                    except Exception:
-                        pass
-
-        # Footer (console + append to detailed log)
-        print("\n✅ forecasts.csv updated")
-        print("✅ forecasts_by_model.csv updated")
-        print(f"✅ Detailed reasoning log created: {detailed_log_filename}")
-
-        try:
-            footer = f"[{ist_iso()}] RUN COMPLETE (dedupe ns={seen_guard.ns})"
-            print("🏁 " + footer)
-            with open(detailed_log_filename, "a", encoding="utf-8") as df:
-                df.write(footer + "\n")
-        except Exception:
-            pass
-
-    finally:
-        try:
-            tee.close()
-        except Exception:
-            pass
-        try:
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
-        except Exception:
-            pass
-
-def main():
-    """
-    CLI entrypoint for Spagbot.
-    Parses CLI args, sets environment flags for downstream functions,
-    and dispatches to the async main loop.
-    """
-    parser = argparse.ArgumentParser(description="Run Spagbot (Ensemble + GTMC1 + Bayes-MC).")
-
-    # Required/standard args
-    parser.add_argument(
-        "--mode",
-        type=str,
-        default="test_questions",
-        choices=["test_questions", "run"],
-        help="Which overall run mode to use. 'test_questions' runs the built-in test set; 'run' performs a full run.",
-    )
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=0,
-        help="Limit number of questions to run (0 = no limit; run all).",
-    )
-    parser.add_argument(
-        "--fresh-research",
-        action="store_true",
-        help="Ignore cached research and fetch anew for every question.",
-    )
-
-    # ANCHOR: "playlist CLI"
-    # New optional selector; defaults to env RUN_PLAYLIST (else 'tournament').
-    # This *only* sets an environment variable that downstream code can read.
-    parser.add_argument(
-        "--playlist",
-        choices=["tournament", "cup", "all"],
-        default=os.getenv("RUN_PLAYLIST", "tournament"),
-        help="Which question pool to run against. Overrides RUN_PLAYLIST env if provided.",
-    )
-
-    parser.add_argument(
-        "--reforecast",
-        action="store_true",
-        help="Ignore seen-registry and re-forecast even if this question was seen before."
-    )
-
-    args = parser.parse_args()
-
-    # Expose --reforecast to async code via env (read in main_async)
-    if getattr(args, "reforecast", False):
-        os.environ["SPAGBOT_REFORECAST"] = "1"
-    else:
-        os.environ["SPAGBOT_REFORECAST"] = "0"
-
-    # Make --reforecast visible to async code via env
-    if getattr(args, "reforecast", False):
-        os.environ["SPAGBOT_REFORECAST"] = "1"
-    else:
-        os.environ["SPAGBOT_REFORECAST"] = "0"
-
-    # Resolve the playlist, print it for visibility, and expose via env
-    playlist = getattr(args, "playlist", os.getenv("RUN_PLAYLIST", "tournament"))
-    print(f"Playlist: {playlist}")
-    os.environ["RUN_PLAYLIST"] = playlist  # make available to all called functions
-
-    # Optional: disable research cache if explicitly requested
+    # wiring: allow CLI to override env submission and research cache
+    global SUBMIT_PREDICTION, DISABLE_RESEARCH_CACHE
+    if args.submit:
+        SUBMIT_PREDICTION = True
     if args.fresh_research:
-        os.environ["SPAGBOT_DISABLE_RESEARCH_CACHE"] = "1"
-        global DISABLE_RESEARCH_CACHE
         DISABLE_RESEARCH_CACHE = True
 
-    # Dispatch to async entrypoint (signature unchanged)
-    asyncio.run(main_async(args.mode, args.limit))
+    _print_start_banner(limit)
+
+    # Collect posts (open questions) from the configured tournament
+    try:
+        posts_resp = list_posts_from_tournament(TOURNAMENT_ID, offset=0, count=limit)
+        posts = posts_resp.get("results") or []
+    except Exception as e:
+        print(f"[error] listing tournament posts: {e!r}")
+        return
+
+    run_id = f"{ist_stamp()}__{TOURNAMENT_ID}"
+
+    # Iterate
+    for i, post in enumerate(posts[:limit], 1):
+        try:
+            pid = post.get("id") or post.get("post_id")
+            if pid:
+                post = get_post_details(int(pid))
+        except Exception:
+            # fallback: use the shallow post data we already have
+            pass
+
+        q = post.get("question") or {}
+        title = str(q.get("title") or post.get("title") or "").strip()
+        qid = int(q.get("id") or 0)
+        print(f"\n{'-'*90}\n[{i}/{limit}] ❓ {title}  (QID: {qid})")
+
+        await run_one_question_core(post, run_id=run_id, seen_guard=None)
+
+    print(f"\n✅ Spagbot run complete at {ist_iso()}")
+
+def main():
+    try:
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        print("\n[ctrl-c] aborted")
 
 if __name__ == "__main__":
     main()
-    print("🚀 Spagbot run complete")

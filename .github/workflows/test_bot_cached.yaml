@@ -49,6 +49,12 @@ jobs:
       MARKET_SNAPSHOT_MAX_MATCHES: "3"
       METACULUS_INCLUDE_RESOLVED: "1"
 
+      #Model temperature tuning
+      FORECAST_TEMP: "0.00"
+      FORECAST_TOP_P: "0.10"
+      RESEARCH_TEMP: "0.10"
+      RESEARCH_TOP_P: "1.00"
+      
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
