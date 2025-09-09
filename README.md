@@ -2,6 +2,7 @@
 This repository contains a simple bot meant to get you started with creating your own bot for the [AI Forecasting Tournament](https://www.metaculus.com/aib/). If you are looking for a more robust (but more complex) bot template/framework see [forecasting-tools](https://github.com/Metaculus/forecasting-tools)
 
 
+
 ## Quick start -> Fork and use Github Actions
 The easiest way to use this repo is to fork it, enable github workflow/actions, and then set repository secrets. Then your bot will run every 30min, pick up new questions, and forecast on them. Automation is handled in the `.github/workflows/` folder. The `daily_run_simple_bot.yaml` file runs the simple bot every 30 min and will skip questions it has already forecasted on.
 
