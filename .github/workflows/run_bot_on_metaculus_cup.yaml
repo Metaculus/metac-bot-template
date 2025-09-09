@@ -104,7 +104,7 @@ jobs:
 
       - name: Run Spagbot on Metaculus Cup (fresh)
         run: |
-          poetry run python spagbot.py --mode run --fresh-research
+          poetry run python spagbot.py --mode tournament --fresh-research
 
       - name: Git commit any changes
         run: |

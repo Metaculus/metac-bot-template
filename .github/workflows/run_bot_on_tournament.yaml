@@ -104,7 +104,7 @@ jobs:
 
       - name: Run Spagbot (fresh research + actors)
         run: |
-          poetry run python spagbot.py --mode run --fresh-research
+          poetry run python spagbot.py --mode tournament --fresh-research
 
       - name: Git commit any changes
         run: |
