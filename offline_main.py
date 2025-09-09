@@ -3,7 +3,7 @@ import os
 
 from logic.offline.forecaster import forecast_from_json, dispassion, slowly
 
-FORECAST_DIR = "forecasts/q3"
+FORECAST_DIR = "forecasts/fall"
 
 async def main_dispassion() -> None:
     files = [f for f in os.listdir(FORECAST_DIR) if f.endswith(".json")]
