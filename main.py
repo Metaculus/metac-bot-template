@@ -6,11 +6,23 @@ import os
 
 import dotenv
 
-from logic.chat_group_single_question import chat_group_single_question
+from logic.main_pipeline import chat_group_single_question
 from logic.forecast_single_question import \
     forecast_single_question
 from forecasting_tools import MetaculusApi
 dotenv.load_dotenv()
+
+# Configure logging to display INFO messages to console
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
+# Silence third-party library logs
+logging.getLogger('httpx').setLevel(logging.WARNING)
+logging.getLogger('openai').setLevel(logging.WARNING)
+logging.getLogger('urllib3').setLevel(logging.WARNING)
 
 import requests
 
@@ -27,7 +39,7 @@ GET_NEWS = True  # set to True to enable the bot to do online research
 # Environment variables
 
 SUBMIT_PREDICTION = True if os.getenv("SUBMIT_PREDICTION") == "true" else False
-USE_EXAMPLE_QUESTIONS = True if os.getenv("USE_EXAMPLE_QUESTIONS") == "true" else False
+USE_EXAMPLE_QUESTIONS = True #TODO RETURN TO WHAT WAS BEFORE! if os.getenv("USE_EXAMPLE_QUESTIONS") == "true" else False
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True if os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS") == "true" else False
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
