@@ -36,7 +36,7 @@ async def main_slowly() -> None:
     
     for file in files:
         logging.info("Processing slowly forecast for: %s", file)
-        await forecast_from_json(forecasting_function=slowly, path=os.path.join(FORECAST_DIR, file), is_woc=True)
+        await forecast_from_json(forecasting_function=slowly, path=os.path.join(FORECAST_DIR, file), is_woc=False)
     
     logging.info("=== Completed offline slowly forecasting ===")
 
