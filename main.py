@@ -39,7 +39,7 @@ GET_NEWS = True  # set to True to enable the bot to do online research
 # Environment variables
 
 SUBMIT_PREDICTION = True if os.getenv("SUBMIT_PREDICTION") == "true" else False
-USE_EXAMPLE_QUESTIONS = True #TODO RETURN TO WHAT WAS BEFORE! if os.getenv("USE_EXAMPLE_QUESTIONS") == "true" else False
+USE_EXAMPLE_QUESTIONS = True  if os.getenv("USE_EXAMPLE_QUESTIONS") == "true" else False
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True if os.getenv("SKIP_PREVIOUSLY_FORECASTED_QUESTIONS") == "true" else False
 
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
