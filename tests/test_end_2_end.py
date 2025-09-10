@@ -6,7 +6,7 @@ import pytest
 from logic.offline.forecaster import forecast_from_json, slowly, dispassion
 from main import forecast_questions
 
-TEST_FORECAST_DIR = "forecasts/q2"
+TEST_FORECAST_DIR = "forecasts/fall"
 
 
 
