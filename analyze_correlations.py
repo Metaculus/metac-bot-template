@@ -17,8 +17,9 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 from forecasting_tools.cp_benchmarking.benchmark_for_bot import BenchmarkForBot
 
 from metaculus_bot.correlation_analysis import CorrelationAnalyzer
@@ -95,13 +96,44 @@ def main():
         default=1.0,
         help="Maximum cost per question for ensemble recommendations",
     )
-    parser.add_argument("--max-size", type=int, default=5, help="Maximum ensemble size")
+    parser.add_argument("--max-size", type=int, default=7, help="Maximum ensemble size")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     parser.add_argument(
         "--question-types",
         nargs="*",
         choices=["binary", "numeric", "multiple_choice"],
         help="Filter analysis to specific question types",
+    )
+    parser.add_argument(
+        "--score-stats",
+        dest="score_stats",
+        action="store_true",
+        default=True,
+        help="Print score scaling stats by question type (default: on)",
+    )
+    parser.add_argument(
+        "--no-score-stats",
+        dest="score_stats",
+        action="store_false",
+        help="Disable printing score scaling stats",
+    )
+    parser.add_argument(
+        "--score-stats-per-question",
+        action="store_true",
+        default=False,
+        help="Also compute per-question stats (average across models per question)",
+    )
+    parser.add_argument(
+        "--score-stats-json",
+        type=str,
+        default=None,
+        help="Optional path to write score stats JSON (includes per-report and per-question if requested)",
+    )
+    parser.add_argument(
+        "--model-stats-json",
+        type=str,
+        default=None,
+        help="Optional path to write per-model, per-type score stats JSON",
     )
     parser.add_argument(
         "--exclude-models",
@@ -141,6 +173,30 @@ def main():
     # Apply scoring patches for mixed question types
     apply_scoring_patches()
 
+    # Analysis-only: suppress noisy numeric fallback warnings from scoring_patches while counting them.
+    class _NumericFallbackFilter(logging.Filter):
+        def __init__(self) -> None:
+            super().__init__()
+            self.suppressed_lines = 0
+            self.qids: set[str] = set()
+            self._pat_qid1 = re.compile(r"Numeric Question (\d+)")
+            self._pat_qid2 = re.compile(r"Numeric q=(\d+)")
+
+        def filter(self, record: logging.LogRecord) -> bool:  # True keeps, False drops
+            if record.name == "metaculus_bot.scoring_patches":
+                msg = str(record.getMessage())
+                low = msg.lower()
+                if ("cannot compute model cdf" in low) or ("using percentile fallback" in low):
+                    self.suppressed_lines += 1
+                    m = self._pat_qid1.search(msg) or self._pat_qid2.search(msg)
+                    if m:
+                        self.qids.add(m.group(1))
+                    return False
+            return True
+
+    _fallback_filter = _NumericFallbackFilter()
+    logging.getLogger("metaculus_bot.scoring_patches").addFilter(_fallback_filter)
+
     # Perform analysis
     analyzer = CorrelationAnalyzer()
     analyzer.add_benchmark_results(benchmarks)
@@ -165,12 +221,199 @@ def main():
             print(f"  unmatched exclude tokens: {unmatched_exc}")
 
     # Ensure at least two models remain
-    remaining_models = analyzer.get_model_names()
-    if len(remaining_models) < 2:
+    try:
+        remaining_models = analyzer.get_model_names()  # type: ignore[attr-defined]
+    except Exception:
+        remaining_models = None
+
+    if isinstance(remaining_models, (list, tuple, set)) and len(remaining_models) < 2:
         logger.error(
             f"Analysis requires ≥2 models after filtering. Remaining: {remaining_models if remaining_models else 'none'}"
         )
         sys.exit(1)
+
+    # Score scaling stats after filters
+    if args.score_stats:
+
+        def _detect_type_from_report(rep) -> str:
+            # Delegate to analyzer's helper which avoids touching .cdf
+            try:
+                return analyzer._get_question_type(rep)  # type: ignore[attr-defined]
+            except Exception:
+                return "binary"
+
+        def _collect_scores_per_report(benches: List[BenchmarkForBot]) -> Dict[str, List[float]]:
+            buckets: Dict[str, List[float]] = {"binary": [], "numeric": [], "multiple_choice": []}
+            for b in benches:
+                for r in b.forecast_reports:
+                    s = getattr(r, "expected_baseline_score", None)
+                    if s is None:
+                        continue
+                    qtype = _detect_type_from_report(r)
+                    buckets.setdefault(qtype, []).append(float(s))
+            return buckets
+
+        def _collect_scores_per_question(benches: List[BenchmarkForBot]) -> Dict[str, List[float]]:
+            # Aggregate scores per (question_id, type) across models, then average
+            per_q: Dict[Tuple[int, str], List[float]] = {}
+            for b in benches:
+                for r in b.forecast_reports:
+                    s = getattr(r, "expected_baseline_score", None)
+                    if s is None:
+                        continue
+                    qid = getattr(getattr(r, "question", None), "id_of_question", None)
+                    if qid is None:
+                        continue
+                    qtype = _detect_type_from_report(r)
+                    per_q.setdefault((int(qid), qtype), []).append(float(s))
+            # Average within question, then bucket by type
+            buckets: Dict[str, List[float]] = {"binary": [], "numeric": [], "multiple_choice": []}
+            for (qid, qtype), vals in per_q.items():
+                if vals:
+                    buckets.setdefault(qtype, []).append(float(np.mean(vals)))
+            return buckets
+
+        def _summarize(buckets: Dict[str, List[float]]) -> Dict[str, Dict[str, float]]:
+            out: Dict[str, Dict[str, float]] = {}
+            for qtype, vals in buckets.items():
+                if not vals:
+                    out[qtype] = {
+                        "n": 0,
+                        "mean": float("nan"),
+                        "mean_abs": float("nan"),
+                        "min": float("nan"),
+                        "max": float("nan"),
+                    }
+                else:
+                    arr = np.array(vals, dtype=float)
+                    out[qtype] = {
+                        "n": int(arr.size),
+                        "mean": float(np.mean(arr)),
+                        "mean_abs": float(np.mean(np.abs(arr))),
+                        "min": float(np.min(arr)),
+                        "max": float(np.max(arr)),
+                    }
+            return out
+
+        benches_filtered = getattr(analyzer, "benchmarks", benchmarks)
+        per_report_buckets = _collect_scores_per_report(benches_filtered)
+        per_report_summary = _summarize(per_report_buckets)
+
+        print("\n" + "=" * 60)
+        print("SCORE SCALING (After Filters) — Per-Report")
+        print("=" * 60)
+        for qtype in ["binary", "numeric", "multiple_choice"]:
+            s = per_report_summary.get(qtype, {})
+            print(
+                f"{qtype:16} n={s.get('n',0):4d} | mean={s.get('mean', float('nan')):7.2f} | "
+                f"mean|score|={s.get('mean_abs', float('nan')):7.2f} | min={s.get('min', float('nan')):7.2f} | max={s.get('max', float('nan')):7.2f}"
+            )
+
+        per_question_summary = None
+        if args.score_stats_per_question:
+            per_q_buckets = _collect_scores_per_question(benches_filtered)
+            per_question_summary = _summarize(per_q_buckets)
+            print("\nSCORE SCALING — Per-Question (average across models per question)")
+            print("-" * 60)
+            for qtype in ["binary", "numeric", "multiple_choice"]:
+                s = per_question_summary.get(qtype, {})
+                print(
+                    f"{qtype:16} n={s.get('n',0):4d} | mean={s.get('mean', float('nan')):7.2f} | "
+                    f"mean|score|={s.get('mean_abs', float('nan')):7.2f} | min={s.get('min', float('nan')):7.2f} | max={s.get('max', float('nan')):7.2f}"
+                )
+
+        # Optional JSON export
+        if args.score_stats_json:
+            try:
+                import json as _json
+
+                blob = {"per_report": per_report_summary}
+                if per_question_summary is not None:
+                    blob["per_question"] = per_question_summary
+                with open(args.score_stats_json, "w") as f:
+                    _json.dump(blob, f, indent=2)
+                print(f"\nScore stats written to: {args.score_stats_json}")
+            except Exception as e:
+                logger.warning(f"Failed to write score stats JSON: {e}")
+
+    # Per-model, per-type stats (basic per-report view)
+    try:
+        benches_filtered = getattr(analyzer, "benchmarks", benchmarks)
+
+        def _is_stacking_bench(b) -> bool:
+            try:
+                return bool(analyzer._is_stacking_benchmark(b))  # type: ignore[attr-defined]
+            except Exception:
+                try:
+                    cfg = getattr(b, "forecast_bot_config", {}) or {}
+                    strat = cfg.get("aggregation_strategy")
+                    if hasattr(strat, "value"):
+                        strat = strat.value
+                    return isinstance(strat, str) and strat.lower() == "stacking"
+                except Exception:
+                    return False
+
+        def _model_name_for(b) -> str:
+            try:
+                return str(analyzer._extract_model_name(b))  # type: ignore[attr-defined]
+            except Exception:
+                return str(getattr(b, "name", "unknown"))
+
+        buckets_mt: Dict[Tuple[str, str], List[float]] = {}
+        for b in benches_filtered:
+            if _is_stacking_bench(b):
+                continue
+            mname = _model_name_for(b)
+            for r in b.forecast_reports:
+                s = getattr(r, "expected_baseline_score", None)
+                if s is None:
+                    continue
+                qtype = _detect_type_from_report(r)
+                buckets_mt.setdefault((mname, qtype), []).append(float(s))
+
+        def _summ_stats(vals: List[float]) -> Dict[str, float]:
+            arr = np.array(vals, dtype=float)
+            return {
+                "n": int(arr.size),
+                "mean": float(np.mean(arr)),
+                "mean_abs": float(np.mean(np.abs(arr))),
+                "min": float(np.min(arr)),
+                "max": float(np.max(arr)),
+            }
+
+        # Build model->type->stats mapping
+        per_model: Dict[str, Dict[str, Dict[str, float]]] = {}
+        for (mname, qtype), vals in buckets_mt.items():
+            per_model.setdefault(mname, {})[qtype] = _summ_stats(vals)
+
+        # Print compact breakdown
+        if per_model:
+            print("\n" + "=" * 60)
+            print("MODEL STATS BY TYPE (After Filters)")
+            print("=" * 60)
+            for mname in sorted(per_model.keys()):
+                print(f"\n{mname}")
+                for qtype in ["binary", "numeric", "multiple_choice"]:
+                    st = per_model[mname].get(qtype)
+                    if not st or st.get("n", 0) == 0:
+                        continue
+                    print(
+                        f"  {qtype:16} n={int(st['n']):4d} | mean={st['mean']:7.2f} | "
+                        f"mean|score|={st['mean_abs']:7.2f} | min={st['min']:7.2f} | max={st['max']:7.2f}"
+                    )
+
+        # Optional JSON export
+        if args.model_stats_json:
+            try:
+                import json as _json
+
+                with open(args.model_stats_json, "w") as f:
+                    _json.dump(per_model, f, indent=2)
+                print(f"\nModel stats written to: {args.model_stats_json}")
+            except Exception as e:
+                logger.warning(f"Failed to write model stats JSON: {e}")
+    except Exception as e:
+        logger.warning(f"Failed to compute per-model stats: {e}")
 
     # Check if we have mixed question types
     has_mixed_types = analyzer._has_mixed_question_types()
@@ -248,6 +491,94 @@ def main():
         print(f"  {model1:20} ↔ {model2:20} | r = {corr:6.3f}")
 
     print(f"\nDetailed report saved to: {output_file}")
+
+    # Analysis-only summary for suppressed numeric fallback logs
+    try:
+        suppressed = getattr(_fallback_filter, "suppressed_lines", 0)
+        qids = getattr(_fallback_filter, "qids", set())
+        if suppressed:
+            print(f"\n[analysis] Suppressed numeric fallback warnings: {suppressed} lines across {len(qids)} questions")
+    except Exception:
+        pass
+
+    # ALL-MODEL ENSEMBLE (After Filters): compare mean/median across all remaining base models
+    try:
+        benches_filtered = getattr(analyzer, "benchmarks", benchmarks)
+
+        # Build included base model list (exclude stacking)
+        def _is_stacking_bench(b) -> bool:
+            try:
+                return bool(analyzer._is_stacking_benchmark(b))  # type: ignore[attr-defined]
+            except Exception:
+                try:
+                    cfg = getattr(b, "forecast_bot_config", {}) or {}
+                    strat = cfg.get("aggregation_strategy")
+                    if hasattr(strat, "value"):
+                        strat = strat.value
+                    return isinstance(strat, str) and strat.lower() == "stacking"
+                except Exception:
+                    return False
+
+        def _model_name_for(b) -> str:
+            try:
+                return str(analyzer._extract_model_name(b))  # type: ignore[attr-defined]
+            except Exception:
+                return str(getattr(b, "name", "unknown"))
+
+        model_to_qids: Dict[str, set[int]] = {}
+        models: List[str] = []
+        for b in benches_filtered:
+            if _is_stacking_bench(b):
+                continue
+            m = _model_name_for(b)
+            if m not in model_to_qids:
+                model_to_qids[m] = set()
+                models.append(m)
+            for r in b.forecast_reports:
+                qid = getattr(getattr(r, "question", None), "id_of_question", None)
+                if isinstance(qid, int):
+                    model_to_qids[m].add(qid)
+
+        # Filter to models that actually have any questions
+        models = [m for m in models if model_to_qids.get(m)]
+
+        if len(models) >= 2:
+            # Questions used = intersection across all included models
+            all_sets = [model_to_qids[m] for m in models]
+            inter = set.intersection(*all_sets) if all_sets else set()
+            uni = set.union(*all_sets) if all_sets else set()
+
+            # Average cost per question from analyzer stats
+            try:
+                stats = analyzer._calculate_model_statistics()  # type: ignore[attr-defined]
+            except Exception:
+                stats = {}
+            avg_costs = [stats[m]["avg_cost"] for m in models if m in stats]
+            avg_cost = float(np.mean(avg_costs)) if avg_costs else float("nan")
+
+            # Simulate performance for mean and median
+            mean_score = analyzer._simulate_ensemble_performance(models, "mean")  # type: ignore[attr-defined]
+            median_score = analyzer._simulate_ensemble_performance(models, "median")  # type: ignore[attr-defined]
+
+            # Print summary
+            def _short_list(names: List[str], max_len: int = 6) -> str:
+                if len(names) <= max_len:
+                    return ", ".join(names)
+                return ", ".join(names[:max_len]) + f" … (+{len(names) - max_len} more)"
+
+            print("\n" + "=" * 60)
+            print("ALL-MODEL ENSEMBLE (After Filters)")
+            print("=" * 60)
+            print(f"Models included ({len(models)}): {_short_list(models)}")
+            coverage = (len(inter) / max(len(uni), 1)) * 100.0 if uni else 0.0
+            print(f"Questions used: {len(inter)} of {len(uni)} ({coverage:.1f}% coverage)")
+            print(f"Avg cost per question: ${avg_cost:.3f}")
+            print(f"MEAN   ensemble score: {mean_score:.2f}")
+            print(f"MEDIAN ensemble score: {median_score:.2f}")
+        else:
+            print("\nALL-MODEL ENSEMBLE: skipped (need ≥2 base models after filters)")
+    except Exception as e:
+        logger.warning(f"Failed to compute ALL-MODEL ensemble summary: {e}")
 
 
 if __name__ == "__main__":

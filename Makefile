@@ -67,5 +67,5 @@ analyze_correlations:
 analyze_correlations_latest:
 	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1)" /dev/null
 
-analyze_correlations_latest_with_exclusions:
-	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u analyze_correlations.py "$(ls -t benchmarks/benchmarks_*.jsonl | head -1)" --exclude-models grok-4 gemini-2.5-pro
+analyze_correlations_latest_excluding:
+	PYTHONUNBUFFERED=1 PYTHONPATH=. stdbuf -oL -eL script -q -c "$(PY_ABS) -u analyze_correlations.py $$(ls -t benchmarks/benchmarks_*.jsonl | head -1) --exclude-models grok-4 gemini-2.5-pro" /dev/null

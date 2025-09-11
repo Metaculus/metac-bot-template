@@ -108,10 +108,10 @@ class TestNumericScoringSanity:
 
         assert score_A is not None
         assert score_B is not None
-        # Both should be reasonable scores (not extreme)
-        # With fixed normalization, scores should be in MC-like range
-        assert -80 <= score_A <= 80
-        assert -80 <= score_B <= 80
+        # Both should be bounded, but concentrated vs uniform can be quite negative
+        # under the calibrated normalization used to align avg absolute scores
+        assert -240 <= score_A <= 120
+        assert -240 <= score_B <= 120
 
     def test_worst_case_bounded_by_uniform_mixture(self):
         """Test that 1% uniform mixture prevents extremely bad scores."""

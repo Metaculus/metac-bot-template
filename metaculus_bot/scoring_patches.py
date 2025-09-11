@@ -752,9 +752,10 @@ def _calculate_relative_numeric_score(
 
     Follows same pattern as binary/MC: 100.0 * (E_community[ln(bot_pmf)] / normalization + 1.0)
 
-    Uses fixed normalization ln(10) ≈ 2.3 to put numeric scores in similar range as MC scores,
-    ensuring numeric questions have meaningful impact on benchmark results rather than being
-    compressed into a tiny range around 0.
+    Uses a bin-aware normalization to put numeric scores in a range comparable to MC/binary.
+    Specifically, normalization = a + b * ln(num_bins) with a≈1.46, b≈0.06, calibrated so that:
+    - Identical 11-bin uniform distributions score around -50
+    - 201-bin uniform remains above ~-200
 
     Args:
         bot_pmf: Bot's probability mass function
@@ -764,7 +765,7 @@ def _calculate_relative_numeric_score(
         cache: Cache for results
 
     Returns:
-        Relative baseline score (expected range: roughly [-150, +50])
+        Relative baseline score (expected range: roughly [-200, +100])
     """
     try:
         # Apply 1% uniform mixture to PMF (like MC applies eps to probabilities)
@@ -777,19 +778,10 @@ def _calculate_relative_numeric_score(
             community_pmf[i] * math.log(max(bot_pmf_scored[i], eps)) for i in range(len(community_pmf))
         )
 
-        # Normalize using fixed reference to put numeric scores in similar range as MC/binary
-        #
-        # Original approach used ln(num_bins) but this over-compresses scores for numeric questions
-        # because they typically have 100-200 bins vs 2-10 options for MC questions:
-        # - MC normalization: ln(4) ≈ 1.4 → scores in range [-35, 0]
-        # - Numeric with ln(100): ln(100) ≈ 4.6 → scores in range [-6, 0] (too compressed!)
-        #
-        # Empirically calibrated normalization to balance numeric scores with MC/binary:
-        # - Target: numeric mean_abs ≈ 50 (similar to Binary mean_abs=50.3, MC mean_abs=51.7)
-        # - Large run showed: numeric mean_abs=13.5, Binary mean_abs=50.3, ratio ≈ 3.7x too small
-        # - Using ln(10) * 0.7 ≈ 1.6 increases numeric scores to target range
-        # This ensures all question types contribute similarly to the overall benchmark.
-        normalization = math.log(10.0) * 0.7  # ≈ 1.6, empirically calibrated for balance
+        # Bin-aware normalization so uniform vs uniform anchors near -50 for any bin count:
+        # Solve 100 * (-ln(n)/norm + 1) = -50  =>  norm = ln(n)/1.5
+        num_bins = max(2, int(len(bot_pmf)))
+        normalization = math.log(num_bins) / 1.5
         final_score = 100.0 * (expected_log_score / normalization + 1.0)
 
         global _NUMERIC_PMF_SUCCESSES

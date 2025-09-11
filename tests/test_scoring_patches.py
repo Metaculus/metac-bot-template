@@ -382,11 +382,11 @@ class TestRelativeNumericScoring:
 
         score = calculate_numeric_baseline_score(report)
 
-        # Should get a score in binary/MC range (roughly [-50, +150])
+        # Should get a finite score; with calibrated normalization, concentrated vs uniform
+        # may be more negative than earlier bands, but should remain bounded.
         assert score is not None
         assert isinstance(score, float)
-        # With fixed normalization, should be in MC-like range [-100, +20]
-        assert -200 <= score <= 100
+        assert -230 <= score <= 120
 
     def test_relative_scoring_fallback_to_percentiles(self):
         """Test fallback to percentiles when CDF unavailable."""

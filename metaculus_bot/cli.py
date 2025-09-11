@@ -7,7 +7,6 @@ from typing import Literal
 
 from forecasting_tools import MetaculusApi
 
-# NOTE: TemplateForecaster is still defined in main.py during the first refactor phase.
 from main import TemplateForecaster
 from metaculus_bot.aggregation_strategies import AggregationStrategy
 from metaculus_bot.llm_configs import (
@@ -54,7 +53,7 @@ def main() -> None:
         publish_reports_to_metaculus=True,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
-        aggregation_strategy=AggregationStrategy.MEAN,
+        aggregation_strategy=AggregationStrategy.MEDIAN,
         llms={
             "forecasters": FORECASTER_LLMS,
             "summarizer": SUMMARIZER_LLM,
