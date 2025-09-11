@@ -104,6 +104,8 @@ class CorrelationAnalyzer:
         ] = {}  # (q_id, q_type) -> (score, diagnostics_logged)
         # Map cleaned model names to benchmark objects for later filtering (e.g., exclude stacking bots)
         self._model_name_to_benchmark: Dict[str, BenchmarkForBot] = {}
+        # Human-readable notes about any applied filters
+        self._filter_summary_lines: List[str] = []
 
     def add_benchmark_results(self, benchmarks: List[BenchmarkForBot]) -> None:
         """Extract predictions from benchmark results."""
@@ -132,6 +134,167 @@ class CorrelationAnalyzer:
                 self.predictions.append(prediction)
 
         logger.info(f"Loaded {len(self.predictions)} predictions from {len(benchmarks)} models")
+
+    def _identifiers_for_benchmark(self, benchmark: BenchmarkForBot, model_name: str) -> List[str]:
+        """Return identifier strings used for substring matching.
+
+        Uses multiple fields for robustness without normalization beyond lowercasing:
+        - cleaned model name we derived
+        - the benchmark's own name
+        - any model path strings found in forecast_bot_config.llms (default/forecasters/stacker)
+        """
+        idents: List[str] = []
+        try:
+            idents.append(model_name)
+            if getattr(benchmark, "name", None):
+                idents.append(benchmark.name)
+            cfg = getattr(benchmark, "forecast_bot_config", {}) or {}
+            llms = cfg.get("llms", {}) if isinstance(cfg, dict) else {}
+            if isinstance(llms, dict):
+                default_cfg = llms.get("default")
+                if isinstance(default_cfg, dict) and default_cfg.get("model"):
+                    idents.append(str(default_cfg.get("model")))
+                # forecasters list
+                forecasters = llms.get("forecasters")
+                if isinstance(forecasters, list):
+                    for f in forecasters:
+                        if isinstance(f, dict):
+                            if f.get("original_model"):
+                                idents.append(str(f.get("original_model")))
+                            if f.get("model"):
+                                idents.append(str(f.get("model")))
+                # stacker model
+                stacker_cfg = llms.get("stacker")
+                if isinstance(stacker_cfg, dict) and stacker_cfg.get("model"):
+                    idents.append(str(stacker_cfg.get("model")))
+        except Exception:
+            pass
+        # Deduplicate while preserving order
+        seen = set()
+        out = []
+        for s in idents:
+            if not s:
+                continue
+            if s not in seen:
+                seen.add(s)
+                out.append(s)
+        return out
+
+    def get_model_names(self) -> List[str]:
+        """Return sorted unique model names present in current predictions/benchmarks."""
+        if self._model_name_to_benchmark:
+            names = list(self._model_name_to_benchmark.keys())
+        else:
+            names = sorted({p.model_name for p in self.predictions})
+        return sorted(names)
+
+    def filter_models_inplace(
+        self,
+        include: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
+    ) -> Dict[str, List[str]]:
+        """Filter benchmarks/predictions by substring-matched include/exclude lists.
+
+        Matching is case-insensitive substring on several identifiers per model.
+        If `include` is provided, only included models remain. Then `exclude` is
+        applied to drop any matched models. Returns a dict summarizing matches.
+        """
+        # Clear previous summary
+        self._filter_summary_lines = []
+
+        tokens_inc = [t for t in (include or []) if isinstance(t, str) and t.strip()]
+        tokens_exc = [t for t in (exclude or []) if isinstance(t, str) and t.strip()]
+        if not tokens_inc and not tokens_exc:
+            return {"included": [], "excluded": [], "unmatched_includes": [], "unmatched_excludes": []}
+
+        # Compute model name -> identifiers map
+        name_to_idents: Dict[str, List[str]] = {}
+        for b in self.benchmarks:
+            name = self._extract_model_name(b)
+            name_to_idents[name] = self._identifiers_for_benchmark(b, name)
+
+        # Helpers for case-insensitive substring matching
+        def _any_token_in_idents(tokens: List[str], idents: List[str]) -> bool:
+            if not tokens:
+                return False
+            lowers = [s.lower() for s in idents]
+            for tok in tokens:
+                lt = tok.lower()
+                for s in lowers:
+                    if lt in s:
+                        return True
+            return False
+
+        # Determine included set
+        all_models: List[str] = list(name_to_idents.keys())
+        included_set = set(all_models)
+        matched_includes: Dict[str, List[str]] = {t: [] for t in tokens_inc}
+        matched_excludes: Dict[str, List[str]] = {t: [] for t in tokens_exc}
+
+        if tokens_inc:
+            included_set = set()
+            for name, idents in name_to_idents.items():
+                if _any_token_in_idents(tokens_inc, idents):
+                    included_set.add(name)
+                    # Track which tokens matched this name
+                    for t in tokens_inc:
+                        if _any_token_in_idents([t], idents):
+                            matched_includes[t].append(name)
+
+        # Apply excludes
+        to_exclude: set[str] = set()
+        if tokens_exc:
+            for name, idents in name_to_idents.items():
+                if _any_token_in_idents(tokens_exc, idents):
+                    to_exclude.add(name)
+                    for t in tokens_exc:
+                        if _any_token_in_idents([t], idents):
+                            matched_excludes[t].append(name)
+
+        final_allowed = (
+            [n for n in all_models if (n in included_set) and (n not in to_exclude)]
+            if tokens_inc
+            else [n for n in all_models if n not in to_exclude]
+        )
+
+        # Build summaries
+        unmatched_includes = [t for t, hits in matched_includes.items() if not hits]
+        unmatched_excludes = [t for t, hits in matched_excludes.items() if not hits]
+
+        if tokens_inc:
+            inc_lines = ["Included by tokens:"] + [
+                f"- {t}: {', '.join(hits) if hits else '(no match)'}" for t, hits in matched_includes.items()
+            ]
+            self._filter_summary_lines.extend(inc_lines)
+        if tokens_exc:
+            exc_lines = ["Excluded by tokens:"] + [
+                f"- {t}: {', '.join(hits) if hits else '(no match)'}" for t, hits in matched_excludes.items()
+            ]
+            self._filter_summary_lines.extend(exc_lines)
+        self._filter_summary_lines.append(
+            f"Remaining models: {', '.join(final_allowed) if final_allowed else '(none)'}"
+        )
+
+        # Apply filter to internal state
+        allowed_set = set(final_allowed)
+        before_bench = len(self.benchmarks)
+        before_preds = len(self.predictions)
+        self.benchmarks = [b for b in self.benchmarks if self._extract_model_name(b) in allowed_set]
+        self.predictions = [p for p in self.predictions if p.model_name in allowed_set]
+        self._model_name_to_benchmark = {k: v for k, v in self._model_name_to_benchmark.items() if k in allowed_set}
+        self._model_stats_cache = None
+        self._baseline_score_cache.clear()
+
+        logger.info(
+            f"Model filtering applied: {before_bench}→{len(self.benchmarks)} benchmarks, {before_preds}→{len(self.predictions)} predictions"
+        )
+
+        return {
+            "included": final_allowed if tokens_inc else [],
+            "excluded": sorted(to_exclude),
+            "unmatched_includes": unmatched_includes,
+            "unmatched_excludes": unmatched_excludes,
+        }
 
     def _is_stacking_benchmark(self, benchmark: Optional[BenchmarkForBot]) -> bool:
         """Return True if the provided benchmark used STACKING aggregation.
@@ -1038,6 +1201,12 @@ class CorrelationAnalyzer:
         report.append(
             f"Based on {correlation_matrix.num_questions} questions across {len(correlation_matrix.model_names)} models\n"
         )
+
+        # Note any filters applied
+        if getattr(self, "_filter_summary_lines", None):
+            report.append("## Filters Applied")
+            report.extend(self._filter_summary_lines)
+            report.append("")
 
         # Add question type breakdown if mixed
         if use_component_analysis:

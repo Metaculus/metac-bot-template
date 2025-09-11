@@ -91,6 +91,32 @@ make benchmark_run_large
 make benchmark_display
 ```
 
+### Correlation Analysis & Model Filtering
+
+You can analyze correlations and recompute ensembles from prior runs without re-forecasting. Simple substring-based filters let you include or exclude models in the analysis.
+
+Examples:
+
+```bash
+# Analyze the most recent benchmark file, excluding Grok and Gemini
+PYTHONPATH=. ~/miniconda3/envs/metaculus-bot/bin/python analyze_correlations.py "$(ls -t benchmarks/benchmarks_*.jsonl | head -1)" \
+  --exclude-models grok-4 gemini-2.5-pro
+
+# Analyze a directory while excluding models
+python analyze_correlations.py benchmarks/ --exclude-models grok-4 gemini-2.5-pro
+
+# Include-only a subset (mutually exclusive with --exclude-models)
+python analyze_correlations.py benchmarks/ --include-models qwen3-235b o3
+
+# Apply filters to the built-in post-run analysis
+python community_benchmark.py --mode run --num-questions 30 --mixed \
+  --exclude-models grok-4 gemini-2.5-pro
+```
+
+Notes:
+- Matching is substring-only, case-insensitive (no regex or space/hyphen normalization). For example, `grok-4` matches `openrouter/x-ai/grok-4`, but `grok 4` will not.
+- Filters apply before computing correlation matrices, model stats, and ensemble search. The generated report includes a “Filters Applied” section.
+
 ### Testing
 ```bash
 # Run all tests

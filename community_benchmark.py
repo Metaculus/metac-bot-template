@@ -251,7 +251,13 @@ async def _get_mixed_question_types(total_questions: int, one_year_from_now: dat
     return all_questions
 
 
-async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_types: bool = False) -> None:
+async def benchmark_forecast_bot(
+    mode: str,
+    number_of_questions: int = 2,
+    mixed_types: bool = False,
+    include_models: list[str] | None = None,
+    exclude_models: list[str] | None = None,
+) -> None:
     """
     Run a benchmark that compares your forecasts against the community prediction.
     Ideally 100+ questions for meaningful error bars, but can use e.g. just a few for smoke testing or 30 for a quick run.
@@ -536,6 +542,25 @@ async def benchmark_forecast_bot(mode: str, number_of_questions: int = 2, mixed_
             analyzer = CorrelationAnalyzer()
             analyzer.add_benchmark_results(benchmarks)
 
+            # Optional model filtering prior to report/ensembles
+            if include_models and exclude_models:
+                logger.warning("Both include and exclude provided; include takes precedence, excludes still applied.")
+            if include_models or exclude_models:
+                summary = analyzer.filter_models_inplace(include=include_models, exclude=exclude_models)
+                try:
+                    logger.info("Model filters applied:")
+                    if include_models:
+                        logger.info(f"  include tokens: {include_models}")
+                        if summary.get("unmatched_includes"):
+                            logger.info(f"  unmatched include tokens: {summary['unmatched_includes']}")
+                    if exclude_models:
+                        logger.info(f"  exclude tokens: {exclude_models}")
+                        if summary.get("unmatched_excludes"):
+                            logger.info(f"  unmatched exclude tokens: {summary['unmatched_excludes']}")
+                    logger.info(f"  remaining models: {analyzer.get_model_names()}")
+                except Exception:
+                    pass
+
             # Generate and log correlation report
             report = analyzer.generate_correlation_report("benchmarks/correlation_analysis.md")
             logger.info("\n" + "=" * 50)
@@ -657,6 +682,31 @@ if __name__ == "__main__":
         action="store_true",
         help="Use mixed question types with 50/25/25 distribution (binary/numeric/multiple-choice)",
     )
+    parser.add_argument(
+        "--exclude-models",
+        nargs="*",
+        default=None,
+        help=(
+            "Exclude models by substring match (case-insensitive). " "Example: --exclude-models grok-4 gemini-2.5-pro"
+        ),
+    )
+    parser.add_argument(
+        "--include-models",
+        nargs="*",
+        default=None,
+        help=(
+            "Only include models matching these substrings (case-insensitive). "
+            "Mutually exclusive with --exclude-models."
+        ),
+    )
     args = parser.parse_args()
     mode: Literal["run", "custom", "display"] = args.mode
-    asyncio.run(benchmark_forecast_bot(mode, args.num_questions, args.mixed))
+    asyncio.run(
+        benchmark_forecast_bot(
+            mode,
+            args.num_questions,
+            args.mixed,
+            include_models=args.include_models,
+            exclude_models=args.exclude_models,
+        )
+    )

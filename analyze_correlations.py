@@ -103,6 +103,23 @@ def main():
         choices=["binary", "numeric", "multiple_choice"],
         help="Filter analysis to specific question types",
     )
+    parser.add_argument(
+        "--exclude-models",
+        nargs="*",
+        default=None,
+        help=(
+            "Exclude models by substring match (case-insensitive). " "Example: --exclude-models grok-4 gemini-2.5-pro"
+        ),
+    )
+    parser.add_argument(
+        "--include-models",
+        nargs="*",
+        default=None,
+        help=(
+            "Only include models matching these substrings (case-insensitive). "
+            "Mutually exclusive with --exclude-models."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -127,6 +144,33 @@ def main():
     # Perform analysis
     analyzer = CorrelationAnalyzer()
     analyzer.add_benchmark_results(benchmarks)
+
+    # Apply include/exclude filtering before analysis
+    if args.include_models and args.exclude_models:
+        logger.error("--include-models and --exclude-models are mutually exclusive")
+        sys.exit(2)
+
+    filter_summary = analyzer.filter_models_inplace(include=args.include_models, exclude=args.exclude_models)
+    if args.include_models or args.exclude_models:
+        print("Applied model filters:")
+        if args.include_models:
+            print(f"  include tokens: {args.include_models}")
+        if args.exclude_models:
+            print(f"  exclude tokens: {args.exclude_models}")
+        unmatched_inc = filter_summary.get("unmatched_includes", [])
+        unmatched_exc = filter_summary.get("unmatched_excludes", [])
+        if unmatched_inc:
+            print(f"  unmatched include tokens: {unmatched_inc}")
+        if unmatched_exc:
+            print(f"  unmatched exclude tokens: {unmatched_exc}")
+
+    # Ensure at least two models remain
+    remaining_models = analyzer.get_model_names()
+    if len(remaining_models) < 2:
+        logger.error(
+            f"Analysis requires ≥2 models after filtering. Remaining: {remaining_models if remaining_models else 'none'}"
+        )
+        sys.exit(1)
 
     # Check if we have mixed question types
     has_mixed_types = analyzer._has_mixed_question_types()
