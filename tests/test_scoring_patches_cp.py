@@ -57,7 +57,11 @@ def _make_numeric_question(cdf_values, range_min=0.0, range_max=1.0, zero_point=
             "zero_point": zero_point,
         },
     }
-    return SimpleNamespace(id_of_question=456, api_json={"question": api_q})
+    question = SimpleNamespace(id_of_question=456, api_json={"question": api_q})
+    # Add bounds that our scoring function expects
+    question.lower_bound = float(range_min)
+    question.upper_bound = float(range_max)
+    return question
 
 
 class _Perc:

@@ -1045,7 +1045,7 @@ class CorrelationAnalyzer:
             report.append("## Question Type Distribution")
             for q_type, count in sorted(type_counts.items()):
                 report.append(f"- **{q_type.title()}**: {count} questions")
-            report.append("- **Analysis Method**: Component-wise correlation (improved for mixed types)\n")
+            report.append("- **Analysis Method**: Component-wise correlation\n")
 
         # Model Performance Summary
         report.append("## Individual Model Performance")

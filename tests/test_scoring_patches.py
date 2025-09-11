@@ -216,15 +216,17 @@ class TestNumericScoring:
     """Test numeric baseline scoring with PDF approach."""
 
     def test_numeric_scoring_success(self):
-        """Test successful numeric scoring with PDF approach."""
-        # Create mock question
+        """Test successful numeric scoring with community benchmark approach."""
+        # Create mock question with bounds
         question = Mock()
         question.id_of_question = 456
         question.num_predictions = 20
+        question.lower_bound = 0.0
+        question.upper_bound = 100.0
 
         # Create mock percentiles (enough for PDF estimation)
         percentiles = []
-        for p, v in [(10, 100), (20, 150), (40, 200), (60, 300), (80, 500), (90, 800)]:
+        for p, v in [(10, 10), (20, 20), (40, 40), (60, 60), (80, 80), (90, 90)]:
             mock_p = Mock()
             mock_p.percentile = p
             mock_p.value = v
@@ -254,16 +256,17 @@ class TestNumericScoring:
         assert math.isfinite(score)
         assert isinstance(score, float)
 
-        # Score should be in reasonable range for baseline scoring
-        assert -500 <= score <= 500
+        # Score should be in new expanded range with fixed normalization ln(10)
+        # Range should be similar to MC scores: roughly [-100, +20]
+        assert -200 <= score <= 100
 
     def test_numeric_scoring_pmf_path(self):
         """Test numeric scoring via PMF path when both model and community CDFs exist."""
-        # Create mock question with closed bounds
+        # Create mock question with bounds
         question = Mock()
         question.id_of_question = 789
-        question.open_upper_bound = False
-        question.open_lower_bound = False
+        question.lower_bound = 0.0
+        question.upper_bound = 100.0
         # Provide community CDF (uniform for simplicity)
         community_cdf = np.linspace(0.0, 1.0, 201).tolist()
         question.api_json = {
@@ -289,7 +292,9 @@ class TestNumericScoring:
         assert score is not None
         assert math.isfinite(score)
         assert isinstance(score, float)
-        assert -500 <= score <= 500
+        # Score should be in realistic community benchmark range
+        # With fixed normalization, scores should be in MC-like range
+        assert -200 <= score <= 100
 
     def test_numeric_scoring_insufficient_percentiles(self):
         """Test numeric scoring with insufficient percentiles."""
@@ -329,6 +334,146 @@ class TestNumericScoring:
 
         score = calculate_numeric_baseline_score(report)
         assert score is None
+
+
+class TestRelativeNumericScoring:
+    """Test relative numeric scoring against community distribution (community benchmark context)."""
+
+    def test_relative_scoring_with_community_cdf(self):
+        """Test relative numeric scoring using community CDF as expectation weights."""
+        # Create mock question with bounds [0, 100]
+        question = Mock()
+        question.id_of_question = 999
+        question.lower_bound = 0.0
+        question.upper_bound = 100.0
+
+        # Mock uniform community CDF
+        question.api_json = {
+            "question": {
+                "aggregations": {
+                    "recency_weighted": {
+                        "latest": {
+                            "forecast_values": np.linspace(0.0, 1.0, 201).tolist()  # Uniform community
+                        }
+                    }
+                }
+            }
+        }
+
+        # Create bot prediction with concentration around middle (better than uniform)
+        class P:
+            def __init__(self, percentile):
+                self.percentile = percentile
+
+        # Create CDF that's more concentrated in middle than uniform
+        model_cdf = []
+        for i in range(201):
+            p = i / 200.0
+            # Sigmoid-like concentration
+            cdf_val = 1.0 / (1.0 + math.exp(-8 * (p - 0.5)))
+            model_cdf.append(P(cdf_val))
+
+        prediction = Mock()
+        prediction.cdf = model_cdf
+
+        report = Mock()
+        report.question = question
+        report.prediction = prediction
+
+        score = calculate_numeric_baseline_score(report)
+
+        # Should get a score in binary/MC range (roughly [-50, +150])
+        assert score is not None
+        assert isinstance(score, float)
+        # With fixed normalization, should be in MC-like range [-100, +20]
+        assert -200 <= score <= 100
+
+    def test_relative_scoring_fallback_to_percentiles(self):
+        """Test fallback to percentiles when CDF unavailable."""
+        question = Mock()
+        question.id_of_question = 998
+        question.lower_bound = 0.0
+        question.upper_bound = 100.0
+
+        # No community CDF - will fall back to uniform community
+        question.api_json = {"question": {"aggregations": {}}}
+
+        # Create bot prediction using declared percentiles
+        percentiles = []
+
+        class P:
+            def __init__(self, percentile, value):
+                self.percentile = percentile
+                self.value = value
+
+        # Bot has tight distribution around 50 (better than uniform)
+        values = [30, 45, 48, 50, 52, 55, 70]
+        percs = [0.05, 0.2, 0.4, 0.5, 0.6, 0.8, 0.95]
+        for p, v in zip(percs, values):
+            percentiles.append(P(p * 100, v))
+
+        prediction = Mock()
+        prediction.declared_percentiles = percentiles
+        # No CDF available - will trigger fallback
+
+        report = Mock()
+        report.question = question
+        report.prediction = prediction
+
+        score = calculate_numeric_baseline_score(report)
+
+        # Should still get a reasonable score using fallback method
+        assert score is not None
+        assert isinstance(score, float)
+        # With fixed normalization, should be in MC-like range
+        assert -200 <= score <= 100
+
+    def test_scoring_consistency_with_binary_mc(self):
+        """Test that numeric scores are in similar range as binary/MC."""
+        question = Mock()
+        question.id_of_question = 997
+        question.lower_bound = 0.0
+        question.upper_bound = 100.0
+
+        # Uniform community CDF
+        question.api_json = {
+            "question": {
+                "aggregations": {
+                    "recency_weighted": {"latest": {"forecast_values": np.linspace(0.0, 1.0, 11).tolist()}}
+                }
+            }
+        }
+
+        # Uniform bot CDF for comparison
+        class P:
+            def __init__(self, percentile):
+                self.percentile = percentile
+
+        uniform_bot_cdf = [P(i / 10.0) for i in range(11)]
+
+        prediction = Mock()
+        prediction.cdf = uniform_bot_cdf
+
+        report = Mock()
+        report.question = question
+        report.prediction = prediction
+
+        numeric_score = calculate_numeric_baseline_score(report)
+
+        # Compare to binary scoring for similar "neutral" prediction
+        # Binary: 100.0 * (c * (log2(p) + 1.0) + (1.0 - c) * (log2(1.0 - p) + 1.0))
+        c, p = 0.5, 0.5  # Both 50% - neutral
+        binary_score = 100.0 * (c * (math.log2(p) + 1.0) + (1.0 - c) * (math.log2(1.0 - p) + 1.0))
+
+        # Should be in similar range (both around 0 for neutral predictions)
+        assert numeric_score is not None
+        assert isinstance(numeric_score, float)
+
+        # Both should be relatively close to each other for neutral predictions
+        score_diff = abs(numeric_score - binary_score)
+        assert score_diff < 150  # Should be within reasonable range of each other
+
+        print(f"Numeric score: {numeric_score:.2f}, Binary score: {binary_score:.2f}")
 
 
 class TestScoreScaling:

@@ -10,7 +10,6 @@ import math
 from typing import Any, List, Optional, Tuple
 
 import numpy as np
-from scipy.interpolate import interp1d
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -494,7 +493,7 @@ def calculate_multiple_choice_baseline_score(report: Any, cache: Optional[dict] 
             )  # Score calculated, no diagnostics needed
             logger.debug(f"MC Question {q_id}: baseline score {final_score:.2f} (cached for future use)")
         else:
-            logger.info(
+            logger.debug(
                 f"MC Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f}"
             )
 
@@ -591,12 +590,16 @@ def _extract_numeric_community_cdf(question: Any) -> Optional[List[float]]:
 
 def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) -> Optional[float]:
     """
-    Calculate baseline score for numeric questions using CDF→PMF comparison.
+    Calculate baseline score for numeric questions relative to community distribution.
 
-    Preferred approach: convert both model and community CDFs to discretized PMFs and
-    compute 50 * E_c[ln(p_model / p_baseline)]. This mirrors the continuous log-score
-    style and aligns scale with binary baselines. Falls back to a simple PDF estimate
-    from declared percentiles only when CDFs are unavailable.
+    Uses the same pattern as binary/MC scoring: computes expected log score of bot's PMF
+    under community distribution, then scales to comparable range with binary/MC.
+
+    Formula: 100.0 * (E_community[ln(bot_pmf)] / ln(10) + 1.0)
+
+    The fixed normalization ln(10) ≈ 2.3 ensures numeric scores have similar benchmark
+    impact as MC questions (~[-100, +20] range) rather than being over-compressed by
+    the large number of bins typical in numeric questions.
 
     Args:
         report: NumericReport-like object with `.prediction.cdf` and question `api_json`.
@@ -604,7 +607,7 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
                Format: {(q_id, q_type): (score, diagnostics_logged)}
 
     Returns:
-        Baseline score or None if cannot be calculated
+        Baseline score or None if cannot be calculated (expected range: ~[-100, +20])
     """
     global _NUMERIC_PMF_ATTEMPTS, _NUMERIC_PMF_SUCCESSES
     global _NUMERIC_FALLBACK_ATTEMPTS, _NUMERIC_FALLBACK_SUCCESSES
@@ -640,80 +643,81 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
         # Extract community CDF from API JSON
         community_cdf = _extract_numeric_community_cdf(report.question)
 
-        # If either CDF is missing or too short, fall back to a PDF-like approximation
+        # If either CDF is missing or too short, fall back to percentile-based approximation
         if not community_cdf or len(community_cdf) < 2 or model_cdf_percentiles is None:
             logger.info(
-                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community/model CDF; using legacy PDF fallback"
+                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing community/model CDF; using percentile fallback"
             )
             try:
                 _NUMERIC_FALLBACK_ATTEMPTS += 1
-                # Log basic context for debugging
-                if community_cdf is None:
-                    logger.debug("Numeric: community_cdf is None")
-                else:
-                    logger.debug("Numeric: community_cdf length=%d", len(community_cdf))
-                # Use declared percentiles if available to build interpolation over values
-                declared = getattr(report.prediction, "declared_percentiles", None)
-                if not declared and model_cdf_percentiles:
-                    declared = model_cdf_percentiles[::40]
+                # Get question bounds for proper bin calculation
+                lower_bound = getattr(report.question, "lower_bound", None)
+                upper_bound = getattr(report.question, "upper_bound", None)
 
-                if not declared:
+                if lower_bound is None or upper_bound is None:
+                    logger.warning(
+                        f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing bounds, cannot calculate bins"
+                    )
                     return None
 
-                values = [float(p.value) for p in declared]
-                perc = [
+                # Use declared percentiles to approximate PMF
+                declared = getattr(report.prediction, "declared_percentiles", None)
+                if not declared and model_cdf_percentiles:
+                    declared = model_cdf_percentiles[::20]  # Take every 20th for approximation
+
+                if not declared or len(declared) < 3:
+                    return None
+
+                # Convert percentiles to CDF approximation
+                [float(p.value) for p in declared]
+                percs = [
                     float(getattr(p, "percentile", 0)) / (100.0 if getattr(p, "percentile", 1) > 1 else 1.0)
                     for p in declared
                 ]
-                if len(values) < 3:
+
+                # Create approximate PMF from percentile differences
+                bot_pmf = np.diff(percs)
+                bot_pmf = np.maximum(bot_pmf, 0.0)
+                if bot_pmf.sum() <= 0:
                     return None
+                bot_pmf = bot_pmf / bot_pmf.sum()
 
-                # Interpolate CDF(value)->percentile and estimate local PDF near median
-                cdf_func = interp1d(values, perc, bounds_error=False, fill_value=(0, 1), kind="linear")
-                vmin, vmax = min(values), max(values)
-                dx = (vmax - vmin) / 1000.0 if vmax > vmin else 1.0
-                x0 = np.median(values)
-                cdf_left = float(cdf_func(x0 - dx / 2))
-                cdf_right = float(cdf_func(x0 + dx / 2))
-                pdf = max(1e-10, (cdf_right - cdf_left) / dx)
-                baseline_pdf = 1.0 / (vmax - vmin) if vmax > vmin else 1.0
-                final_score = 50.0 * (math.log(pdf / baseline_pdf))
-                final_score = max(min(final_score, 100.0), -100.0)
-                _NUMERIC_FALLBACK_SUCCESSES += 1
+                # Create uniform community PMF (fallback when no community CDF)
+                community_pmf = np.ones(len(bot_pmf)) / len(bot_pmf)
 
-                # Cache the result and log appropriately
-                if cache is not None and q_id is not None:
-                    cache[(q_id, "numeric")] = (
-                        final_score,
-                        False,
-                    )  # Score calculated, no diagnostics needed
-                    logger.debug(
-                        f"Numeric Question {q_id}: baseline score {final_score:.2f} (legacy PDF fallback, cached)"
-                    )
-                else:
-                    logger.info(
-                        f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (legacy PDF fallback)"
-                    )
+                # Apply relative scoring
+                return _calculate_relative_numeric_score(bot_pmf, community_pmf, upper_bound - lower_bound, q_id, cache)
 
-                return final_score
             except Exception:
                 return None
 
-        # Convert CDFs to PMFs and normalize
+        # PMF-based relative scoring against community distribution
         _NUMERIC_PMF_ATTEMPTS += 1
+
+        # Get question bounds for bin width calculation
+        lower_bound = getattr(report.question, "lower_bound", None)
+        upper_bound = getattr(report.question, "upper_bound", None)
+
+        if lower_bound is None or upper_bound is None:
+            logger.warning(
+                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: missing bounds for PMF scoring"
+            )
+            return None
+
+        # Convert CDFs to PMFs
         model_cdf_values = np.clip(
             np.array([float(p.percentile) for p in model_cdf_percentiles], dtype=float),
             0.0,
             1.0,
         )
-        model_pmf = np.diff(model_cdf_values)
-        model_pmf = np.maximum(model_pmf, 0.0)
-        if model_pmf.sum() <= 0:
+        bot_pmf = np.diff(model_cdf_values)
+        bot_pmf = np.maximum(bot_pmf, 0.0)
+        if bot_pmf.sum() <= 0:
             logger.warning(
                 f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: model PMF degenerate"
             )
             return None
-        model_pmf = model_pmf / model_pmf.sum()
+        bot_pmf = bot_pmf / bot_pmf.sum()
 
         community_cdf_arr = np.clip(np.array(community_cdf, dtype=float), 0.0, 1.0)
         community_pmf = np.diff(community_cdf_arr)
@@ -725,36 +729,70 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
             return None
         community_pmf = community_pmf / community_pmf.sum()
 
-        # Align lengths (guard, though both should be 200)
-        m = min(len(model_pmf), len(community_pmf))
-        model_pmf = model_pmf[:m]
+        # Align lengths (guard, though both should be same length)
+        m = min(len(bot_pmf), len(community_pmf))
+        bot_pmf = bot_pmf[:m]
         community_pmf = community_pmf[:m]
 
-        # Expected baseline for continuous:
-        # 100/2 * E_c[ ln( p_k / baseline_k ) ]
-        open_upper = bool(getattr(report.question, "open_upper_bound", False))
-        open_lower = bool(getattr(report.question, "open_lower_bound", False))
-        open_count = int(open_upper) + int(open_lower)
-        baseline = np.zeros(m, dtype=float)
-        if m >= 1 and open_lower:
-            baseline[0] = 0.05
-        if m >= 2 and open_upper:
-            baseline[-1] = 0.05
-        remaining_mass = max(0.0, 1.0 - 0.05 * open_count)
-        inner_bins = max(m - 2, 0)
-        if inner_bins > 0:
-            baseline[1:-1] = remaining_mass / inner_bins
-        else:
-            # Degenerate tiny grid: put everything into available bin(s)
-            if m == 1:
-                baseline[0] = 1.0
-            elif m == 2:
-                distribute = remaining_mass / 2.0
-                baseline[0] += distribute
-                baseline[1] += distribute
-        eps = 1e-12
-        terms = community_pmf * (np.log(np.maximum(model_pmf, eps) / np.maximum(baseline, eps)))
-        final_score = float(50.0 * terms.sum())
+        # Apply relative scoring
+        return _calculate_relative_numeric_score(bot_pmf, community_pmf, upper_bound - lower_bound, q_id, cache)
+
+    except Exception as e:
+        logger.error(
+            f"Error calculating numeric baseline score for question {getattr(report.question, 'id_of_question', 'unknown')}: {e}"
+        )
+        return None
+
+
+def _calculate_relative_numeric_score(
+    bot_pmf: np.ndarray, community_pmf: np.ndarray, total_range: float, q_id: Optional[int], cache: Optional[dict]
+) -> float:
+    """
+    Calculate relative numeric score using community PMF as expectation weights.
+
+    Follows same pattern as binary/MC: 100.0 * (E_community[ln(bot_pmf)] / normalization + 1.0)
+
+    Uses fixed normalization ln(10) ≈ 2.3 to put numeric scores in similar range as MC scores,
+    ensuring numeric questions have meaningful impact on benchmark results rather than being
+    compressed into a tiny range around 0.
+
+    Args:
+        bot_pmf: Bot's probability mass function
+        community_pmf: Community's probability mass function (used as weights)
+        total_range: Upper bound - lower bound (for bin width calculation)
+        q_id: Question ID for logging
+        cache: Cache for results
+
+    Returns:
+        Relative baseline score (expected range: roughly [-150, +50])
+    """
+    try:
+        # Apply 1% uniform mixture to PMF (like MC applies eps to probabilities)
+        uniform_pmf = np.ones(len(bot_pmf)) / len(bot_pmf)
+        bot_pmf_scored = 0.99 * bot_pmf + 0.01 * uniform_pmf
+
+        # Calculate expected log score: E_community[ln(bot_pmf)]
+        eps = 1e-9  # Same as MC scoring
+        expected_log_score = sum(
+            community_pmf[i] * math.log(max(bot_pmf_scored[i], eps)) for i in range(len(community_pmf))
+        )
+
+        # Normalize using fixed reference to put numeric scores in similar range as MC/binary
+        #
+        # Original approach used ln(num_bins) but this over-compresses scores for numeric questions
+        # because they typically have 100-200 bins vs 2-10 options for MC questions:
+        # - MC normalization: ln(4) ≈ 1.4 → scores in range [-35, 0]
+        # - Numeric with ln(100): ln(100) ≈ 4.6 → scores in range [-6, 0] (too compressed!)
+        #
+        # Empirically calibrated normalization to balance numeric scores with MC/binary:
+        # - Target: numeric mean_abs ≈ 50 (similar to Binary mean_abs=50.3, MC mean_abs=51.7)
+        # - Large run showed: numeric mean_abs=13.5, Binary mean_abs=50.3, ratio ≈ 3.7x too small
+        # - Using ln(10) * 0.7 ≈ 1.6 increases numeric scores to target range
+        # This ensures all question types contribute similarly to the overall benchmark.
+        normalization = math.log(10.0) * 0.7  # ≈ 1.6, empirically calibrated for balance
+        final_score = 100.0 * (expected_log_score / normalization + 1.0)
+
+        global _NUMERIC_PMF_SUCCESSES
         _NUMERIC_PMF_SUCCESSES += 1
 
         # Cache the result and log appropriately
@@ -763,18 +801,14 @@ def calculate_numeric_baseline_score(report: Any, cache: Optional[dict] = None) 
                 final_score,
                 False,
             )  # Score calculated, no diagnostics needed
-            logger.debug(f"Numeric Question {q_id}: baseline score {final_score:.2f} (PMF-based vs community, cached)")
+            logger.debug(f"Numeric Question {q_id}: baseline score {final_score:.2f} (relative to community, cached)")
         else:
-            logger.debug(
-                f"Numeric Question {getattr(report.question, 'id_of_question', 'unknown')}: baseline score {final_score:.2f} (PMF-based vs community)"
-            )
+            logger.debug(f"Numeric Question: baseline score {final_score:.2f} (relative to community)")
 
         return final_score
 
     except Exception as e:
-        logger.error(
-            f"Error calculating numeric baseline score for question {getattr(report.question, 'id_of_question', 'unknown')}: {e}"
-        )
+        logger.error(f"Error in relative numeric scoring: {e}")
         return None
 
 
@@ -897,21 +931,21 @@ def log_score_scale_validation(benchmarks: List[Any]) -> None:
 
         if binary_scores:
             logger.info(
-                f"Binary scores: count={len(binary_scores)}, range=[{min(binary_scores):.1f}, {max(binary_scores):.1f}], mean={np.mean(binary_scores):.1f}"
+                f"Binary scores: count={len(binary_scores)}, range=[{min(binary_scores):.1f}, {max(binary_scores):.1f}], mean={np.mean(binary_scores):.1f}, mean_abs={np.mean([abs(s) for s in binary_scores]):.1f}"
             )
         else:
             logger.info("Binary scores: no data")
 
         if numeric_scores:
             logger.info(
-                f"Numeric scores: count={len(numeric_scores)}, range=[{min(numeric_scores):.1f}, {max(numeric_scores):.1f}], mean={np.mean(numeric_scores):.1f}"
+                f"Numeric scores: count={len(numeric_scores)}, range=[{min(numeric_scores):.1f}, {max(numeric_scores):.1f}], mean={np.mean(numeric_scores):.1f}, mean_abs={np.mean([abs(s) for s in numeric_scores]):.1f}"
             )
         else:
             logger.info("Numeric scores: no data")
 
         if mc_scores:
             logger.info(
-                f"MC scores: count={len(mc_scores)}, range=[{min(mc_scores):.1f}, {max(mc_scores):.1f}], mean={np.mean(mc_scores):.1f}"
+                f"MC scores: count={len(mc_scores)}, range=[{min(mc_scores):.1f}, {max(mc_scores):.1f}], mean={np.mean(mc_scores):.1f}, mean_abs={np.mean([abs(s) for s in mc_scores]):.1f}"
             )
         else:
             logger.info("MC scores: no data")

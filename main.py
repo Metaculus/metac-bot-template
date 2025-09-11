@@ -157,6 +157,11 @@ class TemplateForecaster(CompactLoggingForecastBot):
         if not isinstance(aggregation_strategy, AggregationStrategy):
             raise ValueError(f"aggregation_strategy must be an AggregationStrategy enum, got {aggregation_strategy}")
         self.aggregation_strategy: AggregationStrategy = aggregation_strategy
+
+        # For stacking bots, use the stacker model as default for better display names
+        # This fixes the issue where all stackers show the same first forecaster model name
+        if self.aggregation_strategy == AggregationStrategy.STACKING and self._stacker_llm and self._forecaster_llms:
+            normalized_llms["default"] = self._stacker_llm
         self._custom_research_provider: ResearchCallable | None = research_provider
         self.research_provider: ResearchCallable | None = research_provider  # For framework config access
         if max_questions_per_run is not None and max_questions_per_run <= 0:
