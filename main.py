@@ -716,7 +716,7 @@ class TemplateForecaster(CompactLoggingForecastBot):
             )
             return aggregated  # type: ignore[return-value]
 
-        # Multiple choice aggregation - strategy-based dispatch (NO MORE super() delegation)
+        # Multiple choice aggregation - strategy-based dispatch
         if isinstance(predictions[0], PredictedOptionList):
             mc_preds = [p for p in predictions if isinstance(p, PredictedOptionList)]
 

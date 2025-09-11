@@ -33,6 +33,10 @@ FORECASTER_LLMS = [
         reasoning={"max_tokens": 8_000},
         **MODEL_CONFIG,
     ),
+    build_llm_with_openrouter_fallback(
+        model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+        **MODEL_CONFIG,
+    ),
 ]
 
 SUMMARIZER_LLM: str = "openrouter/openai/gpt-5-mini"
