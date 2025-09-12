@@ -44,7 +44,7 @@ def main() -> None:
         help="Specify the run mode (default: tournament)",
     )
     args = parser.parse_args()
-    run_mode: Literal["tournament", "quarterly_cup", "test_questions"] = args.mode
+    run_mode: Literal["tournament", "minibench", "quarterly_cup", "test_questions"] = args.mode
 
     template_bot = TemplateForecaster(
         research_reports_per_question=1,

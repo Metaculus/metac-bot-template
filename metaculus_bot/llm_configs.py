@@ -35,15 +35,35 @@ FORECASTER_LLMS = [
     ),
     build_llm_with_openrouter_fallback(
         model="openrouter/qwen/qwen3-235b-a22b-thinking-2507",
+        provider={
+            "quantizations": [
+                "fp8",
+                "fp16",
+                "bf16",
+                "fp32",
+                "unknown",
+            ]
+        },
+        **MODEL_CONFIG,
+    ),
+    build_llm_with_openrouter_fallback(
+        model="openrouter/moonshotai/kimi-k2-0905",
+        provider={
+            "quantizations": [
+                "fp8",
+                "fp16",
+                "bf16",
+                "fp32",
+                "unknown",
+            ]
+        },
         **MODEL_CONFIG,
     ),
 ]
 
-SUMMARIZER_LLM: str = "openrouter/openai/gpt-5-mini"
-
+SUMMARIZER_LLM: str = build_llm_with_openrouter_fallback("openrouter/openai/gpt-5-mini")
 # Parser should be a reliable, low-latency model for structure extraction
-PARSER_LLM: str = "openrouter/openai/gpt-5-mini"
-
+PARSER_LLM: str = build_llm_with_openrouter_fallback("openrouter/openai/gpt-5-mini")
 # Researcher is only used by the base bot when internal research is invoked.
 # Our implementation uses providers, but we still set it explicitly to avoid silent defaults.
 RESEARCHER_LLM = build_llm_with_openrouter_fallback(
