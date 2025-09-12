@@ -472,6 +472,168 @@ def main():
                 f"Diversity: {ensemble.diversity_score:.3f} | "
                 f"Overall: {ensemble.ensemble_score:.3f}"
             )
+        # Ablations and per-type diagnostics for top K
+        # TODO: monolith needs refactor
+        try:
+            K = min(5, len(optimal_ensembles))
+            print("\nENSEMBLE ABLATIONS (Top {} by Overall)".format(K))
+            for idx in range(K):
+                ens = optimal_ensembles[idx]
+                base_models = list(ens.model_names)
+                agg = ens.aggregation_strategy
+                base_score = analyzer._simulate_ensemble_performance(base_models, agg)  # type: ignore[attr-defined]
+                # Questions used baseline
+                # Build per-model qid sets
+                benches_filtered = getattr(analyzer, "benchmarks", [])
+
+                def _model_name_for(b) -> str:
+                    try:
+                        return str(analyzer._extract_model_name(b))  # type: ignore[attr-defined]
+                    except Exception:
+                        return str(getattr(b, "name", "unknown"))
+
+                qsets: Dict[str, set] = {}
+                for b in benches_filtered:
+                    m = _model_name_for(b)
+                    if m not in base_models:
+                        continue
+                    s = qsets.setdefault(m, set())
+                    for r in b.forecast_reports:
+                        qid = getattr(getattr(r, "question", None), "id_of_question", None)
+                        if isinstance(qid, int):
+                            s.add(qid)
+                inter_base = set.intersection(*(qsets[m] for m in base_models)) if base_models else set()
+                print(
+                    f"\n{idx+1}. {' + '.join(base_models)} ({agg.upper()})  | baseline={base_score:.2f} | Q={len(inter_base)}"
+                )
+
+                # Per-type split for baseline
+                # Reuse helper from above (defined in ALL-MODEL block). If not present in scope, inline minimal.
+                # We'll re-call the nested helper by reconstructing a minimal version here to avoid cross-scope issues.
+                def _ensemble_per_type_local(models_list: List[str], agg_local: str) -> Dict[str, Dict[str, float]]:
+                    from types import SimpleNamespace as _SNS
+
+                    from metaculus_bot.scoring_patches import (
+                        calculate_multiple_choice_baseline_score as _score_mc,
+                    )
+                    from metaculus_bot.scoring_patches import (
+                        calculate_numeric_baseline_score as _score_num,
+                    )
+
+                    qmap: Dict[int, Dict[str, any]] = {}
+                    for b in benches_filtered:
+                        m = _model_name_for(b)
+                        if m not in models_list:
+                            continue
+                        for r in b.forecast_reports:
+                            qid = getattr(getattr(r, "question", None), "id_of_question", None)
+                            if not isinstance(qid, int):
+                                continue
+                            qmap.setdefault(qid, {})[m] = r
+                    stats: Dict[str, List[float]] = {"binary": [], "numeric": [], "multiple_choice": []}
+                    for qid, m2r in qmap.items():
+                        if any(m not in m2r for m in models_list):
+                            continue
+                        rep0 = next(iter(m2r.values()))
+                        qtype = analyzer._get_question_type(rep0)  # type: ignore[attr-defined]
+                        if qtype == "binary":
+                            vals = [float(m2r[m].prediction) for m in models_list]
+                            agg_p = float(np.mean(vals)) if agg_local == "mean" else float(np.median(vals))
+                            c = getattr(rep0.question, "community_prediction_at_access_time", None)
+                            if c is None:
+                                continue
+                            p = max(0.001, min(0.999, agg_p))
+                            score = 100.0 * (c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0))
+                            stats[qtype].append(float(score))
+                        elif qtype == "multiple_choice":
+                            first = m2r[models_list[0]].prediction
+                            if not hasattr(first, "predicted_options") or not first.predicted_options:
+                                continue
+                            option_names = [getattr(o, "option_name", str(o)) for o in first.predicted_options]
+                            agg_probs: List[float] = []
+                            for name in option_names:
+                                vals = []
+                                for m in models_list:
+                                    pred = m2r[m].prediction
+                                    for opt in pred.predicted_options:
+                                        if getattr(opt, "option_name", str(opt)) == name:
+                                            vals.append(float(getattr(opt, "probability", 0.0)))
+                                            break
+                                agg_probs.append(
+                                    float(np.mean(vals)) if agg_local == "mean" else float(np.median(vals))
+                                )
+                            s = sum(agg_probs)
+                            agg_probs = (
+                                [p / s for p in agg_probs] if s > 0 else [1.0 / len(option_names)] * len(option_names)
+                            )
+                            pred_obj = _SNS(
+                                predicted_options=[
+                                    _SNS(option_name=n, probability=p) for n, p in zip(option_names, agg_probs)
+                                ]
+                            )
+                            fake = _SNS(question=rep0.question, prediction=pred_obj)
+                            sc = _score_mc(fake)
+                            if sc is not None:
+                                stats[qtype].append(float(sc))
+                        elif qtype == "numeric":
+                            cdfs: List[List[any]] = []
+                            for m in models_list:
+                                cdf = analyzer._get_safe_numeric_cdf(m, rep0.question, m2r[m].prediction)  # type: ignore[attr-defined]
+                                if cdf is None:
+                                    cdfs = []
+                                    break
+                                cdfs.append(cdf)
+                            if not cdfs:
+                                continue
+                            L = min(len(c) for c in cdfs)
+                            cdfs = [c[:L] for c in cdfs]
+                            percs = np.array([[float(getattr(pt, "percentile", 0.0)) for pt in c] for c in cdfs])
+                            agg_percs = percs.mean(axis=0) if agg_local == "mean" else np.median(percs, axis=0)
+                            x = [float(getattr(pt, "value", i)) for i, pt in enumerate(cdfs[0][:L])]
+                            pred_obj = _SNS(cdf=[_SNS(value=xi, percentile=float(pi)) for xi, pi in zip(x, agg_percs)])
+                            fake = _SNS(question=rep0.question, prediction=pred_obj)
+                            sc = _score_num(fake)
+                            if sc is not None:
+                                stats[qtype].append(float(sc))
+                    out: Dict[str, Dict[str, float]] = {}
+                    for qt, vals in stats.items():
+                        if not vals:
+                            continue
+                        arr = np.array(vals, dtype=float)
+                        out[qt] = {
+                            "n": int(arr.size),
+                            "mean": float(np.mean(arr)),
+                            "mean_abs": float(np.mean(np.abs(arr))),
+                            "min": float(np.min(arr)),
+                            "max": float(np.max(arr)),
+                        }
+                    return out
+
+                per_type = _ensemble_per_type_local(base_models, agg)
+                if per_type:
+                    print("  per-type:")
+                    for qt in ["binary", "numeric", "multiple_choice"]:
+                        st = per_type.get(qt)
+                        if not st:
+                            continue
+                        print(
+                            f"    {qt:16} n={int(st['n']):4d} | mean={st['mean']:7.2f} | mean|score|={st['mean_abs']:7.2f} | min={st['min']:7.2f} | max={st['max']:7.2f}"
+                        )
+
+                # Leave-one-out ablation
+                contribs = []
+                for m in base_models:
+                    subset = [x for x in base_models if x != m]
+                    score_wo = analyzer._simulate_ensemble_performance(subset, agg)  # type: ignore[attr-defined]
+                    dq = len(set.intersection(*(qsets[x] for x in subset))) if subset else 0
+                    delta = base_score - score_wo
+                    contribs.append((m, score_wo, delta, dq))
+                contribs.sort(key=lambda x: x[2], reverse=True)
+                print("  leave-one-out impacts (Δscore):")
+                for m, scwo, d, dq in contribs:
+                    print(f"    - {m:20} Δ={d:+6.2f} | score_wo={scwo:6.2f} | Q={dq}")
+        except Exception as e:
+            logger.warning(f"Failed to compute ensemble ablations: {e}")
     else:
         print("No ensembles found meeting the cost constraint.")
 
@@ -489,6 +651,26 @@ def main():
     print("\nMost Independent Model Pairs:")
     for model1, model2, corr in least_correlated[:8]:
         print(f"  {model1:20} ↔ {model2:20} | r = {corr:6.3f}")
+
+    # Also show most correlated pairs (by absolute r), excluding self and near-1.0
+    try:
+        pm = corr_matrix.pearson_matrix
+        pairs = []
+        names = list(pm.columns)
+        for i in range(len(names)):
+            for j in range(i + 1, len(names)):
+                val = pm.iloc[i, j]
+                if np.isnan(val):
+                    continue
+                if abs(val) >= 0.999:  # skip trivial self/near-identity
+                    continue
+                pairs.append((names[i], names[j], float(val)))
+        pairs.sort(key=lambda x: abs(x[2]), reverse=True)
+        print("\nMost Correlated Model Pairs:")
+        for model1, model2, corr in pairs[:8]:
+            print(f"  {model1:20} ↔ {model2:20} | r = {corr:6.3f}")
+    except Exception:
+        pass
 
     print(f"\nDetailed report saved to: {output_file}")
 
@@ -575,6 +757,135 @@ def main():
             print(f"Avg cost per question: ${avg_cost:.3f}")
             print(f"MEAN   ensemble score: {mean_score:.2f}")
             print(f"MEDIAN ensemble score: {median_score:.2f}")
+
+            # Per-type diagnostics for ALL-MODEL ensemble
+            # TODO: monolith needs refactor
+            def _ensemble_per_type(models_list: List[str], agg: str) -> Dict[str, Dict[str, float]]:
+                from types import SimpleNamespace as _SNS
+
+                from metaculus_bot.scoring_patches import (
+                    calculate_multiple_choice_baseline_score as _score_mc,
+                )
+                from metaculus_bot.scoring_patches import (
+                    calculate_numeric_baseline_score as _score_num,
+                )
+
+                # Build index: qid -> {model: report}
+                qmap: Dict[int, Dict[str, any]] = {}
+                for b in benches_filtered:
+                    m = _model_name_for(b)
+                    if m not in models_list:
+                        continue
+                    for r in b.forecast_reports:
+                        qid = getattr(getattr(r, "question", None), "id_of_question", None)
+                        if not isinstance(qid, int):
+                            continue
+                        qmap.setdefault(qid, {})[m] = r
+
+                stats: Dict[str, List[float]] = {"binary": [], "numeric": [], "multiple_choice": []}
+
+                for qid, m2r in qmap.items():
+                    if any(m not in m2r for m in models_list):
+                        continue  # need all models
+                    rep0 = next(iter(m2r.values()))
+                    qtype = _detect_type_from_report(rep0)
+                    if qtype == "binary":
+                        vals = [float(m2r[m].prediction) for m in models_list]
+                        agg_p = float(np.mean(vals)) if agg == "mean" else float(np.median(vals))
+                        # Score using binary baseline formula via analyzer's helper (or inline)
+                        try:
+                            # Reuse analyzer's internal baseline calc for binary
+                            # Fallback: inline formula (identical to scoring patch)
+                            c = getattr(rep0.question, "community_prediction_at_access_time", None)
+                            if c is None:
+                                continue
+                            p = max(0.001, min(0.999, agg_p))
+                            score = 100.0 * (c * (np.log2(p) + 1.0) + (1.0 - c) * (np.log2(1.0 - p) + 1.0))
+                            stats[qtype].append(float(score))
+                        except Exception:
+                            continue
+
+                    elif qtype == "multiple_choice":
+                        first = m2r[models_list[0]].prediction
+                        if not hasattr(first, "predicted_options") or not first.predicted_options:
+                            continue
+                        option_names = [getattr(o, "option_name", str(o)) for o in first.predicted_options]
+                        agg_probs: List[float] = []
+                        for name in option_names:
+                            vals = []
+                            for m in models_list:
+                                pred = m2r[m].prediction
+                                for opt in pred.predicted_options:
+                                    if getattr(opt, "option_name", str(opt)) == name:
+                                        vals.append(float(getattr(opt, "probability", 0.0)))
+                                        break
+                            if not vals:
+                                agg_probs.append(0.0)
+                            else:
+                                agg_probs.append(float(np.mean(vals)) if agg == "mean" else float(np.median(vals)))
+                        s = sum(agg_probs)
+                        agg_probs = (
+                            [p / s for p in agg_probs] if s > 0 else [1.0 / len(option_names)] * len(option_names)
+                        )
+                        pred_obj = _SNS(
+                            predicted_options=[
+                                _SNS(option_name=n, probability=p) for n, p in zip(option_names, agg_probs)
+                            ]
+                        )
+                        fake = _SNS(question=rep0.question, prediction=pred_obj)
+                        sc = _score_mc(fake)
+                        if sc is not None:
+                            stats[qtype].append(float(sc))
+
+                    elif qtype == "numeric":
+                        # Build aggregated CDF using analyzer's safe accessor
+                        cdfs: List[List[any]] = []
+                        for m in models_list:
+                            cdf = analyzer._get_safe_numeric_cdf(m, rep0.question, m2r[m].prediction)  # type: ignore[attr-defined]
+                            if cdf is None:
+                                cdfs = []
+                                break
+                            cdfs.append(cdf)
+                        if not cdfs:
+                            continue
+                        # Assume aligned lengths
+                        L = min(len(c) for c in cdfs)
+                        cdfs = [c[:L] for c in cdfs]
+                        percs = np.array([[float(getattr(pt, "percentile", 0.0)) for pt in c] for c in cdfs])
+                        agg_percs = percs.mean(axis=0) if agg == "mean" else np.median(percs, axis=0)
+                        x = [float(getattr(pt, "value", i)) for i, pt in enumerate(cdfs[0][:L])]
+                        pred_obj = _SNS(cdf=[_SNS(value=xi, percentile=float(pi)) for xi, pi in zip(x, agg_percs)])
+                        fake = _SNS(question=rep0.question, prediction=pred_obj)
+                        sc = _score_num(fake)
+                        if sc is not None:
+                            stats[qtype].append(float(sc))
+
+                # Summarize
+                out: Dict[str, Dict[str, float]] = {}
+                for qt, vals in stats.items():
+                    if not vals:
+                        continue
+                    arr = np.array(vals, dtype=float)
+                    out[qt] = {
+                        "n": int(arr.size),
+                        "mean": float(np.mean(arr)),
+                        "mean_abs": float(np.mean(np.abs(arr))),
+                        "min": float(np.min(arr)),
+                        "max": float(np.max(arr)),
+                    }
+                return out
+
+            for agg_name, score_val in [("MEAN", mean_score), ("MEDIAN", median_score)]:
+                per_type = _ensemble_per_type(models, agg_name.lower())
+                if per_type:
+                    print(f"{agg_name} per-type:")
+                    for qt in ["binary", "numeric", "multiple_choice"]:
+                        st = per_type.get(qt)
+                        if not st:
+                            continue
+                        print(
+                            f"  {qt:16} n={int(st['n']):4d} | mean={st['mean']:7.2f} | mean|score|={st['mean_abs']:7.2f} | min={st['min']:7.2f} | max={st['max']:7.2f}"
+                        )
         else:
             print("\nALL-MODEL ENSEMBLE: skipped (need ≥2 base models after filters)")
     except Exception as e:

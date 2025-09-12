@@ -435,7 +435,11 @@ class CorrelationAnalyzer:
                         if len(components1) == len(components2) and len(components1) > 1:
                             # Use scipy.stats.pearsonr for component pairs
                             try:
-                                corr_val, _ = pearsonr(components1, components2)
+                                # Guard against constant vectors to avoid warnings and NaNs
+                                if np.std(components1) < 1e-12 or np.std(components2) < 1e-12:
+                                    corr_val = 0.0
+                                else:
+                                    corr_val, _ = pearsonr(components1, components2)
                                 corr = corr_val if not np.isnan(corr_val) else 0.0
                             except Exception:
                                 corr = 0.0
