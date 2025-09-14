@@ -1,0 +1,311 @@
+📊 Forecast Run 20250910-132012
+Timestamp: 2025-09-10 13:20:52 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 **URL:** https://www.metaculus.com/questions/22427/
+
+📝 **Summary**
+
+- Final Prediction (per option):
+  - 0 or 1: 20.85%
+  - 2 or 3: 35.13%
+  - 4 or 5: 23.05%
+  - 6 or 7: 10.21%
+  - 8 or 9: 6.25%
+  - 10 or more: 4.50%
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **AI Lab Founding and Success**: Historically, few AI labs become leading within two years. Base rate: ~1-2 labs per decade.
+- **Tech Startup Success**: General tech startups have a low success rate (~10% become significant players).
+- **Corporate Spin-offs**: Spin-offs from established labs have a higher success rate (~20-30%) but are rare.
+
+### Recent developments (timeline bullets)
+- [2023-07-12] ↑ — Mistral AI partners with Microsoft, indicating rapid growth potential.
+- [2024-04-15] ↑ — Anthropic recognized as a leading lab, showing potential for new labs to rise quickly.
+- [2024-08-01] ↓ — Regulatory scrutiny on AI labs increases, potentially slowing new entrants.
+
+### Mechanisms & drivers (causal levers)
+- **Funding Availability**: Large (↑) — Access to venture capital and corporate partnerships can accelerate growth.
+- **Talent Mobility**: Moderate (↑) — Movement of top talent from established labs to new ventures.
+- **Regulatory Environment**: Moderate (↓) — Increased regulation can hinder rapid growth.
+- **Technological Breakthroughs**: Large (↑) — New innovations can propel labs to leadership quickly.
+- **Market Demand**: Moderate (↑) — Growing demand for AI solutions encourages new entrants.
+- **Competitive Pressure**: Small (↓) — Dominance of existing players can stifle new labs.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Increased Funding**: More venture capital available now than in past decades.
+- **Talent Fluidity**: Higher mobility of AI researchers between labs.
+- **Regulatory Scrutiny**: More intense focus on AI safety and ethics.
+- **Technological Maturity**: AI technology is more advanced, allowing faster development.
+- **Global Interest**: Broader international interest and investment in AI.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Low probability of new labs becoming leaders quickly; equivalent n = 10.
+- **Evidence mapping**:
+  - ↑ Large: Increased funding and partnerships.
+  - ↑ Moderate: Talent mobility and technological maturity.
+  - ↓ Moderate: Regulatory scrutiny.
+  - ↑ Small: Global interest and market demand.
+- **Net effect**: Posterior should move up moderately, reflecting increased likelihood of new labs becoming leaders.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - New major funding rounds for AI startups.
+  - High-profile talent moves to new labs.
+  - Breakthrough AI technologies announced.
+- **DOWN indicators**:
+  - New regulatory policies targeting AI labs.
+  - Major setbacks in AI safety incidents.
+  - Consolidation trends among existing labs.
+
+### Caveats & pitfalls
+- **Uncertainty in Definitions**: What constitutes a "leading" lab may evolve.
+- **Data Gaps**: Limited data on private funding and lab performance.
+- **Deception Risks**: Labs may overstate capabilities to attract investment.
+- **Regime Changes**: Sudden policy shifts could alter the landscape.
+- **Technological Unpredictability**: Breakthroughs are inherently uncertain.
+
+Final Research Summary: The probability of new AI labs becoming leading within two years is higher than historical norms due to increased funding and talent mobility, but regulatory and competitive pressures remain significant constraints.
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": [
+    0.2085452684176164,
+    0.3513403443014259,
+    0.23053339314529409,
+    0.10206422184255966,
+    0.06248863341089219,
+    0.04502813888221443
+  ],
+  "p10": [
+    0.0067883759544340545,
+    0.04739772020153509,
+    0.010038955159460197,
+    6.719652229336315e-05,
+    1.457036406927978e-07,
+    1.6274516035321628e-09
+  ],
+  "p50": [
+    0.13505103787661865,
+    0.30843844825013106,
+    0.15769406862222957,
+    0.026710747139164197,
+    0.0042954300570240515,
+    0.0008703070595437916
+  ],
+  "p90": [
+    0.5348132070340349,
+    0.7323655756299522,
+    0.5717818952978407,
+    0.32408614456961443,
+    0.2117737227999844,
+    0.14660997575024828
+  ],
+  "posterior_alpha": [
+    0.55,
+    0.9,
+    0.6,
+    0.27,
+    0.16,
+    0.12
+  ]
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the number of new AI labs that will become leading labs within two years of their founding by 2030, we will follow a structured Bayesian reasoning approach.
+
+### 1. Base Rate (Prior) Selection
+
+- **Option 0 or 1**: Historically, very few AI labs become leading within two years. The base rate is approximately 1-2 labs per decade. This suggests a low prior probability for this option.
+- **Option 2 or 3**: Given the historical base rate and the current environment, this option represents a moderate increase from historical norms. Prior probability is slightly higher than the first option.
+- **Option 4 or 5**: This is a significant increase from historical norms, suggesting a lower prior probability.
+- **Option 6 or 7**: This is an even larger deviation from historical norms, indicating a very low prior probability.
+- **Option 8 or 9**: This is highly unlikely based on historical data, suggesting a very low prior probability.
+- **Option 10 or more**: This is extremely unlikely given historical data, suggesting a negligible prior probability.
+
+### 2. Comparison to Base Case
+
+- **Similarities**: The historical base rate of AI labs becoming leading within two years is low, which aligns with the base rate for tech startups and corporate spin-offs.
+- **Differences**: The current environment has increased funding, talent mobility, and technological maturity, which could increase the likelihood of new labs becoming leaders.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+- **Increased Funding and Partnerships**: This evidence suggests a higher likelihood of new labs becoming leaders (P(E | H) is high for all options).
+- **Talent Mobility and Technological Maturity**: These factors also increase the likelihood of success (P(E | H) is moderate to high).
+- **Regulatory Scrutiny**: This decreases the likelihood of rapid success (P(E | H) is lower).
+- **Global Interest and Market Demand**: These factors slightly increase the likelihood (P(E | H) is moderate).
+
+### 4. Bayesian Updating (Posterior)
+
+- **Option 0 or 1**: Prior odds are low. Increased funding and talent mobility moderately increase the odds, but regulatory scrutiny tempers this. Posterior probability remains low.
+- **Option 2 or 3**: Prior odds are moderate. Positive evidence (funding, talent) increases the odds significantly, making this option more likely.
+- **Option 4 or 5**: Prior odds are low. Positive evidence increases the odds, but not as much as for Option 2 or 3.
+- **Option 6 or 7**: Prior odds are very low. Positive evidence increases the odds slightly, but they remain low.
+- **Option 8 or 9**: Prior odds are extremely low. Positive evidence has minimal impact.
+- **Option 10 or more**: Prior odds are negligible. Positive evidence does not significantly change this.
+
+### 5. Red Team Thinking
+
+- **Overconfidence Check**: Ensure not to overestimate the impact of positive evidence given historical constraints.
+- **Tail Risks**: Consider the possibility of a major breakthrough or regulatory change that could drastically alter the landscape.
+- **Alternative Forecast**: A scenario where regulatory changes significantly hinder new lab success could make Option 0 or 1 more plausible.
+
+### 6. Final Normalization
+
+- Ensure probabilities sum to approximately 100%.
+
+### 7. Output Format
+
+Option_0_or_1: 20%  
+Option_2_or_3: 40%  
+Option_4_or_5: 25%  
+Option_6_or_7: 10%  
+Option_8_or_9: 4%  
+Option_10_or_more: 1%  
+
+These probabilities reflect a moderate increase in the likelihood of new AI labs becoming leading due to current favorable conditions, while still acknowledging historical constraints and potential regulatory challenges.
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Forecasting New Leading AI Labs by 2030
+
+## 1. Base Rate (Prior) Selection
+
+Let me establish base rates for each option by examining historical patterns of AI labs becoming "leading" within 2 years of founding:
+
+- **Historical precedent**: Looking at current leading labs (OpenAI, Anthropic, Google DeepMind, Cohere, Mistral), only Mistral and possibly Anthropic achieved "leading" status within 2 years of founding.
+- **Startup success rates**: In tech generally, only about 10% of startups achieve significant success.
+- **Time horizon**: We have approximately 4.3 years remaining until 2030 (from September 2025 to December 2029).
+
+Based on these considerations, my initial priors for each option:
+- 0 or 1: 35% (conservative estimate based on historical patterns)
+- 2 or 3: 30% (slightly more optimistic but still reasonable)
+- 4 or 5: 20% (requires acceleration from historical patterns)
+- 6 or 7: 10% (would require significant acceleration)
+- 8 or 9: 3% (highly unlikely given historical patterns)
+- 10 or more: 2% (extremely unlikely but not impossible)
+
+## 2. Comparison to Base Case
+
+**Similarities to base rate scenario:**
+- AI labs still require significant capital, talent, and computational resources
+- Established players have advantages in data, infrastructure, and partnerships
+- Technical challenges in advancing AI capabilities remain substantial
+
+**Key differences:**
+- Increased funding availability for AI startups compared to previous years
+- Higher mobility of top AI talent between organizations
+- Growing international competition in AI development
+- More mature AI ecosystem enabling faster development cycles
+- Regulatory landscape evolving and potentially constraining rapid growth
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence favoring more new leading labs:**
+- Recent success of Mistral AI (founded 2023, quickly became leading)
+- Anthropic's rapid rise after spinning off from OpenAI
+- Reports of key AI researchers considering leaving established labs
+- Increased venture capital flowing to AI startups
+- International competition (especially from China) creating more entrants
+
+**Evidence favoring fewer new leading labs:**
+- Increasing regulatory scrutiny that may slow new entrants
+- Computational requirements creating high barriers to entry
+- Established players (Google, Microsoft, Meta) consolidating resources
+- Potential AI winter if current expectations aren't met
+- Limited pool of top AI talent to staff multiple new leading labs
+
+## 4. Bayesian Updating
+
+Let's update on a key piece of evidence: Mistral AI's rapid rise to prominence.
+
+Prior for "2 or 3" new leading labs: 30%
+Prior odds: 30/70 = 0.429
+
+Likelihood ratio: If "2 or 3" is true, we would expect to see examples like Mistral with probability ~0.7. If "2 or 3" is false, we would expect to see examples like Mistral with probability ~0.3.
+Likelihood ratio: 0.7/0.3 = 2.33
+
+Posterior odds: 0.429 × 2.33 = 1.00
+Posterior probability: 1.00/(1+1.00) = 50%
+
+However, I need to consider other evidence as well:
+
+- **Increased funding availability**: Shifts probability mass toward higher numbers (+5% to options 4-5 and above)
+- **Regulatory constraints**: Shifts probability mass toward lower numbers (-3% from options 6+ to lower options)
+- **Talent mobility**: Slightly shifts probability mass toward higher numbers (+2% to options 4-5)
+- **Computational barriers**: Shifts probability mass toward lower numbers (-2% from options 8+ to lower options)
+
+## 5. Red Team Thinking
+
+Potential blind spots in my analysis:
+- I may be underestimating the potential for breakthroughs from unexpected sources
+- I might be overweighting recent examples like Mistral without sufficient historical context
+- The definition of "leading" could evolve, making it easier or harder to qualify
+- Geopolitical factors could significantly alter the landscape (e.g., US-China tensions)
+- I may be underestimating the potential for established labs to prevent talent exodus
+
+Alternative forecast: One could argue for a higher probability on "4 or 5" or "6 or 7" based on:
+- Accelerating pace of AI development
+- Increasing fragmentation of existing labs
+- Growing international competition
+- Potential for unexpected breakthroughs
+
+Rebuttal: While these factors are relevant, the high barriers to entry (capital, talent, compute) and the advantages of established players make a large number of new leading labs unlikely.
+
+## 6. Final Normalization
+
+After all updates and considerations, my adjusted probabilities are:
+- 0 or 1: 25% (decreased from prior due to evidence of successful new entrants)
+- 2 or 3: 40% (increased from prior based on Mistral example and funding availability)
+- 4 or 5: 25% (increased from prior due to talent mobility and international competition)
+- 6 or 7: 7% (decreased slightly due to regulatory and computational constraints)
+- 8 or 9: 2% (decreased due to limited talent pool and high barriers to entry)
+- 10 or more: 1% (extremely unlikely given all constraints)
+
+Sum check: 25% + 40% + 25% + 7% + 2% + 1% = 100%
+
+## 7. Output Format
+
+0 or 1: 25%
+2 or 3: 40%
+4 or 5: 25%
+6 or 7: 7%
+8 or 9: 2%
+10 or more: 1%
+```
+

@@ -1,99 +1,356 @@
-# Spagbot 1.0: An AI Ensemble Forecaster
+What is Spagbot?
 
-Date: 08 September 2025
-Contact: kevin dot wyjad at gmail dot com
-Written by GPT-5
+Spagbot is an AI forecasting assistant. Its job is to read forecasting questions (like those on Metaculus), gather relevant evidence, and combine the judgments of different models into one final forecast. It is designed to run automatically on GitHub, saving its forecasts and learning from past performance over time.
 
----
+How it works (conceptually)
 
-## Spagbot: How It Works (A Clear, Non-Coder's Tour)
+Understand the question
 
-### 1) What Spagbot Is Trying to Do
-Spagbot is a general-purpose forecasting bot designed to participate in Metaculus AI forecasting tournaments. For each active question, it:
-* [cite_start]Gathers context to create a "research report"[cite: 38].
-* [cite_start]Asks an ensemble of LLMs (ChatGPT, Claude, Gemini, Grok) to produce a forecast in a strict format[cite: 39].
-* [cite_start]Optionally runs a game-theoretic bargaining simulation (GTMC1) for strategic topics like elections or conflicts[cite: 40].
-* [cite_start]Combines all evidence using a Bayesian/Monte-Carlo aggregator to produce a final forecast[cite: 41].
-* [cite_start]Generates logs and CSVs, and can submit the forecast to Metaculus if enabled[cite: 42].
+Spagbot reads a forecasting question (binary “yes/no,” numeric, or multiple-choice).
 
-[cite_start]Think of the process as: research brief -> multi-model panel -> (strategic simulation) -> Bayesian aggregator -> forecast + logs[cite: 43].
+It builds a tailored prompt to guide models toward giving a probability or range.
 
-### 2) The Main Script That Orchestrates Everything
-[cite_start]The main script is **spagbot.py** (the "conductor")[cite: 45]. [cite_start]When you run `python spagbot.py --mode test_questions`, it loads configurations and API keys, picks questions, and runs a pipeline for each one[cite: 47, 48, 49].
+Gather research
 
-The pipeline per question includes:
-* [cite_start]**A) Research brief**: An LLM generates a short, structured brief with reference classes, recent timeline items, and drivers[cite: 52]. [cite_start]Spagbot can use AskNews to pull recent articles or rely on general knowledge[cite: 53, 54]. [cite_start]It also appends a "Market Consensus Snapshot" showing the current community view from Metaculus and Manifold[cite: 54].
-* **B) Panel forecasts (LLM ensemble)**: Spagbot queries the LLM panel. [cite_start]The models must adhere to a strict output format (e.g., `Final: ZZ%` for binary questions, or specific percentile lines for numeric questions)[cite: 56, 57, 58]. [cite_start]Only these final lines are parsed, not the free-text reasoning[cite: 59, 60].
-* [cite_start]**C) Optional GTMC1 strategic simulation**: If the question's title contains keywords like "election" or "conflict," Spagbot asks an LLM to extract a table of actors[cite: 62]. [cite_start]This table is fed to GTMC1, a bargaining simulator that returns a probability-like signal[cite: 63]. [cite_start]This signal is then added as evidence, and the panel is re-prompted[cite: 64].
-* **D) Bayesian / Monte-Carlo aggregator**: This "decider" layer combines the evidence. [cite_start]For binary questions, it uses a Beta prior/posterior[cite: 66]. [cite_start]For numeric questions, it fits a mixture of normals[cite: 68]. [cite_start]This approach treats each forecaster as a survey contributing fractional evidence and maintains disagreement[cite: 70].
-* [cite_start]**E) Outputs**: The system creates several files, including `forecasts.csv` (final results), `forecasts_by_model.csv` (per-model outcomes), and a detailed log file `forecast_logs/<RUNID>_reasoning.log` which includes the research brief, GTMC1 details, and raw panel reasoning[cite: 72, 73, 75].
+It can query external news/search APIs (AskNews, Serper) to pull in up-to-date information.
 
-### 3) The Supporting Modules
-* [cite_start]**bayes_mc.py**: The statistical combiner for panel outputs[cite: 78]. [cite_start]It handles Beta-Binomial for binary questions, Dirichlet-Multinomial for MCQ, and a mixture of normals for numeric questions[cite: 79, 81, 82].
-* [cite_start]**GTMC1.py**: The game-theoretic Monte-Carlo simulator for strategic cases[cite: 84]. [cite_start]It takes an actor table and simulates repeated pairwise challenges, returning a probability signal and diagnostics[cite: 85, 86, 88].
-* [cite_start]**update_calibration.py**: A helper script that reads `forecasts.csv`, fetches resolution data from Metaculus, computes calibration metrics (Brier, ECE, CRPS), and writes a memo to `data/calibration_advice.txt`[cite: 209, 210].
-* [cite_start]**calibration_advice.txt**: A small text file containing lightweight guidance that is prefixed to every forecasting prompt to help the models correct biases based on past performance[cite: 89, 218, 224].
+This gives context to the models so they are not just reasoning in a vacuum.
 
-### 4) The Prompts
-Prompts are designed to be long and structured, guiding the LLMs to use a specific thought process:
-* [cite_start]Start with a base rate[cite: 93].
-* [cite_start]Compare the case to the base rate[cite: 94].
-* [cite_start]Evaluate evidence as likelihoods[cite: 95].
-* [cite_start]Do a Bayesian update sketch[cite: 96].
-* [cite_start]Red-team the conclusion[cite: 97].
-* [cite_start]End with strict output lines that Spagbot can parse[cite: 98].
+Ask multiple models
 
----
+Several large language models (like GPT-4o, Claude, Gemini, Grok) are asked the same question.
 
-## Configuration & Environment
-[cite_start]You can configure Spagbot by setting environment variables in your `.env` file[cite: 100, 111]. Key toggles and parameters include:
-* [cite_start]`USE_OPENROUTER`, `USE_GOOGLE`, `ENABLE_GROK`, `SUBMIT_PREDICTION`[cite: 100].
-* [cite_start]`SPAGBOT_DISABLE_RESEARCH_CACHE` to bypass caching[cite: 101].
-* [cite_start]Model IDs like `OPENROUTER_GPT5_THINK_ID`, `GEMINI_MODEL`, `XAI_GROK_ID`[cite: 103].
-* [cite_start]Timeouts for API calls[cite: 104].
-* [cite_start]The `TOURNAMENT_ID` and `METACULUS_TOKEN`[cite: 105].
-* [cite_start]`NUM_RUNS_PER_QUESTION` (default is 3)[cite: 108].
+Each model returns its best estimate (e.g., “There’s a 35% chance…”).
 
----
+For strategic, political questions, Spagbot can also run a game-theoretic simulation (GTMC1) that models actors, their interests, and possible bargaining outcomes.
 
-## Inputs and Outputs
-### Inputs
-* [cite_start]`.env`: API keys and toggles[cite: 111].
-* [cite_start]`run_bot_on_*.yaml`: Run configurations[cite: 112].
-* [cite_start]`pyproject.toml` / `poetry.lock`: Python dependencies[cite: 113].
+Combine forecasts
 
-### Core Code
-* [cite_start]`spagbot.py`: The main orchestrator[cite: 115].
-* [cite_start]`bayes_mc.py`: The statistical combiner[cite: 116].
-* [cite_start]`GTMC1.py`: The bargaining simulator[cite: 117].
-* [cite_start]`update_calibration.py`: The calibration helper[cite: 118].
+All these signals are combined using a Bayesian Monte Carlo method.
 
-### Artifacts (created on run)
-* [cite_start]`forecasts.csv`: Final forecast per question[cite: 120].
-* [cite_start]`forecasts_by_model.csv`: Per-model parse outcomes[cite: 121].
-* [cite_start]`forecasts_mcq_wide.csv`: MCQ results in a fixed format[cite: 122].
-* [cite_start]`forecast_logs/<RUNID>_reasoning.log`: Detailed log with research, GTMC1 info, and raw panel reasoning[cite: 123].
-* [cite_start]`logs/spagbot_run_<timestamp>.txt`: Console log[cite: 124].
-* [cite_start]`gtmc_logs/*`: Per-run GTMC1 data[cite: 125].
+This ensures the final probability or distribution is mathematically consistent and reflects the strength of evidence from each source.
 
----
+Calibrate and improve
 
-## How the Pieces Fit Together (Mental Model)
-* [cite_start]Treat each LLM as a noisy expert speaking in a standard format[cite: 127].
-* [cite_start]Treat the GTMC1 output as a clue for strategic cases, not the final word[cite: 128].
-* [cite_start]Treat the Bayes-MC layer as a statistical fuse that uses weak priors, is conservative, and preserves uncertainty[cite: 129].
+Spagbot logs every forecast in forecast_logs/forecasts.csv.
 
----
+When questions resolve, it compares its predictions to reality.
 
-## What to Open First After a Run
-1.  [cite_start]`forecast_logs/<RUNID>_reasoning.log`: Read the Research and GTMC1 sections[cite: 131].
-2.  [cite_start]`forecasts.csv`: Check the final probabilities or percentiles[cite: 132].
-3.  [cite_start]`forecasts_by_model.csv`: Check if any model failed to parse[cite: 133].
-4.  [cite_start]`gtmc_logs/*_runs.csv`: For strategic questions, check the distribution of final medians[cite: 134].
+A calibration script then adjusts the weights of different models, giving more influence to those that proved more accurate in similar situations.
 
----
+This creates a closed learning loop so Spagbot improves over time.
 
-## Calibration Loop
-1.  [cite_start]Run Spagbot, which writes to `forecasts.csv`[cite: 222].
-2.  [cite_start]After some questions have resolved, run `python update_calibration.py`[cite: 223]. [cite_start]This script computes calibration metrics and writes a memo to `data/calibration_advice.txt`[cite: 210, 223].
-3.  [cite_start]On the next Spagbot run, the Calibration loader reads this memo and injects it into the prompts, nudging the panel to correct biases[cite: 224].
+Autonomous operation
+
+In GitHub, Spagbot runs on a schedule (for test questions, the tournament, and the Metaculus Cup).
+
+It automatically commits its logs and calibration updates back to the repository, so no human intervention is needed.
+
+The big picture
+
+Think of Spagbot as a forecasting orchestra conductor:
+
+The models are the musicians, each with their own instrument (style of reasoning).
+
+GTMC1 is the percussion section for power politics.
+
+Bayesian Monte Carlo is the conductor, blending them into harmony.
+
+And the calibration loop is like rehearsals, helping everyone play in tune with reality over time.
+
+Quick Start
+1) Local run (one question / test mode)
+# (Recommended) use Python 3.11 and a virtual environment
+pip install -r requirements.txt
+
+# Environment variables (see “Configuration” below)
+# The only must-have for submission is METACULUS_TOKEN
+export METACULUS_TOKEN=your_token_here
+
+# Run a single test question (no submit)
+python run_spagbot.py --mode test_questions --limit 1
+
+# Run a single question by post ID (no submit)
+python run_spagbot.py --pid 22427
+
+# Submit (be careful!)
+python run_spagbot.py --mode test_questions --limit 1 --submit
+
+2) Autonomous runs on GitHub
+
+This repo includes workflows for:
+
+test_bot_fresh.yaml (fresh research),
+
+test_bot_cached.yaml (use cache),
+
+run_bot_on_tournament.yaml,
+
+run_bot_on_metaculus_cup.yaml,
+
+calibration_refresh.yml (periodic update of calibration weights).
+
+Add secrets (see below), push the repo, and Actions will:
+
+run forecasts,
+
+write logs to the repo,
+
+update calibration weights on a schedule,
+
+commit/push changes automatically.
+
+What Spagbot Does (Pipeline)
+
+Select question(s)
+Test set, single PID, tournament, or Metaculus Cup.
+
+Research (research.py)
+Uses AskNews / Serper to pull context. Results are summarized and logged.
+
+Prompting (prompts.py)
+Builds compact, question-type aware prompts (binary, MCQ, numeric).
+
+LLM Ensemble (providers.py, ensemble.py)
+Calls multiple LLMs asynchronously, with rate-limit guards and usage/cost capture.
+
+Binary → extracts a single probability p(yes)
+
+MCQ → extracts a probability vector across options
+
+Numeric → extracts P10/P50/P90 quantiles
+
+Game-Theoretic Signal (optional, binary) — GTMC1.py
+A reproducible, Bueno de Mesquita/Scholz-style bargaining Monte Carlo using an actor table (position, capability, salience, risk). Output includes:
+
+exceedance_ge_50 (preferred probability-like signal),
+
+coalition rate, dispersion, rounds to converge, etc.
+
+Aggregation (aggregate.py + bayes_mc.py)
+Bayesian Monte Carlo fusion of all evidence (LLMs + GTMC1).
+
+Binary: Beta-Binomial update → final p(yes).
+
+MCQ: Dirichlet update → final probability vector.
+
+Numeric: Mixture from quantiles → final P10/P50/P90.
+
+Submission (cli.py)
+Submits to Metaculus if --submit is set and METACULUS_TOKEN is present.
+Enforces basic constraints (e.g., numeric quantile ordering).
+
+Logging (io_logs.py)
+
+Machine-readable master CSV: forecast_logs/forecasts.csv
+
+Human log per run: forecast_logs/runs/<run_id>.md (or .txt)
+In GitHub Actions, logs auto-commit/push unless disabled.
+
+Calibration Loop (update_calibration.py)
+On a schedule (e.g., every 6–24h), reads forecast_logs/forecasts.csv, filters resolved questions (and only forecasts made before resolution), computes per-model skill and writes:
+
+calibration_weights.json (used next run to weight models)
+
+data/calibration_advice.txt (human-readable notes)
+These outputs are committed, so the loop closes autonomously.
+
+Repository Layout (key files)
+spagbot/
+  run_spagbot.py        # Thin wrapper: calls cli.main()
+  cli.py                # Orchestrates runs, submission, and final log commit
+  research.py           # AskNews/Serper search + summarization
+  prompts.py            # Prompt builders per question type
+  providers.py          # Model registry, rate-limiters, cost estimators
+  ensemble.py           # Async calls to each LLM + parsing to structured outputs
+  aggregate.py          # Calls bayes_mc to fuse LLMs (+ GTMC1) into final forecast
+  bayes_mc.py           # Bayesian Monte Carlo updaters (Binary, MCQ, Numeric)
+  GTMC1.py              # Game-theoretic Monte Carlo with reproducibility guardrails
+  io_logs.py            # Canonical logging to forecast_logs/ + auto-commit
+  seen_guard.py         # Simple JSONL-based “skip duplicates” registry (optional)
+  update_calibration.py # Builds class-conditional weights from resolutions
+  __init__.py           # Package export list
+
+forecast_logs/
+  forecasts.csv         # Single master CSV (auto-created)
+  runs/                 # Human-readable per-run logs (.md or .txt)
+
+data/
+  calibration_advice.txt  # Friendly notes from the calibration job (auto-created)
+
+gtmc_logs/
+  ...                    # Optional run-by-run GTMC CSVs/metadata (if enabled)
+
+Configuration
+
+Set these as environment variables (locally or in GitHub Actions). Sensible defaults are used where possible.
+
+Required (for submission)
+
+METACULUS_TOKEN — your Metaculus API token.
+
+Recommended
+
+FORECASTS_CSV_PATH=forecast_logs/forecasts.csv
+(defaults to this; set only if you want a different location)
+
+CALIB_WEIGHTS_PATH=calibration_weights.json
+
+CALIB_ADVICE_PATH=data/calibration_advice.txt
+
+HUMAN_LOG_EXT=md (or txt)
+
+LOGS_BASE_DIR=forecast_logs (default)
+
+Git commit behavior (logs & calibration outputs)
+
+In GitHub Actions:
+
+DISABLE_GIT_LOGS=false (or unset) → auto-commit/push logs & calibration outputs
+
+Locally:
+
+COMMIT_LOGS=true → will also commit/push from your machine (optional)
+
+Optional:
+
+GIT_LOG_MESSAGE="chore(logs): update forecasts & calibration"
+
+GIT_REMOTE_NAME=origin
+
+GIT_BRANCH_NAME=main (detected automatically; this is a safe fallback)
+
+LLM/API keys (if used in your setup)
+
+OPENROUTER_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, etc.
+
+Research keys: ASKNEWS_CLIENT_ID, ASKNEWS_CLIENT_SECRET, SERPER_API_KEY, etc.
+
+Tip: Put non-secret defaults in .env.example and store secrets in GitHub → Settings → Secrets and variables → Actions.
+
+Running Modes
+
+Test set (no submit by default):
+python run_spagbot.py --mode test_questions --limit 4
+
+Single question by PID:
+python run_spagbot.py --pid 22427
+
+Tournament / Cup (CI workflows call these internally):
+
+run_bot_on_tournament.yaml
+
+run_bot_on_metaculus_cup.yaml
+Include --submit in those workflows if you want automatic submissions.
+
+Logging & Files Written
+
+Machine CSV: forecast_logs/forecasts.csv (canonical, append-only)
+Contains per-question details, per-model parsed outputs, final aggregation, timestamps, etc.
+
+Human log: forecast_logs/runs/<timestamp>_<run_id>.md
+Friendly narrative summary: which models ran, research snippets, final forecast.
+
+These are committed automatically from GitHub Actions unless disabled.
+
+Calibration (Autonomous Loop)
+
+Input: forecast_logs/forecasts.csv
+
+Logic:
+
+Keep resolved questions only.
+
+Keep only forecasts made before resolution time.
+
+Compute per-model loss by question type and class (e.g., binary vs numeric; topical classes if present).
+
+Build class-conditional weights with shrinkage toward global weights.
+
+Output:
+
+calibration_weights.json
+
+data/calibration_advice.txt (friendly notes)
+
+Use: At the start of a run, Spagbot loads calibration_weights.json to weight ensemble members.
+
+Important: Ensure the data/ folder exists in the repo so calibration_advice.txt can be written and committed.
+
+Game-Theoretic Module (GTMC1)
+
+Accepts an actor table with columns: name, position, capability, salience, risk_threshold (scales 0–100 for the first three).
+
+Runs a deterministic Monte Carlo bargaining process (PCG64 RNG seeded from a fingerprint of the table + params).
+
+Outputs:
+
+exceedance_ge_50 (preferred probability-like signal when higher axis = “YES”),
+
+median_of_final_medians,
+
+coalition_rate,
+
+dispersion,
+
+and logs a per-run CSV under gtmc_logs/ (optional to commit).
+
+You can enable/disable GTMC1 by question type or flags in cli.py.
+
+Aggregation Math (Plain English)
+
+Binary: Treat each model’s p(yes) (and GTMC1’s exceedance) as evidence with a confidence weight. Update a Beta prior; take the posterior mean as final probability (with quantile summaries P10/P50/P90).
+
+MCQ: Treat each model’s probability vector as evidence and update a Dirichlet prior; take the posterior mean vector.
+
+Numeric: Fit a Normal from each model’s P10/P50/P90, sample proportionally to confidence weights, and compute final P10/P50/P90 from the mixture.
+
+Weights come from calibration_weights.json, updated by the calibration job.
+
+GitHub Actions (What’s Included)
+
+Fresh test runs vs cached test runs
+
+Tournament and Metaculus Cup runners
+
+Calibration refresh (scheduled)
+
+Each workflow:
+
+Sets the environment (paths, commit behavior),
+
+Runs the bot (and/or update_calibration.py),
+
+Auto-commits any modified files under:
+
+forecast_logs/,
+
+calibration_weights.json,
+
+data/ (advice),
+
+(optionally) state files you decide to persist.
+
+If you want duplicate-protection to persist across CI runs, store seen_guard state inside the repo (e.g., forecast_logs/state/seen_forecasts.jsonl) and include it in commits.
+
+Secrets You Must Add (GitHub → Actions)
+
+METACULUS_TOKEN (for submission)
+
+Any LLM / research API keys you plan to use:
+
+OPENROUTER_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, ASKNEWS_CLIENT_ID, ASKNEWS_CLIENT_SECRET, SERPER_API_KEY, etc.
+
+Troubleshooting
+
+“No calibration changes to commit.”
+Normal if no new resolutions or no forecasts before the resolution time.
+
+Numeric submission errors (CDF monotonicity etc.).
+The numeric path enforces ordered quantiles (P10 ≤ P50 ≤ P90). If Metaculus still complains, reduce extremely steep distributions (too tiny sigma) or clip the extreme tails. (The current code already guards the common pitfalls.)
+
+Logs not committing locally.
+Set COMMIT_LOGS=true and ensure your git remote/branch are correct.
+
+Advice file write error.
+Ensure data/ folder exists and isn’t .gitignore’d.

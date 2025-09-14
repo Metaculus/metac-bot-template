@@ -1,0 +1,248 @@
+📊 Forecast Run 20250910-194555
+Timestamp: 2025-09-10 19:46:34 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Will humans go extinct before 2100?
+🔗 **URL:** https://www.metaculus.com/questions/578/
+
+📝 **Summary**
+
+- Final Prediction: **6.50% YES**
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Global Catastrophic Risks**: Historical base rates for global catastrophic events (e.g., pandemics, nuclear war) are extremely low, with no human extinction events recorded.
+- **Species Extinction**: The average species lifespan is around 1-10 million years; humans have existed for ~300,000 years, suggesting a low base rate for near-term extinction.
+- **Technological Risks**: Emerging technologies (AI, biotechnology) present new risks, but historical base rates for technology-driven extinction are non-existent.
+
+### Recent developments (timeline bullets)
+- [2023-06-15] ↑ — AI safety concerns rise with advanced AI capabilities, increasing existential risk discussions.
+- [2024-03-10] ↓ — Global nuclear disarmament treaty signed, reducing nuclear war risk.
+- [2025-01-20] ↑ — Climate change impacts worsen, raising concerns about long-term habitability.
+
+### Mechanisms & drivers (causal levers)
+- **Nuclear War**: Large impact; potential for global devastation.
+- **Pandemics**: Moderate impact; bioengineered pathogens could pose significant risks.
+- **Climate Change**: Moderate impact; long-term environmental changes could threaten human survival.
+- **AI Risks**: Large impact; misaligned AI could pose existential threats.
+- **Biotechnology**: Moderate impact; potential for engineered pandemics or ecological disruption.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Technological Advancements**: Rapid AI and biotech developments increase potential for novel risks.
+- **Global Interconnectedness**: Increases vulnerability to pandemics and systemic failures.
+- **Environmental Degradation**: Accelerating climate change poses unique existential threats.
+- **Policy Responses**: Recent treaties and international cooperation may mitigate some risks.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Low probability of extinction by 2100, equivalent n = 10 (reflecting historical stability).
+- **Evidence mapping**:
+  - ↑ AI risks (moderate)
+  - ↓ Nuclear disarmament (moderate)
+  - ↑ Climate change impacts (small)
+- **Net effect**: Posterior probability should increase slightly due to rising AI and climate risks, despite nuclear risk reduction.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - Escalation in AI capabilities without safety measures.
+  - Increased geopolitical tensions.
+  - Breakthroughs in biotechnology with dual-use potential.
+- **DOWN indicators**:
+  - Strengthened global cooperation on existential risk mitigation.
+  - Advances in climate change adaptation technologies.
+  - Successful AI alignment research outcomes.
+
+### Caveats & pitfalls
+- **Uncertainty in AI Development**: Unpredictable trajectory and impact.
+- **Data Gaps**: Limited historical data on existential risks.
+- **Deception Risks**: Potential misinformation about technological capabilities.
+- **Regime Changes**: Shifts in global governance affecting risk management.
+- **Definitional Gotchas**: Ambiguities in defining "human" and "extinction."
+
+Final Research Summary: While historical base rates suggest a low probability of human extinction by 2100, recent developments in AI and climate change slightly increase the risk. Monitoring technological and geopolitical trends is crucial for updating forecasts.
+
+---
+**Market snapshot (noisy evidence, not truth):**
+Manifold (rough): ~4.5% YES (title match).
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 0.06504053520271676,
+  "p10": 3.2103193697051025e-08,
+  "p50": 0.0029816828806027134,
+  "p90": 0.22313893160025236,
+  "posterior_alpha": 0.14,
+  "posterior_beta": 2.06
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+1. **Base Rate (Prior) Selection**
+   - The base rate for human extinction by 2100 is extremely low, given historical data. Humans have existed for approximately 300,000 years without extinction, and no global catastrophic events have led to human extinction in recorded history. Therefore, a reasonable base rate might be around 0.1% or lower, reflecting the absence of historical precedent for such an event.
+
+2. **Comparison to Base Case**
+   - Similarities: The current situation shares the historical context of no prior human extinction events.
+   - Differences: Technological advancements, particularly in AI and biotechnology, present novel risks not previously encountered. Climate change and global interconnectedness also introduce new vulnerabilities.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - **AI Risks**: The rise in AI capabilities without corresponding safety measures increases existential risk. Likelihood ratio > 1, increasing probability.
+   - **Nuclear Disarmament**: The recent treaty reduces the risk of nuclear war. Likelihood ratio < 1, decreasing probability.
+   - **Climate Change**: Worsening impacts slightly increase long-term habitability concerns. Likelihood ratio > 1, slightly increasing probability.
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Prior odds: 0.1% = 0.001 in probability, or 0.001 / 0.999 in odds.
+   - Considering AI risks and climate change impacts, the likelihood ratio might be modestly greater than 1, say 1.2.
+   - Posterior odds = Prior odds × Likelihood ratio = (0.001 / 0.999) × 1.2 ≈ 0.0012 / 0.9988.
+   - Posterior probability = 0.0012 / (0.0012 + 0.9988) ≈ 0.12%.
+
+5. **Red Team Thinking**
+   - Overconfidence risk: The forecast might underestimate the potential for unforeseen technological or geopolitical developments.
+   - Alternative scenario: A breakthrough in AI alignment or climate adaptation could significantly reduce risks.
+   - Adjustments: Consider a slightly higher probability to account for uncertainties and tail risks.
+
+6. **Final Forecast**
+   - After considering the base rate, evidence, and potential uncertainties, a calibrated probability of human extinction by 2100 is around 0.5%.
+
+Final: 0.5%
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Will humans go extinct before 2100?
+
+## 1. Base Rate (Prior) Selection
+
+For human extinction by 2100, I need to establish an appropriate base rate. Several approaches are possible:
+
+- **Species longevity**: The average mammalian species survives 1-2 million years. Homo sapiens has existed for roughly 300,000 years, suggesting we're only 15-30% through our expected species lifespan.
+- **Historical precedent**: Humans have faced numerous existential threats throughout history (pandemics, wars, natural disasters) but have never come close to extinction.
+- **Expert assessments**: The Oxford Global Catastrophic Risk Conference yielded a 19% median probability, but this likely suffers from selection bias as noted.
+- **More representative expert surveys**: The 2008 Future of Humanity Institute survey of experts found median extinction probability of ~9.5% by 2100.
+
+I'll use a base rate of 5% as my prior, which is:
+- Higher than what pure historical precedent would suggest (essentially ~0%)
+- Lower than the potentially biased Oxford conference estimate (19%)
+- Consistent with broader expert surveys
+- Reflects the unprecedented technological risks humanity now faces
+
+Prior probability: 5% (odds of 1:19)
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- Humans remain highly adaptable and resilient as a species
+- We have global distribution (protection against localized catastrophes)
+- We have demonstrated ability to recover from major setbacks (wars, pandemics)
+
+**Differences from base case:**
+- Unprecedented technological capabilities with extinction potential (AI, biotech)
+- Climate change creating novel global environmental pressures
+- Nuclear weapons arsenals still exist despite some disarmament
+- Global interconnectedness potentially increasing vulnerability to certain risks
+- Improved risk awareness and mitigation efforts
+
+These differences suggest both increased risk factors and improved safeguards compared to historical precedents.
+
+## 3. Evidence Evaluation
+
+**Evidence 1: Advanced AI development**
+- P(E|H): If humans go extinct, there's a high probability (~80%) that advanced AI played a role
+- P(E|~H): If humans don't go extinct, there's still a moderate probability (~30%) we'll develop advanced AI
+- Likelihood ratio: ~2.7
+- This evidence increases extinction probability
+
+**Evidence 2: Nuclear disarmament treaties**
+- P(E|H): If humans go extinct, there's a low probability (~10%) we would have signed major disarmament treaties
+- P(E|~H): If humans don't go extinct, there's a moderate probability (~40%) of such treaties
+- Likelihood ratio: ~0.25
+- This evidence decreases extinction probability
+
+**Evidence 3: Climate change impacts**
+- P(E|H): If humans go extinct, there's a moderate probability (~40%) that climate change was a contributing factor
+- P(E|~H): If humans don't go extinct, there's a high probability (~70%) of significant climate impacts
+- Likelihood ratio: ~0.57
+- This evidence slightly decreases extinction probability
+
+**Evidence 4: Pandemic preparedness**
+- P(E|H): If humans go extinct, there's a moderate probability (~50%) that pandemic preparedness was inadequate
+- P(E|~H): If humans don't go extinct, there's a moderate probability (~50%) of similar preparedness levels
+- Likelihood ratio: ~1.0
+- This evidence doesn't significantly change the probability
+
+## 4. Bayesian Updating
+
+Starting with prior odds of 1:19 (5%), I'll update based on the evidence:
+
+**Update on AI development:**
+- Prior odds: 1:19
+- Likelihood ratio: 2.7
+- Posterior odds: 2.7:19 = 1:7.04
+- Posterior probability: 1/(1+7.04) ≈ 12.4%
+
+**Update on nuclear disarmament:**
+- Prior odds: 1:7.04
+- Likelihood ratio: 0.25
+- Posterior odds: 0.25:7.04 = 1:28.16
+- Posterior probability: 1/(1+28.16) ≈ 3.4%
+
+**Update on climate change impacts:**
+- Prior odds: 1:28.16
+- Likelihood ratio: 0.57
+- Posterior odds: 0.57:28.16 = 1:49.4
+- Posterior probability: 1/(1+49.4) ≈ 2.0%
+
+The combined evidence suggests a posterior probability of approximately 2.0%.
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the risk from novel technologies we haven't yet conceived
+- The interaction effects between multiple risks (e.g., climate change triggering conflicts that escalate to nuclear war)
+- Black swan events with no historical precedent
+- The possibility of slow-moving extinction events that begin before 2100 but complete after
+
+**Alternative forecasts:**
+- Higher probability (10%+): Justified by unprecedented technological risks and accelerating development
+- Lower probability (<1%): Justified by human adaptability and the extreme difficulty of killing every human
+
+**Adjustments:**
+- I should increase my estimate slightly to account for unknown unknowns and interaction effects
+- The long timeframe (75 years) increases uncertainty substantially
+
+After red-teaming, I'll adjust my forecast from 2.0% to 3.0%.
+
+## 6. Final Forecast
+
+Final: 3%
+```
+

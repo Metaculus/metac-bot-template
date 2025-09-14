@@ -1,0 +1,1465 @@
+📊 Forecast Run 20250909-222444
+Timestamp: 2025-09-09 22:26:10 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Will humans go extinct before 2100?
+🔗 **URL:** https://www.metaculus.com/questions/578/
+
+📝 **Summary**
+
+- Final Prediction: **10.03% YES**
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Global Catastrophic Risks**: Historical base rate for human extinction events is effectively zero, but expert estimates suggest a 19% chance by 2100 (selection bias noted).
+- **Nuclear War**: No full-scale nuclear wars have occurred; hypothetical models predict catastrophic outcomes.
+- **Climate Change**: Severe climate events are increasing, but extinction-level impacts are speculative.
+
+### Recent developments (timeline bullets)
+- [2025-09-05] ↑ — AI experts warn of a 20% chance of AI-induced extinction within 30 years.
+- [2025-09-05] ↑ — Study shows a 70% chance of Gulf Stream collapse by 2035, potentially triggering severe climate shifts.
+- [2025-09-04] ↑ — Article highlights nuclear war risks, with potential for massive human casualties.
+
+### Mechanisms & drivers (causal levers)
+- **Artificial Intelligence**: Large — Potential for AI to surpass human control.
+- **Nuclear Conflict**: Large — Geopolitical tensions could escalate into nuclear war.
+- **Climate Change**: Moderate — Extreme weather could destabilize ecosystems and societies.
+- **Pandemics**: Moderate — New diseases could emerge with high mortality rates.
+- **Technological Advances**: Small — Could mitigate or exacerbate risks.
+
+### Differences vs. the base rate (what’s unusual now)
+- **AI Development**: Rapid advancements increase existential risk, unlike historical technological changes.
+- **Climate Instability**: Accelerating climate change presents new, unpredictable risks.
+- **Geopolitical Tensions**: Current multipolar world order increases nuclear conflict risk.
+- **Global Connectivity**: Increases pandemic spread potential compared to historical outbreaks.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Assume a low prior probability (e.g., 1%) with moderate strength (equivalent n = 10).
+- **Evidence mapping**:
+  - ↑ AI risk (large)
+  - ↑ Climate change impacts (moderate)
+  - ↑ Nuclear tensions (large)
+  - ↓ Historical extinction events (small)
+- **Net effect**: Posterior probability should increase moderately given recent evidence.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - Escalation in AI capabilities without regulation.
+  - Increased geopolitical tensions.
+  - Accelerating climate anomalies.
+- **DOWN indicators**:
+  - Successful international disarmament treaties.
+  - Breakthroughs in climate mitigation.
+  - Effective global AI governance frameworks.
+
+### Caveats & pitfalls
+- **Uncertainty in AI timelines**: Predictions vary widely.
+- **Data gaps**: Limited historical data on extinction-level events.
+- **Deception risks**: Potential misinformation in geopolitical contexts.
+- **Regime changes**: Political shifts could alter risk landscapes.
+- **Definitional gotchas**: Ambiguities in defining "human extinction."
+
+Final Research Summary: Recent developments in AI, climate change, and geopolitical tensions suggest a moderate increase in the probability of human extinction by 2100. However, significant uncertainties and potential mitigating factors remain.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:24:47 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Will humans go extinct before 2100? — unknown — n/a
+
+**Manifold (play-money odds):**
+- Will humans go extinct before 2100? [Resolves to Metaculus in 2027] — binary — 4.5% YES — [link](https://manifold.markets/jack/will-humans-go-extinct-before-2100)
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 0.10034486550064724,
+  "p10": 0.0008829839578658172,
+  "p50": 0.045320164031568605,
+  "p90": 0.2829014602275655,
+  "posterior_alpha": 0.42000000000000004,
+  "posterior_beta": 3.7800000000000002
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+1. **Base Rate (Prior) Selection**
+   - The historical base rate for human extinction events is effectively zero, as humans have not gone extinct in recorded history. However, expert estimates, such as the 19% chance by 2100 from the Global Catastrophic Risk Conference, suggest a higher risk. Given the selection bias in that estimate, a more conservative prior of 1% is reasonable, reflecting the low historical frequency but acknowledging potential risks.
+
+2. **Comparison to Base Case**
+   - Similarities: The current situation shares the general absence of historical extinction events.
+   - Differences: Recent developments in AI, climate change, and geopolitical tensions introduce new risks not present in historical contexts. These differences suggest a need to adjust the probability upward from the historical base rate.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - AI Risk: The warning of a 20% chance of AI-induced extinction within 30 years is significant. If extinction occurs, such warnings are more likely (P(E | H) > P(E | ~H)), increasing the probability.
+   - Climate Change: A 70% chance of Gulf Stream collapse by 2035 could lead to severe climate shifts. This evidence moderately increases the probability, as such events could contribute to extinction.
+   - Nuclear Tensions: Highlighted risks of nuclear war with massive casualties increase the probability, as geopolitical tensions are a known driver of existential risk.
+   - Historical Extinction Events: The absence of past extinction events slightly decreases the probability, as it suggests resilience.
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Prior odds: 1% = 0.01 odds
+   - Likelihood ratio for AI risk: Assume a moderate increase, e.g., 2:1
+   - Likelihood ratio for climate change: Assume a moderate increase, e.g., 1.5:1
+   - Likelihood ratio for nuclear tensions: Assume a moderate increase, e.g., 2:1
+   - Combined likelihood ratio: 2 * 1.5 * 2 = 6
+   - Posterior odds = 0.01 * 6 = 0.06
+   - Posterior probability = 0.06 / (1 + 0.06) ≈ 5.66%
+
+5. **Red Team Thinking**
+   - Overconfidence risk: The forecast may overestimate the impact of recent developments due to uncertainty in AI timelines and geopolitical stability.
+   - Alternative scenario: Effective global governance and technological advances could mitigate risks, suggesting a lower probability.
+   - Adjustments: Consider the potential for mitigating factors and reduce the probability slightly to account for these.
+
+6. **Final Forecast**
+   - After considering the base rate, evidence, and potential mitigating factors, the final forecast is adjusted to reflect a balanced view of risks and uncertainties.
+
+Final: 5%
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Will humans go extinct before 2100?
+
+## 1. Base Rate (Prior) Selection
+
+For human extinction by 2100, I need to establish an appropriate base rate. This is challenging since human extinction has never occurred, so I'll consider several reference points:
+
+- The Stern Review (2006) estimated extinction risk at 0.1% per year, which compounds to roughly 9.5% by 2100
+- The Future of Humanity Institute surveys found expert estimates ranging from 1-20%, with the Oxford conference yielding 19% (though with selection bias)
+- The Doomsday Argument suggests roughly 5-25% chance of extinction this century
+- The Biological Survival School of thought suggests <1% chance given our species' adaptability
+
+Given these considerations, I'll use a base rate of 5% as my prior probability. This acknowledges the non-negligible risk while accounting for the selection bias in the 19% figure from the Oxford conference.
+
+Prior probability (P(H)) = 5%
+Prior odds = 0.05/0.95 = 1/19 (approximately 1:19 odds against extinction)
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- Humans remain a single species dependent on Earth's biosphere
+- Nuclear weapons continue to exist in multiple nations' arsenals
+- Natural catastrophic risks (asteroids, supervolcanoes) remain constant
+
+**Differences from base case:**
+- Accelerating AI development creates new extinction pathways not present historically
+- Climate change is progressing faster than previously modeled
+- Potential for engineered pandemics has increased with biotechnology advances
+- Global connectivity increases vulnerability to cascading systemic failures
+- Improved monitoring systems and international cooperation may mitigate some risks
+
+These differences suggest both increased risk factors and potential mitigating factors compared to historical base rates.
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: AI Risk Developments**
+- P(E|H): If human extinction occurs, there's a high probability (~70%) we would see warnings about AI risks like those reported
+- P(E|~H): If extinction doesn't occur, there's still a moderate probability (~30%) we would see such warnings
+- Likelihood ratio: 70%/30% = 2.33
+- This evidence increases the probability of extinction
+
+**Evidence 2: Climate Change Acceleration**
+- P(E|H): If extinction occurs, there's a moderate probability (~50%) we would see severe climate warnings like Gulf Stream collapse
+- P(E|~H): If extinction doesn't occur, there's also a moderate probability (~40%) we would see such warnings
+- Likelihood ratio: 50%/40% = 1.25
+- This evidence slightly increases the probability of extinction
+
+**Evidence 3: Nuclear Conflict Risks**
+- P(E|H): If extinction occurs, there's a high probability (~60%) we would see heightened nuclear tensions
+- P(E|~H): If extinction doesn't occur, there's a moderate probability (~30%) we would see such tensions
+- Likelihood ratio: 60%/30% = 2.0
+- This evidence increases the probability of extinction
+
+**Evidence 4: Historical Resilience**
+- P(E|H): If extinction occurs, there's a low probability (~20%) we would have observed human survival through previous catastrophes
+- P(E|~H): If extinction doesn't occur, there's a high probability (~80%) we would observe such resilience
+- Likelihood ratio: 20%/80% = 0.25
+- This evidence decreases the probability of extinction
+
+## 4. Bayesian Updating (Posterior Probability)
+
+Starting with prior odds of 1:19 (0.0526), I'll update based on the evidence:
+
+**Update on AI Risk:**
+- Prior odds × Likelihood ratio = 1/19 × 2.33 = 2.33/19 = 0.123
+- Posterior probability = 0.123/(1 + 0.123) = 0.109 or 10.9%
+
+**Update on Climate Change:**
+- Prior odds (now 0.123) × Likelihood ratio = 0.123 × 1.25 = 0.154
+- Posterior probability = 0.154/(1 + 0.154) = 0.133 or 13.3%
+
+**Update on Nuclear Risk:**
+- Prior odds (now 0.154) × Likelihood ratio = 0.154 × 2.0 = 0.308
+- Posterior probability = 0.308/(1 + 0.308) = 0.235 or 23.5%
+
+**Update on Historical Resilience:**
+- Prior odds (now 0.308) × Likelihood ratio = 0.308 × 0.25 = 0.077
+- Posterior probability = 0.077/(1 + 0.077) = 0.072 or 7.2%
+
+After considering all evidence, the posterior probability is approximately 7.2%.
+
+## 5. Red Team Thinking
+
+**Potential overconfidence:**
+- I may be overestimating humanity's ability to respond to existential threats
+- The evidence on AI risk may be understated given the unprecedented nature of AGI
+- Climate tipping points could trigger cascading failures not accounted for in models
+- The probability of multiple simultaneous crises (pandemic + nuclear conflict) may be underestimated
+
+**Alternative forecasts:**
+- A higher probability (15-20%) would be justified if one weighs technological risks more heavily
+- A lower probability (1-3%) would be justified if one believes in stronger international coordination or technological solutions
+
+**Tail risks:**
+- Low-probability but high-impact scenarios include:
+  - Unforeseen technological disasters (e.g., physics experiments gone wrong)
+  - Extraterrestrial threats not accounted for in historical data
+  - Cascading failures across multiple systems simultaneously
+
+Considering these factors, I should adjust my estimate slightly upward to account for unknown unknowns and tail risks, to approximately 8%.
+
+## 6. Final Forecast
+
+After considering the base rate, evidence evaluation, Bayesian updating, and red team thinking, my final forecast for human extinction before 2100 is 8%. This reflects both the historical resilience of humanity and the new technological and environmental risks we face.
+
+Final: 8%
+```
+
+### Gemini [gemini-2.5-pro]
+```
+Here is my probabilistic forecast reasoning:
+
+### 1. Base Rate (Prior) Selection
+The event in question—human extinction within the next 75 years—has no direct historical precedent. The historical base rate is zero, but this is a poor guide because it doesn't account for novel, 21st-century anthropogenic risks like advanced AI, engineered pandemics, or nuclear weapons.
+
+Expert opinions provide an alternative anchor. The 2008 Oxford poll yielding a 19% median estimate is noted, but its significant selection bias makes it an unreliable and likely inflated figure. Toby Ord's more recent estimate of a 1-in-6 (~17%) chance of *existential catastrophe* (a broader category than just extinction) in the next 100 years is a more rigorous expert assessment.
+
+The most useful starting point is the Manifold market consensus of 4.5%. This represents a "wisdom of the crowd" posterior probability, incorporating much of the general knowledge and sentiment about these risks up to the present day. I will adopt this 4.5% as a well-informed, weak prior to be updated with the specific new evidence from the research report.
+
+*   **Prior Probability P(H):** 4.5%
+*   **Prior Odds:** 0.045 / (1 - 0.045) ≈ 0.047, or about 1-to-21 against extinction.
+
+### 2. Comparison to Base Case
+The current situation is fundamentally different from the vast majority of human history, which makes a purely historical base rate inappropriate.
+*   **Similarities:** Humanity is geographically dispersed and has proven resilient to past catastrophes like pandemics and natural disasters. The bar for *complete* extinction (zero humans) is extremely high.
+*   **Differences:** The primary drivers of extinction risk are now anthropogenic and technological.
+    *   **Artificial Intelligence:** The rapid, accelerating development of AI presents a potential risk of a superintelligence we cannot control, a scenario with no historical parallel.
+    *   **Biotechnology:** The capacity to engineer pathogens increases the risk of pandemics far deadlier than naturally occurring ones.
+    *   **Nuclear Arsenals & Geopolitics:** A multipolar world with renewed great power competition increases the risk of nuclear conflict compared to the immediate post-Cold War era.
+    *   **Climate Change:** The rate of climate change is unprecedented, creating systemic fragility and the potential for cascading societal collapses.
+
+These differences, especially AI, justify a much higher probability of extinction than at any other point in human history.
+
+### 3. Evidence Evaluation
+I will evaluate the new information from the research report, treating the 4.5% market price as the baseline before this news.
+
+*   **Evidence 1: "AI experts warn of a 20% chance of AI-induced extinction within 30 years."**
+    *   This is an extremely strong piece of evidence. Let H be "human extinction by 2100" and E1 be this expert warning.
+    *   **P(E1 | H):** If humanity is on a trajectory toward extinction, it is very likely that experts in the field of the primary risk driver (AI) would be issuing stark warnings like this.
+    *   **P(E1 | ~H):** If humanity is *not* on such a trajectory, it is less likely (though still possible) that a consensus of experts would issue such a specific and high-probability warning. They could be wrong or alarmist, but this is a powerful signal.
+    *   **Likelihood Ratio (LR):** P(E1 | H) / P(E1 | ~H) is significantly greater than 1. I estimate this evidence makes the extinction hypothesis at least twice as likely. **LR ≈ 2.0**. This is a conservative interpretation, discounting the 20% figure itself but taking the issuance of the warning as significant new information.
+
+*   **Evidence 2: "Study shows a 70% chance of Gulf Stream collapse by 2035."**
+    *   This is strong evidence of accelerating climate instability. Let E2 be this study's finding.
+    *   An AMOC collapse would be catastrophic, causing massive disruption to agriculture and society, thereby increasing the likelihood of conflicts and other follow-on disasters. However, its direct link to *extinction* is weaker than that of AI. It is a major threat multiplier.
+    *   **Likelihood Ratio (LR):** The evidence increases the probability of extinction, but by a smaller amount than the AI risk. I estimate a likelihood ratio of **LR ≈ 1.2**.
+
+*   **Evidence 3: "Article highlights nuclear war risks."**
+    *   This is weak evidence. It confirms an existing, well-known risk but does not provide new data on its likelihood. Its informational content is low. **LR ≈ 1.0**.
+
+### 4. Bayesian Updating
+I will update the prior odds using the likelihood ratios from the new evidence.
+
+*   **Prior Odds:** 1-to-21 against (P ≈ 4.5%)
+*   **Update with Evidence 1 (AI warning, LR=2.0):**
+    *   Posterior Odds = Prior Odds × LR1 = (1/21) × 2.0 = 2/21 ≈ 1-to-10.5 against.
+    *   Posterior Probability = 1 / (1 + 10.5) ≈ 8.7%
+
+*   **Update with Evidence 2 (Climate warning, LR=1.2):**
+    *   New Posterior Odds = Previous Odds × LR2 = (1/10.5) × 1.2 ≈ 1/8.75 ≈ 1-to-8.8 against.
+    *   **Final Posterior Probability** = 1 / (1 + 8.8) ≈ 1 / 9.8 ≈ **10.2%**
+
+### 5. Red Team Thinking
+*   **Why might this forecast be too high?** The primary reason is the high bar for the resolution criteria: "no known humans alive." Humanity is resilient and widespread. Catastrophes that would end civilization might still leave survivors. I may also be insufficiently skeptical of expert alarmism. The very act of warning can trigger mitigating actions, a factor my analysis does not explicitly model.
+*   **Why might this forecast be too low?** I may be underestimating the speed of AI development or the potential for correlated risks, where climate collapse, pandemics, and geopolitical instability create a cascading failure that overwhelms our ability to respond. My choice of LRs, while attempting to be conservative, could be too timid in the face of such dire warnings.
+*   **Adjustment:** The strict definition of extinction is a powerful counter-argument. While the risks of civilizational collapse are high, complete extinction is harder to achieve. This suggests slightly tempering the final probability downwards from the calculated 10.2%. A doubling of the initial 4.5% market probability seems like a significant but justified update in response to the evidence. This would land the forecast at 9%.
+
+### 6. Final Forecast
+My initial prior of 4.5% is based on the market consensus. The new evidence, particularly the stark warning from AI experts and the increased risk of a major climate system collapse, is highly significant. A formal Bayesian update suggests the probability should more than double, moving it into the 10% range. After red-teaming this and considering the very high bar for complete extinction, I will adjust this slightly downward. The final forecast reflects a substantial increase in perceived risk due to the new information, acknowledging that AI is a novel risk factor unlike any humanity has faced before.
+
+Final: 9%
+```
+
+### Grok [grok-4]
+```
+### 1. Base Rate (Prior) Selection
+For human extinction before 2100, an appropriate base rate must account for the fact that no such event has occurred in recorded human history (spanning ~10,000 years of civilization or ~300,000 years of Homo sapiens existence), making the historical frequency effectively 0%. However, this is a rare tail-risk event, so a naive 0% prior is unhelpful; instead, I draw from expert surveys and prediction markets as a reference class. The 2008 Oxford poll gave a median of 19%, but as noted, it's likely biased toward high estimates due to selection effects (attendees were risk-focused experts). More balanced expert estimates, like Toby Ord's "The Precipice" (2020), suggest about 1 in 6 (~16.7%) by 2100, while prediction platforms like Manifold currently show ~4.5%. Aggregating these with historical rarity, I'll select a conservative prior of 5% (or odds of 1:19), reflecting a low but non-zero baseline informed by expert consensus and market signals, adjusted downward for potential overestimation in biased samples.
+
+### 2. Comparison to Base Case
+The base case is the historical absence of human extinction events, where humanity has survived pandemics (e.g., Black Death killed ~30-50% of Europe but not globally), wars (e.g., World Wars caused massive casualties but not extinction), and natural disasters (e.g., supervolcanic eruptions like Toba ~75,000 years ago reduced populations but didn't wipe out humans). The current situation is similar in that no immediate extinction-level event is underway, and humanity has resilience through technology, global cooperation, and population size (~8 billion). However, differences include unprecedented drivers: rapid AI advancement (unlike past tech shifts), accelerating climate change (faster than historical shifts), heightened geopolitical tensions in a nuclear-armed multipolar world (more volatile than Cold War bipolarity), and global connectivity enabling faster pandemic spread. These differences matter because they introduce novel, potentially cascading risks that could overwhelm historical resilience, justifying an upward adjustment from the base rate.
+
+### 3. Evidence Evaluation (Likelihoods)
+Key evidence from the research report and background:
+
+- **AI risks (large upward driver)**: Recent warnings of 20% AI-induced extinction risk within 30 years. P(E | H) is high (~80%) because uncontrolled AI could directly cause extinction (e.g., misaligned superintelligence). P(E | ~H) is lower (~30%) as such warnings might occur in a hype-driven field without true risk. Likelihood ratio: ~2.7 (increases probability).
+  
+- **Climate change (moderate upward)**: 70% chance of Gulf Stream collapse by 2035, potentially causing severe shifts. P(E | H) ~70% (extinction paths often involve ecosystem collapse). P(E | ~H) ~40% (studies could overestimate without leading to extinction). Likelihood ratio: ~1.75 (increases probability moderately).
+
+- **Nuclear/geopolitical risks (large upward)**: Highlighted risks of nuclear war with massive casualties. P(E | H) ~60% (escalations likely in extinction scenarios). P(E | ~H) ~20% (tensions exist but historically de-escalate). Likelihood ratio: ~3 (increases probability).
+
+- **Historical lack of extinction (small downward)**: No past events. P(E | H) ~10% (extinction would require breaking historical patterns). P(E | ~H) ~100% (consistent with survival). Likelihood ratio: ~0.1 (decreases probability slightly).
+
+- **Pandemics and tech advances (moderate drivers)**: Balanced; pandemics could spread faster now, but tech might mitigate. Net likelihood ratio ~1.2 (slight increase).
+
+Overall, evidence leans upward due to novel risks, with a combined qualitative likelihood ratio of ~2-3.
+
+### 4. Bayesian Updating (Posterior Probability)
+Starting with prior probability P(H) = 5% (prior odds = 0.05 / 0.95 ≈ 1:19).
+
+Apply a net likelihood ratio of ~2.5 from evidence (aggregating upward drivers like AI/nuclear/climate, tempered by historical stability).
+
+Posterior odds = Prior odds × LR = (1:19) × 2.5 ≈ 2.5:19 ≈ 1:7.6.
+
+Posterior probability = 1 / (1 + 7.6) ≈ 11.6%.
+
+This update reflects a moderate increase from the prior, incorporating evidence without overreacting (per calibration guidance to avoid big swings). Confidence remains uncertain due to sparse data on extinction events, with the posterior suggesting a low but meaningful risk.
+
+### 5. Red Team Thinking
+My forecast might be overconfident in upward adjustments, as expert polls like the 2008 one are biased, and markets (e.g., Manifold's 4.5%) could undervalue tail risks due to optimism bias or short-term focus. Blind spots include underestimating mitigation: breakthroughs in AI safety, climate tech (e.g., carbon capture), or diplomacy could drastically reduce risks, which I may not have weighted enough. Tail risks include black-swan events like asteroid impacts (low probability but high impact) or unforeseen biotech disasters, potentially pushing probability higher; conversely, human adaptability has historically defied doomsday predictions. An alternative forecast of ~2% (e.g., strict historical base rate) is plausible if one dismisses expert warnings as alarmist, but I rebut this by noting that novel risks like AI lack historical analogs, making pure base rates insufficient. A higher alternative (~20%) aligns with biased polls, but I rebut it due to selection effects. Adjusting for these, I'll nudge my estimate down slightly to account for overconfidence in evidence strength, landing around 10% to better cover uncertainties.
+
+Final: 10%
+```
+
+📊 Forecast Run 20250909-222444
+Timestamp: 2025-09-09 22:28:26 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** How old will the oldest living person be in 2100?
+🔗 **URL:** https://www.metaculus.com/questions/14333/
+
+📝 **Summary**
+
+- Final Prediction: **Distribution summary**
+  - P10: 115.197
+  - P50: 123.255
+  - P90: 136.118
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Supercentenarians (110+ years old):** As of 2023, there are fewer than 100 verified supercentenarians worldwide. Base rate: extremely low probability of reaching 115+.
+- **Centenarians (100+ years old):** Approximately 573,000 centenarians globally in 2023. Base rate: low probability of reaching 110+.
+- **Limitations:** Data on extreme ages is sparse and subject to verification challenges.
+
+### Recent developments (timeline bullets)
+- [2025-09-08] ↓ — Studies show life expectancy gains have slowed significantly since 1939, limiting future longevity increases.
+- [2025-09-06] ↑ — Global aging population projected to increase, potentially driving interest in longevity research.
+
+### Mechanisms & drivers (causal levers)
+- **Medical advancements:** Moderate; potential breakthroughs in geroscience could extend lifespan.
+- **Public health improvements:** Small; most gains already realized in developed countries.
+- **Genetic factors:** Moderate; some individuals have genetic predispositions for longevity.
+- **Lifestyle factors:** Small; diet, exercise, and social engagement can contribute to longer life.
+- **Environmental factors:** Small; pollution and climate change may negatively impact longevity.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Slowing life expectancy gains:** Recent studies indicate a deceleration in longevity improvements.
+- **Aging population:** Larger proportion of elderly may drive more research into extending life.
+- **Technological advancements:** Potential for breakthroughs in biotechnology and medicine.
+- **Policy focus:** Increased attention on healthcare and pension systems due to aging demographics.
+
+### Bayesian update sketch (for the statistician)
+- **Prior:** Low probability of anyone reaching 120+ years by 2100; equivalent n = 50.
+- **Evidence mapping:**
+  - ↓ Large — Slowing life expectancy gains since 1939.
+  - ↑ Moderate — Potential for medical breakthroughs.
+  - ↓ Small — Current life expectancy trends in developed countries.
+  - ↑ Small — Increased focus on longevity research.
+- **Net effect:** Posterior should move slightly down due to strong evidence of slowing gains.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators:**
+  - Breakthroughs in anti-aging research.
+  - Increased funding for longevity studies.
+  - New genetic discoveries related to lifespan.
+- **DOWN indicators:**
+  - Continued stagnation in life expectancy data.
+  - Lack of significant medical advancements.
+  - Rising environmental health risks.
+
+### Caveats & pitfalls
+- **Uncertainty in future breakthroughs:** Unpredictable nature of scientific advancements.
+- **Data gaps:** Limited reliable data on extreme ages.
+- **Verification challenges:** Difficulty in verifying ages of supercentenarians.
+- **Regime changes:** Shifts in healthcare policy could impact longevity.
+- **Definitional gotchas:** Variability in defining "oldest living person."
+
+Final Research Summary: Current evidence suggests a slowing in life expectancy gains, making it unlikely for the oldest living person in 2100 to significantly exceed current records. However, potential medical breakthroughs could alter this trajectory.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:26:11 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- How old will the oldest living person be in 2100? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 124.54973029994406,
+  "p10": 115.1966085047898,
+  "p50": 123.25456656859623,
+  "p90": 136.1182684128119
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the age of the oldest living person in 2100, we will follow a structured Bayesian approach:
+
+1. **Base Rate (Prior) Selection**
+   - **Base Rate:** The current record for the oldest living person is 122 years (Jeanne Calment). The base rate for supercentenarians (110+ years) is extremely low, with fewer than 100 verified cases worldwide. The base rate for reaching 120+ is even lower.
+   - **Mean/Median and Variance:** Assume a mean of 115 years with a high variance due to the rarity and variability of extreme ages.
+
+2. **Comparison to Base Case**
+   - **Similarities:** The current situation reflects historical trends where very few individuals reach extreme ages.
+   - **Differences:** Advances in medical technology and increased focus on longevity research could potentially extend maximum lifespan, but recent data shows a slowing in life expectancy gains.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - **Slowing Life Expectancy Gains:** Strong evidence suggests a deceleration in longevity improvements, making higher ages less likely.
+   - **Medical Advancements:** Moderate potential for breakthroughs in geroscience, which could increase the likelihood of higher ages.
+   - **Aging Population and Research Focus:** Small positive impact due to increased interest and funding in longevity research.
+
+4. **Bayesian Updating (Posterior Distribution)**
+   - **Prior:** Low probability of reaching 120+ years.
+   - **Likelihoods:** Slowing gains (↓), potential medical breakthroughs (↑), increased research focus (↑).
+   - **Posterior:** The net effect is a slight downward adjustment due to the strong evidence of slowing gains, despite potential for breakthroughs.
+
+5. **Red Team Thinking**
+   - **Overconfidence Check:** Consider the unpredictability of scientific advancements and the potential for unforeseen breakthroughs.
+   - **Tail Risks:** A breakthrough in anti-aging could significantly shift the distribution upwards.
+   - **Alternative Forecast:** A more optimistic scenario could see the oldest living person reaching 125+ years if significant medical advancements occur.
+
+6. **Final Percentiles**
+   - Given the evidence and adjustments, the forecasted percentiles for the age of the oldest living person in 2100 are as follows:
+
+P10: 115  
+P20: 117  
+P40: 120  
+P60: 122  
+P80: 125  
+P90: 128
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Forecasting the Age of the Oldest Living Person in 2100
+
+## 1. Base Rate (Prior) Selection
+
+For my prior, I'll use the historical record of maximum human lifespan:
+
+- The oldest verified human ever was Jeanne Calment who died at 122 years and 164 days (1997)
+- The current oldest living person is Maria Branyas at 115 years old (as of 2023)
+- Over the past century, the record for oldest living person has fluctuated mostly between 110-122 years
+
+The distribution of maximum human lifespan appears to follow a relatively stable pattern despite significant increases in average life expectancy. I'll use a prior centered around 120 years with a standard deviation of about 5 years, reflecting the historical variation we've observed.
+
+## 2. Comparison to Base Case
+
+**Similarities to reference distribution:**
+- Biological limits to human aging appear relatively consistent
+- The gap between average life expectancy and maximum lifespan has persisted
+- Verified supercentenarians remain extremely rare despite population growth
+
+**Differences that matter:**
+- We have 77 years until 2100, allowing for significant medical advances
+- Aging research is receiving increased scientific attention and funding
+- Genomic medicine and biotechnology are advancing rapidly
+- The global population will be larger, increasing the statistical probability of outliers
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence for higher values:**
+- Continued advances in medicine and biotechnology could target aging mechanisms directly
+- Larger global population increases the statistical chance of extreme outliers
+- Increased focus on longevity research may yield breakthroughs
+- 77 years is sufficient time for multiple generations of scientific advancement
+
+**Evidence for lower values:**
+- Life expectancy gains have slowed significantly since 1939
+- Maximum lifespan has shown remarkable stability despite medical advances
+- The verified maximum age record (122) has stood for over 25 years
+- Biological limits to cellular repair and replication may be difficult to overcome
+
+## 4. Bayesian Updating
+
+Starting with my prior centered at 120 years:
+
+- The evidence of slowing life expectancy gains suggests the rate of progress may be diminishing (likelihood ratio favoring lower values ~1.5:1)
+- The potential for medical breakthroughs in aging research over 77 years suggests possible increases (likelihood ratio favoring higher values ~2:1)
+- The stability of maximum lifespan despite past medical advances suggests biological constraints (likelihood ratio favoring values near current maximum ~1.8:1)
+
+Combining these likelihoods with my prior:
+- The mean shifts upward from 120 to approximately 125 years
+- The variance increases slightly due to uncertainty about future breakthroughs
+- The distribution becomes slightly right-skewed to account for low-probability breakthrough scenarios
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the potential for radical life extension technologies
+- Conversely, I might be overestimating how quickly aging research will translate to practical interventions
+- The verification of extreme ages may become more rigorous, potentially lowering official records
+- Climate change or global instability could negatively impact longevity
+
+**Alternative scenarios:**
+- Breakthrough scenario: Significant advances in cellular reprogramming, gene therapy, or other interventions could push maximum lifespan to 150+ years
+- Conservative scenario: Biological limits prove extremely difficult to overcome, keeping maximum age around current levels (115-122)
+
+I should widen my distribution to account for these possibilities, particularly extending the upper tail to accommodate breakthrough scenarios.
+
+## 6. Final Percentiles
+
+After considering all evidence and potential scenarios, I'll provide my calibrated forecast for the age of the oldest living person in 2100:
+
+P10: 118
+P20: 121
+P40: 126
+P60: 131
+P80: 138
+P90: 145
+```
+
+### Gemini [gemini-2.5-pro]
+```
+### 1. Base Rate (Prior) Selection
+
+The most appropriate base rate is the historical record of the maximum verified age of a human at any given time, particularly over the last 50-70 years. This period has seen modern medical care and record-keeping.
+
+- The all-time, undisputed record is Jeanne Calment, who died at 122.
+- In recent decades, the oldest living person's age has typically fluctuated in the 115-119 year range (e.g., Kane Tanaka, 119; Maria Branyas, currently 118 in 2025).
+
+This suggests a distribution centered around the recent typical maximums, with the Calment record representing a significant but achievable high-end outcome.
+
+My prior distribution is therefore:
+- **Median (P50):** 118 years. This reflects the current maximum age and the typical range seen recently.
+- **Spread:** The distribution is skewed to the right. A low outcome might be 115, while a high outcome could approach Calment's record. I'll set a prior P10 at 115 and a P90 at 122.
+
+### 2. Comparison to Base Case
+
+The forecast is for 2100, roughly 75 years from now.
+
+- **Similarities:** The fundamental biological constraints on human aging that have defined the base rate period will likely persist. There is no guarantee of a breakthrough that fundamentally alters the aging process.
+- **Differences:**
+    1.  **Time Horizon:** 75 years is a long period, allowing for significant technological and medical advancements that were not present in the base rate period.
+    2.  **Demographics:** The absolute number of elderly people (80+, 90+, 100+) will be far larger in the latter half of the 21st century. A larger sample size of elderly individuals increases the statistical probability of producing an extreme age outlier, even with no change in underlying lifespan limits.
+    3.  **Technology:** The potential for breakthroughs in geroscience (e.g., senolytics, gene therapy, cellular reprogramming) is a major difference. While speculative, such a breakthrough could shift the maximum possible lifespan upwards, something not seen in the base rate period.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+I will evaluate the key pieces of evidence from the research report:
+
+-   **Evidence 1 (↓ Large): "Studies show life expectancy gains have slowed significantly since 1939."** This is strong evidence supporting a "plateau" theory of maximum lifespan. It suggests that the low-hanging fruit has been picked and further gains will be difficult. This strongly pulls the forecast down, making ages significantly above 122 much less likely. It reinforces the median of my prior.
+
+-   **Evidence 2 (↑ Moderate): "Global aging population projected to increase, potentially driving interest in longevity research."** This is an indirect upward driver. A larger elderly population creates both a larger pool for outliers and a stronger economic/political incentive to fund research. This increases the probability of a breakthrough, making higher outcomes (e.g., 125+) more plausible than they would be otherwise. This suggests the right tail of the distribution should be fatter.
+
+-   **Evidence 3 (Net Effect):** The report's summary notes the net effect is a slight downward pull due to the certainty of slowing gains versus the speculation of breakthroughs. I mostly agree, but I believe the 75-year time horizon makes the potential for breakthroughs a significant factor that primarily widens the distribution's variance rather than just shifting the median.
+
+### 4. Bayesian Updating (Posterior Distribution)
+
+-   **Prior:** P10=115, P50=118, P90=122.
+-   **Updating Step:**
+    1.  The strong evidence of slowing gains anchors the center of the distribution. It suggests that the most likely scenario ("business as usual") is that the maximum age in 2100 will be similar to today's. I will keep my median at **118**.
+    2.  The combination of a long time horizon, a larger elderly population, and increased research focus acts as a strong driver of uncertainty, particularly on the upside. This means the right tail of the distribution must be extended. A breakthrough is not the most likely scenario, but it is a plausible one. Therefore, I will push the upper percentiles significantly higher than my prior. Breaking Calment's record (122) is no longer a P90 event; it's more like a P80. The new P90 should reflect a world with a modest life-extension technology.
+    3.  There is also a small chance of regression due to environmental factors, new pandemics, or societal instability. This pulls the lower tail down slightly.
+
+-   **Posterior Shape:** The resulting posterior distribution is more spread out than the prior and has a more pronounced right skew. The median remains anchored at 118, but the possibility of much higher ages is now explicitly included in the upper percentiles.
+
+### 5. Red Team Thinking
+
+-   **Alternative Forecast:** A plausible alternative is that there is a hard, unbreakable biological limit around 125 (the "Hayflick limit" concept applied to a whole organism). In this view, my P90 of 126 is too high. However, the 75-year time horizon is long enough that a breakthrough that pushes past this perceived limit cannot be ruled out. The science on a "hard limit" is not settled.
+-   **Overconfidence:** Am I anchored too heavily on the 115-122 range? The jump from the pre-Calment record to Calment's 122 was substantial. A similar unexpected jump could happen again. My wide, skewed distribution is an attempt to account for this "unknown unknown" or "fat tail" risk.
+-   **Regression Risk:** Is a P10 of 114 low enough? If major societal collapse or a series of devastating pandemics occurred, the support systems for supercentenarians could vanish, potentially pushing the maximum age down to 110-112. However, this seems like a tail risk below the 10th percentile. A P10 of 114 seems a reasonable floor for a non-catastrophic future.
+
+After red-teaming, I am comfortable with my distribution. It balances the strong evidence of current stagnation with the high uncertainty of future technological breakthroughs over a long time horizon.
+
+### 6. Final Percentiles
+
+P10: 114
+P20: 116
+P40: 117
+P60: 119
+P80: 122
+P90: 126
+```
+
+### Grok [grok-4]
+```
+P10: 116
+P20: 118
+P40: 121
+P60: 124
+P80: 129
+P90: 134
+```
+
+📊 Forecast Run 20250909-222444
+Timestamp: 2025-09-09 22:30:13 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 **URL:** https://www.metaculus.com/questions/22427/
+
+📝 **Summary**
+
+- Final Prediction (per option):
+  - 0 or 1: 26.37%
+  - 2 or 3: 30.44%
+  - 4 or 5: 16.62%
+  - 6 or 7: 7.71%
+  - 8 or 9: 4.28%
+  - 10 or more: 14.58%
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Reference Class 1**: AI labs founded in the last decade that became leading labs within two years. Base rate: Low, as few labs achieve top status quickly.
+- **Reference Class 2**: Tech startups achieving unicorn status within two years. Base rate: Moderate, but varies significantly by sector and innovation level.
+- **Limitations**: Rapid AI advancements and market dynamics may not align with historical data.
+
+### Recent developments (timeline bullets)
+- [2025-09-09] ↑ — Mistral AI's rapid growth and high valuation suggest potential to become a leading lab.
+- [2025-09-09] ↓ — Decline in AI adoption in U.S. businesses may signal cooling interest or market saturation.
+
+### Mechanisms & drivers (causal levers)
+- **Investment influx**: Large — Significant funding can accelerate lab growth and innovation.
+- **Talent mobility**: Moderate — Movement of key personnel can lead to new lab formations.
+- **Regulatory environment**: Moderate — Favorable policies can encourage new entrants.
+- **Technological breakthroughs**: Large — Innovations can rapidly elevate a lab's status.
+- **Market demand**: Moderate — High demand for AI solutions can drive lab prominence.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Increased funding**: Current AI labs receive unprecedented investment levels.
+- **Talent concentration**: High-profile talent is more mobile, forming new labs.
+- **Regulatory scrutiny**: Heightened focus on AI ethics and safety may slow some labs.
+- **Global competition**: More international players are entering the AI race.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Low probability of new labs becoming leading within two years; equivalent n = 10.
+- **Evidence mapping**:
+  - ↑ Large — Mistral AI's rapid valuation increase.
+  - ↑ Moderate — High-profile talent forming new labs.
+  - ↓ Moderate — Decline in AI adoption in U.S. businesses.
+  - ↑ Moderate — Significant investments in AI sector.
+- **Net effect**: Posterior should move up moderately, reflecting increased likelihood of new labs achieving leading status.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - New high-profile AI lab formations.
+  - Significant funding rounds for emerging labs.
+  - Breakthroughs in AI technology.
+- **DOWN indicators**:
+  - Regulatory crackdowns on AI development.
+  - Decline in AI sector investments.
+  - Major AI safety incidents.
+
+### Caveats & pitfalls
+- **Uncertainty in definitions**: "Leading lab" status can be subjective.
+- **Data gaps**: Limited historical data on rapid lab ascension.
+- **Deception risks**: Overstated capabilities by new labs.
+- **Regime changes**: Policy shifts could alter market dynamics.
+
+Final Research Summary: The likelihood of new AI labs becoming leading within two years is increasing due to significant investments and talent mobility, though regulatory and market challenges remain.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:28:27 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Before 2030, how many new AI labs will be leading labs within 2 years of their founding? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": [
+    0.26370826698390276,
+    0.30442035512101895,
+    0.166213472503171,
+    0.07709040181843417,
+    0.04276452075508005,
+    0.14580298281839243
+  ],
+  "p10": [
+    0.049053356655740774,
+    0.0713691189153861,
+    0.011777463350865528,
+    0.0002880021830579162,
+    1.3194812383862501e-06,
+    0.007430375393805503
+  ],
+  "p50": [
+    0.22704795434045172,
+    0.27396520367571525,
+    0.11793216386538151,
+    0.02812523929986556,
+    0.004637503005386386,
+    0.09671786736013023
+  ],
+  "p90": [
+    0.5365327538620703,
+    0.5841732748009066,
+    0.3972722832595099,
+    0.22692139233688044,
+    0.13701722605128122,
+    0.36142207246765445
+  ],
+  "posterior_alpha": [
+    1.2162162159162162,
+    1.405135134715135,
+    0.7540540538340541,
+    0.35702702697702704,
+    0.19702702701702704,
+    0.6705405415405405
+  ]
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the number of new AI labs that will become leading labs within two years of their founding before 2030, we will follow a structured Bayesian reasoning approach.
+
+### 1. Base Rate (Prior) Selection
+
+- **Option 1 (0 or 1)**: Historically, very few AI labs achieve leading status quickly. Given the high barriers to entry and the dominance of established players, the base rate for 0 or 1 new leading labs is relatively high. Let's assign a prior of 40%.
+  
+- **Option 2 (2 or 3)**: Some new labs have achieved rapid success, but this is less common. A moderate base rate is appropriate here, say 30%.
+  
+- **Option 3 (4 or 5)**: Achieving this number of new leading labs is less likely, given historical trends. A lower base rate of 15% is reasonable.
+  
+- **Option 4 (6 or 7)**: This is quite unlikely given the historical data, so a base rate of 10% is appropriate.
+  
+- **Option 5 (8 or 9)**: Very few labs achieve this level of success, so a base rate of 4% is reasonable.
+  
+- **Option 6 (10 or more)**: This is extremely unlikely, so a base rate of 1% is appropriate.
+
+### 2. Comparison to Base Case
+
+- **Similarities**: The current environment still has high barriers to entry, similar to historical trends.
+  
+- **Differences**: Increased funding, talent mobility, and technological advancements could lead to more rapid success for new labs.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+- **Mistral AI's rapid growth**: Increases the likelihood of more labs achieving leading status. This evidence is more likely if options 2 or 3 are true.
+  
+- **High-profile talent forming new labs**: Supports the possibility of more labs becoming leading, favoring options 2 or 3.
+  
+- **Decline in AI adoption in U.S. businesses**: Suggests a potential cooling in the market, which could decrease the likelihood of many new labs becoming leading, favoring option 1.
+  
+- **Significant investments in AI sector**: Increases the likelihood of more labs achieving leading status, favoring options 2 or 3.
+
+### 4. Bayesian Updating (Posterior)
+
+- **Prior for Option 1 (0 or 1)**: 40%
+  - **Likelihood of evidence**: Moderate to low, given the positive indicators for new labs.
+  - **Posterior**: Adjust down to 35%.
+
+- **Prior for Option 2 (2 or 3)**: 30%
+  - **Likelihood of evidence**: High, given the positive indicators.
+  - **Posterior**: Adjust up to 35%.
+
+- **Prior for Option 3 (4 or 5)**: 15%
+  - **Likelihood of evidence**: Moderate, given the positive indicators.
+  - **Posterior**: Adjust up to 18%.
+
+- **Prior for Option 4 (6 or 7)**: 10%
+  - **Likelihood of evidence**: Low, given the historical difficulty.
+  - **Posterior**: Adjust down to 8%.
+
+- **Prior for Option 5 (8 or 9)**: 4%
+  - **Likelihood of evidence**: Very low.
+  - **Posterior**: Adjust down to 3%.
+
+- **Prior for Option 6 (10 or more)**: 1%
+  - **Likelihood of evidence**: Extremely low.
+  - **Posterior**: Remain at 1%.
+
+### 5. Red Team Thinking
+
+- **Overconfidence Check**: Consider the possibility of unexpected breakthroughs or regulatory changes that could alter the landscape significantly.
+  
+- **Alternative Scenarios**: A major breakthrough or regulatory change could lead to more labs becoming leading, but this is speculative.
+
+### 6. Final Normalization
+
+Ensure probabilities sum to 100%:
+
+- Option 1: 35%
+- Option 2: 35%
+- Option 3: 18%
+- Option 4: 8%
+- Option 5: 3%
+- Option 6: 1%
+
+### 7. Output Format
+
+Option_1: 35%  
+Option_2: 35%  
+Option_3: 18%  
+Option_4: 8%  
+Option_5: 3%  
+Option_6: 1%
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Analysis: New Leading AI Labs by 2030
+
+## 1. Base Rate (Prior) Selection
+
+I'll establish base rates for each option by examining historical patterns of AI labs becoming "leading" within 2 years of founding:
+
+**Historical Context:**
+- Since ~2015, we've seen a few notable examples: Anthropic, Mistral AI, and possibly xAI have achieved rapid prominence
+- The question defines "leading" as top 5 by model ELO on Chatbot Arena
+- The time period is from now (2025-09-09) until the end of 2029 (about 4.3 years)
+
+**Base Rate Reasoning:**
+- The AI field has seen accelerated development since ChatGPT's release
+- Historically, 1-3 labs have achieved "leading" status within 2 years in the past decade
+- The rate appears to be increasing in recent years (2022-2025)
+
+**Initial Base Rates:**
+- 0 or 1: 25% (historically most common outcome)
+- 2 or 3: 35% (becoming more common recently)
+- 4 or 5: 20% (plausible given acceleration)
+- 6 or 7: 10% (less likely but possible)
+- 8 or 9: 5% (quite unlikely)
+- 10 or more: 5% (tail risk)
+
+## 2. Comparison to Base Case
+
+**Similarities to Base Rate Scenario:**
+- High capital requirements for leading AI labs remain
+- Technical talent is still concentrated in a few organizations
+- Compute and data advantages favor established players
+
+**Key Differences:**
+- Increased funding availability for AI startups compared to historical norms
+- More talent mobility as noted in the background (DeepMind CEO considering leaving)
+- Growing international competition (e.g., Mistral in France)
+- Regulatory environment becoming more complex
+- Technological breakthroughs may enable more rapid advancement
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: Talent Mobility**
+- P(Talent Mobility | Many new leading labs): Very High
+- P(Talent Mobility | Few new leading labs): Moderate
+- Likelihood ratio: Favors more new labs
+
+**Evidence 2: Mistral AI's Rapid Rise**
+- P(Mistral's success | Many new leading labs): High
+- P(Mistral's success | Few new leading labs): Low
+- Likelihood ratio: Strongly favors more new labs
+
+**Evidence 3: Decline in AI Adoption in U.S. Businesses**
+- P(Adoption decline | Many new leading labs): Low
+- P(Adoption decline | Few new leading labs): Moderate
+- Likelihood ratio: Favors fewer new labs
+
+**Evidence 4: Significant Investment in AI Sector**
+- P(High investment | Many new leading labs): Very High
+- P(High investment | Few new leading labs): Moderate
+- Likelihood ratio: Favors more new labs
+
+## 4. Bayesian Updating
+
+Let's update on the Mistral AI evidence:
+
+For "2 or 3" option:
+- Prior probability: 35%
+- Prior odds: 0.35/0.65 ≈ 0.54
+- Likelihood ratio: ~2 (Mistral's success is about twice as likely under "2 or 3" than alternatives)
+- Posterior odds: 0.54 × 2 ≈ 1.08
+- Posterior probability: 1.08/(1+1.08) ≈ 52%
+
+However, I need to consider all options and evidence. The talent mobility and investment evidence also favor more new labs, while the adoption decline slightly favors fewer.
+
+Qualitative updates across all options:
+- "0 or 1" should decrease significantly given recent trends
+- "2 or 3" should increase based on current momentum
+- "4 or 5" should increase moderately
+- "6 or 7" should increase slightly
+- "8 or 9" and "10 or more" remain low probability tail risks
+
+## 5. Red Team Thinking
+
+**Potential Blind Spots:**
+- I may be overweighting recent examples (recency bias)
+- The definition of "leading" could change as the field evolves
+- Regulatory changes could dramatically alter the landscape
+- Consolidation might occur if established players acquire promising startups
+- The time window (4.3 years) is relatively short for many new labs to emerge and become leading
+
+**Alternative Forecast:**
+A reasonable alternative would place more weight on "0 or 1" due to:
+- Increasing compute requirements creating higher barriers to entry
+- Established players (OpenAI, Google, Anthropic) maintaining advantages
+- Potential market saturation or AI winter if current hype diminishes
+
+**Rebuttal:**
+The evidence of talent mobility and successful recent examples like Mistral suggest the field remains dynamic. The 4.3-year window provides sufficient time for multiple new entrants.
+
+## 6. Final Normalization
+
+Adjusting my probabilities based on all evidence and considerations:
+
+- "0 or 1": Decrease from 25% to 15% (evidence suggests more new labs)
+- "2 or 3": Increase from 35% to 40% (most supported by evidence)
+- "4 or 5": Increase from 20% to 25% (reasonable given trends)
+- "6 or 7": Maintain at 10% (plausible but less likely)
+- "8 or 9": Maintain at 5% (tail risk)
+- "10 or more": Maintain at 5% (tail risk)
+
+## 7. Final Forecast
+
+0 or 1: 15%
+2 or 3: 40%
+4 or 5: 25%
+6 or 7: 10%
+8 or 9: 5%
+10 or more: 5%
+(sum 100%)
+```
+
+### Gemini [gemini-2.5-pro]
+```
+Here is a probabilistic forecast following the specified steps.
+
+### 1. Base Rate (Prior) Selection
+
+To establish a base rate, I will use the reference class of AI labs founded in the current AI boom (post-2020) that have rapidly become "leading." A "leading" lab is defined as being in the top 5 on the Chatbot Arena ELO leaderboard.
+
+*   **Anthropic:** Founded in 2021. Became a top-tier lab with the release of Claude in early 2023, which is approximately 2 years. This is one success case.
+*   **Mistral AI:** Founded in April 2023. Became a top-tier lab with its performant open-source models and Mistral Large by early 2024, well within one year. This is a second success case.
+*   **Other contenders:** Labs like xAI (founded July 2023) are strong but have not yet consistently broken into the top 5.
+
+Over the last ~4 years (2021-2024), we have seen approximately 2 labs meet this challenging criterion. This suggests a base rate of roughly **0.5 successful new labs per year**.
+
+The forecast period is from September 2025 to the end of 2029, a little over 4 years. Applying the base rate gives an expected value of 0.5 labs/year * 4.25 years ≈ 2.1 labs. This suggests that the most likely outcomes are in the 0-3 range, with a peak around 2. A Poisson distribution with λ=2.1 would place about 38% probability on "0 or 1" and 46% on "2 or 3". This forms my prior distribution.
+
+### 2. Comparison to Base Case
+
+The forecast period (late 2025-2029) has key differences from the base rate period (2021-2024):
+
+*   **Similarities:** The fundamental drivers of talent mobility from established labs (e.g., Anthropic from OpenAI) and massive venture capital interest remain strong.
+*   **Differences (Accelerants):**
+    1.  **Capital Availability:** The amount of capital available for promising teams is even larger now than in 2021. Sovereign wealth funds and corporate giants are pouring billions into the sector.
+    2.  **Proven Playbook:** The success of Mistral and Anthropic provides a clearer playbook for new labs to follow, potentially accelerating their path to success.
+*   **Differences (Inhibitors):**
+    1.  **Higher Technical Bar:** The performance of state-of-the-art models (e.g., GPT-5, Claude 4) is much higher. A new lab must surpass a significantly more advanced frontier to be considered "leading."
+    2.  **Market & Regulatory Headwinds:** The report notes a "decline in AI adoption in U.S. businesses," which could cool investor sentiment. Additionally, increasing regulatory scrutiny could slow down development and favor entrenched incumbents.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+I will evaluate the key pieces of evidence from the background and research report.
+
+*   **Evidence 1: Massive Investment & Talent Mobility (e.g., Mistral, xAI, potential Hassabis spinout).**
+    *   P(E | High # of labs): High. This environment is exactly what you'd expect if many new, well-funded labs were forming and competing.
+    *   P(E | Low # of labs): Low. If the environment were hostile to new entrants, we would not see this level of funding and high-profile talent movement.
+    *   **Update:** This evidence strongly increases the probability of higher outcomes (4+ labs).
+
+*   **Evidence 2: Decline in AI adoption in U.S. businesses.**
+    *   P(E | High # of labs): Low. A decline in adoption would likely lead to a contraction in VC funding, making it harder to start capital-intensive AI labs.
+    *   P(E | Low # of labs): High. This is a leading indicator of a potential "AI chill" or market consolidation, which would result in fewer new entrants succeeding.
+    *   **Update:** This evidence increases the probability of lower outcomes (0 or 1 lab).
+
+*   **Evidence 3: Increasing Incumbent Advantage & Regulatory Scrutiny.**
+    *   P(E | High # of labs): Moderate. New labs could find niches (like Mistral with open-source) or be created by state actors to bypass these issues.
+    *   P(E | Low # of labs): High. These factors create moats for existing players like Google and OpenAI, making it much harder for new labs to break in.
+    *   **Update:** This evidence moderately increases the probability of lower outcomes.
+
+### 4. Bayesian Updating (Posterior)
+
+My prior, based on a rate of 0.5 labs/year, was centered on an expectation of ~2.1 labs.
+
+The evidence presents a conflicting picture. The current environment of massive capital and talent churn (Evidence 1) is a powerful force for creating new labs. This pushes the expected number up. If I only considered this, I might update my expected value (λ) to 3 or 4.
+
+However, the cooling business adoption and strengthening incumbent moats (Evidence 2 & 3) are significant headwinds. They suggest the "easy" opportunities may be gone and consolidation is coming. This pushes the expected number down, perhaps to 1.5.
+
+I will balance these forces. The capital and talent factors feel more direct and immediate to the creation of new *research labs*, which might be funded for strategic reasons (by VCs or nations) irrespective of short-term enterprise adoption. Therefore, I will make a slight net-positive update to my initial expectation. I'll adjust my effective rate parameter (λ) from 2.1 to **2.5**.
+
+A Poisson distribution with λ=2.5 yields approximately:
+*   P(0 or 1) ≈ 29%
+*   P(2 or 3) ≈ 47%
+*   P(4 or 5) ≈ 20%
+*   P(6+) ≈ 4%
+
+### 5. Red Team Thinking
+
+My analysis might be too reliant on a simple Poisson model, which assumes independent events. I will consider two key alternative scenarios that this model might miss:
+
+1.  **The "Sovereign AI" Wave:** The current geopolitical climate could spur multiple nations (e.g., in the EU, the Middle East, Asia) to fund their own "national champion" labs with the explicit goal of reaching the top tier. This could lead to a cluster of new leading labs, making higher outcomes (4+) more likely than my model suggests.
+2.  **The "Big Stall":** A combination of a capabilities plateau, a major AI safety incident, and the noted decline in business adoption could cause the funding bubble to pop. In this scenario, the outcome would almost certainly be 0 or 1.
+
+These scenarios suggest the true distribution has fatter tails than a simple Poisson distribution. To account for this, I will take some probability mass from the most likely outcome ("2 or 3") and redistribute it to the tails ("0 or 1" and "4 or 5" and higher).
+
+*   Decrease "2 or 3" from 47% to 42%.
+*   Increase "0 or 1" from 29% to 30%.
+*   Increase "4 or 5" from 20% to 22%.
+*   Increase "6 or 7" from ~3.5% to 5%.
+*   Assign a small probability to "8 or 9".
+
+This adjusted distribution better reflects the high uncertainty and the plausibility of both boom and bust scenarios.
+
+### 6. Final Normalization
+
+The adjusted probabilities are internally consistent and sum to 100%.
+
+0 or 1: 30%
+2 or 3: 42%
+4 or 5: 22%
+6 or 7: 5%
+8 or 9: 1%
+10 or more: 0%
+```
+
+### Grok [grok-4]
+```
+0 or 1: 25%  
+2 or 3: 40%  
+4 or 5: 20%  
+6 or 7: 10%  
+8 or 9: 3%  
+10 or more: 2%
+```
+
+📊 Forecast Run 20250909-222444
+Timestamp: 2025-09-09 22:31:24 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** How many major US labor strikes with generative AI as one of their main reasons will start in 2029?
+🔗 **URL:** https://www.metaculus.com/questions/38195/
+
+📝 **Summary**
+
+- Final Prediction: **Distribution summary**
+  - P10: 0.922706
+  - P50: 3.34597
+  - P90: 5.95967
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Reference Class 1**: Major US labor strikes involving technological change. Base rate: ~5–10 strikes per year. Limitation: Not all tech changes are as disruptive as AI.
+- **Reference Class 2**: Strikes specifically citing AI concerns. Base rate: 1–2 per year since 2023. Limitation: Limited historical data.
+- **Reference Class 3**: Strikes in the entertainment industry. Base rate: ~2–4 per year. Limitation: Industry-specific dynamics may not generalize.
+
+### Recent developments (timeline bullets)
+- [2025-09-09] ↑ — SAG-AFTRA election highlights AI concerns, indicating ongoing union focus on AI issues.
+- [2025-09-09] ↑ — OpenAI's film project underscores AI's growing role in entertainment, potentially increasing strike motivations.
+
+### Mechanisms & drivers (causal levers)
+- **AI Adoption**: Large — Rapid AI integration in industries could trigger protective strikes.
+- **Union Strength**: Moderate — Stronger unions may lead to more frequent strikes.
+- **Public Awareness**: Moderate — Increased awareness of AI's impact could drive strike support.
+- **Regulatory Environment**: Small — Changes in labor laws or AI regulations could influence strike likelihood.
+- **Economic Conditions**: Moderate — Economic downturns may increase strike frequency as job security concerns rise.
+
+### Differences vs. the base rate (what’s unusual now)
+- **AI-Specific Concerns**: Strikes are increasingly focused on AI, unlike past tech changes.
+- **Industry Focus**: Entertainment industry is a hotspot for AI-related strikes.
+- **Union Strategies**: Unions are adopting more aggressive stances on AI protections.
+- **Public Sentiment**: Growing public concern about AI's impact on jobs and creativity.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Assume a prior of 2 strikes in 2029 with an equivalent n of 10.
+- **Evidence mapping**:
+  - ↑ Large — Ongoing union focus on AI issues.
+  - ↑ Moderate — OpenAI's film project as a catalyst for industry concern.
+  - ↑ Small — Public awareness and sentiment shifts.
+- **Net effect**: Posterior should move up moderately, suggesting a higher likelihood of AI-related strikes in 2029.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - Increased union rhetoric on AI.
+  - New AI projects in sensitive industries.
+  - Legislative actions on AI labor protections.
+- **DOWN indicators**:
+  - Successful AI-labor agreements without strikes.
+  - Economic improvements reducing strike motivations.
+  - Decreased media focus on AI job threats.
+
+### Caveats & pitfalls
+- **Uncertainty**: Rapid AI advancements could change dynamics unpredictably.
+- **Data Gaps**: Limited historical data on AI-specific strikes.
+- **Deception Risks**: Misleading narratives about AI's impact could skew perceptions.
+- **Regime Changes**: Shifts in political or economic conditions could alter strike likelihood.
+- **Definitional Gotchas**: Ambiguities in what constitutes "AI-related" demands.
+
+Final Research Summary: The likelihood of major US labor strikes in 2029 citing generative AI as a primary concern is increasing, driven by ongoing union focus and AI's expanding role in industries like entertainment. Watch for union rhetoric and new AI projects as leading indicators.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:30:13 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- How many major US labor strikes with generative AI as one of their main reasons will start in 2029? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 3.3916747596269903,
+  "p10": 0.9227058863431791,
+  "p50": 3.3459731011757636,
+  "p90": 5.959671165448895
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the number of major US labor strikes in 2029 with generative AI as one of their main reasons, we will follow a structured Bayesian approach.
+
+### 1. Base Rate (Prior) Selection
+- **Reference Class 2**: Strikes specifically citing AI concerns, with a base rate of 1–2 per year since 2023. This is the most relevant class given the specific focus on AI.
+- **Mean/Median**: 1.5 strikes per year.
+- **Variance**: Given the limited data, assume a moderate variance reflecting uncertainty, say 0.5.
+
+### 2. Comparison to Base Case
+- **Similarity**: The ongoing focus on AI in labor disputes aligns with the base rate of AI-related strikes.
+- **Differences**: The increasing integration of AI and heightened union activity suggest a potential increase in strike frequency.
+
+### 3. Evidence Evaluation (Likelihoods)
+- **Ongoing Union Focus on AI**: Strong evidence for increased strike likelihood. Likelihood ratio: 2×.
+- **OpenAI's Film Project**: Moderate evidence, as it highlights AI's role in a sensitive industry. Likelihood ratio: 1.5×.
+- **Public Awareness**: Small but positive effect. Likelihood ratio: 1.2×.
+
+### 4. Bayesian Updating (Posterior Distribution)
+- **Prior**: 1.5 strikes with variance 0.5.
+- **Likelihood**: Combined effect of evidence suggests a moderate increase.
+- **Posterior Mean**: Adjust upwards to around 2.5 strikes, reflecting increased likelihood.
+- **Posterior Variance**: Increase slightly to 0.7 to account for uncertainty in evidence.
+
+### 5. Red Team Thinking
+- **Overconfidence Check**: Consider the possibility of fewer strikes if AI-labor agreements are reached without strikes.
+- **Tail Risks**: Rapid AI advancements or economic downturns could lead to more strikes.
+- **Alternative Forecast**: A scenario with successful AI-labor agreements could result in only 1 strike.
+- **Adjustment**: Slightly widen the distribution to account for these scenarios.
+
+### 6. Final Percentiles
+- **P10**: 1 strike
+- **P20**: 1.5 strikes
+- **P40**: 2 strikes
+- **P60**: 3 strikes
+- **P80**: 4 strikes
+- **P90**: 5 strikes
+
+P10: 1  
+P20: 1.5  
+P40: 2  
+P60: 3  
+P80: 4  
+P90: 5
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Forecasting Major US Labor Strikes Related to Generative AI in 2029
+
+## 1. Base Rate (Prior) Selection
+
+For this forecast, I'll use multiple reference classes to establish a prior:
+
+**Primary Reference Class**: Major US labor strikes with generative AI as a main reason (2023-2025)
+- Writers Guild of America strike (2023)
+- SAG-AFTRA actors strike (2023)
+- SAG-AFTRA video game voice actors strike (2024-2025)
+
+This gives us approximately 1-1.5 strikes per year specifically citing generative AI as a main reason.
+
+**Secondary Reference Class**: Major US labor strikes overall
+- According to BLS data, there are typically 10-20 major work stoppages per year in the US
+- Technology-related demands appear in roughly 15-25% of these strikes
+
+The base rate I'll use is 1.5 strikes per year with generative AI as a main reason, with a relatively wide variance given the limited historical data.
+
+## 2. Comparison to Base Case
+
+**Similarities to base case**:
+- Labor unions continue to be concerned about technological displacement
+- The entertainment industry remains particularly sensitive to AI replacement
+- The pattern of unions seeking contractual protections against new technologies continues
+
+**Differences from base case**:
+- By 2029, generative AI will be significantly more advanced and widespread than in 2023-2025
+- More industries beyond entertainment will likely be affected by generative AI
+- Unions will have had several years to develop strategies around AI concerns
+- Some industries may have already established precedents for AI protections
+
+These differences suggest a potential increase in the number of strikes compared to the 2023-2025 period.
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence for higher numbers**:
+- Ongoing SAG-AFTRA focus on AI issues suggests continued union attention to this topic (likelihood ratio ~1.5x for higher values)
+- OpenAI's film project indicates AI's growing role in creative industries, potentially triggering more protective actions (likelihood ratio ~1.3x for higher values)
+- The spread of generative AI to more industries beyond entertainment by 2029 will create new fronts for labor disputes (likelihood ratio ~2x for higher values)
+- Historical pattern of labor disputes following technological disruption (likelihood ratio ~1.5x for higher values)
+
+**Evidence for lower numbers**:
+- Early strikes (2023-2025) may establish precedents that reduce the need for future strikes (likelihood ratio ~0.7x for higher values)
+- Regulatory frameworks for AI in labor contexts may develop by 2029, reducing the need for strikes (likelihood ratio ~0.8x for higher values)
+- Adaptation of workforce and business models to AI may reduce friction points (likelihood ratio ~0.8x for higher values)
+
+## 4. Bayesian Updating (Posterior Distribution)
+
+Starting with a prior of 1.5 strikes per year with generative AI as a main reason:
+
+First update based on technological advancement and industry spread:
+- Prior: 1.5 strikes/year
+- Likelihood ratio: ~2x for higher values due to AI spreading to more industries
+- Posterior mean shifts to approximately 3 strikes/year
+
+Second update based on precedent-setting and adaptation:
+- Prior: 3 strikes/year
+- Likelihood ratio: ~0.8x for higher values due to precedent-setting reducing need for strikes
+- Posterior mean adjusts to approximately 2.4 strikes/year
+
+The posterior distribution is centered around 2-3 strikes in 2029, with a wider right tail reflecting the possibility of more widespread AI-related labor disputes.
+
+## 5. Red Team Thinking
+
+**Potential blind spots**:
+- I may be underestimating the pace of AI advancement and its disruptive potential by 2029
+- I might be overestimating union strength and worker bargaining power in 2029
+- The definition of "major" strikes and what constitutes AI as a "main reason" could affect resolution
+- Economic conditions in 2029 could significantly impact strike likelihood
+
+**Alternative scenarios**:
+- High scenario (5-7 strikes): AI advances dramatically, displacing workers across multiple industries simultaneously, triggering coordinated strike actions
+- Low scenario (0-1 strikes): Early regulatory frameworks and labor agreements effectively address AI concerns, making strikes unnecessary
+
+**Tail risks**:
+- Upper tail: A sudden breakthrough in AI capabilities creates an urgent crisis across multiple industries
+- Lower tail: AI development plateaus or faces significant regulatory constraints, reducing labor concerns
+
+## 6. Final Percentiles
+
+P10: 1
+P20: 1
+P40: 2
+P60: 3
+P80: 4
+P90: 5
+```
+
+### Gemini [gemini-2.5-pro]
+```
+Here is my probabilistic forecast.
+
+### 1. Base Rate (Prior) Selection
+The most relevant reference class is "major US labor strikes specifically citing AI concerns." Data from 2023-2025 (as of the report date) shows 3 such strikes (WGA 2023, SAG-AFTRA 2023, SAG-AFTRA Video Game 2024-), giving a raw base rate of approximately 1-2 strikes per year. However, the question is for 2029, four years in the future. Given the rapid adoption and development of generative AI, it is reasonable to assume this trend will accelerate. I will model this as a count variable, making a Poisson distribution a suitable prior. I'll project a linear growth in the strike rate from ~1.5/year in 2025 to ~3.5/year by 2029. Therefore, my prior is a Poisson distribution with a mean (λ) of 3.5. This distribution has a median of 3 and a mean of 3.5, with a right skew, acknowledging the possibility of a significant increase in strike activity.
+
+### 2. Comparison to Base Case
+The current situation differs from historical technological disruptions in several ways that suggest a higher frequency of strikes:
+*   **Speed and Scope:** Generative AI is being developed and deployed much faster and more broadly than previous automation technologies, affecting a wide range of white-collar and creative professions.
+*   **Nature of Threat:** The issues are complex, involving not just job replacement but also intellectual property, digital likeness rights, and the degradation of creative work.
+*   **Industry Spread:** While initial strikes were in entertainment, by 2029, AI's impact will be deeply felt in journalism, software, logistics, and other unionized sectors, creating new potential flashpoints.
+These differences support the assumption of an accelerating trend, making the 2029 environment likely to be more contentious than the 2023-2025 period.
+
+### 3. Evidence Evaluation (Likelihoods)
+I will evaluate the key pieces of evidence from the research report:
+*   **Ongoing Union Focus (↑):** The [2025-09-09] report of the SAG-AFTRA election highlighting AI concerns is strong evidence that this is a persistent, high-priority issue for unions, not a passing one. This makes future strikes more likely. This evidence is more consistent with a higher future strike rate.
+*   **Concrete AI Adoption (↑):** The mention of OpenAI's film project serves as a tangible catalyst. It moves the threat from abstract to concrete, likely hardening union stances and increasing member willingness to strike. This also pushes the forecast upward.
+*   **Causal Levers:** The report identifies "AI Adoption" as a "Large" driver and "Union Strength" and "Public Awareness" as "Moderate" drivers. All point towards an increase in strike potential.
+
+Collectively, this evidence strongly supports and reinforces the upward trend assumed in my prior. It suggests that the rate of strikes in 2029 is more likely to be higher than my prior's mean of 3.5.
+
+### 4. Bayesian Updating (Posterior Distribution)
+*   **Prior:** Poisson(λ=3.5)
+*   **Evidence:** Strong, consistent indicators of increasing union focus and tangible AI threats.
+*   **Update:** I will perform a conceptual Bayesian update by increasing the parameter of my Poisson distribution. The evidence suggests the trend is not just continuing but robust. A moderate upward adjustment is warranted. I will update my posterior distribution to a **Poisson(λ=4.5)**.
+*   **Posterior Shape:** The new distribution has a mean of 4.5 and a median of 4. The most probable outcomes are 4 or 5 strikes. The distribution remains right-skewed, with a non-trivial probability of a higher number of strikes (e.g., a ~17% chance of 7 or more strikes).
+
+### 5. Red Team Thinking
+I must consider factors that could lead to a different outcome.
+*   **Alternative Scenario (Fewer Strikes):** The 2023 strikes set powerful precedents. Unions and companies might learn from them, leading to successful contract negotiations *without* strikes. Widespread, effective government regulation on AI in the workplace could also address union concerns, reducing the need for strikes. In this world, the number of strikes could be 0-2.
+*   **Alternative Scenario (More Strikes):** AI capabilities in 2029 could be drastically greater than anticipated, and its deployment more aggressive. This, combined with an economic downturn, could lead to a "contagion" effect where strikes erupt across many industries simultaneously, leading to a much higher number (e.g., 8+).
+*   **Adjustment:** My posterior model, Poisson(4.5), assigns a P(≤2) ≈ 17% and a P(≥8) ≈ 9%. This seems to adequately capture the plausibility of these alternative scenarios in the tails of the distribution without being overconfident in the central estimate. The model appears robust to these critiques, so I will not make a major adjustment.
+
+### 6. Final Percentiles
+The following percentiles are derived from my posterior distribution, which is approximately a Poisson distribution with a mean of 4.5.
+
+P10: 2
+P20: 3
+P40: 4
+P60: 5
+P80: 6
+P90: 7
+```
+
+### Grok [grok-4]
+```
+1. **Base Rate (Prior) Selection**  
+I select Reference Class 2 from the research report: Strikes specifically citing AI concerns, with a base rate of 1–2 per year since 2023. This is the most directly relevant class, as it focuses on AI-specific labor actions, drawing from recent historical data (e.g., 2 in 2023, 1 in 2024, potentially more in 2025). Limitations include sparse data (only a few years), so uncertainty is high.  
+Prior distribution: Median ~1.5–2, mean ~2 (following the report's sketch of a prior of 2 with equivalent n=10). Spread: Wide due to limited data, approximating a Poisson-like distribution with variance ~2 (std dev ~1.4), but widened for uncertainty (e.g., P10 ~0, P90 ~4).
+
+2. **Comparison to Base Case**  
+Similarities: The current situation mirrors the early AI adoption phase since 2023, with strikes concentrated in entertainment and driven by job displacement fears—consistent with the base rate of 1–2 per year.  
+Differences: By 2029 (4 years from now), AI will likely be more advanced and widespread, potentially affecting additional industries (e.g., writing, art, manufacturing) beyond entertainment. Unions are adopting more aggressive strategies, public awareness is growing, and AI adoption is accelerating (e.g., OpenAI's film project). These differences matter because they could amplify disruptions, leading to more strikes than the base rate, stretching the distribution upward and increasing variance.
+
+3. **Evidence Evaluation (Likelihoods)**  
+- Ongoing SAG-AFTRA election and union focus on AI (↑, moderate to large): Consistent with higher strike numbers, as it signals sustained organizing; makes outcomes >2 ~1.5× more likely than lower.  
+- OpenAI's film project (↑, moderate): Highlights AI's encroachment in entertainment, potentially catalyzing strikes; pushes toward higher values by ~1.2× likelihood ratio for >base rate.  
+- Mechanisms like AI adoption (large driver) and public awareness (moderate): Strongly favor higher outcomes, as rapid integration could trigger protective actions; net ~2× likelihood for higher vs. lower.  
+- Smaller factors (e.g., regulatory environment): Neutral to slight upward push.  
+Overall, evidence skews positive, with a net moderate upward adjustment; no strong downward evidence.
+
+4. **Bayesian Updating (Posterior Distribution)**  
+Prior: Mean ~2, variance ~2 (e.g., Poisson λ=2).  
+Likelihood: Evidence (e.g., union focus and AI projects) provides a moderate positive update, equivalent to a likelihood ratio of ~1.5–2 favoring higher values.  
+Update step: Posterior mean = (prior mean × prior precision + observed mean × evidence precision) / total precision. Conceptually, if prior is Gamma(α=10, β=5) for mean 2 (shape/rate), and evidence adds ~5 "observations" at mean 3 (moderate up), posterior Gamma(15, ~6) yields mean ~2.5, with slightly increased variance due to uncertainty.  
+Result: Posterior mean shifts to ~2.5–3, median ~2–3, variance widens to ~3–4 (std dev ~1.7–2) for future uncertainty, with positive skew from tail risks.
+
+5. **Red Team Thinking**  
+Potential overconfidence: Limited historical data (only ~3 years) could make my upward shift too aggressive; I'm relying on recent trends that might not persist. Blind spots: Overemphasis on entertainment—strikes might not spread widely if AI integration is smooth or regulated early.  
+Tail risks: Low tail (0 strikes) if preemptive agreements or regulations resolve issues (e.g., successful non-strike negotiations); high tail (6+ strikes) if AI disrupts multiple sectors (e.g., tech, media, services) amid economic downturns.  
+Alternative forecast: A conservative one sticks to base rate (mean ~1.5, P90=3), arguing evidence is noisy and 2029 is far off; plausible if AI hype fades. Rebuttal: Report's drivers (e.g., AI adoption) and recent developments suggest moderate growth is warranted. Adjustment: Widen high tail slightly (P90 to 6) to cover regime changes, but keep core modest per calibration guidance (small nudges).
+
+6. **Final Percentiles**  
+Calibrated posterior: Mean ~2.5, median ~2, positive skew, wide spread for uncertainty (covers 0–6+ with tails). Internally consistent, avoiding overconfidence.
+
+P10: 0
+P20: 1
+P40: 2
+P60: 3
+P80: 4
+P90: 6
+```
+

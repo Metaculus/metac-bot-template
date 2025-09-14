@@ -1,0 +1,1465 @@
+📊 Forecast Run 20250909-223849
+Timestamp: 2025-09-09 22:39:49 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Will humans go extinct before 2100?
+🔗 **URL:** https://www.metaculus.com/questions/578/
+
+📝 **Summary**
+
+- Final Prediction: **8.85% YES**
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Global Catastrophic Risks**: Historical base rate for human extinction events is effectively zero, but expert estimates suggest a 19% chance by 2100 (selection bias noted).
+- **Nuclear War**: No full-scale nuclear wars have occurred; hypothetical models predict catastrophic outcomes.
+- **Climate Change**: Severe climate events are increasing, but extinction-level impacts are speculative.
+
+### Recent developments (timeline bullets)
+- [2025-09-05] ↑ — AI experts warn of a 20% chance of AI-induced extinction within 30 years.
+- [2025-09-05] ↑ — Study shows a 70% chance of Gulf Stream collapse by 2035, potentially triggering severe climate shifts.
+- [2025-09-04] ↑ — Article highlights nuclear war risks, with potential for massive human casualties.
+
+### Mechanisms & drivers (causal levers)
+- **Artificial Intelligence**: Large — Potential for AI to surpass human control.
+- **Nuclear Conflict**: Large — Geopolitical tensions could escalate into nuclear war.
+- **Climate Change**: Moderate — Extreme weather could destabilize ecosystems and societies.
+- **Pandemics**: Moderate — New diseases could emerge with high mortality rates.
+- **Technological Advances**: Small — Could mitigate or exacerbate risks.
+
+### Differences vs. the base rate (what’s unusual now)
+- **AI Development**: Rapid advancements increase existential risk, unlike historical technological changes.
+- **Climate Instability**: Accelerating climate change presents new, unpredictable risks.
+- **Geopolitical Tensions**: Current multipolar world order increases nuclear conflict risk.
+- **Global Connectivity**: Increases pandemic spread potential compared to historical outbreaks.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Assume a low prior probability (e.g., 1%) with moderate strength (equivalent n = 10).
+- **Evidence mapping**:
+  - ↑ AI risk (large)
+  - ↑ Climate change impacts (moderate)
+  - ↑ Nuclear tensions (large)
+  - ↓ Historical extinction events (small)
+- **Net effect**: Posterior probability should increase moderately given recent evidence.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - Escalation in AI capabilities without regulation.
+  - Increased geopolitical tensions.
+  - Accelerating climate anomalies.
+- **DOWN indicators**:
+  - Successful international disarmament treaties.
+  - Breakthroughs in climate mitigation.
+  - Effective global AI governance frameworks.
+
+### Caveats & pitfalls
+- **Uncertainty in AI timelines**: Predictions vary widely.
+- **Data gaps**: Limited historical data on extinction-level events.
+- **Deception risks**: Potential misinformation in geopolitical contexts.
+- **Regime changes**: Political shifts could alter risk landscapes.
+- **Definitional gotchas**: Ambiguities in defining "human extinction."
+
+Final Research Summary: Recent developments in AI, climate change, and geopolitical tensions suggest a moderate increase in the probability of human extinction by 2100. However, significant uncertainties and potential mitigating factors remain.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:38:52 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Will humans go extinct before 2100? — unknown — n/a
+
+**Manifold (play-money odds):**
+- Will humans go extinct before 2100? [Resolves to Metaculus in 2027] — binary — 4.5% YES — [link](https://manifold.markets/jack/will-humans-go-extinct-before-2100)
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 0.0885044238809074,
+  "p10": 0.00039264581544430204,
+  "p50": 0.03435743639262867,
+  "p90": 0.25904436282889204,
+  "posterior_alpha": 0.37,
+  "posterior_beta": 3.83
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+1. **Base Rate (Prior) Selection**
+   - The historical base rate for human extinction is effectively zero, as there have been no known extinction events for humans. However, expert estimates, such as the 19% probability from the Global Catastrophic Risk Conference, suggest a higher risk, though this is likely biased. A more conservative base rate might be around 1%, reflecting the lack of historical precedent but acknowledging potential risks.
+   - Initial prior: 1% probability.
+
+2. **Comparison to Base Case**
+   - Similarities: The base case assumes low probability due to historical stability and lack of precedent for human extinction.
+   - Differences: Current technological and geopolitical developments, such as AI advancements and nuclear tensions, present new risks not accounted for in historical data.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - AI Risk: Recent warnings of a 20% chance of AI-induced extinction within 30 years increase the likelihood of extinction (P(E | H) > P(E | ~H)).
+   - Climate Change: A 70% chance of Gulf Stream collapse by 2035 suggests severe climate impacts, moderately increasing extinction risk.
+   - Nuclear Tensions: Highlighted risks of nuclear war increase the likelihood of catastrophic outcomes.
+   - Likelihood ratios for these pieces of evidence suggest a moderate increase in the probability of extinction.
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Prior odds: 1% probability = 0.01 odds.
+   - Considering the evidence, let's assume a likelihood ratio of 3 (moderate increase due to AI, climate, and nuclear risks).
+   - Posterior odds = 0.01 × 3 = 0.03.
+   - Posterior probability = 0.03 / (1 + 0.03) ≈ 2.91%.
+
+5. **Red Team Thinking**
+   - Overconfidence risk: The forecast might underestimate the potential for mitigating factors, such as international cooperation on AI and climate.
+   - Alternative scenario: Rapid technological advancements could lead to effective risk mitigation, reducing extinction probability.
+   - Adjusting for these considerations, a slight reduction in the posterior probability might be warranted.
+
+6. **Final Forecast**
+   - Considering the base rate, evidence, and potential mitigating factors, the final probability is adjusted to reflect a moderate increase in risk but also acknowledges uncertainties and potential for mitigation.
+
+Final: 3%
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Will humans go extinct before 2100?
+
+## 1. Base Rate (Prior) Selection
+
+For human extinction by 2100, I need to establish an appropriate base rate. This is challenging since human extinction has never occurred, so I'll consider several reference points:
+
+- The Stern Review (2006) estimated extinction risk at 0.1% per year, which compounds to roughly 9.5% by 2100
+- The Future of Humanity Institute surveys found expert estimates ranging from 1-20%, with the Oxford conference yielding 19% (though with selection bias)
+- The Doomsday Argument suggests roughly 5-25% chance of extinction this century
+- The Biological Survival School of thought suggests <1% based on species longevity
+
+Given these considerations and acknowledging the selection bias in the Oxford conference, I'll use a prior of 5%. This represents a middle ground between extremely low historical base rates and higher expert estimates, while accounting for the noted selection effects.
+
+Prior probability: 5% (odds of 1:19)
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- Humans have survived numerous existential threats throughout history
+- Our species has demonstrated remarkable adaptability and resilience
+- Global cooperation mechanisms exist for addressing shared threats
+
+**Differences from base case:**
+- Unprecedented technological capabilities with both protective and destructive potential
+- Multiple simultaneous existential risks (AI, nuclear, climate, biotech) unlike historical periods
+- Global interconnectedness that could either amplify or mitigate catastrophic events
+- Accelerating pace of technological change creating novel risks
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: AI Development Risks**
+- P(E|H): If humans go extinct, advanced AI would likely be a contributing factor (~70%)
+- P(E|~H): If humans don't go extinct, we'd still see AI warnings but with successful containment (~20%)
+- Likelihood ratio: ~3.5 (moderately increases probability)
+
+**Evidence 2: Climate Change Trajectory**
+- P(E|H): If humans go extinct, severe climate destabilization would likely be involved (~60%)
+- P(E|~H): If humans don't go extinct, we'd still see climate challenges but with adaptation (~40%)
+- Likelihood ratio: ~1.5 (slightly increases probability)
+
+**Evidence 3: Nuclear Conflict Potential**
+- P(E|H): If humans go extinct, nuclear war would likely be a contributing factor (~65%)
+- P(E|~H): If humans don't go extinct, nuclear tensions would exist but remain contained (~25%)
+- Likelihood ratio: ~2.6 (moderately increases probability)
+
+**Evidence 4: Historical Survival Record**
+- P(E|H): If humans go extinct, it would be despite our long survival history (100%)
+- P(E|~H): If humans don't go extinct, this continues our unbroken survival record (100%)
+- Likelihood ratio: ~1 (neutral)
+
+**Evidence 5: Technological Mitigation Capabilities**
+- P(E|H): If humans go extinct, it would be despite technological protections (~30%)
+- P(E|~H): If humans don't go extinct, technology likely played a protective role (~80%)
+- Likelihood ratio: ~0.375 (moderately decreases probability)
+
+## 4. Bayesian Updating
+
+Starting with prior odds of 1:19 (5%), I'll update based on the evidence:
+
+Posterior odds = Prior odds × Combined likelihood ratio
+Posterior odds = (1/19) × 3.5 × 1.5 × 2.6 × 1 × 0.375
+Posterior odds = (1/19) × 5.1
+Posterior odds ≈ 0.268
+
+Converting to probability:
+Posterior probability = Posterior odds / (1 + Posterior odds)
+Posterior probability = 0.268 / (1 + 0.268)
+Posterior probability ≈ 0.211 or 21.1%
+
+## 5. Red Team Thinking
+
+**Potential overconfidence:**
+- I may be overweighting recent alarming reports about AI, climate, and nuclear risks
+- Historical resilience of humanity suggests lower extinction probability
+- The resolution criteria requires complete extinction, not just massive population reduction
+- Technological solutions and space colonization could provide extinction insurance
+
+**Alternative scenarios:**
+- Human civilization might collapse but small populations could survive in remote areas
+- We might develop robust space colonies before catastrophic Earth events
+- International cooperation could effectively address existential risks
+- The definition of "human" might evolve through genetic engineering or cybernetic enhancement
+
+**Best alternative forecast:**
+A more optimistic view might place the probability at 5-10%, arguing that:
+1. Technological advancement will outpace existential threats
+2. Historical resilience suggests continued adaptability
+3. Distributed human populations would be difficult to completely eliminate
+4. International cooperation will improve for existential risk management
+
+**Rebuttals:**
+1. Technology creates new risks faster than protective capabilities
+2. Past resilience doesn't account for unprecedented technological threats
+3. Global catastrophes could affect even distributed populations
+4. International cooperation remains fragile on existential issues
+
+Given these considerations, I should adjust my estimate downward slightly to account for the complete extinction requirement and humanity's demonstrated resilience. A more calibrated estimate would be around 15%.
+
+## 6. Final Forecast
+
+Final: 15%
+```
+
+### Gemini [gemini-2.5-pro]
+```
+### 1. Base Rate (Prior) Selection
+The event in question is human extinction by 2100, a unique event with no historical precedent. A direct historical base rate is therefore zero, which is unhelpful as it ignores newly emerged risks. Expert opinion offers an alternative, but the cited 19% median from the 2008 Global Catastrophic Risk Conference is acknowledged to be heavily skewed by selection bias. A more neutral starting point is needed. I will select a conservative prior that acknowledges the existence of unprecedented modern risks (nuclear, biological, AI) without fully subscribing to the most pessimistic views. A prior probability of **2%** seems appropriate. This represents a belief that while extinction is unlikely, the combination of 21st-century technologies and pressures creates a small but non-negligible risk over the next ~75 years. In odds, this is 2:98, or approximately 1:49.
+
+### 2. Comparison to Base Case
+The base case for human survival is the entirety of human history, particularly the 20th century, where we survived the Cold War and the advent of nuclear weapons. The current situation differs significantly:
+- **Artificial Intelligence**: Unlike any previous technology, advanced AI presents a potential loss-of-control scenario. This is a novel risk category not present in our historical reference class.
+- **Accelerated Climate Change**: The rate of climate change and the proximity of potential tipping points (like the Gulf Stream collapse) are far more severe than in the 20th century, acting as a "threat multiplier" that can cause state collapse, resource wars, and famines.
+- **Geopolitical Instability**: The shift from a bipolar (Cold War) to a multipolar world may increase the chances of miscalculation and regional conflicts escalating into a global nuclear exchange.
+These differences suggest that the risk environment today is substantially more dangerous than the historical average, justifying an upward revision from any purely historical base rate.
+
+### 3. Evidence Evaluation
+I will evaluate the key evidence provided in the report to update my 2% prior.
+
+- **Evidence 1: AI experts warn of a 20% chance of AI-induced extinction within 30 years.**
+  - This is a powerful piece of evidence. Let H be "human extinction by 2100" and E be "AI experts issue a stark warning."
+  - P(E | H): If humanity is heading for extinction, it is highly likely that a primary driver like AI would elicit strong warnings from experts in the field.
+  - P(E | ~H): If humanity is not going to go extinct, it's still possible for experts to be alarmist or wrong. However, such a specific and high-probability warning is less likely in a world where the risk is truly negligible.
+  - The likelihood ratio (P(E | H) / P(E | ~H)) is significantly greater than 1. This evidence strongly increases the probability.
+
+- **Evidence 2: Study shows a 70% chance of Gulf Stream (AMOC) collapse by 2035.**
+  - This is another strong piece of evidence pointing to systemic instability. AMOC collapse would not directly cause extinction but would trigger catastrophic cascading effects (agricultural failure, mass migration, conflict) that dramatically increase the odds of another risk (e.g., nuclear war) becoming existential.
+  - The likelihood ratio for this evidence is also clearly greater than 1, pushing the probability upwards.
+
+- **Evidence 3: Manifold market consensus at 4.5%.**
+  - This is a "wisdom of the crowds" estimate. It's a posterior probability from other forecasters. It is higher than my 2% prior, suggesting my prior is too conservative or that the crowd has already priced in the recent negative evidence. I will treat this as a strong anchor for my final posterior.
+
+### 4. Bayesian Updating (Posterior Probability)
+I will perform a conceptual update.
+- **Prior Odds**: 1:49 (2% probability).
+- **Evidence**: The combined weight of the new evidence (severe AI risk, high probability of a major climate tipping point, increased geopolitical tension) is substantial. These are not minor developments; they are major warnings about the primary theorized drivers of existential risk. A simple multiplication of likelihood ratios would be inappropriate as the risks are correlated (e.g., poor global governance affects both AI safety and climate action).
+- **Combined Likelihood Ratio**: I estimate the combined effect of the evidence makes the extinction hypothesis roughly 3 to 4 times more likely. Let's use a combined likelihood ratio of 3.5.
+- **Posterior Odds**: Prior Odds × Likelihood Ratio = (1/49) × 3.5 = 3.5/49 = 1/14.
+- **Posterior Probability**: Odds of 1:14 correspond to a probability of 1 / (1 + 14) = 1/15 ≈ 6.7%.
+
+This updated figure of ~6.7% is significantly higher than my prior, reflecting the gravity of the evidence. It is also reasonably close to the Manifold market's 4.5%, suggesting it is in a plausible range.
+
+### 5. Red Team Thinking
+- **Why might this forecast be too high?** I may be overweighting recent, alarming studies. Humanity has a track record of innovation and "muddling through" crises (e.g., the ozone layer, the Cold War). The same technological progress driving AI risk could also yield solutions to climate change or other threats. The Manifold market is lower, suggesting I might be more pessimistic than the consensus.
+- **Why might this forecast be too low?** The risks may be multiplicative, not additive. A climate shock could trigger a nuclear war. I may also be underestimating the speed of AI development or the potential for "unknown unknowns." The 19% expert median, while biased, suggests that those who study this full-time are far more concerned. My 6.7% is much closer to the crowd than the specialists.
+- **Adjustment**: My calculated 6.7% feels like a solid estimate based on the evidence. However, the calibration guidance advises against large swings, and a 3x increase from the prior is significant. The Manifold market provides a strong anchor at 4.5%. To balance my stronger interpretation of the evidence against the market consensus and the principle of conservative updates, I will adjust my final forecast slightly downwards from my calculated posterior.
+
+### 6. Final Forecast
+My initial prior of 2% is updated by strong evidence regarding AI risk and climate tipping points. The quantitative update suggests a posterior around 6.7%. After considering red team arguments and the Manifold market anchor, I adjust this slightly downwards to a more conservative final estimate.
+
+Final: 6%
+```
+
+### Grok [grok-4]
+```
+### 1. Base Rate (Prior) Selection
+For human extinction before 2100, an appropriate base rate draws from historical data on species survival and expert estimates of existential risks. Historically, Homo sapiens has existed for about 300,000 years without extinction, and no confirmed extinction-level events have occurred in recorded history (e.g., no global nuclear wars, no civilization-ending pandemics like the Black Death, which killed ~30-50% of Europe's population but not all humans). This suggests a very low base rate—effectively near 0% per century based on long-term survival. However, for forward-looking risks, I reference expert surveys and prediction markets as a reference class. The 2008 Oxford poll gave a 19% median, but as noted, it's likely biased toward high estimates due to selection effects (attendees were risk-focused). More neutral sources like Manifold's current 4.5% community forecast provide a lower anchor. Long-term species extinction rates (e.g., from paleontology) are around 1-2% per million years for mammals, but this underestimates modern anthropogenic risks.
+
+I choose a conservative prior of 1% (or odds of 1:99), aligning with the research report's suggestion of a low prior (e.g., 1%) and emphasizing historical resilience while acknowledging rare tail risks. This is lower than the biased 19% to avoid overindexing on pessimistic views, but not zero to account for unprecedented modern threats.
+
+### 2. Comparison to Base Case
+The base case is the historical reference class of human survival through millennia, including past existential threats like ice ages, pandemics (e.g., 1918 flu), and world wars, where extinction risk was effectively zero despite high mortality in some events. The current situation is similar in that humanity has robust adaptive capacities—technological progress, global cooperation (e.g., treaties like the Paris Agreement), and no single threat has yet proven insurmountable.
+
+However, it's different due to novel, accelerating risks: rapid AI development introduces uncontrolled superintelligence risks absent in history; climate change is progressing faster than past natural shifts, with potential tipping points like Gulf Stream collapse; geopolitical tensions in a multipolar world with nuclear arsenals exceed Cold War bipolar stability; and global connectivity amplifies pandemic spread beyond historical outbreaks. These differences matter because they create "fat-tail" risks—low-probability, high-impact events that weren't as prominent historically—potentially increasing the odds slightly from the base rate.
+
+### 3. Evidence Evaluation (Likelihoods)
+I'll evaluate key pieces from the research report, estimating likelihoods qualitatively and deriving likelihood ratios (LR = P(E|H) / P(E|~H)). Each piece is recent (2025) and tilts toward higher risk.
+
+- **AI experts warning of 20% chance of AI-induced extinction within 30 years (↑ large effect)**: If extinction occurs (H), such warnings are highly likely (P(E|H) ≈ 80-90%) as precursors to uncontrolled AI. If not ( ~H), they're still plausible but less urgent (P(E|~H) ≈ 40-50%) due to hype or overestimation. LR ≈ 1.8-2.0 (mildly positive); this increases probability as it signals emerging risks not in the base case.
+  
+- **70% chance of Gulf Stream collapse by 2035, triggering severe climate shifts (↑ moderate effect)**: Under H, this is very likely (P(E|H) ≈ 70-80%) as a driver of ecosystem collapse leading to extinction. Under ~H, it's possible but mitigated (P(E|~H) ≈ 50-60%) via adaptation. LR ≈ 1.3-1.5 (positive); this boosts probability by highlighting accelerating climate instability vs. historical gradual changes.
+
+- **Article on nuclear war risks with potential massive casualties (↑ large effect)**: If H, such escalations are expected (P(E|H) ≈ 60-70%) in a path to extinction. If ~H, they're common rhetoric (P(E|~H) ≈ 40-50%). LR ≈ 1.4-1.5 (positive); this raises probability due to current geopolitical tensions differing from post-Cold War stability.
+
+- **Historical lack of extinction events (↓ small effect)**: This is highly likely under ~H (P(E|~H) ≈ 100%) but still possible under H (P(E|H) ≈ 90%, as extinction hasn't happened yet). LR ≈ 0.9-1.0 (neutral to slightly negative); it decreases probability slightly by reinforcing resilience.
+
+Overall, the evidence net increases probability moderately, with AI and nuclear risks providing the strongest upward push, tempered by historical data.
+
+### 4. Bayesian Updating (Posterior Probability)
+Starting with prior probability P(H) = 1% (prior odds = 1:99).
+
+For an explicit update, let's aggregate the evidence into a net likelihood ratio. Combining the LRs qualitatively: AI (1.8), climate (1.4), nuclear (1.4), historical (0.95) → net LR ≈ 1.8 * 1.4 * 1.4 * 0.95 ≈ 3.35 (a moderate upward adjustment, avoiding big swings per calibration guidance).
+
+Posterior odds = prior odds * net LR = 1:99 * 3.35 ≈ 3.35:99 ≈ 1:29.55.
+
+Posterior probability = 1 / (1 + 29.55) ≈ 3.3%.
+
+This posterior remains uncertain due to high variance in risk estimates (e.g., AI timelines vary widely) and potential mitigations (e.g., AI governance). It's a small nudge from the 1% prior, reflecting evidence-weighted updates without overconfidence.
+
+### 5. Red Team Thinking
+My forecast might be overconfident in the upward adjustment—I'm relying on recent alarming reports, but these could be sensationalized or subject to publication bias, similar to the 2008 poll's selection effect. Blind spots include underestimating human adaptability (e.g., tech breakthroughs like carbon capture or AI safety) or overestimating tail risks (e.g., AI extinction odds might be inflated by doomsayers). Tail risks: A black swan like a supervolcano (low base rate, ~1 in 10,000 years) could spike probability, or positive surprises like global disarmament could drop it near zero.
+
+An alternative forecast might be 10-20% (e.g., closer to the 2008 poll or AI warnings), plausible if one weights expert pessimism more heavily and assumes cascading failures (e.g., AI + climate + nuclear). Rebuttal: This ignores historical base rates and prediction market skepticism (Manifold at 4.5%), plus overfits to recent news without long-term data. Conversely, a 0.1% forecast could argue all risks are overhyped, but that dismisses valid evidence. To adjust for this, I widen my implicit uncertainty: my 3.3% balances conservatism, but I'd put a 90% confidence interval at 1-10% to cover tails. No major percentile adjustments needed, but this tempers any urge to swing higher.
+
+Final: 3%
+```
+
+📊 Forecast Run 20250909-223849
+Timestamp: 2025-09-09 22:42:50 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** How old will the oldest living person be in 2100?
+🔗 **URL:** https://www.metaculus.com/questions/14333/
+
+📝 **Summary**
+
+- Final Prediction: **Distribution summary**
+  - P10: 116.922
+  - P50: 124.123
+  - P90: 136.83
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Supercentenarians (110+ years old):** As of 2023, there are fewer than 100 verified supercentenarians worldwide. Base rate: extremely low probability of reaching 115+.
+- **Centenarians (100+ years old):** Approximately 573,000 centenarians globally in 2023. Base rate: low probability of reaching 110+.
+- **Limitations:** Data on extreme ages is sparse and subject to verification challenges.
+
+### Recent developments (timeline bullets)
+- [2025-09-08] ↓ — Studies show life expectancy gains have slowed significantly since 1939, limiting future longevity increases.
+- [2025-09-06] ↑ — Global aging population projected to increase, potentially driving interest in longevity research.
+
+### Mechanisms & drivers (causal levers)
+- **Medical advancements:** Moderate; potential breakthroughs in geroscience could extend lifespan.
+- **Public health improvements:** Small; most gains already realized in developed countries.
+- **Genetic factors:** Moderate; some individuals have genetic predispositions for longevity.
+- **Lifestyle factors:** Small; diet, exercise, and social engagement can contribute to longer life.
+- **Environmental factors:** Small; pollution and climate change may negatively impact longevity.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Slowing life expectancy gains:** Recent studies indicate a deceleration in longevity improvements.
+- **Aging population:** Larger proportion of elderly may drive more research into extending life.
+- **Technological advancements:** Potential for breakthroughs in biotechnology and medicine.
+- **Policy focus:** Increased attention on healthcare and pension systems due to aging demographics.
+
+### Bayesian update sketch (for the statistician)
+- **Prior:** Low probability of anyone reaching 120+ years by 2100; equivalent n = 50.
+- **Evidence mapping:**
+  - ↓ Large — Slowing life expectancy gains since 1939.
+  - ↑ Moderate — Potential for medical breakthroughs.
+  - ↓ Small — Current life expectancy trends in developed countries.
+  - ↑ Small — Increased focus on longevity research.
+- **Net effect:** Posterior should move slightly down due to strong evidence of slowing gains.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators:**
+  - Breakthroughs in anti-aging research.
+  - Increased funding for longevity studies.
+  - New genetic discoveries related to lifespan.
+- **DOWN indicators:**
+  - Continued stagnation in life expectancy data.
+  - Lack of significant medical advancements.
+  - Rising environmental health risks.
+
+### Caveats & pitfalls
+- **Uncertainty in future breakthroughs:** Unpredictable nature of scientific advancements.
+- **Data gaps:** Limited reliable data on extreme ages.
+- **Verification challenges:** Difficulty in verifying ages of supercentenarians.
+- **Regime changes:** Shifts in healthcare policy could impact longevity.
+- **Definitional gotchas:** Variability in defining "oldest living person."
+
+Final Research Summary: Current evidence suggests a slowing in life expectancy gains, making it unlikely for the oldest living person in 2100 to significantly exceed current records. However, potential medical breakthroughs could alter this trajectory.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:39:49 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- How old will the oldest living person be in 2100? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 125.46560610811221,
+  "p10": 116.92249846080342,
+  "p50": 124.12337028070135,
+  "p90": 136.82991089967783
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the age of the oldest living person in 2100, we will follow a structured Bayesian approach:
+
+1. **Base Rate (Prior) Selection**
+   - **Base Rate:** The current record for the oldest living person is 122 years, held by Jeanne Calment. The base rate for supercentenarians (110+ years) is extremely low, with fewer than 100 verified cases worldwide. The base rate for reaching 120+ is even lower.
+   - **Mean/Median and Variance:** The mean age of the oldest living person over the past century has hovered around 115-120 years, with a variance reflecting the rarity of reaching beyond 120.
+
+2. **Comparison to Base Case**
+   - **Similarities:** The current situation reflects historical trends where very few individuals reach extreme ages.
+   - **Differences:** Advances in medical technology and increased focus on longevity research could potentially extend maximum lifespan, though gains have slowed.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - **Slowing Life Expectancy Gains:** This evidence suggests a lower likelihood of significant increases in maximum age, pushing the forecast down.
+   - **Medical Advancements:** Potential breakthroughs could increase the likelihood of higher ages, but this is uncertain.
+   - **Aging Population and Research Focus:** These factors slightly increase the likelihood of higher ages due to increased interest and investment in longevity research.
+
+4. **Bayesian Updating (Posterior Distribution)**
+   - **Prior:** Assume a low probability of reaching 120+ years by 2100.
+   - **Likelihoods:** Slowing gains (strong negative), potential medical breakthroughs (moderate positive), increased research focus (small positive).
+   - **Posterior Shift:** The strong negative evidence of slowing gains slightly outweighs the positive evidence, leading to a modest downward adjustment in the forecast.
+
+5. **Red Team Thinking**
+   - **Overconfidence Check:** Consider the unpredictability of scientific breakthroughs and the potential for unforeseen advancements.
+   - **Tail Risks:** A breakthrough in anti-aging could significantly increase the maximum age, while environmental factors could decrease it.
+   - **Alternative Forecast:** A more optimistic forecast might place more weight on potential breakthroughs, but this is speculative.
+
+6. **Final Percentiles**
+   - Based on the analysis, the forecast for the age of the oldest living person in 2100 is as follows:
+
+P10: 115  
+P20: 118  
+P40: 121  
+P60: 123  
+P80: 125  
+P90: 128
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Forecasting the Age of the Oldest Living Person in 2100
+
+## 1. Base Rate (Prior) Selection
+
+For my prior, I'll use the historical record of maximum human lifespan:
+
+- The oldest verified human ever was Jeanne Calment who died at 122 years and 164 days (1997)
+- The current oldest living person is Maria Branyas at 115 years old (as of 2023)
+- Over the past century, the record for oldest living person has typically ranged between 114-122 years
+
+The distribution of maximum human lifespan appears to follow a relatively stable pattern despite significant increases in average life expectancy. I'll use a prior centered around 120 years with a standard deviation of about 5 years, reflecting the historical range we've observed.
+
+## 2. Comparison to Base Case
+
+**Similarities to reference distribution:**
+- Biological limits to human aging appear relatively consistent
+- The gap between maximum lifespan and average life expectancy has remained large
+- Verified supercentenarians remain extremely rare despite population growth
+
+**Differences that matter:**
+- The time horizon (2100) allows for potential medical breakthroughs in aging research
+- Larger global population increases the statistical likelihood of extreme outliers
+- Advances in biotechnology and genetic engineering may specifically target maximum lifespan
+- Better record-keeping and verification systems may identify more genuine supercentenarians
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence for higher values:**
+- Ongoing research in geroscience and anti-aging technologies could yield breakthroughs (moderate likelihood shift upward, ~1.5×)
+- Larger aging population may drive increased research funding and interest (small shift upward, ~1.2×)
+- Genetic engineering and personalized medicine may allow targeting of specific aging mechanisms (moderate shift upward, ~1.5×)
+
+**Evidence for lower values:**
+- Life expectancy gains have slowed significantly since 1939 (strong evidence, ~2× shift downward)
+- Maximum lifespan has shown remarkable stability despite medical advances (strong evidence, ~2× shift downward)
+- Environmental factors and climate change may negatively impact longevity (small shift downward, ~1.1×)
+
+## 4. Bayesian Updating (Posterior Distribution)
+
+Starting with my prior centered at 120 years (SD = 5):
+
+First update: Considering the slowing of life expectancy gains and stability of maximum lifespan
+- This shifts the distribution downward (likelihood ratio ~2× favoring lower values)
+- Updated mean: ~118 years
+
+Second update: Considering potential medical breakthroughs and genetic engineering
+- This shifts the distribution upward (likelihood ratio ~1.5× favoring higher values)
+- Updated mean: ~122 years
+
+Third update: Considering larger population size and better verification systems
+- This shifts the distribution slightly upward (likelihood ratio ~1.2× favoring higher values)
+- Updated mean: ~124 years
+
+The posterior distribution has:
+- Shifted mean from 120 to ~124 years
+- Increased variance (wider tails) due to technological uncertainty
+- Positive skew (longer right tail) reflecting potential breakthroughs
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the potential for radical life extension technologies
+- The 75-year timeframe until 2100 is substantial for scientific progress
+- Historical patterns may not apply if we achieve a fundamental understanding of aging mechanisms
+
+**Alternative scenarios:**
+- Breakthrough scenario: Major advances in cellular reprogramming, telomere extension, or senolytic therapies could push maximum lifespan to 150+ years
+- Conservative scenario: Biological limits prove extremely difficult to overcome, keeping maximum lifespan around 120-125 years
+- Catastrophic scenario: Global crises (pandemics, climate disasters) could reduce maximum lifespan below current levels
+
+I should widen my distribution to account for these possibilities, particularly extending the upper tail to reflect potential breakthroughs.
+
+## 6. Final Percentiles
+
+P10: 118
+P20: 121
+P40: 125
+P60: 130
+P80: 138
+P90: 145
+```
+
+### Gemini [gemini-2.5-pro]
+```
+Here is a probabilistic forecast following the specified Bayesian reasoning steps.
+
+### 1. Base Rate (Prior) Selection
+
+The target variable is the maximum age of a living person in 2100. The most relevant reference class is the historical record of the maximum verified human age.
+
+*   The all-time record is held by Jeanne Calment, who died at 122.5 years in 1997.
+*   Since then, the oldest person has typically been in the 115-119 year range. For example, Kane Tanaka died at 119 in 2022, and Maria Branyas is 118 as of 2025 in the problem's context.
+*   This suggests a distribution centered around recent maximums, with a tail extending to the all-time record.
+
+My prior distribution, assuming no major changes between now and 2100, would be:
+*   **Median:** 118 years. This reflects the typical age of the world's oldest person in the last couple of decades.
+*   **Spread:** The distribution is right-skewed. It's difficult to push the maximum age up, but a combination of factors could do so. A pessimistic outcome (P10) might be 115, while an optimistic one (P90) might be 121, approaching but not surpassing Calment's record.
+
+### 2. Comparison to Base Case
+
+The forecast is for 2100, approximately 75 years from the present (2025).
+
+**Similarities:**
+*   The fundamental biological mechanisms of aging will likely remain the primary limiting factor.
+
+**Differences:**
+*   **Time Horizon:** 75 years is a long period for medical and technological advancement. The progress from 1950 to 2025 was immense, and a similar pace of innovation in geroscience is plausible.
+*   **Demographics (the most critical difference):** The number of very old people is projected to increase dramatically. The UN projects the number of centenarians (100+ years old) will grow from ~600,000 today to over 25 million by 2100. This represents a more than 40-fold increase in the pool of individuals from which a new record holder could emerge. From an extreme value statistics perspective, increasing the sample size this dramatically has a powerful effect on the expected maximum value, even if the underlying individual lifespan distribution remains unchanged.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+I will evaluate the key pieces of evidence from the report and general knowledge.
+
+*   **↑↑ Strong Upward Pressure (Demographics):** The >40x increase in the number of centenarians is the single most important factor. Extreme value theory suggests that the maximum of a sample increases with the logarithm of the sample size. This provides strong statistical pressure for the maximum age to be higher in 2100 than it is today. This evidence makes outcomes above 120 much more likely.
+*   **↑ Moderate Upward Pressure (Medical Advances):** The 75-year time horizon provides ample opportunity for breakthroughs in areas like cellular rejuvenation, gene therapy, or treatments for age-related diseases (e.g., cancer, Alzheimer's). The report notes this as a "Moderate" driver. This primarily stretches the right tail of the distribution, making outcomes like 125 or 130 more plausible than they would be otherwise.
+*   **↓ Moderate Downward Pressure (Biological Plateau):** The primary evidence against a large increase is the fact that Jeanne Calment's record has stood for nearly 30 years. This suggests we may be approaching a biological limit or plateau. The report's note on "slowing life expectancy gains" supports this, though it's about the average, not the maximum. This evidence tempers the optimism from the other factors and makes it less likely that the maximum will increase without limit.
+
+### 4. Bayesian Updating (Posterior Distribution)
+
+I will update my prior (median 118) based on this evidence.
+
+*   **Prior:** Median of 118, with a P90 of 121.
+*   **Likelihoods:** The demographic evidence provides a very strong likelihood of a higher maximum age. The statistical effect of a 40x larger sample size is not a small nudge; it's a major shift. This evidence alone would compel me to move the entire distribution upward by several years. The potential for medical advances further reinforces this upward shift, especially in the upper tail. The evidence for a plateau acts as a countervailing force, preventing the forecast from becoming excessively high and suggesting the distribution should remain reasonably tight.
+*   **Posterior:** The demographic argument is compelling enough to believe that surpassing Calment's record of 122.5 is a likely outcome. I will therefore center my posterior distribution around that record. My posterior median will be 122. The strong evidence for a plateau will constrain the lower end of my forecast, while the potential for breakthroughs will stretch the upper end. This results in a right-skewed distribution centered significantly higher than my prior.
+
+### 5. Red Team Thinking
+
+*   **Alternative Scenario (Hard Biological Limit):** What if 122.5 is a hard, unbreakable ceiling due to fundamental biological constraints? In this case, my forecast is too high. The maximum age in 2100 would be at most 122, and my median should be lower. However, the 40x increase in centenarians makes it highly probable that if a human *can* live past 122, we will see it by 2100. My P10 of 119 and P20 of 120 account for the possibility that the limit is real and Calment was an extreme outlier.
+*   **Alternative Scenario (Radical Breakthrough):** What if a true "cure for aging" is developed and deployed by, say, 2060? Someone born in 2075 could be 125 in 2100 and still have a long life ahead. In this case, my forecast is far too conservative. My P90 of 128 is intended to capture significant medical progress, but not a paradigm-shifting event like longevity escape velocity, which I consider a tail risk beyond the 90th percentile.
+*   **Conclusion:** My forecast balances the powerful, quantifiable statistical effect of population growth against the unquantifiable possibilities of biological limits and radical breakthroughs. The central estimate is anchored to the idea that the massive increase in the elderly population makes breaking the current record the most likely outcome.
+
+### 6. Final Percentiles
+
+P10: 119
+P20: 120
+P40: 121
+P60: 123
+P80: 126
+P90: 128
+```
+
+### Grok [grok-4]
+```
+[error] xAI: TimeoutError()
+```
+
+📊 Forecast Run 20250909-223849
+Timestamp: 2025-09-09 22:44:34 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 **URL:** https://www.metaculus.com/questions/22427/
+
+📝 **Summary**
+
+- Final Prediction (per option):
+  - 0 or 1: 21.01%
+  - 2 or 3: 30.07%
+  - 4 or 5: 19.68%
+  - 6 or 7: 9.36%
+  - 8 or 9: 4.70%
+  - 10 or more: 15.17%
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Reference Class 1**: AI labs founded in the last decade that became leading labs within two years. Base rate: Low, as few labs achieve top status quickly.
+- **Reference Class 2**: Tech startups achieving unicorn status within two years. Base rate: Moderate, but varies significantly by sector and innovation level.
+- **Limitations**: Rapid AI advancements and market dynamics may not align with historical data.
+
+### Recent developments (timeline bullets)
+- [2025-09-09] ↑ — Mistral AI's rapid growth and high valuation suggest potential to become a leading lab.
+- [2025-09-09] ↓ — Decline in AI adoption in U.S. businesses may signal cooling interest or market saturation.
+
+### Mechanisms & drivers (causal levers)
+- **Investment influx**: Large — Significant funding can accelerate lab growth and innovation.
+- **Talent mobility**: Moderate — Movement of key personnel can lead to new lab formations.
+- **Regulatory environment**: Moderate — Favorable policies can encourage new entrants.
+- **Technological breakthroughs**: Large — Innovations can rapidly elevate a lab's status.
+- **Market demand**: Moderate — High demand for AI solutions can drive lab prominence.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Increased funding**: Current AI labs receive unprecedented investment levels.
+- **Talent concentration**: High-profile talent is more mobile, forming new labs.
+- **Regulatory scrutiny**: Heightened focus on AI ethics and safety may slow some labs.
+- **Global competition**: More international players are entering the AI race.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Low probability of new labs becoming leading within two years; equivalent n = 10.
+- **Evidence mapping**:
+  - ↑ Large — Mistral AI's rapid valuation increase.
+  - ↑ Moderate — High-profile talent forming new labs.
+  - ↓ Moderate — Decline in AI adoption in U.S. businesses.
+  - ↑ Moderate — Significant investments in AI sector.
+- **Net effect**: Posterior should move up moderately, reflecting increased likelihood of new labs achieving leading status.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - New high-profile AI lab formations.
+  - Significant funding rounds for emerging labs.
+  - Breakthroughs in AI technology.
+- **DOWN indicators**:
+  - Regulatory crackdowns on AI development.
+  - Decline in AI sector investments.
+  - Major AI safety incidents.
+
+### Caveats & pitfalls
+- **Uncertainty in definitions**: "Leading lab" status can be subjective.
+- **Data gaps**: Limited historical data on rapid lab ascension.
+- **Deception risks**: Overstated capabilities by new labs.
+- **Regime changes**: Policy shifts could alter market dynamics.
+
+Final Research Summary: The likelihood of new AI labs becoming leading within two years is increasing due to significant investments and talent mobility, though regulatory and market challenges remain.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:42:50 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Before 2030, how many new AI labs will be leading labs within 2 years of their founding? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": [
+    0.21010268049572073,
+    0.30073660934433527,
+    0.19679187291097872,
+    0.09360665138725734,
+    0.04703963812800674,
+    0.15172254773370245
+  ],
+  "p10": [
+    0.02638839864879399,
+    0.06718807031831776,
+    0.02139521565658109,
+    0.0008562276525008478,
+    3.8014789342595055e-06,
+    0.009246870713614599
+  ],
+  "p50": [
+    0.1682494370399397,
+    0.2702259153942621,
+    0.1500910337802632,
+    0.04257462667575155,
+    0.0070008342530950875,
+    0.10416627566828524
+  ],
+  "p90": [
+    0.45881182725253294,
+    0.5790720541566093,
+    0.4461240618072271,
+    0.2655598731698606,
+    0.15141585846004438,
+    0.36851622301216025
+  ],
+  "posterior_alpha": [
+    0.9722222222222223,
+    1.378888888888889,
+    0.9,
+    0.42666666666666664,
+    0.21666666666666667,
+    0.7055555555555556
+  ]
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the number of new AI labs that will become leading labs within two years of their founding before 2030, we will follow a structured Bayesian reasoning approach.
+
+### 1. Base Rate (Prior) Selection
+
+- **Option 1 (0 or 1):** Historically, very few AI labs achieve leading status quickly. The base rate for this is low, as the AI industry has been dominated by a few key players.
+- **Option 2 (2 or 3):** A moderate base rate, considering the potential for a few new entrants to achieve rapid success, similar to tech startups achieving unicorn status.
+- **Option 3 (4 or 5):** Lower base rate, as it is less common for multiple labs to achieve leading status in a short time frame.
+- **Option 4 (6 or 7):** Very low base rate, as this would require a significant shift in the industry landscape.
+- **Option 5 (8 or 9):** Extremely low base rate, as this would be unprecedented.
+- **Option 6 (10 or more):** Negligible base rate, as this would require a complete overhaul of the current market dynamics.
+
+### 2. Comparison to Base Case
+
+- **Similarities:** The current AI landscape is still dominated by a few key players, similar to historical trends.
+- **Differences:** Increased funding, talent mobility, and technological advancements could lead to more rapid ascension of new labs.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+- **Mistral AI's rapid growth:** Increases likelihood for options 2 and 3, as it shows potential for new labs to quickly become leaders.
+- **High-profile talent forming new labs:** Supports options 2 and 3, as talent mobility can lead to successful new ventures.
+- **Decline in AI adoption in U.S. businesses:** Decreases likelihood for all options, particularly higher ones, as it suggests market saturation.
+- **Significant investments in AI sector:** Increases likelihood for options 2 and 3, as funding can accelerate growth.
+
+### 4. Bayesian Updating (Posterior)
+
+- **Prior for Option 2 (2 or 3):** Moderate base rate.
+- **Likelihood Ratio for Mistral AI's growth:** Increases the odds for Option 2.
+- **Posterior for Option 2:** Higher than prior, reflecting increased likelihood due to evidence.
+
+### 5. Red Team Thinking
+
+- **Overconfidence Check:** Consider the possibility of overestimating the impact of current trends.
+- **Tail Risks:** Regulatory changes or major AI safety incidents could drastically alter the landscape.
+- **Alternative Forecast:** A conservative forecast might place more weight on Option 1, considering historical dominance by a few labs.
+
+### 6. Final Normalization
+
+- Ensure probabilities sum to approximately 100%.
+
+### 7. Output Format
+
+Option_1: 30%  
+Option_2: 40%  
+Option_3: 20%  
+Option_4: 7%  
+Option_5: 2%  
+Option_6: 1%  
+
+This distribution reflects a moderate increase in the likelihood of new labs becoming leaders, driven by current trends, while acknowledging the historical dominance of a few key players.
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Analysis: New Leading AI Labs by 2030
+
+## 1. Base Rate (Prior) Selection
+
+I'll establish base rates for each option by examining historical patterns of AI labs becoming "leading" within 2 years of founding:
+
+**Historical Context:**
+- Since ~2015, we've seen a few notable examples: Anthropic, Mistral AI, and possibly xAI have achieved rapid prominence
+- The question defines "leading" as top 5 by model ELO on Chatbot Arena
+- The time period is from now (2025-09-09) until the end of 2029 (~4.3 years)
+
+**Base Rate Reasoning:**
+- The AI field has historically had high barriers to entry (compute, talent, funding)
+- Few labs have historically achieved "leading" status within 2 years
+- The rate appears to be accelerating in recent years (2022-2025)
+- I estimate approximately 1-2 such labs have emerged per 2-year period recently
+
+**Initial Base Rates:**
+- 0 or 1: 25% (conservative estimate based on historical patterns)
+- 2 or 3: 35% (slightly higher as this represents the recent trend)
+- 4 or 5: 20% (possible but less likely)
+- 6 or 7: 10% (requires significant acceleration)
+- 8 or 9: 5% (very unlikely given historical patterns)
+- 10 or more: 5% (tail risk/extreme scenario)
+
+## 2. Comparison to Base Case
+
+**Similarities to Base Rate:**
+- High barriers to entry remain (compute costs, specialized talent)
+- Established players (OpenAI, Google DeepMind, Anthropic) have strong advantages
+- Top talent remains concentrated in a few organizations
+
+**Differences from Base Rate:**
+- Increased funding availability for AI startups (positive factor)
+- More talent mobility as noted in background (positive factor)
+- Growing international competition (positive factor)
+- Potential regulatory constraints (negative factor)
+- Declining AI adoption in US businesses (negative factor)
+- Only ~4.3 years remain until 2030 (limiting factor)
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: Mistral AI's rapid growth**
+- P(E|H="0 or 1"): Low (0.3) - This evidence contradicts this hypothesis
+- P(E|H="2 or 3"): Moderate (0.6) - Consistent with this hypothesis
+- P(E|H="4 or 5"): High (0.8) - Strongly supports this hypothesis
+- P(E|H="6 or 7" or higher): Very high (0.9) - Very strongly supports these hypotheses
+
+**Evidence 2: Talent mobility from established labs**
+- P(E|H="0 or 1"): Low (0.4) - Somewhat contradicts this hypothesis
+- P(E|H="2 or 3"): Moderate (0.7) - Consistent with this hypothesis
+- P(E|H="4 or 5"): High (0.8) - Supports this hypothesis
+- P(E|H="6 or 7" or higher): Very high (0.9) - Strongly supports these hypotheses
+
+**Evidence 3: Decline in AI adoption in U.S. businesses**
+- P(E|H="0 or 1"): High (0.8) - Supports this hypothesis
+- P(E|H="2 or 3"): Moderate (0.6) - Somewhat consistent
+- P(E|H="4 or 5"): Low (0.4) - Somewhat contradicts this hypothesis
+- P(E|H="6 or 7" or higher): Very low (0.2) - Strongly contradicts these hypotheses
+
+**Evidence 4: Limited time remaining until 2030 (~4.3 years)**
+- P(E|H="0 or 1"): Moderate (0.5) - Neutral
+- P(E|H="2 or 3"): Moderate (0.6) - Somewhat consistent
+- P(E|H="4 or 5"): Moderate (0.5) - Neutral
+- P(E|H="6 or 7"): Low (0.3) - Somewhat contradicts this hypothesis
+- P(E|H="8 or 9" or higher): Very low (0.2) - Strongly contradicts these hypotheses
+
+## 4. Bayesian Updating
+
+Let's update on Evidence 1 (Mistral AI's rapid growth) for the "2 or 3" option:
+
+Prior probability P(H) = 35% = 0.35
+Prior odds = 0.35/(1-0.35) = 0.538
+Likelihood ratio = P(E|H)/P(E|~H) = 0.6/0.5 = 1.2
+Posterior odds = 0.538 × 1.2 = 0.646
+Posterior probability = 0.646/(1+0.646) = 0.392 ≈ 39%
+
+This increases our confidence in the "2 or 3" option from 35% to 39%.
+
+Continuing with qualitative updates for all options:
+
+**0 or 1:**
+- Evidence 1 (Mistral's growth): Decreases probability
+- Evidence 2 (Talent mobility): Decreases probability
+- Evidence 3 (Declining adoption): Increases probability
+- Evidence 4 (Time constraint): Slight increase
+- Net effect: Slight decrease to ~22%
+
+**2 or 3:**
+- Evidence 1 (Mistral's growth): Increases probability
+- Evidence 2 (Talent mobility): Increases probability
+- Evidence 3 (Declining adoption): Slight decrease
+- Evidence 4 (Time constraint): Slight increase
+- Net effect: Increase to ~40%
+
+**4 or 5:**
+- Evidence 1 (Mistral's growth): Increases probability
+- Evidence 2 (Talent mobility): Increases probability
+- Evidence 3 (Declining adoption): Decreases probability
+- Evidence 4 (Time constraint): Neutral
+- Net effect: Increase to ~23%
+
+**6 or 7:**
+- Evidence 1 (Mistral's growth): Increases probability
+- Evidence 2 (Talent mobility): Increases probability
+- Evidence 3 (Declining adoption): Decreases probability
+- Evidence 4 (Time constraint): Decreases probability
+- Net effect: Slight increase to ~9%
+
+**8 or 9:**
+- All evidence combined suggests this remains unlikely
+- Net effect: Decrease to ~3%
+
+**10 or more:**
+- All evidence combined suggests this remains very unlikely
+- Net effect: Decrease to ~3%
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the acceleration of AI lab formation
+- The definition of "leading" could change as the field evolves
+- Regulatory changes could either accelerate or decelerate new lab formation
+- Geopolitical factors could drive more national AI champions
+- Technological breakthroughs could lower barriers to entry
+
+**Alternative scenarios:**
+- A major breakthrough could democratize AI development, leading to many more leading labs
+- Conversely, consolidation could occur if existing leaders pull further ahead
+- Regulatory crackdowns could prevent new entrants from becoming competitive
+
+**Adjustments:**
+- I should slightly increase probability for higher counts to account for potential acceleration
+- I should slightly decrease probability for lower counts to account for the trend of increasing lab formation
+
+## 6. Final Normalization
+
+After all updates and considerations:
+
+**0 or 1:** 20%
+**2 or 3:** 40%
+**4 or 5:** 25%
+**6 or 7:** 9%
+**8 or 9:** 3%
+**10 or more:** 3%
+
+Total: 100%
+
+## 7. Final Forecast
+
+0 or 1: 20%
+2 or 3: 40%
+4 or 5: 25%
+6 or 7: 9%
+8 or 9: 3%
+10 or more: 3%
+(sum 100%)
+```
+
+### Gemini [gemini-2.5-pro]
+```
+Here is a probabilistic forecast following the specified methodology.
+
+### 1. Base Rate (Prior) Selection
+
+To establish a base rate, I will analyze the recent history of new AI labs rapidly becoming leaders. The question defines "leading" as a top-5 lab by Chatbot Arena ELO. The current top 5 (as of the prompt's reference date) are OpenAI, Anthropic, Google DeepMind, Cohere, and Mistral AI.
+
+*   **Reference Class:** New AI labs founded since 2020 that achieved top-5 status within two years.
+*   **Positive Examples:**
+    *   **Anthropic:** Founded in 2021. By early 2023, with the release of Claude, they were firmly in the top tier. This fits the "< 2 years" criteria.
+    *   **Mistral AI:** Founded in April 2023. By early 2024, their models were highly competitive and ranked in the top 5. This is a very strong positive example, achieving leading status in under a year.
+*   **Negative/Inapplicable Examples:**
+    *   OpenAI, Google DeepMind, and Cohere were founded before this recent boom and took longer than two years to reach their current "leading" status.
+*   **Calculation:** Over the last ~4 years (2021-2024), we have seen two such labs emerge. This gives us a historical rate of approximately 0.5 labs per year. The question's time frame is from late 2025 to the end of 2029, roughly 4.3 years.
+*   **Prior Expectation:** A simple extrapolation gives a base rate expectation of 0.5 labs/year * 4.3 years = 2.15 labs. This suggests that the prior probability should be centered on the "2 or 3" option. A Poisson distribution with a mean (λ) of ~2.5 would be a reasonable starting point.
+
+### 2. Comparison to Base Case
+
+**Similarities:** The fundamental dynamics of AI development—requiring elite talent, massive compute, and novel research—remain the same. The mechanism of "splintering," where talent leaves established labs to form new ones (e.g., Anthropic from OpenAI), is likely to continue.
+
+**Differences:**
+*   **Increased Capital Availability (Pro-More):** The level of investment in AI is far higher now than in 2021. Startups like Mistral and xAI have raised hundreds of millions or billions of dollars very quickly, accelerating their path to competitiveness.
+*   **Stronger Incumbent Moats (Pro-Fewer):** The cost to train a state-of-the-art model has skyrocketed. Incumbents like Google, Microsoft/OpenAI, and Amazon have massive advantages in compute infrastructure and proprietary data, making it harder for new entrants to catch up.
+*   **Increased Talent Mobility (Pro-More):** High salaries and equity packages make it attractive for top researchers to jump ship. The background note about Demis Hassabis potentially leaving Google is a prime example of how a new top-tier lab could be formed overnight.
+*   **Regulatory Headwinds (Pro-Fewer):** Growing regulatory scrutiny (e.g., EU AI Act) could slow down development and favor established players with large legal and compliance teams.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+I will evaluate key pieces of evidence from the background and research report.
+
+*   **Evidence 1: Massive Investment Influx & High Valuations (e.g., Mistral).**
+    *   P(E | More labs) is high. Massive funding directly enables the expensive research required to become a leader.
+    *   P(E | Fewer labs) is low. Without this capital, new labs could not compete on compute.
+    *   **Likelihood Ratio:** Strongly favors more labs.
+
+*   **Evidence 2: Talent Mobility & Splintering (e.g., Anthropic, Hassabis rumor).**
+    *   P(E | More labs) is high. This is the primary mechanism for the creation of high-potential new labs.
+    *   P(E | Fewer labs) is low. If talent were not mobile, incumbents would consolidate their power.
+    *   **Likelihood Ratio:** Strongly favors more labs.
+
+*   **Evidence 3: Rising Costs and Incumbent Compute Advantage.**
+    *   P(E | Fewer labs) is high. This is the strongest argument for consolidation, as few entities can afford a $500M+ training run.
+    *   P(E | More labs) is moderate. Even with high costs, sovereign wealth funds and venture capitalists have shown a willingness to fund credible teams.
+    *   **Likelihood Ratio:** Moderately favors fewer labs.
+
+*   **Evidence 4: Decline in AI adoption in U.S. businesses.**
+    *   P(E | Fewer labs) is slightly higher. This could be a leading indicator of a cooling market and reduced VC funding, making it harder for new labs to get started.
+    *   P(E | More labs) is slightly lower. However, this indicator might relate more to enterprise adoption of current-gen AI rather than the frontier research that creates leading labs.
+    *   **Likelihood Ratio:** Weakly favors fewer labs.
+
+### 4. Bayesian Updating (Posterior)
+
+My prior was centered on 2-3 labs. The evidence presents a classic "unstoppable force vs. immovable object" scenario. The force is the immense amount of capital and talent trying to create new labs. The object is the massive cost and scale moat of the incumbents.
+
+*   **Update Step:** Let's start with the prior odds for "4 or more" labs vs. "3 or fewer". Based on my prior (λ≈2.5), the probability of 4+ is about 24%, and 3- is 76%. The prior odds are roughly 24/76 = 0.32 to 1.
+*   The combined evidence of massive funding and talent mobility is a very strong factor. I'll estimate a likelihood ratio of 3:1 in favor of "more labs" based on this.
+*   **Posterior Odds:** 0.32 * 3.0 = 0.96 to 1.
+*   **Posterior Probability:** 0.96 / (1 + 0.96) ≈ 49%. This update suggests the probability of having 4 or more labs is now close to 50%.
+
+This conceptual update shifts the center of my distribution upward. The initial base rate of ~2.15 labs seems too low. The new evidence pushes the expectation higher, likely into the 3-4 range. The distribution should be wide to account for the conflicting, high-impact forces.
+
+### 5. Red Team Thinking
+
+My analysis might be over-weighting the recent successes of Anthropic and Mistral. Perhaps they represent a unique window of opportunity that has now closed as incumbents consolidate power. The barrier to entry for creating a true GPT-5-level model might be so high that no new entity, regardless of initial funding, can achieve it within two years. This scenario would favor the "0 or 1" and "2 or 3" options.
+
+Conversely, I might be underestimating the potential for a paradigm shift. A breakthrough in algorithmic efficiency could dramatically lower costs, opening the door for many more players and pushing the outcome into the "6 or 7" or higher bins.
+
+To account for these possibilities, I will ensure my final distribution is not overly peaked. I will place the highest probability on "2 or 3", reflecting a continuation of the recent past, but assign a very substantial probability to "4 or 5" to reflect the accelerating effect of capital. I will also maintain a significant probability for "0 or 1" in case the incumbent moat proves insurmountable.
+
+### 6. Final Normalization
+
+I will now distribute the probability across the given options, ensuring they sum to 100%. I will make "2 or 3" the modal outcome, but with "4 or 5" as a very close second, reflecting the strong upward pressure from funding and talent mobility.
+
+0 or 1: 15%
+2 or 3: 39%
+4 or 5: 30%
+6 or 7: 12%
+8 or 9: 3%
+10 or more: 1%
+```
+
+### Grok [grok-4]
+```
+0 or 1: 20%  
+2 or 3: 35%  
+4 or 5: 25%  
+6 or 7: 12%  
+8 or 9: 5%  
+10 or more: 3%
+```
+
+📊 Forecast Run 20250909-223849
+Timestamp: 2025-09-09 22:45:55 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Will the Trump administration announce a suspension of habeas corpus before January 20, 2029?
+🔗 **URL:** https://www.metaculus.com/questions/37479/
+
+📝 **Summary**
+
+- Final Prediction: **5.95% YES**
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Historical Suspension of Habeas Corpus in the U.S.:** Rare, with notable instances during the Civil War and World War II. Base rate: <1% in peacetime.
+- **Executive Actions on Immigration:** More frequent, but rarely involve habeas corpus suspension. Base rate: ~5% for significant executive immigration actions.
+- **Limitations:** Historical context and legal constraints differ significantly from current political climate.
+
+### Recent developments (timeline bullets)
+- **2025-09-07** ↓ — Appeals court blocked use of Alien Enemies Act for deportations, limiting executive power.
+- **2025-09-09** ↓ — Supreme Court blocked expedited deportations, reinforcing due process rights.
+
+### Mechanisms & drivers (causal levers)
+- **Legal Challenges:** Large — Courts frequently block executive overreach.
+- **Political Climate:** Moderate — Polarized environment may push extreme measures.
+- **Public Opinion:** Moderate — Negative public reaction to rights suspension could deter action.
+- **International Relations:** Small — Diplomatic fallout from aggressive policies may influence decisions.
+- **Internal Administration Dynamics:** Moderate — Hardline advisors like Stephen Miller may push for suspension.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Legal Environment:** Strong judicial checks on executive power.
+- **Political Actors:** Presence of hardline advisors advocating for extreme measures.
+- **Public Scrutiny:** High media and public attention on immigration policies.
+- **Supreme Court Composition:** Conservative majority, but recent rulings show independence.
+
+### Bayesian update sketch (for the statistician)
+- **Prior:** Low probability (<5%) based on historical rarity and legal constraints.
+- **Evidence mapping:**
+  - ↓ Large — Recent court rulings against executive overreach.
+  - ↑ Moderate — Hardline advisors advocating for suspension.
+  - ↓ Moderate — Strong public and legal opposition.
+- **Net effect:** Posterior should move slightly down due to strong legal pushback.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators:**
+  - Increased rhetoric from administration on national security threats.
+  - New legal justifications or precedents supporting suspension.
+  - Changes in Supreme Court composition favoring executive power.
+- **DOWN indicators:**
+  - Continued court rulings against executive immigration actions.
+  - Public protests or backlash against rights suspension.
+  - Congressional opposition or legislative checks on executive power.
+
+### Caveats & pitfalls
+- **Uncertainty in Legal Interpretations:** Courts may interpret laws differently over time.
+- **Data Gaps:** Limited information on internal administration deliberations.
+- **Deception Risks:** Potential for misleading public statements or leaks.
+- **Regime Changes:** Political shifts could alter priorities or strategies.
+- **Definitional Gotchas:** Ambiguity in what constitutes a "suspension" of habeas corpus.
+
+Final Research Summary: The likelihood of the Trump administration suspending habeas corpus before January 20, 2029, remains low due to strong legal and public opposition, despite hardline internal advocacy. Watch for legal and political shifts that could alter this assessment.
+
+### Market Consensus Snapshot
+_Captured 2025-09-09 22:44:48 +0300 (Similarity threshold ≥0.60 on title match)._
+**Metaculus (community forecast):**
+- Will the Trump administration announce a suspension of habeas corpus before January 20, 2029? — unknown — n/a
+
+**Manifold (play-money odds):**
+- No sufficiently similar market found.
+
+_Sources: **Metaculus** aggregates user forecasts into a community prediction; **Manifold** odds come from user betting with play-money. Treat these as noisy evidence, not ground truth; they update continuously._
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": 0.05948417298700908,
+  "p10": 2.0405518490709326e-05,
+  "p50": 0.012097388559982953,
+  "p90": 0.18790768325912943,
+  "posterior_alpha": 0.25,
+  "posterior_beta": 3.9499999999999997
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the probability of the Trump administration announcing a suspension of habeas corpus before January 20, 2029, we will follow a structured Bayesian reasoning approach.
+
+1. **Base Rate (Prior) Selection**
+   - The historical base rate for the suspension of habeas corpus in the U.S. during peacetime is extremely low, less than 1%. This is due to the rarity of such actions outside of extreme circumstances like war.
+   - Given the context of executive actions on immigration, a slightly higher base rate of around 5% could be considered, reflecting the frequency of significant executive actions in this domain, though not specifically involving habeas corpus.
+
+2. **Comparison to Base Case**
+   - Similarities: The current situation involves executive actions on immigration, which is a common area for significant executive measures.
+   - Differences: The legal environment is currently characterized by strong judicial checks, as evidenced by recent court rulings against the administration's attempts to use the Alien Enemies Act for deportations. This is a significant deterrent compared to historical cases where habeas corpus was suspended.
+
+3. **Evidence Evaluation (Likelihoods)**
+   - **Recent Court Rulings**: The appeals court and Supreme Court have blocked the administration's attempts to bypass due process, indicating strong legal opposition. This evidence decreases the probability of suspension.
+     - Likelihood ratio: Low (P(E | H) < P(E | ~H))
+   - **Hardline Advisors**: The presence of advisors like Stephen Miller advocating for extreme measures increases the probability, but the impact is moderated by legal constraints.
+     - Likelihood ratio: Moderate (P(E | H) > P(E | ~H))
+   - **Public and Legal Opposition**: High public scrutiny and legal challenges further decrease the probability.
+     - Likelihood ratio: Low (P(E | H) < P(E | ~H))
+
+4. **Bayesian Updating (Posterior Probability)**
+   - Starting with a prior probability of around 5% based on executive actions, the strong legal opposition and recent court rulings significantly decrease this probability.
+   - Posterior odds = Prior odds × Likelihood ratio
+   - Given the strong evidence against the suspension, the posterior probability is adjusted downward, likely below 5%.
+
+5. **Red Team Thinking**
+   - Overconfidence could arise from underestimating the administration's willingness to push legal boundaries. However, the consistent legal pushback and public opposition are strong counterweights.
+   - Alternative scenarios include a significant national security event that could shift public and legal opinion, but these remain speculative.
+   - Adjustments: Consider a slightly higher probability if new legal justifications emerge, but current evidence supports a low probability.
+
+6. **Final Forecast**
+   - Considering the base rate, evidence, and potential alternative scenarios, the final forecast reflects a low probability of suspension due to strong legal and public opposition.
+
+Final: 3%
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Will the Trump administration announce a suspension of habeas corpus before January 20, 2029?
+
+## 1. Base Rate (Prior) Selection
+
+For this question, I need to establish an appropriate base rate for the suspension of habeas corpus in the United States.
+
+**Historical frequency:**
+- Habeas corpus has been suspended only twice in U.S. history:
+  - During the Civil War by President Lincoln (1861-1865)
+  - During World War II for Japanese Americans in Hawaii (1941-1944)
+
+Over approximately 250 years of U.S. history, habeas corpus suspension has occurred in only 2 instances, both during major wars/conflicts. This gives a historical base rate of about 0.8% per century, or roughly 3% over a presidential term during wartime.
+
+For a more specific prior, I should consider:
+- Presidential administrations that have considered or threatened suspension: Very few
+- Suspensions during non-wartime periods: None
+
+Given that we're looking at a specific administration over a defined period (until January 2029), and considering the rarity of this action, I'll set a conservative prior of **2%**.
+
+## 2. Comparison to Base Case
+
+**Similarities to base case:**
+- The U.S. still operates under the same constitutional framework that has historically limited habeas corpus suspension
+- Courts continue to serve as a check on executive power
+- The suspension clause in the Constitution remains unchanged
+
+**Differences from base case:**
+- The Trump administration has explicitly stated they are "actively looking at" suspension (per Stephen Miller)
+- The administration has already attempted to use the 1798 Alien Enemies Act, showing willingness to employ rarely-used legal mechanisms
+- The administration is framing immigration as an "invasion," potentially trying to meet the constitutional threshold
+- Modern courts have shown more willingness to check executive overreach than in previous eras
+- The Supreme Court has already blocked related attempts to circumvent due process
+
+These differences suggest both upward pressure (explicit consideration of suspension) and downward pressure (judicial resistance) on the probability.
+
+## 3. Evidence Evaluation
+
+**Evidence 1: Stephen Miller's statement about "actively looking at" suspension**
+- P(E|H): Very high (~0.9) - If suspension were to happen, such statements would likely precede it
+- P(E|~H): Moderate (~0.3) - Such statements could be political posturing without actual intent
+- Likelihood ratio: ~3.0
+- This evidence increases the probability
+
+**Evidence 2: Supreme Court blocking the use of Alien Enemies Act**
+- P(E|H): Moderate (~0.4) - If suspension were to happen, we might expect early judicial resistance
+- P(E|~H): High (~0.8) - If suspension won't happen, judicial checks would be a key reason
+- Likelihood ratio: ~0.5
+- This evidence decreases the probability
+
+**Evidence 3: Administration's framing of immigration as an "invasion"**
+- P(E|H): Very high (~0.95) - This framing would be necessary to justify suspension
+- P(E|~H): Moderate (~0.5) - Such rhetoric could be used for other policies without suspension
+- Likelihood ratio: ~1.9
+- This evidence increases the probability
+
+**Evidence 4: Historical rarity of habeas corpus suspension**
+- P(E|H): Low (~0.2) - If suspension were to happen, it would be historically anomalous
+- P(E|~H): Very high (~0.95) - The historical pattern strongly suggests non-suspension
+- Likelihood ratio: ~0.21
+- This evidence significantly decreases the probability
+
+## 4. Bayesian Updating
+
+Starting with prior odds of 2%:
+- Prior odds: 2/98 = 0.0204
+
+First update (Miller's statement):
+- Posterior odds = 0.0204 × 3.0 = 0.0612
+- Posterior probability = 0.0612/(1+0.0612) ≈ 5.8%
+
+Second update (Supreme Court blocking):
+- Posterior odds = 0.0612 × 0.5 = 0.0306
+- Posterior probability = 0.0306/(1+0.0306) ≈ 3.0%
+
+Third update (Invasion framing):
+- Posterior odds = 0.0306 × 1.9 = 0.0581
+- Posterior probability = 0.0581/(1+0.0581) ≈ 5.5%
+
+Fourth update (Historical rarity):
+- Posterior odds = 0.0581 × 0.21 = 0.0122
+- Posterior probability = 0.0122/(1+0.0122) ≈ 1.2%
+
+After these updates, the posterior probability is approximately 1.2%.
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the determination of hardline advisors like Miller
+- I might be overestimating the effectiveness of judicial checks in a crisis scenario
+- I haven't fully accounted for potential future events (e.g., terrorist attacks) that could create pretext
+- The time horizon (until 2029) is quite long, allowing for multiple attempts and changing circumstances
+
+**Alternative scenarios:**
+- A major security incident could dramatically increase the likelihood of suspension
+- Court composition could change, potentially weakening judicial resistance
+- Congressional dynamics could shift, affecting political constraints
+
+**Best alternative forecast:**
+A reasonable alternative forecast might be 5-10%, arguing that:
+- The explicit consideration by the administration is unprecedented
+- The administration has shown willingness to test legal boundaries
+- The time horizon is long enough for multiple attempts
+- A future crisis could create more favorable conditions for suspension
+
+**Rebuttal to alternative:**
+- Even during major crises (9/11, COVID-19), habeas corpus wasn't suspended
+- Courts have consistently defended habeas corpus rights
+- Political and public backlash would be severe
+- Legal alternatives exist that don't require formal suspension
+
+Considering these points, I'll adjust my forecast slightly upward to account for the long time horizon and potential for unforeseen crises, but maintain a low probability given the strong historical and legal constraints.
+
+## 6. Final Forecast
+
+After considering the base rate, evidence, and potential blind spots, I assess the probability that the Trump administration will announce a suspension of habeas corpus before January 20, 2029 at 3%.
+
+Final: 3%
+```
+
+### Gemini [gemini-2.5-pro]
+```
+### 1. Base Rate (Prior) Selection
+The event in question is the suspension of the writ of habeas corpus by the U.S. executive branch. This is an exceptionally rare event in American history. The writ has been suspended on a national or significant regional level only a handful of times, most notably by President Lincoln during the Civil War and in Hawaii during World War II. Both instances occurred during times of overt, violent conflict on a scale that is not currently present.
+
+The reference class is the number of 4-year presidential terms in U.S. history. There have been approximately 60 such terms since 1789. A suspension has occurred in perhaps 2-3 of these terms, suggesting a raw base rate of 3-5%. However, those terms involved existential military conflicts. A more appropriate reference class is peacetime presidential terms, during which a suspension has essentially never happened. Therefore, the base rate for a generic peacetime administration is extremely low, likely less than 1%.
+
+Given the unique political context but sticking to the historical rarity, I will set a prior probability of **P(H) = 2%**. This is higher than a strict historical peacetime rate to account for a generally more aggressive use of executive power in the modern era, but still reflects the event's extreme rarity. In odds, this is 2:98 or 1:49.
+
+### 2. Comparison to Base Case
+**Similarities:**
+- The administration is using the rhetoric of a national crisis ("invasion") to justify extraordinary measures, which is analogous to the "Rebellion or Invasion" clause in the Constitution that was used historically.
+- The administration is led by a president who has previously demonstrated a willingness to challenge established legal and constitutional norms.
+
+**Differences:**
+- **Nature of the "Invasion":** The current "invasion" is a rhetorical framing of immigration, not a military assault by a foreign army as understood in the 18th and 19th centuries. This legal interpretation is novel and highly contestable.
+- **Institutional Constraints:** The modern judiciary, media, and civil society organizations (like the ACLU) are far more powerful and organized checks on executive power than in previous eras where suspension occurred.
+- **Political Climate:** While polarized, the country is not in a state of civil war or declared world war, making the political justification for such a drastic measure much weaker than in historical cases.
+
+The differences, particularly the weakness of the legal justification and the strength of institutional opposition, suggest that a suspension is significantly less likely now than it was during the Civil War.
+
+### 3. Evidence Evaluation (Likelihoods)
+I will evaluate two key pieces of evidence from the provided text.
+
+**Evidence 1: Senior advisor Stephen Miller stated the administration is "actively looking at" suspending habeas corpus.**
+- **P(E1 | H):** If the administration were to announce a suspension (H), it is very likely that senior advisors would be discussing it and signaling this intent publicly, either as a trial balloon or to prepare the political ground. I estimate P(E1 | H) ≈ 80%.
+- **P(E1 | ~H):** If the administration were *not* going to announce a suspension (~H), it is still plausible that a hardline advisor like Miller would float the idea as rhetoric to energize the base and project strength, with no serious plan for implementation. However, this is a very specific and extreme threat to make. I estimate P(E1 | ~H) ≈ 10%.
+- **Likelihood Ratio (LR):** P(E1 | H) / P(E1 | ~H) = 80% / 10% = 8. This evidence strongly increases the probability of a suspension.
+
+**Evidence 2: The Supreme Court and an appeals court recently blocked related, but less extreme, executive actions on immigration.**
+- **P(E2 | H):** If the administration is to announce a suspension (H), it might do so in *reaction* to being thwarted by the courts on lesser measures, viewing it as an escalation necessary to achieve its goals. However, these rulings also signal that the judiciary is a formidable obstacle that would almost certainly strike down a suspension, which might deter the attempt. Let's balance these and estimate P(E2 | H) ≈ 30%.
+- **P(E2 | ~H):** If the administration is *not* going to announce a suspension (~H), it is very likely because they recognize the legal barriers are too high. These court rulings are a clear demonstration of those barriers. Therefore, P(E2 | ~H) is high, let's say ≈ 70%.
+- **Likelihood Ratio (LR):** P(E2 | H) / P(E2 | ~H) = 30% / 70% ≈ 0.43. This evidence decreases the probability, as it confirms the strength of the primary institutional constraint.
+
+### 4. Bayesian Updating (Posterior Probability)
+1.  **Start with the Prior:** P(H) = 2% (Prior Odds = 1:49).
+2.  **Update with Evidence 1 (Miller's statement):**
+    -   Posterior Odds = Prior Odds × LR₁ = (1/49) × 8 = 8/49.
+    -   This updates the probability to P(H) = 8 / (8 + 49) ≈ 14%.
+3.  **Update with Evidence 2 (Court rulings):**
+    -   New Posterior Odds = (8/49) × LR₂ = (8/49) × 0.43 ≈ 3.44/49.
+    -   This gives a final probability of P(H) = 3.44 / (3.44 + 49) ≈ **6.5%**.
+
+The final posterior probability is significantly higher than the historical base rate, driven by the administration's explicit statement of intent. However, it remains low overall due to the powerful and recently demonstrated constraints from the judicial branch.
+
+### 5. Red Team Thinking
+My forecast of ~7% could be too low. The resolution criteria is an "announcement," not a legally successful and sustained suspension. An administration might make such an announcement precisely to provoke a constitutional crisis and rally its base, even if it knows the courts will immediately block it. I may be over-weighting the deterrent effect of the courts and under-weighting the political incentive to perform such a norm-breaking act.
+
+Conversely, the forecast could be too high. This could all be political theater. The institutional barriers, including not just the courts but also potential refusal from the Department of Justice, Department of Defense, and military leadership to enforce such an order, might make it a non-starter internally, regardless of what advisors say publicly.
+
+Considering these factors, the 6.5% figure seems to be a reasonable balance. It reflects a low-probability event (roughly 1-in-15) that is nonetheless a real possibility due to the unique political actors and their stated intentions. I will round up slightly to 7% to account for the long time horizon (until Jan 2029) and the possibility of an intervening crisis that could be used as a pretext.
+
+### Final Forecast
+The final probability is based on a very low historical base rate, updated significantly upward by the administration's explicit rhetoric and intent, and then revised downward by the strong evidence of judicial opposition. The result is a low but non-trivial probability for this high-impact event.
+
+Final: 7%
+```
+
+### Grok [grok-4]
+```
+### 1. Base Rate (Prior) Selection
+An appropriate base rate for the suspension of habeas corpus in the U.S. comes from historical precedents. The writ has been suspended only a handful of times in U.S. history, notably by President Lincoln during the Civil War (1861-1863) and in Hawaii during World War II (1941-1944), both in contexts of active war or rebellion. In peacetime or non-emergency periods, such suspensions are exceedingly rare—essentially never occurring in over 200 years outside those instances. Using data from constitutional law analyses (e.g., from sources like the Congressional Research Service), the base rate for any U.S. administration suspending habeas corpus in a given 4-year term during peacetime is well below 1%. For broader executive overreach on immigration (e.g., significant policy shifts like the Muslim Ban or family separations under Trump 1.0), the rate is higher, around 5% for actions that push legal boundaries but don't reach habeas suspension. I choose a prior of 2% (or odds of 1:49) as a balanced starting point: it anchors on the historical rarity (<1%) while slightly elevating for the frequency of bold immigration actions in polarized eras, avoiding over-optimism about institutional stability.
+
+### 2. Comparison to Base Case
+The current situation is similar to historical base cases in that habeas suspensions have typically required a perceived existential threat like war or invasion, and the Constitution explicitly limits it to "cases of rebellion or invasion" when public safety requires it. Here, the Trump administration is invoking an "invasion" narrative tied to immigration and gangs like Tren de Aragua, echoing wartime justifications but without actual armed conflict. It's different due to the modern political climate: a highly polarized environment with hardline advisors like Stephen Miller pushing extreme measures, which wasn't as prominent in most peacetime administrations. However, strong judicial checks (e.g., recent Supreme Court and appeals court blocks on related actions) and public scrutiny make it less feasible than in eras with weaker oversight, like the 1860s or 1940s. These differences matter because they introduce significant barriers—legal pushback reduces the odds of success, while internal advocacy slightly increases them, suggesting a net downward adjustment from the base rate.
+
+### 3. Evidence Evaluation (Likelihoods)
+- **Stephen Miller's statement on considering suspension (May 2025):** This is moderately supportive evidence. If suspension happens (H), such rhetoric is likely (P(E|H) ≈ 80%, as administrations often signal intent). If not (~H), it's less common but still possible as posturing (P(E|~H) ≈ 30%, given Miller's history of provocative statements). Likelihood ratio: ~2.7 (increases probability moderately).
+- **Supreme Court blocking Alien Enemies Act use and emphasizing habeas rights (September 2025):** This is strong opposing evidence. Under H, courts might still block precursors but are less likely to do so decisively if suspension is imminent (P(E|H) ≈ 40%). Under ~H, such blocks are highly expected given judicial norms (P(E|~H) ≈ 90%). Likelihood ratio: ~0.44 (decreases probability significantly).
+- **Appeals court block on AEA (September 7, 2025):** Similar to above, this reinforces judicial restraint. P(E|H) ≈ 50% (courts could allow some leeway); P(E|~H) ≈ 85%. Likelihood ratio: ~0.59 (decreases probability moderately).
+- **Broader context (polarized climate, public opinion, internal dynamics):** Polarization and advisors like Miller are somewhat likely under H (P(E|H) ≈ 70%) but also common under ~H (P(E|~H) ≈ 50%), yielding a mild ratio of ~1.4 (slight increase). Public opposition is more likely under ~H (ratio ~0.7, slight decrease).
+
+Overall, the evidence leans negative due to legal blocks outweighing rhetorical signals.
+
+### 4. Bayesian Updating (Posterior Probability)
+Starting with prior probability P(H) = 2% (prior odds = 2/98 ≈ 0.0204).
+
+First explicit update: Incorporate the Supreme Court block (strongest evidence, LR ≈ 0.44). Posterior odds = 0.0204 × 0.44 ≈ 0.009. Posterior P(H) = 0.009 / (1 + 0.009) ≈ 0.9%.
+
+Next, fold in Miller's statement (LR ≈ 2.7): Posterior odds = 0.009 × 2.7 ≈ 0.0243. Posterior P(H) ≈ 2.4%.
+
+Incorporate appeals court block (LR ≈ 0.59): Posterior odds = 0.0243 × 0.59 ≈ 0.0143. Posterior P(H) ≈ 1.4%.
+
+Finally, qualitative net for remaining evidence (mild net LR ≈ 0.8 from polarization/public factors): Posterior odds ≈ 0.0143 × 0.8 ≈ 0.0114. Posterior P(H) ≈ 1.1%.
+
+The resulting posterior is around 1%, reflecting a slight downward shift from the prior due to dominant legal evidence. Confidence remains low (high uncertainty) over the 3.5-year horizon, as political shifts could emerge, but evidence doesn't justify big swings.
+
+### 5. Red Team Thinking
+My forecast might be overconfident in judicial stability—courts have occasionally deferred to executives in national security claims (e.g., Korematsu during WWII), and a conservative Supreme Court could pivot if framed as an "invasion." Blind spot: I may undervalue tail risks like escalating border crises or a major incident (e.g., gang violence) providing pretext, which could spike odds to 10-20% in alternative scenarios. The best alternative forecast might be 5-10%, arguing that Trump's history of norm-breaking (e.g., January 6) and Miller's influence make this more plausible than history suggests; rebuttal is that post-2020 institutional reforms and recent rulings show stronger checks, preventing overreach. To account for tails, I'd widen implicit uncertainty: e.g., 10th percentile at 0.5% (if courts remain firm), 90th at 5% (if crises escalate). This nudges my point estimate slightly up for humility, but calibration advice warns against big swings without strong evidence.
+
+Final: 2%
+```
+

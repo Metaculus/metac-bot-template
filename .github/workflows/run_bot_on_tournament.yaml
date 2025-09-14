@@ -3,7 +3,10 @@ name: Forecast on AIB Tournament (fresh research + fresh GTMC1 actors)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/20 * * * *" # every 20 minutes (adjust if needed)
+    - cron: "*/20 * * * *"  # every 20 minutes
+
+permissions:
+  contents: write
 
 concurrency:
   group: ${{ github.workflow }}
@@ -14,57 +17,98 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Routing
-      RUN_PLAYLIST: "tournament"
-      METACULUS_COLLECTION_SLUG_TOURNAMENT: "fall-aib-2025"
-      TOURNAMENT_ID: "fall-aib-2025"
+      # ---- Required / identity ----
+      GIT_SHA: ${{ github.sha }}
+      METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+      TOURNAMENT_ID: fall-aib-2025
       SUBMIT_PREDICTION: "1"
 
-      # Required
-      METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+      # ---- Research providers ----
+      ENABLE_SERPER: "1"
+      SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+      ENABLE_SERPER_WEB: "1"
 
-      # GPT-* via OpenRouter (only this leg via OR)
+      ENABLE_ASKNEWS: "1"
+      ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      ASKNEWS_CLIENT_SECRET: ${{ secrets.ASKNEWS_CLIENT_SECRET }}
+      ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      ASKNEWS_STRATEGIES: "news knowledge,latest news,default"
+      ASKNEWS_ARTICLE_LIMIT: "8"
+      ASKNEWS_PLAN_MAX_ARTICLES: "8"
+      ASKNEWS_TOPK: "8"
+      ASKNEWS_PROBE_N: "1"
+      ASKNEWS_PROBE_TRIES: "2"
+      ASKNEWS_PROBE_WAIT_SEC: "2"
+      ASKNEWS_BREAK_ON_429: "1"
+
+      # ---- LLM providers ----
       USE_OPENROUTER: "1"
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      OPENAI_BASE_URL: "https://openrouter.ai/api/v1"
-      OPENROUTER_GPT5_ID: "openai/gpt-4o"
-      OPENROUTER_GPT5_THINK_ID: "openai/gpt-4o"
-      OPENROUTER_FALLBACK_ID: "openai/gpt-4o"
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENROUTER_BASE_URL: https://openrouter.ai/api/v1
+      OPENROUTER_FALLBACK_ID: openai/gpt-4o
+      OPENROUTER_GPT5_ID: openai/gpt-4o
+      OPENROUTER_GPT5_THINK_ID: openai/gpt-4o
+      OPENROUTER_CLAUDE37_ID: anthropic/claude-3.7-sonnet
+      OR_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
-      # Anthropic Claude via OpenRouter
-      USE_ANTHROPIC: "1"
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      ANTHROPIC_BASE_URL: "https://openrouter.ai/api/v1"
-      OPENROUTER_CLAUDE37_ID: "anthropic/claude-3.7-sonnet"
-
-      # Google Gemini (direct)
       USE_GOOGLE: "1"
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-      GEMINI_MODEL: "gemini-2.5-pro"
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: gemini-2.5-pro
+      GEMINI_MODEL_ID: gemini-2.5-pro
+      GEMINI_CALL_TIMEOUT_SEC: "180"
+      GPT5_CALL_TIMEOUT_SEC: "180"
 
-      # xAI Grok (direct)
       ENABLE_GROK: "1"
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      XAI_GROK_ID: "grok-4"
+      XAI_BASE_URL: https://api.x.ai/v1
+      XAI_GROK_ID: grok-4
+      GROK_MODEL_ID: grok-4
+      GROK_CALL_TIMEOUT_SEC: "240"
 
-      # AskNews (for research)
-      enable_asknews: "1"
-      ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-      ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+      # ---- Optional providers ----
+      PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+      EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL:
 
-      # Market snapshot tuning
+      # ---- Spagbot behavior ----
       ENABLE_MARKET_SNAPSHOT: "1"
-      MARKET_SNAPSHOT_MAX_MATCHES: "3"
-      METACULUS_INCLUDE_RESOLVED: "1"
+      MARKET_SNAPSHOT_MAX_MATCHES: "10"
+      LLM_MAX_CONCURRENCY: "4"
+      SPAGBOT_DISABLE_CLASSIFIER_CACHE: "1"
+      SPAGBOT_DISABLE_RESEARCH_CACHE: "1"  # fresh research
 
-      #Model temperature tuning
+      # ---- Knobs ----
+      RESEARCH_TEMP: "0.10"
+      RESEARCH_TOP_P: "0.90"
+      MIN_ANCHOR_MATCH: "2"
+      SALVAGE_MIN_MATCH: "1"
+      REQUIRE_YEAR_IF_PRESENT: "0"
       FORECAST_TEMP: "0.00"
       FORECAST_TOP_P: "0.10"
-      RESEARCH_TEMP: "0.10"
-      RESEARCH_TOP_P: "1.00"
+      GTMC1_ACTIVATION_THRESHOLD: "0.50"
+      HUMAN_LOG_MODEL_RAW_MAX_CHARS: "5000"
+      HUMAN_LOG_RESEARCH_MAX_CHARS: "15000"
+      RESEARCH_SNIPPET_MAX_CHARS: "600"
+
+      # ---- CSV output ----
+      FORECASTS_CSV_PATH: forecasts.csv
+
+            # Log GitHub Commit config 
+      HUMAN_LOG_EXT: md
+      DISABLE_GIT_LOGS: false
+      COMMIT_LOGS: true 
+      GIT_LOG_MESSAGE:"chore(logs): append forecasts & run logs"
+      GIT_REMOTE_NAME: origin
+      GIT_BRANCH_NAME: main 
+      
+      # ---- Cost table ----
+      MODEL_COSTS_JSON: |
+        {"openai/gpt-4o":{"prompt":2.5,"completion":10.0},"anthropic/claude-3.7-sonnet":{"prompt":3.0,"completion":15.0},"gemini-2.5-pro":{"prompt":1.25,"completion":10.0},"grok-4":{"prompt":3.0,"completion":15.0}}
 
     steps:
-      - name: Check out repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -73,61 +117,32 @@ jobs:
           python-version: "3.11"
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+        run: pipx install poetry
 
-      - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+      - name: Install deps
+        run: poetry install --no-interaction --no-ansi
 
-      - name: Purge research + actor caches (tournament runs only)
+      - name: Run Spagbot (AIB Tournament)
         run: |
-          rm -f cache/research_llm__*.json || true
-          rm -f cache/actors__*.json || true
+          poetry run python run_spagbot.py --mode tournament --limit 20 --submit --purpose fall_aib_2025
 
-      # Optional: quick slug sanity check
-      - name: "Preflight: verify collection slug returns open questions"
-        shell: bash
+      - name: Commit logs & CSV (if changed)
         run: |
-          set -euo pipefail
-          COLL="${METACULUS_COLLECTION_SLUG_TOURNAMENT}"
-          code=$(curl -s -o /tmp/coll.json -w "%{http_code}" \
-            -H "Authorization: Token ${METACULUS_TOKEN}" \
-            "https://www.metaculus.com/api2/questions/?collection=${COLL}&status=open&limit=1")
-          echo "HTTP: $code"
-          if [ "$code" != "200" ]; then
-            echo "❌ Bad response:"; cat /tmp/coll.json; exit 1
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add forecast_logs/** forecasts.csv || true
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: AIB tournament forecasts [skip ci]"
+            git push
+          else
+            echo "No new forecast data to commit."
           fi
-          jq .results[0].id /tmp/coll.json || true
 
-      - name: Run Spagbot (fresh research + actors)
-        run: |
-          poetry run python spagbot.py --mode tournament --fresh-research
-
-      - name: Git commit any changes
-        run: |
-                git config user.name "github-actions[bot]"
-                git config user.email "github-actions[bot]@users.noreply.github.com"
-                git add forecasts.csv forecasts_by_model.csv forecasts_mcq_wide.csv
-                if ! git diff --cached --quiet; then
-                  git commit -m "chore: update forecast data from spagbot run [skip ci]"
-                  git push
-                else
-                  echo "No new forecast data to commit."
-                fi
-                
-      - name: Upload Spagbot outputs (logs, CSVs, calibration)
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: spagbot-run-${{ github.run_id }}
-          if-no-files-found: warn
-          retention-days: 180
+          name: spagbot-tournament-run-${{ github.run_id }}
           path: |
             forecast_logs/**
-            logs/**
             forecasts.csv
-            forecasts_by_model.csv
-            data/calibration_advice.txt

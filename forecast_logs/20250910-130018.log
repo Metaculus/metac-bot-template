@@ -1,0 +1,353 @@
+📊 Forecast Run 20250910-130018
+Timestamp: 2025-09-10 13:03:05 +0300
+============================================================
+
+------------------------------------------------------------
+
+❓ **Question:** Before 2030, how many new AI labs will be leading labs within 2 years of their founding?
+🔗 **URL:** https://www.metaculus.com/questions/22427/
+
+📝 **Summary**
+
+- Final Prediction (per option):
+  - 0 or 1: 17.38%
+  - 2 or 3: 36.41%
+  - 4 or 5: 25.27%
+  - 6 or 7: 10.40%
+  - 8 or 9: 5.82%
+  - 10 or more: 4.74%
+
+------------------------------------------------------------
+
+## RESEARCH
+CALIBRATION GUIDANCE (auto-generated weekly):
+BINARY CALIBRATION
+- No resolved binary questions (with pre-resolution forecasts) yet.
+- Advice: keep using base rates + small evidence-weighted updates; avoid big swings.
+
+MULTIPLE-CHOICE CALIBRATION (Top-1)
+- No resolved MCQ questions (with pre-resolution forecasts) yet.
+
+NUMERIC CALIBRATION (PIT-lite + CRPS)
+- No resolved numeric questions (with pre-resolution forecasts) yet.
+- When numeric results exist, we’ll check p10/p50/p90 coverage and CRPS.
+
+General takeaway: apply **small** nudges only where gaps are consistent with decent sample sizes (≥10).
+— end calibration —
+
+### Reference class & base rates
+- **Reference Class 1**: AI labs founded since 2010; base rate: ~1-2 labs become leading within 2 years.
+- **Reference Class 2**: Tech startups achieving top industry status within 2 years; base rate: ~5-10%.
+- **Limitations**: Rapid AI advancements and market dynamics may skew historical base rates.
+
+### Recent developments (timeline bullets)
+- [2023-06-01] ↑ — Mistral AI partners with Microsoft, indicating rapid ascent potential.
+- [2024-04-15] ↑ — Anthropic joins top 5, showing new labs can quickly become leaders.
+- [2024-08-10] ↓ — Regulatory scrutiny on AI labs increases, potentially slowing new entrants.
+
+### Mechanisms & drivers (causal levers)
+- **Investment influx**: Large (↑) — Significant funding accelerates lab development.
+- **Talent mobility**: Moderate (↑) — Experienced personnel founding new labs.
+- **Regulatory environment**: Moderate (↓) — Increased scrutiny may hinder rapid growth.
+- **Technological breakthroughs**: Large (↑) — Innovations can propel labs to leadership.
+- **Market competition**: Moderate (↓) — Intense competition may limit new entrants' success.
+
+### Differences vs. the base rate (what’s unusual now)
+- **Increased funding**: More venture capital available for AI startups.
+- **Talent concentration**: High mobility of skilled AI researchers.
+- **Regulatory landscape**: Heightened focus on AI safety and ethics.
+- **Technological acceleration**: Faster pace of AI advancements.
+- **Global interest**: Broader international participation in AI development.
+
+### Bayesian update sketch (for the statistician)
+- **Prior**: Assume a prior of 2-3 new leading labs by 2030, equivalent n = 10.
+- **Evidence mapping**:
+  - ↑ Large: Investment influx and talent mobility.
+  - ↓ Moderate: Regulatory environment and market competition.
+  - ↑ Moderate: Technological breakthroughs.
+- **Net effect**: Posterior should move slightly up, suggesting a modest increase in expected new leading labs.
+
+### Indicators to watch (leading signals; next weeks/months)
+- **UP indicators**:
+  - New major funding rounds for AI startups.
+  - High-profile talent moves to new labs.
+  - Breakthrough AI technologies announced.
+- **DOWN indicators**:
+  - Increased regulatory actions against AI labs.
+  - Consolidation trends among existing AI leaders.
+  - Public backlash against AI technologies.
+
+### Caveats & pitfalls
+- **Uncertainty in technological pace**: Breakthroughs are unpredictable.
+- **Data gaps**: Limited historical data on rapid lab ascension.
+- **Deception risks**: Labs may overstate capabilities.
+- **Regime changes**: Policy shifts could alter the landscape.
+- **Definitional gotchas**: Ambiguities in what constitutes a "leading" lab.
+
+Final Research Summary: The likelihood of 2-3 new AI labs becoming leaders by 2030 is slightly higher than historical trends suggest, driven by increased investment and talent mobility, but tempered by regulatory challenges.
+
+------------------------------------------------------------
+
+## GTMC1 DETAILS
+_GTMC1 not used for this question._
+
+------------------------------------------------------------
+
+## BAYES-MC DETAILS
+```json
+{
+  "mean": [
+    0.17380543393223583,
+    0.3640537781279656,
+    0.252676398409026,
+    0.10395246179054086,
+    0.0581609628830794,
+    0.047350964857152414
+  ],
+  "p10": [
+    0.008171566595457685,
+    0.08490424902375178,
+    0.029189319711517385,
+    0.0004914311891270323,
+    3.466921537050041e-06,
+    2.3441816891437834e-07
+  ],
+  "p50": [
+    0.11486973035446672,
+    0.3367159560735201,
+    0.2042531034829334,
+    0.041929694983392565,
+    0.008069956512135282,
+    0.0036662344192867264
+  ],
+  "p90": [
+    0.4357943271388912,
+    0.6859303457365105,
+    0.5555884216283572,
+    0.30678091458906037,
+    0.18716620778969797,
+    0.15509502590950786
+  ],
+  "posterior_alpha": [
+    0.6300000000000001,
+    1.3199999999999998,
+    0.8999999999999999,
+    0.37000000000000005,
+    0.21000000000000002,
+    0.17000000000000004
+  ]
+}
+```
+
+------------------------------------------------------------
+
+## MODEL REASONING (RAW)
+### OpenRouter-Default [openai/gpt-4o]
+```
+To forecast the number of new AI labs that will become leading labs within two years of their founding by 2030, we will follow a structured Bayesian reasoning approach.
+
+### 1. Base Rate (Prior) Selection
+
+- **Option 1 (0 or 1)**: Historically, the base rate for AI labs founded since 2010 becoming leading within two years is about 1-2 labs. Given the historical context, this option aligns with the lower end of the base rate.
+- **Option 2 (2 or 3)**: This aligns with the historical base rate of 1-2 labs, slightly adjusted upwards due to recent trends and developments.
+- **Option 3 (4 or 5)**: This is higher than the historical base rate but could be plausible given the increased investment and talent mobility.
+- **Option 4 (6 or 7)**: This is significantly higher than historical trends and would require substantial changes in the industry dynamics.
+- **Option 5 (8 or 9)**: This is very unlikely based on historical data and current evidence.
+- **Option 6 (10 or more)**: This is extremely unlikely given the historical base rate and current evidence.
+
+### 2. Comparison to Base Case
+
+- **Similarities**: The historical base rate provides a starting point, with 1-2 labs typically becoming leaders within two years.
+- **Differences**: Current dynamics include increased funding, talent mobility, and technological advancements, which could increase the number of new leading labs. However, regulatory scrutiny and market competition could counterbalance these factors.
+
+### 3. Evidence Evaluation (Likelihoods)
+
+- **Investment Influx**: Likely to increase the number of leading labs (↑).
+- **Talent Mobility**: Likely to increase the number of leading labs (↑).
+- **Regulatory Environment**: Likely to decrease the number of leading labs (↓).
+- **Technological Breakthroughs**: Likely to increase the number of leading labs (↑).
+- **Market Competition**: Likely to decrease the number of leading labs (↓).
+
+### 4. Bayesian Updating (Posterior)
+
+- **Prior for 2 or 3 labs**: Assume a prior probability of 30% based on historical trends.
+- **Evidence Update**: Given the positive evidence (investment, talent, technology) and negative evidence (regulation, competition), the likelihood ratio slightly favors an increase.
+- **Posterior for 2 or 3 labs**: Adjust upwards to 35% to reflect the net positive evidence.
+
+### 5. Red Team Thinking
+
+- **Overconfidence Check**: Consider the possibility of unexpected regulatory changes or technological stagnation.
+- **Alternative Scenarios**: A sudden breakthrough or regulatory relaxation could lead to more labs becoming leaders.
+- **Adjustments**: Slightly increase the probability for 4 or 5 labs to account for potential underestimation of positive factors.
+
+### 6. Final Normalization
+
+Ensure probabilities sum to approximately 100% and reflect the evidence and reasoning.
+
+### 7. Output Format
+
+Option_1: 20%  
+Option_2: 35%  
+Option_3: 25%  
+Option_4: 10%  
+Option_5: 5%  
+Option_6: 5%  
+
+These probabilities reflect a modest increase in the expected number of new leading AI labs due to positive industry trends, tempered by regulatory and competitive challenges.
+```
+
+### Claude-3.7-Sonnet (OR) [anthropic/claude-3.7-sonnet]
+```
+# Forecasting New Leading AI Labs by 2030
+
+## 1. Base Rate (Prior) Selection
+
+I'll establish base rates for each option by examining historical patterns of AI labs becoming "leading" within 2 years of founding:
+
+**Historical examples of rapid ascension:**
+- Anthropic: Founded in 2021, became a leading lab within ~2 years
+- Mistral AI: Founded in 2023, quickly rose to prominence
+- Cohere: Founded in 2019, took slightly longer to reach top status
+
+Looking at the period since ~2015, we've seen approximately 2-3 labs achieve "leading" status within 2 years of founding. With about 5 years remaining until 2030, and considering the accelerating pace of AI development, I'll use this as my starting point.
+
+**Initial base rates:**
+- 0 or 1: 15% (conservative estimate based on potential market saturation)
+- 2 or 3: 35% (aligns with recent historical patterns)
+- 4 or 5: 25% (slightly higher than historical rate due to acceleration)
+- 6 or 7: 15% (possible but requires significant acceleration)
+- 8 or 9: 7% (would require substantial disruption)
+- 10 or more: 3% (extremely unlikely given resource constraints)
+
+## 2. Comparison to Base Case
+
+**Similarities to base rate scenario:**
+- Continued strong interest in AI development
+- Availability of talent from existing labs
+- Precedent for successful rapid ascension (Anthropic, Mistral)
+
+**Key differences:**
+- Increased competition: More established players now than in previous years
+- Higher capital requirements: Leading labs now require billions in investment
+- Regulatory environment: Growing scrutiny may slow new entrants
+- Technological maturity: Harder to differentiate as core technologies mature
+- Talent concentration: Top AI talent increasingly concentrated in existing labs
+
+These differences suggest both positive and negative pressures on new lab formation and success.
+
+## 3. Evidence Evaluation (Likelihoods)
+
+**Evidence 1: Talent mobility and lab formation patterns**
+- P(E|H="2 or 3") is high: Consistent with observed patterns of researchers leaving to start new labs
+- P(E|H="0 or 1") is low: Would require unusual talent retention
+- P(E|H="6 or more") is moderate: Possible but would require acceleration of current trends
+
+**Evidence 2: Investment landscape**
+- P(E|H="4 or 5") is moderate-high: Consistent with current investment enthusiasm
+- P(E|H="0 or 1") is low: Would require investment drying up
+- P(E|H="10 or more") is low: Would require unprecedented investment levels
+
+**Evidence 3: Regulatory environment**
+- P(E|H="2 or 3") is high: Consistent with moderate regulatory pressure
+- P(E|H="6 or more") is low: Would require minimal regulatory barriers
+- P(E|H="0 or 1") is moderate: Possible if regulation becomes extremely restrictive
+
+**Evidence 4: Technological differentiation opportunities**
+- P(E|H="4 or 5") is moderate: Consistent with some new breakthrough opportunities
+- P(E|H="8 or more") is very low: Would require many distinct breakthrough areas
+- P(E|H="0 or 1") is moderate: Possible if differentiation becomes extremely difficult
+
+## 4. Bayesian Updating (Posterior)
+
+Let's update on the evidence of talent mobility and lab formation patterns:
+
+For "2 or 3" option:
+- Prior probability: 35%
+- Prior odds: 0.35/0.65 ≈ 0.54
+- Likelihood ratio: ~1.5 (moderately favors this hypothesis)
+- Posterior odds: 0.54 × 1.5 ≈ 0.81
+- Posterior probability: 0.81/(1+0.81) ≈ 45%
+
+For "4 or 5" option:
+- Prior probability: 25%
+- Prior odds: 0.25/0.75 ≈ 0.33
+- Likelihood ratio: ~1.2 (slightly favors this hypothesis)
+- Posterior odds: 0.33 × 1.2 ≈ 0.40
+- Posterior probability: 0.40/(1+0.40) ≈ 29%
+
+For "0 or 1" option:
+- Prior probability: 15%
+- Prior odds: 0.15/0.85 ≈ 0.18
+- Likelihood ratio: ~0.7 (evidence weighs against this hypothesis)
+- Posterior odds: 0.18 × 0.7 ≈ 0.13
+- Posterior probability: 0.13/(1+0.13) ≈ 11%
+
+Continuing with qualitative updates for other options based on all evidence:
+- "6 or 7" shifts down slightly to ~10% due to regulatory concerns
+- "8 or 9" shifts down to ~3% due to difficulty of technological differentiation
+- "10 or more" remains at ~2% as an extreme tail scenario
+
+## 5. Red Team Thinking
+
+**Potential blind spots:**
+- I may be underestimating the potential for geopolitical competition driving new lab formation (e.g., national AI initiatives)
+- I might be overestimating barriers to entry as compute costs could decrease
+- The definition of "leading" may evolve, making it easier or harder to qualify
+- I may be underestimating the potential for existing labs to fragment further
+
+**Alternative scenarios:**
+- Regulatory crackdown scenario: Stringent global AI regulations could severely limit new entrants, making "0 or 1" more likely
+- Breakthrough scenario: A fundamental AI breakthrough could spawn multiple new approaches, making "6 or more" more likely
+- Consolidation scenario: Existing leaders could absorb most talent and capital, making "0 or 1" more likely
+
+After considering these factors, I'll adjust my probabilities slightly:
+- Increase "0 or 1" from 11% to 13% to account for consolidation risks
+- Decrease "2 or 3" from 45% to 42% to account for uncertainty
+- Increase "4 or 5" from 29% to 30% to account for geopolitical factors
+- Maintain "6 or 7" at 10%
+- Increase "8 or 9" from 3% to 4% to account for breakthrough potential
+- Decrease "10 or more" from 2% to 1% as still extremely unlikely
+
+## 6. Final Normalization
+
+Ensuring probabilities sum to 100%:
+- 0 or 1: 13%
+- 2 or 3: 42%
+- 4 or 5: 30%
+- 6 or 7: 10%
+- 8 or 9: 4%
+- 10 or more: 1%
+
+Total: 100%
+
+## 7. Output Format
+
+0 or 1: 13%
+2 or 3: 42%
+4 or 5: 30%
+6 or 7: 10%
+8 or 9: 4%
+10 or more: 1%
+```
+
+### Gemini [gemini-2.5-pro]
+```
+[error] Google API 503: {
+  "error": {
+    "code": 503,
+    "message": "The model is overloaded. Please try again later.",
+    "status": "UNAVAILABLE"
+  }
+}
+```
+
+### Grok [grok-4]
+```
+0 or 1: 20%  
+2 or 3: 45%  
+4 or 5: 25%  
+6 or 7: 7%  
+8 or 9: 2%  
+10 or more: 1%
+```
+
