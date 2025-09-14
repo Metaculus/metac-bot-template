@@ -256,9 +256,9 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
 def run_research(question: str) -> str:
     research = ""
-    if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-        research = call_asknews(question)
-    elif EXA_API_KEY:
+    # if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
+    #     research = call_asknews(question)
+    if EXA_API_KEY:
         research = call_exa_smart_searcher(question)
     elif PERPLEXITY_API_KEY:
         research = call_perplexity(question)
