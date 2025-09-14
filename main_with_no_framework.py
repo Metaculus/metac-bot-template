@@ -208,7 +208,7 @@ def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
                     f"{question['scheduled_close_time']}"
                 )
                 open_question_id_post_id.append((question["id"], post_id))
-
+    print("Found {len(open_question_id_post_id)} open questions.\n")
     return open_question_id_post_id
 
 
