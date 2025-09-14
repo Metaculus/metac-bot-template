@@ -32,7 +32,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Run bot
         run: |
-          poetry run python main.py --mode metaculus_cup
+          poetry run python main_with_no_framework.py --mode metaculus_cup
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         env:
