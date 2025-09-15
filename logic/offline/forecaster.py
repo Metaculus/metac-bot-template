@@ -30,12 +30,22 @@ def _create_offline_agent(name: str, chosen_system_message: str) -> AssistantAge
     client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=1)
     system_message = chosen_system_message.format(expertise=name)
 
-    agent = AssistantAgent(name=_to_camel_case(name), system_message=system_message, model_client=client)
+    camel_name = _to_camel_case(name)
+    # Ensure the name doesn't exceed 63 characters
+    if len(camel_name) > 63:
+        camel_name = _smart_truncate_agent_name(camel_name, name)
+
+    agent = AssistantAgent(name=camel_name, system_message=system_message, model_client=client)
     agent.display_name = name
     return agent
 
 
 import re
+
+
+def _smart_truncate_agent_name(camel_name: str, original_name: str) -> str:
+    """Simple truncation to stay under 64 characters."""
+    return camel_name[:63]
 
 
 def _to_camel_case(text: str) -> str:
