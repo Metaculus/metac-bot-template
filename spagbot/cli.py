@@ -46,6 +46,16 @@ from .ensemble import EnsembleResult, MemberOutput, run_ensemble_binary, run_ens
 from .aggregate import aggregate_binary, aggregate_mcq, aggregate_numeric
 from .research import run_research_async
 
+# --- Optional dedupe: tolerate missing seen_guard gracefully
+try:
+    from .seen_guard import filter_post_ids, assert_not_seen, AlreadySeenError, mark_post_seen
+except Exception as _e:
+    print(f"[warn] seen_guard not available ({_e!r}); continuing without duplicate protection.")
+    def filter_post_ids(ids): return set(int(x) for x in ids or [])
+    def assert_not_seen(post_id, *, mark_on_pass=True, meta=None): return None
+    class AlreadySeenError(Exception): pass
+    def mark_post_seen(post_id, meta=None): return None
+
 # Robust import for topic_classify: prefer package module; fall back to repo root
 try:
     from .topic_classify import should_run_gtmc1  # expected location
@@ -62,9 +72,6 @@ from . import GTMC1
 
 # Unified CSV helpers (single file)
 from .io_logs import ensure_unified_csv, write_unified_row, write_human_markdown, finalize_and_commit
-
-# Dedupe guard (skip already-forecast posts across runs)
-from .seen_guard import filter_post_ids, assert_not_seen, AlreadySeenError
 
 # --------------------------------------------------------------------------------
 # Small utility helpers (safe JSON, timing, clipping, etc.)
@@ -780,6 +787,13 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     write_unified_row(row)
 
+    # Record success → mark this post as seen so we don’t reforecast it later
+    try:
+        mark_post_seen(post_id, {"question_id": question_id, "title": title})
+    except Exception:
+        # never let logging state kill the run
+        pass  
+
 # --------------------------------------------------------------------------------
 # Batch runners (test set or tournament)
 # --------------------------------------------------------------------------------
@@ -788,7 +802,7 @@ async def run_posts(posts: List[dict], *, purpose: str, submit_ok: bool) -> None
     ensure_unified_csv()
     calib = _load_calibration_weights()
     run_id = ist_stamp()
-        # ----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # seen_guard: remove already-seen posts *before* we do any heavy work.
     # We match by Post ID as returned by the tournament listing/details.
     try:
@@ -860,24 +874,23 @@ async def run_tournament(limit: int, *, purpose: str, submit_ok: bool) -> None:
         if not posts:
             print(f"[warn] No open posts returned for tournament '{TOURNAMENT_ID}'.")
             return
-
         print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
 
-        # Optional: early dedupe in tournament path
+        # Optional: early dedupe in tournament path (safe even if seen_guard stubbed)
         try:
-            ids = [int(p.get("id") or p.get("post_id") or -1) for p in posts]
-            keep = set(filter_post_ids(ids))
-            posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in keep]
-            print(f"[seen_guard] tournament fetch: {len(ids) - len(posts)} duplicate(s) removed early.")
+            ids_all = [int(p.get("id") or p.get("post_id") or -1) for p in posts]
+            ids_keep = set(filter_post_ids(ids_all))
+            if ids_keep and len(ids_keep) < len(ids_all):
+                before = len(posts)
+                posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in ids_keep]
+                print(f"[seen_guard] tournament fetch: dropped {before - len(posts)} duplicate(s) early.")
         except Exception as e:
             print(f"[seen_guard] tournament early-filter failed (non-fatal): {e!r}")
 
     except Exception as e:
         print(f"[error] listing tournament posts: {e!r}")
         return
-
     await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
-
 
 # --------------------------------------------------------------------------------
 # CLI entrypoints
