@@ -95,6 +95,11 @@ jobs:
       # ---- CSV output ----
       FORECASTS_CSV_PATH: forecasts.csv
 
+            # Seen Guard controls
+      # set to "48" if you want a 2-day re-forecast cool-down window
+      SEEN_COOLDOWN_HOURS: "0"   
+      FORECAST_LOCK_DIR: forecast_logs/locks
+      
             # Log GitHub Commit config 
       HUMAN_LOG_EXT: md
       DISABLE_GIT_LOGS: false

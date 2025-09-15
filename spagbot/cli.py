@@ -63,6 +63,9 @@ from . import GTMC1
 # Unified CSV helpers (single file)
 from .io_logs import ensure_unified_csv, write_unified_row, write_human_markdown, finalize_and_commit
 
+# Dedupe guard (skip already-forecast posts across runs)
+from .seen_guard import filter_post_ids, assert_not_seen, AlreadySeenError
+
 # --------------------------------------------------------------------------------
 # Small utility helpers (safe JSON, timing, clipping, etc.)
 # --------------------------------------------------------------------------------
@@ -498,6 +501,16 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     if submit_ok and question_id:
         t_sub0 = time.time()
         try:
+            # seen_guard: block duplicates right before we hit the API
+            try:
+                assert_not_seen(post_id)  # use the Post ID (not Question ID) for consistency with CSV logging
+            except AlreadySeenError as e:
+                submit_status_code = "SKIP_DUPLICATE"
+                submit_error = str(e)[:280]
+                print(f"[seen_guard] Skip submit: {e}")
+                # Do NOT raise; we still want to log the row (no new forecast submitted)
+                raise
+
             if qtype == "binary" and isinstance(final_main, float):
                 payload = _build_payload_for_submission("binary", _clip01(final_main))
                 code, err = post_forecast(question_id, payload)
@@ -775,6 +788,27 @@ async def run_posts(posts: List[dict], *, purpose: str, submit_ok: bool) -> None
     ensure_unified_csv()
     calib = _load_calibration_weights()
     run_id = ist_stamp()
+        # ----------------------------------------------------------------------
+    # seen_guard: remove already-seen posts *before* we do any heavy work.
+    # We match by Post ID as returned by the tournament listing/details.
+    try:
+        candidate_ids = []
+        for p in posts:
+            # Prefer top-level 'id' (post id); fall back to 'post_id' if present
+            pid = p.get("id") or p.get("post_id") or None
+            if pid is not None:
+                candidate_ids.append(int(pid))
+        fresh_ids = set(filter_post_ids(candidate_ids))
+        if not fresh_ids:
+            print("[seen_guard] All candidate posts already handled. Exiting batch.")
+            return
+        # Keep only posts whose ids survived the filter
+        posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in fresh_ids]
+        print(f"[seen_guard] {len(candidate_ids) - len(posts)} duplicate(s) skipped; {len(posts)} fresh post(s) remain.")
+    except Exception as e:
+        # Never fail a run because of the guard; just log and proceed unfiltered.
+        print(f"[seen_guard] filter_post_ids failed (non-fatal): {e!r}")
+    # ----------------------------------------------------------------------
     for i, post in enumerate(posts, 1):
         qtitle = str((post.get("question") or {}).get("title") or post.get("title") or "")
         qid = int((post.get("question") or {}).get("id") or 0)
@@ -826,11 +860,24 @@ async def run_tournament(limit: int, *, purpose: str, submit_ok: bool) -> None:
         if not posts:
             print(f"[warn] No open posts returned for tournament '{TOURNAMENT_ID}'.")
             return
+
         print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
+
+        # Optional: early dedupe in tournament path
+        try:
+            ids = [int(p.get("id") or p.get("post_id") or -1) for p in posts]
+            keep = set(filter_post_ids(ids))
+            posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in keep]
+            print(f"[seen_guard] tournament fetch: {len(ids) - len(posts)} duplicate(s) removed early.")
+        except Exception as e:
+            print(f"[seen_guard] tournament early-filter failed (non-fatal): {e!r}")
+
     except Exception as e:
         print(f"[error] listing tournament posts: {e!r}")
         return
+
     await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
+
 
 # --------------------------------------------------------------------------------
 # CLI entrypoints
