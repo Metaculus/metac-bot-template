@@ -130,8 +130,13 @@ def extract_probabilities(results, first_step_key: str, second_step_key: str) ->
     return first_step_probabilities, second_step_probabilities
 
 
-async def build_and_write_json(filename, data, is_woc=False):
-    path = "forecasts/wisdom_of_crowds_forecasts" if is_woc else "forecasts/fall"
+async def build_and_write_json(filename, data, is_woc=False, subdirectory=None):
+    if is_woc:
+        path = "forecasts/wisdom_of_crowds_forecasts"
+    else:
+        base_path = "forecasts/fall"
+        path = f"{base_path}/{subdirectory}" if subdirectory else base_path
+
     await aiofiles.os.makedirs(path, exist_ok=True)
 
     filepath = f"{path}/{filename}.json"

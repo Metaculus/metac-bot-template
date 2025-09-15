@@ -102,7 +102,7 @@ async def dispassion(
     final_answer = probabilities["revision_probability_result"]
 
     filename = strip_title_to_filename(title) + EXP_NAME_DISPASSION
-    await build_and_write_json(filename, probabilities, is_woc)
+    await build_and_write_json(filename, probabilities, is_woc, subdirectory="dispassion")
 
     return final_answer, summarization
 
@@ -133,7 +133,7 @@ async def slowly(
     final_answer = probabilities["deliberation_probability_result"]
 
     filename = strip_title_to_filename(title) + EXP_NAME_SLOWLY
-    await build_and_write_json(filename, probabilities, is_woc)
+    await build_and_write_json(filename, probabilities, is_woc, subdirectory="slowly")
 
     return final_answer, summarization
 

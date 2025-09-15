@@ -8,6 +8,8 @@ on:
 jobs:
   offline_forecast:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -41,3 +43,38 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           poetry run python offline_main.py
+
+      - name: Upload forecast artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forecast-results-${{ github.run_id }}
+          path: forecasts/fall/
+          retention-days: 30
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Check for changes and commit
+        id: changes
+        run: |
+          git add forecasts/fall/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected, creating commit"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            git commit -m "Update offline forecast results - $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+
+            🤖 Generated with automated offline forecasting bot
+
+            Co-Authored-By: Claude <noreply@anthropic.com>"
+          fi
+
+      - name: Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git push origin main
