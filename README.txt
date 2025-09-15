@@ -1,3 +1,7 @@
+Awesome — here’s a minimally updated README you can copy-paste in full. I only changed what was necessary to match the current setup (notably: default CSV path, local install instructions to include Poetry, and the repo layout line for `run_spagbot.py`).
+
+---
+
 What is Spagbot?
 
 Spagbot is an AI forecasting assistant. Its job is to read forecasting questions (like those on Metaculus), gather relevant evidence, and combine the judgments of different models into one final forecast. It is designed to run automatically on GitHub, saving its forecasts and learning from past performance over time.
@@ -32,7 +36,7 @@ This ensures the final probability or distribution is mathematically consistent 
 
 Calibrate and improve
 
-Spagbot logs every forecast in forecast_logs/forecasts.csv.
+Spagbot logs every forecast in forecasts.csv (path is configurable).
 
 When questions resolve, it compares its predictions to reality.
 
@@ -59,36 +63,54 @@ Bayesian Monte Carlo is the conductor, blending them into harmony.
 And the calibration loop is like rehearsals, helping everyone play in tune with reality over time.
 
 Quick Start
-1) Local run (one question / test mode)
+
+1. Local run (one question / test mode)
+
 # (Recommended) use Python 3.11 and a virtual environment
+
 pip install -r requirements.txt
 
+# Alternatively, if you use Poetry:
+
+# 1) Install Poetry ([https://python-poetry.org/](https://python-poetry.org/))
+
+# 2) Run:
+
+# poetry install
+
+# poetry run python run\_spagbot.py --mode test\_questions --limit 1
+
 # Environment variables (see “Configuration” below)
-# The only must-have for submission is METACULUS_TOKEN
-export METACULUS_TOKEN=your_token_here
+
+# The only must-have for submission is METACULUS\_TOKEN
+
+export METACULUS\_TOKEN=your\_token\_here
 
 # Run a single test question (no submit)
-python run_spagbot.py --mode test_questions --limit 1
+
+python run\_spagbot.py --mode test\_questions --limit 1
 
 # Run a single question by post ID (no submit)
-python run_spagbot.py --pid 22427
+
+python run\_spagbot.py --pid 22427
 
 # Submit (be careful!)
-python run_spagbot.py --mode test_questions --limit 1 --submit
 
-2) Autonomous runs on GitHub
+python run\_spagbot.py --mode test\_questions --limit 1 --submit
+
+2. Autonomous runs on GitHub
 
 This repo includes workflows for:
 
-test_bot_fresh.yaml (fresh research),
+test\_bot\_fresh.yaml (fresh research),
 
-test_bot_cached.yaml (use cache),
+test\_bot\_cached.yaml (use cache),
 
-run_bot_on_tournament.yaml,
+run\_bot\_on\_tournament.yaml,
 
-run_bot_on_metaculus_cup.yaml,
+run\_bot\_on\_metaculus\_cup.yaml,
 
-calibration_refresh.yml (periodic update of calibration weights).
+calibration\_refresh.yml (periodic update of calibration weights).
 
 Add secrets (see below), push the repo, and Actions will:
 
@@ -123,11 +145,11 @@ Numeric → extracts P10/P50/P90 quantiles
 Game-Theoretic Signal (optional, binary) — GTMC1.py
 A reproducible, Bueno de Mesquita/Scholz-style bargaining Monte Carlo using an actor table (position, capability, salience, risk). Output includes:
 
-exceedance_ge_50 (preferred probability-like signal),
+exceedance\_ge\_50 (preferred probability-like signal),
 
 coalition rate, dispersion, rounds to converge, etc.
 
-Aggregation (aggregate.py + bayes_mc.py)
+Aggregation (aggregate.py + bayes\_mc.py)
 Bayesian Monte Carlo fusion of all evidence (LLMs + GTMC1).
 
 Binary: Beta-Binomial update → final p(yes).
@@ -137,49 +159,51 @@ MCQ: Dirichlet update → final probability vector.
 Numeric: Mixture from quantiles → final P10/P50/P90.
 
 Submission (cli.py)
-Submits to Metaculus if --submit is set and METACULUS_TOKEN is present.
+Submits to Metaculus if --submit is set and METACULUS\_TOKEN is present.
 Enforces basic constraints (e.g., numeric quantile ordering).
 
-Logging (io_logs.py)
+Logging (io\_logs.py)
 
-Machine-readable master CSV: forecast_logs/forecasts.csv
+Machine-readable master CSV: forecasts.csv (path configurable via FORECASTS\_CSV\_PATH)
 
-Human log per run: forecast_logs/runs/<run_id>.md (or .txt)
+Human log per run: forecast\_logs/runs/\<run\_id>.md (or .txt)
 In GitHub Actions, logs auto-commit/push unless disabled.
 
-Calibration Loop (update_calibration.py)
-On a schedule (e.g., every 6–24h), reads forecast_logs/forecasts.csv, filters resolved questions (and only forecasts made before resolution), computes per-model skill and writes:
+Calibration Loop (update\_calibration.py)
+On a schedule (e.g., every 6–24h), reads forecasts.csv, filters resolved questions (and only forecasts made before resolution), computes per-model skill and writes:
 
-calibration_weights.json (used next run to weight models)
+calibration\_weights.json (used next run to weight models)
 
-data/calibration_advice.txt (human-readable notes)
+data/calibration\_advice.txt (human-readable notes)
 These outputs are committed, so the loop closes autonomously.
 
 Repository Layout (key files)
-spagbot/
-  run_spagbot.py        # Thin wrapper: calls cli.main()
-  cli.py                # Orchestrates runs, submission, and final log commit
-  research.py           # AskNews/Serper search + summarization
-  prompts.py            # Prompt builders per question type
-  providers.py          # Model registry, rate-limiters, cost estimators
-  ensemble.py           # Async calls to each LLM + parsing to structured outputs
-  aggregate.py          # Calls bayes_mc to fuse LLMs (+ GTMC1) into final forecast
-  bayes_mc.py           # Bayesian Monte Carlo updaters (Binary, MCQ, Numeric)
-  GTMC1.py              # Game-theoretic Monte Carlo with reproducibility guardrails
-  io_logs.py            # Canonical logging to forecast_logs/ + auto-commit
-  seen_guard.py         # Simple JSONL-based “skip duplicates” registry (optional)
-  update_calibration.py # Builds class-conditional weights from resolutions
-  __init__.py           # Package export list
+(run at repo root)
+run\_spagbot.py        # Thin wrapper: calls cli.main()
 
-forecast_logs/
-  forecasts.csv         # Single master CSV (auto-created)
-  runs/                 # Human-readable per-run logs (.md or .txt)
+spagbot/
+cli.py                # Orchestrates runs, submission, and final log commit
+research.py           # AskNews/Serper search + summarization
+prompts.py            # Prompt builders per question type
+providers.py          # Model registry, rate-limiters, cost estimators
+ensemble.py           # Async calls to each LLM + parsing to structured outputs
+aggregate.py          # Calls bayes\_mc to fuse LLMs (+ GTMC1) into final forecast
+bayes\_mc.py           # Bayesian Monte Carlo updaters (Binary, MCQ, Numeric)
+GTMC1.py              # Game-theoretic Monte Carlo with reproducibility guardrails
+io\_logs.py            # Canonical logging to forecast\_logs/ + auto-commit
+seen\_guard.py         # Simple JSONL-based “skip duplicates” registry (optional)
+update\_calibration.py # Builds class-conditional weights from resolutions
+**init**.py           # Package export list
+
+forecast\_logs/
+forecasts.csv         # (if you set FORECASTS\_CSV\_PATH here) otherwise default is repository root
+runs/                 # Human-readable per-run logs (.md or .txt)
 
 data/
-  calibration_advice.txt  # Friendly notes from the calibration job (auto-created)
+calibration\_advice.txt  # Friendly notes from the calibration job (auto-created)
 
-gtmc_logs/
-  ...                    # Optional run-by-run GTMC CSVs/metadata (if enabled)
+gtmc\_logs/
+...                    # Optional run-by-run GTMC CSVs/metadata (if enabled)
 
 Configuration
 
@@ -187,75 +211,75 @@ Set these as environment variables (locally or in GitHub Actions). Sensible defa
 
 Required (for submission)
 
-METACULUS_TOKEN — your Metaculus API token.
+METACULUS\_TOKEN — your Metaculus API token.
 
 Recommended
 
-FORECASTS_CSV_PATH=forecast_logs/forecasts.csv
-(defaults to this; set only if you want a different location)
+FORECASTS\_CSV\_PATH=forecasts.csv
+(default; set only if you want a different location)
 
-CALIB_WEIGHTS_PATH=calibration_weights.json
+CALIB\_WEIGHTS\_PATH=calibration\_weights.json
 
-CALIB_ADVICE_PATH=data/calibration_advice.txt
+CALIB\_ADVICE\_PATH=data/calibration\_advice.txt
 
-HUMAN_LOG_EXT=md (or txt)
+HUMAN\_LOG\_EXT=md (or txt)
 
-LOGS_BASE_DIR=forecast_logs (default)
+LOGS\_BASE\_DIR=forecast\_logs (default)
 
 Git commit behavior (logs & calibration outputs)
 
 In GitHub Actions:
 
-DISABLE_GIT_LOGS=false (or unset) → auto-commit/push logs & calibration outputs
+DISABLE\_GIT\_LOGS=false (or unset) → auto-commit/push logs & calibration outputs
 
 Locally:
 
-COMMIT_LOGS=true → will also commit/push from your machine (optional)
+COMMIT\_LOGS=true → will also commit/push from your machine (optional)
 
 Optional:
 
-GIT_LOG_MESSAGE="chore(logs): update forecasts & calibration"
+GIT\_LOG\_MESSAGE="chore(logs): update forecasts & calibration"
 
-GIT_REMOTE_NAME=origin
+GIT\_REMOTE\_NAME=origin
 
-GIT_BRANCH_NAME=main (detected automatically; this is a safe fallback)
+GIT\_BRANCH\_NAME=main (detected automatically; this is a safe fallback)
 
 LLM/API keys (if used in your setup)
 
-OPENROUTER_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, etc.
+OPENROUTER\_API\_KEY, GOOGLE\_API\_KEY, XAI\_API\_KEY, etc.
 
-Research keys: ASKNEWS_CLIENT_ID, ASKNEWS_CLIENT_SECRET, SERPER_API_KEY, etc.
+Research keys: ASKNEWS\_CLIENT\_ID, ASKNEWS\_CLIENT\_SECRET, SERPER\_API\_KEY, etc.
 
 Tip: Put non-secret defaults in .env.example and store secrets in GitHub → Settings → Secrets and variables → Actions.
 
 Running Modes
 
 Test set (no submit by default):
-python run_spagbot.py --mode test_questions --limit 4
+python run\_spagbot.py --mode test\_questions --limit 4
 
 Single question by PID:
-python run_spagbot.py --pid 22427
+python run\_spagbot.py --pid 22427
 
 Tournament / Cup (CI workflows call these internally):
 
-run_bot_on_tournament.yaml
+run\_bot\_on\_tournament.yaml
 
-run_bot_on_metaculus_cup.yaml
+run\_bot\_on\_metaculus\_cup.yaml
 Include --submit in those workflows if you want automatic submissions.
 
 Logging & Files Written
 
-Machine CSV: forecast_logs/forecasts.csv (canonical, append-only)
+Machine CSV: forecasts.csv (canonical, append-only)
 Contains per-question details, per-model parsed outputs, final aggregation, timestamps, etc.
 
-Human log: forecast_logs/runs/<timestamp>_<run_id>.md
+Human log: forecast\_logs/runs/<timestamp>\_\<run\_id>.md
 Friendly narrative summary: which models ran, research snippets, final forecast.
 
 These are committed automatically from GitHub Actions unless disabled.
 
 Calibration (Autonomous Loop)
 
-Input: forecast_logs/forecasts.csv
+Input: forecasts.csv
 
 Logic:
 
@@ -269,31 +293,31 @@ Build class-conditional weights with shrinkage toward global weights.
 
 Output:
 
-calibration_weights.json
+calibration\_weights.json
 
-data/calibration_advice.txt (friendly notes)
+data/calibration\_advice.txt (friendly notes)
 
-Use: At the start of a run, Spagbot loads calibration_weights.json to weight ensemble members.
+Use: At the start of a run, Spagbot loads calibration\_weights.json to weight ensemble members.
 
-Important: Ensure the data/ folder exists in the repo so calibration_advice.txt can be written and committed.
+Important: Ensure the data/ folder exists in the repo so calibration\_advice.txt can be written and committed.
 
 Game-Theoretic Module (GTMC1)
 
-Accepts an actor table with columns: name, position, capability, salience, risk_threshold (scales 0–100 for the first three).
+Accepts an actor table with columns: name, position, capability, salience, risk\_threshold (scales 0–100 for the first three).
 
 Runs a deterministic Monte Carlo bargaining process (PCG64 RNG seeded from a fingerprint of the table + params).
 
 Outputs:
 
-exceedance_ge_50 (preferred probability-like signal when higher axis = “YES”),
+exceedance\_ge\_50 (preferred probability-like signal when higher axis = “YES”),
 
-median_of_final_medians,
+median\_of\_final\_medians,
 
-coalition_rate,
+coalition\_rate,
 
 dispersion,
 
-and logs a per-run CSV under gtmc_logs/ (optional to commit).
+and logs a per-run CSV under gtmc\_logs/ (optional to commit).
 
 You can enable/disable GTMC1 by question type or flags in cli.py.
 
@@ -305,7 +329,7 @@ MCQ: Treat each model’s probability vector as evidence and update a Dirichlet 
 
 Numeric: Fit a Normal from each model’s P10/P50/P90, sample proportionally to confidence weights, and compute final P10/P50/P90 from the mixture.
 
-Weights come from calibration_weights.json, updated by the calibration job.
+Weights come from calibration\_weights.json, updated by the calibration job.
 
 GitHub Actions (What’s Included)
 
@@ -319,27 +343,27 @@ Each workflow:
 
 Sets the environment (paths, commit behavior),
 
-Runs the bot (and/or update_calibration.py),
+Runs the bot (and/or update\_calibration.py),
 
 Auto-commits any modified files under:
 
-forecast_logs/,
+forecast\_logs/,
 
-calibration_weights.json,
+calibration\_weights.json,
 
 data/ (advice),
 
 (optionally) state files you decide to persist.
 
-If you want duplicate-protection to persist across CI runs, store seen_guard state inside the repo (e.g., forecast_logs/state/seen_forecasts.jsonl) and include it in commits.
+If you want duplicate-protection to persist across CI runs, store seen\_guard state inside the repo (e.g., forecast\_logs/state/seen\_forecasts.jsonl) and include it in commits.
 
 Secrets You Must Add (GitHub → Actions)
 
-METACULUS_TOKEN (for submission)
+METACULUS\_TOKEN (for submission)
 
 Any LLM / research API keys you plan to use:
 
-OPENROUTER_API_KEY, GOOGLE_API_KEY, XAI_API_KEY, ASKNEWS_CLIENT_ID, ASKNEWS_CLIENT_SECRET, SERPER_API_KEY, etc.
+OPENROUTER\_API\_KEY, GOOGLE\_API\_KEY, XAI\_API\_KEY, ASKNEWS\_CLIENT\_ID, ASKNEWS\_CLIENT\_SECRET, SERPER\_API\_KEY, etc.
 
 Troubleshooting
 
@@ -350,7 +374,7 @@ Numeric submission errors (CDF monotonicity etc.).
 The numeric path enforces ordered quantiles (P10 ≤ P50 ≤ P90). If Metaculus still complains, reduce extremely steep distributions (too tiny sigma) or clip the extreme tails. (The current code already guards the common pitfalls.)
 
 Logs not committing locally.
-Set COMMIT_LOGS=true and ensure your git remote/branch are correct.
+Set COMMIT\_LOGS=true and ensure your git remote/branch are correct.
 
 Advice file write error.
 Ensure data/ folder exists and isn’t .gitignore’d.
