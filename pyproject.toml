@@ -5,6 +5,7 @@ description = ""
 authors = ["Vasile Popescu <elisescu@elisescu.com>"]
 readme = "README.md"
 package-mode = false
+packages = [{ include = "spagbot" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -16,14 +17,9 @@ openai = "^1.57.4"
 python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.54"
 
-
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-packages = [{ include = "spagbot" }]
-
