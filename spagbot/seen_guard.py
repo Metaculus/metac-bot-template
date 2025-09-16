@@ -170,7 +170,7 @@ def _read_recent_qids_from_csv(csv_path: str, cooldown_hours: int) -> Set[int]:
 
 
 # ---------------------------------------------------------------------------
-# Public API (used by cli.py)
+# Public API (used by other modules)
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -240,66 +240,12 @@ class SeenGuard:
             pass
 
 
-# Backwards-compatible free functions used by older code in cli.py
+# Create a single instance of the guard for other modules to use
 _GUARD = SeenGuard()
 
+# Define the public functions that other modules will import and call
 def filter_unseen_posts(posts: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return _GUARD.filter_unseen_posts(posts)
 
 def mark_seen(question_id: int | str) -> None:
     _GUARD.mark_seen(question_id)
-
-# --- Back-compat layer for cli.py imports (append to seen_guard.py) ---
-from __future__ import annotations
-import json, os, time
-from pathlib import Path
-from typing import Iterable, Dict, Any
-
-# Persist inside the repo so duplicates are remembered across CI runs.
-# In GitHub Actions, set: SEEN_GUARD_PATH=forecast_logs/state/seen_forecasts.jsonl
-_STATE_PATH = Path(os.environ.get("SEEN_GUARD_PATH", ".spagbot/seen_forecasts.jsonl"))
-
-def _ensure_dir(p: Path) -> None:
-    p.parent.mkdir(parents=True, exist_ok=True)
-
-def _read_seen_ids() -> set[int]:
-    if not _STATE_PATH.exists():
-        return set()
-    ids: set[int] = set()
-    with _STATE_PATH.open("r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                rec = json.loads(line)
-                ids.add(int(rec.get("post_id")))
-            except Exception:
-                pass
-    return ids
-
-def _append_seen(post_id: int, meta: Dict[str, Any] | None = None) -> None:
-    _ensure_dir(_STATE_PATH)
-    rec = {"post_id": int(post_id), "ts": int(time.time())}
-    if meta:
-        rec.update(meta)
-    with _STATE_PATH.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-class AlreadySeenError(Exception):
-    pass
-
-def filter_post_ids(post_ids: Iterable[int | str]) -> list[int]:
-    """Return only the IDs that have NOT been seen."""
-    seen = _read_seen_ids()
-    out: list[int] = []
-    for pid in post_ids:
-        pid = int(pid)
-        if pid not in seen:
-            out.append(pid)
-    return out
-
-def assert_not_seen(post_id: int | str) -> None:
-    if int(post_id) in _read_seen_ids():
-        raise AlreadySeenError(f"Post {post_id} already seen")
-
-def mark_post_seen(post_id: int | str, meta: Dict[str, Any] | None = None) -> None:
-    _append_seen(int(post_id), meta)
-# --- end compat layer ---
