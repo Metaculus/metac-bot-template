@@ -99,7 +99,8 @@ jobs:
       # set to "48" if you want a 2-day re-forecast cool-down window
       SEEN_COOLDOWN_HOURS: "48"   
       FORECAST_LOCK_DIR: forecast_logs/locks
-
+      SEEN_GUARD_PATH: forecast_logs/state/seen_forecasts.jsonl
+      
             # Log GitHub Commit config 
       HUMAN_LOG_EXT: md
       DISABLE_GIT_LOGS: false
