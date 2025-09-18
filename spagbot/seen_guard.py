@@ -249,3 +249,24 @@ def filter_unseen_posts(posts: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]
 
 def mark_seen(question_id: int | str) -> None:
     _GUARD.mark_seen(question_id)
+
+    # --- Defensive Patch ---
+# This block is here to prevent an ImportError from old, undiscovered code
+# that might still be trying to import the functions below. These functions
+# do nothing and can be removed if the ImportError in the logs disappears.
+
+def filter_post_ids(post_ids: list[int]) -> list[int]:
+    """OBSOLETE: Does nothing. Returns the original list."""
+    print("[warn] An obsolete function ('filter_post_ids') was called. Please find and remove the call.")
+    return post_ids
+
+def mark_post_seen(post_id: int, meta=None) -> None:
+    """OBSOLETE: Does nothing."""
+    print(f"[warn] An obsolete function ('mark_post_seen') was called for post {post_id}. Please find and remove the call.")
+    pass
+
+def assert_not_seen(post_id: int) -> None:
+    """OBSOLETE: Does nothing."""
+    pass
+
+# --- End Defensive Patch ---
