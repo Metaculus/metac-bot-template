@@ -48,13 +48,10 @@ from .research import run_research_async
 
 # --- Optional dedupe: tolerate missing seen_guard gracefully
 try:
-    from .seen_guard import filter_post_ids, assert_not_seen, AlreadySeenError, mark_post_seen
-except Exception as _e:
-    print(f"[warn] seen_guard not available ({_e!r}); continuing without duplicate protection.")
-    def filter_post_ids(ids): return set(int(x) for x in ids or [])
-    def assert_not_seen(post_id, *, mark_on_pass=True, meta=None): return None
-    class AlreadySeenError(Exception): pass
-    def mark_post_seen(post_id, meta=None): return None
+    from . import seen_guard
+except ImportError as e:
+    print(f"[warn] seen_guard not available ({e!r}); continuing without duplicate protection.")
+    seen_guard = None
 
 # Robust import for topic_classify: prefer package module; fall back to repo root
 try:
@@ -508,16 +505,6 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     if submit_ok and question_id:
         t_sub0 = time.time()
         try:
-            # seen_guard: block duplicates right before we hit the API
-            try:
-                assert_not_seen(post_id)  # use the Post ID (not Question ID) for consistency with CSV logging
-            except AlreadySeenError as e:
-                submit_status_code = "SKIP_DUPLICATE"
-                submit_error = str(e)[:280]
-                print(f"[seen_guard] Skip submit: {e}")
-                # Do NOT raise; we still want to log the row (no new forecast submitted)
-                raise
-
             if qtype == "binary" and isinstance(final_main, float):
                 payload = _build_payload_for_submission("binary", _clip01(final_main))
                 code, err = post_forecast(question_id, payload)
@@ -787,12 +774,10 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     write_unified_row(row)
 
-    # Record success → mark this post as seen so we don’t reforecast it later
-    try:
-        mark_post_seen(post_id, {"question_id": question_id, "title": title})
-    except Exception:
-        # never let logging state kill the run
-        pass  
+# Record success → mark this question as seen so we don’t reforecast it later
+if seen_guard:
+    # Note: We use question_id here to be consistent with the filtering logic.
+    seen_guard.mark_seen(question_id)  
 
 # --------------------------------------------------------------------------------
 # Batch runners (test set or tournament)
@@ -802,28 +787,23 @@ async def run_posts(posts: List[dict], *, purpose: str, submit_ok: bool) -> None
     ensure_unified_csv()
     calib = _load_calibration_weights()
     run_id = ist_stamp()
+
+# MODERN FILTERING: Filter posts at the beginning of the batch run
+if seen_guard:
+    posts_to_run = seen_guard.filter_unseen_posts(posts)
+else:
+    posts_to_run = posts
+
+if not posts_to_run:
+    print("[seen_guard] All candidate posts already handled. Exiting batch.")
+    return
+
+# IMPORTANT: Make sure the loop below uses the new `posts_to_run` variable!
+# for i, post in enumerate(posts, 1):  <-- CHANGE THIS...
+# to
+# for i, post in enumerate(posts_to_run, 1): <-- ...TO THIS
     # ----------------------------------------------------------------------
-    # seen_guard: remove already-seen posts *before* we do any heavy work.
-    # We match by Post ID as returned by the tournament listing/details.
-    try:
-        candidate_ids = []
-        for p in posts:
-            # Prefer top-level 'id' (post id); fall back to 'post_id' if present
-            pid = p.get("id") or p.get("post_id") or None
-            if pid is not None:
-                candidate_ids.append(int(pid))
-        fresh_ids = set(filter_post_ids(candidate_ids))
-        if not fresh_ids:
-            print("[seen_guard] All candidate posts already handled. Exiting batch.")
-            return
-        # Keep only posts whose ids survived the filter
-        posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in fresh_ids]
-        print(f"[seen_guard] {len(candidate_ids) - len(posts)} duplicate(s) skipped; {len(posts)} fresh post(s) remain.")
-    except Exception as e:
-        # Never fail a run because of the guard; just log and proceed unfiltered.
-        print(f"[seen_guard] filter_post_ids failed (non-fatal): {e!r}")
-    # ----------------------------------------------------------------------
-    for i, post in enumerate(posts, 1):
+    for i, post in enumerate(posts_to_run, 1):
         qtitle = str((post.get("question") or {}).get("title") or post.get("title") or "")
         qid = int((post.get("question") or {}).get("id") or 0)
         print(f"\n{'-'*88}\n[{i}/{len(posts)}] ❓ {qtitle}  (QID: {qid})")
