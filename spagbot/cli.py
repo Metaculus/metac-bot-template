@@ -46,7 +46,7 @@ from .ensemble import EnsembleResult, MemberOutput, run_ensemble_binary, run_ens
 from .aggregate import aggregate_binary, aggregate_mcq, aggregate_numeric
 from .research import run_research_async
 
-# --- Optional dedupe: tolerate missing seen_guard gracefully
+# --- Corrected seen_guard import ---
 try:
     from . import seen_guard
 except ImportError as e:
@@ -297,6 +297,14 @@ async def run_one_question(post: dict, *, run_id: str, purpose: str, submit_ok: 
     q = post.get("question") or {}
     post_id = int(post.get("id") or post.get("post_id") or 0)
     question_id = int(q.get("id") or 0)
+
+    # Concurrency lock using seen_guard
+    if seen_guard:
+        with seen_guard.lock(question_id) as acquired:
+            if not acquired:
+                print(f"[seen_guard] QID {question_id} is locked by another process; skipping.")
+                return
+    
     title = str(q.get("title") or post.get("title") or "").strip()
     url = f"https://www.metaculus.com/questions/{question_id}/" if question_id else ""
     qtype = (q.get("type") or "binary").strip()
@@ -774,10 +782,9 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     write_unified_row(row)
 
-# Record success → mark this question as seen so we don’t reforecast it later
-if seen_guard:
-    # Note: We use question_id here to be consistent with the filtering logic.
-    seen_guard.mark_seen(question_id)  
+    # Record success → mark this question as seen so we don’t reforecast it later
+    if seen_guard:
+        seen_guard.mark_seen(question_id)
 
 # --------------------------------------------------------------------------------
 # Batch runners (test set or tournament)
@@ -788,25 +795,20 @@ async def run_posts(posts: List[dict], *, purpose: str, submit_ok: bool) -> None
     calib = _load_calibration_weights()
     run_id = ist_stamp()
 
-# MODERN FILTERING: Filter posts at the beginning of the batch run
-if seen_guard:
-    posts_to_run = seen_guard.filter_unseen_posts(posts)
-else:
-    posts_to_run = posts
+    # MODERN FILTERING: Filter posts at the beginning of the batch run
+    if seen_guard:
+        posts_to_run = seen_guard.filter_unseen_posts(posts)
+    else:
+        posts_to_run = posts
 
-if not posts_to_run:
-    print("[seen_guard] All candidate posts already handled. Exiting batch.")
-    return
+    if not posts_to_run:
+        print("[seen_guard] All candidate posts already handled. Exiting batch.")
+        return
 
-# IMPORTANT: Make sure the loop below uses the new `posts_to_run` variable!
-# for i, post in enumerate(posts, 1):  <-- CHANGE THIS...
-# to
-# for i, post in enumerate(posts_to_run, 1): <-- ...TO THIS
-    # ----------------------------------------------------------------------
     for i, post in enumerate(posts_to_run, 1):
         qtitle = str((post.get("question") or {}).get("title") or post.get("title") or "")
         qid = int((post.get("question") or {}).get("id") or 0)
-        print(f"\n{'-'*88}\n[{i}/{len(posts)}] ❓ {qtitle}  (QID: {qid})")
+        print(f"\n{'-'*88}\n[{i}/{len(posts_to_run)}] ❓ {qtitle}  (QID: {qid})")
         try:
             await run_one_question(post, run_id=run_id, purpose=purpose, submit_ok=submit_ok, calib=calib)
             print("✔ logged to forecasts.csv")
@@ -855,22 +857,10 @@ async def run_tournament(limit: int, *, purpose: str, submit_ok: bool) -> None:
             print(f"[warn] No open posts returned for tournament '{TOURNAMENT_ID}'.")
             return
         print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
-
-        # Optional: early dedupe in tournament path (safe even if seen_guard stubbed)
-        try:
-            ids_all = [int(p.get("id") or p.get("post_id") or -1) for p in posts]
-            ids_keep = set(filter_post_ids(ids_all))
-            if ids_keep and len(ids_keep) < len(ids_all):
-                before = len(posts)
-                posts = [p for p in posts if int(p.get("id") or p.get("post_id") or -1) in ids_keep]
-                print(f"[seen_guard] tournament fetch: dropped {before - len(posts)} duplicate(s) early.")
-        except Exception as e:
-            print(f"[seen_guard] tournament early-filter failed (non-fatal): {e!r}")
-
+        await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
     except Exception as e:
         print(f"[error] listing tournament posts: {e!r}")
         return
-    await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
 
 # --------------------------------------------------------------------------------
 # CLI entrypoints
