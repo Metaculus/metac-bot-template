@@ -1,0 +1,313 @@
+{
+    "deliberation_results": {
+        "Machine Learning Engineering (Large Language Models Development)": {
+            "time_to_resolution": "Approximately 3.5 months (until January 1, 2026 from September 21, 2025)",
+            "perspective_relevance": "As a machine learning engineer specializing in large language model (LLM) development, I have intimate knowledge of the technical innovations underpinning recent AI advances (e.g., reinforcement learning, self-consistency methods, scaling laws, and multi-modal architectures). I understand the nuances and bottlenecks of mathematical reasoning in LLMs, limitations of benchmarks, and the difference between 'optimization for a test' versus genuine generalization. This background is crucial to interpret current benchmark leaps, R&D reporting practices, and commercialization pressures shaping publication timelines.",
+            "status_quo": "As of early/mid 2025, no AI system had surpassed 85% on the FrontierMath benchmark. Leading models like OpenAI GPT-4 and DeepMind Gemini were highly capable but typically scored in the 70\u201380% range on advanced mathematics benchmarks, with only recent gold-medal performance reported on Olympiad tests (but not specifically FrontierMath). Historical improvements on hard math benchmarks have been incremental until the recent year.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Surging Performance on Related Math Benchmarks (AIME, Olympiad, ICPC)",
+                    "effect": "Increases probability. News reports indicate OpenAI's GPT-5, DeepSeek R1, and DeepMind Gemini-2.5 are achieving unprecedented results: >94% on AIME, gold-level IMO performance, perfect solutions on elite programming contests. These tests are arguably as difficult as some FrontierMath problems, suggesting imminent capability."
+                },
+                {
+                    "factor": "Scaling Effectiveness and Efficient Training/Fine-Tuning Tricks",
+                    "effect": "Increases probability. RL-based methods and self-consistency, exemplified by DeepSeek R1 and recent Nvidia/ProRL studies, offer faster and more cost-effective improvement in mathematical/logical reasoning, enabling more actors to push frontiers and reducing hardware bottlenecks."
+                },
+                {
+                    "factor": "Limitations in Benchmark Generalization and Potential for Overfitting",
+                    "effect": "Decreases probability slightly. There is evidence (e.g., on SWE-bench, discussed in the Blitzy article and in GPT-5 reporting) that benchmarks can be 'Goodharted', i.e., gamed by training or filtering for the test distribution. However, FrontierMath was designed specifically to resist such gaming. True surpassing of 85% may still reflect general capability, but there remains a risk of overfitting."
+                },
+                {
+                    "factor": "Publication Practices and Organizational Incentives",
+                    "effect": "Increases probability. All major actors (OpenAI, DeepMind, DeepSeek, and now emerging Chinese and open-source entrants) have strong incentives to publicize state-of-the-art results\u2014such as a >85% FrontierMath score\u2014immediately and publicly, given the high stakes (funding, reputation, hiring, government scrutiny). Historically, results on hard benchmarks are often rapidly published once achieved."
+                },
+                {
+                    "factor": "FrontierMath's Difficulty and Scope vs. Other Benchmarks",
+                    "effect": "Decreases probability. Despite rapid progress, FrontierMath is designed for non-trivial, symbolic, and numeric problems that are less susceptible to memorization. Some open-source commentary (e.g., reports of current ARC-AGI-2 scores) suggests that 'blind spots' still exist even for the best models."
+                },
+                {
+                    "factor": "Time Remaining until Deadline",
+                    "effect": "Increases probability. With over 3 months to go\u2014long in the current fast-moving AI cycle\u2014the odds tilt towards at least one team achieving, and publishing, a qualifying >85% result if it's within reach."
+                },
+                {
+                    "factor": "Publication Requirements for Resolution",
+                    "effect": "Decreases probability slightly. To resolve YES, results must be published (paper, conference, or blog). Deliberate withholding (for competition, safety, or commercialization reasons) could delay or suppress publication, but history shows major results are usually made public once verified\u2014especially for a trophy like this."
+                }
+            ],
+            "no_scenario": "Despite near-human or superhuman scores on related math contests, no model is able to reliably surpass 85% on FrontierMath by the end of 2025 due to either subtle difficulty mismatches, blind spots in reasoning (e.g., symbolic manipulation or proof generation), or because model developers prioritize other benchmarks for PR/competition. Alternatively, a model quietly achieves >85% but the result is withheld (for commercial, safety, or regulatory reasons) and not published by the close date.",
+            "yes_scenario": "Within the next quarter, OpenAI, DeepMind, DeepSeek, or another leading player evaluates their best model (e.g., GPT-5, Gemini 2.5, DeepSeek-R1) on the latest FrontierMath benchmark, surpasses 85%, and promptly publishes a blog post or preprint detailing the method and score. The result is celebrated by media and industry, reinforcing perceptions of a new AI milestone in mathematical reasoning.",
+            "final_reasoning": "Recent evidence indicates that LLMs have made exceptional progress on mathematical reasoning: OpenAI's GPT-5 reportedly achieves 94.6% on AIME, gold-level performance on the IMO, and perfect scores in ICPC World Finals\u2014outperforming the best human teams. DeepSeek's R1 reaches 86.7% on AIME using reasoning-native RL, and similar 'System-2' AI advances (e.g., Blitzy, ProRL) show that scaling inference time can unlock previously unreachable problem classes. At the same time, careful reading of the news suggests FrontierMath remains harder (by deliberate design) and is less amenable to test set overfitting, but no report suggests that any major lab is far below the 85% bar\u2014indeed, given how closely AIME/IMO/ICPC align with tough FrontierMath instances, it is plausible that at least one lab's latest system already meets or exceeds the threshold, or will do so imminently. Strong incentives exist to publish such a result soon. Residual uncertainty centers on the possibility of subtle benchmark mismatch, last-mile issues with symbolic reasoning, or publication delays, but these are outweighed by the pace and magnitude of progress. Therefore, I judge a YES outcome overwhelmingly likely.",
+            "final_probability": 93
+        },
+        "Machine Learning Engineering (Benchmark Evaluation Standards)": {
+            "time_to_resolution": "Approximately 3 months and 10 days (until January 1, 2026).",
+            "perspective_relevance": "As an expert in Machine Learning Engineering with a focus on benchmark evaluation standards, I have deep familiarity with how state-of-the-art models are measured against benchmarks like FrontierMath. This includes awareness of the limitations of benchmarks, issues around solution/data leakage, nuances in benchmark design, best practices for reproducible and public results, and the distinctions between impressive human-competitive headline results and the stricter metrics demanded by newer, harder benchmarks like FrontierMath.",
+            "status_quo": "As of early 2025, no AI system had publicly demonstrated >85% performance on the FrontierMath benchmark. Prior top models had achieved strong results on AIME (~70\u201380%) and IMO-like problems, but not on the extremely difficult and novel problems in FrontierMath.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Rapid Progress in Mathematical Reasoning Benchmarks",
+                    "effect": "Strongly increases probability. New results show AI models (notably GPT-5, DeepSeek-R1, and DeepMind Gemini 2.5) hitting or exceeding human-elite performance on AIME and IMO, and dominating the ICPC 2025 contest."
+                },
+                {
+                    "factor": "FrontierMath Benchmark Design and Difficulty",
+                    "effect": "Decreases probability. FrontierMath is intentionally designed to avoid data leakage and train-test contamination, and features non-trivial problems going beyond existing competition benchmarks. It may include tasks unfamiliar even to the top humans or models trained on prior data."
+                },
+                {
+                    "factor": "Benchmark Publication Standards & Documentation",
+                    "effect": "Weakly decreases probability. The resolution requires a public document or blog post reporting >85% performance, which depends on both actual performance and willingness of labs to report results in a timely/public fashion."
+                },
+                {
+                    "factor": "Training Scaling and RL Approaches",
+                    "effect": "Increases probability. DeepSeek-R1 and recent work from Nvidia and Tencent show that RL-based approaches and extended training allow for rapid development of genuinely new reasoning strategies, enabling progress on tasks previously seen as out of reach."
+                },
+                {
+                    "factor": "Recent Model Performance on Related Benchmarks",
+                    "effect": "Strongly increases probability. With DeepSeek-R1 and GPT-5 achieving 86.7\u201394.6% on AIME and other models hitting or surpassing human gold-medalist levels on IMO, the gap to 85% on FrontierMath is plausibly closing quickly."
+                },
+                {
+                    "factor": "Base rates of major SOTA breakthroughs on new/novel benchmarks",
+                    "effect": "Moderately decreases probability. Historically, even with rapid progress in other domains, the hardest new benchmarks often resist SOTA for their first year or two."
+                },
+                {
+                    "factor": "Potential for Solution/Leakage or Contamination",
+                    "effect": "Weakly decreases probability. The news and standards suggest FrontierMath is actively guarded, but the possibility of indirect exposure or overfitting can't be fully ruled out\u2014though this is less likely to drive spurious results given scrutiny."
+                },
+                {
+                    "factor": "Economic and Competitive Incentives",
+                    "effect": "Moderately increases probability. The low training costs and democratization opened by methods like DeepSeek's and the incentive for labs to claim 'firsts' in high-profile math benchmarks motivate rapid, public attempts."
+                }
+            ],
+            "no_scenario": "Despite superhuman performance on AIME, ICPC, and the IMO, models fall short of 85% on FrontierMath itself, either due to the benchmark's novel, highly adversarial problem design or because labs do not or cannot publish >85% results before the deadline. Alternatively, some models could reach high internal scores but be held back from publication for safety, strategic, or PR reasons.",
+            "yes_scenario": "OpenAI, DeepMind, DeepSeek, or another lab successfully adapts scaling, RL, and advanced self-improvement techniques, tunes for time-intensive 'system 2' compute, and cracks the 85% threshold on FrontierMath. They promptly publish a public report or blog post (e.g., similar to the GPT-5 release or DeepSeek-R1 Nature paper), clearly documenting the >85% score before January 1, 2026.",
+            "final_reasoning": "The last three months have seen a step-change in AI mathematical reasoning. GPT-5, DeepSeek-R1, and Gemini 2.5 have all delivered superhuman results on AIME, IMO, and the ICPC. DeepSeek-R1 specifically hit 86.7% on AIME with self-consistency\u2014higher than the target threshold here\u2014and others have hit gold-medal IMO scores. The difference between AIME/IMO and FrontierMath is non-trivial, but these are not marginal misses: these models are now reliably outperforming top humans, displaying novel algorithmic/strategic approaches, and can scale their reasoning time. News around Nvidia ProRL and Tencent R-Zero adds confidence that continued RL-based training yields new abilities, not just regurgitation or sampling artifacts. Historically, hard new benchmarks sometimes hold out longer, but given the rate of progress, the intense competitive incentives, and low cost-of-entry, it seems highly likely that at least one lab has both crossed and will promptly publish >85% on FrontierMath before the end of 2025. The only major risks are last-minute benchmark changes or publication bottlenecks, but both seem less likely given recent aggressive press and paper timelines. Weighing all this, the appropriate probability, given benchmark caveats but also very strong trend evidence, is high.",
+            "final_probability": 92
+        },
+        "AI Policy and Forecasting (Technology Forecasting Methodologies)": {
+            "time_to_resolution": "Approximately 3 months and 10 days until January 1, 2026.",
+            "perspective_relevance": "As an expert in AI Policy and Forecasting (Technology Forecasting Methodologies), I bring to bear a deep knowledge of the trajectory of AI research, the methodology and limitations of benchmarks, realistic rates of progress in advanced mathematical reasoning for AI, and the incentives/behaviors of leading AI labs. My expertise allows me to weigh the rapid recent progress in bench-marked mathematical performance against historical base rates, publication norms, and technical hurdles.",
+            "status_quo": "As of September 2025, no AI system has been publicly documented to achieve above 85% performance on the FrontierMath benchmark (to my knowledge), though superhuman results are being reported on AIME, International Mathematical Olympiad (IMO), ICPC, and other hard benchmarks. The status quo is that SOTA models are close to the 85% mark on some related benchmarks, but there is no public and unambiguous report of exceeding 85% on FrontierMath itself.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Rapid Model Improvements and Generalization",
+                    "effect": "Increases probability. Multiple lines of evidence show a sudden leap in SOTA LLMs\u2019 mathematical reasoning, with DeepSeek-R1 and GPT-5 demonstrating 86.7%+ on AIME and gold medal/near-perfect performance in IMO and ICPC. The same underlying advances (reinforcement learning, chain-of-thought, system-2 scaling, etc.) could transfer to FrontierMath."
+                },
+                {
+                    "factor": "Benchmark Difficulty and Distribution Shift",
+                    "effect": "Decreases probability. While models are excelling at AIME/IMO/ICPC, FrontierMath is specifically designed to avoid saturation and distribution overfitting, possibly including more novel or adversarial problems. This makes transfer of SOTA harder and could slow 'benchmark clearing'."
+                },
+                {
+                    "factor": "Publication and Reporting Incentives",
+                    "effect": "Increases probability. OpenAI, DeepMind, and other labs have a strong incentive to demonstrate and publish state-of-the-art results on new, credible benchmarks to maintain their lead and grab headlines. As labs have hit saturation for standard benchmarks, there will be pressure to test and publish on the next-tier-of-difficulty, like FrontierMath."
+                },
+                {
+                    "factor": "Evaluation Bottlenecks or Delays",
+                    "effect": "Decreases probability. The question requires not only achievement, but also public documentation (official report, blog, paper, etc.) before Jan 1, 2026. Labs may withhold or delay releasing such results for strategic reasons, or may face reviewer or data-availability bottlenecks on a new benchmark."
+                },
+                {
+                    "factor": "AI Reasoning Scaling Laws + System-2 Approaches",
+                    "effect": "Increases probability. The recent evidence from NVIDIA's ProRL, Blitzy, and longer inference time approaches shows strong returns from scaling both parameters and inference-time reasoning, directly improving math/coding benchmarks. If this holds for frontier math reasoning, >85% could be reached before the deadline."
+                },
+                {
+                    "factor": "Potential for Overfitting or Leakage",
+                    "effect": "Ambiguous. If substantial portions of the benchmark leak into training sets, or are subject to Goodharting, published results may overestimate true capabilities; but if the community is vigilant, this risk may just slow publication."
+                }
+            ],
+            "no_scenario": "Despite the impressive advances on benchmarks like AIME and IMO, models fail to generalize robustly to the harder and carefully curated FrontierMath problems. Either no model trained by Jan 1, 2026 exceeds 85%, or, more likely, one does privately, but the lab chooses not to publish the result (or only offers a vague internal report), missing the question\u2019s resolution bar.",
+            "yes_scenario": "By late 2025, OpenAI, DeepSeek, or DeepMind successfully adapts their latest reasoning-native models or system-2 tooling to the FrontierMath benchmark. At least one model exceeds 85% (likely in the 85\u201390% range) and the result is published, perhaps in an official benchmark leaderboard, a peer-reviewed paper (e.g., NeurIPS 2025), high-profile preprint, or a developer blog post. This allows for unambiguous public documentation and resolves the question Yes.",
+            "final_reasoning": "The recent wave of AI reasoning breakthroughs\u2014exceeding 85% on AIME, superhuman IMO/ICPC performance, and new RL/self-consistency approaches\u2014shows a robust and ongoing trend in scaling mathematical reasoning in SOTA models. The fact that these gains are now occurring at relatively low compute budgets (e.g., DeepSeek-R1) makes it highly probable that incremental improvements and transfer to new benchmarks will continue at pace. While FrontierMath is specifically designed to avoid easy transfer and to resist model overfit, my view is that the SOTA labs, motivated to publicize high-profile wins, will test and retune models on it within weeks/months. Given there are 3+ months left\u2014ample time to re-run, fine-tune, or scale up current models\u2014I judge the likelihood of someone surpassing and publicly reporting >85% on FrontierMath before Jan 1, 2026 as very high. The main risks are (1) last-minute publication bottlenecks, (2) the benchmark being significantly harder or not yet popular among labs, or (3) strategic withholding of results. These are modest compared to the overwhelming evidence of rapid reasoning progress and clear incentive to 'clear' new credible benchmarks. Thus, I set the probability at 93%.",
+            "final_probability": 93
+        },
+        "Artificial Intelligence (Deep Learning Theory)": {
+            "time_to_resolution": "Approximately 3 months and 10 days (until January 1, 2026).",
+            "perspective_relevance": "As an expert in Deep Learning Theory, I bring insight into both current LLM/reasoning model capabilities and the underlying scaling laws, architectural innovations, reinforcement learning from rewards/feedback, and the factors that historically govern leapfrogging in mathematical reasoning benchmarks. I can take a critical view of performance inflation due to benchmark saturation and transfer learning, and I am able to differentiate between incremental progress and true competitive breakthroughs\u2014in addition to understanding the internal mechanics of why certain model designs or training paradigms are more likely to succeed.",
+            "status_quo": "No publicly documented AI model has yet surpassed 85% on the FrontierMath benchmark. The most advanced models\u2014OpenAI's GPT-5, DeepMind's Gemini 2.5, and DeepSeek-R1\u2014are consistently outperforming human champions on major benchmarks and competitions (AIME 2024/2025, International Mathematical Olympiad, ICPC programming contest), but official, public >85% FrontierMath results have not yet been announced or documented.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "State-of-the-art LLM and reasoning model progress (GPT-5, DeepSeek-R1, Gemini 2.5)",
+                    "effect": "Significantly increases probability. Recent models dramatically outperform past SOTA in math/coding contests (AIME: DeepSeek-R1 at 86.7% with self-consistency; GPT-5 at 94.6% on AIME 2025), and are outpacing gold-medalist humans at the IMO. This indicates underlying reasoning advances near or exceeding the threshold demanded by FrontierMath."
+                },
+                {
+                    "factor": "Transferability from adjacent benchmarks to FrontierMath",
+                    "effect": "Moderately increases probability. The models are now consistently topping or saturating other difficult math/coding test sets (AIME, SWE-bench, ICPC, IMO). While FrontierMath is designed to outpace these, transfer learning and increasingly generalized reasoning architectures (e.g., those leveraging tree-of-thought, self-consistency, agentic RL) imply that a breakthrough on similar benchmarks is likely to translate or spill over."
+                },
+                {
+                    "factor": "Recent training/architectural innovations (RL from outcome, pause-and-reflect, self-verification, curriculum-generation, system-2-type deliberation)",
+                    "effect": "Increases probability. Emerging methods such as DeepSeek's binary reward RL, NVIDIA's long-horizon ProRL, and Tencent's R-Zero showcase rapid self-improvement and reasoning leaps available on modest compute budgets. These techniques overcome prior scaling or data-labeling bottlenecks and are explicitly producing new reasoning behaviors (not just memorization or pattern-matching)."
+                },
+                {
+                    "factor": "Benchmark gaming, overfitting, and solution leakage risks",
+                    "effect": "Slightly decreases probability. There are growing concerns that AI labs may optimize for benchmarks or benefit from indirect exposure, which can inflate reported performance. However, new benchmarks like FrontierMath are designed to minimize leakage, and the question requires public documentation, mitigating this concern."
+                },
+                {
+                    "factor": "Public documentation/announcement requirements for resolution",
+                    "effect": "Slightly decreases probability. It is possible an AI already internally exceeds >85% but the result might not be published for strategic or regulatory reasons, especially given ongoing regulatory scrutiny and competitive secrecy in the industry."
+                },
+                {
+                    "factor": "Short time horizon (approx. 3 months to resolution)",
+                    "effect": "Slightly decreases probability. While progress has been rapid, AI labs may prefer to delay publication for 2026 launches or due to regulatory caution, and tight publication review cycles in top conferences may not align with the resolution deadline."
+                },
+                {
+                    "factor": "Model generalization and assessment by independent organizations",
+                    "effect": "Slightly decreases probability. The performance must be documented and credible\u2014there is some non-zero probability that, despite impressive results elsewhere, AI models may struggle with out-of-distribution problems or adversarially-designed questions unique to FrontierMath."
+                }
+            ],
+            "no_scenario": "Despite success on AIME, ICPC, and IMO, FrontierMath remains sufficiently distinct\u2014either more adversarial, better at resisting pattern-matching exploitation, or more reliant on long-form, multi-step proofs that current LLMs handle poorly or inconsistently. Either OpenAI, DeepMind, or DeepSeek do not attempt a public run before 2026 (e.g., waiting for optimal publicity or regulatory clarity), or their besting of >85% is not formally documented in an eligible announcement or peer-reviewed publication by the deadline. There is also the (less likely) possibility that final model outputs lack the rigor, explainability, or formal verification (e.g., proof checker standards) expected for FrontierMath, failing the resolution criteria.",
+            "yes_scenario": "An AI model\u2014most likely OpenAI's GPT-5, DeepSeek-R1, or Google Gemini 2.5, potentially with further prompt/ensemble/RL refinements\u2014achieves greater than 85% on the official FrontierMath benchmark, with results formally documented in a public benchmark report, peer-reviewed paper, conference presentation, or AI lab blog post before January 1, 2026. The achievement is based on genuine reasoning progress (as indicated by recent AIME, IMO, and ICPC results), and is made public either for publicity, to signal continued leadership, or to attract enterprise or research customers. The performance meets or surpasses required standards for rigor and verification as defined by the FrontierMath organizers.",
+            "final_reasoning": "LLMs and reasoning models have advanced at an accelerated pace and now consistently exceed human champion performance on elite math and programming competitions: GPT-5 scores 94.6% on AIME 2025, DeepSeek-R1 hits 86.7% (with self-consistency) on AIME 2024, and AI models now score gold or perfect at the IMO and ICPC under human-equivalent conditions. Concurrently, innovations in reinforcement learning, curriculum generation, and self-improving reasoning architectures have removed prior bottlenecks and enabled models to autonomously acquire new strategies across domains. Transfer from adjacent benchmarks is strong, and system design is increasingly general-purpose. While benchmark gaming and documentation topology are non-zero concerns, AI labs are motivated to publicize such milestones for commercial, reputational, and signaling reasons\u2014especially as competition heats up among OpenAI, DeepMind, and emerging rivals like DeepSeek. The main downside risk is timing: a tight window remains for results publication, and certain labs might strategically delay. Nonetheless, the preponderance of evidence and current velocity of progress\u2014on base rates and theory\u2014point strongly to an imminent, credible public demonstration. My best estimate is 85% probability of a Yes resolution by January 1, 2026.",
+            "final_probability": 85
+        },
+        "Artificial Intelligence (Scaling Laws in AI)": {
+            "time_to_resolution": "About 3 months and 10 days (until January 1, 2026)",
+            "perspective_relevance": "As an expert in AI scaling laws, large language model advances, and mathematical benchmark evaluation, I can clarify the strong link between underlying compute, data, RLHF techniques, and performance on highly challenging tasks such as FrontierMath. I combine technical insight into model scaling trends, post-training methods, recent SOTA benchmarks, and the nuance in moving from IMO/AIME-level performance to hard generalization in newer test regimes like FrontierMath.",
+            "status_quo": "As of early 2025, no AI system had achieved >85% on the FrontierMath benchmark. Models that performed at or near the human level on AIME or IMO were still struggling to surpass 65-75% on FrontierMath, with rapid progress but no clear breaching of the 85% threshold.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent rapid progress on adjacent benchmarks (AIME, IMO, ICPC, SWEBench, etc)",
+                    "effect": "Strongly increases probability, since the previous ceiling at Olympiad/GRE/SAT math has now been decisively broken by GPT-5, Gemini 2.5, DeepSeek-R1, etc, many now scoring at or near perfect on those tasks."
+                },
+                {
+                    "factor": "FrontierMath's intended difficulty and recency safeguards",
+                    "effect": "Moderately decreases probability; as an actively updated, 'unsolved problems only' benchmark, it resists data leakage or benchmark overfitting, requiring true generalization and novel problem-solving skill."
+                },
+                {
+                    "factor": "Scaling law tailwinds and emergence from reinforcement learning breakthroughs",
+                    "effect": "Strongly increases probability. DeepSeek R1 and NVIDIA's ProRL show that longer RL training and novel reward structures can sharply unlock new reasoning capabilities, historically leading to step-function improvements."
+                },
+                {
+                    "factor": "Lack of directly reported >85% results, despite impressive adjacent SOTA scores",
+                    "effect": "Moderately decreases probability. Despite GPT-5 and DeepSeek R1 achieving >94% on AIME and gold at IMO/ICPC, there is NO explicit report above the 85% mark on FrontierMath itself as of September 18-21, 2025, with public focus shifting to newer, harder benchmarks."
+                },
+                {
+                    "factor": "Extremely short timeline to threshold crossing and publication",
+                    "effect": "Slightly increases probability. Major labs (OpenAI, Google, DeepSeek) are close enough that even minor post-release tuning, self-consistency, or RL-on-new-data could push them past 85% within weeks, though this depends on publication timing and incentives."
+                },
+                {
+                    "factor": "Publication/verification bottlenecks and incentive misalignments",
+                    "effect": "Slightly decreases probability. For SOTA results to count, they require public documentation, which is sometimes delayed, embargoed, or deprioritized if the result is not considered momentous by the lab or community compared to adjacent AGI/GPT/ARC-AGI milestones."
+                }
+            ],
+            "no_scenario": "Despite models achieving human+ scores on IMO, AIME, and even gold-medal ICPC and SWEBench, none are tuned/tested sufficiently on FrontierMath to breach 85% before end-2025. Attention, investment, and publication shift to even newer AGI-hard benchmarks (e.g. ZeroBench, ARC-AGI-2, EnigmaEval) seen as more prestigious 'firsts.' As a result, cabined by publication inertia, time crunch, or by true unsolved difficulty spikes, no official >85% showing is documented before January 1, 2026.",
+            "yes_scenario": "OpenAI (or Google/DeepSeek) runs the latest GPT-5 (or Gemini 2.5 or DeepSeek-R2) with additional reasoning/RL or inference-time strategies (tree-of-thought, self-consistency, etc) on FrontierMath and, with enough attempts, achieves and publishes a >85% score\u2014breaking the barrier between Olympiad-level and true new-math generalization. Documentation appears in a blog post, arXiv preprint, or competition leaderboard by December 2025.",
+            "final_reasoning": "FrontierMath represents a deliberate post-benchmark challenge\u2014intended to resist test set leakage and overfitting. However, as of September 2025, models like GPT-5, Gemini 2.5, and DeepSeek-R1 have *already* cracked all previous SOTA boundaries\u2014gold IMO, perfect ICPC, 94%+ AIME, and 86.8% SWEBench-Verified. More, DeepSeek and NVIDIA recently demonstrated that massively extended RL and self-improving curricula can extract dramatic new reasoning strategies and unlock performance leaps. The key limiting factor is: (a) whether model developers have prioritized *FrontierMath* specifically for sustained optimization, and (b) whether they will bother to publish results before the January 1, 2026 cutoff. As an AI scaling laws expert, I recognize the base rate for 'very hard benchmark falls <6 months after Olympiad-level fall' is perhaps 0.5\u20130.7, but here, all trendlines from the past 12 months (see: scaling law breakthroughs in reasoning, RL, and evaluation) suggest the gap is now weeks/months, not years. The cited news demonstrates that large models are now solving tasks once reserved for top adult mathematicians and computer scientists, and the remaining distance to 85% is within reach, conditional on organizational incentives and possible stealth progress. The main risk is *documentation* or that labs may aim their effort elsewhere (e.g. ZeroBench, EnigmaEval, ARC-AGI-2), but the raw ability will almost certainly breach the barrier if attempted. Weighing these, I assign a strong, but not fully extreme, probability.",
+            "final_probability": 86
+        },
+        "Computer Science (Algorithmic Complexity)": {
+            "time_to_resolution": "Approximately 3 months and 10 days (resolves January 1, 2026; today is September 21, 2025)",
+            "perspective_relevance": "As an expert in Computer Science and Algorithmic Complexity, I have a deep understanding of what constitutes non-trivial mathematical reasoning, the limitations and strengths of current AI architectures (especially with regard to algorithmic generalization and combinatorial complexity), and the ways AI benchmarks are constructed, gamed, and overfit. I am attuned to the difference between statistical pattern recognition and true step-by-step reasoning, and understand both the practical and theoretical constraints in AI progress, as well as the role played by milestone benchmarks and verification. This lets me critically assess whether recent AI achievements will likely translate to >85% performance on the hard, unexploited problems of the FrontierMath benchmark.",
+            "status_quo": "No AI system has yet publicly achieved >85% on the FrontierMath benchmark. Recent models have rapidly advanced on other difficult benchmarks (AIME, IMO, ICPC), but, as of the last public information, no team has released or documented >85% on FrontierMath.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Superhuman AI Performance on Adjacent Benchmarks",
+                    "effect": "Increases probability. GPT-5 and DeepSeek-R1 have recently obtained perfect or near-perfect scores in ICPC 2025 and >94% on AIME 2025, with gold-medal performance on the 2025 IMO. These results directly suggest that the hardest frontier math benchmarks are within reach for top labs."
+                },
+                {
+                    "factor": "Algorithmic Generalization and New Reasoning Techniques",
+                    "effect": "Increases probability. The news demonstrates systematic breakthroughs in reinforcement learning-based self-reasoning (e.g., DeepSeek-R1, Tencent's R-Zero, Nvidia's ProRL); techniques like chain-of-thought, self-consistency, and verifier-assisted learning are helping models cross previous performance plateaus, extrapolating beyond surface-level statistical pattern matching."
+                },
+                {
+                    "factor": "Potential for Benchmark Overfitting and Information Leakage",
+                    "effect": "Decreases probability. The competitive pressure to achieve public benchmarks increases the risk of indirect exposure or subtle overfitting, which can muddy claims of general reasoning. There is ongoing discussion in the field about Goodharting and benchmark stagnation as models may be tuned to expected tests rather than genuine algorithmic inventiveness."
+                },
+                {
+                    "factor": "Verification and Documentation Standards for Resolution",
+                    "effect": "Decreases probability (modestly). For the question to resolve YES, a documented, verifiable, and public record is required (peer-reviewed paper, blog post etc.), not just private or rumored results. There is always some lag between internal achievement and publication\u2014and labs may not prioritize public FrontierMath optimization if results can\u2019t be released speedily due to competitive or policy concerns."
+                },
+                {
+                    "factor": "FrontierMath Benchmark Specifics",
+                    "effect": "Decreases probability slightly. While AI is showing superhuman performance in adjacent domains, FrontierMath may specifically contain novel, well-shielded challenges. Given recent history (e.g., ARC-AGI series), it's common for new benchmarks to remain uncracked for some time after release, especially if dataset curation and test integrity are strong."
+                },
+                {
+                    "factor": "Pace of Algorithmic Progress",
+                    "effect": "Strongly increases probability. The recent news demonstrates not just incremental but exponential improvements within months, at modest financial and compute costs\u2014suggesting a high likelihood that the current or next model generation can reach >85% FrontierMath before year-end."
+                }
+            ],
+            "no_scenario": "Although models like GPT-5 and DeepSeek-R1 exhibit extraordinary performance (e.g., perfect ICPC, 94.6% AIME), when tested on the actual, unseen FrontierMath tasks\u2014assumed to be constructed to resist overfitting and data leakage\u2014the models plateau at 70\u201380% and attempts to push further either reveal new reasoning bottlenecks or unacceptable error rates. Teams may focus efforts elsewhere (newer benchmarks, commercial applications), or withhold results pending further improvements or publication cycles, resulting in no publicized >85% score before the deadline.",
+            "yes_scenario": "Building on ICPC, AIME, and IMO breakthroughs, OpenAI, DeepMind, or DeepSeek prioritize submission on FrontierMath. Using enhanced 'thinking mode', chain-of-thought, verifier-augmented training, and extended compute, they achieve and document >85% performance\u2014likely in a preprint, official blog, or at NeurIPS/ICLR/AAAI, with clear evidence and reproducibility. Alternatively, an open-source team leverages the recent RL advances (R-Zero, ProRL, System-2 reasoning at inference) to bridge the final gap and publishes the result before year-end.",
+            "final_reasoning": "Recent evidence shows AI models making superhuman advances on previously intractable benchmarks adjacent to FrontierMath (ICPC, AIME, IMO), with algorithmic innovations enabling rapid performance jumps. The cost of state-of-the-art training has dropped, democratizing access and increasing parallel efforts aiming for public results. However, the specific content and curation of the FrontierMath benchmark, combined with requirements for public, documented results and potential publication lag, introduce moderate headwinds. Given the acceleration of progress and strong incentive to publicly claim such a high-profile result, the chances are now very high, though not quite certain\u2014remaining short of 100% only due to these procedural issues or possible benchmark toughness.",
+            "final_probability": 92
+        },
+        "Computer Science (Computational Learning Theory)": {
+            "time_to_resolution": "3 months and 10 days (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Computational Learning Theory, I focus on the fundamental properties of learnability, generalization, transfer, and the limits imposed by model and data complexity. My background enables me to assess whether mathematical reasoning benchmarks like FrontierMath can plausibly be surpassed by current or near-term AI\u2014especially in light of architectural advances (e.g., reinforcement learning methods, chain-of-thought, agentic LLMs), scaling laws, and evidence of generalization gaps or overfitting that can impede benchmark progress. I am attuned to the distinction between improvements on surface-level benchmarks and genuine generalization to new, hard mathematical problems\u2014precisely what FrontierMath is designed to test.",
+            "status_quo": "As of late 2025, no public AI model has been reported to surpass 85% on the FrontierMath benchmark. State-of-the-art models\u2014such as GPT-5, DeepSeek-R1, and Gemini 2.5\u2014have achieved superhuman results on AIME, IMO, ICPC, and some coding benchmarks, but no published claim demonstrates >85% on FrontierMath specifically.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "FrontierMath-Benchmark Alignment with Recent AI Capabilities",
+                    "effect": "Increases probability. Recent LLMs (e.g., GPT-5, DeepSeek-R1, Gemini 2.5) now routinely outperform humans on AIME, IMO, and ICPC benchmarks. These tests are out-of-distribution from training and require complex reasoning akin to that in FrontierMath."
+                },
+                {
+                    "factor": "Demonstrated Near-Benchmark Results on Related Math Tasks",
+                    "effect": "Increases probability. GPT-5 reports 94.6% on AIME 2025 and DeepSeek-R1 achieves 86.7% on AIME 2024. Gold-level performance is reported for the 2025 IMO. Though not direct FrontierMath scores, these results imply that >85% on FrontierMath is possible in the same model family, given further tuning or focused evaluation."
+                },
+                {
+                    "factor": "Lack of Explicit Published FrontierMath Scores",
+                    "effect": "Decreases probability. Despite massive progress, no explicit claim (>85%) on FrontierMath has yet been published as of September 2025, even though LLM developers are likely to be motivated to do so for PR and scientific value."
+                },
+                {
+                    "factor": "FrontierMath Benchmark Difficulty and Goodhart's Law",
+                    "effect": "Decreases probability. News articles discuss that as benchmarks like FrontierMath become targets, model developers can overfit or game the test, but the benchmark is explicitly designed to be adversarial and hard to \u2018game\u2019, possibly making >85% genuinely difficult even for top-tier models."
+                },
+                {
+                    "factor": "Acceleration Due to New RL and Systemic Approaches",
+                    "effect": "Increases probability. DeepSeek, ProRL, R-Zero, and other self-supervised RL systems show rapid gains with lower compute, implying that scaling, system combination, and inference-time reasoning continue to enable outsized improvements, perhaps enough to cross the >85% threshold in a short timeframe."
+                },
+                {
+                    "factor": "Publication and Transparency Lags",
+                    "effect": "Decreases probability slightly. Given the requirement for public documentation (paper/blog/conference), even if >85% is achieved internally, it must be documented in time for resolution."
+                }
+            ],
+            "no_scenario": "Major LLMs (OpenAI, Google, DeepSeek, etc.) are internally capable of >85% on FrontierMath, but do not publicly release results or papers due to business secrecy, regulatory caution, or perception risks. Alternatively, models still generalize worse to unseen, adversarial math problems than on IMO/AIME/ICPC, and breakthroughs remain just below the threshold, with scores plateauing around 75\u201382%. No peer-reviewed or credible public disclosure of >85% is made by Jan 1, 2026. Alternatively, someone does achieve the result, but only reports it after the new year or in a non-qualifying leak/internal memo.",
+            "yes_scenario": "OpenAI, Google DeepMind, DeepSeek, or another lab formally evaluates a top-tier model\u2014perhaps GPT-5+ or DeepSeek-R1+\u2014on FrontierMath, scoring >85%. The result is written up in an official blog, a peer-reviewed preprint, or cited in a benchmark leader board from EpochAI. The result is widely publicized, aligning with prior recent superhuman scores on AIME, IMO, and ICPC benchmarks. The publication arrives prior to the Jan 1, 2026 deadline, fulfilling all resolution criteria.",
+            "final_reasoning": "There is overwhelming evidence that top models are surpassing prior human-level performance on incredibly difficult unseen mathematical and algorithmic benchmarks: AIME, IMO, and ICPC. GPT-5 achieved 94.6% on AIME; DeepSeek-R1 86.7% on AIME 2024 with self-consistency; and both OpenAI and Google have reported gold-level or perfect results on world-class contests. The architecture and training approaches (reinforcement learning, RL-with-self-play, longer context, inference-time compute scaling) support further, rapid improvements. However, until now, there has been no explicit publication or press release confirming >85% on FrontierMath, despite direct incentive for labs to do so if achieved. Moreover, FrontierMath is engineered to be difficult even for advanced models, and some researchers emphasize potential benchmark bottlenecking (almost reaching, but not quite crossing, the >85% level) or limits to current LLM architectures for truly adversarial, novel mathematical tasks. Still, given the rate of progress, the temporal proximity of several high-profile releases, and the fact that publication lag is the chief risk\u2014not lack of capability\u2014there is a strong chance (but not certainty) that at least one lab will officially publish a qualifying result on or just after GPT-5 or DeepSeek-R1+ by year's end. We are late in 2025 already, but with 3 months left and rapid cycles, I estimate there is a greater than even chance, though not a slam-dunk, due to possible delays or strategic nondisclosure. Given all, my probability is 74%.",
+            "final_probability": 74
+        },
+        "Mathematics Education (Mathematics Problem Solving Research)": {
+            "time_to_resolution": "Approximately 3 months and 10 days, as the question resolves on Jan 1, 2026.",
+            "perspective_relevance": "As a researcher in Mathematics Education, especially in mathematical problem solving, I am intimately familiar with the types of reasoning, abstraction, and creative processes required to excel at challenging mathematics benchmarks. My expertise provides insight into how AI performance on tests like AIME, IMO, and ICPC compares to problem solving on the FrontierMath benchmark\u2014i.e., whether today\u2019s AI models have truly crossed the threshold of general mathematical reasoning, or whether current results primarily reflect narrow overfitting or benchmark-specific optimization.",
+            "status_quo": "No AI system has publicly achieved >85% on the FrontierMath benchmark. Previously, top results on mathematical reasoning tests for AI have lagged well behind expert human levels on the hardest, generalizing mathematics exams.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent AI performance on adjacent math benchmarks (AIME, IMO)",
+                    "effect": "Strongly increases probability. News shows DeepSeek and OpenAI achieving 86.7% on AIME (with self-consistency), gold-medal-level IMO performance, and outperforming humans in elite programming contests. These are direct evidence of a leap in mathematical reasoning and problem solving."
+                },
+                {
+                    "factor": "Evidence of generalization and transfer to new, harder benchmarks (FrontierMath)",
+                    "effect": "Moderately increases probability, but with caveats. While AI outperformed expectations in unfamiliar contests (e.g., ICPC), there is uncertainty over direct transferability to the more abstract, nonstandard problems found on FrontierMath. However, the move from high-school tests to graduate-level olympiad-style performance is notable progress."
+                },
+                {
+                    "factor": "Benchmark specificity and Goodhart's Law",
+                    "effect": "Slightly decreases probability. The news and domain literature highlight benchmark saturation and possible gaming. If labs specifically target benchmarks for optimization, this could inflate apparent skill. However, recent achievements suggest broader, reasoning-driven advances rather than simple benchmark-leak exploitation."
+                },
+                {
+                    "factor": "Freshness and difficulty of FrontierMath",
+                    "effect": "Decreases probability. FrontierMath is specifically designed to stay ahead of the curve, with novel questions to prevent memorization, and is aimed at testing advanced problem solving, not seen in standard benchmarks."
+                },
+                {
+                    "factor": "Pace of progress and competitive incentives",
+                    "effect": "Increases probability. The low training cost (DeepSeek: $294k) and rapid scaling observed in recent months\u2014driven by competitive urgency between OpenAI, Google, DeepSeek, and others\u2014raise the likelihood that a top lab will target and publish >85% results, especially with the global prestige and signaling benefits at stake."
+                },
+                {
+                    "factor": "Transparency and resolution criteria (publication requirement)",
+                    "effect": "Slightly decreases probability. For 'Yes', labs must formally publish the result (in a paper, report, blog post, etc.), not just claim private internal progress. Some milestone results (e.g., the OpenAI IMO gold model) have been delayed for publication and independent confirmation, causing minor but real risk of non-public validation before the deadline."
+                }
+            ],
+            "no_scenario": "No major lab targets the FrontierMath benchmark for a formal public run in time, perhaps due to focusing on even harder or more public-facing milestones. Alternatively, even the newest models\u2014while excelling at IMO/ICPC/AIME\u2014still fail to generalize to the most original and abstract problems on FrontierMath, especially if the benchmark was carefully curated to evade capabilities demonstrated on prior tests.",
+            "yes_scenario": "Within the next 3 months, OpenAI, Google, DeepSeek, or another frontier AI lab mounts a direct challenge to FrontierMath, motivated by recent breakthroughs and media interest. They run GPT-5, Gemini Deep Think, or DeepSeek R1/next on the latest version, and achieve >85% (possibly aided by new self-consistency, verification, or extended inference-time compute). They promptly publish the result in a blog post, paper, or conference talk, securing resolution.",
+            "final_reasoning": "The news presents a parade of landmark achievements\u2014AIME scores of 86.7-94.6%, IMO gold-medal-level problem solving, perfect scores at ICPC, and multi-domain breakthroughs in both math and coding. DeepSeek and OpenAI have repeatedly shown ability to generalize from training-data math to previously unseen contest problems, converging on human-expert and superhuman levels. Novel reinforcement learning and system-2 reasoning strategies (long-context, agentic exploration, verifiers) have unlocked new levels of abstraction. While FrontierMath is designed to be harder and minimize benchmark overfitting, the proximity of current performance (IMO gold, ICPC perfection) suggests that the 85% mark is within reach. The biggest risk is a lack of formal documentation before Jan 1, but with only ~3 months left, institutional prestige and competitive pressure make a public confirmation likely. I estimate the base rate for new benchmarks being 'smashed' by frontier labs within a year of their creation is now very high, unless a major methodological barrier is present. There remain modest probabilities for slippage due to publication delays, unanticipated benchmark difficulty, or strategic timing (e.g., labs saving results for later PR cycles), but the overwhelming trend is toward rapid progress and open reporting.",
+            "final_probability": 93
+        }
+    },
+    "deliberation_probability": [
+        93,
+        92,
+        93,
+        85,
+        86,
+        92,
+        74,
+        93
+    ],
+    "deliberation_mean_probability": 88.5,
+    "deliberation_sd": 6.697547525560595,
+    "deliberation_probability_result": 88
+}
