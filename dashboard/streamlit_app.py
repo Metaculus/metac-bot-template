@@ -2,39 +2,21 @@
 # -----------------------------------------------------------
 # Spagbot Performance Dashboard (Streamlit)
 #
-# GOAL (non-coder friendly):
 # - Always-on, web-based dashboard for collaborators.
 # - Shows both "Key" (headline) and "Refined" performance metrics.
-# - Reads forecasts/logs directly from your GitHub repo or a parquet snapshot.
-#
-# HOW TO USE:
-# 1) Put this file in your repo at: dashboard/streamlit_app.py
-# 2) (Option A: simplest) Point RAW_CSV_URL at your repo's raw forecasts.csv.
-#    Example raw URL looks like:
-#    https://raw.githubusercontent.com/<org_or_user>/<repo>/main/forecast_logs/forecasts.csv
-# 3) (Option B: faster) Use the optional GitHub Action below to create a parquet snapshot
-#    at dashboard/data/forecasts.parquet and set USE_PARQUET=True.
-# 4) Deploy on Streamlit Community Cloud; set no secrets unless your data is private.
-#
-# NOTES:
-# - The app tries to "auto-map" your column names to common internal names,
-#   so it should work even if your CSV headers are slightly different.
-# - Everything is heavily commented; you can skim the top and ignore the rest.
+# - Reads forecasts/logs from a local Parquet snapshot (fast) OR from a raw CSV URL.
 # -----------------------------------------------------------
 
 from __future__ import annotations
 import io
 import os
-import sys
-import math
 import json
-import time
-import textwrap
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List, Tuple
+from pathlib import Path
+from typing import Dict, Any, Optional, List
 
-import pandas as pd
+from datetime import datetime
 import numpy as np
+import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -42,37 +24,25 @@ import plotly.graph_objects as go
 # -----------------------------
 # USER SETTINGS (edit these)
 # -----------------------------
-import os
-from pathlib import Path
-
-# Build paths relative to THIS file, so it works no matter the working directory.
 APP_DIR = Path(__file__).resolve().parent
 
-# Option B (faster): read from a parquet snapshot that lives next to this app:
-# Expected location: <APP_DIR>/data/forecasts.parquet
-USE_PARQUET = True  # you can also make this env-driven if you like
+# Toggle via environment variable (no code edits needed later):
+#   USE_PARQUET=true / false
+USE_PARQUET = os.getenv("USE_PARQUET", "true").lower() in {"1", "true", "yes"}
+
+# Parquet file lives next to this app: <repo>/dashboard/data/forecasts.parquet
 PARQUET_PATH = APP_DIR / "data" / "forecasts.parquet"
 
-# Option A (fallback): raw CSV URL (used only if parquet isn't found or USE_PARQUET is False)
+# CSV fallback (only used if USE_PARQUET is False OR parquet not found)
 RAW_CSV_URL = os.getenv(
     "SPAGBOT_RAW_CSV_URL",
-    "https://raw.githubusercontent.com/<ORG_OR_USER>/<REPO>/main/forecast_logs/forecasts.csv"
+    "https://raw.githubusercontent.com/<ORG_OR_USER>/<REPO>/main/forecast_logs/forecasts.csv",
 )
-
-# If your repo is private and you want to read the raw URL with auth:
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # only needed for private repos
 
 # -----------------------------
 # Column name auto-mapping
 # -----------------------------
-# We try to standardize to these internal names so the rest of the app is simple:
-#   "qid", "pid", "question_title", "question_type",
-#   "created_at", "submitted_at", "run_id",
-#   "model", "ensemble", "forecast", "forecast_hi", "forecast_lo",
-#   "outcome", "cdf_json", "mcq_vector_json",
-#   "cost_usd", "tokens_in", "tokens_out", "tag", "lead_time_hours"
-#
-# We'll search your CSV for several possibilities per field:
 COLUMN_ALIAS_MAP: Dict[str, List[str]] = {
     "qid": ["qid", "question_id", "metaculus_qid", "QID"],
     "pid": ["pid", "post_id", "metaculus_post_id", "PID"],
@@ -93,14 +63,11 @@ COLUMN_ALIAS_MAP: Dict[str, List[str]] = {
     "tokens_in": ["tokens_in", "prompt_tokens"],
     "tokens_out": ["tokens_out", "completion_tokens"],
     "tag": ["tag", "topic", "category"],
-    "lead_time_hours": ["lead_time_hours", "lead_hours", "lead_time"]
+    "lead_time_hours": ["lead_time_hours", "lead_hours", "lead_time"],
 }
 
-# -----------------------------
-# Utility: map columns
-# -----------------------------
 def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
-    # Create a new dict of standardized columns
+    """Rename columns to a standard schema so the rest of the app is simple."""
     col_map: Dict[str, str] = {}
     lower_cols = {c.lower(): c for c in df.columns}
     for std, options in COLUMN_ALIAS_MAP.items():
@@ -108,41 +75,53 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
             if opt.lower() in lower_cols:
                 col_map[std] = lower_cols[opt.lower()]
                 break
-    # Rename where possible
-    df = df.rename(columns={v: k for k, v in col_map.items()})
-    return df
+    return df.rename(columns={v: k for k, v in col_map.items()})
 
 # -----------------------------
 # Data loading
 # -----------------------------
 @st.cache_data(show_spinner=True)
+def load_from_parquet(path: Path) -> pd.DataFrame:
+    df = pd.read_parquet(path)
+    return _auto_map_columns(df)
+
+@st.cache_data(show_spinner=True)
+def load_from_csv(url: str, token: str = "") -> pd.DataFrame:
+    import requests
+    headers = {"Authorization": f"token {token}"} if token else {}
+    resp = requests.get(url, headers=headers, timeout=30)
+    resp.raise_for_status()
+    return _auto_map_columns(pd.read_csv(io.StringIO(resp.text)))
+
 def load_data() -> pd.DataFrame:
-    # Option B: Parquet (fast)
-    if USE_PARQUET and PARQUET_PATH.exists():
-        df = pd.read_parquet(PARQUET_PATH)
-        return _auto_map_columns(df)
-    ...
+    """
+    Load data according to the chosen mode:
+      - If USE_PARQUET is True and the file exists -> load parquet.
+      - Else if RAW_CSV_URL is provided (non-placeholder) -> load CSV.
+      - Else -> show an actionable error.
+    """
+    if USE_PARQUET:
+        if PARQUET_PATH.exists():
+            return load_from_parquet(PARQUET_PATH)
+        else:
+            st.warning(f"USE_PARQUET=True but file not found at: {PARQUET_PATH}")
+            st.info("Falling back to CSV (RAW_CSV_URL) if configured.")
 
-    # Option A: raw CSV from GitHub
-    if not RAW_CSV_URL or RAW_CSV_URL.startswith("https://raw.githubusercontent.com/<"):
-        st.warning("Please set SPAGBOT_RAW_CSV_URL env var to your repo's raw forecasts.csv URL.")
-        return pd.DataFrame()
+    if RAW_CSV_URL and "raw.githubusercontent.com/<ORG_OR_USER>/<REPO>" not in RAW_CSV_URL:
+        try:
+            return load_from_csv(RAW_CSV_URL, GITHUB_TOKEN)
+        except Exception as e:
+            st.error(f"Failed to fetch CSV from RAW_CSV_URL.\n{e}")
 
-    # If a token is provided and the URL is a GitHub raw URL, use authenticated request
-    try:
-        import requests
-        headers = {"Authorization": f"token {GITHUB_TOKEN}"} if GITHUB_TOKEN else {}
-        resp = requests.get(RAW_CSV_URL, headers=headers, timeout=30)
-        resp.raise_for_status()
-        data = resp.text
-        df = pd.read_csv(io.StringIO(data))
-        return _auto_map_columns(df)
-    except Exception as e:
-        st.error(f"Failed to fetch CSV: {e}")
-        return pd.DataFrame()
+    st.error(
+        "No data source available. Either:\n"
+        "1) Place a parquet at 'dashboard/data/forecasts.parquet' and set USE_PARQUET=true, or\n"
+        "2) Set SPAGBOT_RAW_CSV_URL to your repo's raw forecasts.csv (and GITHUB_TOKEN for private repos)."
+    )
+    return pd.DataFrame()
 
 # -----------------------------
-# Metrics helpers (binary focus with graceful fallback)
+# Metrics helpers (binary focus)
 # -----------------------------
 def safe_float_series(s: pd.Series) -> pd.Series:
     try:
@@ -198,7 +177,6 @@ def calibration_bins(p: pd.Series, y: pd.Series, n_bins: int = 10) -> pd.DataFra
     return pd.DataFrame(rows)
 
 def sharpness(p: pd.Series) -> Optional[float]:
-    # Sharpness ~ spread away from 0.5; higher is "sharper"
     p = safe_float_series(p)
     if p.notna().sum() == 0:
         return None
@@ -212,11 +190,24 @@ st.set_page_config(page_title="Spagbot Dashboard", layout="wide")
 st.title("🔮 Spagbot Performance Dashboard")
 st.caption("Always-on view of key + refined metrics for Metaculus tournament and cup submissions.")
 
+# Debug helper in sidebar
+with st.sidebar:
+    st.header("Controls")
+    show_debug = st.checkbox("Show data-source debug", value=False)
+    st.caption("Tip: Toggle this on if the app can't find the parquet file.")
+
 df = load_data()
 if df.empty:
     st.stop()
 
-# Normalize some types
+# Optional debug info
+if show_debug:
+    st.code(
+        f"USE_PARQUET={USE_PARQUET}\nPARQUET_PATH={PARQUET_PATH}\nRAW_CSV_URL={RAW_CSV_URL}",
+        language="text"
+    )
+
+# Normalize date types
 if "created_at" in df.columns:
     df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 if "submitted_at" in df.columns:
@@ -227,10 +218,9 @@ has_outcome = "outcome" in df.columns and df["outcome"].notna().any()
 has_model   = "model" in df.columns
 has_type    = "question_type" in df.columns
 
-# Sidebar filters
+# Sidebar filters (continued)
 with st.sidebar:
     st.header("Filters")
-    # date range
     if "created_at" in df.columns and df["created_at"].notna().any():
         min_d = pd.to_datetime(df["created_at"].min())
         max_d = pd.to_datetime(df["created_at"].max())
@@ -238,21 +228,18 @@ with st.sidebar:
         mask_date = (df["created_at"].dt.date >= d1) & (df["created_at"].dt.date <= d2)
         df = df[mask_date]
 
-    # question type
     if has_type:
         types = sorted([str(x) for x in df["question_type"].dropna().unique()])
         if types:
             sel_types = st.multiselect("Question types", types, default=types)
             df = df[df["question_type"].astype(str).isin(sel_types)]
 
-    # model
     if has_model:
         models = sorted([str(x) for x in df["model"].dropna().unique()])
         if models:
             sel_models = st.multiselect("Models", models, default=models)
             df = df[df["model"].astype(str).isin(sel_models)]
 
-    # tag/topic if present
     if "tag" in df.columns:
         tags = sorted([str(x) for x in df["tag"].dropna().unique()])
         show_tag = st.checkbox("Filter by tag/topic", value=False)
@@ -262,7 +249,7 @@ with st.sidebar:
 
 st.markdown("### Key metrics")
 
-# Choose ensemble-only vs all
+# Ensemble toggle
 show_ensemble_only = st.toggle("Show ENSEMBLE forecasts only (if flagged)", value=False)
 df_key = df.copy()
 if show_ensemble_only and "ensemble" in df.columns:
@@ -272,28 +259,28 @@ if show_ensemble_only and "ensemble" in df.columns:
 p_col = "forecast" if "forecast" in df_key.columns else None
 y_col = "outcome" if "outcome" in df_key.columns else None
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
-with col1:
+c1, c2, c3, c4, c5, c6 = st.columns(6)
+with c1:
     brier = brier_score(df_key[p_col], df_key[y_col]) if (p_col and y_col) else None
     st.metric("Brier (binary)", f"{brier:.3f}" if brier is not None else "—")
 
-with col2:
+with c2:
     ll = log_loss(df_key[p_col], df_key[y_col]) if (p_col and y_col) else None
     st.metric("Log loss", f"{ll:.3f}" if ll is not None else "—")
 
-with col3:
+with c3:
     hr = hit_rate(df_key[p_col], df_key[y_col]) if (p_col and y_col) else None
     st.metric("Hit rate @0.5", f"{100*hr:.1f}%" if hr is not None else "—")
 
-with col4:
+with c4:
     sh = sharpness(df_key[p_col]) if p_col else None
     st.metric("Sharpness (|p-0.5|)", f"{sh:.3f}" if sh is not None else "—")
 
-with col5:
+with c5:
     n_sub = int(df_key[p_col].notna().sum()) if p_col else len(df_key)
     st.metric("# forecasts", f"{n_sub}")
 
-with col6:
+with c6:
     last_ts = None
     for c in ["submitted_at", "created_at"]:
         if c in df_key.columns and df_key[c].notna().any():
@@ -319,7 +306,7 @@ with tab_cal:
             hovertext=[f"n={c}" for c in bin_df["count"]]
         ))
         fig.add_trace(go.Scatter(
-            x=[0,1], y=[0,1], mode="lines",
+            x=[0, 1], y=[0, 1], mode="lines",
             name="Perfect calibration", line=dict(dash="dash")
         ))
         fig.update_layout(
@@ -328,8 +315,7 @@ with tab_cal:
             height=450
         )
         st.plotly_chart(fig, use_container_width=True)
-
-        st.caption("Bubbles show the observed resolution per probability bin; dashed line is perfect calibration.")
+        st.caption("Bubbles show observed resolution per probability bin; dashed line is perfect calibration.")
     else:
         st.info("Need binary outcomes to show calibration.")
 
@@ -357,7 +343,6 @@ with tab_models:
                 st.dataframe(g.sort_values("brier", ascending=True), use_container_width=True)
             else:
                 st.info("Need outcomes for per-model performance.")
-
     with c2:
         if has_type:
             st.markdown("**By question type**")
@@ -376,7 +361,6 @@ with tab_models:
 
 with tab_questions:
     st.markdown("**Questions**")
-    # Build an identifier for selection
     if "qid" in df_key.columns:
         opts = (
             df_key[["qid", "question_title"]]
@@ -388,9 +372,9 @@ with tab_questions:
         if chosen:
             qid = int(chosen.split("–")[0].strip().replace("Q", "").strip())
             dd = df_key[df_key["qid"] == qid].copy()
-            st.write(f"### Q{qid} — {dd['question_title'].dropna().iloc[0] if dd['question_title'].notna().any() else ''}")
+            title = dd["question_title"].dropna().iloc[0] if dd["question_title"].notna().any() else ""
+            st.write(f"### Q{qid} — {title}")
 
-            # Time series of forecasts
             if "created_at" in dd.columns and p_col in dd.columns:
                 dd = dd.sort_values("created_at")
                 fig = px.line(dd, x="created_at", y=p_col, color=("model" if has_model else None),
@@ -398,7 +382,6 @@ with tab_questions:
                 fig.update_layout(height=400)
                 st.plotly_chart(fig, use_container_width=True)
 
-            # Show raw rows for transparency
             st.markdown("**All rows for this question**")
             st.dataframe(dd, use_container_width=True)
     else:
@@ -406,7 +389,6 @@ with tab_questions:
 
 with tab_costs:
     st.subheader("Cost & tokens")
-    # If cost info exists
     if "cost_usd" in df_key.columns:
         fig = px.box(df_key.dropna(subset=["cost_usd"]), y="cost_usd", points="all", height=350)
         st.plotly_chart(fig, use_container_width=True)
@@ -428,7 +410,6 @@ with tab_costs:
 
 with tab_runs:
     st.subheader("Stability across runs/commits")
-    # We estimate stability by grouping on (qid, run_id) when available
     if "run_id" in df_key.columns and "qid" in df_key.columns and p_col in df_key.columns:
         g = (
             df_key.dropna(subset=[p_col])
@@ -436,7 +417,6 @@ with tab_runs:
             .mean()
             .reset_index()
         )
-        # Spread of orecasts per Q across runs
         spread = g.groupby("qid")[p_col].agg(["count", "std", "min", "max"]).reset_index()
         st.dataframe(spread.sort_values("std", ascending=False), use_container_width=True)
         st.caption("Tip: lower std suggests more stable forecasts for a question across runs.")
@@ -445,5 +425,5 @@ with tab_runs:
 
 st.divider()
 st.markdown("**Data source**")
-st.code(f"Parquet: {USE_PARQUET} | RAW_CSV_URL: {RAW_CSV_URL}", language="text")
-st.caption("If parquet is enabled, the app reads dashboard/data/forecasts.parquet. Otherwise, it fetches forecasts.csv from your repo.")
+st.code(f"USE_PARQUET={USE_PARQUET} | PARQUET_PATH={PARQUET_PATH} | RAW_CSV_URL={RAW_CSV_URL}", language="text")
+st.caption("When USE_PARQUET=true and the file exists, the app loads from dashboard/data/forecasts.parquet; otherwise it tries the CSV URL.")
