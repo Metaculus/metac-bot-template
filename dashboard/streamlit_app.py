@@ -1,6 +1,6 @@
 # dashboard/streamlit_app.py
 # -----------------------------------------------------------
-# Spagbot Performance Dashboard (Streamlit)
+# Spagbot Performance Dashboard (Streamlit) - A
 #
 # - Always-on, web-based dashboard for collaborators.
 # - Shows both "Key" (headline) and "Refined" performance metrics.
