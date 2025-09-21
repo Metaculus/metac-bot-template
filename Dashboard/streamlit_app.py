@@ -50,7 +50,7 @@ RAW_CSV_URL = os.getenv(
 )
 
 # Option B (faster): read from a local parquet (written by the optional GitHub Action below)
-USE_PARQUET = False
+USE_PARQUET = True
 PARQUET_PATH = "data/forecasts.parquet"  # relative to dashboard/ when deployed
 
 # If your repo is private and you still want to read "raw" URLs, you can set a GitHub token
