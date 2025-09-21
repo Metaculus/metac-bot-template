@@ -42,19 +42,24 @@ import plotly.graph_objects as go
 # -----------------------------
 # USER SETTINGS (edit these)
 # -----------------------------
-# Option A (simplest): read directly from raw GitHub CSV
+import os
+from pathlib import Path
+
+# Build paths relative to THIS file, so it works no matter the working directory.
+APP_DIR = Path(__file__).resolve().parent
+
+# Option B (faster): read from a parquet snapshot that lives next to this app:
+# Expected location: <APP_DIR>/data/forecasts.parquet
+USE_PARQUET = True  # you can also make this env-driven if you like
+PARQUET_PATH = APP_DIR / "data" / "forecasts.parquet"
+
+# Option A (fallback): raw CSV URL (used only if parquet isn't found or USE_PARQUET is False)
 RAW_CSV_URL = os.getenv(
     "SPAGBOT_RAW_CSV_URL",
-    # EXAMPLE ONLY – change this to your repo's raw file URL
     "https://raw.githubusercontent.com/<ORG_OR_USER>/<REPO>/main/forecast_logs/forecasts.csv"
 )
 
-# Option B (faster): read from a local parquet (written by the optional GitHub Action below)
-USE_PARQUET = True
-PARQUET_PATH = "data/forecasts.parquet"  # relative to dashboard/ when deployed
-
-# If your repo is private and you still want to read "raw" URLs, you can set a GitHub token
-# and the app will use it for an authenticated request. For public repos, leave blank.
+# If your repo is private and you want to read the raw URL with auth:
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 
 # -----------------------------
@@ -113,9 +118,10 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
 @st.cache_data(show_spinner=True)
 def load_data() -> pd.DataFrame:
     # Option B: Parquet (fast)
-    if USE_PARQUET and os.path.exists(PARQUET_PATH):
+    if USE_PARQUET and PARQUET_PATH.exists():
         df = pd.read_parquet(PARQUET_PATH)
         return _auto_map_columns(df)
+    ...
 
     # Option A: raw CSV from GitHub
     if not RAW_CSV_URL or RAW_CSV_URL.startswith("https://raw.githubusercontent.com/<"):
