@@ -33,6 +33,15 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Ignore all local caches/logs/data by default
+/cache/
+/logs/
+/data/
+
+# Keep the dashboard parquet tracked (important for the app)
+!Dashboard/data/
+!Dashboard/data/forecasts.parquet
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.

@@ -205,11 +205,11 @@ Resolution criteria:
 Today (Istanbul time): {today}
 """
 
-RESEARCHER_PROMPT = """You are the RESEARCHER for a Bayesian forecasting panel.
+RESEARCHER_PROMPT = """You are a professional RESEARCHER for a Bayesian forecasting panel.
 Your job is to produce a concise, decision-useful research brief that helps a statistician
 update a prior. The forecasters will combine your brief with a statistical aggregator that
 expects: base rates (reference class), recency-weighted evidence (relative to horizon),
-key mechanisms, differences vs. the base rate, and indicators to watch.
+key mechanisms, differences vs. the base rate, and indicators to watch. Provide a carefully reasoned, deeply through out research brief. Before answering, lay out for yoursefl your research plan step-by-step. First, identify the core questions to investigate. Second, for each question, propose the search queries you would use. Third, after gathering information, synthesize the key findings. Finally, draft the comprehensive answer."
 
 QUESTION
 Title: {title}
@@ -236,11 +236,11 @@ Do NOT fabricate precise citations; if unsure, say “uncertain”.
 
 === REQUIRED OUTPUT FORMAT (use headings exactly as written) ===
 ### Reference class & base rates
-- Identify 1–3 plausible reference classes; give ballpark base rates or ranges; note limitations.
+- Identify 1–3 plausible reference classes; give ballpark base rates or ranges and reasoning and on how these were derived; note limitations.
 
 ### Recent developments (timeline bullets)
 - [YYYY-MM-DD] item — direction (↑/↓ for event effect on YES) — why it matters (≤25 words)
-- Focus on events within the recency guideline above.
+- Focus on events within the recency guideline above. Use grounding web search as needed. 
 
 ### Mechanisms & drivers (causal levers)
 - List 3–6 drivers that move probability up/down; note typical size (small/moderate/large).
@@ -260,7 +260,7 @@ Do NOT fabricate precise citations; if unsure, say “uncertain”.
 ### Caveats & pitfalls
 - 3–5 bullets on uncertainty, data gaps, deception risks, regime changes, definitional gotchas.
 
-Final Research Summary: One or two sentences for the forecaster. Keep the entire brief under ~450 words.
+Final Research Summary: One or two sentences for the forecaster. Keep the entire brief under ~3000 words.
 """
 
 # -------------------------------------------------------------------------------------

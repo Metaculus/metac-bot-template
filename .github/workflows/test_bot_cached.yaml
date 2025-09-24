@@ -19,24 +19,6 @@ jobs:
       GIT_SHA: ${{ github.sha }}
       METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
 
-      # ---- Research providers ----
-      ENABLE_SERPER: "1"
-      SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
-      ENABLE_SERPER_WEB: "1"
-
-      ENABLE_ASKNEWS: "1"
-      ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-      ASKNEWS_CLIENT_SECRET: ${{ secrets.ASKNEWS_CLIENT_SECRET }}
-      ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-      ASKNEWS_STRATEGIES: "news knowledge,latest news,default"
-      ASKNEWS_ARTICLE_LIMIT: "8"
-      ASKNEWS_PLAN_MAX_ARTICLES: "8"
-      ASKNEWS_TOPK: "8"
-      ASKNEWS_PROBE_N: "1"
-      ASKNEWS_PROBE_TRIES: "2"
-      ASKNEWS_PROBE_WAIT_SEC: "2"
-      ASKNEWS_BREAK_ON_429: "1"
-
       # ---- LLM providers ----
       USE_OPENROUTER: "1"
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -100,9 +82,9 @@ jobs:
       GIT_REMOTE_NAME: origin
       GIT_BRANCH_NAME: main 
 
-      # Cost table
+       # ---- Cost table (string JSON) ----
       MODEL_COSTS_JSON: |
-        {"openai/gpt-4o":{"prompt":2.5,"completion":10.0},"anthropic/claude-3.7-sonnet":{"prompt":3.0,"completion":15.0},"gemini-2.5-pro":{"prompt":1.25,"completion":10.0},"grok-4":{"prompt":3.0,"completion":15.0}}
+        {"openai/gpt-4o":{"prompt":0.0025,"completion":0.01},"anthropic/claude-3.7-sonnet":{"prompt":0.003,"completion":0.015},"gemini-2.5-pro":{"prompt":0.00125,"completion":0.01},"grok-4":{"prompt":0.003,"completion":0.015}}
 
     steps:
       - name: Checkout
