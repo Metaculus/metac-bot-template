@@ -1,0 +1,401 @@
+{
+    "deliberation_results": {
+        "RealEstateAnalysis (ComparativeMarketAnalysis)": {
+            "time_to_resolution": "Approximately 3.5 months (until December 2025 data is published and likely obtainable by late January 2026).",
+            "perspective_relevance": "As an expert in RealEstateAnalysis (ComparativeMarketAnalysis), I focus on ground-level price drivers: supply-demand imbalances, liquidity, buyer composition (domestic/foreign/mortgage-cash), and affordability metrics, alongside institutional context and historical cycles. I bring granular insight into pricing mechanisms, reference market parallels, and recognize not just market narratives but hard transaction data, notably Idealista's price index\u2014the resolution source.",
+            "status_quo": "Madrid housing prices rose by 20% during 2024\u2014an explosive, abnormal gain even in the context of a hot market. Typical forecasts for Spain in 2025 anticipate a 6-10% nominal price increase, with Madrid often at the upper end but baseline expectations (without an additional shock) are for lower YoY growth than 2024.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Historic Supply/Demand Imbalance",
+                    "effect": "Strongly increases probability. The acute shortage persists; supply growth lags new household formation by a wide margin, and deficit is explicitly marked as especially acute in Madrid."
+                },
+                {
+                    "factor": "Foreign and Investor Demand",
+                    "effect": "Increases probability. Non-resident/investor purchases are at historic highs and they pay premiums, pushing prices up."
+                },
+                {
+                    "factor": "Affordability and Purchaser Exhaustion",
+                    "effect": "Decreases probability. 20% YoY price growth is unsustainable given wage/income growth. Youth participation has collapsed and overall affordability metrics are at extremes\u2014pointing toward resistance at current nominal price levels."
+                },
+                {
+                    "factor": "Government Intervention and Macro Policy",
+                    "effect": "Slightly decreases probability. Golden visa removal, attempted rent controls, and a more intense policy debate may curb runaway exuberance particularly at the luxury segment. ECB and Bank of Spain are holding rates steady, not providing further stimulus that could supercharge prices from here."
+                },
+                {
+                    "factor": "Base Rate Effects / Regression to the Mean",
+                    "effect": "Substantially decreases probability. 18%+ YoY nominal price gains are extremely rare in advanced urban markets in the absence of financial or political shock. The base rate for consecutive years of such high growth is very low historically\u2014even in housing-short cities."
+                },
+                {
+                    "factor": "Recent Actual Price Data",
+                    "effect": "Neutral to slightly increasing probability. The latest Q2 YoY gains for Madrid are ~14% (per UBS, media)\u2014still very high, but already showing a deceleration relative to 2024's 20%. Almost all major forecasts for H2 2025 (CaixaBank, Tinsa, Idealista, etc.) put full-year 2025 price growth at 7%-11% nationally, with Madrid expected to overshoot but not by a margin that would mechanically push above 18%."
+                },
+                {
+                    "factor": "Bubble Risk and International Comparisons",
+                    "effect": "Slightly increasing probability. Madrid is grouped among the world's most dynamic, bubble-risk cities, with pricing mechanisms decoupling from local economics. In such contexts, short-term overshoots on the upside (followed by potential corrections) are more likely than in 'rational' markets."
+                }
+            ],
+            "no_scenario": "Madrid housing prices continue to climb, driven by supply shortages and intense demand, but the pace slows as affordability hits limits. 2025 YoY price growth for December is strong\u2014say, 10-14%\u2014but below the outsized 18% threshold. This matches the majority of current economist and bank forecasts, with policy friction, demand exhaustion, and base-rate regression at play. Foreign demand remains robust but does not offset the cap set by local wage constraints and a shift in sentiment as bubble warnings grow.",
+            "yes_scenario": "Despite affordability strains and government cooling attempts, price growth in Madrid re-accelerates in late 2025 as international capital (fleeing weaker European cities, chasing real returns) targets Madrid, and rent surges force buyers off the fence. Supply tightens even further due to bureaucratic bottlenecks. Policy action is ineffective, or even counterproductive (rent controls chase supply off-market). December 2025 data surprise at 18-21% YoY gains, reminiscent of late-boom dislocations in global cities.",
+            "final_reasoning": "Madrid's 2024 performance (+20%) sets a high bar. All available comparative and fundamental analysis\u2014grounded in CMAs and leveraged forecasts\u2014puts 2025 expectation at strong, but moderating, nominal growth. Recent data (Q2: +14% YoY) shows deceleration, not re-acceleration. The supply shortage remains severe and investor demand is strong, but rapid price appreciation faces mounting headwinds: severe affordability squeeze (youth/families sidelined), government alarms (targeting demand/funds), and already-pervasive bubble warnings (UBS, others). Historical base rates for two consecutive 18%+ years in a developed, regulated city are extremely low even with structural shortages\u2014the kind of double-digit expansion that continues without pause is rare. While a disorderly international inflow or regulatory misstep could deliver a shock, the most likely outcome\u2014grounded in market analytics, status quo inertia, and available forecasts\u2014is substantial growth but under the 18% resolving bar. That said, the persistent supply-demand crunch and unique capital flows justify modestly non-zero tails. On balance, as of late September 2025, I assign a probability of 17% to a >18% nominal rise in Madrid housing from December 2024 to December 2025.",
+            "final_probability": 17
+        },
+        "RealEstateAnalysis (HedonicPricingModel)": {
+            "time_to_resolution": "Approximately 3 months, until December 2025 Idealista data is published (likely in early January 2026)",
+            "perspective_relevance": "As a RealEstateAnalysis (HedonicPricingModel) expert, my approach emphasizes the deep linkage between supply/demand imbalances, structural and cyclical drivers, and expectations for price growth. This model translates market fundamentals (e.g., supply constraints, demand drivers, credit conditions, foreign investment) into observed price outcomes, enabling sharper quantification of the likelihood of extreme price movements like >18% annual increases.",
+            "status_quo": "Current house price growth in Madrid is extremely strong, with 2024 seeing a 20% rise and 2025 so far showing roughly 14% YoY (Sept/Sept) growth. Consensus major bank and research forecasts for Madrid/Spain are for 6-10% price growth in 2025; no major institution forecasts a repeat of 2024's extreme 20%+ rise in Madrid. Recent months suggest continued high but slightly moderating acceleration.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Structural Supply-Demand Imbalance",
+                    "effect": "Increases probability. Chronic, severe supply shortfalls (est. 700,000 home gap nationwide; 60,000+ deficit in Madrid province), with supply continuing to fall while new household creation is high, underpin upward price pressure. Historically these gaps take years to resolve, priming the market for outlier price moves in the absence of demand shocks."
+                },
+                {
+                    "factor": "Credit and Affordability Constraints",
+                    "effect": "Decreases probability. Mortgage accessibility is stagnating, affordability ratios are worsening, and wage growth lags far behind price appreciation. Demand from young and median-income locals is being priced out, placing a partial ceiling on sustainable YoY price appreciation."
+                },
+                {
+                    "factor": "Foreign Demand and Investment Capital Flows",
+                    "effect": "Increases probability. Foreign buyers now comprise nearly 20% of purchases and pay much higher prices per sqm than locals. Strong global demand for Spanish/Madrid real estate, especially from non-residents with higher purchasing power, continues to fuel price increases and decouple local incomes from prices."
+                },
+                {
+                    "factor": "Recent Momentum and Bubble Risk",
+                    "effect": "Increases probability. Madrid leads global cities for YoY price growth; recent 14% YoY per UBS, and nearly 13% YoY Spain-wide per INE in Q2 2025. Price booms often overshoot due to positive feedback dynamics, especially late in a cycle when speculative or panic buying emerges."
+                },
+                {
+                    "factor": "Regulatory Headwinds and Policy Responses",
+                    "effect": "Decreases probability. The elimination of the Golden Visa, tighter rent controls, and increasing political noise around housing policy introduce downside risks. While these have thus far failed to dent buyer pressure, 'policy surprise' remains a risk for extreme moves."
+                },
+                {
+                    "factor": "Broader European and Global Macro Conditions",
+                    "effect": "Neutral to slight decrease. The European macroeconomic outlook is stable but slow; ECB is not expected to cut rates near-term, and Spain faces higher inflation than the euro area, keeping real rates stable or rising and raising the bar for continued runaway price growth."
+                },
+                {
+                    "factor": "Base Rate/Mean Reversion",
+                    "effect": "Strong decrease. Historically, double-digit (>18%) YoY price growth in large mature cities almost never repeats in consecutive years; price run-ups typically moderate even under strong fundamentals. Consensus forecasts, including those from CaixaBank, project 8-10% in 2025 and a further easing to ~6% in 2026."
+                }
+            ],
+            "no_scenario": "Supply remains constrained, but macroeconomic stability, rising unaffordability, and minor demand fatigue combine to slow price appreciation to 9\u201314% YoY in Madrid. Mortgage rates remain stable or rise slightly, new policy measures slightly dampen demand (especially among foreigners), and the extraordinary 18%+ pace of 2024 proves unsustainable. Market activity remains brisk, but enough buyers get priced out that gains moderate.",
+            "yes_scenario": "Interest rates unexpectedly fall or external demand surges (e.g., due to geopolitical uncertainty elsewhere). Domestic institutional or retail investors/speculators, expecting continued appreciation, accelerate purchases; supply shortages worsen, and there is a 'blowoff top' dynamic where price growth re-accelerates from already elevated 2025 levels to 18%+ YoY by December. Possible exacerbating factors include currency inflows, policy missteps fueling FOMO, or a major new inflow of high-net-worth buyers.",
+            "final_reasoning": "Despite profound undersupply and continuing foreign interest, most current data point to a slight moderation in Madrid price growth. The fundamental drivers (supply constraint, foreign demand, urban desirability) are extraordinarily strong, but affordability has hit limits, especially for the local population, and primary market players now expect annual price gains to slow to the 8-13% range in 2025 (from 20% the previous year). While boom/bubble dynamics and positive momentum could produce one more outsized year, double-digit base effects and the rarity of back-to-back 18%+ years in advanced markets make such an outcome unlikely. No major forecaster sees this outcome as baseline. Though an upside surprise is possible, the status quo, consensus, and macro context point strongly against >18% growth. I estimate the probability of >18% price growth in Madrid in 2025 to be low, but not zero: roughly 8%.",
+            "final_probability": 8
+        },
+        "BankingAndFinance (RiskAssessmentStandards)": {
+            "time_to_resolution": "Approximately 3.5 months (until January 7, 2026 at the latest, when December 2025 data should be available)",
+            "perspective_relevance": "As an expert in Banking and Finance (Risk Assessment Standards), I evaluate the robustness and sustainability of housing market fundamentals, focusing on supply-demand mismatches, credit market dynamics, interest and mortgage rates, macroeconomic stability, and potential for market corrections. I am especially attuned to the distinction between structural drivers and speculative bubbles, using evidence-based frameworks to assess risk of extreme price changes.",
+            "status_quo": "The status quo is rapid price growth: Madrid housing prices rose by 20% in 2024, and as of Q2 2025 have surged 14% year-on-year. Multiple sources project continued pressure upward, but consensus forecasts for Spain as a whole range from 5\u201310% for year-end 2025. Madrid remains the national outlier.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Structural Supply Deficit",
+                    "effect": "Strongly increases probability. The persistent housing shortage (est. deficit >60,000 units for Madrid, >765,000 nationwide) with slow new construction drives sustained upward pressure on prices, especially in Madrid."
+                },
+                {
+                    "factor": "Robust Demand and Demographics",
+                    "effect": "Increases probability. Strong household formation, migration, and foreign investment (non-resident buys at premium, luxury/investment-driven demand) boost upward price momentum."
+                },
+                {
+                    "factor": "Interest Rates/Mortgage Financing",
+                    "effect": "Modestly increases probability. Easing monetary policy expectations and stable mortgage markets support purchasing capacity, but rate cuts in 2025 are still speculative."
+                },
+                {
+                    "factor": "Affordability Constraints/Wage Growth",
+                    "effect": "Decreases probability. Price increases have far outpaced local wage growth, creating affordability ceilings that, historically, begin to limit transaction volumes and upward price movement after sharp surges."
+                },
+                {
+                    "factor": "Bubble Risk & Regulatory Threats",
+                    "effect": "Decreases probability. Madrid is nearing 'moderate bubble risk' (UBS index), and government is introducing more controls (e.g., golden visa removal, rent caps). While these have not stopped the market yet, rising awareness of overvaluation can dampen risk appetite, and surprises (macro or policy) could ignite a correction."
+                },
+                {
+                    "factor": "Base Rate of Sustained High (>18%) Annual Gains",
+                    "effect": "Decreases probability versus the recent outlier year. Historically, such large year-on-year increases are rare, even in hot markets. Regression to the mean is typical after a +20% surge."
+                }
+            ],
+            "no_scenario": "Madrid housing prices continue to rise but at a slower pace than 2024. Affordability constraints, diminished first-time buyer activity, and emerging policy headwinds (e.g., removal of golden visa, tighter rental regulations, macro jitters) cool some speculative demand. Foreign investment remains strong, but overall growth moderates to the 8%\u201314% range, consistent with leading forecasts and historical precedent after unusually sharp increases.",
+            "yes_scenario": "Household formation and foreign demand intensify, supply bottlenecks persist or even worsen, and mortgage rates edge down faster than expected, further unlocking buyer capacity. Policy interventions fail to cool demand meaningfully. Speculative/bandwagon effects (including international capital seeking positive real returns amidst global asset scarcity) amplify price growth, leading to another year of +18\u201322% annual gains in Madrid, as in 2024.",
+            "final_reasoning": "The probability that Madrid housing prices rise by more than 18% in 2025 is meaningfully higher than the national Spanish forecast (5\u201310%), and Madrid has just posted a 20% increase in 2024 and 14% YoY as of Q2 2025. Supply deficits and robust demand present compelling upward forces, and recent history suggests strong momentum. However, base rates for repeated >18% annual rises in developed urban markets are low\u2014markets tend toward regression after outlier years due to affordability and risk limits. Key forecasts by CaixaBank, Tinsa, and others (ranging 9\u201314% for 2025 in Madrid) point to ongoing, but slowing, growth. Bubble risk is building and intervention is rising, but so far is insufficient to reverse the trend. With strong banking/financial sector resilience and no major credit excess, a 'crash' is unlikely, but so too is a repeat of 2024's extreme gains. I assign moderate credence to another >18% gain (hot streaks can extend!), but ultimately judge the base rate and converging forecasts to carry more weight, given limits to sustainable price explosion. Thus, I assess the probability as slightly below even odds, but clearly above historical norms.",
+            "final_probability": 35
+        },
+        "UrbanPlanning (MunicipalHousingPolicyReview)": {
+            "time_to_resolution": "Approximately 3.5 months, resolves after the December 2025 Idealista data is published (typically January 2026).",
+            "perspective_relevance": "As an expert in Urban Planning and Municipal Housing Policy Review, my perspective emphasizes not only economic and market dynamics, but also regulatory context, housing supply pipeline, local policy interventions, urban land-use constraints, and granular demand drivers (demography, migration, etc). These factors play a large role in medium-term price trajectories and frequently act as rate-limiting mechanisms or amplifiers beyond what generic macroeconomic forecasting might capture.",
+            "status_quo": "Madrid experienced a 20% increase in housing prices in 2024. Most mainstream bank and real estate forecasters (CaixaBank, Tinsa) expect a slowdown to around 6\u201310% for 2025 for Spain, and up to 10% for Madrid, reflecting a strong but moderating uptrend. Ultra-high growth (above 18%) is rare in mature markets for two consecutive years, barring exogenous shocks.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Severe and growing supply shortage (projected deficit of 700k+ homes; Madrid with highest local gap)",
+                    "effect": "Increases: Tight supply supports strong price pressures; with persistent deficit and slow response from new construction, especially acute in Madrid due to land scarcity and planning delays."
+                },
+                {
+                    "factor": "Surging domestic and foreign demand, population and household formation, high international investment",
+                    "effect": "Increases: Net migration, changing household structure, strong labor market, and increase in purchases by foreigners and investors (particularly non-residents in Madrid) elevate effective demand vis-\u00e0-vis available stock."
+                },
+                {
+                    "factor": "Affordability and policy headwinds (loss of purchasing power, high mortgage costs, policy tightening)",
+                    "effect": "Decreases: Although demand is strong, median buyer affordability is increasingly constrained by prices growing well beyond wage/income rises and mortgage costs remain elevated due to ECB rates. Government interventions (removal of golden visa, rent controls) may dampen specific demand segments or signal caution."
+                },
+                {
+                    "factor": "Recent price trajectory and historical base rates",
+                    "effect": "Decreases: While 20%+ growth happened in 2024, year-on-year growth above 18% in two consecutive years is extremely rare in developed markets (base rate <7% across Europe as per historical Real Estate market studies). Reversion to mean is typical after spike years unless new external shocks emerge."
+                },
+                {
+                    "factor": "Bubble warnings and regulatory caution",
+                    "effect": "Decreases: The UBS Index has flagged Madrid at 'moderate bubble risk', and history shows that years with widespread bubble warnings often precede (or at least correlate with) policy or market reactions that brake further price acceleration even if a crash is avoided."
+                },
+                {
+                    "factor": "Urban planning friction and construction lags",
+                    "effect": "Increases slightly: Urban planning bottlenecks and delays in land conversion or building approvals mean that any policy effort to address the deficit in 2025 will not realize new supply flows until 2026+; thus, even attempts at supply relief are unlikely to materially flatten prices within the forecast window."
+                },
+                {
+                    "factor": "Forecaster consensus and momentum",
+                    "effect": "Decreases: The overlap of multiple reputable forecasts (CaixaBank, Tinsa, INE) is for 6\u201310% price rises in Madrid in 2025, with no consensus for a repeat of 18%+ growth. Such a broad convergence typically reflects the collective weighting of most recent trend data and mitigation expectation."
+                }
+            ],
+            "no_scenario": "Despite severe supply shortages, the headline percentage increase decelerates due to affordability ceilings for most buyers, mounting political pressure and regulatory friction (rent caps, loss of golden visa allure, threat of additional taxes), and the natural dampening after an extraordinary spike year. While prices rise\u2014possibly strongly\u2014they do so by a more 'normal' high-single- to low-double-digit rate (e.g., 8\u201312%), as expected by most banks and real estate analysts. International demand continues but shifts in response to macro climate, and domestic purchasers increasingly get priced out, limiting transaction volume growth. Any price surges flatten as Q3\u2013Q4 data rolls in, resulting in <18% YoY change in December 2025 data.",
+            "yes_scenario": "Madrid's demand remains so strong (driven by net international arrivals, household formation, and speculative investment seeking inflation hedge) that price increases defy even high expectations despite worsening affordability. The persistent supply bottleneck worsens further\u2014no significant new builds come online, and policy plans stall or backfire. ECB rates remain static, and lenders continue to extend favorable terms to high-net-worth and non-resident buyers. The negative effect of policy tightening is minimal, and emotional 'fear of missing out' or asset inflation sentiment propels bidding wars. Prices report another extraordinary year, rising above 18% YoY in Idealista's December data, shocking market observers and putting Madrid into acute bubble territory.",
+            "final_reasoning": "The evidence strongly supports continued, possibly sharp, price rises in Madrid\u2014supply is critically insufficient, demand (especially international) is strong and multifaceted, and planning bottlenecks preclude rapid supply-side relief within the 2025 timeframe. However, both the historical base rates for mega-spikes (18%+) two years in a row, plus explicit forecasts from sector authorities, indicate that extreme growth is unsustainable and unlikely in consecutive periods. Affordability ceilings, souring sentiment about overvaluation, the end of the golden visa, and increased warning signals from both analysts and policymakers are likely to moderate further acceleration, not to mention the 'mean reversion' that typically follows an anomalously high leap. Nicking into the 12\u201315% range is highly plausible. Surpassing 18% would require additional exogenous shocks (financial repression, abrupt migration wave, or delayed reporting of market cooling). Therefore, the probability of >18% growth is much lower than a superficial trend following would suggest, despite very strong fundamentals and the ongoing expansion phase.",
+            "final_probability": 13
+        },
+        "Economics (SupplyAndDemandTheory)": {
+            "time_to_resolution": "approximately 3.5 months (resolves with December 2025 price publication in January 2026)",
+            "perspective_relevance": "As an expert in Economics with specialization in Supply and Demand Theory, I can rigorously assess the magnitude and persistence of the housing supply-demand imbalance, price elasticity, overvaluation risks, and possible market corrections. This skill set is crucial to quantify the probability of extreme price growth (over 18% in a year) given the current market mechanics, policy backdrops, and historical precedent.",
+            "status_quo": "Baseline expectation (via CaixaBank, Tinsa, and sectoral forecasts) is a continued strong but moderating price rise, with 2025 full-year projections ranging from approximately 7% to 11% increase (nominal) in Spain, and slightly higher in Madrid (reference: 2024 saw a 20% increase in Madrid, with 12\u201314% YoY recently). Most sources now expect annualized growth to cool somewhat from 2024, but remain high relative to the historical average.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Supply Shortfall (Structural Deficit)",
+                    "effect": "Increases probability. Market deficits are acute (Madrid needs >60,000 homes; national deficit 600,000\u2013765,000), and new construction rates are far below new household formation. This structural shortage is the strongest upward pressure on prices."
+                },
+                {
+                    "factor": "Demand Strength (Demographic and Foreign)",
+                    "effect": "Increases probability. Immigration, new household formation, and strong foreign buying (18% of sales in Madrid, non-resident share rising) all sustain very high demand, especially for central locations with limited new supply."
+                },
+                {
+                    "factor": "Affordability Constraints and Credit Conditions",
+                    "effect": "Decreases probability. Price increases have far outstripped wage growth, young buyers have nearly collapsed, and home purchases are increasingly for higher-income and foreign buyers. Interest rates are not set to fall soon, so any negative shock (credit tightening, demand fatigue) could slow the market abruptly."
+                },
+                {
+                    "factor": "Policy/Regulation Drag",
+                    "effect": "Slightly decreases probability. Government efforts to cool the market (ending golden visas, rent controls) have mainly affected the luxury segment and have not reversed the upward trend, but could cap extremes if more measures arrive or investor sentiment wobbles."
+                },
+                {
+                    "factor": "Overvaluation and Bubble Dynamics",
+                    "effect": "Mixed. Overvaluation signs are clear in Madrid (ECB: 10% nationally, higher in Madrid), but strongest expansion markets often see price overshoots before any correction, especially under supply squeeze. However, bubbles eventually burst, which could dampen late-2025 growth if sentiment turns."
+                },
+                {
+                    "factor": "Base Rate and Regression to Mean",
+                    "effect": "Decreases probability. Double-digit (>18%) annual rises are rare in major developed cities, almost always linked to credit bubbles or extreme supply-demand events. After such a sharp 2024 rise (20%), sustaining another >18% would require acceleration, not just persistence\u2014historically very uncommon."
+                },
+                {
+                    "factor": "Recent Momentum and Price Data",
+                    "effect": "Partially increases probability. Latest reports show 12\u201314% YoY increases for Madrid (Q2 2025 vs. Q2 2024). Market activity in first half of 2025 is robust, but not clearly exceeding the previous year. Some leading reports still cap forecasts near 10\u201312% for the full year."
+                }
+            ],
+            "no_scenario": "After the 2024 surge (+20%), price growth in Madrid moderates to high single/low double digits (8\u201314%) over 2025 as supply remains tight but marginal affordability is exhausted for core local buyers. Foreign demand supports prices but does not accelerate further. New listings rise modestly, demand meets resistance, government rhetoric discourages aggressive bullishness, and prices close December 2025 up 9\u201315% compared to December 2024.",
+            "yes_scenario": "Persistent and severe supply shortages, a new surge in foreign and high-end local demand (possibly fueled by greater mortgage competition, speculative sentiment, or macro-safety flows out of other markets), or a policy move that backfires\u2014such as stricter rental limits pushing more buyers into ownership\u2014add to the momentum. Market sentiment remains euphoric, price momentum accelerates in Q3\u2013Q4 2025, and Madrid closes the year with a >18% nominal increase from December 2024 to December 2025.",
+            "final_reasoning": "Although Madrid\u2019s supply-demand imbalance is historically severe, a multi-year run of double-digit price growth becomes progressively harder to sustain\u2014especially after 2024\u2019s 20% spike. While the shortage, international demand, and regulatory inertia all fuel sustained nominal price increases, all mainstream sectoral outlooks (CaixaBank, Tinsa, UBS) now anticipate a moderation versus 2024, projecting near 10\u201312% growth in Madrid for 2025, with few credible arguments for further acceleration beyond that level. The base rate for back-to-back >18% increases in developed city housing markets is extremely low outside hyper-inflationary or speculative boom contexts, neither of which are currently dominating Spain. The small probability of a 'blow-off' phase or a black-swan restriction (new capital inflows, currency moves, exogenous demand spike) keeps the chance above zero, but all fundamental, historical, and base-rate evidence point to a deceleration. Therefore, I assess the probability Madrid house prices will rise more than 18% YoY in 2025 as substantially below 50%. Given continued strong signs in Q2 2025, I place the current probability at 15%.",
+            "final_probability": 15
+        },
+        "Economics (RealEstateMarketCycleTheory)": {
+            "time_to_resolution": "Approximately 3.5 months, as the question will resolve based on December 2025 prices (published likely in January 2026).",
+            "perspective_relevance": "As an expert in Real Estate Market Cycle Theory, my perspective emphasizes understanding both cyclical dynamics (expansion vs. correction phases), macro/structural drivers (housing deficits, migration, credit conditions, international capital flows), and base rates from past housing cycles, specifically focusing on when and how surges in price growth do, or do not, get sustained.",
+            "status_quo": "Madrid experienced a 20% housing price increase in 2024. The current consensus forecast among banks and analysts for 2025 is a 5-10% rise nationally, with major capitals like Madrid expected to outperform the national average but with growing caution around overheating.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Supply-Demand Structural Deficit",
+                    "effect": "Strongly increases the probability. Housing deficit in Madrid is substantial and growing, with demand outpacing new supply by a wide margin (estimates suggest 60,000+ homes needed in Madrid alone), driving price pressure."
+                },
+                {
+                    "factor": "Foreign Capital Inflows and International Demand",
+                    "effect": "Moderately increases the probability. Non-resident and foreign buyers are at historic highs (account for ~18-20% of sales in Madrid\u2019s segment), bidding up prices, particularly in desirable urban zones."
+                },
+                {
+                    "factor": "Macro/Lending Environment and Interest Rates",
+                    "effect": "Neutral to mildly supportive; while ECB is not cutting rates yet, mortgage flows remain strong, with improved access to credit and household financial position better than 2007. However, the lack of further easing limits upside."
+                },
+                {
+                    "factor": "Affordability Ceiling and Social Pressure",
+                    "effect": "Decreases the probability. Prices are outpacing wages, suppressing demand from domestic first-time buyers, with record-low youth participation and a rising median age of buyers. Risk of 'demand exhaustion' for locals may limit extreme price jumps."
+                },
+                {
+                    "factor": "Policy Response/Regulatory Risk",
+                    "effect": "Margins the probability downward. Eliminations like the Golden Visa and attempts at rent controls may cool the top end, but have so far not altered the overall trend because supply constraints persist."
+                },
+                {
+                    "factor": "Market Psychology and Early Overvaluation Signals",
+                    "effect": "Decreases the probability of further outsized gains, as widespread talk of 'bubble risk' and significant price increases typically precede topping phases, especially historically when growth approaches or exceeds income growth by large margins."
+                },
+                {
+                    "factor": "Base Rates and Market Cycles",
+                    "effect": "Strongly decreases the probability. History shows that consecutive years of >15% price gains in mature European capitals are rare; after such a year, the odds of repeating or exceeding that gain fall sharply due to mean reversion and demand elasticity, even if underlying fundamentals remain positive."
+                }
+            ],
+            "no_scenario": "In this scenario, price growth in Madrid remains strong but moderates to 10-15%, possibly due to a combination of: buyer fatigue at record prices, affordability barriers, more cautious bank lending, or effects of nascent government interventions. The housing deficit and foreign capital still keep prices rising, but the annualized growth rate stays below the 18% threshold\u2014likely in line with the more conservative (6-10%) forecasts from banks and research institutions.",
+            "yes_scenario": "Madrid's housing crisis deepens further. Construction falls short of even modest increases in supply, while international/geopolitical instability elsewhere makes Spanish property even more attractive for foreign capital. Demand remains unchecked through 2025; sellers can name their prices as both domestic and foreign buyers bid up scarce listings. Market psychology stays bullish, perhaps fueled by speculative momentum and an expectation of further capital gains, pushing annual price growth above 18%, repeating or even accelerating the 2024 pace.",
+            "final_reasoning": "While Madrid's market fundamentals remain historically tight\u2014supply deficits, solid demand, and international capital inflows\u2014base rates from real estate cycle theory advise caution after an extraordinary surge (20% in 2024). Most expansionary cycles show diminishing returns after consecutive outsized years, especially as affordability sharply deteriorates. The housing shortage will keep pressure on prices, but there are accumulating headwinds: affordability ceilings, mounting social/political pressure, 'bubble' narrative in media, regulator intervention, and the simple fact that buyers begin to pull back after extreme moves. The late-2025 analyst consensus (6-10%) and the fact that price rises have already overshot underlying economic variables (wages, credit, GDP) argue for a visible moderation. Upside tail risk remains (if supply collapses or foreign demand unexpectedly spikes further), but the evidence moderately favors a strong, but not extreme, price increase in 2025. Given the cycle phase and historical base rates, the probability of >18% appreciation is substantial but sub-coinflip.",
+            "final_probability": 35
+        },
+        "Economics (MonetaryPolicyTransmission)": {
+            "time_to_resolution": "Approximately 3.5 months (resolves with December 2025 data, it is now late September 2025).",
+            "perspective_relevance": "As an expert in Economics (MonetaryPolicyTransmission), my perspective is crucial for understanding how interest rates, credit availability, and monetary policy filter through Spain\u2019s economy and specifically impact the real estate market in Madrid. Rapid changes in housing prices are tightly linked to monetary, demographic, and supply-demand dynamics\u2014when, or if, monetary tightening reaches end-users, whether household credit constraints begin to bite, and how international flows interact with these conditions.",
+            "status_quo": "Madrid\u2019s house prices are currently rising at a very strong rate: ~14% YoY according to UBS and INE, and 20% in 2024. The typical scenario would be some deceleration but still strong growth, as widely forecast by banks and consultancies. Most base forecasts for 2025 price growth in Madrid (and Spain generally) are in the 5\u201310% range.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Supersize supply shortage",
+                    "effect": "INCREASES probability. The supply shortage remains acute, with estimates of a 39% fall in available homes for sale since 2019, an accumulated national housing deficit (esp. acute in Madrid), and little evidence of imminent construction ramp-up in the last quarter of 2025."
+                },
+                {
+                    "factor": "Aggressive recent price action & psychological anchoring",
+                    "effect": "INCREASES probability. A 20% rise in 2024 and ~14% YoY as of Q2 2025 may create expectations of continued high growth among buyers and investors, sustaining momentum."
+                },
+                {
+                    "factor": "Affordability & demand constraints",
+                    "effect": "DECREASES probability. Wage growth is failing to keep pace; the affordability gap is widening; youth home purchase has plummeted. This could limit further explosive upside as a smaller proportion of the population can now buy, despite supply limits."
+                },
+                {
+                    "factor": "Monetary policy stance and mortgage costs",
+                    "effect": "NEUTRAL to slightly DECREASES probability. ECB is holding rates steady for now; no near-term cuts expected, but Spain's bank lending conditions remain relatively supportive. However, no new easing to turbocharge the market is anticipated in the final months of 2025."
+                },
+                {
+                    "factor": "Foreign demand and asset-seeking capital",
+                    "effect": "INCREASES probability. International (esp. non-resident, high-net-worth) buyers remain robust, seeking assets amid financial repression. Even with the Golden Visa's end, demand for mid-tier and upper-market homes stays strong, supporting price gains."
+                },
+                {
+                    "factor": "Risk of policy/regulatory intervention",
+                    "effect": "DECREASES probability. Authorities are under social/political pressure to cool the market (rent controls, anti-speculation measures, etc.), but so far such moves have not meaningfully slowed price inflation in Madrid."
+                },
+                {
+                    "factor": "Macro sentiment & capital flows",
+                    "effect": "NEUTRAL. Broader eurozone is sluggish but stable; no credit crunch on the horizon, but not a boom either."
+                }
+            ],
+            "no_scenario": "After the extreme 2024 price gains, affordability constraints and policy headwinds finally bite: even if underlying demand and supply mismatch persist, the sheer cost of housing begins to limit upward trajectory, with realized YoY gains decelerating to the 8-12% range for 2025, as most major forecasters predict. Foreign demand, though strong, cannot offset local constraints, and transaction volume plateaus. Policy interventions or a cooling speculative mood could further limit upside.",
+            "yes_scenario": "Housing price momentum proves unstoppable in the face of deep supply constraints, speculative expectation, and international capital chasing yield. There\u2019s no material deceleration in Q4: monthly price growth remains 1-1.3% through December, taking the annual increase past 18%. Minor regulatory efforts don\u2019t bite, foreign buying remains strong, and buyers rush to secure properties before anticipated future regulation and further price surges.",
+            "final_reasoning": "Base rates for +18% annual house price increases in a mature European market are very low (outside extraordinary episodes). The last available UBS/INE figures, plus repeated references in news and official reports, point to a current YoY growth rate of 12\u201314% in Madrid as of Q2/Q3. For Madrid to exceed 18% growth for full-year 2025, acceleration would have to persist across the second half\u2014an extremely bullish scenario, in contrast to the widespread projections from Caixabank, Tinsa, and consensus bank analysts (mostly 6-10%). Most expert reports suggest a slowdown after the unsustainable surge of 2024. Yes, the supply crunch is extreme, international demand is strong, and all sector indicators confirm structurally high 'pressure'\u2014but affordability and price fatigue, ECB stasis, and growing political pressure for cooling policies are mounting. Thus, while a double-digit increase is likely, >18% is a very high bar. Nonetheless, the base rate for such extreme surges following a record previous year is much <20%, and forecasts (including sector specialists and banks) remain far below this level. News at hand indicates solid, but not explosive, momentum persists. A cyclical or speculative double-peak cannot be entirely ruled out, but given status quo drivers, the probability of over 18% annual appreciation by December is low, though not absolutely negligible.",
+            "final_probability": 12
+        },
+        "Urban Studies (UrbanGrowthTheory)": {
+            "time_to_resolution": "Approximately 3.5 months (until the release of December 2025 data, likely early January 2026)",
+            "perspective_relevance": "As an Urban Studies (UrbanGrowthTheory) expert, my perspective is uniquely relevant because rapid urban growth, supply-demand imbalances, gentrification, and the impacts of international capital and demography are key explanatory variables in extreme urban price fluctuations. Assessing the interplay of structural housing deficits, urban migration, policy inertia, and global capital flows is critical for forecasting outsized price gains in a major city such as Madrid.",
+            "status_quo": "If nothing changed from the most recent observable trend (Madrid housing prices up 20% in 2024, recent annualized rates are ~14%), the status quo would be continued strong year-on-year increases, but most expert and institutional forecasts project a moderation (6-10% rise for 2025 over 2024 in both national and Madrid-specific data).",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Structural Housing Deficit",
+                    "effect": "Strongly raises the probability\u2014Madrid and other high-pressure cities are in acute structural shortage, with deficits growing faster than supply expansion. The gap is a key driver of sustained high appreciation."
+                },
+                {
+                    "factor": "International Demand and Investment",
+                    "effect": "Raises probability\u2014Madrid is experiencing record levels of foreign purchases, especially from wealthy non-residents, which have historically driven outsized price appreciation in global cities. However, loss of the Golden Visa likely has minimal effect outside the luxury tier."
+                },
+                {
+                    "factor": "Macro-financial Environment (Interest Rates, Lending)",
+                    "effect": "Slightly raises probability\u2014Although ECB rates are on hold, gradual loosening of credit conditions alongside favorable bank appetite supports continued transactions and higher price ceilings. However, sustained high rates could cap affordability-driven upside."
+                },
+                {
+                    "factor": "Affordability and Local Demand Destruction",
+                    "effect": "Decreases probability\u2014Stretched affordability ratios and collapsing youth purchases indicate domestic demand is strained; extreme price increases may induce natural limits as local residents are priced out."
+                },
+                {
+                    "factor": "Policy/Regulatory Response",
+                    "effect": "Neutral to slightly decreases probability\u2014Some minor anti-speculation measures and rent controls are in place, but with little impact to date; more drastic interventions could trigger a slowdown, but currently lack teeth or scale."
+                },
+                {
+                    "factor": "Recent Momentum and Base Rate of Extreme Price Surges",
+                    "effect": "Decreases probability\u2014Base rates for year-on-year price gains >18% in developed city real-estate markets are extremely low, and most forecast models (CaixaBank, Tinsa, Institutional, and sectoral) expect a moderation. Even late-2025 price surge numbers point to ~14% annualized rises, not >18%."
+                },
+                {
+                    "factor": "Bubble Risk and Sentiment",
+                    "effect": "Ambiguous\u2014Bubble risk rising (UBS Index), but most analysts believe supply shortfall\u2014not speculative excess\u2014is driving the market. Short-term corrections rarely materialize without external financial shock or drastic policy."
+                }
+            ],
+            "no_scenario": "Despite continued supply constraints and high foreign interest, price appreciation decelerates: year-end comparisons (Dec 2024 - Dec 2025) fall within the 10-14% range forecasted by major institutions. Domestic buyers remain tapped out, and foreign investment slows modestly (perhaps due to regulatory noise or waning speculative interest). Policy responses remain ineffectual, but the momentum simply can't sustain outsized increases off 2024's high base.",
+            "yes_scenario": "Supply fails catastrophically to respond to continued population and household growth (including migration surges); foreign investment accelerates, and buyers treat Madrid as a 'safe haven' as other markets cool. Local and global investors fuel a speculative frenzy in the face of feeble policy containment, and year-end 2025 prices print another >18% rise, making for an unprecedented two-year streak of 18%+ gains.",
+            "final_reasoning": "From an urban studies and market cycle perspective, Madrid's situation is a textbook case of high in-migration, chronic underbuilding, and strong international demand creating relentless upward price pressure. However, the base rate for >18% nominal annual price increases two years running in a developed, policy-influenced housing market is extremely low\u2014such rates are seen only during bubbles built on excess leverage, not in supply-limited mature economies. The 2024 20% rise was exceptional, but all forward-looking institutional and sector forecasts now suggest deceleration to high single or low double-digit increases, with around 6-10% for Spain and 10-14% for Madrid (Q2 y/y at 14%, but likely to ease further as some demand is priced out and institutional investors grow wary of bubble risk). Affordability constraints and buyer fatigue (especially among locals) act as natural speed limits. Policy moves are unlikely to deflate prices, but similarly not strong enough to create a new speculative surge. The urban studies literature and global city precedents (London, Vancouver, etc.) suggest >18% repeats are rare and usually short-lived. In summary, another >18% spike is possible but highly unlikely short of a major unforeseen shock in demand/supply or capital flows.",
+            "final_probability": 10
+        },
+        "Urban Studies (LandUseEconomics)": {
+            "time_to_resolution": "Approx. 3 months (until December 2025 data publication)",
+            "perspective_relevance": "As an expert in Urban Studies (LandUseEconomics), I leverage insights into housing supply-demand imbalances, regulatory influences, international investment trends, demographic pressures, and financial sector resilience. This allows for nuanced analysis of Madrid's housing price trajectory, especially the interplay between supply constraints and demand shocks that typically underpin rapid price escalations in global city real estate markets.",
+            "status_quo": "Madrid housing prices rose by 20% in 2024\u2014a historically high figure. Typical forecasts by sector experts (CaixaBank, UBS, Tinsa) suggest 2025 price growth will moderate to a 6\u201310% range for Spain, with Madrid outpacing but likely not reaching another 18%+ gain without a new or sustained demand shock.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Severe structural housing shortage",
+                    "effect": "Increases probability\u2014Madrid's deficit (over 60,000 dwellings) pushes prices above national averages and is intensifying (supply fell 39% since 2019). Limited new-build approvals mean mismatch is worsening."
+                },
+                {
+                    "factor": "Robust demand, domestic and foreign",
+                    "effect": "Increases probability\u2014Demographic growth (household formation, migration), historic foreign investor activity (14\u201318% of sales, premium prices), and rapid new mortgage origination support high demand, directly pressuring prices."
+                },
+                {
+                    "factor": "Affordability constraints and declining mortgage utilization",
+                    "effect": "Decreases probability\u2014Absorptive capacity by local residents is strained. Youth home ownership has collapsed, home purchases increasingly shift to older, wealthier, often foreign buyers. If these groups slow activity, price momentum may drop."
+                },
+                {
+                    "factor": "Policy/regulatory environment",
+                    "effect": "Decreases probability\u2014Spain ended \u2018golden visa\u2019 residency for property buyers, and rent controls were expanded. These have suppressed demand at the high end and could reduce speculative pressure, particularly in luxury segments."
+                },
+                {
+                    "factor": "Bubble risk/market overvaluation",
+                    "effect": "Decreases probability\u2014Numerous analysts (UBS, ECB, Caixabank) highlight signs of overvaluation (Madrid up to 8\u201310%). These conditions raise risk of a plateau, correction, or price stagnation, as affordability gaps cause buyers to exit the market."
+                },
+                {
+                    "factor": "Interest rates and macroeconomic stability",
+                    "effect": "Ambiguous/slightly increases probability\u2014Spain faces moderately above-EU-average inflation, but interest rates are stable and banks remain eager to lend. Rising rates could slow demand but seem unlikely in the very short window remaining."
+                },
+                {
+                    "factor": "Recent base rate: pre-2025 price dynamics",
+                    "effect": "Status quo moderate\u2014A 14% annualized gain for Madrid in the latest data (Sept 2024\u2013Sept 2025). Even at this rapid rate, surpassing 18% YoY in 2025 from the already high Dec 2024 base seems a stretch unless Q4 is extremely strong."
+                }
+            ],
+            "no_scenario": "H1 and H2 2025 continue strong but below 2024's record; foreign demand slows due to global capital market shifts or regulatory frictions; local affordability caps kick in, and overvaluation impedes further rapid appreciation. The price gain for the year moderates to ~10\u201314% despite severe supply constraints\u2014substantial but not breaching the 18% threshold.",
+            "yes_scenario": "National and international buyers maintain extreme momentum despite affordability strains; Q4 2025 delivers another surge (driven by delayed completions, policy anticipation effects, or new demand shocks\u2014e.g. capital flight from other global regions), and structural shortage fully transmits into sale prices. Madrid again outpaces forecasts, ending 2025 with 18%+ YoY growth.",
+            "final_reasoning": "Base rates and the law of large numbers dictate that 18%+ housing price increases in a major global city\u2014*for a second consecutive year*\u2014are rare except in times of extraordinary or speculative market stress. While all near-term indicators are bullish (structural shortage, robust demand, surging prices), the consensus among credible institutions (UBS, CaixaBank, ECB) is for a significant but moderating increase (6\u201310% for Spain, ~10\u201314% for Madrid). Only a minority of analysts seriously contend with a repeat of 2024's outlier figure. Overvaluation signals are flashing, and affordability barriers are nearing their limit for most local buyers\u2014leaving growth heavily reliant on international capital and upper-income demand, which, while still strong, faces new regulatory headwinds. The current annualized rate (14%) is already robust, and a further acceleration large enough to breach 18% by year-end would require either a major Q4 demand shock or unexpected macro/financial events. Given all factors\u2014especially land supply inertia, drag from prior price run-ups, and global macro stability\u2014I assess the chance of >18% growth as materially lower than for a 10\u201315% advance, but not impossible given supply stress. I assign a probability at the high end of plausibility, but well short of 50%, to appropriately reflect bullish fundamentals but the even more powerful base-rate effect.",
+            "final_probability": 30
+        },
+        "RegionalStudiesIberia (SouthernEuropeanHousingModel)": {
+            "time_to_resolution": "Approximately 3 months until publishing of December 2025 data, which is expected by early January 2026.",
+            "perspective_relevance": "As an expert in Regional Studies Iberia, focusing on the Southern European Housing Model, I bring critical insight into the interplay between structural housing supply shortages, demographic shifts, public policy inertia, and demand-side drivers \u2013 in particular, how the Spanish (and specifically Madrid) context has led to cycles of housing inflation notably distinct from Northern or Central European models. I also closely follow the subtleties of supply-demand mismatches, regulatory limitations, and the historical role of foreign capital in this market.",
+            "status_quo": "If nothing changes, Madrid housing prices will continue to increase at a rate notably above the national average but may revert toward single-digit growth as affordability strains, macro pressure, and speculative limits curb the outsized surges recorded in 2024. The most recent full-year price increase (2024) was 20%, and the consensus forecast from banks is 5\u201310% for 2025.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Severe, ongoing supply shortage",
+                    "effect": "Increases probability. The housing deficit, especially in Madrid (one of the most affected areas), is still widening due to the mismatch between new construction and household formation. Structural constraints (planning slowdowns, limited land, and sluggish affordable housing policy) ensure elevated price pressure."
+                },
+                {
+                    "factor": "Intense and resilient demand, buoyed by strong labor market, foreign investment, and migration",
+                    "effect": "Increases probability. Demand outpaces supply, with robust national and international buyer activity (foreigners now over 14% of purchases, with higher-paying non-residents especially relevant in Madrid), and continued population and household growth."
+                },
+                {
+                    "factor": "Affordability strain and socio-economic headwinds",
+                    "effect": "Decreases probability. While price surges continue, an affordability ceiling is being approached \u2013 wage growth is outpaced by property inflation, mortgage demand among Spanish youth has collapsed, and new buyer cohorts are shrinking. At some price level, transactional volume and price growth will have to respond."
+                },
+                {
+                    "factor": "Government policy: containment attempts but limited efficacy",
+                    "effect": "Neutral to slightly increases probability. Policies meant to cool the market (e.g., ending Golden Visas, rent limits) have had minimal impact, especially in prime city locations like Madrid. Structural underbuilding far outweighs incremental regulatory dampeners."
+                },
+                {
+                    "factor": "Speculation/fear of bubble and macro \u2018cooling\u2019",
+                    "effect": "Decreases probability. Madrid has entered the moderate bubble risk group (UBS index). Investors could grow cautious, possibly moderating demand. However, underlying demand is so strong that minor corrections seem unlikely before year-end 2025."
+                },
+                {
+                    "factor": "Historical base rates and trend maturing",
+                    "effect": "Decreases probability. Enormous double-digit surges like 2024 (20%) are historically rare; when such boom years happen, base rates suggest strong mean reversion toward sustainable (below 10%) growth, not repeat surges."
+                }
+            ],
+            "no_scenario": "After the extraordinary 20% rise in 2024, housing prices in Madrid grow at a slower but still strong rate in 2025 \u2013 perhaps 10\u201314% year-on-year, as forecast by most banks and consultancies. Affordability ceilings, macro headwinds (e.g., slightly higher inflation, mortgage rates stagnating or rising), and some investor caution moderate activity. Supply remains short, but the market cannot sustain another surge above 18%. Data at year end confirm sub-18% growth.",
+            "yes_scenario": "Madrid\u2019s unique combination of severe supply bottlenecks, strong inward migration, resilient foreign capital, and an ongoing decoupling from national/income trends lead to prices surging above 18% again. Strains from the supply deficit prove too powerful for affordability constraints to act as a brake, as the proportion of high-income and international buyers rises faster than previously modeled. Regulatory action fails, and sentiment (including bubble warnings) itself acts as a reinforcing driver as momentum buyers pile in. December 2025 data confirm another >18% year-on-year increase.",
+            "final_reasoning": "The most recent data (INE, Idealista, CaixaBank, Tinsa) shows Madrid\u2019s housing market remains the fastest-rising in Western Europe (+14% YoY per UBS bubble index, Q2 2025), outpacing national averages. Structural supply shortages in Madrid are severe and worsening, with deficits now among the deepest in Spain and no meaningful policy or planning mitigation in place. Foreign demand is exceptionally strong and gaining share, especially from non-resident, higher-paying buyers. While these factors argue firmly for ongoing price inflation, strong countervailing forces exist: affordability is approaching limits for domestic buyers, macroeconomic worries are mounting (Spain\u2019s inflation outpaces Eurozone, ECB rate cuts on hold), and most expert forecasts (CaixaBank, Tinsa, Fotocasa) point to 5\u201310% growth, with optimistic cases as high as 10\u201312% (though a minority of analysts mention the possibility of higher spikes in in-demand cities).\n\nAfter a 20% YoY increase in 2024, the historical base rate and path dependence argue against another consecutive 18%+ surge\u2014such sustained doubling is extremely rare outside crash-bubble cycles. Even optimistic institutional models rarely forecast above 14% for 2025. Therefore, despite the powerful upward pressures, the probability of >18% is meaningfully less than 50%. A major unexpected demand shock or investor frenzy would be needed; more likely are strong but decelerating gains (10\u201315%). I expect <18% increase, barring a last-quarter global/local demand shock.\n\nFinal probability: 20% for >18% YoY increase in Madrid 2025, as the prior surge and structural shortages keep risks high, but base rates, expert forecasts, and affordability squeeze all favor strong-but-not-extreme growth.",
+            "final_probability": 20
+        }
+    },
+    "deliberation_probability": [
+        17,
+        8,
+        35,
+        13,
+        15,
+        35,
+        12,
+        10,
+        30,
+        20
+    ],
+    "deliberation_mean_probability": 19.5,
+    "deliberation_sd": 10.21164912136026,
+    "deliberation_probability_result": 20
+}
