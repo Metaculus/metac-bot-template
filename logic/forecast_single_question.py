@@ -23,7 +23,7 @@ async def forecast_single_question(
         news: str = None
 ) -> Tuple[Union[int, Dict[str, float]], str]:
     title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    config = get_gpt_config(cache_seed, 0.7, "gpt-4o", 120)
+    config = get_gpt_config(cache_seed, 0.7, "gpt-4.1", 120)
 
     if not is_woc:
         # Extract news
