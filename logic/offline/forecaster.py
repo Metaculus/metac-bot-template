@@ -27,7 +27,7 @@ EXP_NAME_SLOWLY = "_slowly"
 
 
 def _create_offline_agent(name: str, chosen_system_message: str) -> AssistantAgent:
-    client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=1)
+    client = OpenAIChatCompletionClient(model="gpt-4.1", temperature=0.7)
     system_message = chosen_system_message.format(expertise=name)
 
     camel_name = _to_camel_case(name)
