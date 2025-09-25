@@ -114,11 +114,19 @@ jobs:
         run: |
           poetry run python run_spagbot.py --mode tournament --limit 20 --submit --purpose fall_aib_2025
 
-      - name: Commit logs & CSV (if changed)
+      - name: Commit updated forecasts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f Dashboard/data/forecasts.parquet forecasts.csv
+          git commit -m "chore(ci): update forecasts [skip ci]" || echo "No changes"
+          git push
+
+      - name: Commit logs (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add forecast_logs/** forecasts.csv || true
+          git add forecast_logs/** || true
           if ! git diff --cached --quiet; then
             git commit -m "feat: AIB tournament forecasts [skip ci]"
             git push
@@ -134,3 +142,6 @@ jobs:
           path: |
             forecast_logs/**
             forecasts.csv
+
+
+

@@ -1,188 +1,56 @@
-###  Specific to Project ###
-benchmarks/
-sandbox.py
+# ===============================
+# Spagbot .gitignore
+# ===============================
 
-
-### General gitignore ###
-
-# Byte-compiled / optimized / DLL files
+# --- Python basics ---
 __pycache__/
 *.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
 *.egg
-MANIFEST
+*.pyo
+*.pyd
 
-# Ignore all local caches/logs/data by default
-/cache/
-/logs/
-/data/
-
-# Keep the dashboard parquet tracked (important for the app)
-!Dashboard/data/
-!Dashboard/data/forecasts.parquet
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-# *.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
+# --- Virtual environments ---
+.venv/
 venv/
-ENV/
-env.bak/
-venv.bak/
+env/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# --- Local configs & secrets ---
+.env
+.env.*
+*.key
+*.secret
 
-# Rope project settings
-.ropeproject
+# --- Logs & debug ---
+logs/
+debug/
+*.log
+*.out
+*.err
 
-# mkdocs documentation
-/site
+# --- Forecast data (local only) ---
+# Ignore all parquet/csv locally
+*.parquet
+*.csv
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# --- Forecast & GTMC run logs ---
+forecast_logs/
+gtmc_logs/
 
-# Pyre type checker
-.pyre/
+# --- Cache / temp ---
+cache/
+*.tmp
+*.bak
+*.swp
+*.DS_Store
+Thumbs.db
 
-# pytype static type analyzer
-.pytype/
+# --- Notebooks checkpoints ---
+.ipynb_checkpoints/
 
-# Cython debug symbols
-cython_debug/
+# --- Ignore lowercase dashboard/data just in case ---
+dashboard/data/
 
-# Ruff
-.ruff_cache/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
-
-# MacOS
-.DS_Store
-node-v22.19.0-x64 (1).msi
-
-dashboard/
-Dashboard/data/*.csv
-Dashboard/data/*.tmp
-
+# ===============================
+# End
+# ===============================
