@@ -39,6 +39,10 @@ cache/
 *.DS_Store
 Thumbs.db
 
+# Prevent forecast data artifacts from being committed
+forecasts.csv
+[Dd]ashboard/data/forecasts.parquet
+
 # --- Notebooks checkpoints ---
 .ipynb_checkpoints/
 
