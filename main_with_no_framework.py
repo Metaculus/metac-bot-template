@@ -72,7 +72,7 @@ CURRENT_METACULUS_CUP_ID = "metaculus-cup"
 AXC_2025_TOURNAMENT_ID = 32564
 AI_2027_TOURNAMENT_ID = "ai-2027"
 
-TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
+TOURNAMENT_IDS = [FALL_2025_AI_BENCHMARKING_ID, CURRENT_MINIBENCH_ID]
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
@@ -164,7 +164,7 @@ def create_forecast_payload(
 
 
 def list_posts_from_tournament(
-    tournament_id: int | str = TOURNAMENT_ID, offset: int = 0, count: int = 50
+    tournament_id: int | str, offset: int = 0, count: int = 50
 ) -> list[dict]:
     """
     List (all details) {count} posts from the {tournament_id}
@@ -193,8 +193,8 @@ def list_posts_from_tournament(
     return data
 
 
-def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
-    posts = list_posts_from_tournament()
+def get_open_question_ids_from_tournament(tournament_id: int | str) -> list[tuple[int, int]]:
+    posts = list_posts_from_tournament(tournament_id)
 
     post_dict = dict()
     for post in posts["results"]:
@@ -1109,7 +1109,9 @@ if __name__ == "__main__":
     if USE_EXAMPLE_QUESTIONS:
         open_question_id_post_id = EXAMPLE_QUESTIONS
     else:
-        open_question_id_post_id = get_open_question_ids_from_tournament()
+        open_question_id_post_id = []
+        for tournament_id in TOURNAMENT_IDS:
+            open_question_id_post_id.extend(get_open_question_ids_from_tournament(tournament_id=tournament_id))
 
     asyncio.run(
         forecast_questions(
