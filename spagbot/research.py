@@ -49,6 +49,12 @@ from .config import (
 
 from .prompts import build_research_prompt, _CAL_PREFIX
 
+# --- Debug hook: last error message from research step (for human log & CSV) ---
+LAST_RESEARCH_ERROR: str = ""   # set by _grounded_search / _compose_research_via_gemini
+def _set_research_error(msg: str) -> None:
+    global LAST_RESEARCH_ERROR
+    LAST_RESEARCH_ERROR = (msg or "").strip()
+
 # =============================================================================
 # RUNTIME + CACHE
 # =============================================================================
@@ -133,6 +139,7 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
     timeout = float(_GEMINI_TIMEOUT if timeout is None else timeout)
     api_key = _gemini_api_key()
     if not api_key:
+        _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for Google Search grounding")
         return []
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
@@ -167,6 +174,13 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
             timeout=timeout,
         )
         if resp.status_code != 200:
+            # Surface a short, human-readable reason for the human log / CSV
+            try:
+                j = resp.json()
+                msg = (j.get("error", {}) or {}).get("message", "")
+            except Exception:
+                msg = (resp.text or "")[:200]
+            _set_research_error(f"grounding HTTP {resp.status_code}: {msg}")
             return []
         data = resp.json()
         text_blobs = []
@@ -196,8 +210,10 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
                 # ignore non-JSON lines
                 pass
         return items
-    except Exception:
+    except Exception as e:
+        _set_research_error(f"grounding request error: {e!r}")
         return []
+
 
 # =============================================================================
 # RANK & FILTER (unchanged logic, just new provider)
@@ -254,6 +270,7 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
     """
     api_key = _gemini_api_key()
     if not api_key:
+        _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for research composition")
         return "", "", {}
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
@@ -269,8 +286,15 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
             timeout=float(_GEMINI_TIMEOUT),
         )
         if resp.status_code != 200:
+            try:
+                j = resp.json()
+                msg = (j.get("error", {}) or {}).get("message", "")
+            except Exception:
+                msg = (resp.text or "")[:200]
+            _set_research_error(f"compose HTTP {resp.status_code}: {msg}")
             return "", "", {}
         data = resp.json()
+
         texts = []
         for cand in (data.get("candidates") or []):
             for part in ((cand.get("content") or {}).get("parts") or []):
@@ -278,7 +302,8 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
                 if t:
                     texts.append(t)
         return ("\n".join(texts).strip(), f"google/{model}", {})
-    except Exception:
+    except Exception as e:
+        _set_research_error(f"compose request error: {e!r}")
         return "", "", {}
 
 # =============================================================================
@@ -417,6 +442,7 @@ async def run_research_async(
                 "research_n_raw": int(len(raw_items)),
                 "research_n_kept": int(len(picked)),
                 "research_cached": "0",
+                "research_error": (LAST_RESEARCH_ERROR or ""),
                 "research_usage": usage or {},
                 "research_cost_usd": 0.0,
             },
@@ -433,6 +459,7 @@ async def run_research_async(
         "research_n_raw": int(len(raw_items)),
         "research_n_kept": int(len(picked)),
         "research_cached": "0",
+        "research_error": (LAST_RESEARCH_ERROR or ""),
         "research_usage": usage or {},
         "research_cost_usd": 0.0,
     }

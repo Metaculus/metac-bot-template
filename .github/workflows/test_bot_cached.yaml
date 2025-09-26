@@ -37,7 +37,7 @@ jobs:
 
       ENABLE_GROK: "1"
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      XAI_BASE_URL: https://api.x.ai/v1
+      XAI_BASE_URL: https://api.x.ai/v1/chat/completions
       XAI_GROK_ID: grok-4
       GROK_MODEL_ID: grok-4
 
@@ -68,7 +68,7 @@ jobs:
       MARKET_SNAPSHOT_MAX_MATCHES: "10"
       LLM_MAX_CONCURRENCY: "4"
       HUMAN_LOG_MODEL_RAW_MAX_CHARS: "5000"
-      HUMAN_LOG_RESEARCH_MAX_CHARS: "15000"
+      HUMAN_LOG_RESEARCH_MAX_CHARS: "20000"
       RESEARCH_SNIPPET_MAX_CHARS: "600"
 
       # CSV output

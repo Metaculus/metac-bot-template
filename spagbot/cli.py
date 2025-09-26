@@ -587,6 +587,7 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
         "research_n_raw": str(research_meta.get("research_n_raw", "")),
         "research_n_kept": str(research_meta.get("research_n_kept", "")),
         "research_cached": research_meta.get("research_cached", ""),
+        "research_error": research_meta.get("research_error", ""),
 
 
         # Options/values
@@ -725,8 +726,8 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     })
 
     # Human-readable markdown log
-    MAX_RAW_CHARS = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS","1200"))
-    RESEARCH_MAX = int(os.getenv("HUMAN_LOG_RESEARCH_MAX_CHARS","12000"))
+    MAX_RAW_CHARS = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS","5000"))
+    RESEARCH_MAX = int(os.getenv("HUMAN_LOG_RESEARCH_MAX_CHARS","20000"))
     md = []
     md.append(f"# {title} (QID: {question_id})")
     md.append(f"- Type: {qtype}")
@@ -735,15 +736,49 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     md.append("## Research (summary)")
     md.append((research_text or "").strip()[:RESEARCH_MAX])
+    # Research (debug)
+    try:
+        _r_src   = research_meta.get("research_source","")
+        _r_llm   = research_meta.get("research_llm","")
+        _r_q     = research_meta.get("research_query","")
+        _r_raw   = research_meta.get("research_n_raw","")
+        _r_kept  = research_meta.get("research_n_kept","")
+        _r_cache = research_meta.get("research_cached","")
+        _r_err   = research_meta.get("research_error","")
+        md.append("### Research (debug)")
+        md.append(f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | n_raw={_r_raw} | n_kept={_r_kept}")
+        if _r_q:
+            md.append(f"- query: {_r_q}")
+        if _r_err:
+            md.append(f"- error: {_r_err}")
+    except Exception:
+        pass
+
+    # Classifier (debug)
+    try:
+        md.append("### Classifier (debug)")
+        md.append(f"- source={classifier_source} | is_strategic={is_strategic} | score={strategic_score:.2f}")
+        if classifier_rationale:
+            md.append(f"- rationale: {classifier_rationale}")
+    except Exception:
+        pass
 
     md.append("## Per-model")
+    had_errors = []
     for m in ens_res.members:
         raw_excerpt = (m.raw_text or "")[:MAX_RAW_CHARS]
         err = f" | error={m.error}" if getattr(m, "error", "") else ""
+        if getattr(m, "error", ""):
+            had_errors.append(f"{m.name}: {m.error}")
         md.append(f"- **{m.name}** ok={m.ok} time={getattr(m,'elapsed_ms',0)}ms cost=${getattr(m,'cost_usd',0.0):.4f}{err} parsed={m.parsed}")
         if raw_excerpt:
             md.append("  - Raw output (excerpt):")
             md.append("    " + raw_excerpt.replace("\n","\n    "))
+    if had_errors:
+        md.append("### Model errors (summary)")
+        for line in had_errors:
+            md.append(f"- {line}")
+
 
     md.append("## Ensembles (with research)")
     if qtype == "binary":

@@ -44,15 +44,15 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: gemini-2.5-pro
       GEMINI_MODEL_ID: gemini-2.5-pro
-      GEMINI_CALL_TIMEOUT_SEC: "180"
-      GPT5_CALL_TIMEOUT_SEC: "180"
+      GEMINI_CALL_TIMEOUT_SEC: "300"
+      GPT5_CALL_TIMEOUT_SEC: "300"
 
       ENABLE_GROK: "1"
       XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-      XAI_BASE_URL: https://api.x.ai/v1
+      XAI_BASE_URL: https://api.x.ai/v1/chat/completions
       XAI_GROK_ID: grok-4
       GROK_MODEL_ID: grok-4
-      GROK_CALL_TIMEOUT_SEC: "240"
+      GROK_CALL_TIMEOUT_SEC: "300"
 
       # ---- Optional providers ----
       PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}

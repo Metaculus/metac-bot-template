@@ -24,7 +24,7 @@ OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL")           # e.g., https://openrouter.ai/api/v1
 GOOGLE_API_KEY  = os.getenv("GOOGLE_API_KEY")
 XAI_API_KEY     = os.getenv("XAI_API_KEY")
-XAI_BASE_URL    = "https://api.x.ai/v1"
+XAI_BASE_URL    = "https://api.x.ai/v1/chat/completions"
 METACULUS_TOKEN = os.getenv("METACULUS_TOKEN")
 
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
@@ -38,9 +38,9 @@ OPENROUTER_CLAUDE37_ID    = os.getenv("OPENROUTER_CLAUDE37_ID", "anthropic/claud
 GEMINI_MODEL              = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
 XAI_GROK_ID               = os.getenv("XAI_GROK_ID", "grok-4")
 
-GPT5_CALL_TIMEOUT_SEC   = float(os.getenv("GPT5_CALL_TIMEOUT_SEC", 120))
-GEMINI_CALL_TIMEOUT_SEC = float(os.getenv("GEMINI_CALL_TIMEOUT_SEC", 120))
-GROK_CALL_TIMEOUT_SEC   = float(os.getenv("GROK_CALL_TIMEOUT_SEC", 180))
+GPT5_CALL_TIMEOUT_SEC   = float(os.getenv("GPT5_CALL_TIMEOUT_SEC", 300))
+GEMINI_CALL_TIMEOUT_SEC = float(os.getenv("GEMINI_CALL_TIMEOUT_SEC", 300))
+GROK_CALL_TIMEOUT_SEC   = float(os.getenv("GROK_CALL_TIMEOUT_SEC", 300))
 
 # --- Decoding knobs (separate for research vs. forecasting) ---
 FORECAST_TEMP = float(os.getenv("FORECAST_TEMP", "0.00"))

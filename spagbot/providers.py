@@ -161,7 +161,7 @@ async def _call_gemini_direct(model_id: str, prompt: str, temperature: float) ->
             "generationConfig":{"temperature":float(temperature)}
         }
         try:
-            r = requests.post(url, json=body, timeout=45)
+            r = requests.post(url, json=body, timeout=300)
             j = r.json()
         except Exception as e:
             return "", {}, f"Gemini request error: {e!r}"
@@ -191,7 +191,7 @@ async def _call_grok_direct(model_id: str, prompt: str, temperature: float) -> t
         headers = {"Authorization": f"Bearer {XAI_API_KEY}", "Content-Type":"application/json"}
         body = {"model": model_id, "messages":[{"role":"user","content":prompt}], "temperature": float(temperature)}
         try:
-            r = requests.post(XAI_BASE_URL, json=body, headers=headers, timeout=60)
+            r = requests.post(XAI_BASE_URL, json=body, headers=headers, timeout=300)
             j = r.json()
         except Exception as e:
             return "", {}, f"Grok request error: {e!r}"
