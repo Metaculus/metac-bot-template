@@ -124,6 +124,42 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
             np.where(lbl.isin(["no", "false", "0"]), 0.0, np.nan)
         )
 
+def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[Path]:
+    """
+    Returns a list of markdown files likely related to this question.
+    We search forecast_logs/ and logs/ for files that match any run_id in dd
+    or the question id (e.g., Q12345*.md). De-duplicated and sorted by
+    last modified, newest first.
+    """
+    repo_root = APP_DIR.parent
+    search_dirs = [repo_root / "forecast_logs", repo_root / "logs"]
+
+    # Build filename patterns
+    run_ids: List[str] = []
+    if "run_id" in dd.columns and dd["run_id"].notna().any():
+        run_ids = [str(r) for r in dd["run_id"].dropna().astype(str).unique().tolist()]
+
+    found: List[Path] = []
+    for d in search_dirs:
+        if not d.exists():
+            continue
+
+        # Match by run_id if we have it
+        for rid in run_ids:
+            for p in d.glob(f"*{rid}*.md"):
+                found.append(p)
+
+        # Also try matching by question id (files like Q39562*.md)
+        if qid is not None:
+            for p in d.glob(f"*Q{qid}*.md"):
+                found.append(p)
+
+    # De-duplicate while preserving newest first
+    unique: Dict[str, Path] = {}
+    for p in sorted(found, key=lambda x: x.stat().st_mtime, reverse=True):
+        unique.setdefault(p.resolve().as_posix(), p)
+    return list(unique.values())
+
     # Numeric resolution
     if "resolved_value" in out.columns:
         out["resolved_value"] = pd.to_numeric(out["resolved_value"], errors="coerce")
@@ -142,6 +178,15 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
             t = [ _title_from_slug(str(u)) for u in out["question_url"].fillna("") ]
             if any(bool(x) for x in t):
                 out["qtitle"] = t
+
+    # --- FORCE NUMERIC for forecast columns ---
+    forecast_like_cols = [
+        c for c in out.columns
+        if c.startswith("binary_prob__")
+        or any(c.startswith(pref) for pref in NUMERIC_PREFIXES)
+    ]
+    for c in forecast_like_cols:
+        out[c] = pd.to_numeric(out[c], errors="coerce")
 
     return out
 
@@ -207,11 +252,18 @@ df, meta = load_data()
 if df.empty:
     st.stop()
 
+# Expand perm labels to include *all* binary_prob__* columns dynamically
+binary_perm_cols = [c for c in df.columns if c.startswith("binary_prob__")]
+for c in binary_perm_cols:
+    if c not in BINARY_PERM_LABELS:
+        BINARY_PERM_LABELS[c] = c.replace("binary_prob__", "").replace("_", " ")
+
 # Banner shows where the data came from
 st.info(
     f"**Source:** {meta.get('source','?')}  |  **Path/URL:** {meta.get('path','?')}  |  "
     f"**Modified:** {meta.get('mtime','?')}  |  **Rows:** {meta.get('rows','?')}"
 )
+
 
 # Normalize created_at
 if "created_at" in df.columns:
@@ -504,8 +556,29 @@ with tab_questions:
                 fig = px.line(dd, x="created_at", y=chosen_perm, markers=True, title="Forecast history (binary)")
                 fig.update_layout(height=360)
                 st.plotly_chart(fig, use_container_width=True)
+ 
             st.markdown("**All rows for this question**")
             st.dataframe(dd, use_container_width=True)
+
+            # --- Human logs (model reasoning) ---
+            st.markdown("**Human logs (model reasoning)**")
+            try:
+                qid_int = int(qid) if qid is not None else None
+            except Exception:
+                qid_int = None
+            log_paths = _find_human_logs_for_question(dd, qid_int)
+
+            if not log_paths:
+                st.info("No .md human logs found for this question in forecast_logs/ or logs/.")
+            else:
+                # Show up to the most recent 8 logs (adjust if you want more/less)
+                for p in log_paths[:8]:
+                    with st.expander(p.name, expanded=False):
+                        try:
+                            st.markdown(p.read_text(encoding="utf-8", errors="ignore"))
+                        except Exception as e:
+                            st.warning(f"Could not read {p.name}: {e}")
+
     else:
         st.info("Couldn’t find a question identifier. Expected `question_id` (→ qid) or a parsable `question_url`.")
 

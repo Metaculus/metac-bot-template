@@ -37,9 +37,9 @@ def _env_bool(name: str, default: bool) -> bool:
 
 # ----------- provider toggles -----------
 USE_OPENROUTER_DEFAULT = _env_bool("USE_OPENROUTER_DEFAULT", True)
-USE_ANTHROPIC         = _env_bool("USE_ANTHROPIC", False)
-USE_GEMINI            = _env_bool("USE_GEMINI", False)    # DIRECT Gemini
-USE_GROK              = _env_bool("USE_GROK", False)      # DIRECT Grok
+USE_ANTHROPIC         = _env_bool("USE_ANTHROPIC", True)
+USE_GEMINI            = _env_bool("USE_GEMINI", True)    # DIRECT Gemini
+USE_GROK              = _env_bool("USE_GROK", True)      # DIRECT Grok
 
 # ----------- OpenRouter (AsyncOpenAI-compatible) -----------
 OR_API_KEY  = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("OR_API_KEY", "")
