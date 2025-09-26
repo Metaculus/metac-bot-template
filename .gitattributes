@@ -1,0 +1,11 @@
+# Normalize line endings
+* text=auto
+
+# Always use LF endings for shell scripts
+*.sh text eol=lf
+
+# Force LF for requirements.txt
+requirements.txt text eol=lf
+
+# Ensure hooks (in tracked .githooks folder) also use LF
+.githooks/* text eol=lf

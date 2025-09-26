@@ -1,0 +1,24 @@
+#!/bin/sh
+# Re-exec this script in bash (prefer WSL bash if available), because sh doesn't support 'pipefail'.
+if [ -z "$BASH" ]; then
+  if command -v wsl.exe >/dev/null 2>&1; then
+    exec wsl bash "$0" "$@"
+  elif command -v bash >/dev/null 2>&1; then
+    exec bash "$0" "$@"
+  else
+    echo "pre-commit: bash not found; cannot run hook." >&2
+    exit 1
+  fi
+fi
+
+# Now we're in bash
+set -euo pipefail
+
+# Block committing these files unless OVERRIDE=1 is set
+if git diff --cached --name-only | grep -E -q '^(forecasts\.csv|[Dd]ashboard/data/forecasts\.parquet)$'; then
+  echo "❌ Blocked: committing forecasts.csv or Dashboard/data/forecasts.parquet"
+  echo "   (override with: OVERRIDE=1 git commit ...)"
+  if [ "${OVERRIDE:-}" != "1" ]; then
+    exit 1
+  fi
+fi
