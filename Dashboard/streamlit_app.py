@@ -124,6 +124,36 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
             np.where(lbl.isin(["no", "false", "0"]), 0.0, np.nan)
         )
 
+    # Numeric resolution (for numeric questions)
+    if "resolved_value" in out.columns:
+        out["resolved_value"] = pd.to_numeric(out["resolved_value"], errors="coerce")
+
+    # Derive qid/qtitle from question_url when missing
+    if "qid" not in out.columns and "question_url" in out.columns:
+        out["qid"] = [_parse_qid_from_url(str(u)) for u in out["question_url"].fillna("")]
+        if out["qid"].isna().all():
+            out.drop(columns=["qid"], errors="ignore", inplace=True)
+
+    if "qtitle" not in out.columns:
+        name = _first_present(out, ["question_title", "title", "name"])
+        if name:
+            out["qtitle"] = out[name]
+        elif "question_url" in out.columns:
+            t = [_title_from_slug(str(u)) for u in out["question_url"].fillna("")]
+            if any(bool(x) for x in t):
+                out["qtitle"] = t
+
+    # --- FORCE NUMERIC for forecast columns (prevents blank plots) ---
+    forecast_like_cols = [
+        c for c in out.columns
+        if c.startswith("binary_prob__")
+        or any(c.startswith(pref) for pref in NUMERIC_PREFIXES)
+    ]
+    for c in forecast_like_cols:
+        out[c] = pd.to_numeric(out[c], errors="coerce")
+
+    return out
+
 def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[Path]:
     """
     Return markdown logs related to this question (by content scan).
@@ -153,9 +183,7 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
     for root in search_roots:
         if not root.exists():
             continue
-        # direct .md in folder
         candidates.extend([p for p in root.glob("*.md") if p.is_file()])
-        # recurse
         candidates.extend([p for p in root.rglob("*.md") if p.is_file()])
 
     # Optional: match by run_id substring if present in dd
@@ -172,13 +200,11 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
     matched: List[Path] = []
     for p in candidates:
         try:
-            # Fast path: filename contains some run_id
             name = p.name
             if any(rid in name for rid in run_id_strs):
                 matched.append(p)
                 continue
 
-            # Content sniff (limit read to ~64KB for speed)
             with p.open("r", encoding="utf-8", errors="ignore") as fh:
                 text = fh.read(64 * 1024)
 
@@ -186,7 +212,6 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
                 matched.append(p)
                 continue
         except Exception:
-            # ignore unreadable files
             pass
 
     # De-duplicate and sort newest-first
@@ -195,36 +220,6 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
         unique.setdefault(p.resolve().as_posix(), p)
     return list(unique.values())
 
-
-    # Numeric resolution
-    if "resolved_value" in out.columns:
-        out["resolved_value"] = pd.to_numeric(out["resolved_value"], errors="coerce")
-
-    # Derive qid/qtitle from question_url when missing
-    if "qid" not in out.columns and "question_url" in out.columns:
-        out["qid"] = [ _parse_qid_from_url(str(u)) for u in out["question_url"].fillna("") ]
-        if out["qid"].isna().all():
-            out.drop(columns=["qid"], errors="ignore", inplace=True)
-
-    if "qtitle" not in out.columns:
-        name = _first_present(out, ["question_title", "title", "name"])
-        if name:
-            out["qtitle"] = out[name]
-        elif "question_url" in out.columns:
-            t = [ _title_from_slug(str(u)) for u in out["question_url"].fillna("") ]
-            if any(bool(x) for x in t):
-                out["qtitle"] = t
-
-    # --- FORCE NUMERIC for forecast columns ---
-    forecast_like_cols = [
-        c for c in out.columns
-        if c.startswith("binary_prob__")
-        or any(c.startswith(pref) for pref in NUMERIC_PREFIXES)
-    ]
-    for c in forecast_like_cols:
-        out[c] = pd.to_numeric(out[c], errors="coerce")
-
-    return out
 
 @st.cache_data(show_spinner=True)
 def load_from_parquet(path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
