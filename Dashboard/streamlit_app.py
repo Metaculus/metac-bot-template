@@ -126,39 +126,75 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[Path]:
     """
-    Returns a list of markdown files likely related to this question.
-    We search forecast_logs/ and logs/ for files that match any run_id in dd
-    or the question id (e.g., Q12345*.md). De-duplicated and sorted by
-    last modified, newest first.
+    Return markdown logs related to this question (by content scan).
+    Looks under:
+      - <repo>/forecast_logs/runs/*.md
+      - <repo>/forecast_logs/**/*.md
+      - <repo>/logs/**/*.md
+    Matches if the file CONTENT (first ~64 KB) contains:
+      - 'Q{qid}'          (e.g., 'Q39562')
+      - '/questions/{qid}' in a URL
+      - 'question_id: {qid}' (yaml-ish)
+    Also tries run_id matches if filenames include a run id substring.
+    Results are de-duplicated, newest-first.
     """
+    if qid is None:
+        return []
+
     repo_root = APP_DIR.parent
-    search_dirs = [repo_root / "forecast_logs", repo_root / "logs"]
+    search_roots = [
+        repo_root / "forecast_logs" / "runs",
+        repo_root / "forecast_logs",
+        repo_root / "logs",
+    ]
 
-    # Build filename patterns
-    run_ids: List[str] = []
-    if "run_id" in dd.columns and dd["run_id"].notna().any():
-        run_ids = [str(r) for r in dd["run_id"].dropna().astype(str).unique().tolist()]
-
-    found: List[Path] = []
-    for d in search_dirs:
-        if not d.exists():
+    # Collect candidate files
+    candidates: List[Path] = []
+    for root in search_roots:
+        if not root.exists():
             continue
+        # direct .md in folder
+        candidates.extend([p for p in root.glob("*.md") if p.is_file()])
+        # recurse
+        candidates.extend([p for p in root.rglob("*.md") if p.is_file()])
 
-        # Match by run_id if we have it
-        for rid in run_ids:
-            for p in d.glob(f"*{rid}*.md"):
-                found.append(p)
+    # Optional: match by run_id substring if present in dd
+    run_id_strs: List[str] = []
+    if "run_id" in dd.columns and dd["run_id"].notna().any():
+        run_id_strs = [str(x) for x in dd["run_id"].dropna().astype(str).unique().tolist()]
 
-        # Also try matching by question id (files like Q39562*.md)
-        if qid is not None:
-            for p in d.glob(f"*Q{qid}*.md"):
-                found.append(p)
+    # Precompile quick patterns
+    qid_str = str(qid)
+    pat_qid     = re.compile(rf"\bQ{re.escape(qid_str)}\b", re.IGNORECASE)
+    pat_url_qid = re.compile(rf"/questions?/{re.escape(qid_str)}\b")
+    pat_yaml_q  = re.compile(rf"\bquestion[_\- ]?id\s*:\s*{re.escape(qid_str)}\b", re.IGNORECASE)
 
-    # De-duplicate while preserving newest first
+    matched: List[Path] = []
+    for p in candidates:
+        try:
+            # Fast path: filename contains some run_id
+            name = p.name
+            if any(rid in name for rid in run_id_strs):
+                matched.append(p)
+                continue
+
+            # Content sniff (limit read to ~64KB for speed)
+            with p.open("r", encoding="utf-8", errors="ignore") as fh:
+                text = fh.read(64 * 1024)
+
+            if pat_qid.search(text) or pat_url_qid.search(text) or pat_yaml_q.search(text):
+                matched.append(p)
+                continue
+        except Exception:
+            # ignore unreadable files
+            pass
+
+    # De-duplicate and sort newest-first
     unique: Dict[str, Path] = {}
-    for p in sorted(found, key=lambda x: x.stat().st_mtime, reverse=True):
+    for p in sorted(matched, key=lambda x: x.stat().st_mtime, reverse=True):
         unique.setdefault(p.resolve().as_posix(), p)
     return list(unique.values())
+
 
     # Numeric resolution
     if "resolved_value" in out.columns:
@@ -523,7 +559,8 @@ with tab_mcq:
 # Per-Question drilldown (robust to missing qtitle) ---------------------------
 with tab_questions:
     st.subheader("Questions")
-    # Try to ensure qid/qtitle exist
+
+    # Try to ensure qid/qtitle exist from question_url when missing
     if "qid" not in df.columns and "question_url" in df.columns and df["question_url"].notna().any():
         derived = df["question_url"].fillna("").astype(str).map(_parse_qid_from_url)
         if derived.notna().any():
@@ -534,29 +571,61 @@ with tab_questions:
             df["qtitle"] = derived_t
 
     has_qid = "qid" in df.columns and df["qid"].notna().any()
-    has_qtitle = "qtitle" in df.columns and df["qtitle"].notna().any()
 
     if has_qid:
-        base = ["qid"] + (["qtitle"] if has_qtitle else [])
-        opts = df[base].dropna(subset=["qid"]).drop_duplicates().sort_values("qid")
-        if has_qtitle:
+        # Build selector safely (do not assume qtitle exists)
+        has_qtitle_all = "qtitle" in df.columns and df["qtitle"].notna().any()
+        select_cols = ["qid"] + (["qtitle"] if has_qtitle_all else [])
+        opts = (
+            df.loc[df["qid"].notna(), select_cols]
+              .drop_duplicates()
+              .sort_values("qid")
+        )
+
+        # Human-friendly display labels
+        if has_qtitle_all:
             display = [f"Q{int(q)} – {str(t)[:80]}" for q, t in zip(opts["qid"], opts["qtitle"].fillna(""))]
         else:
             display = [f"Q{int(q)}" for q in opts["qid"]]
+
         chosen = st.selectbox("Pick a question:", display if len(display) else ["(no questions found)"])
         if display:
             import re as _re
-            qid = int(_re.search(r"Q(\d+)", chosen).group(1))
+            m = _re.search(r"Q(\d+)", chosen)
+            qid = int(m.group(1)) if m else None
+
+            # Subset rows for this question
             dd = df[df["qid"] == qid].copy()
-            title = dd["qtitle"].dropna().iloc[0] if has_qtitle and dd["qtitle"].notna().any() else "(no title)"
+
+            # Title derived from the subset itself (avoids mismatch df vs dd)
+            has_qtitle_dd = "qtitle" in dd.columns and dd["qtitle"].notna().any()
+            title = dd["qtitle"].dropna().iloc[0] if has_qtitle_dd else "(no title)"
             st.write(f"### Q{qid} — {title}")
+
+            # Binary forecast history plot (numeric-safe)
             if binary_perm_cols and "created_at" in dd.columns:
-                chosen_perm = st.selectbox("Binary permutation to plot", binary_perm_cols, format_func=lambda c: perm_labels.get(c, c))
+                chosen_perm = st.selectbox(
+                    "Binary permutation to plot",
+                    binary_perm_cols,
+                    format_func=lambda c: perm_labels.get(c, c)
+                )
                 dd = dd.sort_values("created_at")
-                fig = px.line(dd, x="created_at", y=chosen_perm, markers=True, title="Forecast history (binary)")
-                fig.update_layout(height=360)
-                st.plotly_chart(fig, use_container_width=True)
- 
+                yvals = pd.to_numeric(dd[chosen_perm], errors="coerce")
+                mask = yvals.notna() & dd["created_at"].notna()
+                if mask.any():
+                    fig = px.line(
+                        dd.loc[mask],
+                        x="created_at",
+                        y=yvals.loc[mask],
+                        markers=True,
+                        title="Forecast history (binary)"
+                    )
+                    fig.update_layout(height=360)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("No valid numeric values to plot for this permutation.")
+
+            # Full table for this question
             st.markdown("**All rows for this question**")
             st.dataframe(dd, use_container_width=True)
 
@@ -566,12 +635,15 @@ with tab_questions:
                 qid_int = int(qid) if qid is not None else None
             except Exception:
                 qid_int = None
+
+            # Requires the helper added in Utilities:
+            # _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[Path]
             log_paths = _find_human_logs_for_question(dd, qid_int)
 
             if not log_paths:
                 st.info("No .md human logs found for this question in forecast_logs/ or logs/.")
             else:
-                # Show up to the most recent 8 logs (adjust if you want more/less)
+                # Show up to the most recent 8 logs (adjust as desired)
                 for p in log_paths[:8]:
                     with st.expander(p.name, expanded=False):
                         try:
