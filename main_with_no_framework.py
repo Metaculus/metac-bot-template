@@ -13,7 +13,7 @@ import numpy as np
 import requests
 from asknews_sdk import AskNewsSDK
 from openai import AsyncOpenAI
-
+import time
 
 """
 This file provides a simple forecasting bot built from the ground up.
@@ -54,7 +54,10 @@ PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 EXA_API_KEY = os.getenv("EXA_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
+
+
 
 # The tournament IDs below can be used for testing your bot.
 Q4_2024_AI_BENCHMARKING_ID = 32506
@@ -74,9 +77,9 @@ TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
     (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
-    (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
+    # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
+    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    # (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
 
@@ -227,11 +230,11 @@ def get_post_details(post_id: int) -> dict:
     details = json.loads(response.content)
     return details
 
-CONCURRENT_REQUESTS_LIMIT = 5
+CONCURRENT_REQUESTS_LIMIT = 1
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
 
-async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3) -> str:
+async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4", temperature: float = 0.3) -> str:
     """
     Makes a streaming completion request to OpenAI's API with concurrent request limiting.
     """
@@ -239,7 +242,11 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
     # Remove the base_url parameter to call the OpenAI API directly
     # Also checkout the package 'litellm' for one function that can call any model from any provider
     # Also checkout OpenRouter for allowing one API key for many providers (especially powerful if combined with litellm)
-    client = AsyncOpenAI()
+    client = AsyncOpenAI(
+        base_url=OPENROUTER_BASE_URL,
+        api_key=OPENROUTER_API_KEY,
+        max_retries=2,
+    )
 
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
@@ -256,13 +263,17 @@ async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3)
 
 def run_research(question: str) -> str:
     research = ""
-    # if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-    #     research = call_asknews(question)
-    if EXA_API_KEY:
-        research = call_exa_smart_searcher(question)
-    elif PERPLEXITY_API_KEY:
-        research = call_perplexity(question)
-    else:
+    report_number = 1
+    if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
+        print(f"Calling ASKNEWS for {question}")
+        research += f"Research Report {report_number}:\n{call_asknews(question)}\n"
+        report_number += 1
+    # elif EXA_API_KEY:
+    #     research = call_exa_smart_searcher(question)
+    if PERPLEXITY_API_KEY:
+        research += f"Research Report {report_number}:\n{call_perplexity(question)}"   
+        report_number += 1
+    if not research:
         research = "No research done"
 
     print(f"########################\nResearch Found:\n{research}\n########################")
@@ -278,7 +289,7 @@ def call_perplexity(question: str) -> str:
         "content-type": "application/json",
     }
     payload = {
-        "model": "llama-3.1-sonar-huge-128k-online",
+        "model": "sonar-reasoning-pro",
         "messages": [
             {
                 "role": "system",  # this is a system prompt designed to guide the perplexity assistant
@@ -347,7 +358,7 @@ def call_asknews(question: str) -> str:
         return_type="both",
         strategy="latest news",  # enforces looking at the latest news only
     )
-
+    time.sleep(10)
     # get context from the "historical" database that contains a news archive going back to 2023
     historical_response = ask.news.search_news(
         query=question,
@@ -464,7 +475,7 @@ async def get_binary_gpt_prediction(
             rationale
         )
         comment = (
-            f"Extracted Probability: {probability}%\n\nGPT's Answer: "
+            f"Extracted Probability: {probability}%\n\LLM's Answer: "
             f"{rationale}\n\n\n"
         )
         return probability, comment
