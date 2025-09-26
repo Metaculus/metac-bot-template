@@ -197,6 +197,12 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
     pat_url_qid = re.compile(rf"/questions?/{re.escape(qid_str)}\b")
     pat_yaml_q  = re.compile(rf"\bquestion[_\- ]?id\s*:\s*{re.escape(qid_str)}\b", re.IGNORECASE)
 
+    # Optional: match on the question title if present
+    qtitle_text = None
+    if "qtitle" in dd.columns and dd["qtitle"].notna().any():
+        qtitle_text = str(dd["qtitle"].dropna().iloc[0]).strip()
+    pat_title = re.compile(re.escape(qtitle_text), re.IGNORECASE) if qtitle_text else None
+
     matched: List[Path] = []
     for p in candidates:
         try:
@@ -208,9 +214,11 @@ def _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[
             with p.open("r", encoding="utf-8", errors="ignore") as fh:
                 text = fh.read(64 * 1024)
 
-            if pat_qid.search(text) or pat_url_qid.search(text) or pat_yaml_q.search(text):
-                matched.append(p)
+            if (pat_qid.search(text) or pat_url_qid.search(text) or pat_yaml_q.search(text)
+                or (pat_title and pat_title.search(text))):
+                matched.append(p); 
                 continue
+
         except Exception:
             pass
 
@@ -597,28 +605,68 @@ with tab_questions:
             title = dd["qtitle"].dropna().iloc[0] if has_qtitle_dd else "(no title)"
             st.write(f"### Q{qid} — {title}")
 
-            # Binary forecast history plot (numeric-safe)
-            if binary_perm_cols and "created_at" in dd.columns:
+            # Prefer binary plot if this question actually has non-null binary series
+            available_binaries = []
+            if "created_at" in dd.columns:
+                for c in binary_perm_cols:
+                    if c in dd.columns and pd.to_numeric(dd[c], errors="coerce").notna().any():
+                        available_binaries.append(c)
+
+            if available_binaries:
                 chosen_perm = st.selectbox(
                     "Binary permutation to plot",
-                    binary_perm_cols,
+                    available_binaries,
                     format_func=lambda c: perm_labels.get(c, c)
                 )
                 dd = dd.sort_values("created_at")
                 yvals = pd.to_numeric(dd[chosen_perm], errors="coerce")
                 mask = yvals.notna() & dd["created_at"].notna()
-                if mask.any():
-                    fig = px.line(
-                        dd.loc[mask],
-                        x="created_at",
-                        y=yvals.loc[mask],
-                        markers=True,
-                        title="Forecast history (binary)"
-                    )
-                    fig.update_layout(height=360)
-                    st.plotly_chart(fig, use_container_width=True)
+                fig = px.line(
+                    dd.loc[mask],
+                    x="created_at",
+                    y=yvals.loc[mask],
+                    markers=True,
+                    title="Forecast history (binary)"
+                )
+                fig.update_layout(height=360)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                # Fallback: try numeric quantiles (q10/q50/q90) for a sensible variant
+                num_pfx = ["numeric_p10__", "numeric_p50__", "numeric_p90__"]
+                has_numeric = any(any(col.startswith(p) for col in dd.columns) for p in num_pfx)
+                if has_numeric and "created_at" in dd.columns:
+                    # group available variants for which we have any numeric data
+                    variants = {}
+                    for pref in num_pfx:
+                        for c in dd.columns:
+                            if c.startswith(pref):
+                                var = c[len(pref):]
+                                variants.setdefault(var, {})[pref] = c
+                    # choose 'ensemble' if present, else any variant with data
+                    preferred = "ensemble" if "ensemble" in variants else next(iter(variants.keys()))
+                    cols = variants.get(preferred, {})
+
+                    p10 = pd.to_numeric(dd.get(cols.get("numeric_p10__")), errors="coerce") if "numeric_p10__" in cols else None
+                    p50 = pd.to_numeric(dd.get(cols.get("numeric_p50__")), errors="coerce") if "numeric_p50__" in cols else None
+                    p90 = pd.to_numeric(dd.get(cols.get("numeric_p90__")), errors="coerce") if "numeric_p90__" in cols else None
+
+                    idx = dd["created_at"].notna()
+                    if p50 is not None and p50.notna().any():
+                        fign = go.Figure()
+                        if p10 is not None and p90 is not None and p10.notna().any() and p90.notna().any():
+                            fign.add_traces([
+                                go.Scatter(x=dd.loc[idx, "created_at"], y=p10.loc[idx], name="q10", mode="lines+markers"),
+                                go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"),
+                                go.Scatter(x=dd.loc[idx, "created_at"], y=p90.loc[idx], name="q90", mode="lines+markers"),
+                            ])
+                        else:
+                            fign.add_trace(go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"))
+                        fign.update_layout(title=f"Numeric forecast history ({preferred})", height=360)
+                        st.plotly_chart(fign, use_container_width=True)
+                    else:
+                        st.info("No numeric forecasts found for this question.")
                 else:
-                    st.info("No valid numeric values to plot for this permutation.")
+                    st.info("This question has no binary or numeric series to plot yet.")
 
             # Full table for this question
             st.markdown("**All rows for this question**")
