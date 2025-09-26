@@ -1,9 +1,10 @@
 # Dashboard/streamlit_app.py
 # =============================================================================
-# Spagbot Performance Dashboard (robust version)
-# - Robust to missing qid/qtitle: derives from question_url when needed
-# - Adds data-source banner (file path/URL, modified time, row count)
-# - Keeps binary, numeric (pinball/coverage/sharpness), MCQ, costs, runs, downloads
+# Spagbot Performance Dashboard (resilient + cache-clear)
+# - Robust to missing qid/qtitle (derives from question_url when needed)
+# - Data-source banner (path/URL, modified time, row count)
+# - Sidebar "Clear cache & reload" button
+# - Binary, numeric (pinball/coverage/sharpness), MCQ, costs, runs, downloads
 # =============================================================================
 
 from __future__ import annotations
@@ -15,29 +16,29 @@ import json
 import zipfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-
 from datetime import datetime, timezone
+
 import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 APP_DIR = Path(__file__).resolve().parent
 
+# Prefer parquet if present; can be overridden with env
 USE_PARQUET = os.getenv("USE_PARQUET", "true").lower() in {"1", "true", "yes"}
 PARQUET_PATH = APP_DIR / "data" / "forecasts.parquet"
 
+# Fallback CSV (raw GitHub). Default points to your repo; can be overridden.
 RAW_CSV_URL = os.getenv(
     "SPAGBOT_RAW_CSV_URL",
-    "https://raw.githubusercontent.com/<ORG_OR_USER>/<REPO>/main/forecast_logs/forecasts.csv",
+    "https://raw.githubusercontent.com/kwyjad/Spagbot_metac-bot/main/forecast_logs/forecasts.csv",
 )
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
-
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # only needed if repo is private
 
 # -----------------------------------------------------------------------------
 # Column mapping + labels
@@ -46,20 +47,16 @@ COLUMN_ALIAS_MAP: Dict[str, List[str]] = {
     "qid": ["question_id", "qid", "metaculus_qid"],
     "qtitle": ["question_title", "title", "name"],
     "qtype": ["question_type", "qtype", "type"],
-
     "created_at": ["run_time_iso", "created_time_iso", "created_at"],
     "closes_at": ["closes_time_iso"],
     "resolves_at": ["resolves_time_iso"],
-
     "run_id": ["run_id"],
     "purpose": ["purpose"],
     "git_sha": ["git_sha"],
     "tournament_id": ["tournament_id"],
-
     "outcome_label": ["resolved_outcome_label"],
     "resolved_flag": ["resolved"],
     "resolved_value": ["resolved_value"],
-
     "cost_usd_total": ["cost_usd__total", "cost_usd_total", "cost_usd"],
     "cost_usd_research": ["cost_usd__research"],
     "cost_usd_classifier": ["cost_usd__classifier"],
@@ -80,7 +77,6 @@ BINARY_PERM_LABELS: Dict[str, str] = {
 NUMERIC_PREFIXES = ["numeric_p10__", "numeric_p50__", "numeric_p90__"]
 MCQ_PREFIX = "mcq_json__"
 
-
 # -----------------------------------------------------------------------------
 # Utilities
 # -----------------------------------------------------------------------------
@@ -91,7 +87,6 @@ def _first_present(df: pd.DataFrame, names: List[str]) -> Optional[str]:
     return None
 
 def _parse_qid_from_url(url: str) -> Optional[int]:
-    # Accepts /questions/38736-foo or .../question/38736 or …?q=38736
     m = re.search(r"/questions?/(\d+)", url)
     if not m:
         m = re.search(r"[?&]q=(\d+)", url)
@@ -101,15 +96,11 @@ def _parse_qid_from_url(url: str) -> Optional[int]:
         return None
 
 def _title_from_slug(url: str) -> Optional[str]:
-    # Try to extract slug after qid and hyphen
     m = re.search(r"/questions?/\d+-([a-z0-9\-]+)", url.lower())
     if not m:
         return None
-    slug = m.group(1)
-    slug = slug.replace("-", " ").strip()
-    if slug:
-        return slug
-    return None
+    slug = m.group(1).replace("-", " ").strip()
+    return slug or None
 
 def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
@@ -125,40 +116,34 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
         if tcol in out.columns:
             out[tcol] = pd.to_datetime(out[tcol], errors="coerce")
 
-    # Derive outcome (binary) if possible
+    # Derive outcome (binary 0/1) from label if present
     if "outcome_label" in out.columns:
         lbl = out["outcome_label"].astype(str).str.strip().str.lower()
         out["outcome"] = np.where(
-            lbl.isin(["yes", "true", "1"]),
-            1.0,
-            np.where(lbl.isin(["no", "false", "0"]), 0.0, np.nan),
+            lbl.isin(["yes", "true", "1"]), 1.0,
+            np.where(lbl.isin(["no", "false", "0"]), 0.0, np.nan)
         )
 
+    # Numeric resolution
     if "resolved_value" in out.columns:
         out["resolved_value"] = pd.to_numeric(out["resolved_value"], errors="coerce")
 
-    # ---- Robust derivation of qid/qtitle from question_url if needed ----
+    # Derive qid/qtitle from question_url when missing
     if "qid" not in out.columns and "question_url" in out.columns:
-        qids: List[Optional[int]] = []
-        for u in out["question_url"].fillna("").astype(str):
-            qids.append(_parse_qid_from_url(u))
-        if any(x is not None for x in qids):
-            out["qid"] = qids
+        out["qid"] = [ _parse_qid_from_url(str(u)) for u in out["question_url"].fillna("") ]
+        if out["qid"].isna().all():
+            out.drop(columns=["qid"], errors="ignore", inplace=True)
 
     if "qtitle" not in out.columns:
-        # Prefer explicit title column if present
         name = _first_present(out, ["question_title", "title", "name"])
         if name:
             out["qtitle"] = out[name]
         elif "question_url" in out.columns:
-            titles: List[Optional[str]] = []
-            for u in out["question_url"].fillna("").astype(str):
-                titles.append(_title_from_slug(u))
-            if any(bool(t) for t in titles):
-                out["qtitle"] = titles
+            t = [ _title_from_slug(str(u)) for u in out["question_url"].fillna("") ]
+            if any(bool(x) for x in t):
+                out["qtitle"] = t
 
     return out
-
 
 @st.cache_data(show_spinner=True)
 def load_from_parquet(path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
@@ -175,9 +160,9 @@ def load_from_parquet(path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
 def load_from_csv(url: str, token: str = "") -> Tuple[pd.DataFrame, Dict[str, str]]:
     import requests
     headers = {"Authorization": f"token {token}"} if token else {}
-    resp = requests.get(url, headers=headers, timeout=45)
-    resp.raise_for_status()
-    df = pd.read_csv(io.StringIO(resp.text))
+    r = requests.get(url, headers=headers, timeout=45)
+    r.raise_for_status()
+    df = pd.read_csv(io.StringIO(r.text))
     meta = {
         "source": "csv",
         "path": url,
@@ -190,7 +175,8 @@ def load_data() -> Tuple[pd.DataFrame, Dict[str, str]]:
     if USE_PARQUET and PARQUET_PATH.exists():
         return load_from_parquet(PARQUET_PATH)
 
-    if RAW_CSV_URL and "raw.githubusercontent.com/<ORG_OR_USER>/<REPO>" not in RAW_CSV_URL:
+    # Fallback to CSV from GitHub if configured or default works
+    if RAW_CSV_URL:
         try:
             return load_from_csv(RAW_CSV_URL, GITHUB_TOKEN)
         except Exception as e:
@@ -199,115 +185,9 @@ def load_data() -> Tuple[pd.DataFrame, Dict[str, str]]:
     st.error(
         "No data source available.\n"
         "Place a parquet at 'Dashboard/data/forecasts.parquet' (and set USE_PARQUET=true), "
-        "or set SPAGBOT_RAW_CSV_URL."
+        "or set SPAGBOT_RAW_CSV_URL to a raw CSV URL."
     )
     return pd.DataFrame(), {"source": "none", "path": "-", "mtime": "-", "rows": "0"}
-
-
-# -----------------------------------------------------------------------------
-# Metrics
-# -----------------------------------------------------------------------------
-def safe_float_series(s: pd.Series) -> pd.Series:
-    try:
-        return pd.to_numeric(s, errors="coerce")
-    except Exception:
-        return pd.Series(dtype=float)
-
-def brier_score(p: pd.Series, y: pd.Series) -> Optional[float]:
-    p, y = safe_float_series(p), safe_float_series(y)
-    mask = p.notna() & y.notna()
-    if mask.sum() == 0:
-        return None
-    return float(np.mean((p[mask] - y[mask]) ** 2))
-
-def log_loss(p: pd.Series, y: pd.Series, eps: float = 1e-15) -> Optional[float]:
-    p, y = safe_float_series(p), safe_float_series(y)
-    mask = p.notna() & y.notna()
-    if mask.sum() == 0:
-        return None
-    p_clip = np.clip(p[mask].values, eps, 1 - eps)
-    yv = y[mask].values
-    return float(-np.mean(yv * np.log(p_clip) + (1 - yv) * np.log(1 - p_clip)))
-
-def hit_rate(p: pd.Series, y: pd.Series, threshold: float = 0.5) -> Optional[float]:
-    p, y = safe_float_series(p), safe_float_series(y)
-    mask = p.notna() & y.notna()
-    if mask.sum() == 0:
-        return None
-    preds = (p[mask] >= threshold).astype(int)
-    return float((preds.values == y[mask].values).mean())
-
-def sharpness(p: pd.Series) -> Optional[float]:
-    p = safe_float_series(p)
-    if p.notna().sum() == 0:
-        return None
-    return float(np.mean(np.abs(p - 0.5)))
-
-def pinball_loss(y_true: np.ndarray, qhat: np.ndarray, q: float) -> float:
-    diff = y_true - qhat
-    return float(np.mean(np.maximum(q * diff, (q - 1) * diff)))
-
-def numeric_metrics_from_quantiles(y: pd.Series, p10: pd.Series, p50: pd.Series, p90: pd.Series) -> Dict[str, Optional[float]]:
-    yv = safe_float_series(y).values
-    q10 = safe_float_series(p10).values
-    q50 = safe_float_series(p50).values
-    q90 = safe_float_series(p90).values
-    mask = np.isfinite(yv) & np.isfinite(q10) & np.isfinite(q50) & np.isfinite(q90)
-    if mask.sum() == 0:
-        return {"pinball_avg": None, "coverage80": None, "interval_width": None, "n": 0}
-
-    yv, q10, q50, q90 = yv[mask], q10[mask], q50[mask], q90[mask]
-    q10, q90 = np.minimum(q10, q90), np.maximum(q10, q90)
-    q50 = np.clip(q50, q10, q90)
-    l10 = pinball_loss(yv, q10, 0.1)
-    l50 = pinball_loss(yv, q50, 0.5)
-    l90 = pinball_loss(yv, q90, 0.9)
-    coverage = float(np.mean((yv >= q10) & (yv <= q90)))
-    width = float(np.mean(q90 - q10))
-    return {"pinball_avg": (l10 + l50 + l90) / 3.0, "coverage80": coverage, "interval_width": width, "n": int(mask.sum())}
-
-def parse_mcq_json(col: pd.Series) -> List[Optional[Dict[str, float]]]:
-    out: List[Optional[Dict[str, float]]] = []
-    for x in col.fillna("").astype(str):
-        x = x.strip()
-        if not x or x.lower() == "none" or x == "nan":
-            out.append(None); continue
-        try:
-            d = json.loads(x)
-            if not isinstance(d, dict):
-                out.append(None); continue
-            total = float(sum(float(v) for v in d.values()))
-            if total > 0:
-                d = {k: float(v) / total for k, v in d.items()}
-            out.append(d)
-        except Exception:
-            out.append(None)
-    return out
-
-def mcq_metrics(y_label: pd.Series, probs_list: List[Optional[Dict[str, float]]]) -> Dict[str, Optional[float]]:
-    y = y_label.fillna("").astype(str).str.strip()
-    ce_vals, brier_vals, top1_vals = [], [], []
-    n = 0
-    for truth, probs in zip(y, probs_list):
-        if not truth or probs is None:
-            continue
-        p = float(probs.get(truth, 0.0))
-        eps = 1e-15
-        ce_vals.append(-np.log(max(p, eps)))
-        b = (1 - p) ** 2 + sum((pv - 0.0) ** 2 for k, pv in probs.items() if k != truth)
-        brier_vals.append(b)
-        top_label = max(probs.items(), key=lambda kv: kv[1])[0] if probs else None
-        top1_vals.append(1.0 if top_label == truth else 0.0)
-        n += 1
-    if n == 0:
-        return {"cross_entropy": None, "brier_mc": None, "top1_acc": None, "n": 0}
-    return {
-        "cross_entropy": float(np.mean(ce_vals)),
-        "brier_mc": float(np.mean(brier_vals)),
-        "top1_acc": float(np.mean(top1_vals)),
-        "n": n,
-    }
-
 
 # -----------------------------------------------------------------------------
 # App
@@ -315,24 +195,29 @@ def mcq_metrics(y_label: pd.Series, probs_list: List[Optional[Dict[str, float]]]
 st.set_page_config(page_title="Spagbot Dashboard", layout="wide")
 st.title("🔮 Spagbot Performance Dashboard")
 
+# Sidebar controls (with Cache clear)
+with st.sidebar:
+    st.header("Controls")
+    if st.button("🔁 Clear cache & reload", help="If the banner looks stale, click me"):
+        st.cache_data.clear()
+        st.rerun()
+    date_filter_on = st.checkbox("Filter by created date", value=False)
+
 df, meta = load_data()
 if df.empty:
     st.stop()
 
-# Banner: source/timestamp/rows
+# Banner shows where the data came from
 st.info(
     f"**Source:** {meta.get('source','?')}  |  **Path/URL:** {meta.get('path','?')}  |  "
     f"**Modified:** {meta.get('mtime','?')}  |  **Rows:** {meta.get('rows','?')}"
 )
 
-# Sidebar
-with st.sidebar:
-    st.header("Controls")
-    date_filter_on = st.checkbox("Filter by created date", value=False)
-
+# Normalize created_at
 if "created_at" in df.columns:
     df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
+# Optional date filter
 if date_filter_on and "created_at" in df.columns and df["created_at"].notna().any():
     d1 = pd.to_datetime(df["created_at"].min()).date()
     d2 = pd.to_datetime(df["created_at"].max()).date()
@@ -357,32 +242,51 @@ perm_labels = {c: (BINARY_PERM_LABELS.get(c) or c.replace("binary_prob__", "").r
 
 has_outcome = "outcome" in df.columns and df["outcome"].notna().any()
 
-# Key metrics
+# --- Key metrics
 st.markdown("## Key metrics")
 default_perm = "binary_prob__ensemble" if "binary_prob__ensemble" in perm_labels else (binary_perm_cols[0] if binary_perm_cols else None)
 p_col = st.selectbox(
-    "Headline permutation", options=([default_perm] + [c for c in binary_perm_cols if c != default_perm]) if default_perm else binary_perm_cols,
+    "Headline permutation",
+    options=([default_perm] + [c for c in binary_perm_cols if c != default_perm]) if default_perm else binary_perm_cols,
     format_func=lambda c: perm_labels.get(c, c),
 ) if binary_perm_cols else None
 
 c1, c2, c3, c4, c5, c6 = st.columns(6)
+def safe_float_series(s: pd.Series) -> pd.Series:
+    try:
+        return pd.to_numeric(s, errors="coerce")
+    except Exception:
+        return pd.Series(dtype=float)
+def brier_score(p: pd.Series, y: pd.Series) -> Optional[float]:
+    p, y = safe_float_series(p), safe_float_series(y)
+    mask = p.notna() & y.notna()
+    return float(np.mean((p[mask] - y[mask]) ** 2)) if mask.sum() else None
+def log_loss(p: pd.Series, y: pd.Series, eps: float = 1e-15) -> Optional[float]:
+    p, y = safe_float_series(p), safe_float_series(y)
+    mask = p.notna() & y.notna()
+    if not mask.sum():
+        return None
+    pv = np.clip(p[mask].values, eps, 1 - eps)
+    yv = y[mask].values
+    return float(-np.mean(yv * np.log(pv) + (1 - yv) * np.log(1 - pv)))
+def hit_rate(p: pd.Series, y: pd.Series, threshold: float = 0.5) -> Optional[float]:
+    p, y = safe_float_series(p), safe_float_series(y)
+    mask = p.notna() & y.notna()
+    return float(( (p[mask] >= threshold).astype(int).values == y[mask].values ).mean()) if mask.sum() else None
+def sharpness(p: pd.Series) -> Optional[float]:
+    p = safe_float_series(p)
+    return float(np.mean(np.abs(p - 0.5))) if p.notna().sum() else None
+
 if p_col is not None:
-    with c1:
-        st.metric("Brier (binary)", f"{brier_score(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
-    with c2:
-        st.metric("Log loss", f"{log_loss(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
-    with c3:
-        st.metric("Hit rate @0.5", f"{100*hit_rate(df[p_col], df['outcome']):.1f}%" if has_outcome else "—")
-    with c4:
-        st.metric("Sharpness (|p-0.5|)", f"{sharpness(df[p_col]):.3f}" if p_col in df.columns else "—")
+    with c1: st.metric("Brier (binary)", f"{brier_score(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
+    with c2: st.metric("Log loss", f"{log_loss(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
+    with c3: st.metric("Hit rate @0.5", f"{100*hit_rate(df[p_col], df['outcome']):.1f}%" if has_outcome else "—")
+    with c4: st.metric("Sharpness (|p-0.5|)", f"{sharpness(df[p_col]):.3f}" if p_col in df.columns else "—")
 else:
-    for col in (c1, c2, c3, c4):
-        with col:
-            st.metric("—", "—")
+    for col in (c1, c2, c3, c4): 
+        with col: st.metric("—", "—")
 
-with c5:
-    st.metric("forecasts", f"{int(df[p_col].notna().sum()) if p_col else len(df)}")
-
+with c5: st.metric("forecasts", f"{int(df[p_col].notna().sum()) if p_col else len(df)}")
 with c6:
     last_ts = None
     for c in ["created_at", "resolves_at", "closes_at"]:
@@ -397,7 +301,7 @@ tab_cal, tab_compare, tab_numeric, tab_mcq, tab_questions, tab_costs, tab_runs, 
      "Per-Question drilldown", "Costs/Tokens", "Run Stability", "Downloads"]
 )
 
-# Calibration
+# Calibration ------------------------------------------------------------------
 with tab_cal:
     st.subheader("Reliability (Calibration) curve")
     if p_col is not None and has_outcome:
@@ -433,7 +337,7 @@ with tab_cal:
     else:
         st.info("No forecast column detected.")
 
-# Compare permutations (binary)
+# Compare permutations (binary) ------------------------------------------------
 with tab_compare:
     st.subheader("Headline metrics by permutation (binary)")
     if not binary_perm_cols:
@@ -454,7 +358,29 @@ with tab_compare:
             mdf = mdf.sort_values("Brier", na_position="last")
         st.dataframe(mdf, use_container_width=True)
 
-# Numeric permutations
+# Numeric permutations ---------------------------------------------------------
+def pinball_loss(y_true: np.ndarray, qhat: np.ndarray, q: float) -> float:
+    diff = y_true - qhat
+    return float(np.mean(np.maximum(q * diff, (q - 1) * diff)))
+
+def numeric_metrics_from_quantiles(y: pd.Series, p10: pd.Series, p50: pd.Series, p90: pd.Series) -> Dict[str, Optional[float]]:
+    yv = safe_float_series(y).values
+    q10 = safe_float_series(p10).values
+    q50 = safe_float_series(p50).values
+    q90 = safe_float_series(p90).values
+    mask = np.isfinite(yv) & np.isfinite(q10) & np.isfinite(q50) & np.isfinite(q90)
+    if mask.sum() == 0:
+        return {"pinball_avg": None, "coverage80": None, "interval_width": None, "n": 0}
+    yv, q10, q50, q90 = yv[mask], q10[mask], q50[mask], q90[mask]
+    q10, q90 = np.minimum(q10, q90), np.maximum(q10, q90)
+    q50 = np.clip(q50, q10, q90)
+    l10 = pinball_loss(yv, q10, 0.1)
+    l50 = pinball_loss(yv, q50, 0.5)
+    l90 = pinball_loss(yv, q90, 0.9)
+    coverage = float(np.mean((yv >= q10) & (yv <= q90)))
+    width = float(np.mean(q90 - q10))
+    return {"pinball_avg": (l10 + l50 + l90) / 3.0, "coverage80": coverage, "interval_width": width, "n": int(mask.sum())}
+
 with tab_numeric:
     st.subheader("Numeric permutations (q10/q50/q90)")
     if not numeric_variants:
@@ -481,7 +407,44 @@ with tab_numeric:
             ndf = ndf.sort_values("Pinball avg (0.1/0.5/0.9)", na_position="last")
         st.dataframe(ndf, use_container_width=True)
 
-# MCQ permutations
+# MCQ permutations -------------------------------------------------------------
+def parse_mcq_json(col: pd.Series) -> List[Optional[Dict[str, float]]]:
+    out: List[Optional[Dict[str, float]]] = []
+    for x in col.fillna("").astype(str):
+        x = x.strip()
+        if not x or x.lower() == "none" or x == "nan":
+            out.append(None); continue
+        try:
+            d = json.loads(x)
+            if not isinstance(d, dict):
+                out.append(None); continue
+            total = float(sum(float(v) for v in d.values()))
+            if total > 0:
+                d = {k: float(v) / total for k, v in d.items()}
+            out.append(d)
+        except Exception:
+            out.append(None)
+    return out
+
+def mcq_metrics(y_label: pd.Series, probs_list: List[Optional[Dict[str, float]]]) -> Dict[str, Optional[float]]:
+    y = y_label.fillna("").astype(str).str.strip()
+    ce_vals, brier_vals, top1_vals = [], [], []
+    n = 0
+    for truth, probs in zip(y, probs_list):
+        if not truth or probs is None:
+            continue
+        p = float(probs.get(truth, 0.0))
+        eps = 1e-15
+        ce_vals.append(-np.log(max(p, eps)))
+        b = (1 - p) ** 2 + sum((pv - 0.0) ** 2 for k, pv in probs.items() if k != truth)
+        brier_vals.append(b)
+        top_label = max(probs.items(), key=lambda kv: kv[1])[0] if probs else None
+        top1_vals.append(1.0 if top_label == truth else 0.0)
+        n += 1
+    if n == 0:
+        return {"cross_entropy": None, "brier_mc": None, "top1_acc": None, "n": 0}
+    return {"cross_entropy": float(np.mean(ce_vals)), "brier_mc": float(np.mean(brier_vals)), "top1_acc": float(np.mean(top1_vals)), "n": n}
+
 with tab_mcq:
     st.subheader("MCQ permutations")
     if not mcq_variants:
@@ -505,68 +468,58 @@ with tab_mcq:
             mdf = mdf.sort_values("Cross-entropy", na_position="last")
         st.dataframe(mdf, use_container_width=True)
 
-# Per-Question drilldown (robust to missing qid/qtitle)
+# Per-Question drilldown (robust to missing qtitle) ---------------------------
 with tab_questions:
     st.subheader("Questions")
-
-    # Figure out what we can use to list questions
-    has_qid = "qid" in df.columns and df["qid"].notna().any()
-    has_qtitle = "qtitle" in df.columns and df["qtitle"].notna().any()
-
-    if not has_qid and "question_url" in df.columns and df["question_url"].notna().any():
-        # Try deriving qid from question_url on-the-fly (in case cache missed it)
+    # Try to ensure qid/qtitle exist
+    if "qid" not in df.columns and "question_url" in df.columns and df["question_url"].notna().any():
         derived = df["question_url"].fillna("").astype(str).map(_parse_qid_from_url)
         if derived.notna().any():
             df["qid"] = derived
-            has_qid = True
-
-    if not has_qtitle and "question_url" in df.columns and df["question_url"].notna().any():
+    if "qtitle" not in df.columns and "question_url" in df.columns and df["question_url"].notna().any():
         derived_t = df["question_url"].fillna("").astype(str).map(_title_from_slug)
         if derived_t.notna().any():
             df["qtitle"] = derived_t
-            has_qtitle = True
+
+    has_qid = "qid" in df.columns and df["qid"].notna().any()
+    has_qtitle = "qtitle" in df.columns and df["qtitle"].notna().any()
 
     if has_qid:
-        opts = df[["qid"] + (["qtitle"] if has_qtitle else [])].dropna(subset=["qid"]).drop_duplicates().sort_values("qid")
+        base = ["qid"] + (["qtitle"] if has_qtitle else [])
+        opts = df[base].dropna(subset=["qid"]).drop_duplicates().sort_values("qid")
         if has_qtitle:
             display = [f"Q{int(q)} – {str(t)[:80]}" for q, t in zip(opts["qid"], opts["qtitle"].fillna(""))]
         else:
             display = [f"Q{int(q)}" for q in opts["qid"]]
         chosen = st.selectbox("Pick a question:", display if len(display) else ["(no questions found)"])
         if display:
-            qid = int(re.search(r"Q(\d+)", chosen).group(1))
+            import re as _re
+            qid = int(_re.search(r"Q(\d+)", chosen).group(1))
             dd = df[df["qid"] == qid].copy()
-            title = dd["qtitle"].dropna().iloc[0] if "qtitle" in dd.columns and dd["qtitle"].notna().any() else "(no title)"
+            title = dd["qtitle"].dropna().iloc[0] if has_qtitle and dd["qtitle"].notna().any() else "(no title)"
             st.write(f"### Q{qid} — {title}")
-
-            # Binary history
-            if binary_perm_cols:
+            if binary_perm_cols and "created_at" in dd.columns:
                 chosen_perm = st.selectbox("Binary permutation to plot", binary_perm_cols, format_func=lambda c: perm_labels.get(c, c))
-                if "created_at" in dd.columns and chosen_perm in dd.columns:
-                    dd = dd.sort_values("created_at")
-                    fig = px.line(dd, x="created_at", y=chosen_perm, markers=True, title="Forecast history (binary)")
-                    fig.update_layout(height=360)
-                    st.plotly_chart(fig, use_container_width=True)
-
-            # Show rows
+                dd = dd.sort_values("created_at")
+                fig = px.line(dd, x="created_at", y=chosen_perm, markers=True, title="Forecast history (binary)")
+                fig.update_layout(height=360)
+                st.plotly_chart(fig, use_container_width=True)
             st.markdown("**All rows for this question**")
             st.dataframe(dd, use_container_width=True)
     else:
         st.info("Couldn’t find a question identifier. Expected `question_id` (→ qid) or a parsable `question_url`.")
 
-# Costs
+# Costs -----------------------------------------------------------------------
 with tab_costs:
     st.subheader("Cost & tokens")
     has_total = "cost_usd_total" in df.columns and df["cost_usd_total"].notna().any()
     has_research = "cost_usd_research" in df.columns and df["cost_usd_research"].notna().any()
     has_classifier = "cost_usd_classifier" in df.columns and df["cost_usd_classifier"].notna().any()
-
     if has_total or has_research or has_classifier:
         cols = []
         if has_total: cols.append("cost_usd_total")
         if has_research: cols.append("cost_usd_research")
         if has_classifier: cols.append("cost_usd_classifier")
-
         melted = df[cols].melt(var_name="cost_type", value_name="usd").dropna()
         melted["cost_type"] = melted["cost_type"].map({
             "cost_usd_total": "Total", "cost_usd_research": "Research", "cost_usd_classifier": "Classifier"
@@ -577,7 +530,7 @@ with tab_costs:
         st.info("No cost columns found (expected any of cost_usd__total / __research / __classifier).")
     st.caption("Token columns not present in this parquet; showing cost distributions only.")
 
-# Run stability
+# Run stability ---------------------------------------------------------------
 with tab_runs:
     st.subheader("Stability across runs/commits")
     if "run_id" in df.columns and "qid" in df.columns and p_col:
@@ -587,12 +540,11 @@ with tab_runs:
     else:
         st.info("Need run_id, qid, and a chosen permutation to compute cross-run stability.")
 
-# Downloads
+# Downloads -------------------------------------------------------------------
 with tab_downloads:
     st.subheader("Download data")
     st.download_button("Download current view as CSV", data=df.to_csv(index=False).encode("utf-8"),
                        file_name="spagbot_forecasts_view.csv", mime="text/csv")
-
     try:
         import pyarrow as pa  # noqa
         import pyarrow.parquet as pq  # noqa
@@ -624,7 +576,7 @@ with tab_downloads:
     else:
         st.info("No files found under logs/ or forecast_logs/ to package.")
 
-# Debug expander
+# Debug expander --------------------------------------------------------------
 st.divider()
 with st.expander("Detected columns / quick debug"):
     st.write("USE_PARQUET:", USE_PARQUET)
@@ -632,5 +584,5 @@ with st.expander("Detected columns / quick debug"):
     st.write("RAW_CSV_URL:", RAW_CSV_URL)
     st.write("First 25 columns:", list(df.columns)[:25])
     st.write("Binary permutations:", [c for c in df.columns if c.startswith('binary_prob__')])
-    st.write("Numeric variants:", {k: list(v.keys()) for k, v in numeric_variants.items()})
+    st.write("Numeric variants:", list(numeric_variants.keys()))
     st.write("MCQ variants:", [c for c in df.columns if c.startswith(MCQ_PREFIX)])
