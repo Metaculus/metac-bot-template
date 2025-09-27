@@ -261,17 +261,20 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4", temper
         return answer
 
 
-def run_research(question: str) -> str:
+def run_research(question_details: dict, today: str) -> str:
     research = ""
     report_number = 1
     if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-        print(f"Calling ASKNEWS for {question}")
-        research += f"Research Report {report_number}:\n{call_asknews(question)}\n"
+        query = question_details['title']
+        print(f"Calling ASKNEWS for {query}")
+        research += f"Research Report {report_number}:\n{call_asknews(query)}\n"
         report_number += 1
     # elif EXA_API_KEY:
     #     research = call_exa_smart_searcher(question)
     if PERPLEXITY_API_KEY:
-        research += f"Research Report {report_number}:\n{call_perplexity(question)}"   
+        query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}"
+        print(f"Calling perplexity for {query}")
+        research += f"Research Report {report_number}:\n{call_perplexity(query)}"   
         report_number += 1
     if not research:
         research = "No research done"
@@ -457,7 +460,7 @@ async def get_binary_gpt_prediction(
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
 
-    summary_report = run_research(title)
+    summary_report = run_research(question_details, today)
 
     content = BINARY_PROMPT_TEMPLATE.format(
         title=title,
@@ -737,7 +740,7 @@ async def get_numeric_gpt_prediction(
     else:
         lower_bound_message = f"The outcome can not be lower than {lower_bound}."
 
-    summary_report = run_research(title)
+    summary_report = run_research(question_details, today)
 
     content = NUMERIC_PROMPT_TEMPLATE.format(
         title=title,
@@ -920,7 +923,7 @@ async def get_multiple_choice_gpt_prediction(
     question_type = question_details["type"]
     options = question_details["options"]
 
-    summary_report = run_research(title)
+    summary_report = run_research(question_details, today)
 
     content = MULTIPLE_CHOICE_PROMPT_TEMPLATE.format(
         title=title,
