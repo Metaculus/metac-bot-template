@@ -7,6 +7,9 @@ on:
     paths:
       - "forecasts.csv"   # ← only rebuild when the CSV changes
 
+permissions:
+  contents: write  # required so we can push the parquet back to the repo
+
 jobs:
   build-parquet:
     runs-on: ubuntu-24.04
