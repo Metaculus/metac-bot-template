@@ -756,7 +756,7 @@ async def get_numeric_gpt_prediction(
         percentile_values = extract_percentiles_from_response(rationale)
 
         comment = (
-            f"Extracted Percentile_values: {percentile_values}\n\nGPT's Answer: "
+            f"Extracted Percentile_values: {percentile_values}\n\nLLM's Answer: "
             f"{rationale}\n\n\n"
         )
 
@@ -943,7 +943,7 @@ async def get_multiple_choice_gpt_prediction(
         )
 
         comment = (
-            f"EXTRACTED_PROBABILITIES: {option_probabilities}\n\nGPT's Answer: "
+            f"EXTRACTED_PROBABILITIES: {option_probabilities}\n\nLLM's Answer: "
             f"{rationale}\n\n\n"
         )
 
