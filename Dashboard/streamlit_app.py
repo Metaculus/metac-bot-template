@@ -389,16 +389,13 @@ def sharpness(p: pd.Series) -> Optional[float]:
     p = safe_float_series(p)
     return float(np.mean(np.abs(p - 0.5))) if p.notna().sum() else None
 
-if p_col is not None:
-    with c1: st.metric("Brier (binary)", f"{brier_score(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
-    with c2: st.metric("Log loss", f"{log_loss(df[p_col], df['outcome']):.3f}" if has_outcome else "—")
-    with c3: st.metric("Hit rate @0.5", f"{100*hit_rate(df[p_col], df['outcome']):.1f}%" if has_outcome else "—")
-    with c4: st.metric("Sharpness (|p-0.5|)", f"{sharpness(df[p_col]):.3f}" if p_col in df.columns else "—")
-else:
-    for col in (c1, c2, c3, c4):
-        with col: st.metric("—", "—")
-
-with c5: st.metric("forecasts", f"{int(df[p_col].notna().sum()) if p_col else len(df)}")
+total_rows = len(df)
+sel_non_null = int(pd.to_numeric(df[p_col], errors="coerce").notna().sum()) if p_col else total_rows
+with c1: st.metric("Brier (binary)", f"{brier_score(df[p_col], df['outcome']):.3f}" if has_outcome and p_col else "—")
+with c2: st.metric("Log loss", f"{log_loss(df[p_col], df['outcome']):.3f}" if has_outcome and p_col else "—")
+with c3: st.metric("Hit rate @0.5", f"{100*hit_rate(df[p_col], df['outcome']):.1f}%" if has_outcome and p_col else "—")
+with c4: st.metric("Sharpness (|p-0.5|)", f"{sharpness(df[p_col]):.3f}" if p_col in df.columns else "—")
+with c5: st.metric("forecasts", f"{sel_non_null} / {total_rows}")
 with c6:
     last_ts = None
     for c in ["created_at", "resolves_at", "closes_at"]:
@@ -597,18 +594,28 @@ with tab_questions:
     has_qid = "qid" in df.columns and df["qid"].notna().any()
 
     if has_qid:
-        # Build selector safely (do not assume qtitle exists)
-        has_qtitle_all = "qtitle" in df.columns and df["qtitle"].notna().any()
-        select_cols = ["qid"] + (["qtitle"] if has_qtitle_all else [])
-        opts = (
-            df.loc[df["qid"].notna(), select_cols]
-              .drop_duplicates()
-              .sort_values("qid")
-        )
+        # Build per-question recency (use max created_at where available)
+        df_tmp = df[df["qid"].notna()].copy()
+        if "created_at" in df_tmp.columns:
+            # max created_at per qid
+            recency = df_tmp.groupby("qid")["created_at"].max().reset_index().rename(columns={"created_at":"_latest_ts"})
+            opts = (
+                df_tmp[["qid", "qtitle"]].drop_duplicates()
+                .merge(recency, on="qid", how="left")
+                .sort_values(["_latest_ts", "qid"], ascending=[False, False])
+            )
+        else:
+            opts = (
+                df_tmp[["qid", "qtitle"]].drop_duplicates()
+                .sort_values("qid", ascending=False)   # fallback: newest-ish by larger qid
+            )
 
         # Human-friendly display labels
-        if has_qtitle_all:
-            display = [f"Q{int(q)} – {str(t)[:80]}" for q, t in zip(opts["qid"], opts["qtitle"].fillna(""))]
+        if "qtitle" in opts.columns and opts["qtitle"].notna().any():
+            display = [
+                f"Q{int(q)} – {str(t)[:80]}"
+                for q, t in zip(opts["qid"], opts["qtitle"].fillna(""))
+            ]
         else:
             display = [f"Q{int(q)}" for q in opts["qid"]]
 
@@ -652,16 +659,19 @@ with tab_questions:
                 fig.update_layout(height=360)
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                # Fallback: try numeric quantiles (q10/q50/q90) for a sensible variant
-                num_pfx = ["numeric_p10__", "numeric_p50__", "numeric_p90__"]
-                has_numeric = any(any(col.startswith(p) for p in num_pfx for col in dd.columns))
+                # --- FIX: robust numeric presence check (no TypeError) ---
+                num_pfx = ("numeric_p10__", "numeric_p50__", "numeric_p90__")
+                has_numeric = any(c.startswith(num_pfx) for c in dd.columns)
+
                 if has_numeric and "created_at" in dd.columns:
+                    # group available variants for which we have any numeric data
                     variants = {}
-                    for pref in num_pfx:
-                        for c in dd.columns:
+                    for c in dd.columns:
+                        for pref in num_pfx:
                             if c.startswith(pref):
                                 var = c[len(pref):]
                                 variants.setdefault(var, {})[pref] = c
+                    # choose 'ensemble' if present, else any variant with data
                     preferred = "ensemble" if "ensemble" in variants else (next(iter(variants.keys())) if variants else None)
                     if preferred:
                         cols = variants.get(preferred, {})
