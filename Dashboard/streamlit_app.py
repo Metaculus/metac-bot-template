@@ -2,9 +2,11 @@
 # =============================================================================
 # Spagbot Performance Dashboard (resilient + cache-clear)
 # - Robust to missing qid/qtitle (derives from question_url when needed)
+# - Keeps data fresh: parquet vs CSV freshness checks + optional local CSV
 # - Data-source banner (path/URL, modified time, row count)
-# - Sidebar "Clear cache & reload" button
+# - Sidebar toggles: Clear cache, Prefer CSV if newer, Date filter
 # - Binary, numeric (pinball/coverage/sharpness), MCQ, costs, runs, downloads
+# - Streamlit deprecation fix: width='stretch' instead of use_container_width
 # =============================================================================
 
 from __future__ import annotations
@@ -26,17 +28,22 @@ import streamlit as st
 import requests
 
 # -----------------------------------------------------------------------------
-# Config
+# App paths / Config
 # -----------------------------------------------------------------------------
+APP_DIR = Path(__file__).resolve().parent
+REPO_ROOT = APP_DIR.parent  # assumes Dashboard/ at repo root
 USE_PARQUET = os.getenv("USE_PARQUET", "true").lower() == "true"
-PARQUET_PATH = Path("Dashboard/data/forecasts.parquet")
+PARQUET_PATH = REPO_ROOT / "Dashboard" / "data" / "forecasts.parquet"
 
-# Fallback CSV (raw GitHub). Default points to your repo; can be overridden.
+# Raw CSV fallback (GitHub). Override if your repo path differs or is private.
 RAW_CSV_URL = os.getenv(
     "SPAGBOT_RAW_CSV_URL",
     "https://raw.githubusercontent.com/kwyjad/Spagbot_metac-bot/main/forecast_logs/forecasts.csv",
 )
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # only needed if repo is private
+
+# Optional explicit local CSV path override (e.g., SPAGBOT_LOCAL_CSV_PATH=forecasts.csv)
+LOCAL_CSV_OVERRIDE = os.getenv("SPAGBOT_LOCAL_CSV_PATH", "").strip()
 
 # -----------------------------------------------------------------------------
 # Column mapping + labels
@@ -60,16 +67,19 @@ COLUMN_ALIAS_MAP: Dict[str, List[str]] = {
     "cost_usd_classifier": ["cost_usd__classifier"],
 }
 
+# Labels for binary permutations (keep/extend as you like)
 BINARY_PERM_LABELS: Dict[str, str] = {
-    # (unchanged – keep your labels here)
+    # "binary_prob__ensemble": "Ensemble",
+    # "binary_prob__bayes": "Bayes",
+    # ...
 }
 
+# Family prefixes
 NUMERIC_PREFIXES = [
     "numeric_p10__", "numeric_p50__", "numeric_p90__",
     "numeric_mu__", "numeric_sigma__"
 ]
-
-MCQ_PREFIX = "mcq_prob__"
+MCQ_PREFIX = "mcq_prob__"   # <-- Needed for MCQ detection
 
 # -----------------------------------------------------------------------------
 # Small helpers
@@ -101,7 +111,7 @@ def _title_from_slug(url: str) -> Optional[str]:
 def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
     out = df.copy()
 
-    # Map aliases
+    # Map aliases to standardized names
     for std, options in COLUMN_ALIAS_MAP.items():
         name = _first_present(out, options)
         if name and std not in out.columns:
@@ -118,7 +128,7 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
         out["outcome"] = np.where(lab.eq("yes"), 1.0,
                            np.where(lab.eq("no"), 0.0, np.nan))
 
-    # --- NEW: force qid to numeric so drilldown never misses rows ---
+    # Force qid numeric so drilldown never misses rows on dtype mismatch
     if "qid" in out.columns:
         out["qid"] = pd.to_numeric(out["qid"], errors="coerce").astype("Int64")
 
@@ -139,7 +149,7 @@ def _auto_map_columns(df: pd.DataFrame) -> pd.DataFrame:
             if any(bool(x) for x in t):
                 out["qtitle"] = t
 
-    # --- FORCE NUMERIC for forecast columns (prevents blank plots) ---
+    # Ensure numeric types for forecast-like columns (avoids blank plots)
     forecast_like_cols = [
         c for c in out.columns
         if c.startswith("binary_prob__")
@@ -160,51 +170,145 @@ def _load_parquet(path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
     }
     return _auto_map_columns(df), meta
 
-def _load_csv(url: str, token: str = "") -> Tuple[pd.DataFrame, Dict[str, str]]:
+def _load_csv_url(url: str, token: str = "") -> Tuple[pd.DataFrame, Dict[str, str]]:
     raw = _http_get(url, token)
     df = pd.read_csv(io.BytesIO(raw), low_memory=False)
     meta = {
-        "source": "csv",
+        "source": "csv-url",
         "path": url,
         "mtime": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "rows": str(len(df)),
     }
     return _auto_map_columns(df), meta
 
-def _csv_seems_newer_than_parquet(pq_meta: Dict[str, str]) -> bool:
-    """Heuristic: if parquet row count is less than CSV row count, prefer CSV."""
-    try:
-        csv_df, csv_meta = _load_csv(RAW_CSV_URL, GITHUB_TOKEN)
-        return len(csv_df) > int(pq_meta.get("rows", "0"))
-    except Exception:
-        return False
+def _load_csv_local(path: Path) -> Tuple[pd.DataFrame, Dict[str, str]]:
+    df = pd.read_csv(path, low_memory=False)
+    meta = {
+        "source": "csv-local",
+        "path": str(path),
+        "mtime": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "rows": str(len(df)),
+    }
+    return _auto_map_columns(df), meta
+
+def _csv_seems_newer_than_parquet(pq_meta_rows: int) -> Tuple[bool, Optional[Tuple[pd.DataFrame, Dict[str, str]]]]:
+    """
+    Heuristic freshness: if any available CSV (local or URL) has strictly more rows than parquet,
+    return (True, (df, meta)) for the freshest CSV to use immediately.
+    """
+    candidates: List[Tuple[pd.DataFrame, Dict[str, str]]] = []
+    # Local override path
+    if LOCAL_CSV_OVERRIDE:
+        p = (REPO_ROOT / LOCAL_CSV_OVERRIDE).resolve()
+        if p.exists():
+            try:
+                candidates.append(_load_csv_local(p))
+            except Exception:
+                pass
+    # Standard local locations inside repo
+    for rel in ["forecasts.csv", "forecast_logs/forecasts.csv"]:
+        p = (REPO_ROOT / rel).resolve()
+        if p.exists():
+            try:
+                candidates.append(_load_csv_local(p))
+            except Exception:
+                pass
+    # URL fallback
+    if RAW_CSV_URL:
+        try:
+            candidates.append(_load_csv_url(RAW_CSV_URL, GITHUB_TOKEN))
+        except Exception:
+            pass
+
+    if not candidates:
+        return False, None
+
+    # Pick the CSV with the most rows
+    best = max(candidates, key=lambda tup: len(tup[0]))
+    newer = len(best[0]) > pq_meta_rows
+    return newer, (best[0], best[1]) if newer else (False, None)
 
 def load_data() -> Tuple[pd.DataFrame, Dict[str, str]]:
     prefer_csv = st.sidebar.checkbox("Prefer CSV if it’s newer than parquet", value=False)
 
+    # 1) Parquet path present?
     if USE_PARQUET and PARQUET_PATH.exists():
         df_pq, meta_pq = _load_parquet(PARQUET_PATH)
-        if prefer_csv and RAW_CSV_URL and _csv_seems_newer_than_parquet(meta_pq):
+        if prefer_csv:
             try:
-                return _load_csv(RAW_CSV_URL, GITHUB_TOKEN)
+                pq_rows = int(meta_pq.get("rows", "0"))
             except Exception:
-                # fall back to parquet if CSV fails
-                return df_pq, meta_pq
+                pq_rows = len(df_pq)
+            newer, best_csv = _csv_seems_newer_than_parquet(pq_rows)
+            if newer and best_csv:
+                return best_csv
         return df_pq, meta_pq
 
-    # Fallback to CSV from GitHub if configured or default works
+    # 2) No parquet — try local CSVs, then URL
+    # Local override?
+    if LOCAL_CSV_OVERRIDE:
+        p = (REPO_ROOT / LOCAL_CSV_OVERRIDE).resolve()
+        if p.exists():
+            try: return _load_csv_local(p)
+            except Exception as e: st.error(f"Failed reading local CSV at {p}: {e}")
+
+    # Standard local locations
+    for rel in ["forecasts.csv", "forecast_logs/forecasts.csv"]:
+        p = (REPO_ROOT / rel).resolve()
+        if p.exists():
+            try: return _load_csv_local(p)
+            except Exception as e: st.error(f"Failed reading local CSV at {p}: {e}")
+
+    # URL fallback
     if RAW_CSV_URL:
         try:
-            return _load_csv(RAW_CSV_URL, GITHUB_TOKEN)
+            return _load_csv_url(RAW_CSV_URL, GITHUB_TOKEN)
         except Exception as e:
             st.error(f"Failed to fetch CSV from RAW_CSV_URL.\n{e}")
 
     st.error(
         "No data source available.\n"
         "Place a parquet at 'Dashboard/data/forecasts.parquet' (and set USE_PARQUET=true), "
+        "or provide a CSV locally (forecasts.csv / forecast_logs/forecasts.csv), "
         "or set SPAGBOT_RAW_CSV_URL to a raw CSV URL."
     )
     return pd.DataFrame(), {"source": "none", "path": "—", "mtime": "—", "rows": "0"}
+
+# -----------------------------------------------------------------------------
+# Human logs helper (FIX for NameError)
+# -----------------------------------------------------------------------------
+def _find_human_logs_for_question(dfq: pd.DataFrame, qid: Optional[int]) -> List[Path]:
+    """
+    Look for .md reasoning logs related to this question under forecast_logs/ and logs/.
+    Heuristics:
+      - Filename contains the QID (e.g., ...Q39562..., ...qid_39562...)
+      - If run_id is present, also look for files containing the run_id
+    Returns most recent first.
+    """
+    roots = [REPO_ROOT / "forecast_logs", REPO_ROOT / "logs"]
+    patterns = []
+    if qid is not None:
+        patterns.append(str(qid))
+        patterns.append(f"Q{qid}")
+        patterns.append(f"qid_{qid}")
+    # add run_id hints if available
+    run_ids = []
+    if "run_id" in dfq.columns and dfq["run_id"].notna().any():
+        run_ids = sorted(set(str(x) for x in dfq["run_id"].dropna().astype(str).tolist()))
+        patterns += run_ids
+
+    found: List[Path] = []
+    for root in roots:
+        if not root.exists():
+            continue
+        for p in root.rglob("*.md"):
+            name = p.name.lower()
+            if any(s.lower() in name for s in patterns) or (qid is None and p.is_file()):
+                found.append(p)
+
+    # sort by modification time (newest first)
+    found.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return found
 
 # -----------------------------------------------------------------------------
 # App
@@ -230,7 +334,7 @@ st.info(
 if "created_at" in df.columns:
     df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
-# Optional date filter
+# Optional date filter (checkbox-controlled)
 date_filter_on = st.sidebar.checkbox("Enable date filter", value=False)
 if date_filter_on and "created_at" in df.columns and df["created_at"].notna().any():
     d1 = pd.to_datetime(df["created_at"].min()).date()
@@ -286,7 +390,7 @@ def log_loss(p: pd.Series, y: pd.Series, eps: float = 1e-15) -> Optional[float]:
 def hit_rate(p: pd.Series, y: pd.Series, threshold: float = 0.5) -> Optional[float]:
     p, y = safe_float_series(p), safe_float_series(y)
     mask = p.notna() & y.notna()
-    return float(( (p[mask] >= threshold).astype(int).values == y[mask].values ).mean()) if mask.sum() else None
+    return float(((p[mask] >= threshold).astype(int).values == y[mask].values).mean()) if mask.sum() else None
 def sharpness(p: pd.Series) -> Optional[float]:
     p = safe_float_series(p)
     return float(np.mean(np.abs(p - 0.5))) if p.notna().sum() else None
@@ -297,7 +401,7 @@ if p_col is not None:
     with c3: st.metric("Hit rate @0.5", f"{100*hit_rate(df[p_col], df['outcome']):.1f}%" if has_outcome else "—")
     with c4: st.metric("Sharpness (|p-0.5|)", f"{sharpness(df[p_col]):.3f}" if p_col in df.columns else "—")
 else:
-    for col in (c1, c2, c3, c4): 
+    for col in (c1, c2, c3, c4):
         with col: st.metric("—", "—")
 
 with c5: st.metric("forecasts", f"{int(df[p_col].notna().sum()) if p_col else len(df)}")
@@ -339,7 +443,7 @@ with tab_cal:
                                      hovertext=[f"n={c}" for c in bdf["count"]]))
             fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Perfect", line=dict(dash="dash")))
             fig.update_layout(xaxis_title="Forecast probability", yaxis_title="Observed frequency", height=430)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("No resolved rows yet for calibration.")
     else:
@@ -347,7 +451,7 @@ with tab_cal:
 
     st.subheader("Forecast distribution (sharpness)")
     if p_col is not None:
-        st.plotly_chart(px.histogram(df.dropna(subset=[p_col]), x=p_col, nbins=20, height=320), use_container_width=True)
+        st.plotly_chart(px.histogram(df.dropna(subset=[p_col]), x=p_col, nbins=20, height=320), width="stretch")
     else:
         st.info("No forecast column detected.")
 
@@ -370,7 +474,7 @@ with tab_compare:
         mdf = pd.DataFrame(rows)
         if has_outcome and mdf["Brier"].notna().any():
             mdf = mdf.sort_values("Brier", na_position="last")
-        st.dataframe(mdf, use_container_width=True)
+        st.dataframe(mdf, width="stretch")
 
 # Numeric permutations ---------------------------------------------------------
 def pinball_loss(y_true: np.ndarray, qhat: np.ndarray, q: float) -> float:
@@ -419,7 +523,7 @@ with tab_numeric:
         ndf = pd.DataFrame(rows)
         if ndf["Pinball avg (0.1/0.5/0.9)"].notna().any():
             ndf = ndf.sort_values("Pinball avg (0.1/0.5/0.9)", na_position="last")
-        st.dataframe(ndf, use_container_width=True)
+        st.dataframe(ndf, width="stretch")
 
 # MCQ permutations -------------------------------------------------------------
 def parse_mcq_json(col: pd.Series) -> List[Optional[Dict[str, float]]]:
@@ -480,7 +584,7 @@ with tab_mcq:
         mdf = pd.DataFrame(rows)
         if mdf["Cross-entropy"].notna().any():
             mdf = mdf.sort_values("Cross-entropy", na_position="last")
-        st.dataframe(mdf, use_container_width=True)
+        st.dataframe(mdf, width="stretch")
 
 # Per-Question drilldown (robust to missing qtitle) ---------------------------
 with tab_questions:
@@ -552,7 +656,7 @@ with tab_questions:
                     title="Forecast history (binary)"
                 )
                 fig.update_layout(height=360)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             else:
                 # Fallback: try numeric quantiles (q10/q50/q90) for a sensible variant
                 num_pfx = ["numeric_p10__", "numeric_p50__", "numeric_p90__"]
@@ -566,34 +670,36 @@ with tab_questions:
                                 var = c[len(pref):]
                                 variants.setdefault(var, {})[pref] = c
                     # choose 'ensemble' if present, else any variant with data
-                    preferred = "ensemble" if "ensemble" in variants else next(iter(variants.keys()))
-                    cols = variants.get(preferred, {})
+                    preferred = "ensemble" if "ensemble" in variants else (next(iter(variants.keys())) if variants else None)
+                    if preferred:
+                        cols = variants.get(preferred, {})
+                        p10 = pd.to_numeric(dd.get(cols.get("numeric_p10__")), errors="coerce") if "numeric_p10__" in cols else None
+                        p50 = pd.to_numeric(dd.get(cols.get("numeric_p50__")), errors="coerce") if "numeric_p50__" in cols else None
+                        p90 = pd.to_numeric(dd.get(cols.get("numeric_p90__")), errors="coerce") if "numeric_p90__" in cols else None
 
-                    p10 = pd.to_numeric(dd.get(cols.get("numeric_p10__")), errors="coerce") if "numeric_p10__" in cols else None
-                    p50 = pd.to_numeric(dd.get(cols.get("numeric_p50__")), errors="coerce") if "numeric_p50__" in cols else None
-                    p90 = pd.to_numeric(dd.get(cols.get("numeric_p90__")), errors="coerce") if "numeric_p90__" in cols else None
-
-                    idx = dd["created_at"].notna()
-                    if p50 is not None and p50.notna().any():
-                        fign = go.Figure()
-                        if p10 is not None and p90 is not None and p10.notna().any() and p90.notna().any():
-                            fign.add_traces([
-                                go.Scatter(x=dd.loc[idx, "created_at"], y=p10.loc[idx], name="q10", mode="lines+markers"),
-                                go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"),
-                                go.Scatter(x=dd.loc[idx, "created_at"], y=p90.loc[idx], name="q90", mode="lines+markers"),
-                            ])
+                        idx = dd["created_at"].notna()
+                        if p50 is not None and p50.notna().any():
+                            fign = go.Figure()
+                            if p10 is not None and p90 is not None and p10.notna().any() and p90.notna().any():
+                                fign.add_traces([
+                                    go.Scatter(x=dd.loc[idx, "created_at"], y=p10.loc[idx], name="q10", mode="lines+markers"),
+                                    go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"),
+                                    go.Scatter(x=dd.loc[idx, "created_at"], y=p90.loc[idx], name="q90", mode="lines+markers"),
+                                ])
+                            else:
+                                fign.add_trace(go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"))
+                            fign.update_layout(title=f"Numeric forecast history ({preferred})", height=360)
+                            st.plotly_chart(fign, width="stretch")
                         else:
-                            fign.add_trace(go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"))
-                        fign.update_layout(title=f"Numeric forecast history ({preferred})", height=360)
-                        st.plotly_chart(fign, use_container_width=True)
+                            st.info("No numeric forecasts found for this question.")
                     else:
-                        st.info("No numeric forecasts found for this question.")
+                        st.info("No numeric variants detected for this question.")
                 else:
                     st.info("This question has no binary or numeric series to plot yet.")
 
             # Full table for this question
             st.markdown("**All rows for this question**")
-            st.dataframe(dd, use_container_width=True)
+            st.dataframe(dd, width="stretch")
 
             # --- Human logs (model reasoning) ---
             st.markdown("**Human logs (model reasoning)**")
@@ -602,8 +708,6 @@ with tab_questions:
             except Exception:
                 qid_int = None
 
-            # Requires the helper added in Utilities:
-            # _find_human_logs_for_question(dd: pd.DataFrame, qid: Optional[int]) -> List[Path]
             log_paths = _find_human_logs_for_question(dd, qid_int)
 
             if not log_paths:
@@ -635,8 +739,8 @@ with tab_costs:
         melted["cost_type"] = melted["cost_type"].map({
             "cost_usd_total": "Total", "cost_usd_research": "Research", "cost_usd_classifier": "Classifier"
         }).fillna(melted["cost_type"])
-        st.plotly_chart(px.box(melted, x="cost_type", y="usd", points="all", title="Cost distribution (USD)"), use_container_width=True)
-        st.dataframe(melted.groupby("cost_type")["usd"].sum().reset_index().rename(columns={"usd":"sum_usd"}), use_container_width=True)
+        st.plotly_chart(px.box(melted, x="cost_type", y="usd", points="all", title="Cost distribution (USD)"), width="stretch")
+        st.dataframe(melted.groupby("cost_type")["usd"].sum().reset_index().rename(columns={"usd":"sum_usd"}), width="stretch")
     else:
         st.info("No cost columns found (expected any of cost_usd__total / __research / __classifier).")
     st.caption("Token columns not present in this parquet; showing cost distributions only.")
@@ -647,7 +751,7 @@ with tab_runs:
     if "run_id" in df.columns and "qid" in df.columns and p_col:
         g = df.dropna(subset=[p_col]).groupby(["qid", "run_id"])[p_col].mean().reset_index()
         spread = g.groupby("qid")[p_col].agg(["count", "std", "min", "max"]).reset_index()
-        st.dataframe(spread.sort_values("std", ascending=False), use_container_width=True)
+        st.dataframe(spread.sort_values("std", ascending=False), width="stretch")
     else:
         st.info("Need run_id, qid, and a chosen permutation to compute cross-run stability.")
 
@@ -671,8 +775,7 @@ with tab_downloads:
                            file_name="forecasts.parquet", mime="application/octet-stream")
 
     # Human logs ZIP
-    repo_root = APP_DIR.parent
-    candidate_dirs = [repo_root / "logs", repo_root / "forecast_logs"]
+    candidate_dirs = [REPO_ROOT / "logs", REPO_ROOT / "forecast_logs"]
     found_any = any(d.exists() and any(d.iterdir()) for d in candidate_dirs)
     if found_any:
         bufzip = io.BytesIO()
@@ -681,7 +784,7 @@ with tab_downloads:
                 if d.exists():
                     for p in d.rglob("*"):
                         if p.is_file():
-                            zf.write(p, p.relative_to(repo_root).as_posix())
+                            zf.write(p, p.relative_to(REPO_ROOT).as_posix())
         st.download_button("Download human logs (logs/ & forecast_logs/) as ZIP",
                            data=bufzip.getvalue(), file_name="spagbot_human_logs.zip", mime="application/zip")
     else:
@@ -693,6 +796,7 @@ with st.expander("Detected columns / quick debug"):
     st.write("USE_PARQUET:", USE_PARQUET)
     st.write("PARQUET_PATH:", str(PARQUET_PATH))
     st.write("RAW_CSV_URL:", RAW_CSV_URL)
+    st.write("LOCAL_CSV_OVERRIDE:", LOCAL_CSV_OVERRIDE or "—")
     st.write("First 25 columns:", list(df.columns)[:25])
     st.write("Binary permutations:", [c for c in df.columns if c.startswith('binary_prob__')])
     st.write("Numeric variants:", list(numeric_variants.keys()))
