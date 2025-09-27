@@ -2,13 +2,13 @@
 from __future__ import annotations
 """
 research.py — External research pipeline **without Serper/AskNews**.
-This version uses **Gemini 2.5 Pro** with **Grounding by Google (google_search tool)**
+This version uses **Gemini 2.5 Pro** with **Grounding by Google (Google Search tool)**
 for retrieval, and Gemini again for writing the research brief.
 
 What this module does (unchanged surface):
 - Extracts "anchors" (quoted phrases, proper nouns, years, numeric-with-units, keywords)
   from the question (title/description/criteria).
-- Queries **Google Grounding** (via Gemini `google_search` tool) to get source candidates.
+- Queries **Google Grounding** (via Gemini Search tool) to get source candidates.
 - Ranks & filters results by anchor overlap, with a "salvage" pass if strict filtering is empty.
 - Builds a compact source list and asks **Gemini 2.5 Pro** to write a research summary.
 - Returns (final_text, meta). `final_text` is what your human log prints; `meta` feeds CSV.
@@ -54,6 +54,13 @@ LAST_RESEARCH_ERROR: str = ""   # set by _grounded_search / _compose_research_vi
 def _set_research_error(msg: str) -> None:
     global LAST_RESEARCH_ERROR
     LAST_RESEARCH_ERROR = (msg or "").strip()
+
+# --- Rough token counter for cost estimation ---
+def _rough_token_count(text: str) -> int:
+    """Cheap token count heuristic: ~4 chars ≈ 1 token."""
+    if not text:
+        return 0
+    return max(1, int(len(text) / 4))
 
 # =============================================================================
 # RUNTIME + CACHE
@@ -143,6 +150,7 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
         return []
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
+    # System-style guidance + user task. (v1beta allows only 'user' parts; keep both for clarity.)
     sys_instr = (
         "You are a research assistant. Use Google Search grounding to find recent, high-quality, "
         "authoritative sources relevant to the user's query. Return only JSON Lines (one JSON per line) "
@@ -152,6 +160,7 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
     user_task = f"Query: {query}\nTop {max_results} sources, JSON Lines only."
 
     def _post(body: dict) -> tuple[int, dict]:
+        """POST helper that always returns (status_code, json_or_fallback)."""
         try:
             r = requests.post(
                 _gemini_base_url(model),
@@ -162,47 +171,101 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
             try:
                 j = r.json()
             except Exception:
-                j = {"error_text": (r.text or "")[:500]}
+                j = {"error_text": (r.text or "")[:800]}
             return r.status_code, j
         except Exception as e:
             return 599, {"error_text": f"exception: {e!r}"}
 
-    # Primary schema
-    body_primary = {
-        "contents": [
-            {"role": "user", "parts": [{"text": sys_instr}]},
-            {"role": "user", "parts": [{"text": user_task}]},
-        ],
-        "tools": [{"googleSearchRetrieval": {}}],
-        "toolConfig": {"googleSearchRetrieval": {"dynamicRetrievalConfig": {"mode": "MODE_DYNAMIC"}}},
-        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 2048},
-    }
+    # Shared content payload
+    shared_contents = [
+        {"role": "user", "parts": [{"text": sys_instr}]},
+        {"role": "user", "parts": [{"text": user_task}]},
+    ]
+    gen_cfg = {"temperature": 0.2, "maxOutputTokens": 2048}
 
-    status, data = _post(body_primary)
-
-    # Fallback schema if Google tweaks names
-    if status == 400 and ("Unknown name" in str(data) or "Invalid JSON payload" in str(data)):
-        body_fallback = {
-            "contents": body_primary["contents"],
+    # We try multiple schemata because Google's v1beta has toggled names between releases.
+    attempts: List[Tuple[str, dict]] = [
+        # 1) Official camelCase (most recent docs)
+        ("camel_with_toolConfig_MODE_DYNAMIC", {
+            "contents": shared_contents,
+            "tools": [{"googleSearchRetrieval": {}}],
+            "toolConfig": {"googleSearchRetrieval": {"dynamicRetrievalConfig": {"mode": "MODE_DYNAMIC"}}},
+            "generationConfig": gen_cfg,
+        }),
+        # 2) Same but DYNAMIC (some builds reject MODE_ prefix)
+        ("camel_with_toolConfig_DYNAMIC", {
+            "contents": shared_contents,
+            "tools": [{"googleSearchRetrieval": {}}],
+            "toolConfig": {"googleSearchRetrieval": {"dynamicRetrievalConfig": {"mode": "DYNAMIC"}}},
+            "generationConfig": gen_cfg,
+        }),
+        # 3) CamelCase with NO toolConfig (let platform choose defaults)
+        ("camel_no_toolConfig", {
+            "contents": shared_contents,
+            "tools": [{"googleSearchRetrieval": {}}],
+            "generationConfig": gen_cfg,
+        }),
+        # 4) Snake_case schema (older samples)
+        ("snake_with_tool_config_MODE_DYNAMIC", {
+            "contents": shared_contents,
             "tools": [{"google_search_retrieval": {}}],
             "tool_config": {"google_search_retrieval": {"dynamic_retrieval_config": {"mode": "MODE_DYNAMIC"}}},
-            "generationConfig": body_primary["generationConfig"],
-        }
-        status, data = _post(body_fallback)
+            "generationConfig": gen_cfg,
+        }),
+        # 5) Snake_case with DYNAMIC
+        ("snake_with_tool_config_DYNAMIC", {
+            "contents": shared_contents,
+            "tools": [{"google_search_retrieval": {}}],
+            "tool_config": {"google_search_retrieval": {"dynamic_retrieval_config": {"mode": "DYNAMIC"}}},
+            "generationConfig": gen_cfg,
+        }),
+        # 6) Snake_case with NO tool_config
+        ("snake_no_tool_config", {
+            "contents": shared_contents,
+            "tools": [{"google_search_retrieval": {}}],
+            "generationConfig": gen_cfg,
+        }),
+        # 7) Legacy 'google_search' (very old samples)
+        ("legacy_google_search_simple", {
+            "contents": shared_contents,
+            "tools": [{"google_search": {}}],
+            "generationConfig": gen_cfg,
+        }),
+    ]
 
-    if status != 200:
-        err_msg = ""
+    last_errs: List[str] = []
+    data_ok: dict = {}
+    status_ok: int = 0
+    for attempt_name, body in attempts:
+        status, data = _post(body)
+        if status == 200:
+            data_ok, status_ok = data, status
+            last_errs.clear()
+            break
+        # Collect short error note for debugging
         if isinstance(data, dict):
-            err = data.get("error") or {}
-            err_msg = err.get("message") or data.get("error_text") or str(data)[:500]
-        msg = f"grounding HTTP {status}: {err_msg}"
+            msg = ""
+            if "error" in data and isinstance(data["error"], dict):
+                msg = data["error"].get("message", "") or ""
+            if not msg:
+                msg = data.get("error_text", "")
+            if not msg:
+                msg = str(data)[:300]
+            last_errs.append(f"{attempt_name}: HTTP {status} → {msg[:220]}")
+        else:
+            last_errs.append(f"{attempt_name}: HTTP {status}")
+
+    if status_ok != 200:
+        # Surface the top one or two error messages for your human log.
+        tail = " | ".join(last_errs[:2]) if last_errs else "no provider message"
+        msg = f"grounding failed: {tail}"
         print(f"[research] {msg}")
         _set_research_error(msg)
         return []
 
     # Parse candidates
     text_blobs: List[str] = []
-    for cand in (data.get("candidates") or []):
+    for cand in (data_ok.get("candidates") or []):
         for part in ((cand.get("content") or {}).get("parts") or []):
             t = part.get("text")
             if t:
@@ -281,19 +344,18 @@ def _rank_and_filter_items(items: List[Dict[str, Any]], anchors: Dict[str, List[
 # COMPOSE THE RESEARCH BRIEF (Gemini only for research)
 # =============================================================================
 
-async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict]:
-    """Generate the research brief using Gemini 2.5 Pro (no OpenRouter here).
-    Returns (text, used_model_id, usage_dict[empty]).
-    """
+async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict, dict]:
+    """Generate the research brief using Gemini 2.5 Pro.
+    Returns (text, used_model_id, usage_dict, request_body)."""
     api_key = _gemini_api_key()
     if not api_key:
         _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for research composition")
-        return "", "", {}
+        return "", "", {}, body
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt_text}]}],
-        "generationConfig": {"temperature": float(RESEARCH_TEMP), "maxOutputTokens": 2048},
+        "generationConfig": {"temperature": float(RESEARCH_TEMP), "maxOutputTokens": 5000},
     }
     try:
         resp = requests.post(
@@ -309,7 +371,7 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
             except Exception:
                 msg = (resp.text or "")[:200]
             _set_research_error(f"compose HTTP {resp.status_code}: {msg}")
-            return "", "", {}
+            return "", "", {}, body
         data = resp.json()
 
         texts = []
@@ -318,10 +380,10 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
                 t = part.get("text")
                 if t:
                     texts.append(t)
-        return ("\n".join(texts).strip(), f"google/{model}", {})
+        return ("\n".join(texts).strip(), f"google/{model}", {}, body)
     except Exception as e:
         _set_research_error(f"compose request error: {e!r}")
-        return "", "", {}
+        return "", "", {}, body
 
 # =============================================================================
 # UTIL: format sources for prompt/log
@@ -435,12 +497,20 @@ async def run_research_async(
     )
 
     # 5) LLM compose (Gemini only for research)
-    llm_text, used_llm, usage = await _compose_research_via_gemini(prompt)
+    llm_text, used_llm, usage, req_body = await _compose_research_via_gemini(prompt)
     if not llm_text.strip():
         if picked:
             llm_text = "\n".join([f"- {it.get('title','')} ({it.get('url','')})" for it in picked])
         else:
             llm_text = "No recent external sources found; proceeding with general knowledge and base rates."
+
+    # --- cost estimation ---
+    prompt_tokens = _rough_token_count(json.dumps(req_body))
+    output_tokens = _rough_token_count(llm_text)
+    # Gemini 2.5 Pro rates (USD per 1K tokens)
+    in_rate = 0.00125
+    out_rate = 0.01
+    research_cost_usd = (prompt_tokens/1000)*in_rate + (output_tokens/1000)*out_rate
 
     # 6) Final text for the human log: brief + source list (+ optional pre-filter dump)
     parts = [_CAL_PREFIX + llm_text, "", _format_sources_for_log(picked)]
@@ -461,7 +531,7 @@ async def run_research_async(
                 "research_cached": "0",
                 "research_error": (LAST_RESEARCH_ERROR or ""),
                 "research_usage": usage or {},
-                "research_cost_usd": 0.0,
+                "research_cost_usd": round(research_cost_usd, 6),
             },
         }, ensure_ascii=False)
         write_cache("research", ck, cache_blob)
@@ -478,6 +548,6 @@ async def run_research_async(
         "research_cached": "0",
         "research_error": (LAST_RESEARCH_ERROR or ""),
         "research_usage": usage or {},
-        "research_cost_usd": 0.0,
+        "research_cost_usd": round(research_cost_usd, 6),
     }
     return final_text, meta

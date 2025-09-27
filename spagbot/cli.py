@@ -341,6 +341,7 @@ async def run_one_question(post: dict, *, run_id: str, purpose: str, submit_ok: 
     strategic_score = float((cls_info or {}).get("strategic_score", 0.0))
     classifier_source = (cls_info or {}).get("source") or ""
     classifier_rationale = (cls_info or {}).get("rationale") or ""
+    classifier_cost = float(cls_info.get("cost_usd", 0.0) or 0.0)
 
     # ------------------ 3) Optional GTMC1 (binary + strategic) ------------------
     gtmc1_active = bool(use_gtmc1 and qtype == "binary")
@@ -746,7 +747,12 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
         _r_cache = research_meta.get("research_cached","")
         _r_err   = research_meta.get("research_error","")
         md.append("### Research (debug)")
-        md.append(f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | n_raw={_r_raw} | n_kept={_r_kept}")
+        _r_cost  = research_meta.get("research_cost_usd", 0.0)
+        md.append(
+            f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | "
+            f"n_raw={_r_raw} | n_kept={_r_kept} | cost=${float(_r_cost):.6f}"
+        )
+
         if _r_q:
             md.append(f"- query: {_r_q}")
         if _r_err:
@@ -757,7 +763,9 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     # Classifier (debug)
     try:
         md.append("### Classifier (debug)")
-        md.append(f"- source={classifier_source} | is_strategic={is_strategic} | score={strategic_score:.2f}")
+        md.append(f"- source={classifier_source} | is_strategic={is_strategic} | "
+                  f"score={strategic_score:.2f} | cost=${classifier_cost:.6f}")
+
         if classifier_rationale:
             md.append(f"- rationale: {classifier_rationale}")
     except Exception:
@@ -801,7 +809,7 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     row.update({
         # ...existing keys...
-        "cost_usd__classifier": "",  # placeholder; wire this up if/when classifier uses an LLM
+        "cost_usd__classifier": f"{classifier_cost:.6f}",
         "cost_usd__research": f"{float(research_meta.get('research_cost_usd',0.0)):.6f}",
     })
     # total cost = research + per-model costs
