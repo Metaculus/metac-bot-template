@@ -229,6 +229,7 @@ if "created_at" in df.columns:
     df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
 # Optional date filter
+date_filter_on = st.sidebar.checkbox("Enable date filter", value=False)
 if date_filter_on and "created_at" in df.columns and df["created_at"].notna().any():
     d1 = pd.to_datetime(df["created_at"].min()).date()
     d2 = pd.to_datetime(df["created_at"].max()).date()
