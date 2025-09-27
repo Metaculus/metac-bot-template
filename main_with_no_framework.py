@@ -230,7 +230,7 @@ def get_post_details(post_id: int) -> dict:
     details = json.loads(response.content)
     return details
 
-CONCURRENT_REQUESTS_LIMIT = 6
+CONCURRENT_REQUESTS_LIMIT = 8
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
 
