@@ -6,7 +6,7 @@
 # - Data-source banner (path/URL, modified time, row count)
 # - Sidebar toggles: Clear cache, Prefer CSV if newer, Date filter
 # - Binary, numeric (pinball/coverage/sharpness), MCQ, costs, runs, downloads
-# - Streamlit deprecation fix: width='stretch' instead of use_container_width
+# - Uses use_container_width=True (broad Streamlit compatibility)
 # =============================================================================
 
 from __future__ import annotations
@@ -67,11 +67,10 @@ COLUMN_ALIAS_MAP: Dict[str, List[str]] = {
     "cost_usd_classifier": ["cost_usd__classifier"],
 }
 
-# Labels for binary permutations (keep/extend as you like)
+# Labels for binary permutations (extend as needed)
 BINARY_PERM_LABELS: Dict[str, str] = {
     # "binary_prob__ensemble": "Ensemble",
     # "binary_prob__bayes": "Bayes",
-    # ...
 }
 
 # Family prefixes
@@ -79,7 +78,7 @@ NUMERIC_PREFIXES = [
     "numeric_p10__", "numeric_p50__", "numeric_p90__",
     "numeric_mu__", "numeric_sigma__"
 ]
-MCQ_PREFIX = "mcq_prob__"   # <-- Needed for MCQ detection
+MCQ_PREFIX = "mcq_prob__"   # for MCQ detection
 
 # -----------------------------------------------------------------------------
 # Small helpers
@@ -245,21 +244,18 @@ def load_data() -> Tuple[pd.DataFrame, Dict[str, str]]:
         return df_pq, meta_pq
 
     # 2) No parquet — try local CSVs, then URL
-    # Local override?
     if LOCAL_CSV_OVERRIDE:
         p = (REPO_ROOT / LOCAL_CSV_OVERRIDE).resolve()
         if p.exists():
             try: return _load_csv_local(p)
             except Exception as e: st.error(f"Failed reading local CSV at {p}: {e}")
 
-    # Standard local locations
     for rel in ["forecasts.csv", "forecast_logs/forecasts.csv"]:
         p = (REPO_ROOT / rel).resolve()
         if p.exists():
             try: return _load_csv_local(p)
             except Exception as e: st.error(f"Failed reading local CSV at {p}: {e}")
 
-    # URL fallback
     if RAW_CSV_URL:
         try:
             return _load_csv_url(RAW_CSV_URL, GITHUB_TOKEN)
@@ -275,7 +271,7 @@ def load_data() -> Tuple[pd.DataFrame, Dict[str, str]]:
     return pd.DataFrame(), {"source": "none", "path": "—", "mtime": "—", "rows": "0"}
 
 # -----------------------------------------------------------------------------
-# Human logs helper (FIX for NameError)
+# Human logs helper
 # -----------------------------------------------------------------------------
 def _find_human_logs_for_question(dfq: pd.DataFrame, qid: Optional[int]) -> List[Path]:
     """
@@ -292,9 +288,8 @@ def _find_human_logs_for_question(dfq: pd.DataFrame, qid: Optional[int]) -> List
         patterns.append(f"Q{qid}")
         patterns.append(f"qid_{qid}")
     # add run_id hints if available
-    run_ids = []
     if "run_id" in dfq.columns and dfq["run_id"].notna().any():
-        run_ids = sorted(set(str(x) for x in dfq["run_id"].dropna().astype(str).tolist()))
+        run_ids = sorted(set(str(x) for x in dfq["run_id"].dropna().astype(str)))
         patterns += run_ids
 
     found: List[Path] = []
@@ -306,7 +301,6 @@ def _find_human_logs_for_question(dfq: pd.DataFrame, qid: Optional[int]) -> List
             if any(s.lower() in name for s in patterns) or (qid is None and p.is_file()):
                 found.append(p)
 
-    # sort by modification time (newest first)
     found.sort(key=lambda p: p.stat().st_mtime, reverse=True)
     return found
 
@@ -443,7 +437,7 @@ with tab_cal:
                                      hovertext=[f"n={c}" for c in bdf["count"]]))
             fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines", name="Perfect", line=dict(dash="dash")))
             fig.update_layout(xaxis_title="Forecast probability", yaxis_title="Observed frequency", height=430)
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No resolved rows yet for calibration.")
     else:
@@ -451,7 +445,7 @@ with tab_cal:
 
     st.subheader("Forecast distribution (sharpness)")
     if p_col is not None:
-        st.plotly_chart(px.histogram(df.dropna(subset=[p_col]), x=p_col, nbins=20, height=320), width="stretch")
+        st.plotly_chart(px.histogram(df.dropna(subset=[p_col]), x=p_col, nbins=20, height=320), use_container_width=True)
     else:
         st.info("No forecast column detected.")
 
@@ -474,7 +468,7 @@ with tab_compare:
         mdf = pd.DataFrame(rows)
         if has_outcome and mdf["Brier"].notna().any():
             mdf = mdf.sort_values("Brier", na_position="last")
-        st.dataframe(mdf, width="stretch")
+        st.dataframe(mdf, use_container_width=True)
 
 # Numeric permutations ---------------------------------------------------------
 def pinball_loss(y_true: np.ndarray, qhat: np.ndarray, q: float) -> float:
@@ -523,7 +517,7 @@ with tab_numeric:
         ndf = pd.DataFrame(rows)
         if ndf["Pinball avg (0.1/0.5/0.9)"].notna().any():
             ndf = ndf.sort_values("Pinball avg (0.1/0.5/0.9)", na_position="last")
-        st.dataframe(ndf, width="stretch")
+        st.dataframe(ndf, use_container_width=True)
 
 # MCQ permutations -------------------------------------------------------------
 def parse_mcq_json(col: pd.Series) -> List[Optional[Dict[str, float]]]:
@@ -584,7 +578,7 @@ with tab_mcq:
         mdf = pd.DataFrame(rows)
         if mdf["Cross-entropy"].notna().any():
             mdf = mdf.sort_values("Cross-entropy", na_position="last")
-        st.dataframe(mdf, width="stretch")
+        st.dataframe(mdf, use_container_width=True)
 
 # Per-Question drilldown (robust to missing qtitle) ---------------------------
 with tab_questions:
@@ -656,20 +650,18 @@ with tab_questions:
                     title="Forecast history (binary)"
                 )
                 fig.update_layout(height=360)
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
             else:
                 # Fallback: try numeric quantiles (q10/q50/q90) for a sensible variant
                 num_pfx = ["numeric_p10__", "numeric_p50__", "numeric_p90__"]
-                has_numeric = any(any(col.startswith(p) for col in dd.columns) for p in num_pfx)
+                has_numeric = any(any(col.startswith(p) for p in num_pfx for col in dd.columns))
                 if has_numeric and "created_at" in dd.columns:
-                    # group available variants for which we have any numeric data
                     variants = {}
                     for pref in num_pfx:
                         for c in dd.columns:
                             if c.startswith(pref):
                                 var = c[len(pref):]
                                 variants.setdefault(var, {})[pref] = c
-                    # choose 'ensemble' if present, else any variant with data
                     preferred = "ensemble" if "ensemble" in variants else (next(iter(variants.keys())) if variants else None)
                     if preferred:
                         cols = variants.get(preferred, {})
@@ -689,7 +681,7 @@ with tab_questions:
                             else:
                                 fign.add_trace(go.Scatter(x=dd.loc[idx, "created_at"], y=p50.loc[idx], name="q50 (median)", mode="lines+markers"))
                             fign.update_layout(title=f"Numeric forecast history ({preferred})", height=360)
-                            st.plotly_chart(fign, width="stretch")
+                            st.plotly_chart(fign, use_container_width=True)
                         else:
                             st.info("No numeric forecasts found for this question.")
                     else:
@@ -699,7 +691,7 @@ with tab_questions:
 
             # Full table for this question
             st.markdown("**All rows for this question**")
-            st.dataframe(dd, width="stretch")
+            st.dataframe(dd, use_container_width=True)
 
             # --- Human logs (model reasoning) ---
             st.markdown("**Human logs (model reasoning)**")
@@ -713,7 +705,6 @@ with tab_questions:
             if not log_paths:
                 st.info("No .md human logs found for this question in forecast_logs/ or logs/.")
             else:
-                # Show up to the most recent 8 logs (adjust as desired)
                 for p in log_paths[:8]:
                     with st.expander(p.name, expanded=False):
                         try:
@@ -739,8 +730,8 @@ with tab_costs:
         melted["cost_type"] = melted["cost_type"].map({
             "cost_usd_total": "Total", "cost_usd_research": "Research", "cost_usd_classifier": "Classifier"
         }).fillna(melted["cost_type"])
-        st.plotly_chart(px.box(melted, x="cost_type", y="usd", points="all", title="Cost distribution (USD)"), width="stretch")
-        st.dataframe(melted.groupby("cost_type")["usd"].sum().reset_index().rename(columns={"usd":"sum_usd"}), width="stretch")
+        st.plotly_chart(px.box(melted, x="cost_type", y="usd", points="all", title="Cost distribution (USD)"), use_container_width=True)
+        st.dataframe(melted.groupby("cost_type")["usd"].sum().reset_index().rename(columns={"usd":"sum_usd"}), use_container_width=True)
     else:
         st.info("No cost columns found (expected any of cost_usd__total / __research / __classifier).")
     st.caption("Token columns not present in this parquet; showing cost distributions only.")
@@ -751,7 +742,7 @@ with tab_runs:
     if "run_id" in df.columns and "qid" in df.columns and p_col:
         g = df.dropna(subset=[p_col]).groupby(["qid", "run_id"])[p_col].mean().reset_index()
         spread = g.groupby("qid")[p_col].agg(["count", "std", "min", "max"]).reset_index()
-        st.dataframe(spread.sort_values("std", ascending=False), width="stretch")
+        st.dataframe(spread.sort_values("std", ascending=False), use_container_width=True)
     else:
         st.info("Need run_id, qid, and a chosen permutation to compute cross-run stability.")
 
