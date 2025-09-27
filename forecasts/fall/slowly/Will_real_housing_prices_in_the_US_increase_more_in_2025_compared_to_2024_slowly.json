@@ -1,0 +1,369 @@
+{
+    "deliberation_results": {
+        "Real Estate Analysis (Comparative Market Analysis)": {
+            "time_to_resolution": "Approximately 14 months (resolves based on November 2025 data, today is September 27, 2025).",
+            "perspective_relevance": "As a Real Estate Analysis (Comparative Market Analysis) expert, my perspective emphasizes how micro-level supply/demand, affordability, absorption rates, and historical price patterns interact with macro trends and behavioral inertia. My approach leverages granular data (list to sale price ratios, price reductions, days on market, regional and product segmentation) and recognizes the significance of status quo and mean reversion in housing cycles.",
+            "status_quo": "In 2024, real (inflation-adjusted) US housing prices grew slightly or were nearly flat, with recent ZHVI data showing only marginal increases. The base rate for US housing prices outpacing inflation two years in a row is moderate but not high, especially after an extraordinary pandemic-era run-up.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Rising Inventory and Slower Price Growth",
+                    "effect": "Decreases probability. Multiple reports highlight a 16-28% year-over-year growth in active inventory, homes taking longer to sell, and a 0.5% decline in price per square foot. These are classic late-cycle signals of a cooling or plateauing market."
+                },
+                {
+                    "factor": "Mortgage Rate Environment",
+                    "effect": "Slightly decreases probability. Rates have come down from their 2023 highs but remain in the mid-6% range, well above pre-2022 levels. This continues to suppress affordability and buyer demand, especially as more buyers are 'locked out' by high monthly payments."
+                },
+                {
+                    "factor": "Builder Incentives and New Home Sales Surge",
+                    "effect": "Slightly increases probability. New home sales unexpectedly surged in August 2025, up 20% month-over-month and 15% year-over-year, driven by discounts and rate buydowns. Builders cutting prices can support headline index prices in the short term, but aggressive concessions suggest underlying price weakness."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Decreases probability. The Midwest and Northeast show price resilience due to tighter supply, but key Sun Belt markets (Texas, Florida, California) face price declines and oversupply. National indices are weighted by large, softening metros."
+                },
+                {
+                    "factor": "Affordability Crisis and Demand Elasticity",
+                    "effect": "Decreases probability. The median payment is up ~45% since 2021; affordability indices are at or near record lows. Even as prices plateau, demand remains constrained, and more buyers are priced out, limiting upward price pressure."
+                },
+                {
+                    "factor": "Inflation Outpacing Price Gains",
+                    "effect": "Strongly decreases probability. FHFA and Case-Shiller report home prices up 1.9-2.9% year-over-year, but CPI is running 2.7%+, so real appreciation is negative or flat. Recent months have seen home price growth lag inflation, an unusual but telling reversal."
+                },
+                {
+                    "factor": "Behavioral Inertia and 'Locked-In' Effect",
+                    "effect": "Slightly increases probability. Most existing owners are locked into sub-6% mortgages and reluctant to sell, keeping resale inventory somewhat muted, which can support prices in the face of weak demand. However, this effect is waning as new listings rise and some sellers capitulate."
+                },
+                {
+                    "factor": "Historical Base Rate Post-Boom",
+                    "effect": "Decreases probability. After outsized post-pandemic gains, history shows a tendency for real price growth to slow, stall, or even reverse for several years as affordability and demand recalibrate."
+                }
+            ],
+            "no_scenario": "Affordability remains constrained by high rates and prices, inventory continues rising, and price reductions become more common. Regional softness in large Sun Belt markets drags the national index, and real price growth is flat or negative as inflation outpaces any nominal gains. The inflation-adjusted ZHVI change from Nov 2024 to Nov 2025 is less than from Nov 2023 to Nov 2024, or even negative.",
+            "yes_scenario": "Mortgage rates drop further, perhaps below 6%, and pent-up demand is released. New home sales continue to surge and spill over into existing home prices. Inventory growth slows or reverses, and resilient metros in the Northeast and Midwest outweigh declines elsewhere. Real price gains exceed the prior year, with the ZHVI rising faster than inflation between Nov 2024 and Nov 2025.",
+            "final_reasoning": "While there are some positive signals from the new home market and certain resilient regions, the national picture is dominated by growing inventory, softening demand, and price reductions\u2014especially in large, previously high-growth markets. Affordability remains near record lows, and the most recent data shows real price growth has turned negative in many indices. The surge in new home sales is heavily incentive-driven and may be unsustainable. Inflation is outpacing nominal price gains, and most forecasts (including Zillow's and Cotality's) expect only modest or flat growth. Historically, periods following massive run-ups see flat or negative real price appreciation for several years. With the base rate and current conditions, the chance that real US home prices increase more in 2025 than in 2024 is well below 50%. The most likely outcome is continued stagnation or mild real declines.",
+            "final_probability": 23
+        },
+        "Real Estate Analysis (Hedonic Pricing Model)": {
+            "time_to_resolution": "Approximately 14 months (until December 2025, when resolution data will be available)",
+            "perspective_relevance": "As an expert in Real Estate Analysis (Hedonic Pricing Model), I bring a granular understanding of how various factors\u2014such as interest rates, inventory, regional heterogeneity, and buyer incentives\u2014impact real (inflation-adjusted) housing prices. The hedonic model's ability to decompose price changes into their underlying drivers is directly relevant for interpreting both current market signals and forecasting their likely effects on the ZHVI.",
+            "status_quo": "In 2024, real housing price growth was minimal or slightly negative, with the ZHVI essentially flat in inflation-adjusted terms (0.998 ratio Nov24/Nov23). The multi-year trend is a deceleration from the pandemic surge, with recent months reflecting stagnant or declining real prices in many metros.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Interest Rates/Mortgage Rates",
+                    "effect": "Decreases probability. Despite modest recent declines, rates remain elevated relative to 2020-2022, suppressing affordability and demand. Rate cuts could help, but the effect is slow and may not fully offset other headwinds."
+                },
+                {
+                    "factor": "Inventory Levels",
+                    "effect": "Decreases probability. Inventory is up sharply (16-28% YoY), with active listings rising for nearly two years and the market shifting toward buyers. More supply typically puts downward pressure on prices, especially given weak demand."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Neutral to slightly decreases probability. Price growth is still positive in Midwest/Northeast but negative in key Sun Belt and Western markets. Since the ZHVI is national, weak or negative in large, volatile markets (e.g., West, South) can outweigh strength elsewhere."
+                },
+                {
+                    "factor": "Builder Incentives and New Home Sales",
+                    "effect": "Increases probability (slightly). Builders are offering deep discounts and incentives, sparking a short-term jump in new-home sales/prices. However, these are one-off effects and may not persist or translate to existing home prices or the full year."
+                },
+                {
+                    "factor": "Affordability Constraints",
+                    "effect": "Decreases probability. The real cost of homeownership (prices + rates) remains near multi-decade highs, sidelining buyers and reducing upward pressure on prices."
+                },
+                {
+                    "factor": "Macroeconomic and Policy Environment",
+                    "effect": "Decreases probability. Economic uncertainty, potential stagflation, and tariffs (e.g., steel, aluminum) increase input costs but also suppress demand. Fed is expected to cut slowly; any faster cuts would be a tailwind but not a base case."
+                },
+                {
+                    "factor": "Base Rate of Year-over-Year Real Price Growth Acceleration",
+                    "effect": "Decreases probability. Historically, after a period of deceleration or stagnation, it's rare for the next year to show sharply higher real price growth unless there is a catalytic shock (e.g., rate collapse, massive stimulus). Current signals do not suggest such a shock."
+                }
+            ],
+            "no_scenario": "Mortgage rates remain in the 6-6.5% range, inventory continues to rise or stays elevated, and demand remains tepid despite moderate builder incentives. The ZHVI grows slightly in nominal terms, but inflation is similar or higher, so real growth from Nov 2024 to Nov 2025 is flat or lower than the prior year's already weak growth. Regional declines in the Sun Belt and West offset modest gains in the Northeast/Midwest. The net result is that the year-over-year real price increase does not exceed 2024's pace.",
+            "yes_scenario": "Mortgage rates drop more sharply than expected (e.g., below 5.5%), perhaps due to aggressive Fed easing or a positive economic surprise, triggering a surge in buyer demand. Inventory growth slows or reverses as sellers pull listings or buyers return, and new-home and existing-home sales accelerate. Regional strength in the Midwest/Northeast spreads, and even Sun Belt/West stabilize or rebound. As a result, the real ZHVI posts a more robust gain from Nov 2024 to Nov 2025 than the prior year's marginal increase.",
+            "final_reasoning": "Synthesizing the hedonic model perspective and recent data: The 2024-2025 period is marked by high but slightly easing mortgage rates, surging inventory, and weakening affordability. While new-home sales saw a late-summer bounce, this appears driven by aggressive incentives and may not be sustained or broad-based. Inventory is up, days on market are rising, and price growth is lagging inflation in most national indices. The ZHVI itself has shown near-zero real growth over the past year. Historically, after such a period of stagnation, real price growth does not typically accelerate unless a major demand shock occurs, for which there is currently no strong evidence. Regional heterogeneity matters, but national price indices are weighted toward larger, more volatile markets that are currently softening. The base rate for acceleration in real price growth following a flat year is low. Builder incentives may provide a minor boost, but do not offset the larger macro headwinds. Thus, the probability that real US housing prices (as measured by ZHVI and adjusted for inflation) will increase more in 2025 than 2024 is below even odds.",
+            "final_probability": 30
+        },
+        "US Regional Economics (Federal Reserve Economic Data Analysis)": {
+            "time_to_resolution": "About 14 months, as the question resolves using ZHVI data for November 2025, and today is late September 2025.",
+            "perspective_relevance": "As an expert in US Regional Economics and Federal Reserve Economic Data Analysis, I can integrate macroeconomic indicators, regional housing trends, and monetary policy developments as observed in real-time data and news. My perspective allows for nuanced analysis of how mortgage rates, inventory shifts, affordability, and regional disparities interact and reflect in the ZHVI, especially in inflation-adjusted terms.",
+            "status_quo": "In 2024, real housing prices increased only marginally or were roughly flat (ZHVI Nov 2023 to Nov 2024 ratio was 0.998). The recent trend has been real prices plateauing or slightly declining, with nominal increases lagging inflation. Historically, periods of rapid appreciation are followed by slowdowns when rates rise and affordability erodes.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Mortgage Rates & Fed Policy",
+                    "effect": "Slightly increases probability of a rebound, as rates have eased from peaks, but remain historically high, limiting upside for demand and price growth."
+                },
+                {
+                    "factor": "Inventory Levels",
+                    "effect": "Increases probability of slower or negative real price growth. Inventory is rising substantially after years of constraint, shifting power to buyers and reducing price pressure, especially in the West/South."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Decreases overall probability. While some Midwest/Northeast markets are still appreciating, Sunbelt and Western metros are seeing falling or flat prices. National indices will be dragged by these large, cooling markets."
+                },
+                {
+                    "factor": "Affordability Crisis",
+                    "effect": "Strongly decreases probability. High prices and high rates have shut out many buyers, stalling demand and putting downward pressure on real prices, despite nominal stickiness."
+                },
+                {
+                    "factor": "Homebuilder Activity and Incentives",
+                    "effect": "Neutral to slightly positive. New sales have rebounded due to incentives and lower rates, but this may not be fully sustainable and is disproportionately affecting new vs. existing homes. Builders are eating margin to clear inventory."
+                },
+                {
+                    "factor": "Recent Price Trends & Base Rates",
+                    "effect": "Strongly decreases probability. Most recent indices (Cotality, FHFA, Case-Shiller) show price growth below inflation, and July/August saw monthly declines, which is rare outside of downturns. Base rate for two consecutive years of real price acceleration is low outside of recovery cycles."
+                }
+            ],
+            "no_scenario": "Mortgage rates remain elevated or rise again due to inflation or Fed caution, inventory keeps climbing as locked-in sellers finally list, and buyer demand remains weak due to affordability. As a result, nominal price growth is flat or slightly positive, but inflation outpaces it, so real prices barely rise or even fall. The relative real price increase from Nov 2024 to Nov 2025 is smaller than the prior year's change, or even negative.",
+            "yes_scenario": "Mortgage rates fall more sharply than expected, stimulating demand, especially from first-time buyers and move-up buyers who were previously locked out. Inventory growth slows or reverses as sellers pull back, and strong wage/income growth supports new demand. Regional booms in the Midwest/Northeast outweigh Sunbelt/West declines, pushing national real price growth in 2025 above the 2024 rate.",
+            "final_reasoning": "Weighing all factors, the dominant signals are: 1) real price growth has already slowed dramatically and is now lagging inflation, 2) inventory is rising and sellers are increasingly cutting prices, 3) mortgage rates remain a headwind despite recent declines, and 4) base rates for a real price acceleration in the second year after a plateau are low barring a major macro shift. While new home sales have spiked recently due to incentives and lower rates, this is not yet translating into broad-based, sustained price growth. Regional divergence means some metros will outperform, but the national ZHVI will be weighed down by large, cooling markets. Upside risk exists if rates were to fall sharply and the Fed turns dovish, but current data and incentives are more consistent with a stabilization or further deceleration in real price growth. Therefore, the probability that real housing prices in the US will increase *more* in 2025 than in 2024 is low.",
+            "final_probability": 23
+        },
+        "Economics (Monetary Theory)": {
+            "time_to_resolution": "Approximately 14 months (question resolves based on Nov 2025 vs Nov 2024 data, and today is late September 2025)",
+            "perspective_relevance": "As an expert in Economics (Monetary Theory), I bring a deep understanding of how monetary policy, interest rates, inflation, and macroeconomic dynamics interact with asset markets such as housing. Housing prices are highly sensitive to interest rates (mortgage rates), credit availability, and liquidity conditions\u2014all core to monetary theory. I can assess the likely direction of real (inflation-adjusted) housing prices by synthesizing data on mortgage rates, Fed policy, inflation expectations, and housing market supply/demand trends.",
+            "status_quo": "Real (inflation-adjusted) US housing prices have been rising modestly or flat, with the latest data showing that price increases are lagging inflation. The market has cooled from pandemic-era highs, with higher mortgage rates, rising inventory, and decelerating nominal price growth.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Monetary Policy/Fed Rate Cuts",
+                    "effect": "Slightly increases probability of stronger price growth in 2025, as recent and anticipated Fed rate cuts lower mortgage rates, potentially reviving demand and supporting nominal prices. However, the effect is modest given high rates remain and transmission lags."
+                },
+                {
+                    "factor": "Mortgage Rate Level and Lock-In Effect",
+                    "effect": "Mixed effect. Mortgage rates have recently eased but remain historically high (around 6.3%). Most existing mortgages are locked below 6%, limiting listings. Lower rates could bring some buyers and sellers off the sidelines, but affordability remains stretched."
+                },
+                {
+                    "factor": "Inventory and Supply Dynamics",
+                    "effect": "Increases probability of price softening: Inventory is rising (16-28% YoY increases, 98+ weeks of gains), which puts downward pressure on prices. New listings are flat or declining, but active listings are up as homes linger on the market. Builders are offering discounts, and delistings are up."
+                },
+                {
+                    "factor": "Demand Weakness and Affordability Constraints",
+                    "effect": "Decreases probability of accelerated real price growth. Buyer demand is weak, sales are at a decade low, and affordability indices are near historic lows. High prices and high mortgage rates are deterring buyers, and wage growth is not keeping up with home-price appreciation."
+                },
+                {
+                    "factor": "Inflation Trajectory",
+                    "effect": "Neutral to slightly negative. CPI inflation is running 2.5-2.7%, higher than recent home price growth. If inflation remains sticky, real home price growth is harder to achieve, and even moderate nominal gains may not translate to real appreciation."
+                },
+                {
+                    "factor": "Regional and Segment Divergence",
+                    "effect": "Neutral to negative: While Midwest and Northeast may see some local gains, major Sun Belt and Western metros are seeing price declines and inventory surges, which pulls down the national average."
+                },
+                {
+                    "factor": "Policy and Tariffs (Trump Administration)",
+                    "effect": "Slight negative. New tariffs on construction materials could raise new home prices but also dampen new construction, affecting supply and affordability in a complex way. Potential for stagflationary environment is a headwind."
+                }
+            ],
+            "no_scenario": "Mortgage rates remain near 6%+, affordability remains historically low, inventory continues to rise, and buyer demand stays weak as high home prices meet limited wage growth. Nominal home price growth is flat or modestly positive, but inflation continues at 2.5-3%, so real price growth in 2025 is less than in 2024, or even negative. The ZHVI's inflation-adjusted gain from Nov 2024 to Nov 2025 is lower than the previous year's gain.",
+            "yes_scenario": "Fed rate cuts are more aggressive or effective than expected, pushing mortgage rates closer to 5.5% and stimulating pent-up demand. Consumer confidence and labor markets remain strong, and inflation moderates, so nominal home price growth picks up modestly, outpacing a cooling inflation rate. Builders' discounts and new home activity support additional price growth on the margin, and real price gains outpace 2024's already-slow growth.",
+            "final_reasoning": "The base rate for real (inflation-adjusted) US home price acceleration in a mature, post-boom market is low, especially with rising inventory, ongoing affordability problems, and only modest relief from mortgage rates. While there are some green shoots (recent new home sales surge, Fed cuts, builder incentives), these are partially offset by persistent demand weakness, regional price declines, and rising supply. Most recent indices (Cotality, Case-Shiller, FHFA, Zillow) show price growth lagging inflation, and multiple sources predict further softening or flatness. Inflation remains a hurdle, as even modest nominal gains are insufficient for real appreciation unless inflation drops more than expected. Given the slow-moving nature of housing cycles, the status quo of sluggish or declining real price growth is likely to persist. I assign extra weight to the status quo and base rates, but acknowledge a small chance of a late-2025 rebound. Thus, the likelihood that real US housing price growth from Nov 2024 to Nov 2025 exceeds the growth from Nov 2023 to Nov 2024 is below even odds, but not extremely low.",
+            "final_probability": 30
+        },
+        "Economics (Supply and Demand Theory)": {
+            "time_to_resolution": "Approximately 14 months (resolves with Nov 2025 ZHVI data, likely finalized by late December 2025 or early 2026).",
+            "perspective_relevance": "As an economist specializing in supply and demand theory, I focus on the interplay of macroeconomic forces (interest rates, incomes, demographics), housing supply constraints, and consumer/investor demand. This lens is essential for understanding the underlying drivers of real housing prices and for assessing whether price appreciation will accelerate or decelerate in the coming year, especially in the context of shifting inventory, mortgage rates, and regional variation.",
+            "status_quo": "In the most recent period (Nov 2023\u2013Nov 2024), real housing prices were essentially flat to slightly down (-0.2%), after a decade of generally strong real appreciation. The base rate for the US is slow-moving changes rather than sharp swings in real housing price growth; absent shocks, real prices tend to rise modestly or stagnate during periods of high rates and growing inventory.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Mortgage Rates & Monetary Policy",
+                    "effect": "Falling mortgage rates typically increase demand and could boost real prices, but rates remain in the mid-6% range, with only modest recent declines. This is a mild positive but not a major catalyst without sharper rate cuts."
+                },
+                {
+                    "factor": "Inventory Trends",
+                    "effect": "Inventory has risen significantly (16\u201328% YoY, depending on data source), alleviating the extreme supply shortages of 2021\u201322. Rising inventory generally puts downward pressure on prices; this is a significant negative for real price growth."
+                },
+                {
+                    "factor": "Affordability Constraints",
+                    "effect": "Affordability remains at multi-decade lows, with the median payment for new buyers having risen sharply and the Affordable Housing Index falling. This severely limits marginal demand and is a strong negative for real price growth acceleration."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Some affordable Midwest/Northeast markets are seeing moderate price gains, but large Sunbelt and West Coast metros are experiencing outright declines. This regional split makes strong national acceleration unlikely\u2014a mild negative."
+                },
+                {
+                    "factor": "New Home Sales and Builder Incentives",
+                    "effect": "New home sales surged in August 2025, supported by builder discounts and incentives, but much of this activity is in response to builder flexibility, not a broad-based demand boom. These effects are temporary and unlikely to drive sustained national acceleration\u2014a mild positive for price stability, not for acceleration."
+                },
+                {
+                    "factor": "Inflation Trends",
+                    "effect": "General inflation remains above home price appreciation, so real (inflation-adjusted) prices are stagnating or declining. Unless nominal growth accelerates, real appreciation is unlikely to pick up\u2014a moderate negative."
+                },
+                {
+                    "factor": "Policy and Macro Risks",
+                    "effect": "Tariffs (raising construction costs) and possible Fed hawkishness are likely to constrain supply and demand, but the net effect is likely negative for affordability and demand. Economic uncertainty and labor market softness add downside risk\u2014a moderate negative."
+                }
+            ],
+            "no_scenario": "Mortgage rates remain sticky in the mid-6% range, supply continues to rise as more sellers list homes, and affordability stays depressed. Nominal home prices rise slowly, but with inflation running at 2\u20133%, real prices are flat or down. Regional weakness in large Sunbelt and coastal markets offsets any gains in the Northeast/Midwest. 2025 sees either another year of flat real prices or a modest real decline, so the real price change from Nov 2024\u2013Nov 2025 is less than (or equal to) the change from Nov 2023\u2013Nov 2024.",
+            "yes_scenario": "Mortgage rates fall faster than expected (to the low 5% range), stimulating broad-based demand. Inventory growth stalls or reverses as buyers return. Nominal prices accelerate, outpacing inflation, especially if the labor market remains robust. Regional strength in the Midwest/Northeast outweighs weakness elsewhere, and the real ZHVI posts a larger gain in 2025 than in 2024.",
+            "final_reasoning": "The historical base rate, the current macro and market indicators, and the latest news all point to a housing market that is cooling, with rising inventory, persistent affordability problems, and only modest easing of mortgage rates. Even the recent surge in new home sales seems tied to aggressive incentives, not a durable demand shift. Most data suggest real prices are flat or slightly down, and forecasts from Zillow and others see only tepid nominal growth\u2014less than inflation. Regional divergence further diminishes the chance of a national acceleration in real price growth. The status quo outcome is for another flat or slightly negative real price change, and for the 2025 real price growth to be less than or equal to that of 2024. While a rebound is possible if rates fall sharply, the preponderance of evidence suggests this is unlikely. I assign a 20% probability to 'Yes' (that real price growth will be higher in 2025 than 2024), reflecting a low but not negligible chance of an upside surprise.",
+            "final_probability": 20
+        },
+        "Economics (Behavioral Economics)": {
+            "time_to_resolution": "Approximately 14 months (resolves with November 2025 ZHVI data, likely finalized by December 2025 or early 2026).",
+            "perspective_relevance": "As a behavioral economist, I bring a nuanced understanding of how psychological factors, such as loss aversion, expectations, anchoring, and herd behavior, combine with market fundamentals to drive housing market dynamics. Homebuyers and sellers' decisions are not always rational or purely based on economic fundamentals; factors like reference dependence, endowment effects, and status-quo bias (reluctance to sell low-interest homes) can shape inventory, prices, and transaction volumes in ways that traditional models may underestimate.",
+            "status_quo": "Real (inflation-adjusted) housing prices in the US have grown very modestly or stagnated in 2024 compared to 2023 (ZHVI data: Nov 2023 to Nov 2024 essentially flat after adjusting for inflation). Historically, after sharp run-ups (2020-2022), periods of plateau or mild correction are common. Barring major shocks, slow growth or stagnation is the base rate.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Mortgage Rate Lock-In Effect",
+                    "effect": "Decreases probability. With over 80% of homeowners locked into sub-6% mortgages, behavioral reluctance to sell (endowment effect, loss aversion) keeps resale inventory low, but as rates fall only modestly and new rates remain above most existing mortgages, this effect persists, limiting upward price pressure."
+                },
+                {
+                    "factor": "Rising Inventory and Buyer Power",
+                    "effect": "Decreases probability. Inventory is rising (16-28% YoY in recent articles), days on market are up, and price cuts are widespread. Sellers are increasingly offering concessions, and the market is described as the most buyer-friendly in a decade. Behavioral 'anchoring' may slow price declines, but the supply/demand balance is shifting."
+                },
+                {
+                    "factor": "Affordability Constraints and Price-to-Income Ratio",
+                    "effect": "Decreases probability. Despite high nominal home values, affordability is at multi-decade lows, with the median payment up over 40% since 2021. Behavioral economics predicts demand destruction as buyers anchor to previous price/mortgage standards and 'give up' (as headlines and survey data show), blunting further price increases."
+                },
+                {
+                    "factor": "Regional/Segment Divergence and New-Home Market Dynamics",
+                    "effect": "Mixed. New-home sales surged in late summer 2025, largely due to aggressive incentives, not underlying demand. Builders' willingness to offer concessions is high, which props up sales volume but not necessarily prices. Some segments (Northeast, Midwest) still see mild price growth, while the West/South are weakening. This divergence may mean a flat or slightly positive national ZHVI, but not a strong acceleration."
+                },
+                {
+                    "factor": "Expectations and Herding Behavior",
+                    "effect": "Decreases probability. News flow and market sentiment are turning negative, with headlines about price stagnation or erosion. Behavioral economics shows that negative expectations can become self-fulfilling, as buyers hold off, sellers accept lower offers, and price reductions become normalized."
+                },
+                {
+                    "factor": "Potential for Fed Cuts or Macro Shocks",
+                    "effect": "Marginally increases probability. If the Fed cuts rates more than expected, or a positive macro shock occurs, mortgage rates could fall enough to meaningfully unlock pent-up demand. However, expectations are for rates to remain in the mid-6% range, which would keep the lock-in effect strong."
+                }
+            ],
+            "no_scenario": "Inventory continues to rise into 2025 as sellers become more motivated, buyers remain constrained by affordability, and modest declines or stagnation in real prices persist. Even with some regional hot spots, national real ZHVI growth from Nov 2024 to Nov 2025 matches or falls below the (already flat) previous year's change. Behavioral inertia (anchoring to high list prices) slows nominal declines, but inflation-adjusted prices are flat or down.",
+            "yes_scenario": "A softer Fed leads to a sharper-than-expected decline in mortgage rates (mid-5% or lower by Q2 2025), unlocking both sellers and buyers. Pent-up demand returns, builders reduce incentives, and home price growth modestly re-accelerates. Regional strength in the Northeast and Midwest outweighs declines elsewhere, resulting in a larger real price increase in 2025 than in 2024.",
+            "final_reasoning": "Base rates and behavioral patterns both suggest that after a period of strong gains, US real home price growth tends to plateau or even decline, especially as affordability bites and inventory rises. The most recent data show a stagnating or weakening market, with more inventory, longer sales times, and increasing price cuts/incentives. New-home sales have surged but almost entirely due to concessions, not price increases. The ZHVI and major indices suggest flat or sub-inflation price growth through mid-2025, and behavioral effects (anchoring, loss aversion, downward rigidity) will likely slow any correction, but not reverse trends in the short term. Unless mortgage rates drop substantially, it's hard to see a strong upturn. Given the status quo base rate and current behavioral/economic headwinds, the probability that real US housing prices in 2025 will increase more (as a percentage) than in 2024 is low, but not zero due to potential surprises from monetary policy or macro shocks. I assign a probability of 23%.",
+            "final_probability": 23
+        },
+        "Urban Studies (Urban Growth Models)": {
+            "time_to_resolution": "About 2.2 months (resolves with November 2025 ZHVI, today is September 27, 2025)",
+            "perspective_relevance": "As an expert in Urban Studies focusing on Urban Growth Models, I bring an understanding of the structural factors that drive housing price dynamics: demographic shifts, spatial patterns of urban development, supply constraints, policy changes, and macroeconomic feedbacks. This perspective is critical for contextualizing short-term market signals within longer-term urban system trends, distinguishing cyclical corrections from structural inflections, and weighing the impact of policy, migration, and construction trends on housing prices at the national scale.",
+            "status_quo": "In 2024, real US housing prices increased only slightly, with appreciation barely matching inflation or even lagging it by some measures. The baseline expectation, given flat-to-weak growth, rising inventory, and affordability constraints, is that 2025 will see similar or even weaker real appreciation unless something significantly shifts. Historically, US housing markets tend to adjust slowly unless hit by a major shock.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Inventory Growth and Supply Elasticity",
+                    "effect": "Decreases probability. Sustained increases in for-sale inventory (active listings up 16-25% YoY) and construction in certain regions (notably the South and West) suggest supply is finally catching up with demand, easing upward price pressure. Historically, periods of rising inventory foreshadow either flat or declining real prices."
+                },
+                {
+                    "factor": "Affordability Crisis and Demand Elasticity",
+                    "effect": "Decreases probability. The median monthly payment and home price have outpaced wage growth, squeezing buyers out of the market. When affordability falls to historic lows, price growth typically stalls unless offset by a surge in incomes or a sharp drop in rates\u2014which is not evident. Demand elasticity is now biting, as shown by record-low sales and buyers sitting on the sidelines."
+                },
+                {
+                    "factor": "Mortgage Rate Environment",
+                    "effect": "Neutral to slightly increases probability. Rates have fallen from their late-2023 peak, but remain historically high (6.2-6.3%). There is some potential for a late-2025 demand rebound if rates fall further, but so far, the relief is modest and is being offset by weak affordability and high prices."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Weakly increases probability. Some regions (Midwest, Northeast) continue to see price gains due to persistent supply constraints, while major Sunbelt and Western metros are experiencing outright declines. Nationally, this creates a drag on the aggregate, but pockets of strength could limit downside."
+                },
+                {
+                    "factor": "Urban Migration and Household Formation",
+                    "effect": "Neutral to slightly increases probability. Pandemic-driven migration has slowed; household formation is weak due to high costs, and there is anecdotal evidence of demographic headwinds (family size shrinking, delayed homebuying), which historically correlates with reduced housing demand and slower price growth."
+                },
+                {
+                    "factor": "Builder/Developer Incentives and Market Structure",
+                    "effect": "Neutral to slightly decreases probability. Builders are offering aggressive incentives and price cuts, which supports transaction volume but puts downward or flat pressure on real prices, especially for new construction."
+                },
+                {
+                    "factor": "Macroeconomic/Policy Uncertainty (e.g., tariffs, Fed policy)",
+                    "effect": "Decreases probability. Tariffs on construction materials and economic uncertainty add to costs and volatility, but also dampen demand by raising rates and sapping consumer confidence. The risk is tilted towards stagnation or weaker real growth."
+                },
+                {
+                    "factor": "Base Rate of Real US Home Price Growth",
+                    "effect": "Decreases probability. Historically, real home prices in the US rise about 1-2% per year, but after a boom, periods of flat or negative real growth are common. The current context of slowing or flat prices after a surge fits past post-boom slowdowns."
+                }
+            ],
+            "no_scenario": "ZHVI (inflation-adjusted) shows a minimal or negative real price change from Nov 2024 to Nov 2025\u2014say, a 0% to -1% real change\u2014whereas Nov 2023 to Nov 2024 saw a flat or slightly positive change. This could result from continued high inventory, stagnant demand, and sellers cutting prices or offering incentives, especially in the South and West, outweighing regional gains elsewhere. The economy avoids a sharp rate drop or stimulus, and affordability remains a constraint.",
+            "yes_scenario": "A late-2025 demand rebound materializes due to further rate cuts, seasonal effects, or a macroeconomic surprise (e.g., a government stimulus or rapid inflation drop), leading to a stronger-than-expected uptick in real prices from Nov 2024 to Nov 2025. Alternatively, a surge in high-priced sales (e.g., in the Northeast) shifts the ZHVI upward more than during the prior year. However, this would likely require a sharp and sustained reversal of current weak demand trends.",
+            "final_reasoning": "Most signals\u2014rising inventory, record-low existing-home sales, growing price concessions, and affordability at historic lows\u2014point to stagnation or deceleration in real home price growth for 2025 versus 2024. Though there is a modest rebound in new-home sales and some regions are holding up, the national picture is dominated by weakening demand and a glut of supply, especially in major markets like the South and West. Mortgage rates have softened but not enough to spark a broad-based recovery, and macro uncertainty (tariffs, Fed policy, weak household formation) weighs on sentiment. Base rate logic from past post-boom cycles suggests the most likely outcome is flat or weaker real growth compared to 2024. Given these factors, the probability that real US housing prices increase more in 2025 than in 2024 is below even odds. However, a true collapse is unlikely due to regional strength and ongoing supply constraints in some metros. I assign a probability of 30%, reflecting a meaningful but minority chance of a late-year rebound or data quirk, but with the status quo (stagnation or deceleration) as the dominant trajectory.",
+            "final_probability": 30
+        },
+        "Urban Studies (Location Theory)": {
+            "time_to_resolution": "About 2.2 months (question resolves using November 2025 ZHVI data, today's date is September 27, 2025).",
+            "perspective_relevance": "As an expert in Urban Studies (Location Theory), I focus on spatial patterns of housing demand and supply, regional economic fundamentals, migration, and the structural determinants of local real estate markets. This perspective is valuable here because it helps distinguish cyclical, national-level market trends from underlying location-driven heterogeneity that may either amplify or dampen aggregate price changes.",
+            "status_quo": "The status quo is one of minimal real (inflation-adjusted) housing price appreciation nationwide: in the most recent annual period, real prices are roughly flat or slightly negative, with high mortgage rates, rising inventory, and pockets of regional variation. In 2024, real housing prices rose very modestly and have recently lagged inflation.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Mortgage Rate Trajectory",
+                    "effect": "Falling mortgage rates (from mid-7% to low-6% range) should support demand, but rates remain high by recent standards and much of the existing homeowner base is locked into lower rates, muting the impact and keeping transaction volumes low. This is a mildly positive factor for price growth, but only if rates continue to decline or stabilize."
+                },
+                {
+                    "factor": "Inventory and Supply Response",
+                    "effect": "Inventory has been rising for nearly two years, now above pre-pandemic levels in many metros. This, combined with more days on market and frequent price cuts, creates downward pressure on prices. Builders have increased incentives and discounts. This is a negative factor for price growth, especially in the South and West."
+                },
+                {
+                    "factor": "Regional Economic Divergence",
+                    "effect": "Some regions (Midwest, Northeast) continue to see price gains due to limited supply and persistent demand, while Sun Belt and Western metros are experiencing outright price declines. The overall effect is that regional strength is being offset by weakness elsewhere, limiting national growth."
+                },
+                {
+                    "factor": "Affordability Constraints",
+                    "effect": "Affordability is at historic lows, with the average family able to afford only about half of a median-priced home. High prices and mortgage rates have sidelined buyers, reducing upward price momentum. This is a negative factor for real price growth."
+                },
+                {
+                    "factor": "Inflation and Real Price Calculations",
+                    "effect": "Recent home price gains have been below the inflation rate, so even small nominal increases translate to real price stagnation or decline. For 2025 to show faster real price growth than 2024, nominal appreciation must accelerate and/or inflation must decelerate. This is currently unlikely given the news and forecasts."
+                },
+                {
+                    "factor": "Policy and Macro Uncertainty",
+                    "effect": "Potential for new tariffs (on construction inputs), continued Fed cautiousness, and general economic uncertainty (including election-year dynamics) could further restrict demand or raise costs, contributing to market hesitancy. This is a moderately negative factor."
+                },
+                {
+                    "factor": "Base Rate / Historical Precedent",
+                    "effect": "Historically, periods of rising inventory, high rates, and declining affordability are followed by flat or declining real prices; rapid rebounds are rare outside of recessionary recoveries. The recent price boom was exceptional, and mean reversion is the base case."
+                }
+            ],
+            "no_scenario": "Inventory continues to rise into Q4 2025, mortgage rates remain in the 6%+ range, and buyer demand is tepid due to high prices and affordability challenges. Regional price declines in the South and West offset modest gains in the Northeast and Midwest. Nominal price growth is weak, and inflation remains in the 2-3% range, so real price growth in 2025 is less than in 2024 (which was near zero).",
+            "yes_scenario": "Mortgage rates fall more sharply than expected (below 6%), spurring a late-year surge in demand, especially from buyers who have been sidelined. Inventory growth stalls or reverses, and regional strength in the Midwest/Northeast combines with a stabilization in the Sun Belt and West. Inflation moderates, so even modest nominal gains translate to stronger real price growth, and the 2025 real price change outpaces the 2024 figure.",
+            "final_reasoning": "The preponderance of evidence from news and data points to a housing market experiencing rising inventory, sluggish demand, and growing affordability constraints. Builders and sellers are increasingly offering discounts and incentives, with price cuts widespread. While mortgage rates have eased slightly, they remain high, and the majority of homeowners are locked into even lower rates, reducing market fluidity. Regional divergence persists, but weakness in large Sun Belt and Western metros is dragging down the national average. Nominal price growth is slow and being outpaced by inflation; July's Cotality HPI, for example, showed a 1.4% annual gain against 2.7% inflation. For real price growth in 2025 (Nov 2024 - Nov 2025) to exceed that of 2024 (Nov 2023 - Nov 2024), there would need to be a marked acceleration in nominal appreciation or a sharp drop in inflation, neither of which is supported by current trends or forecasts. The base rate in similar post-boom, high-rate environments is for real prices to be flat to slightly negative. Upside risk exists if rates fall quickly, but the most likely outcome is that real housing price appreciation in 2025 will be equal to or lower than in 2024. My probability, therefore, is low but not absolutely zero due to possible late-year demand surprises.",
+            "final_probability": 17
+        },
+        "Sociology (Socioeconomic Stratification Theory)": {
+            "time_to_resolution": "About 14 months, as the question resolves based on ZHVI Nov 2025 vs Nov 2024.",
+            "perspective_relevance": "As an expert in Socioeconomic Stratification Theory, I focus on how housing markets both reflect and reinforce class and wealth inequalities. Housing demand, affordability, and price movements are deeply intertwined with distributional dynamics across income groups, the availability of credit, and broader trends in social mobility and intergenerational wealth transfer. This lens is crucial for assessing not just aggregate price movements, but also the resilience or erosion of demand across different social strata when affordability shifts sharply, as in the current environment.",
+            "status_quo": "In 2024, real housing price growth was minimal, with ZHVI barely outpacing or even lagging inflation, and much of the post-pandemic boom has cooled. The baseline is that real price growth remains subdued or flat, with regional divergence.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Affordability Crisis and Credit Constraints",
+                    "effect": "Decreases probability. With housing affordability at record lows (as per the Affordable Housing Index and news coverage), demand from first-time and lower-middle class buyers is suppressed, limiting upward price pressure even as supply rises."
+                },
+                {
+                    "factor": "Rising Inventory and Stagnant Demand",
+                    "effect": "Decreases probability. Active listings and inventory have been rising for almost two years. This typically leads to slower price growth or declines, especially if demand is not keeping pace\u2014supported by reports of increased delistings and longer time-on-market."
+                },
+                {
+                    "factor": "Mortgage Rate Environment",
+                    "effect": "Mixed effect. While mortgage rates have eased slightly to the low 6% range, the vast majority of homeowners are locked in at lower rates, reducing the incentive to sell and limiting turnover, but modestly helping new-home demand. However, rates remain high relative to pre-pandemic, capping affordability and demand."
+                },
+                {
+                    "factor": "Builder Incentives and New Home Market",
+                    "effect": "Increases probability slightly. Builders are offering substantial incentives and rate buydowns, which has caused new-home sales to surge recently. This could support aggregate price indices in the short term if sustained, but may not fully offset weakness in the existing-home segment."
+                },
+                {
+                    "factor": "Regional Divergence",
+                    "effect": "Decreases probability for national aggregate. While some metros (Northeast, Midwest) continue to see gains, larger and more volatile markets in the South and West are experiencing flat or declining prices, pulling down the national average."
+                },
+                {
+                    "factor": "Sociological Demand Elasticity",
+                    "effect": "Decreases probability. As stratification intensifies, the pool of buyers able to absorb high prices shrinks, especially as high prices now directly impact family formation and household creation (as per NPR article). This reduces organic demand growth and caps price appreciation."
+                },
+                {
+                    "factor": "Inflation Adjustment",
+                    "effect": "Decreases probability. While nominal prices may post small gains, inflation is running at or above the pace of nominal price increases, so real growth is likely to remain flat or negative barring a strong late-year rally."
+                }
+            ],
+            "no_scenario": "Real housing prices grow less in 2025 than in 2024, or potentially decline. Inventory continues to build, especially in the South and West, while affordability stays poor and mortgage rates remain elevated. New supply from builders meets a buyer pool weakened by credit constraints and economic uncertainty. The market experiences more price cuts, longer listing times, and a shift from seller to buyer power. Inflation stays in the 2-3% range, outpacing modest nominal home price increases. Regional declines offset gains in a minority of metros. The ZHVI annualized real growth rate from Nov 2024 to Nov 2025 is less than that from Nov 2023 to Nov 2024.",
+            "yes_scenario": "Real housing prices in 2025 outpace 2024's real growth. Mortgage rates fall more sharply than expected, stimulating demand, while labor markets and consumer confidence remain strong. Builders' incentives and discounts ignite a mini-buying boom, especially in new homes, which lifts the aggregate ZHVI. Inflation moderates, so even a modest nominal increase in home prices translates to a higher real gain. Regional stragglers stabilize, and high-growth metros accelerate enough to lift the national average.",
+            "final_reasoning": "The base rate for consecutive years of accelerating real housing price growth is low, especially after a historic run-up and in an environment of rising inventory and stubbornly high mortgage rates. The bulk of news coverage and data indicates price growth has slowed or stalled in 2025, with several major metros experiencing year-over-year declines and the national average flat or lagging inflation. While the new-home segment shows a pulse thanks to incentives and lower rates, this is likely insufficient to offset broader weakness, especially as existing-home sales remain at decade lows and affordability metrics continue to worsen. From a stratification perspective, the market's ability to absorb further price increases is curtailed by the shrinking pool of qualified buyers, as housing costs now tangibly shape family and life choices. The only plausible Yes scenario would require a sharper drop in rates and a demand surge that is not yet evident in the data. Given these dynamics, the probability that real housing prices will increase more in 2025 than in 2024 is below the base rate for 'trend reversal' years and is consistent with the early stages of a market correction.",
+            "final_probability": 18
+        }
+    },
+    "deliberation_probability": [
+        23,
+        30,
+        23,
+        30,
+        20,
+        23,
+        30,
+        17,
+        18
+    ],
+    "deliberation_mean_probability": 23.77777777777778,
+    "deliberation_sd": 5.14241620684717,
+    "deliberation_probability_result": 24
+}
