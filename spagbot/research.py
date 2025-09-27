@@ -133,17 +133,16 @@ def _gemini_api_key() -> str:
     return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
 
 def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None) -> List[Dict[str, Any]]:
-    """Call Gemini with google_search tool to retrieve grounded sources.
-    Returns a list of dicts: {title, url, text, date}
+    """Call Gemini with Google Search grounding to retrieve sources.
+    Returns a list of dicts: {title, url, text, date, source}
     """
     timeout = float(_GEMINI_TIMEOUT if timeout is None else timeout)
     api_key = _gemini_api_key()
     if not api_key:
-        _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for Google Search grounding")
+        _set_research_error("missing GEMINI_API_KEY / GOOGLE_API_KEY")
         return []
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
-    # Ask Gemini to produce top sources as JSON lines. Grounding tool will fetch results.
     sys_instr = (
         "You are a research assistant. Use Google Search grounding to find recent, high-quality, "
         "authoritative sources relevant to the user's query. Return only JSON Lines (one JSON per line) "
@@ -152,67 +151,85 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
     )
     user_task = f"Query: {query}\nTop {max_results} sources, JSON Lines only."
 
-    body = {
+    def _post(body: dict) -> tuple[int, dict]:
+        try:
+            r = requests.post(
+                _gemini_base_url(model),
+                params={"key": api_key},
+                json=body,
+                timeout=timeout,
+            )
+            try:
+                j = r.json()
+            except Exception:
+                j = {"error_text": (r.text or "")[:500]}
+            return r.status_code, j
+        except Exception as e:
+            return 599, {"error_text": f"exception: {e!r}"}
+
+    # Primary schema
+    body_primary = {
         "contents": [
             {"role": "user", "parts": [{"text": sys_instr}]},
             {"role": "user", "parts": [{"text": user_task}]},
         ],
-        # Enable Grounding with Google Search
-        "tools": [{"google_search": {}}],
-        "tool_config": {"google_search": {"dynamic_retrieval_config": {"mode": "MODE_DYNAMIC"}}},
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 2048,
-        },
+        "tools": [{"googleSearchRetrieval": {}}],
+        "toolConfig": {"googleSearchRetrieval": {"dynamicRetrievalConfig": {"mode": "MODE_DYNAMIC"}}},
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 2048},
     }
 
-    try:
-        resp = requests.post(
-            _gemini_base_url(model),
-            params={"key": api_key},
-            json=body,
-            timeout=timeout,
-        )
-        if resp.status_code != 200:
-            # Surface a short, human-readable reason for the human log / CSV
-            try:
-                j = resp.json()
-                msg = (j.get("error", {}) or {}).get("message", "")
-            except Exception:
-                msg = (resp.text or "")[:200]
-            _set_research_error(f"grounding HTTP {resp.status_code}: {msg}")
-            return []
-        data = resp.json()
-        text_blobs = []
-        for cand in (data.get("candidates") or []):
-            for part in ((cand.get("content") or {}).get("parts") or []):
-                t = part.get("text")
-                if t:
-                    text_blobs.append(t)
-        joined = "\n".join(text_blobs).strip()
-        items: List[Dict[str, Any]] = []
-        # Parse JSON Lines
-        for line in joined.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-                # Normalize fields
-                items.append({
-                    "title": obj.get("title") or obj.get("headline") or obj.get("url") or "",
-                    "url": obj.get("url") or "",
-                    "text": obj.get("summary") or obj.get("snippet") or "",
-                    "date": obj.get("date") or "",
-                    "source": obj.get("source") or "",
-                })
-            except Exception:
-                # ignore non-JSON lines
-                pass
-        return items
-    except Exception as e:
-        _set_research_error(f"grounding request error: {e!r}")
+    status, data = _post(body_primary)
+
+    # Fallback schema if Google tweaks names
+    if status == 400 and ("Unknown name" in str(data) or "Invalid JSON payload" in str(data)):
+        body_fallback = {
+            "contents": body_primary["contents"],
+            "tools": [{"google_search_retrieval": {}}],
+            "tool_config": {"google_search_retrieval": {"dynamic_retrieval_config": {"mode": "MODE_DYNAMIC"}}},
+            "generationConfig": body_primary["generationConfig"],
+        }
+        status, data = _post(body_fallback)
+
+    if status != 200:
+        err_msg = ""
+        if isinstance(data, dict):
+            err = data.get("error") or {}
+            err_msg = err.get("message") or data.get("error_text") or str(data)[:500]
+        msg = f"grounding HTTP {status}: {err_msg}"
+        print(f"[research] {msg}")
+        _set_research_error(msg)
         return []
+
+    # Parse candidates
+    text_blobs: List[str] = []
+    for cand in (data.get("candidates") or []):
+        for part in ((cand.get("content") or {}).get("parts") or []):
+            t = part.get("text")
+            if t:
+                text_blobs.append(t)
+    joined = "\n".join(text_blobs).strip()
+
+    items: List[Dict[str, Any]] = []
+    for line in joined.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+            items.append({
+                "title": obj.get("title") or obj.get("headline") or obj.get("url") or "",
+                "url": obj.get("url") or "",
+                "text": obj.get("summary") or obj.get("snippet") or "",
+                "date": obj.get("date") or "",
+                "source": obj.get("source") or "",
+            })
+        except Exception:
+            # ignore non-JSON lines
+            pass
+
+    if not items:
+        _set_research_error("no valid JSON lines returned from grounding")
+    return items
 
 
 # =============================================================================
