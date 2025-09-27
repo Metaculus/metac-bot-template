@@ -1,66 +1,94 @@
-# ===============================
-# Spagbot .gitignore (clean)
-# ===============================
-
-# --- Python basics ---
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
 *.egg-info/
+.installed.cfg
 *.egg
-*.pyo
-*.pyd
+MANIFEST
 
-# --- Virtual environments ---
-.venv/
-venv/
-env/
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyBuilder
+target/
+
+# pyenv
+.python-version
+
+# Environments
 .env
-.env.*
-.pdm.toml
-__pypackages__/
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# --- Local configs & secrets ---
-*.key
-*.secret
+# IDEs
+.vscode/
+.idea/
 
-# --- Logs & debug ---
-logs/
-debug/
-*.log
-*.out
-*.err
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# --- Cache / temp ---
-.cache/
-cache/
-*.tmp
-*.bak
-*.swp
-*.DS_Store
-Thumbs.db
+# Pyre type checker
+.pyre/
 
-# Prevent forecast data artifacts from being committed
-forecasts.csv
-[Dd]ashboard/data/forecasts.parquet
+# Pytype
+.pytype/
 
-# --- Notebooks checkpoints ---
-.ipynb_checkpoints/
+# Cython debug symbols
+cython_debug/
 
 # --- Forecast data produced locally ---
-forecast_logs/
+# Ignore all of forecast_logs except runs/
+forecast_logs/*
+!forecast_logs/runs/
+!forecast_logs/runs/**
+
+# Ignore GTMC logs
 gtmc_logs/
-forecasts.csv
 
-# Do NOT ignore parquet globally (we want one tracked parquet for the app).
-# Ignore everything in Dashboard/data EXCEPT the parquet we publish.
-Dashboard/data/*
-!Dashboard/data/.gitkeep
-!Dashboard/data/forecasts.parquet
+# Ignore parquet built for dashboard
+[Dd]ashboard/data/forecasts.parquet
 
-# Guard against accidental lowercase folder on case-insensitive filesystems
-dashboard/
-dashboard/data/
-
-# ===============================
-# End
-# ===============================
+# Optional OS files
+.DS_Store
+Thumbs.db

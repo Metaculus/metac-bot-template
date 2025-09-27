@@ -74,8 +74,10 @@ jobs:
       HUMAN_LOG_RESEARCH_MAX_CHARS: "20000"
       RESEARCH_SNIPPET_MAX_CHARS: "600"
 
-      # ---- CSV output ----
-      FORECASTS_CSV_PATH: forecasts.csv
+      # ---- CSV and logs output ----
+      FORECASTS_CSV_PATH: forecasts.csv      # write to root forecasts.csv
+      LOGS_BASE_DIR: forecast_logs           # save human logs here
+      
 
             # Seen Guard controls
       # set to "48" if you want a 2-day re-forecast cool-down window
@@ -85,7 +87,7 @@ jobs:
 
             # Log GitHub Commit config 
       HUMAN_LOG_EXT: md
-      DISABLE_GIT_LOGS: false
+      DISABLE_GIT_LOGS: "false"
       COMMIT_LOGS: true 
       GIT_LOG_MESSAGE:"chore(logs): append forecasts & run logs"
       GIT_REMOTE_NAME: origin

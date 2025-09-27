@@ -76,6 +76,7 @@ jobs:
 
       # ---- CSV output ----
       FORECASTS_CSV_PATH: forecasts.csv
+      LOGS_BASE_DIR: forecast_logs           # save human logs here
 
       # Seen Guard controls
       # set to "48" if you want a 2-day re-forecast cool-down window
@@ -85,7 +86,7 @@ jobs:
 
       # Log GitHub Commit config 
       HUMAN_LOG_EXT: md
-      DISABLE_GIT_LOGS: false
+      DISABLE_GIT_LOGS: "false"
       COMMIT_LOGS: true 
       GIT_LOG_MESSAGE:"chore(logs): append forecasts & run logs"
       GIT_REMOTE_NAME: origin

@@ -27,6 +27,14 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 
+# --- load Streamlit secrets -> environment (for persistent local/cloud config)
+try:
+    if "env" in st.secrets:
+        for k, v in st.secrets["env"].items():
+            os.environ.setdefault(k, str(v))
+except Exception:
+    pass
+
 # -----------------------------------------------------------------------------
 # App paths / Config
 # -----------------------------------------------------------------------------
