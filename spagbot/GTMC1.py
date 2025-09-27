@@ -19,7 +19,10 @@ New/added outputs:
   - exceedance_ge_50: fraction of runs whose final median >= 50.0 (0..1)
       -> This is a defensible proxy for P(YES) when higher-axis = "YES".
   - iqr: numeric IQR of final medians (q75 - q25)
-  - final_median_mean: mean of final medians for completeness
+  - final_median_mean: mean of final medians
+  - q25, q75: 25th and 75th percentiles of final medians
+  - num_runs: how many MC repetitions actually executed
+  - final_probability_yes: alias of exceedance_ge_50 (for clarity in logs)
   - meta.paths.meta_json: path to the meta JSON for bookkeeping
 
 Important scales & conventions:
@@ -613,10 +616,6 @@ def run_monte_carlo_from_actor_table(
     rounds_list: List[int] = []
     exceed_count = 0
 
-    # Pre-draw any per-run meta randomness (Fix #8)
-    # Here, per-actor sampling is already RNG-driven in _actors_from_table.
-    # If you later add per-run noise, pre-draw arrays here with `rng.*`.
-
     # Monte Carlo
     for run in range(int(num_runs)):
         actors = _actors_from_table(rng, actor_rows)
@@ -642,20 +641,18 @@ def run_monte_carlo_from_actor_table(
         coalition_count += coal_flag
 
         # Exceedance with small hysteresis to reduce flip-flops (Fix #5)
-        # yes_threshold is on the same 0..100 scale as medians.
-        eps = 0.3  # 0.3 units on 0..100 axis (~0.3 percentage points)
+        eps = 0.3  # 0.3 units on 0..100 axis
         if med > float(yes_threshold) + eps:
             ex_flag = 1
         elif med < float(yes_threshold) - eps:
             ex_flag = 0
         else:
-            # In the gray band, use >= as tie-break to preserve backward-compat
             ex_flag = 1 if med >= float(yes_threshold) else 0
         exceed_count += ex_flag
 
         results_rows.append({
             "run": run + 1,
-            "final_median": round(med, 4),  # rounded for cosmetic stability (Fix #6)
+            "final_median": round(med, 4),
             "rounds": int(r),
             "coalition_events": len(model.coalition_events),
             "exceed_ge_threshold": int(ex_flag),
@@ -695,7 +692,6 @@ def run_monte_carlo_from_actor_table(
     if medians:
         med_of_meds = float(np.median(medians))
         q25, q75 = float(np.percentile(medians, 25)), float(np.percentile(medians, 75))
-        # enforce monotonicity if you later expose multiple percentiles
         iqr = q75 - q25
         disp = "low" if iqr <= 5 else ("medium" if iqr <= 15 else "high")
         med_rounds = float(np.median(rounds_list))
@@ -710,7 +706,12 @@ def run_monte_carlo_from_actor_table(
             "median_rounds": int(round(med_rounds)),
             "dispersion": disp,
             "iqr": round(iqr, 4),
+            "q25": round(q25, 4),
+            "q75": round(q75, 4),
+            "final_median_mean": round(float(np.mean(medians)), 4),
             "exceedance_ge_50": round(ex_rate, 4),
+            "final_probability_yes": round(ex_rate, 4),  # alias for clarity
+            "num_runs": int(len(results_rows)),
             "runs_csv": meta["paths"]["runs_csv"],
             "meta_json": meta["paths"]["meta_json"],
         }
@@ -722,7 +723,12 @@ def run_monte_carlo_from_actor_table(
             "median_rounds": None,
             "dispersion": "n/a",
             "iqr": None,
+            "q25": None,
+            "q75": None,
+            "final_median_mean": None,
             "exceedance_ge_50": None,
+            "final_probability_yes": None,
+            "num_runs": 0,
             "runs_csv": meta["paths"]["runs_csv"],
             "meta_json": meta["paths"]["meta_json"],
         }

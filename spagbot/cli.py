@@ -1,4 +1,3 @@
-# spagbot/cli.py
 from __future__ import annotations
 """
 cli.py — Spagbot runner (unified CSV + ablation support)
@@ -83,6 +82,22 @@ def _clip01(x: float) -> float:
 def _safe_float(x: Any) -> Optional[float]:
     try:
         return float(x)
+    except Exception:
+        return None
+
+def _maybe_dump_raw_gtmc1(content: str, *, run_id: str, question_id: int) -> Optional[str]:
+    """
+    If SPAGBOT_DEBUG_RAW=1, write the raw LLM JSON-ish text we received for the
+    GTMC1 actor table to a file in gtmc_logs/ and return the path. Otherwise None.
+    """
+    if os.getenv("SPAGBOT_DEBUG_RAW", "0") != "1":
+        return None
+    try:
+        os.makedirs("gtmc_logs", exist_ok=True)
+        path = os.path.join("gtmc_logs", f"{run_id}_q{question_id}_actors_raw.json")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return path
     except Exception:
         return None
 
@@ -350,6 +365,11 @@ async def run_one_question(post: dict, *, run_id: str, purpose: str, submit_ok: 
     gtmc1_policy_sentence: str = ""
     t_gtmc1_ms = 0
 
+    # Raw-dump debugging fields (only populated on failure / deactivation)
+    gtmc1_raw_dump_path: str = ""
+    gtmc1_raw_excerpt: str = ""
+    gtmc1_raw_reason: str = ""
+
     if gtmc1_active:
         try:
             from .config import OPENROUTER_FALLBACK_ID
@@ -393,10 +413,20 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
                         temperature=0.2,
                     )
                 text = (resp.choices[0].message.content or "").strip()
+                raw_text_for_debug = text  # keep exactly what the LLM sent
                 try:
                     data = json.loads(re.sub(r"^```json\s*|\s*```$", "", text, flags=re.S))
                 except Exception:
                     data = {}
+                    gtmc1_active = False
+                    gtmc1_raw_reason = "json_parse_error"
+                    # Dump raw if requested; otherwise keep a short excerpt for the human log
+                    gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
+                    if not gtmc1_raw_dump_path:
+                        # Use the same limit used elsewhere for model raw content
+                        MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+                        gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
+
                 actors = data.get("actors") or []
                 gtmc1_policy_sentence = str(data.get("policy_continuum") or "").strip()
                 cleaned: List[Dict[str, Any]] = []
@@ -427,7 +457,11 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
                     )
                 else:
                     gtmc1_active = False
-                t_gtmc1_ms = _ms(t_gt0)
+                    gtmc1_raw_reason = "actors_lt_3"
+                    gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
+                    if not gtmc1_raw_dump_path:
+                        MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+                        gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
         except Exception:
             gtmc1_active = False
             t_gtmc1_ms = 0
@@ -688,6 +722,7 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
         "gtmc1_exceedance_ge_50": (gtmc1_signal.get("exceedance_ge_50") if gtmc1_signal else ""),
         "gtmc1_dispersion": (gtmc1_signal.get("dispersion") if gtmc1_signal else ""),
         "gtmc1_median_rounds": (gtmc1_signal.get("median_rounds") if gtmc1_signal else ""),
+        "gtmc1_num_runs": (gtmc1_signal.get("num_runs") if gtmc1_signal else ""),
         "gtmc1_policy_sentence": gtmc1_policy_sentence or "",
         "gtmc1_signal_json": gtmc1_signal or "",
 
@@ -760,188 +795,222 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     except Exception:
         pass
 
-    # Classifier (debug)
+    # --- GTMC1 (debug) --------------------------------------------------------
     try:
-        md.append("### Classifier (debug)")
-        md.append(f"- source={classifier_source} | is_strategic={is_strategic} | "
-                  f"score={strategic_score:.2f} | cost=${classifier_cost:.6f}")
+        md.append("### GTMC1 (debug)")
+        # Basic flags
+        md.append(f"- strategic_class={is_strategic} | strategic_score={strategic_score:.2f} | source={classifier_source}")
+        md.append(f"- gtmc1_active={gtmc1_active} | qtype={qtype} | t_ms={t_gtmc1_ms}")
 
-        if classifier_rationale:
-            md.append(f"- rationale: {classifier_rationale}")
+        # Actor extraction outcome
+        _n_actors = len(actors_table) if actors_table else 0
+        md.append(f"- actors_parsed={_n_actors}")
+
+        # Key Monte Carlo outputs (if any)
+        _sig = gtmc1_signal or {}
+        _ex = _sig.get("exceedance_ge_50")
+        _coal = _sig.get("coalition_rate")
+        _med = _sig.get("median_of_final_medians")
+        _disp = _sig.get("dispersion")
+
+        md.append(f"- exceedance_ge_50={_ex} | coalition_rate={_coal} | median={_med} | dispersion={_disp}")
+        _runs_csv = _sig.get("runs_csv")
+        if _runs_csv:
+            md.append(f"- runs_csv={_runs_csv}")
+        _meta_json = _sig.get("meta_json")
+        if _meta_json:
+            md.append(f"- meta_json={_meta_json}")
+
+        # If GTMC1 was expected but didn’t apply, say why (best effort).
+        if use_gtmc1 and qtype == "binary" and not gtmc1_active:
+            md.append("- note=GTMC1 gate opened (strategic) but deactivated later (client/JSON/actors<3).")
+        # If we captured raw (on failure), surface it.
+        if gtmc1_raw_reason:
+            md.append(f"- raw_reason={gtmc1_raw_reason}")
+        if gtmc1_raw_dump_path or gtmc1_raw_excerpt:
+            md.append("### GTMC1 (raw)")
+            if gtmc1_raw_dump_path:
+                md.append(f"- raw_file={gtmc1_raw_dump_path}")
+            if gtmc1_raw_excerpt:
+                md.append("```json")
+                md.append(gtmc1_raw_excerpt)
+                md.append("```")
+    except Exception as _gtmc1_dbg_ex:
+        md.append(f"- gtmc1_debug_error={type(_gtmc1_dbg_ex).__name__}: {str(_gtmc1_dbg_ex)[:200]}")
+    # --------------------------------------------------------------------------
+
+    # --- GTMC1 (actors used) ---------------------------------------------------
+    # Show the actual table we fed into GTMC1 so you can audit inputs later.
+    if gtmc1_active and actors_table:
+        try:
+            md.append("### GTMC1 (actors used)")
+            md.append("| Actor | Position | Capability | Salience | Risk thresh |")
+            md.append("|---|---:|---:|---:|---:|")
+            for a in actors_table:
+                md.append(
+                    f"| {a['name']} | {float(a['position']):.0f} | "
+                    f"{float(a['capability']):.0f} | {float(a['salience']):.0f} | "
+                    f"{float(a['risk_threshold']):.3f} |"
+                )
+        except Exception as _gtmc1_tbl_ex:
+            md.append(f"- actors_table_render_error={type(_gtmc1_tbl_ex).__name__}: {str(_gtmc1_tbl_ex)[:160]}")
+
+    # --- Ensemble outputs (compact) --------------------------------------------
+    try:
+        md.append("### Ensemble (model outputs)")
+        for m in ens_res.members:
+            if not isinstance(m, MemberOutput):
+                continue
+            _line = f"- {m.name}: ok={m.ok} t_ms={getattr(m,'elapsed_ms',0)}"
+            if qtype == "binary" and m.ok and isinstance(m.parsed, (float, int)):
+                _line += f" p={_clip01(float(m.parsed)):.4f}"
+            elif qtype == "multiple_choice" and m.ok and isinstance(m.parsed, list):
+                # just show top-3
+                try:
+                    vec = [float(x) for x in m.parsed]
+                    idxs = np.argsort(vec)[::-1][:3]
+                    _line += " top3=" + ", ".join([f"{options[i]}:{_clip01(vec[i]):.3f}" for i in idxs])
+                except Exception:
+                    pass
+            elif qtype in ("numeric", "discrete") and m.ok and isinstance(m.parsed, dict):
+                p10 = _safe_float(m.parsed.get("P10"))
+                p50 = _safe_float(m.parsed.get("P50"))
+                p90 = _safe_float(m.parsed.get("P90"))
+                if p10 is not None and p90 is not None:
+                    if p50 is None:
+                        p50 = 0.5 * (p10 + p90)
+                    _line += f" P10={p10:.3f}, P50={p50:.3f}, P90={p90:.3f}"
+            md.append(_line)
+    except Exception as _ens_dbg_ex:
+        md.append(f"- ensemble_debug_error={type(_ens_dbg_ex).__name__}: {str(_ens_dbg_ex)[:200]}")
+
+    # --- Aggregation summary (BMC) ---------------------------------------------
+    try:
+        md.append("### Aggregation (BMC)")
+        # Make the BMC summary JSON-safe and also visible in the human log
+        bmc_json = {}
+        if isinstance(bmc_summary, dict):
+            # strip large arrays already removed; copy select keys if present
+            for k in ("mean", "var", "std", "n_evidence", "p10", "p50", "p90"):
+                if k in bmc_summary:
+                    bmc_json[k] = bmc_summary[k]
+        # Put a human line:
+        if qtype == "binary" and isinstance(final_main, float):
+            md.append(f"- final_probability={_clip01(final_main):.4f}")
+        elif qtype == "multiple_choice" and isinstance(final_main, dict):
+            # show top-3
+            items = sorted(final_main.items(), key=lambda kv: kv[1], reverse=True)[:3]
+            md.append("- final_top3=" + ", ".join([f"{k}:{_clip01(float(v)):.3f}" for k, v in items]))
+        elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
+            _p10 = final_main.get("P10"); _p50 = final_main.get("P50"); _p90 = final_main.get("P90")
+            md.append(f"- final_quantiles: P10={_p10}, P50={_p50}, P90={_p90}")
+        md.append(f"- bmc_summary={json.dumps(bmc_json)}")
+    except Exception as _bmc_dbg_ex:
+        md.append(f"- bmc_debug_error={type(_bmc_dbg_ex).__name__}: {str(_bmc_dbg_ex)[:200]}")
+
+    # --------------------------------------------------------------------------
+    # Attach BMC summary into CSV row (JSON), then persist both CSV + human log
+    # --------------------------------------------------------------------------
+    try:
+        if isinstance(bmc_summary, dict):
+            row["bmc_summary_json"] = {k: v for k, v in bmc_summary.items() if k != "samples"}
     except Exception:
+        # keep whatever default is in row already
         pass
 
-    md.append("## Per-model")
-    had_errors = []
-    for m in ens_res.members:
-        raw_excerpt = (m.raw_text or "")[:MAX_RAW_CHARS]
-        err = f" | error={m.error}" if getattr(m, "error", "") else ""
-        if getattr(m, "error", ""):
-            had_errors.append(f"{m.name}: {m.error}")
-        md.append(f"- **{m.name}** ok={m.ok} time={getattr(m,'elapsed_ms',0)}ms cost=${getattr(m,'cost_usd',0.0):.4f}{err} parsed={m.parsed}")
-        if raw_excerpt:
-            md.append("  - Raw output (excerpt):")
-            md.append("    " + raw_excerpt.replace("\n","\n    "))
-    if had_errors:
-        md.append("### Model errors (summary)")
-        for line in had_errors:
-            md.append(f"- {line}")
-
-
-    md.append("## Ensembles (with research)")
-    if qtype == "binary":
-        md.append(f"- main={final_main:.4f} | no_gtmc1={v_nogtmc1:.4f} | uniform={v_uniform:.4f} | simple={v_simple:.4f}")
-    elif qtype == "multiple_choice":
-        md.append(f"- main={final_main}")
-    else:
-        md.append(f"- main={final_main}")
-
-    md.append("## Ablation (no research)")
-    if qtype == "binary":
-        md.append(f"- main={ab_main:.4f} | uniform={ab_uniform:.4f} | simple={ab_simple:.4f}")
-    else:
-        md.append(f"- main={ab_main}")
-
-    if gtmc1_active:
-        md.append("## GTMC1")
-        md.append(f"- policy: {gtmc1_policy_sentence}")
-        md.append(f"- signal: {json.dumps(gtmc1_signal, ensure_ascii=False)[:1500]}")
-
-    row.update({
-        # ...existing keys...
-        "cost_usd__classifier": f"{classifier_cost:.6f}",
-        "cost_usd__research": f"{float(research_meta.get('research_cost_usd',0.0)):.6f}",
-    })
-    # total cost = research + per-model costs
-    total_cost = float(research_meta.get('research_cost_usd',0.0))
-    for ms in DEFAULT_ENSEMBLE:
-        try:
-            total_cost += float(row.get(f"cost_usd__{ms.name}", "0") or 0)
-        except Exception:
-            pass
-    row["cost_usd__total"] = f"{total_cost:.6f}"
-
-    write_human_markdown(run_id, question_id, "\n\n".join(md))
-
-    write_unified_row(row)
-
-    # Record success → mark this question as seen so we don’t reforecast it later
-    if seen_guard:
-        seen_guard.mark_seen(question_id)
-
-# --------------------------------------------------------------------------------
-# Batch runners (test set or tournament)
-# --------------------------------------------------------------------------------
-
-async def run_posts(posts: List[dict], *, purpose: str, submit_ok: bool) -> None:
-    ensure_unified_csv()
-    calib = _load_calibration_weights()
-    run_id = ist_stamp()
-
-    # MODERN FILTERING: Filter posts at the beginning of the batch run
-    if seen_guard:
-        posts_to_run = seen_guard.filter_unseen_posts(posts)
-    else:
-        posts_to_run = posts
-
-    if not posts_to_run:
-        print("[seen_guard] All candidate posts already handled. Exiting batch.")
-        return
-
-    for i, post in enumerate(posts_to_run, 1):
-        qtitle = str((post.get("question") or {}).get("title") or post.get("title") or "")
-        qid = int((post.get("question") or {}).get("id") or 0)
-        print(f"\n{'-'*88}\n[{i}/{len(posts_to_run)}] ❓ {qtitle}  (QID: {qid})")
-        try:
-            await run_one_question(post, run_id=run_id, purpose=purpose, submit_ok=submit_ok, calib=calib)
-            print("✔ logged to forecasts.csv")
-        except Exception as e:
-            print(f"✖ error on QID {qid}: {e!r}")
-
-    # --- Finalize & commit logs to Git (CI-safe) ---
+    # Write human-readable markdown file
     try:
-        finalize_and_commit(
-            run_id,
-            forecast_rows_written=True,
-            extra_paths=None,
-            commit_message=os.getenv(
-                "GIT_LOG_MESSAGE",
-                f"chore(logs): append forecasts & run logs ({purpose})"
-            ),
-        )
+        write_human_markdown("\n".join(md), run_id=run_id, question_id=question_id)
+    except Exception as _md_ex:
+        print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
+
+    # Finally, write the unified CSV row
+    write_unified_row(row)
+    print("✔ logged to forecasts.csv")
+    return
+
+
+# ==============================================================================
+# Top-level runner (fetch posts, iterate, submit, and commit logs)
+# ==============================================================================
+
+async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
+    """
+    Fetch a batch of posts and process them one by one.
+    Currently supports 'tournament' mode (uses TOURNAMENT_ID from config).
+    """
+    run_id = ist_stamp()
+    print("----------------------------------------------------------------------------------------")
+    if mode == "tournament":
+        # Pull a page of posts
+        data = list_posts_from_tournament(TOURNAMENT_ID, offset=0, count=max(1, limit))
+        posts = data.get("results") or data.get("posts") or []
+        print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
+    else:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    # Optional duplicate guard (filter out questions seen recently)
+    if seen_guard and hasattr(seen_guard, "filter_fresh_posts"):
+        posts, dup_count = seen_guard.filter_fresh_posts(posts)
+        print(f"[seen_guard] {dup_count} duplicate(s) skipped; {len(posts)} fresh post(s) remain.")
+    else:
+        print("[seen_guard] not active; processing all posts returned.")
+
+    # Make sure CSV exists before we start
+    ensure_unified_csv()
+
+    # Process each post
+    for idx, post in enumerate(posts[:limit], start=1):
+        q = post.get("question") or {}
+        qid = q.get("id") or post.get("id") or "?"
+        title = (q.get("title") or post.get("title") or "").strip()
+        print("")
+        print("----------------------------------------------------------------------------------------")
+        print(f"[{idx}/{len(posts[:limit])}] ❓ {title}  (QID: {qid})")
+        try:
+            await run_one_question(
+                post,
+                run_id=run_id,
+                purpose=purpose,
+                submit_ok=bool(submit),
+                calib=_load_calibration_weights(),
+            )
+        except Exception as e:
+            print(f"[error] run_one_question failed for QID {qid}: {type(e).__name__}: {str(e)[:200]}")
+
+    # Commit logs to git if configured
+    try:
+        finalize_and_commit()
         print("[logs] finalize_and_commit: done")
     except Exception as e:
-        # Never fail the run because of git/logging issues
-        print(f"[logs] finalize_and_commit skipped: {e!r}")
+        print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
 
-async def run_test_questions(limit: int, *, purpose: str, submit_ok: bool) -> None:
-    DEFAULT_IDS = [578, 14333, 22427, 38195]
-    env_ids = os.getenv("TEST_POST_IDS", "")
-    ids = DEFAULT_IDS
-    if env_ids.strip():
-        try:
-            ids = [int(x) for x in re.split(r"[,\s]+", env_ids.strip()) if x]
-        except Exception:
-            pass
-    ids = ids[:max(1, limit)]
-    posts: List[dict] = []
-    for pid in ids:
-        try:
-            posts.append(get_post_details(int(pid)))
-        except Exception as e:
-            print(f"[warn] failed to fetch post {pid}: {e!r}")
-    await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
 
-async def run_tournament(limit: int, *, purpose: str, submit_ok: bool) -> None:
-    try:
-        resp = list_posts_from_tournament(TOURNAMENT_ID, offset=0, count=limit)
-        posts = resp.get("results") or []
-        if not posts:
-            print(f"[warn] No open posts returned for tournament '{TOURNAMENT_ID}'.")
-            return
-        print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
-        await run_posts(posts, purpose=purpose, submit_ok=submit_ok)
-    except Exception as e:
-        print(f"[error] listing tournament posts: {e!r}")
-        return
+# ==============================================================================
+# CLI entrypoint
+# ==============================================================================
 
-# --------------------------------------------------------------------------------
-# CLI entrypoints
-# --------------------------------------------------------------------------------
+def _parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Spagbot runner")
+    p.add_argument("--mode", default="tournament", choices=["tournament"], help="Run mode")
+    p.add_argument("--limit", type=int, default=20, help="Max posts to fetch/process")
+    p.add_argument("--submit", action="store_true", help="Submit forecasts to Metaculus")
+    p.add_argument("--purpose", default="ad_hoc", help="String tag recorded in CSV/logs")
+    return p.parse_args()
 
-async def main_async():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["test_questions", "tournament"], default="test_questions",
-                        help="Where to pull questions from.")
-    parser.add_argument("--limit", type=int, default=4, help="How many questions to run.")
-    parser.add_argument("--pid", type=int, default=None, help="Run a single, specific post ID.")
-    parser.add_argument("--submit", action="store_true", help="Actually submit to Metaculus.")
-    parser.add_argument("--purpose", type=str, default="testing",
-                        choices=["fall_aib_2025", "metaculus_cup", "testing"],
-                        help="Internal purpose tag for logging & analysis.")
-    args = parser.parse_args()
 
-    submit_ok = args.submit or SUBMIT_PREDICTION
-
+def main() -> None:
+    args = _parse_args()
     print("🚀 Spagbot ensemble starting…")
-    print(f"Mode: {args.mode} | Limit: {args.limit} | Purpose: {args.purpose} | Submit: {submit_ok}")
-    print("-" * 88)
-
-    if args.pid:
-        try:
-            post = get_post_details(int(args.pid))
-            await run_posts([post], purpose=args.purpose, submit_ok=submit_ok)
-        except Exception as e:
-            print(f"[error] Failed to fetch or run question {args.pid}: {e!r}")
-        return
-
-    if args.mode == "test_questions":
-        await run_test_questions(args.limit, purpose=args.purpose, submit_ok=submit_ok)
-    else:
-        await run_tournament(args.limit, purpose=args.purpose, submit_ok=submit_ok)
-
-def main():
+    print(f"Mode: {args.mode} | Limit: {args.limit} | Purpose: {args.purpose} | Submit: {bool(args.submit)}")
     try:
-        asyncio.run(main_async())
+        asyncio.run(run_job(mode=args.mode, limit=args.limit, submit=bool(args.submit), purpose=args.purpose))
     except KeyboardInterrupt:
-        print("\n[ctrl-c] aborted")
+        print("Interrupted by user.")
+    except Exception as e:
+        print(f"[fatal] {type(e).__name__}: {str(e)[:200]}")
+        raise
+
+
+if __name__ == "__main__":
+    main()

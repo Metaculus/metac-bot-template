@@ -92,6 +92,9 @@ jobs:
       GIT_REMOTE_NAME: origin
       GIT_BRANCH_NAME: main 
       
+      #GTMC1 Debug
+      SPAGBOT_DEBUG_RAW: "1"
+
        # ---- Cost table (string JSON) ----
       MODEL_COSTS_JSON: |
         {"openai/gpt-4o":{"prompt":0.0025,"completion":0.01},"anthropic/claude-3.7-sonnet":{"prompt":0.003,"completion":0.015},"gemini-2.5-pro":{"prompt":0.00125,"completion":0.01},"grok-4":{"prompt":0.003,"completion":0.015}}

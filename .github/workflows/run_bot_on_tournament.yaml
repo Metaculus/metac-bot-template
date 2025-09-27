@@ -79,13 +79,13 @@ jobs:
       LOGS_BASE_DIR: forecast_logs           # save human logs here
       
 
-            # Seen Guard controls
+      # Seen Guard controls
       # set to "48" if you want a 2-day re-forecast cool-down window
       SEEN_COOLDOWN_HOURS: "24"   
       FORECAST_LOCK_DIR: forecast_logs/locks
       SEEN_GUARD_PATH: forecast_logs/state/seen_forecasts.jsonl
 
-            # Log GitHub Commit config 
+      # Log GitHub Commit config 
       HUMAN_LOG_EXT: md
       DISABLE_GIT_LOGS: "false"
       COMMIT_LOGS: true 
@@ -93,6 +93,9 @@ jobs:
       GIT_REMOTE_NAME: origin
       GIT_BRANCH_NAME: main 
       
+      #GTMC1 Debug
+      SPAGBOT_DEBUG_RAW: "1"
+
        # ---- Cost table (string JSON) ----
       MODEL_COSTS_JSON: |
         {"openai/gpt-4o":{"prompt":0.0025,"completion":0.01},"anthropic/claude-3.7-sonnet":{"prompt":0.003,"completion":0.015},"gemini-2.5-pro":{"prompt":0.00125,"completion":0.01},"grok-4":{"prompt":0.003,"completion":0.015}}
