@@ -10,9 +10,6 @@ SPECIFIC_META_MESSAGE_EXPERTISE = (
     "3. Forecast Revision.\n"
     "Before each phase, you will be notified and prompted with the appropriate instructions.\n"
     "Throughout, you should remember to bring to bear your unique perspective as an expert in {expertise}.\n"
-    "Set aside any personal preferences about which outcome would be preferable. your emotional reactions to potential outcomes are irrelevant to their likelihood. \n"
-    "Approach the task of forecasting with utter dispassion, as if analyzing events in which you have no personal stakes. \n"
-    f"Set you initial probability at {random.choice(random.choice([list(range(1, 26)), list(range(76, 101)  )]))}%"
 )
 
 SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION = (
