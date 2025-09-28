@@ -25,7 +25,7 @@ async def chat_group_single_question(
     logging.info("=== Starting main pipeline for question: %s ===", title[:100] + "..." if len(title) > 100 else title)
     logging.info("Pipeline parameters: cache_seed=%s, is_multiple_choice=%s, options=%s, is_woc=%s, use_hyde=%s, num_of_experts=%s", 
                  cache_seed, is_multiple_choice, options, is_woc, use_hyde, num_of_experts)
-    config = get_gpt_config(cache_seed, 1, "gpt-o4-mini-high", 120)
+    config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
     logging.info("Configuration created with cache_seed=%s", cache_seed)
 
     logging.info("Starting research phase with use_hyde=%s", use_hyde)
