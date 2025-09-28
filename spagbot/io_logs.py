@@ -365,40 +365,63 @@ def commit_and_push_logs(changed_paths: Iterable[Path], commit_message: Optional
 # Convenience: one-shot helper
 # ------------------------------
 
-def finalize_and_commit(
-    run_id: str,
-    forecast_rows_written: bool = True,
-    extra_paths: Optional[Iterable[Path]] = None,
-    commit_message: Optional[str] = None,
-) -> bool:
+def finalize_and_commit(*args, **kwargs) -> None:
+    """Finalize a run's logs and (optionally) commit them to git.
+
+    Backward compatible with older calls that passed extra keyword args like
+    forecast_rows_written, extra_paths, commit_message.
     """
-    Convenience helper to call near the end of a run:
-      - Collects the forecasts.csv (if written) and the human log file for run_id,
-        plus any extra_paths you pass.
-      - Tries to commit & push them (subject to environment rules described above).
-      - Returns True if a commit occurred, False otherwise.
-    """
-    paths = get_log_paths()
-    changed = []
+    # Accept both finalize_and_commit(run_id, message=...) and
+    # finalize_and_commit(run_id, commit_message=...), as well as no run_id.
+    run_id = None
+    message = None
 
-    # Include forecasts.csv if we likely touched it
-    if forecast_rows_written and paths.forecasts_csv.exists():
-        changed.append(paths.forecasts_csv)
+    if len(args) >= 1 and isinstance(args[0], str):
+        run_id = args[0]
 
-    # Include this run's human log if exists
-    run_log = human_log_path(run_id)
-    if run_log.exists():
-        changed.append(run_log)
+    # Old callers may pass 'commit_message'
+    message = kwargs.pop("message", None) or kwargs.pop("commit_message", None)
 
-    if extra_paths:
-        for p in extra_paths:
-            if p and Path(p).exists():
-                changed.append(Path(p))
+    # Swallow legacy/unneeded kwargs
+    _ = kwargs.pop("forecast_rows_written", None)
+    _ = kwargs.pop("extra_paths", None)
 
-    if not changed:
-        return False
+    rid = run_id or RUN_ID
 
-    return commit_and_push_logs(changed_paths=changed, commit_message=commit_message)
+    if DISABLE_GIT_LOGS:
+        return
+
+    run_dir = LOGS_BASE_DIR / rid
+    try:
+        run_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+    try:
+        subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
+        subprocess.run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"], check=True)
+    except Exception:
+        pass
+
+    try:
+        subprocess.run(["git", "add", str(FORECASTS_CSV_PATH)], check=False)
+    except Exception:
+        pass
+
+    # Add the whole logs tree; .gitignore will naturally exclude ignored paths
+    try:
+        subprocess.run(["git", "add", f"{LOGS_BASE_DIR}/**"], check=False, shell=False)
+    except Exception:
+        pass
+
+    commit_msg = message or GIT_LOG_MESSAGE or "chore(logs): append forecasts & run logs"
+    try:
+        subprocess.run(["git", "commit", "-m", commit_msg], check=False)
+        if GIT_REMOTE_NAME and GIT_BRANCH_NAME:
+            subprocess.run(["git", "push", GIT_REMOTE_NAME, GIT_BRANCH_NAME], check=False)
+    except Exception:
+        pass
+
 # -----------------------------------------------------------------------------
 # Compatibility shims for older/newer CLI codepaths
 # -----------------------------------------------------------------------------
@@ -420,10 +443,53 @@ def write_unified_row(row: Dict[str, object]) -> None:
     """
     append_forecast_row(row)
 
-def write_human_markdown(run_id: str, question_id: int, content: str) -> None:
+# --- begin patch: backward-compatible write_human_markdown ---
+def write_human_markdown(*args, **kwargs) -> str:
+    """Write a human-friendly markdown file for a question/run.
+
+    Backward compatible call patterns:
+      1) write_human_markdown(run_id: str, question_id: int, content: str)
+      2) write_human_markdown(question_id: int, content: str, run_id: Optional[str] = None)
+
+    Returns the path that was written to (as a string).
     """
-    CLI passes (run_id, question_id, content). We ignore question_id and write one
-    per-run human log file (run_id.md or run_id.txt) for simplicity.
-    """
+    # --- Backward-compat positional handling ---
+    run_id = None
+    question_id = None
+    content = None
+
+    if len(args) >= 3 and isinstance(args[0], str) and isinstance(args[1], int):
+        # Old signature: (run_id, question_id, content)
+        run_id, question_id, content = args[0], args[1], args[2]
+        # ignore any extra positional args to be forgiving
+    else:
+        # New normalized signature: (question_id, content, run_id=None)
+        if len(args) >= 1 and isinstance(args[0], int):
+            question_id = args[0]
+        if len(args) >= 2 and isinstance(args[1], str):
+            content = args[1]
+        run_id = kwargs.pop("run_id", None)
+
+    # Also support pure kwargs usage
+    if question_id is None:
+        question_id = kwargs.pop("question_id", None)
+    if content is None:
+        content = kwargs.pop("content", None)
+    if run_id is None:
+        run_id = kwargs.pop("run_id", None)  # in case it was only provided as kw earlier
+
+    if question_id is None or content is None:
+        raise TypeError("write_human_markdown() requires question_id and content. (run_id is optional)")
+
+    # Fallback to module RUN_ID if not provided
+    rid = run_id or RUN_ID
+
+    md_dir = ensure_dir(LOGS_BASE_DIR / rid / "human")
+    md_path = md_dir / f"Q{question_id}.{HUMAN_LOG_EXT}"
+    md_path.write_text(content, encoding="utf-8")
+    return str(md_path)
+
+# --- end patch ---
+
     # Prepend a small heading if you want; otherwise just append the content.
     write_human_log(run_id, content, mode="a")

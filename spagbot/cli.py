@@ -66,6 +66,28 @@ except Exception:
 
 from . import GTMC1
 
+# --- seen_guard import shim (ensures a callable filter_unseen_posts exists) ---
+try:
+    try:
+        # When cli.py is executed as a module
+        from .seen_guard import SeenGuard  # type: ignore
+    except Exception:
+        # When cli.py is executed as a script from repo root
+        from seen_guard import SeenGuard  # type: ignore
+
+    _sg = SeenGuard()
+
+    def filter_unseen_posts(posts):
+        # Adapter to old call-site name; calls the actual class method.
+        return _sg.filter_fresh_posts(posts)
+
+except Exception as e:
+    print(f"[seen_guard] disabled ({e}); processing all posts returned.")
+    def filter_unseen_posts(posts):
+        return posts
+# --- end seen_guard import shim ---
+
+
 # Unified CSV helpers (single file)
 from .io_logs import ensure_unified_csv, write_unified_row, write_human_markdown, finalize_and_commit
 
@@ -920,7 +942,8 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     # Write human-readable markdown file
     try:
-        write_human_markdown("\n".join(md), run_id=run_id, question_id=question_id)
+               write_human_markdown(question_id, "\n\n".join(md), run_id=run_id)
+
     except Exception as _md_ex:
         print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
 

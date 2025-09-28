@@ -218,3 +218,10 @@ def filter_post_ids(post_ids: list[int]) -> list[int]:
 
 def mark_post_seen(post_id: int, meta=None) -> None:
     print(f"[warn] An obsolete function ('mark_post_seen') was called for post {post_id}. Please find and remove the call.")
+
+def filter_unseen_posts(posts: list[dict]) -> list[dict]:
+    """
+    Compatibility shim expected by older callers.
+    Accepts a list of posts (each with an 'id' key), returns only fresh ones.
+    """
+    return _GUARD.filter_fresh_posts(posts)
