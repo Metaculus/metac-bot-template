@@ -368,59 +368,51 @@ def commit_and_push_logs(changed_paths: Iterable[Path], commit_message: Optional
 def finalize_and_commit(*args, **kwargs) -> None:
     """Finalize a run's logs and (optionally) commit them to git.
 
-    Backward compatible with older calls that passed extra keyword args like
-    forecast_rows_written, extra_paths, commit_message.
+    Backward compatible with:
+      - finalize_and_commit(run_id, message=...) or ... commit_message=...
+      - finalize_and_commit(message=...) with no run_id (we infer default)
     """
-    # Accept both finalize_and_commit(run_id, message=...) and
-    # finalize_and_commit(run_id, commit_message=...), as well as no run_id.
     run_id = None
-    message = None
-
     if len(args) >= 1 and isinstance(args[0], str):
         run_id = args[0]
 
-    # Old callers may pass 'commit_message'
+    if run_id is None:
+        run_id = kwargs.pop("run_id", None)
     message = kwargs.pop("message", None) or kwargs.pop("commit_message", None)
 
-    # Swallow legacy/unneeded kwargs
-    _ = kwargs.pop("forecast_rows_written", None)
-    _ = kwargs.pop("extra_paths", None)
+    # Ignore legacy extras silently
+    kwargs.pop("forecast_rows_written", None)
+    kwargs.pop("extra_paths", None)
 
-    rid = run_id or RUN_ID
+    if not message:
+        message = os.getenv("GIT_LOG_MESSAGE", "chore(logs): append forecasts & run logs")
 
-    if DISABLE_GIT_LOGS:
+    # Default run_id if not provided
+    try:
+        from .config import ist_stamp
+        default_rid = ist_stamp()
+    except Exception:
+        import datetime as _dt
+        default_rid = _dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    rid = run_id or default_rid
+
+    # Collect files to commit
+    lp = get_log_paths()
+    run_dir = lp.runs_dir / rid
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    paths_to_commit = []
+    if lp.forecasts_csv.exists():
+        paths_to_commit.append(lp.forecasts_csv)
+    # human logs (md/txt depending on HUMAN_LOG_EXT)
+    paths_to_commit.extend(run_dir.rglob(f"*.{lp.human_ext}"))
+
+    if not paths_to_commit:
         return
 
-    run_dir = LOGS_BASE_DIR / rid
-    try:
-        run_dir.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
-
-    try:
-        subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
-        subprocess.run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"], check=True)
-    except Exception:
-        pass
-
-    try:
-        subprocess.run(["git", "add", str(FORECASTS_CSV_PATH)], check=False)
-    except Exception:
-        pass
-
-    # Add the whole logs tree; .gitignore will naturally exclude ignored paths
-    try:
-        subprocess.run(["git", "add", f"{LOGS_BASE_DIR}/**"], check=False, shell=False)
-    except Exception:
-        pass
-
-    commit_msg = message or GIT_LOG_MESSAGE or "chore(logs): append forecasts & run logs"
-    try:
-        subprocess.run(["git", "commit", "-m", commit_msg], check=False)
-        if GIT_REMOTE_NAME and GIT_BRANCH_NAME:
-            subprocess.run(["git", "push", GIT_REMOTE_NAME, GIT_BRANCH_NAME], check=False)
-    except Exception:
-        pass
+    # Delegate to the robust helper that already handles CI/local policy,
+    # git identity, branch detection, and push.
+    commit_and_push_logs(paths_to_commit, commit_message=message)
 
 # -----------------------------------------------------------------------------
 # Compatibility shims for older/newer CLI codepaths
@@ -445,51 +437,63 @@ def write_unified_row(row: Dict[str, object]) -> None:
 
 # --- begin patch: backward-compatible write_human_markdown ---
 def write_human_markdown(*args, **kwargs) -> str:
-    """Write a human-friendly markdown file for a question/run.
-
-    Backward compatible call patterns:
-      1) write_human_markdown(run_id: str, question_id: int, content: str)
-      2) write_human_markdown(question_id: int, content: str, run_id: Optional[str] = None)
-
-    Returns the path that was written to (as a string).
     """
-    # --- Backward-compat positional handling ---
-    run_id = None
+    Write a per-question human-readable markdown file.
+
+    Backward compatible with both:
+      - write_human_markdown(run_id, question_id, content)
+      - write_human_markdown(question_id=..., content=..., run_id=...)
+    and any mixture of positional/keyword args without "multiple values" errors.
+
+    Returns the absolute path written, as a string.
+    """
     question_id = None
     content = None
+    run_id = None
 
-    if len(args) >= 3 and isinstance(args[0], str) and isinstance(args[1], int):
-        # Old signature: (run_id, question_id, content)
-        run_id, question_id, content = args[0], args[1], args[2]
-        # ignore any extra positional args to be forgiving
-    else:
-        # New normalized signature: (question_id, content, run_id=None)
-        if len(args) >= 1 and isinstance(args[0], int):
-            question_id = args[0]
+    # -------- Back-compat positional handling --------
+    # Possible legacy forms:
+    #   (run_id, question_id, content)
+    #   (question_id, content)  -> implies default/current run_id
+    if len(args) >= 1 and isinstance(args[0], str):
+        if len(args) >= 2 and str(args[1]).isdigit():
+            run_id = args[0]
+            question_id = int(args[1])
+            if len(args) >= 3 and isinstance(args[2], str):
+                content = args[2]
+    elif len(args) >= 1 and str(args[0]).isdigit():
+        question_id = int(args[0])
         if len(args) >= 2 and isinstance(args[1], str):
             content = args[1]
-        run_id = kwargs.pop("run_id", None)
 
-    # Also support pure kwargs usage
+    # -------- Keyword args (authoritative) --------
     if question_id is None:
-        question_id = kwargs.pop("question_id", None)
+        qi = kwargs.pop("question_id", None)
+        if qi is not None:
+            question_id = int(qi)
     if content is None:
         content = kwargs.pop("content", None)
     if run_id is None:
-        run_id = kwargs.pop("run_id", None)  # in case it was only provided as kw earlier
+        run_id = kwargs.pop("run_id", None)
 
     if question_id is None or content is None:
         raise TypeError("write_human_markdown() requires question_id and content. (run_id is optional)")
 
-    # Fallback to module RUN_ID if not provided
-    rid = run_id or RUN_ID
+    # Default run_id if not provided
+    try:
+        from .config import ist_stamp
+        default_rid = ist_stamp()
+    except Exception:
+        import datetime as _dt
+        default_rid = _dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    rid = run_id or default_rid
 
-    md_dir = ensure_dir(LOGS_BASE_DIR / rid / "human")
-    md_path = md_dir / f"Q{question_id}.{HUMAN_LOG_EXT}"
+    # Write under forecast_logs/runs/<run_id>/human/
+    paths = get_log_paths()
+    md_dir = (paths.runs_dir / rid / "human")
+    md_dir.mkdir(parents=True, exist_ok=True)
+
+    md_path = md_dir / f"Q{int(question_id)}.{paths.human_ext}"
     md_path.write_text(content, encoding="utf-8")
     return str(md_path)
 
-# --- end patch ---
-
-    # Prepend a small heading if you want; otherwise just append the content.
-    write_human_log(run_id, content, mode="a")

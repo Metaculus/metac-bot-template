@@ -30,9 +30,15 @@ import os
 import re
 import time
 from typing import Optional, List, Dict, Any, Tuple
+import inspect
 
 import numpy as np
 import requests
+
+import json
+from pathlib import Path
+
+
 
 # ---- Spagbot internals (all relative imports) --------------------------------
 from .config import (
@@ -88,6 +94,7 @@ except Exception as e:
 # --- end seen_guard import shim ---
 
 
+
 # Unified CSV helpers (single file)
 from .io_logs import ensure_unified_csv, write_unified_row, write_human_markdown, finalize_and_commit
 
@@ -95,6 +102,88 @@ from .io_logs import ensure_unified_csv, write_unified_row, write_human_markdown
 # Small utility helpers (safe JSON, timing, clipping, etc.)
 # --------------------------------------------------------------------------------
 
+# --- SeenGuard wiring (robust to different shapes/APIs) -----------------------
+def _load_seen_guard():
+    """
+    Try to load a SeenGuard instance from seen_guard.py in a robust way.
+    Will look for common instance names and fall back to constructing SeenGuard.
+    Returns: guard instance or None
+    """
+    try:
+        import seen_guard as sg_mod
+    except Exception:
+        return None
+
+    # Prefer a ready-made instance exported from the module
+    for attr in ("_GUARD", "GUARD", "guard"):
+        guard = getattr(sg_mod, attr, None)
+        if guard is not None:
+            return guard
+
+    # Fallback: instantiate if class is available
+    try:
+        SG = getattr(sg_mod, "SeenGuard", None)
+        if SG is not None:
+            cooldown = int(os.getenv("SEEN_COOLDOWN_HOURS", "24"))
+            path = os.getenv("SEEN_GUARD_PATH", "forecast_logs/state/seen_forecasts.jsonl")
+            return SG(Path(path), cooldown_hours=cooldown)
+    except Exception:
+        pass
+
+    return None
+
+
+def _apply_seen_guard(guard, posts):
+    """
+    Call the first matching method on guard to filter posts.
+    Accepts either a return of (posts, dup_count) or just posts.
+    """
+    if not guard or not posts:
+        return posts, 0
+
+    candidates = [
+        "filter_fresh_posts",
+        "filter_unseen_posts",
+        "filter_posts",
+        "filter_recent_posts",
+        "filter_new_posts",
+        "filter",  # very generic, last
+    ]
+
+    last_err = None
+    for name in candidates:
+        if hasattr(guard, name):
+            fn = getattr(guard, name)
+            try:
+                # Try simple positional call
+                result = fn(posts)
+            except TypeError:
+                # Try kwargs form if implemented that way
+                try:
+                    result = fn(posts=posts)
+                except Exception as e:
+                    last_err = e
+                    continue
+            except Exception as e:
+                last_err = e
+                continue
+
+            # Normalize return
+            if isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], list):
+                return result
+            if isinstance(result, list):
+                return result, 0
+
+            # Unexpected return shape; treat as no-op
+            return posts, 0
+
+    # If we got here, no callable matched or all failed
+    if last_err:
+        raise last_err
+    return posts, 0
+# ----------------------------------------------------------------------------- 
+
+# Time in milliseconds since start_time
 def _ms(start_time: float) -> int:
     return int(round((time.time() - start_time) * 1000))
 
@@ -906,6 +995,34 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     except Exception as _ens_dbg_ex:
         md.append(f"- ensemble_debug_error={type(_ens_dbg_ex).__name__}: {str(_ens_dbg_ex)[:200]}")
 
+    # --- Per-model details: reasoning + usage/cost --------------------------------
+    try:
+        MODEL_RAW_MAX = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+        md.append("")
+        md.append("### Per-model (raw + usage/cost)")
+
+        for m in ens_res.members:
+            if not isinstance(m, MemberOutput):
+                continue
+            md.append(f"#### {m.name}")
+            md.append(
+                f"- ok={m.ok} | t_ms={getattr(m,'elapsed_ms',0)} | "
+                f"tokens: prompt={getattr(m,'prompt_tokens',0)}, "
+                f"completion={getattr(m,'completion_tokens',0)}, "
+                f"total={getattr(m,'total_tokens',0)} | "
+                f"cost=${float(getattr(m,'cost_usd',0.0)):.6f}"
+            )
+            if getattr(m, "error", None):
+                md.append(f"- error={str(m.error)[:240]}")
+            if getattr(m, "raw_text", None):
+                raw = (m.raw_text or "").strip()
+                if raw:
+                    md.append("```md")
+                    md.append(raw[:MODEL_RAW_MAX])
+                    md.append("```")
+    except Exception as _pm_ex:
+        md.append(f"- per_model_dump_error={type(_pm_ex).__name__}: {str(_pm_ex)[:200]}")
+
     # --- Aggregation summary (BMC) ---------------------------------------------
     try:
         md.append("### Aggregation (BMC)")
@@ -942,7 +1059,7 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     # Write human-readable markdown file
     try:
-               write_human_markdown(question_id, "\n\n".join(md), run_id=run_id)
+               write_human_markdown(run_id=run_id, question_id=question_id, content="\n\n".join(md))
 
     except Exception as _md_ex:
         print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
@@ -960,27 +1077,228 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
     """
     Fetch a batch of posts and process them one by one.
-    Currently supports 'tournament' mode (uses TOURNAMENT_ID from config).
+    Supports:
+      - mode="tournament": uses TOURNAMENT_ID from config
+      - mode="file": reads local JSON (list of posts, dict with 'results'/'posts',
+                     or dict with 'post_ids' to fetch individually)
     """
-    run_id = ist_stamp()
+    # --- local imports to keep this function self-contained ---------------
+    import os, json, inspect, importlib
+    from pathlib import Path
+
+    def _istamp():
+        # Use Istanbul-tz stamp from config if available, else UTC-ish fallback
+        try:
+            from .config import IST_TZ
+            from datetime import datetime
+            return datetime.now(IST_TZ).strftime("%Y%m%d-%H%M%S")
+        except Exception:
+            from datetime import datetime, timezone
+            return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+    run_id = _istamp()
     print("----------------------------------------------------------------------------------------")
+
+    # --- load helpers from this module scope --------------------------------
+    # They already exist below in this file; just reference them:
+    #   list_posts_from_tournament(...), get_post_details(...)
+    #   ensure_unified_csv(), run_one_question(...), _load_calibration_weights()
+    #   finalize_and_commit()
+
+    # --- load questions ------------------------------------------------------
     if mode == "tournament":
-        # Pull a page of posts
         data = list_posts_from_tournament(TOURNAMENT_ID, offset=0, count=max(1, limit))
         posts = data.get("results") or data.get("posts") or []
         print(f"[info] Retrieved {len(posts)} open post(s) from '{TOURNAMENT_ID}'.")
+    elif mode == "file":
+        qfile_path = (
+            globals().get("QUESTIONS_FILE")
+            or os.getenv("QUESTIONS_FILE")
+            or "data/test_questions.json"
+        )
+        qfile = Path(qfile_path)
+        if not qfile.exists():
+            raise FileNotFoundError(f"Questions file not found: {qfile}")
+
+        with qfile.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        posts = []
+        if isinstance(data, list):
+            # list of post objects
+            posts = data
+        elif isinstance(data, dict):
+            # dict with posts or results
+            posts = data.get("results") or data.get("posts") or []
+            # NEW: dict with post_ids -> fetch each
+            post_ids = data.get("post_ids") or data.get("ids") or []
+            if post_ids and not posts:
+                fetched = []
+                for pid in post_ids[: max(1, limit)]:
+                    try:
+                        fetched.append(get_post_details(int(pid)))
+                    except Exception as e:
+                        print(f"[warn] get_post_details({pid}) failed: {type(e).__name__}: {str(e)[:120]}")
+                posts = fetched
+        else:
+            posts = []
+
+        print(f"[info] Loaded {len(posts)} post(s) from {qfile.as_posix()}.")
     else:
         raise ValueError(f"Unsupported mode: {mode}")
 
-    # Optional duplicate guard (filter out questions seen recently)
-    if seen_guard and hasattr(seen_guard, "filter_fresh_posts"):
-        posts, dup_count = seen_guard.filter_fresh_posts(posts)
-        print(f"[seen_guard] {dup_count} duplicate(s) skipped; {len(posts)} fresh post(s) remain.")
-    else:
-        print("[seen_guard] not active; processing all posts returned.")
+    # --- SeenGuard wiring (handles both package and top-level) ---------------
+    def _load_seen_guard():
+        """
+        Try to import a SeenGuard instance/class from spagbot.seen_guard or seen_guard.
+        Return an instance or None.
+        """
+        sg_mod = None
+        # Prefer relative (inside package)
+        try:
+            from . import seen_guard as _sg
+            sg_mod = _sg
+        except Exception:
+            # Fall back to absolute names
+            for modname in ("spagbot.seen_guard", "seen_guard"):
+                try:
+                    sg_mod = importlib.import_module(modname)
+                    break
+                except Exception:
+                    continue
 
-    # Make sure CSV exists before we start
+        if sg_mod is None:
+            return None
+
+        # If module exposes a ready-made instance, use it
+        for attr in ("_GUARD", "GUARD", "guard"):
+            guard = getattr(sg_mod, attr, None)
+            if guard is not None:
+                return guard
+
+        # Else instantiate SeenGuard(csv_path/state_file/lock_dir via env defaults)
+        SG = getattr(sg_mod, "SeenGuard", None)
+        if SG is not None and inspect.isclass(SG):
+            try:
+                return SG()  # it reads env defaults internally
+            except Exception:
+                return None
+
+        return None
+
+    def _apply_seen_guard(guard, posts_list):
+        """
+        Call whichever filter method exists; normalize return to (posts, dup_count).
+        """
+        if guard is None or not posts_list:
+            return posts_list, 0
+
+        candidates = [
+            "filter_unseen_posts",     # your current API
+            "filter_fresh_posts",      # earlier suggestion
+            "filter_posts",
+            "filter_recent_posts",
+            "filter_new_posts",
+            "filter",                  # very generic, last
+        ]
+        last_err = None
+        for name in candidates:
+            if hasattr(guard, name):
+                fn = getattr(guard, name)
+                try:
+                    # most APIs: fn(posts)
+                    result = fn(posts_list)
+                except TypeError:
+                    try:
+                        # named arg fallback
+                        result = fn(posts=posts_list)
+                    except Exception as e:
+                        last_err = e
+                        continue
+                except Exception as e:
+                    last_err = e
+                    continue
+
+                # normalize return
+                if isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], list):
+                    return result
+                if isinstance(result, list):
+                    # compute naive dup_count
+                    return result, max(0, len(posts_list) - len(result))
+
+                # unexpected shape → treat as no-op
+                return posts_list, 0
+
+        if last_err:
+            raise last_err
+        return posts_list, 0
+
+    # Try to activate seen guard
+    try:
+        guard = _load_seen_guard()
+        if guard is None:
+            print("[seen_guard] not active; processing all posts returned.")
+        else:
+            before = len(posts)
+            posts, dup_count = _apply_seen_guard(guard, posts)
+            after = len(posts)
+            if not isinstance(dup_count, int):
+                dup_count = max(0, before - after)
+            print(f"[seen_guard] {dup_count} duplicate(s) skipped; {after} fresh post(s) remain.")
+    except Exception as _sg_ex:
+        print(f"[seen_guard] disabled due to error: {type(_sg_ex).__name__}: {str(_sg_ex)[:200]}")
+
+    # Ensure CSV exists before we start
     ensure_unified_csv()
+
+    # Process each post
+    if not posts:
+        print("[info] No posts to process.")
+        try:
+            finalize_and_commit()
+            print("[logs] finalize_and_commit: done")
+        except Exception as e:
+            print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
+        return
+
+    for idx, post in enumerate(posts[: max(1, limit)], start=1):
+        q = post.get("question") or {}
+        qid = q.get("id") or post.get("id") or "?"
+        title = (q.get("title") or post.get("title") or "").strip()
+        print("")
+        print("----------------------------------------------------------------------------------------")
+        print(f"[{idx}/{len(posts[: max(1, limit)])}] ❓ {title}  (QID: {qid})")
+        try:
+            await run_one_question(
+                post,
+                run_id=run_id,
+                purpose=purpose,
+                submit_ok=bool(submit),
+                calib=_load_calibration_weights(),
+            )
+        except Exception as e:
+            print(f"[error] run_one_question failed for QID {qid}: {type(e).__name__}: {str(e)[:200]}")
+
+    # Commit logs to git if configured
+    try:
+        finalize_and_commit()
+        print("[logs] finalize_and_commit: done")
+    except Exception as e:
+        print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
+
+
+    # Ensure CSV exists before we start
+    ensure_unified_csv()
+
+    # Nothing to do?
+    if not posts:
+        print("[info] No posts to process.")
+        try:
+            finalize_and_commit(run_id=run_id)
+            print("[logs] finalize_and_commit: done")
+        except Exception as e:
+            print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
+        return
 
     # Process each post
     for idx, post in enumerate(posts[:limit], start=1):
@@ -1003,11 +1321,10 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
 
     # Commit logs to git if configured
     try:
-        finalize_and_commit()
+        finalize_and_commit(run_id=run_id)
         print("[logs] finalize_and_commit: done")
     except Exception as e:
         print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
-
 
 # ==============================================================================
 # CLI entrypoint
@@ -1015,12 +1332,13 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
 
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Spagbot runner")
-    p.add_argument("--mode", default="tournament", choices=["tournament"], help="Run mode")
+    p.add_argument("--mode", default="tournament", choices=["tournament", "file"], help="Run mode")
     p.add_argument("--limit", type=int, default=20, help="Max posts to fetch/process")
     p.add_argument("--submit", action="store_true", help="Submit forecasts to Metaculus")
     p.add_argument("--purpose", default="ad_hoc", help="String tag recorded in CSV/logs")
+    p.add_argument("--questions-file", default="data/test_questions.json",
+                   help="When --mode file, path to JSON with {'post_ids': [..]}")
     return p.parse_args()
-
 
 def main() -> None:
     args = _parse_args()

@@ -92,7 +92,8 @@ jobs:
       GIT_LOG_MESSAGE:"chore(logs): append forecasts & run logs"
       GIT_REMOTE_NAME: origin
       GIT_BRANCH_NAME: main 
-      
+      # Optional: one markdown file per run (no subfolder) is 1; blank means one file per question
+      HUMAN_LOG_FLAT:
       #GTMC1 Debug
       SPAGBOT_DEBUG_RAW: "1"
 
