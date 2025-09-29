@@ -245,7 +245,7 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4", temper
     client = AsyncOpenAI(
         base_url=OPENROUTER_BASE_URL,
         api_key=OPENROUTER_API_KEY,
-        max_retries=2,
+        max_retries=5,
     )
 
     async with llm_rate_limiter:
