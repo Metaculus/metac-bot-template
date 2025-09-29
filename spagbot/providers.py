@@ -15,6 +15,12 @@ import os, asyncio, json
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
 
+from .config import (
+    GPT5_CALL_TIMEOUT_SEC,
+    GEMINI_CALL_TIMEOUT_SEC,
+    GROK_CALL_TIMEOUT_SEC,
+)
+
 # ---------------- stable names for CSV schema ----------------
 KNOWN_MODELS = [
     "OpenRouter-Default",
@@ -55,13 +61,21 @@ except Exception:
 llm_semaphore = asyncio.Semaphore(int(os.getenv("LLM_MAX_CONCURRENCY","4")))
 _async_client_singleton = None
 
+_OR_TIMEOUT = max(1.0, float(GPT5_CALL_TIMEOUT_SEC or 0))
+_GEMINI_TIMEOUT = max(1.0, float(GEMINI_CALL_TIMEOUT_SEC or 0))
+_GROK_TIMEOUT = max(1.0, float(GROK_CALL_TIMEOUT_SEC or 0))
+
 def _get_or_client():
     """Return AsyncOpenAI client (OpenRouter) or None."""
     global _async_client_singleton
     if not OR_API_KEY or AsyncOpenAI is None:
         return None
     if _async_client_singleton is None:
-        _async_client_singleton = AsyncOpenAI(api_key=OR_API_KEY, base_url=OR_BASE_URL)
+        _async_client_singleton = AsyncOpenAI(
+            api_key=OR_API_KEY,
+            base_url=OR_BASE_URL,
+            timeout=_OR_TIMEOUT,
+        )
     return _async_client_singleton
 
 # ----------- Gemini (DIRECT) -----------
@@ -140,14 +154,27 @@ async def _call_openrouter(model_id: str, prompt: str, temperature: float) -> tu
         return "", {}, "no OpenRouter client"
     try:
         async with llm_semaphore:
-            resp = await client.chat.completions.create(
-                model=model_id,
-                messages=[{"role":"user","content":prompt}],
-                temperature=temperature,
+            resp = await asyncio.wait_for(
+                client.chat.completions.create(
+                    model=model_id,
+                    messages=[{"role":"user","content":prompt}],
+                    temperature=temperature,
+                    timeout=_OR_TIMEOUT,
+                ),
+                timeout=_OR_TIMEOUT,
             )
-        text = (resp.choices[0].message.content or "").strip()
+        content = getattr(resp.choices[0].message, "content", "")
+        if isinstance(content, list):
+            text = "".join(
+                part.get("text", "") if isinstance(part, dict) else str(part)
+                for part in content
+            ).strip()
+        else:
+            text = (content or "").strip()
         usage = usage_to_dict(getattr(resp, "usage", None))
         return text, usage, ""
+    except asyncio.TimeoutError:
+        return "", {}, f"TimeoutError: OpenRouter call exceeded {_OR_TIMEOUT:.0f}s"
     except Exception as e:
         return "", {}, f"{type(e).__name__}: {str(e)[:200]}"
 
@@ -161,7 +188,7 @@ async def _call_gemini_direct(model_id: str, prompt: str, temperature: float) ->
             "generationConfig":{"temperature":float(temperature)}
         }
         try:
-            r = requests.post(url, json=body, timeout=300)
+            r = requests.post(url, json=body, timeout=_GEMINI_TIMEOUT)
             j = r.json()
         except Exception as e:
             return "", {}, f"Gemini request error: {e!r}"
@@ -191,7 +218,7 @@ async def _call_grok_direct(model_id: str, prompt: str, temperature: float) -> t
         headers = {"Authorization": f"Bearer {XAI_API_KEY}", "Content-Type":"application/json"}
         body = {"model": model_id, "messages":[{"role":"user","content":prompt}], "temperature": float(temperature)}
         try:
-            r = requests.post(XAI_BASE_URL, json=body, headers=headers, timeout=300)
+            r = requests.post(XAI_BASE_URL, json=body, headers=headers, timeout=_GROK_TIMEOUT)
             j = r.json()
         except Exception as e:
             return "", {}, f"Grok request error: {e!r}"
