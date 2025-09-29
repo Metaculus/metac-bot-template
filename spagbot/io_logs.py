@@ -41,6 +41,7 @@ from __future__ import annotations
 import csv
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Sequence
@@ -354,9 +355,35 @@ def commit_and_push_logs(changed_paths: Iterable[Path], commit_message: Optional
     branch = os.getenv("GIT_BRANCH_NAME", _current_branch(repo))
     try:
         _run(["git", "push", remote, branch], cwd=repo, check=True)
-    except subprocess.CalledProcessError:
-        # Push failure shouldn't break the run; return True to indicate we at least committed
-        return True
+    except subprocess.CalledProcessError as push_err:
+        # Remote has likely advanced. Try to rebase onto the latest remote state
+        # and push again. If anything in this recovery flow fails we still
+        # consider the commit successful so the caller can continue.
+        print(
+            f"[git] initial push failed ({push_err.returncode}); attempting pull --rebase",
+            file=sys.stderr,
+        )
+        try:
+            _run(
+                ["git", "pull", "--rebase", "--autostash", remote, branch],
+                cwd=repo,
+                check=True,
+            )
+        except subprocess.CalledProcessError as pull_err:
+            print(
+                f"[git] pull --rebase failed ({pull_err.returncode}); leaving commit local",
+                file=sys.stderr,
+            )
+            return True
+
+        try:
+            _run(["git", "push", remote, branch], cwd=repo, check=True)
+        except subprocess.CalledProcessError as retry_err:
+            print(
+                f"[git] retry push failed ({retry_err.returncode}); leaving commit local",
+                file=sys.stderr,
+            )
+            return True
 
     return True
 
