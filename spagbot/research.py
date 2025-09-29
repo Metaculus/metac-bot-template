@@ -453,8 +453,20 @@ async def run_research_async(
     if cached:
         try:
             data = json.loads(cached)
-            final_text = data.get("final_text","");
-            meta = data.get("meta",{}) or {}
+            final_text = data.get("final_text", "")
+            meta_raw: Any = data.get("meta", {}) or {}
+
+            if isinstance(meta_raw, dict):
+                meta = dict(meta_raw)
+            elif isinstance(meta_raw, str):
+                try:
+                    meta_parsed = json.loads(meta_raw)
+                    meta = dict(meta_parsed) if isinstance(meta_parsed, dict) else {}
+                except Exception:
+                    meta = {}
+            else:
+                meta = {}
+
             meta["research_cached"] = "1"
             return final_text, meta
         except Exception:
