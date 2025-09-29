@@ -97,6 +97,10 @@ run_bot_on_tournament.yaml,
 
 run_bot_on_metaculus_cup.yaml,
 
+> **Note:** Metaculus renames the Cup slug every season. Update the `TOURNAMENT_ID`
+> in `.github/workflows/run_bot_on_metaculus_cup.yaml` to match the current Cup
+> URL (presently `metaculus-cup-fall-2025`).
+
 calibration_refresh.yml (periodic update of calibration weights).
 
 Add secrets (see below), push the repo, and Actions will:

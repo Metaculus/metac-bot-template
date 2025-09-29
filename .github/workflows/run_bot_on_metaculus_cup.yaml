@@ -20,7 +20,8 @@ jobs:
       # ---- Required / identity ----
       GIT_SHA: ${{ github.sha }}
       METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-      TOURNAMENT_ID: metaculus-cup
+      # Metaculus renamed the Cup slug for Fall 2025; keep this in sync with the live tournament URL.
+      TOURNAMENT_ID: metaculus-cup-fall-2025
       SUBMIT_PREDICTION: "1"
 
       # ---- LLM providers ----
