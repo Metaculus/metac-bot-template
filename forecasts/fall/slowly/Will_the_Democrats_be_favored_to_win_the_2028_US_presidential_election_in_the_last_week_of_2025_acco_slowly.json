@@ -1,0 +1,465 @@
+{
+    "deliberation_results": {
+        "ElectionForecasting (BayesianForecasting)": {
+            "time_to_resolution": "About 13 weeks (resolves after December 31, 2025; today is September 29, 2025)",
+            "perspective_relevance": "As an expert in Bayesian Election Forecasting, I ground my forecast in base rates, market behavior, and the inertia of public opinion, while leveraging the predictive power and biases present in well-trafficked prediction markets like Kalshi. My approach adjusts for status quo bias, market inefficiencies, and the probabilistic structure of similar events, while weighing the impact of recent polling and sentiment shifts.",
+            "status_quo": "As of mid/late 2025, Democratic and Republican odds are close, but recent market and polling data suggest a slight Democratic edge in prediction markets for the 2028 presidential election\u2014Kalshi has shown Democrats favored at 52% to 48% in recent snapshots, despite Republicans' perceived momentum after their 2024 victory.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base rates/status quo bias in partisan advantage",
+                    "effect": "Slightly increases Democratic probability. Prediction markets tend to overreact to recent events but revert to the mean; the party not in the White House often starts as the betting favorite for the next cycle, but market prices in 2025 are still close to even."
+                },
+                {
+                    "factor": "Recency effect of 2024 Republican victory and polling momentum",
+                    "effect": "Decreases Democratic probability. Multiple news articles and polls highlight Republican strength, trust on key issues (economy, crime, immigration), and a popular GOP president, making markets more cautious about Democratic odds."
+                },
+                {
+                    "factor": "Kalshi market mechanics and inefficiencies",
+                    "effect": "Slightly increases the chance of a 'No' (Republicans favored) due to inefficiencies, manipulation, or arbitrage, but high liquidity suggests markets will self-correct unless strong exogenous shocks occur."
+                },
+                {
+                    "factor": "Uncertainty in candidate fields for 2028",
+                    "effect": "Slightly increases Democratic probability. The Republican field is clearer (JD Vance the frontrunner), but Democratic prospects are fragmented; markets may price in a generic party effect, which historically leans Democrat in early betting unless the incumbent is extremely popular."
+                },
+                {
+                    "factor": "Public sentiment volatility and midterm outlook",
+                    "effect": "Could decrease Democratic probability as Republicans appear poised for 2026 gains; however, midterms are less predictive for presidential markets than commonly assumed."
+                },
+                {
+                    "factor": "Prediction market herding and arbitrage",
+                    "effect": "Neutral to slightly increasing Democratic probability. Large players may push odds based on perceived mispricings, but Kalshi's liquidity and regulatory oversight reduce long-term distortions."
+                }
+            ],
+            "no_scenario": "Republicans remain favored on Kalshi in the last week of 2025 due to continued strong polling for GOP issues (immigration, economy, crime), a clear Republican candidate (JD Vance) with strong early organization, and lingering Democratic disarray or unpopularity. Market sentiment becomes more bearish on Democrats, with the median price for 'Republican' outpacing 'Democratic' on Kalshi.",
+            "yes_scenario": "The Democratic Party overcomes current polling deficits by consolidating around a popular or consensus candidate (e.g., Newsom or Buttigieg), public opinion shifts due to emerging issues or Republican missteps, or prediction markets revert to the mean and price in the historical 'pendulum swing' toward the out-party. Kalshi's market median for 'Democratic' edges out 'Republican' in the last week of 2025.",
+            "final_reasoning": "Kalshi's most recent public odds (from June and July 2025) showed Democrats narrowly favored (52% to 48%), and Polymarket odds similarly lean slightly Democratic, despite strong Republican polling and narrative momentum. Historically, prediction markets price in the tendency for the out-party to be favored early in the cycle, and as of late 2025, the markets have not fully priced in a Republican lock despite their 2024 victory and favorable polling. The news articles highlight Republican momentum and public dissatisfaction with Democrats, but do not suggest an overwhelming market or polling consensus that would flip the betting favorite to Republicans just yet. Given the short time to resolution and the inertia typical in such markets, I expect only a modest shift, if any, before the end of 2025. The base rate for prediction markets at this stage is a near-coin-flip, with perhaps a slight Democratic lean. Therefore, the most likely outcome is that Democrats remain (even if barely) the median favorite on Kalshi for the last week of 2025. I assign a probability just above even odds to reflect the modest Democratic edge, while accounting for the real possibility of a shift.",
+            "final_probability": 57
+        },
+        "ElectionForecasting (FundamentalsBasedForecasting)": {
+            "time_to_resolution": "Approximately 3 months (question resolves based on median Kalshi prices during December 25-31, 2025; today is September 29, 2025).",
+            "perspective_relevance": "As a fundamentals-based election forecaster, my approach emphasizes structural factors\u2014such as party coalitions, economic indicators, candidate favorability, historical voting patterns, and institutional advantages\u2014over short-term polling swings or media noise. Prediction markets like Kalshi tend to reflect consensus expectations, which are themselves influenced by these fundamentals, especially when the election is still far off and candidate fields are unsettled.",
+            "status_quo": "As of late September 2025, the status quo is that the Republican Party holds the presidency (Trump won in 2024), the Democrats are in opposition and are polling poorly, and Kalshi's latest public odds (from June and July) showed Democrats with a small edge (52% to 48%), but this may have shifted in light of recent GOP strength and negative sentiment toward Democrats.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Incumbency and Midterm Dynamics",
+                    "effect": "Having just lost the White House, Democrats historically benefit from a 'rebound' effect in midterms and subsequent cycles, but this is not guaranteed and the period immediately after a loss is often a low point for party favorability and market odds. This slightly decreases Democratic odds in the short run (by December 2025)."
+                },
+                {
+                    "factor": "Party Brand and Policy Climate",
+                    "effect": "Polling and pundit commentary indicate the Democratic Party brand is at a historic low, especially on issues like immigration and crime, which are dominating the policy agenda. This sharply decreases the probability that markets will favor Democrats in the near term."
+                },
+                {
+                    "factor": "Candidate Uncertainty and Bench Strength",
+                    "effect": "The Democratic bench is still unsettled, with leading figures (Harris, Newsom, Buttigieg) lacking broad popularity or clear momentum. Prediction markets tend to discount parties without a clear, strong frontrunner, which decreases Democratic odds on Kalshi in late 2025."
+                },
+                {
+                    "factor": "Prediction Market Biases and Recency Effects",
+                    "effect": "Prediction markets often overreact to recent events. With Republicans having just won the presidency, bettors may overweight this, further reducing Democratic odds in the immediate post-election period."
+                },
+                {
+                    "factor": "Historical Base Rates",
+                    "effect": "Historically, the party out of power does not immediately become favored for the next presidential cycle; it usually takes midterm gains, candidate clarity, or a shift in public mood. This supports a base rate of 'No' for Democrats being favored by prediction markets at this early stage."
+                },
+                {
+                    "factor": "Market Structure and Manipulation Risks",
+                    "effect": "While there is some risk of manipulation or arbitrage in prediction markets, there is no strong evidence of this systematically favoring one party here. Market inefficiencies are likely to be minor relative to the fundamentals."
+                }
+            ],
+            "no_scenario": "Kalshi prediction markets, responding to the GOP's 2024 win, continuing negative sentiment toward Democrats (per polling and media), and a lack of a clear Democratic frontrunner, price Republicans as favored (median price for Republican > median price for Democrat) during the last week of 2025. This is reinforced by recent polling showing low trust in Democrats on key issues and continued GOP momentum.",
+            "yes_scenario": "A major, unforeseen scandal or economic shock damages the Republican Party's prospects, or a charismatic Democratic candidate emerges and consolidates support by late 2025, leading market participants to shift their odds and price Democrats as favored (median price for Democrat > Republican) on Kalshi during the relevant week.",
+            "final_reasoning": "The fundamentals point toward a 'No' outcome: Democrats are at a post-defeat low ebb, polling and pundit analysis indicate continued weakness, and prediction markets typically take time to shift toward the out-party after a loss. The status quo is that Republicans are favored both in the public sphere and, likely, on Kalshi. There is some evidence that markets priced Democrats slightly ahead in mid-2025, but recent polling, media discussion, and fundamentals suggest sentiment has shifted toward the GOP and will likely persist through the end of the year unless there is a major shock. Given the criteria (median price over a week), even a slight GOP advantage will resolve the question 'No.' The historical base rate of out-party being favored this soon after a loss is quite low. Thus, a 'No' prediction (Democrats not favored on Kalshi in the last week of 2025) is strongly supported.",
+            "final_probability": 20
+        },
+        "FinancialMarketsAnalysis (PredictionMarketsInterpretation)": {
+            "time_to_resolution": "Approximately 3 months (question resolves based on Kalshi market median prices between December 25, 2025 and December 31, 2025)",
+            "perspective_relevance": "As an expert in FinancialMarketsAnalysis with a focus on PredictionMarketsInterpretation, I bring a distinct ability to read between the lines of prediction market pricing, liquidity, and trader sentiment. My expertise allows me to scrutinize not just headline prices but market microstructure, arbitrage flows, and the interplay between news events and market expectations. I am attuned to inefficiencies and the tendency for markets to briefly reflect sentiment rather than fundamentals, but I also understand how persistent price signals can reflect durable, consensus expectations among informed traders.",
+            "status_quo": "As of late September 2025, Kalshi and other major prediction markets (e.g., Polymarket) show the 2028 US presidential election as close, with Republicans (esp. JD Vance) favored in polling and betting, but with the Democratic Party maintaining a slight edge in some market pricing. The 2024 election resulted in a Trump (Republican) win, with Republicans now holding the presidency and Senate. Despite this, prediction markets have often priced the Democrats as very slight favorites for 2028, likely reflecting base rates for party alternation, demographic trends, and uncertainty about the Republican nominee.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rates and Mean Reversion",
+                    "effect": "Slightly increases probability for Democrats; parties tend to alternate control of the White House, and markets often price in reversion after a party wins a big election."
+                },
+                {
+                    "factor": "Recent Republican Strength and Incumbency",
+                    "effect": "Decreases probability for Democrats; Republicans are coming off a strong 2024 win, control both executive and legislative branches, and polling shows high trust in Republicans on key issues (economy, immigration, crime)."
+                },
+                {
+                    "factor": "Prediction Market Efficiency and Arbitrage",
+                    "effect": "Slightly increases probability for the more liquid, consensus market expectation (currently a tossup to slight Democratic edge), but academic work points to inefficiencies and the potential for temporary mispricings, so market signals can be noisy in the absence of clear information about 2028 candidates."
+                },
+                {
+                    "factor": "Candidate Uncertainty",
+                    "effect": "Increases volatility; Democrats have no clear front-runner (Harris, Newsom, Buttigieg all polling below Vance), which may keep odds below 55% for either party until the field clarifies."
+                },
+                {
+                    "factor": "Recent Polling and Public Sentiment",
+                    "effect": "Decreases probability for Democrats; recent Reuters/Ipsos and Ipsos/Post polls show Republicans trusted more on top issues and stronger in likely 2026 midterms, and Democratic favorability is at historic lows post-2024."
+                },
+                {
+                    "factor": "Market Microstructure and Manipulation Risk",
+                    "effect": "Neutral to slight decrease; large, liquid prediction markets like Kalshi are less prone to sustained manipulation, but short-term sentiment swings and coordinated bets can briefly move prices, especially if news flow is negative for one party."
+                },
+                {
+                    "factor": "Cross-Market Consensus",
+                    "effect": "Increases probability for Democrats; despite polls and media narrative favoring Republicans, both Kalshi and Polymarket, as of last available reports, have Democrats as narrow favorites (e.g., Kalshi 52-48, Polymarket 55-46). This suggests a market consensus that may persist absent a major shock."
+                }
+            ],
+            "no_scenario": "Republicans are favored (>50%) on Kalshi for most or all of the last week of December 2025. This could happen if midterm polling for 2026 continues to deteriorate for Democrats, if a strong Republican nominee (e.g., Vance or Rubio) emerges with high favorability, or if the Democratic field remains divided and unpopular, with party infighting or damaging policy debates. News events (e.g., economic downturn, Democratic scandals, continued low approval for Democratic leaders) could also tip the market further toward Republicans.",
+            "yes_scenario": "Democrats are favored (>50%) on Kalshi for a majority of the last week of December 2025. This could result from mean-reverting market behavior (markets price in alternation after a big Republican win), positive developments for Democrats (e.g., Newsom or another candidate gains traction, Republican missteps, economic or policy shocks hurting GOP), or simply the persistence of the current market consensus, which has Democrats as narrow favorites despite recent Republican strength. The lack of a clear Republican incumbent for 2028 (since Trump is term-limited) could also increase uncertainty, benefiting the out-party.",
+            "final_reasoning": "Applying a FinancialMarketsAnalysis lens, the most recent cross-market data (Kalshi, Polymarket) points to a narrow but consistent Democratic edge for 2028, despite a political environment that currently appears hostile to Democrats. Past episodes show that prediction markets often price in base rates of alternation and revert to near-tossup odds in out-years, especially when no incumbent is running. Recent academic work highlights occasional inefficiencies but ultimately points to prediction markets as better aggregators than polls. While the news flow and polling have been negative for Democrats, prediction markets have not fully reflected this, likely due to uncertainty over the 2028 field and the tendency for markets to anchor near 50% absent strong information. Thus, barring a large, unambiguous swing in the next three months, the status quo (Democrats as very slight favorites) is likely to persist, especially given the market's historical behavior. However, the edge is small, as the underlying fundamentals currently favor Republicans, and a single major development (e.g., a strong Republican nominee, further Democratic collapse, or policy shock) could flip the market.",
+            "final_probability": 58
+        },
+        "FinancialMarketsAnalysis (MarketMicrostructure)": {
+            "time_to_resolution": "Approximately 3 months (from September 29, 2025, to December 25-31, 2025).",
+            "perspective_relevance": "As a specialist in FinancialMarketsAnalysis (MarketMicrostructure), my expertise is in understanding how prediction markets operate, what drives pricing, how market liquidity, order flow, and participant composition can impact the odds, and the ways in which these markets both reflect and sometimes distort underlying public sentiment and information. This is crucial for this question, as it is resolved based on the Kalshi prediction market, which is subject to microstructural forces such as liquidity, arbitrage, and trader incentives, not just the latest polls or news.",
+            "status_quo": "As of late September 2025, Kalshi's market for 'Which party will win the 2028 Presidential Election?' reportedly has the Democratic Party slightly favored, with recent figures suggesting odds in the low 50s (e.g., 52% Dem to 48% GOP in late June, per Benzinga). However, the broader media and polling environment is currently more favorable to Republicans, following a Trump victory in 2024, strong Republican polling on key issues, and low Democratic favorability. The status quo is thus a narrow Democratic edge on Kalshi, despite a challenging environment for Democrats.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Market Microstructure and Arbitrage",
+                    "effect": "Increases probability. Kalshi is highly liquid, with sophisticated participants and arbitrageurs who tend to keep prices in line with the best available information. This mitigates the risk of prices diverging too far from consensus expectations unless there is a major shift in fundamentals."
+                },
+                {
+                    "factor": "Base Rates and Incumbency Overhang",
+                    "effect": "Slightly increases probability for Democrats. Even after losing the presidency, the out-party often gets a 'snap-back' in odds as the field resets and voter fatigue with the new incumbent party can set in. Prediction markets tend to price in mean reversion unless there is overwhelming evidence to the contrary."
+                },
+                {
+                    "factor": "Recent News and Polls (Republican Momentum)",
+                    "effect": "Decreases probability. The news cycle and polling environment currently favor Republicans, with polls showing JD Vance and other Republicans leading, Democratic favorability at historic lows, and public trust in Republicans on key issues like immigration and crime. This puts downward pressure on Democratic odds."
+                },
+                {
+                    "factor": "Market Manipulation and Whale Activity",
+                    "effect": "Neutral to slightly increases probability. While there have been documented cases of whales moving prices on prediction markets, Kalshi's more regulated and liquid structure makes large-scale manipulation less likely to persist. However, a single motivated actor with enough capital could temporarily push the market, especially in periods of low newsflow."
+                },
+                {
+                    "factor": "Order Flow and Trader Composition",
+                    "effect": "Slightly increases probability. Kalshi's user base is more U.S.-centric and, based on past cycles, has shown a modest Democratic skew compared to international crypto-based markets like Polymarket. This may keep Democratic odds a few points higher than polling or pundit consensus."
+                },
+                {
+                    "factor": "Information Asymmetry and Event Uncertainty",
+                    "effect": "Slightly increases probability. With no declared candidates, high uncertainty, and a long runway to the election, prediction markets tend to revert to 50/50, especially if neither party has a dominant frontrunner. This inertia benefits the status quo (Democrats slightly favored)."
+                }
+            ],
+            "no_scenario": "A 'No' outcome will occur if, by late December 2025, the Kalshi market median price for 'Democratic' is at or below that for 'Republican.' This could happen if: (a) Republican polling continues to strengthen, (b) a clear, popular, and unifying Republican candidate emerges (e.g., JD Vance consolidates support), (c) Democratic infighting or scandal worsens, or (d) a negative macroeconomic or geopolitical event further sours the public mood toward Democrats. Additionally, if whales or influential traders decide to press the market toward the GOP, and no countervailing Democratic enthusiasm or liquidity appears, the market could flip.",
+            "yes_scenario": "A 'Yes' outcome will occur if, despite the currently unfavorable media and polling environment, Democratic odds remain narrowly ahead on Kalshi due to: (a) lack of strong consensus on the GOP side (e.g., Vance is seen as unproven), (b) mean reversion effects as market participants anticipate a closer general election, (c) Democratic traders providing sufficient liquidity to keep prices above the Republican median, or (d) an unexpected negative event for Republicans or positive news for Democrats (e.g., a strong Democratic candidate emerging, or a Republican scandal). The prediction market's microstructure, with sophisticated arbitrage and a slight Democratic tilt among traders, keeps Democratic odds narrowly ahead even in a tough cycle.",
+            "final_reasoning": "While the macro environment is currently tough for Democrats, and polling/news cycles favor Republicans, the Kalshi market is highly liquid, efficient, and prone to mean reversion when fundamentals are not overwhelmingly lopsided. The prediction market's trader composition, order flow, and microstructure may give the Democrats a modest edge, especially given a lack of certainty about the 2028 candidates and the general tendency for markets to revert toward 50/50 under uncertainty. The probability should not be extreme due to the real possibility that Republican odds could surpass Democrats if current trends persist or intensify. However, the base rate (markets drifting to near-even odds more than a year ahead of an election) and the current status quo (Democratic odds narrowly leading) suggest a moderate probability that Democrats will still be favored on Kalshi in the last week of 2025. My estimate, weighing all factors, is moderately above 50%, but not by a wide margin.",
+            "final_probability": 58
+        },
+        "USPolitics (AmericanPoliticalParties)": {
+            "time_to_resolution": "Approx. 3 months (until December 25\u201331, 2025)",
+            "perspective_relevance": "As an expert in US politics, particularly party dynamics and the mechanics of prediction markets, I bring insight into: (1) the inertia of partisan alignment; (2) how political shocks and leadership changes affect party favorability; (3) how traders on Kalshi interpret public and elite signals; and (4) the tendency for prediction markets to overweight short-term trends and underweight long-run structural features. I am also familiar with how markets can temporarily depart from fundamentals due to sentiment, liquidity, or manipulation, but usually revert to base rates over time.",
+            "status_quo": "As of late June 2025, Kalshi and other major prediction markets (Polymarket, BetMGM) had the Democratic Party as a slight favorite to win the 2028 presidential election (Democrats ~52% to Republicans ~48%). This reflects the historical tendency for prediction markets to price in mean reversion after a party wins two terms, but also to price in the Democratic popular vote advantage.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Republican electoral success and polling",
+                    "effect": "Decreases probability. The Republican Party won the 2024 presidential election (Trump over Harris), gained Senate control, and maintains significant polling advantages on key issues like immigration, crime, and the economy. This is driving negative sentiment about Democratic prospects and could shift market expectations toward the GOP."
+                },
+                {
+                    "factor": "Democratic candidate uncertainty and weakness",
+                    "effect": "Decreases probability. The Democratic bench is seen as weak or divided (Harris, Newsom, Buttigieg, AOC all mentioned as possible nominees, none polling strongly). Harris is unpopular and Newsom leads her in early 2028 polling. This candidate ambiguity typically reduces market confidence in a party's odds."
+                },
+                {
+                    "factor": "Prediction market historical bias and reversion",
+                    "effect": "Increases probability. Markets tend to revert toward 50/50 for elections far in the future, due to candidate and issue uncertainty, and the Democratic structural popular vote advantage seen in the 21st century. Even after strong cycles for one party, markets tend to price in a correction, particularly with the White House changing hands just once (not a 'realignment')."
+                },
+                {
+                    "factor": "Kalshi market liquidity, trader composition, and arbitrage",
+                    "effect": "Moderately increases probability. Kalshi is now the most liquid, regulated U.S. market, with sophisticated traders who are less swayed by partisan media than retail bettors. Pricing inefficiencies are generally quickly arbitraged away. This means the market is less likely to become extremely skewed by short-term sentiment, and more likely to reflect base rates."
+                },
+                {
+                    "factor": "Macro-political environment and polarization",
+                    "effect": "Slightly increases probability. The U.S. remains deeply divided, with a narrow band of swing voters. Market prices will likely reflect this, keeping the Democratic probability close to 50% barring a major shock. The party out of power often becomes favored for the next cycle due to midterm/pendulum dynamics."
+                }
+            ],
+            "no_scenario": "By December 2025, traders on Kalshi are sufficiently convinced by Republican dominance (recent victories, favorable polling, Democratic disarray) that the median price for 'Republican' is higher than 'Democratic' for at least four of the seven days, leading to a No. This could be cemented if the Democrats remain divided with no clear national leader, continued negative polling on key issues, or a popular Republican like JD Vance or Rubio consolidates early support.",
+            "yes_scenario": "Despite current GOP momentum and Democratic uncertainty, Kalshi traders revert to historical patterns: as memories of the 2024 cycle fade, Democratic odds rise modestly, reflecting base rates and the party's typical popular vote advantage. If Democrats coalesce around a candidate (e.g., Newsom, Buttigieg) or if Republicans face internal discord, or if negative events befall the sitting GOP administration, the Democratic price edges above the Republican price for the median of the last week of 2025.",
+            "final_reasoning": "While Republican momentum is strong right now, history shows that prediction markets rarely price the out-party below 45% for a presidential cycle more than two years out. The Democratic base rate advantage (e.g., winning the popular vote in 7 of the last 8 elections), the tendency for markets to revert toward parity due to uncertainty, and the fact that Kalshi's liquidity and trader expertise reduce the chance of short-term sentiment dominating, all suggest that Democrats will likely be slight favorites or at parity in December 2025. Unless there is a major political shock or a clear, highly popular Republican nominee with unified party support, Kalshi's 'Democratic' median price is more likely than not to edge above 'Republican' by a small margin. That said, the risk of a No outcome has risen compared to earlier in the year due to recent GOP success and Democratic division, so I do not go above the mid-50s.",
+            "final_probability": 56
+        },
+        "USPolitics (PresidentialElectionHistory)": {
+            "time_to_resolution": "Approximately 13 weeks (last week of December 2025, currently end of September 2025)",
+            "perspective_relevance": "As an expert in US presidential election history, I bring deep knowledge of historical party trajectories following landslide defeats or victories, the predictive power and limitations of early-cycle polling and prediction markets, and the impact of structural and demographic trends on party prospects. Additionally, I understand how prediction markets like Kalshi reflect both public sentiment and trader biases, especially in periods of low information about future nominees.",
+            "status_quo": "As of late September 2025, Kalshi markets show a modest Democratic edge (52% Dem to 48% GOP in June 2025), but recent news and polling suggest Republicans\u2014riding a Trump victory, Senate gains, and public perception advantages on key issues\u2014enjoy momentum. However, the 2028 field is highly unsettled, and prediction market pricing for such distant events is often conservative and mean-reverting.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base rates after landslide/clear defeats",
+                    "effect": "Decreases probability for Democrats. Historically, parties suffering a clear defeat (as Democrats did in 2024) face headwinds in the next cycle, especially if their bench appears weak or divided."
+                },
+                {
+                    "factor": "Prediction market dynamics (trader behavior, time horizon)",
+                    "effect": "Increases probability for Democrats. Markets tend to revert to near-even odds for elections several years away, as uncertainty about nominees, the economy, and world events is very high. This encourages a default bias toward 50-50 or slight Democratic edge, reflecting recent cycles and the 'blue wall' in the Electoral College."
+                },
+                {
+                    "factor": "Current polling and party favorability",
+                    "effect": "Decreases probability for Democrats. Polling shows Republicans trusted on top issues (economy, crime, immigration), and Democratic favorability is at historic lows. If this persists, it will pressure the market toward GOP."
+                },
+                {
+                    "factor": "Bench strength and candidate perceptions",
+                    "effect": "Neutral to slightly increases probability for Democrats. Democrats have several plausible national figures (Newsom, Buttigieg, Ocasio-Cortez), while the Republican future is less certain after Trump. Markets may discount current polling based on uncertainty about future nominees."
+                },
+                {
+                    "factor": "Recent trading/pricing trends on Kalshi and Polymarket",
+                    "effect": "Increases probability for Democrats. Despite the GOP's strong 2024 showing, market pricing on both Kalshi and Polymarket (as of August/June) puts Democrats slightly ahead for 2028, reflecting long-term uncertainty more than immediate fundamentals."
+                },
+                {
+                    "factor": "Structural demographic and Electoral College trends",
+                    "effect": "Increases probability for Democrats. Long-term trends (urbanization, minority voting patterns) still favor Democrats in the Electoral College, even if Republicans are currently ascendant."
+                }
+            ],
+            "no_scenario": "Republicans retain post-2024 momentum, public trust on key issues remains lopsided, and Democratic infighting or lackluster candidates keep their odds below Republicans on Kalshi. Markets react to strong GOP polling, and by late December 2025, the median price for 'Republican' is higher than 'Democratic.'",
+            "yes_scenario": "Traders on Kalshi revert to historical mean, pricing in high uncertainty for 2028, with Democrats maintaining or regaining a slight edge despite GOP momentum. The Democratic bench clarifies, and news cycles shift attention away from the 2024 defeat, allowing Democratic odds to creep above Republicans by late December 2025 median pricing.",
+            "final_reasoning": "While the Republican Party enjoys clear momentum after a decisive 2024 win and current polling advantages on major issues, prediction markets for events years away (especially for presidential races) almost always revert toward even odds or a slight Democratic edge, due to structural uncertainty and the Electoral College landscape. Both Kalshi and Polymarket (and even traditional betting odds) as of mid-2025 priced Democrats as very slight favorites for 2028, despite the GOP surge. The news articles reinforce the sense of Democratic weakness and GOP strength, but do not point to a fundamental break from historical market behavior. Unless the Democrats utterly collapse or the GOP's advantage becomes overwhelming and sustained (which is possible, but not yet clear), the most probable outcome is that, by the last week of 2025, the Kalshi median price will have Democrats as very slight favorites\u2014though the margin is likely to be narrow. I am thus moderately confident, based on base rates and market behavior, that the answer will be Yes, but this is far from certain: a 60% probability reflects the real risk that continued GOP momentum could tip the market.",
+            "final_probability": 60
+        },
+        "Political Science (MedianVoterTheorem)": {
+            "time_to_resolution": "Approximately 3 months (question resolves in the last week of December 2025, today is late September 2025)",
+            "perspective_relevance": "As an expert in Political Science, especially the Median Voter Theorem (MVT), I understand that general elections in the US typically reward candidates and parties that appeal to the median voter. Prediction markets like Kalshi aggregate information and expectations about future events, including their collective sense of which party is better positioned to capture the center ground and win in 2028. My perspective emphasizes structural incentives for both parties to reposition and find broad appeal, but also recognizes the inertia and polarization that can inhibit this adjustment.",
+            "status_quo": "Currently, the Republican Party is perceived as having momentum after Trump\u2019s 2024 victory, with polling and pundit commentary suggesting the Democrats are facing low favorability and internal disputes over leadership for 2028. However, prediction markets (as of the last available data in June 2025) showed a slight Democratic edge (Kalshi: Dems 52% vs GOP 48%), though this may have shifted since.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of Market Reversion",
+                    "effect": "Prediction markets tend to revert toward near-even odds for elections several years out, especially in a two-party system where both parties are competitive and there is high uncertainty about candidates and events. This increases the probability of Democrats being favored, as the median price will often hover near 50/50 barring extremely strong news."
+                },
+                {
+                    "factor": "Democratic Brand Weakness and Recent Losses",
+                    "effect": "The Democrats are coming off a historic defeat in 2024, have poor favorability, and are struggling to coalesce around a leader for 2028. This decreases the probability of Democrats being favored, as markets may overweight recent partisan momentum and the lack of a clear Democratic frontrunner."
+                },
+                {
+                    "factor": "Median Voter Theorem and Candidate Adjustment",
+                    "effect": "Theoretically, both parties should adjust their platforms to appeal to the median voter. If Democrats can pivot toward popular positions (e.g., on crime, immigration, the economy), they could regain favor. However, recent evidence (e.g., Bill Maher\u2019s critique, polling) suggests the party is not yet making this pivot, so the effect is neutral to slightly negative for Democrats in the short term."
+                },
+                {
+                    "factor": "Prediction Market Structure and Noise",
+                    "effect": "Prediction markets can be temporarily inaccurate or influenced by large trades, manipulation, or arbitrage (as shown in the Decrypt article). However, Kalshi\u2019s CFTC regulation and high liquidity make it relatively robust, so this is only a minor source of noise. This slightly increases uncertainty but does not strongly favor one side."
+                },
+                {
+                    "factor": "Time Decay and Event Uncertainty",
+                    "effect": "With the actual election nearly three years away, the absence of defined candidates, and potential for major events (scandals, economic shocks, world events), markets may hesitate to overcommit to one outcome, instead gravitating toward a narrow edge for the party currently perceived as structurally advantaged. This increases the likelihood of a marginal Democratic edge if the market is in 'wait-and-see' mode."
+                },
+                {
+                    "factor": "Recent Market Prices and Momentum",
+                    "effect": "As of the latest available market data (June\u2013August 2025), both Kalshi and Polymarket showed a slight edge for Democrats (Kalshi: 52% Dems; Polymarket: 55% Dems), even as polls and pundit commentary favored Republicans. This suggests market participants may be pricing in reversion or Democratic recovery."
+                }
+            ],
+            "no_scenario": "Kalshi market median price for 'Democratic Party wins 2028' is equal to or below that of 'Republican Party' during the last week of December 2025. This could occur if Republican momentum persists post-2024, Democrats fail to find a credible 2028 leader, and no external events (e.g., economic downturn, GOP scandal) shift the public mood. Market participants may overweight recent polling and pundit sentiment, pricing in a GOP edge or even odds.",
+            "yes_scenario": "Kalshi market median price for 'Democratic Party wins 2028' remains modestly above 'Republican Party' during the last week of December 2025. This could occur if prediction market participants expect mean reversion, anticipate Democratic adjustment to the median voter, or simply hedge against the unpredictability of a three-year horizon. Even in the face of negative news for Democrats, market structure and uncertainty may keep the Democratic edge.",
+            "final_reasoning": "Although the prevailing journalistic and polling narrative is that the Democrats are struggling after a major defeat, and Republicans are seen as having the upper hand, the base rate for market pricing at this stage of the cycle is near-even odds, with a minor edge to the out-party or to the party with more theoretical structural advantages (e.g., demographic trends, recovery potential). Kalshi prediction markets have shown a slight Democratic edge in recent months, likely due to mean reversion, market uncertainty, and the high probability that the Democrats will adjust their platform to regain competitiveness. The Median Voter Theorem suggests that over time, parties adjust to the center, and the market, sensitive to structural incentives and uncertainty, will often bake in this probability. Thus, despite negative headlines, the probability that Democrats are favored (i.e., median price for Dems is higher than for GOP) in the last week of 2025 remains slightly above 50%. However, this is not a strong edge: a close, 52%\u201355% range is justified, reflecting both base rates and the current market/structural context.",
+            "final_probability": 54
+        },
+        "Political Science (RealignmentTheory)": {
+            "time_to_resolution": "About 3 months (last week of December 2025)",
+            "perspective_relevance": "As an expert in Realignment Theory, my perspective focuses on long-term shifts in party coalitions, demographic changes, and the structural dynamics of American politics. Realignment theory explains how transformative elections can reset the partisan balance for extended periods, making it crucial to distinguish between short-term polling swings and underlying changes in voter coalitions. This expertise helps contextualize whether recent Republican successes reflect momentary backlash or a deeper realignment, and thus whether prediction markets should be expected to sustain a Democratic edge by year-end 2025.",
+            "status_quo": "As of late September 2025, Kalshi and other major prediction markets are pricing the 2028 presidential election as a toss-up, with a slight Democratic edge (e.g., 52% Dem to 48% GOP per June\u2013July market snapshots). However, recent news and polling show Republican strength, with Trump having won the 2024 election, Republicans leading on key issues in polls, and the Democratic Party at a historic low in favorability.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Post-2024 Polarization and Realignment",
+                    "effect": "Increases Republican probability. The 2024 election saw Trump flipping every swing state and winning the popular vote, with significant inroads among Hispanic and blue-collar voters. This suggests a possible realignment, especially if these coalitions persist."
+                },
+                {
+                    "factor": "Incumbency and Democratic Bench Weakness",
+                    "effect": "Decreases Democratic probability. The Democratic Party's most recent standard-bearer, Kamala Harris, is described as having low favorability and trailing Gavin Newsom in 2028 primary polling. The GOP's bench (Vance, Rubio) appears more unified and competitive."
+                },
+                {
+                    "factor": "Issue Ownership and Public Opinion",
+                    "effect": "Decreases Democratic probability. Polls from Reuters/Ipsos and Ipsos/Washington Post show Republicans leading Democrats by double digits on immigration, crime, and the economy\u2014issues that tend to dominate presidential elections, especially in periods of economic uncertainty or cultural backlash."
+                },
+                {
+                    "factor": "Prediction Market Base Rates and Efficiency",
+                    "effect": "Slightly increases Democratic probability. Historically, prediction markets tend to price in mean reversion and status quo bias, often giving Democrats a slight edge in the early years of a cycle due to demographic trends and the electoral college map."
+                },
+                {
+                    "factor": "Market Manipulation and Liquidity Effects",
+                    "effect": "Adds uncertainty and may soften any edge. Recent research highlights arbitrage opportunities and manipulation on prediction markets, meaning prices may not always reflect true probabilities. However, Kalshi's larger volume and regulatory oversight may make its prices more robust than Polymarket's."
+                }
+            ],
+            "no_scenario": "Republican momentum from 2024 holds through 2025. Prediction markets react to sustained polling showing Republican leads on key issues, a weak Democratic bench, and possible further GOP gains in the 2026 midterms. Realignment dynamics (e.g., Hispanic and blue-collar shifts) persist, and Kalshi's market median for 'Democratic' falls below 'Republican' during the last week of 2025.",
+            "yes_scenario": "Democratic prospects stabilize or rebound due to unforeseen events (e.g., GOP infighting, overreach, or scandal; economic recovery; emergence of a compelling Democratic candidate). Prediction markets revert to base-rate biases and demographic projections, giving Democrats a median edge on Kalshi in the final week of 2025, even if only modestly.",
+            "final_reasoning": "Prediction markets are currently pricing the 2028 race as a near toss-up, with a modest Democratic edge in preceding months. However, recent polling, news, and party favorability indicate a Republican surge and a Democratic slump, with realignment-like trends (e.g., Trump winning the popular vote, GOP inroads with key demographics) potentially solidifying. While history suggests markets often revert to status quo (Democratic edge due to demographic and electoral map trends), the magnitude of Democratic weakness and GOP strength in 2025 is notable. Still, the market's own inertia, efficiency, and tendency toward mean reversion\u2014plus the fact that Democrats do not need to be heavily favored to win the Kalshi median, just modestly\u2014mean a total flip to Republican favoritism is not guaranteed. Factoring in all elements, especially the news of historic Democratic weakness, but remembering the status quo bias and base rates, I estimate the probability that Democrats will be favored to win (i.e., have a higher Kalshi market median in the relevant week) at 38%. This is below 50% due to the strong Republican momentum, but not extremely low given prediction markets' conservative tendencies.",
+            "final_probability": 38
+        },
+        "Political Science (PartyIdentificationModel)": {
+            "time_to_resolution": "Approximately 3 months (December 25-31, 2025)",
+            "perspective_relevance": "As an expert in Political Science focusing on the Party Identification Model, my unique perspective emphasizes the stability and slow evolution of partisan alignment and group loyalties, the predictive power of structural factors (partisan balance, economic conditions, incumbency, demographic trends), and the historical base rates of party control after a presidency changes hands. Party identification is a strong predictor of both voter behavior and the expectations of informed market participants.",
+            "status_quo": "As of late September 2025, prediction markets (including Kalshi and Polymarket) have the Democratic and Republican parties closely matched for 2028, with a slight edge to Democrats recently (e.g., Kalshi giving Democrats a 52% to 48% advantage in June, and Polymarket showing 55% probability for Democrats in August). However, recent news and polling highlight Republican momentum, particularly following Trump's 2024 victory and GOP gains among critical demographic groups.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Presidential Party Cycle and Base Rate",
+                    "effect": "Decreases probability for Democrats. Historically, the party out of the White House is favored in open-seat elections, but the base rate after a single-term presidency (as in Trump 2024) is close to even, with a modest advantage for the incumbent party if the president is popular. However, Trump's 2024 win was decisive, and the GOP holds the White House and the Senate."
+                },
+                {
+                    "factor": "Partisan Realignment and Group Shifts",
+                    "effect": "Decreases probability for Democrats. News sources emphasize Republican gains among Hispanic and blue-collar voters and increasing trust in the GOP on key issues (economy, immigration, crime). If these trends persist, the traditional Democratic coalition may be eroding, shifting the market's perception toward the GOP."
+                },
+                {
+                    "factor": "Candidate Bench and Uncertainty",
+                    "effect": "Neutral to slightly increases probability for Democrats. While the Republican field (Vance, Rubio) is strong, the Democratic side is unsettled (Newsom, Buttigieg, Ocasio-Cortez, Harris). Markets may price in uncertainty, which could buoy Democratic odds slightly absent a clear GOP heir apparent."
+                },
+                {
+                    "factor": "Market Behavior and Prediction Market Dynamics",
+                    "effect": "Slightly increases probability for Democrats. Prediction markets often overweight long-term structural factors and reversion to the mean. Kalshi users have historically trended toward Democratic advantages in distant elections, even when GOP is ascendant in the immediate term."
+                },
+                {
+                    "factor": "Media and Narrative Momentum",
+                    "effect": "Decreases probability for Democrats. Recent news coverage is highly negative for Democrats, emphasizing low favorability, internal divisions, and the narrative of a party in retreat, which could pressure short-term market sentiment toward Republicans leading into the last week of 2025."
+                }
+            ],
+            "no_scenario": "In the last week of 2025, Kalshi's market median price for 'Democratic' is equal to or less than 'Republican'\u2014likely because the GOP, buoyed by Trump's 2024 win, continued polling leads on the economy, immigration, and crime, and a clear Republican nominee (e.g., Vance) has consolidated support while Democrats remain divided or polling poorly.",
+            "yes_scenario": "Despite GOP momentum, Kalshi traders revert to long-term fundamentals: demographic shifts, the unpredictability of open-seat elections, or increased Democratic unity around a strong candidate (e.g., Newsom or a surprise figure). Macro shocks (e.g., economic downturn, GOP scandal) or a favorable shift in polling could push the Democratic median price above the Republican one.",
+            "final_reasoning": "While the Democratic Party has a historical base rate advantage in prediction markets for distant elections and may benefit from market reversion toward parity, the current context is negative for them: Republicans control the White House and Senate, have made significant inroads with key demographics, and are leading in issue polling. News coverage and pundit commentary reinforce the narrative of Democratic weakness and GOP ascendancy. However, the lack of a clear Republican nominee and the tendency of prediction markets to overweight structural factors and future uncertainty may prevent a decisive Republican edge. Given these factors\u2014and the evidence that Kalshi's markets have hovered near parity or a slight Democratic edge\u2014I estimate that the Democrats will NOT be favored in the last week of 2025, but the probability is close, reflecting market indecision and the possibility of rapid sentiment shifts.",
+            "final_probability": 40
+        },
+        "Economics (RetrospectiveVotingTheory)": {
+            "time_to_resolution": "About 3 months (last week of December 2025)",
+            "perspective_relevance": "As an expert in Economics with a focus on Retrospective Voting Theory, I bring an understanding of how voters' economic perceptions and satisfaction with incumbents shape forward-looking political expectations. This perspective is crucial for evaluating how current economic and political fundamentals influence prediction market prices for the 2028 election, especially given that such markets often aggregate the collective wisdom of traders who weigh historical precedent, recent political outcomes, and macroeconomic factors.",
+            "status_quo": "As of late September 2025, the Democratic Party is slightly favored on Kalshi to win the 2028 presidential election (previous public odds ranged from 52-55% for Democrats). This reflects a base rate tendency of markets to slightly favor the incumbent party early in cycles unless there is a strong, unambiguous signal to the contrary.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Retrospective economic and political punishment for the incumbent party",
+                    "effect": "Decreases probability for Democrats. The 2024 cycle saw Democrats lose both the presidency and the Senate. Historical base rates suggest the party out of power is somewhat more likely to win the next presidential election, especially after a loss attributed to economic dissatisfaction or broad policy disapproval."
+                },
+                {
+                    "factor": "Prediction market mechanics and information aggregation",
+                    "effect": "Slightly increases probability for Democrats. Market participants tend to overweight recent national vote shares and structural advantages. Early in cycles, prediction markets often revert to the mean, giving the out-party only a small lead or even slight advantage to the incumbent party, especially when the out-party's presumptive nominee (JD Vance) is untested at the national level."
+                },
+                {
+                    "factor": "Democratic candidate field uncertainty",
+                    "effect": "Decreases probability for Democrats. Kamala Harris's defeat and low favorability, combined with an uncertain and potentially divisive primary (with Newsom, Buttigieg, AOC, etc.), may reduce confidence in the party's ability to unite around a strong candidate, especially compared to a consolidated Republican field behind a Trump-endorsed successor like Vance."
+                },
+                {
+                    "factor": "Republican momentum and retrospective issue salience (immigration, crime, economy)",
+                    "effect": "Decreases probability for Democrats. Polls and media coverage highlight Republican leads on salient issues and positive Republican momentum after the 2024 win, which may bias market traders toward the GOP."
+                },
+                {
+                    "factor": "Kalshi market structure and trader composition",
+                    "effect": "Slightly increases probability for Democrats. Kalshi's user base is more mainstream and less crypto-native than Polymarket, which may produce less rightward skew (as seen in crypto-dominated markets) and more reversion to historical base rates (which, over long periods, slightly favor Democrats in recent cycles)."
+                },
+                {
+                    "factor": "Base rates of party alternation after one-term losses",
+                    "effect": "Decreases probability for Democrats. Historically, the party that loses after one term in the White House is less likely to reclaim it at the next open-seat election, especially if the defeat was clear-cut (as in 2024 when Trump won the popular vote and all swing states)."
+                }
+            ],
+            "no_scenario": "Kalshi median prices in the last week of December 2025 show the Republican Party contract trading at a higher value than the Democratic Party contract, reflecting continued GOP momentum, retrospective economic dissatisfaction, and persistent Democratic leadership uncertainty. Market participants view JD Vance (or another Republican) as a strong favorite to retain the White House, and there is no significant event to shift sentiment toward Democrats.",
+            "yes_scenario": "Despite the 2024 defeat, Democratic contracts trade at a slightly higher median price than Republican ones on Kalshi in the last week of 2025. This could occur if the Democratic primary field consolidates around a strong or popular candidate (e.g., Newsom), negative headlines or scandals hit the GOP, or macroeconomic/political events erode Republican confidence. Additionally, Kalshi traders may revert to long-term base rates as the general election is still far away, giving a modest edge to the out-party.",
+            "final_reasoning": "Retrospective Voting Theory and economic fundamentals suggest that, after a decisive loss in 2024, the Democrats face structural headwinds. The public narrative and polling currently favor Republicans on key issues, and the 2024 cycle saw a broad Republican win. However, prediction markets like Kalshi tend to revert to base rates and can be slow to fully price in long-term party disadvantage, especially when the next election is still years away and candidate fields are unsettled. Recent market pricing was only slightly in favor of Democrats (52-55%), but the news cycle and polling are negative for Democrats. The most likely scenario is a near-even market, but with a modest lean toward Republicans by late December 2025. Given how markets typically behave, I expect the Democratic contract to be slightly less favored on Kalshi during the last week of 2025, but not dramatically so. Therefore, the probability that Democrats are favored (i.e., median price higher than GOP) is just under even odds.",
+            "final_probability": 45
+        },
+        "Economics (RationalChoiceTheory)": {
+            "time_to_resolution": "Approximately 3 months until the last week of December 2025 (question resolves December 25-31, 2025).",
+            "perspective_relevance": "As an expert in Economics (RationalChoiceTheory), my analysis emphasizes how informed market participants aggregate information and respond to incentives, making prediction market prices a rational, forward-looking consensus. I focus on how traders\u2019 beliefs, the information environment, and the incentives (including arbitrage and manipulation) contribute to the Kalshi market price\u2014especially in the context of political fundamentals, candidate field clarity, party favorability, and market structure.",
+            "status_quo": "As of late September 2025, Kalshi and Polymarket odds for the 2028 presidential election show the Democrats slightly favored (recent articles cite Democratic odds at 52-55% vs Republicans at 45-48%). This reflects a narrow Democratic lead, but not a strong consensus.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Incumbency/party fatigue",
+                    "effect": "Decreases Democratic probability. The Republican Party just won the presidency in 2024, and historically, the incumbent party is often disfavored after a loss, especially when out of power. However, party fatigue can also shift quickly as new candidates emerge."
+                },
+                {
+                    "factor": "Candidate field clarity",
+                    "effect": "Increases uncertainty. Both parties lack a clear 2028 nominee; Democrats are torn between Newsom, Buttigieg, Harris, and others, while Republicans see Vance as a frontrunner. Uncertainty often benefits the party out of power, but markets may price in Democratic bench strength if Republicans look less unified post-Trump."
+                },
+                {
+                    "factor": "Polls and party favorability",
+                    "effect": "Decreases Democratic probability. Recent polling and pundit commentary highlight Republican leads on key issues (immigration, crime, economy) and Democratic struggles with favorability post-2024. This negative sentiment may put downward pressure on Democratic odds."
+                },
+                {
+                    "factor": "Prediction market structure and meta incentives",
+                    "effect": "Increases Democratic probability. Prediction markets often display a status quo bias and overweight historical base rates\u2014Democrats have won the popular vote in 7 of the last 8 presidential elections, and markets may revert toward Democratic favoritism in the absence of major shocks. Additionally, Kalshi\u2019s regulated structure and high liquidity make prices less susceptible to manipulation than smaller markets."
+                },
+                {
+                    "factor": "Timing and information environment",
+                    "effect": "Decreases probability of decisive movement. With 3 months to go and no new major events, market odds are likely to remain close to current levels, barring a major development (e.g., a leading candidate\u2019s emergence or scandal). Status quo bias and the lack of candidate clarity will likely keep odds in a narrow band."
+                }
+            ],
+            "no_scenario": "Republicans maintain or increase their current advantage on Kalshi, possibly due to continued Democratic disunity, negative polling for likely Democratic candidates, or a strong, unified Republican field. Alternatively, both parties are tied (median prices equal), in which case the question resolves No by default.",
+            "yes_scenario": "Democrats retain a narrow edge on Kalshi (as currently), perhaps due to the historical tendency for prediction markets to slightly favor Democrats at long horizons, or because traders anticipate a Democratic rebound due to shifting issues, demographic trends, or a strong candidate emerging. The median Democratic price remains above Republican for most/all of the last week of December 2025.",
+            "final_reasoning": "Given the current state of the Kalshi and Polymarket markets, Democrats are very slightly favored. Recent news and polling signal Republican strength and Democratic disunity, which puts downward pressure on Democratic odds. However, prediction markets tend to revert toward the status quo and historical base rates, which marginally favor Democrats at this time horizon. The lack of clarity in both parties\u2019 candidate fields and the absence of a decisive event make a significant swing unlikely before the end of 2025. Furthermore, Kalshi\u2019s market structure and depth reduce the risk of arbitrary price manipulation, and the historical pattern is for Democrats to be slightly favored except in times of clear Republican momentum. Given the tie-breaker rule (if medians are equal, resolves No), the probability that Democrats are favored (even by a small margin) is close to, but not much above, a coin flip. I estimate a modest Democratic edge, with significant chance of a tie or Republican edge.",
+            "final_probability": 55
+        },
+        "CommunicationStudies (AgendaSettingTheory)": {
+            "time_to_resolution": "Approximately 3 months (last week of December 2025; today is September 29, 2025)",
+            "perspective_relevance": "As an expert in Communication Studies (Agenda Setting Theory), I can analyze how media coverage, public discourse, and polling data shape the perceived electability of parties. Prediction markets like Kalshi aggregate collective expectations, which are influenced by the media\u2019s emphasis on specific issues (e.g., immigration, economy), partisan narratives, and recent electoral outcomes. This perspective helps assess not only current market prices but also how shifts in agenda, salience, and public opinion might affect those prices by late December 2025.",
+            "status_quo": "As of mid-2025, Kalshi\u2019s market marginally favors Democrats to win the 2028 presidency, but this edge is slim (52%-48% as per June/July 2025 reporting). The Republican Party has momentum following a major 2024 win, but prediction markets have not fully flipped to a GOP-favored position.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Electoral Outcomes",
+                    "effect": "Decreases probability. The Republican sweep in 2024, including the popular vote and swing states, as well as control of the Senate, has strengthened the perception of GOP momentum and weak Democratic prospects."
+                },
+                {
+                    "factor": "Issue Salience and Agenda Setting",
+                    "effect": "Decreases probability. Media and polls emphasize that Republicans are more trusted on top voter issues (immigration, economy, crime), which may erode Democratic perceived viability and shift market sentiment."
+                },
+                {
+                    "factor": "Democratic Candidate Uncertainty",
+                    "effect": "Neutral to slightly increases probability. No clear Democratic frontrunner (Harris, Newsom, Buttigieg, Ocasio-Cortez all have modest support). This ambiguity could make the market hesitant to fully discount Democrats, preserving a slight edge."
+                },
+                {
+                    "factor": "Prediction Market Structural Bias",
+                    "effect": "Increases probability. Kalshi and similar markets have historically tended to slightly overprice Democratic chances due to trader demographics and the status quo bias, especially far from the election."
+                },
+                {
+                    "factor": "Media Polarization and Public Discourse",
+                    "effect": "Slightly increases probability. Persistent polarization and divided public discourse may reduce the likelihood of a rapid, decisive market flip to Republicans, sustaining a narrow Democratic lead in market pricing."
+                },
+                {
+                    "factor": "Arbitrage and Market Inefficiency",
+                    "effect": "Neutral to slightly increases probability. Academic research shows inefficiencies and temporary mispricings can persist, and these often favor the perceived status quo or more familiar party (Democrats in recent cycles)."
+                }
+            ],
+            "no_scenario": "By late December 2025, Kalshi\u2019s median price for the Republican Party surpasses that of the Democrats, reflecting sustained GOP momentum from 2024, further negative polling for Democrats, and continued media focus on Republican-trusted issues. The combination of a strong Republican bench (e.g., JD Vance), Democratic division, and persistent media framing of Democratic weakness leads to a market flip, with Republicans favored.",
+            "yes_scenario": "Despite the Republican win in 2024 and negative polling for Democrats, Kalshi\u2019s market maintains a modest Democratic advantage, driven by trader demographics, lingering status quo bias, no clear Republican standard-bearer for 2028, and the possibility that Democrats could recover if Republicans overreach or the media agenda shifts. Market inefficiencies and lack of definitive polling for 2028 maintain the Democratic edge.",
+            "final_reasoning": "Base rates suggest that presidential elections after an incumbent victory often see the winning party favored early in the next cycle, but prediction markets are slow to move far from the status quo, especially this early. The agenda-setting effects of media and polling data currently favor Republicans, but Kalshi\u2019s market has not definitively flipped, and structural biases plus candidate uncertainty may keep Democrats narrowly favored through December. Therefore, while the probability of Democrats being favored is lower than it would be in an open or positive climate for them, it still slightly exceeds 50%, reflecting a narrow, status-quo-preserving advantage.",
+            "final_probability": 58
+        },
+        "CommunicationStudies (FramingTheory)": {
+            "time_to_resolution": "Approximately 13 weeks (until the last week of December 2025)",
+            "perspective_relevance": "As an expert in Communication Studies with a focus on Framing Theory, I bring a nuanced understanding of how public discourse, media narratives, and polling data can shape perceptions of political parties' electability. Prediction markets like Kalshi are highly sensitive to these frames, as traders' beliefs are informed by the prevailing narratives, media coverage, and perceived momentum. This perspective helps in assessing not just objective polling or candidate strength but also the meta-perception: how likely is it that the market, as a collective, will come to favor one party over the other given the current and evolving frames?",
+            "status_quo": "As of late September 2025, Kalshi markets and most prediction markets are either slightly favoring Democrats or are close to a 50-50 split for the 2028 presidential election, with a marginal Democratic edge seen in both Kalshi and Polymarket as recently as June and August 2025 (52% Dem on Kalshi in June; 55% Dem on Polymarket in August).",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Media Framing of Party Competence and Momentum",
+                    "effect": "Decreases probability for Democrats. Recent media coverage and commentary emphasize Republican momentum, polling advantages on key issues (crime, immigration, economy), and Democratic disarray post-2024 defeat. This could shift trader sentiment toward Republicans."
+                },
+                {
+                    "factor": "Prediction Market Base Rates and Trader Behavior",
+                    "effect": "Increases probability for Democrats. Historically, prediction markets have slightly favored Democrats in generic presidential markets years out from the election, reflecting demographic trends and a tendency for markets to anchor on the previous party's strength unless clear evidence exists to the contrary."
+                },
+                {
+                    "factor": "Candidate Uncertainty and Democratic Leadership Vacuum",
+                    "effect": "Decreases probability for Democrats. Lack of a clear, popular Democratic frontrunner (with Harris trailing Newsom in polls and Newsom not yet consolidating support) may cause traders to discount Democratic chances relative to a Republican Party with an apparent succession plan (JD Vance)."
+                },
+                {
+                    "factor": "Polarization and 'Oracle Effect' in Prediction Markets",
+                    "effect": "Increases probability for Democrats. The 'oracle effect'\u2014the tendency for prediction markets to reflect median elite sentiment rather than short-term polling\u2014can buffer Democratic odds against temporary polling swings, especially if macro factors (demographics, urbanization) are perceived as favoring them long-term."
+                },
+                {
+                    "factor": "Recent Market and Polling Signals",
+                    "effect": "Slightly decreases probability for Democrats. Recent polls and market sentiment reflect Republican strength, with Vance leading in both party primary markets and head-to-heads, and Democrats suffering from negative media frames."
+                },
+                {
+                    "factor": "Status Quo Bias and Slow Change in Market Sentiment",
+                    "effect": "Increases probability for Democrats. Unless an extreme event occurs, markets tend to change slowly, and the slight Democratic lead seen in summer/fall 2025 is likely to persist absent a major new shock."
+                }
+            ],
+            "no_scenario": "By late December 2025, the Kalshi market median price for the Republican Party overtakes that of the Democratic Party, reflecting a consolidation of Republican momentum in media narratives, further Democratic infighting or scandals, or another round of polling showing continued Republican leads on key issues and candidate matchups. This could also occur if a strong Republican nominee (e.g., Vance) solidifies early support while Democrats remain divided or leaderless.",
+            "yes_scenario": "The Kalshi market maintains or slightly increases its current Democratic edge through the end of 2025. This could be due to a stabilization of Democratic primary dynamics (e.g., Newsom consolidating support), a return to issue framing that favors Democrats (such as abortion rights, healthcare, or climate), or simple status quo inertia in the absence of new negative shocks for Democrats. Additionally, prediction market traders may continue to price in long-term demographic trends and the tendency for presidential party control to oscillate.",
+            "final_reasoning": "The current environment is unfavorable to Democrats in terms of media framing and polling, with Republicans enjoying a narrative of momentum after a strong 2024 win and dominance on key issues in recent surveys. However, Kalshi's own market data from mid-2025 still gave Democrats a slight edge, and prediction markets have a status quo bias absent dramatic new information. The unique framing perspective suggests that while negative headlines are powerful, the prediction market's 'meta' logic\u2014considering long-term trends, candidate uncertainty, and the inertia of market sentiment\u2014will likely keep the Democratic price at or just above the Republican price through late December unless there is a crystallizing event. Given the balance of these factors and the close polling/market signals, the probability of Democrats being favored at the end of 2025 is slightly above even, but not by much.",
+            "final_probability": 57
+        }
+    },
+    "deliberation_probability": [
+        57,
+        20,
+        58,
+        58,
+        56,
+        60,
+        54,
+        38,
+        40,
+        45,
+        55,
+        58,
+        57
+    ],
+    "deliberation_mean_probability": 50.46153846153846,
+    "deliberation_sd": 11.666300360549785,
+    "deliberation_probability_result": 50
+}
