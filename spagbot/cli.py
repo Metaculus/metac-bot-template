@@ -29,6 +29,7 @@ import json
 import os
 import re
 import time
+from contextlib import ExitStack
 from typing import Optional, List, Dict, Any, Tuple
 import inspect
 
@@ -417,19 +418,25 @@ def _simple_average_numeric(members: List[MemberOutput]) -> Optional[Dict[str, f
 # Core orchestration for ONE question → produce a single CSV row
 # --------------------------------------------------------------------------------
 
-async def run_one_question(post: dict, *, run_id: str, purpose: str, submit_ok: bool, calib: Dict[str, Any]) -> None:
+async def _run_one_question_body(
+    post: dict,
+    *,
+    run_id: str,
+    purpose: str,
+    submit_ok: bool,
+    calib: Dict[str, Any],
+    seen_guard_state: Dict[str, Any],
+    seen_guard_run_report: Optional[Dict[str, Any]] = None,
+) -> None:
     t_start_total = time.time()
 
     q = post.get("question") or {}
     post_id = int(post.get("id") or post.get("post_id") or 0)
     question_id = int(q.get("id") or 0)
 
-    # Concurrency lock using seen_guard
-    if seen_guard:
-        with seen_guard.lock(question_id) as acquired:
-            if not acquired:
-                print(f"[seen_guard] QID {question_id} is locked by another process; skipping.")
-                return
+    seen_guard_enabled = bool(seen_guard_state.get("enabled", False))
+    seen_guard_lock_acquired = seen_guard_state.get("lock_acquired")
+    seen_guard_lock_error = str(seen_guard_state.get("lock_error") or "")
     
     title = str(q.get("title") or post.get("title") or "").strip()
     url = f"https://www.metaculus.com/questions/{question_id}/" if question_id else ""
@@ -742,6 +749,12 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
         "discrete_values_json": discrete_values if (qtype in ("numeric", "discrete") and discrete_values) else "",
     }
 
+    row["seen_guard_triggered"] = (
+        "1"
+        if seen_guard_enabled and bool(seen_guard_lock_acquired)
+        else ("0" if seen_guard_enabled else "")
+    )
+
     # Per-model outputs
     for i, ms in enumerate(DEFAULT_ENSEMBLE):
         mo: Optional[MemberOutput] = None
@@ -880,6 +893,24 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     md.append(f"- Type: {qtype}")
     md.append(f"- URL: {url}")
     md.append(f"- Classifier: {class_primary} | strategic={is_strategic} (score={strategic_score:.2f})")
+    md.append("### SeenGuard")
+    lock_status = "n/a"
+    if seen_guard_enabled:
+        lock_status = "acquired" if seen_guard_lock_acquired else "not_acquired"
+    md.append(f"- enabled={seen_guard_enabled} | lock_status={lock_status}")
+    if seen_guard_run_report:
+        before = seen_guard_run_report.get("before")
+        skipped = seen_guard_run_report.get("skipped")
+        after = seen_guard_run_report.get("after")
+        md.append(f"- run_filter: before={before} | skipped={skipped} | after={after}")
+        if seen_guard_run_report.get("error"):
+            md.append(f"- filter_error={seen_guard_run_report['error']}")
+    debug_note = "lock disabled"
+    if seen_guard_enabled:
+        debug_note = "lock acquired" if seen_guard_lock_acquired else "lock fallback"
+    if seen_guard_lock_error:
+        debug_note += f" | error={seen_guard_lock_error}"
+    md.append(f"- debug_note={debug_note}")
 
     md.append("## Research (summary)")
     md.append((research_text or "").strip()[:RESEARCH_MAX])
@@ -1070,6 +1101,51 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
     return
 
 
+async def run_one_question(
+    post: dict,
+    *,
+    run_id: str,
+    purpose: str,
+    submit_ok: bool,
+    calib: Dict[str, Any],
+    seen_guard_run_report: Optional[Dict[str, Any]] = None,
+) -> None:
+    q = post.get("question") or {}
+    question_id = int(q.get("id") or post.get("id") or post.get("post_id") or 0)
+
+    seen_guard_state: Dict[str, Any] = {
+        "enabled": bool(seen_guard),
+        "lock_acquired": None,
+        "lock_error": "",
+    }
+
+    lock_stack = ExitStack()
+    try:
+        if seen_guard:
+            try:
+                acquired = lock_stack.enter_context(seen_guard.lock(question_id))
+                seen_guard_state["lock_acquired"] = bool(acquired)
+                if not acquired:
+                    print(f"[seen_guard] QID {question_id} is locked by another process; skipping.")
+                    return
+            except Exception as _sg_lock_ex:
+                seen_guard_state["lock_error"] = f"{type(_sg_lock_ex).__name__}: {str(_sg_lock_ex)[:160]}"
+                seen_guard_state["lock_acquired"] = False
+                print(f"[seen_guard] lock error for QID {question_id}: {seen_guard_state['lock_error']}")
+
+        await _run_one_question_body(
+            post=post,
+            run_id=run_id,
+            purpose=purpose,
+            submit_ok=submit_ok,
+            calib=calib,
+            seen_guard_state=seen_guard_state,
+            seen_guard_run_report=seen_guard_run_report,
+        )
+    finally:
+        lock_stack.close()
+
+
 # ==============================================================================
 # Top-level runner (fetch posts, iterate, submit, and commit logs)
 # ==============================================================================
@@ -1234,18 +1310,30 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
         return posts_list, 0
 
     # Try to activate seen guard
+    seen_guard_run_report: Dict[str, Any] = {
+        "enabled": False,
+        "before": len(posts),
+        "after": len(posts),
+        "skipped": 0,
+        "error": "",
+    }
     try:
         guard = _load_seen_guard()
         if guard is None:
             print("[seen_guard] not active; processing all posts returned.")
         else:
+            seen_guard_run_report["enabled"] = True
+            seen_guard_run_report["before"] = len(posts)
             before = len(posts)
             posts, dup_count = _apply_seen_guard(guard, posts)
             after = len(posts)
             if not isinstance(dup_count, int):
                 dup_count = max(0, before - after)
+            seen_guard_run_report["skipped"] = int(dup_count)
+            seen_guard_run_report["after"] = after
             print(f"[seen_guard] {dup_count} duplicate(s) skipped; {after} fresh post(s) remain.")
     except Exception as _sg_ex:
+        seen_guard_run_report["error"] = f"{type(_sg_ex).__name__}: {str(_sg_ex)[:200]}"
         print(f"[seen_guard] disabled due to error: {type(_sg_ex).__name__}: {str(_sg_ex)[:200]}")
 
     # Ensure CSV exists before we start
@@ -1275,6 +1363,7 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
                 purpose=purpose,
                 submit_ok=bool(submit),
                 calib=_load_calibration_weights(),
+                seen_guard_run_report=seen_guard_run_report,
             )
         except Exception as e:
             print(f"[error] run_one_question failed for QID {qid}: {type(e).__name__}: {str(e)[:200]}")
@@ -1286,45 +1375,6 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
     except Exception as e:
         print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
 
-
-    # Ensure CSV exists before we start
-    ensure_unified_csv()
-
-    # Nothing to do?
-    if not posts:
-        print("[info] No posts to process.")
-        try:
-            finalize_and_commit(run_id=run_id)
-            print("[logs] finalize_and_commit: done")
-        except Exception as e:
-            print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
-        return
-
-    # Process each post
-    for idx, post in enumerate(posts[:limit], start=1):
-        q = post.get("question") or {}
-        qid = q.get("id") or post.get("id") or "?"
-        title = (q.get("title") or post.get("title") or "").strip()
-        print("")
-        print("----------------------------------------------------------------------------------------")
-        print(f"[{idx}/{len(posts[:limit])}] ❓ {title}  (QID: {qid})")
-        try:
-            await run_one_question(
-                post,
-                run_id=run_id,
-                purpose=purpose,
-                submit_ok=bool(submit),
-                calib=_load_calibration_weights(),
-            )
-        except Exception as e:
-            print(f"[error] run_one_question failed for QID {qid}: {type(e).__name__}: {str(e)[:200]}")
-
-    # Commit logs to git if configured
-    try:
-        finalize_and_commit(run_id=run_id)
-        print("[logs] finalize_and_commit: done")
-    except Exception as e:
-        print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
 
 # ==============================================================================
 # CLI entrypoint
