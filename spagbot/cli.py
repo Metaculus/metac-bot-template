@@ -43,7 +43,7 @@ from pathlib import Path
 # ---- Spagbot internals (all relative imports) --------------------------------
 from .config import (
     TOURNAMENT_ID, AUTH_HEADERS, API_BASE_URL,
-    ist_iso, ist_stamp, SUBMIT_PREDICTION,
+    ist_iso, ist_stamp, SUBMIT_PREDICTION, METACULUS_HTTP_TIMEOUT,
 )
 from .prompts import build_binary_prompt, build_numeric_prompt, build_mcq_prompt
 from .providers import DEFAULT_ENSEMBLE, _get_or_client, llm_semaphore
@@ -304,14 +304,14 @@ def list_posts_from_tournament(tournament_id: int | str = TOURNAMENT_ID, offset:
         "include_description": "true",
     }
     url = f"{API_BASE_URL}/posts/"
-    r = requests.get(url, params=params, **AUTH_HEADERS)
+    r = requests.get(url, params=params, timeout=METACULUS_HTTP_TIMEOUT, **AUTH_HEADERS)
     if not r.ok:
         raise RuntimeError(r.text)
     return json.loads(r.content)
 
 def get_post_details(post_id: int) -> dict:
     url = f"{API_BASE_URL}/posts/{post_id}/"
-    r = requests.get(url, **AUTH_HEADERS)
+    r = requests.get(url, timeout=METACULUS_HTTP_TIMEOUT, **AUTH_HEADERS)
     if not r.ok:
         raise RuntimeError(r.text)
     return json.loads(r.content)
@@ -365,7 +365,12 @@ def _build_payload_for_submission(question_type: str, forecast: Any) -> dict:
 
 def post_forecast(question_id: int, payload: dict) -> Tuple[int, Optional[str]]:
     url = f"{API_BASE_URL}/questions/forecast/"
-    r = requests.post(url, json=[{"question": question_id, **payload}], **AUTH_HEADERS)
+    r = requests.post(
+        url,
+        json=[{"question": question_id, **payload}],
+        timeout=METACULUS_HTTP_TIMEOUT,
+        **AUTH_HEADERS,
+    )
     if r.ok:
         return r.status_code, None
     return r.status_code, r.text

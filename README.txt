@@ -97,6 +97,10 @@ run_bot_on_tournament.yaml,
 
 run_bot_on_metaculus_cup.yaml,
 
+> **Note:** Metaculus renames the Cup slug every season. Update the `TOURNAMENT_ID`
+> in `.github/workflows/run_bot_on_metaculus_cup.yaml` to match the current Cup
+> URL (presently `metaculus-cup-fall-2025`).
+
 calibration_refresh.yml (periodic update of calibration weights).
 
 Add secrets (see below), push the repo, and Actions will:
@@ -370,3 +374,6 @@ Ensure data/ folder exists and isn’t .gitignore’d.
 
 Duplicate forecasts.
 Make sure SEEN_GUARD_PATH is set to a path inside the repo (e.g., forecast_logs/state/seen_forecasts.jsonl) and that your workflow imports filter_post_ids/assert_not_seen/mark_post_seen successfully (see the compat layer in seen_guard.py above).
+
+Metaculus API call hangs for minutes.
+Set `METACULUS_HTTP_TIMEOUT` (defaults to 30 seconds) in your workflow or shell to force requests to fail fast instead of waiting indefinitely.

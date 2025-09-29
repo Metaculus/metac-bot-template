@@ -59,6 +59,7 @@ METACULUS_INCLUDE_RESOLVED  = os.getenv("METACULUS_INCLUDE_RESOLVED", "1").lower
 TOURNAMENT_ID = os.getenv("TOURNAMENT_ID", "fall-aib-2025")
 
 API_BASE_URL  = "https://www.metaculus.com/api"
+METACULUS_HTTP_TIMEOUT = float(os.getenv("METACULUS_HTTP_TIMEOUT", "30"))
 AUTH_HEADERS  = {"headers": {"Authorization": f"Token {METACULUS_TOKEN}"}}
 
 TEST_POSTS_FILE = os.getenv("TEST_POSTS_FILE", "data/test_questions.json")
