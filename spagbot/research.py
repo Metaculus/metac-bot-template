@@ -35,7 +35,7 @@ Caching: we keep the same cache contract as before (read_cache/write_cache from 
 This lets repeated runs avoid hitting the network when nothing changed.
 """
 
-import os, re, json, time, math, textwrap, asyncio, hashlib
+import os, re, json, time, math, textwrap, asyncio, hashlib, difflib
 from typing import Optional, List, Dict, Any, Tuple
 import requests
 
@@ -89,6 +89,25 @@ def _cache_key_for(title: str, description: str, criteria: str, qtype: str) -> s
 def _norm_space(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip())
 
+def _norm_for_similarity(s: str) -> str:
+    """Lowercase alphanumeric string for similarity comparisons."""
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+
+def _title_similarity(a: str, b: str) -> float:
+    """Blend token overlap and sequence ratio for rough similarity."""
+    na, nb = _norm_for_similarity(a), _norm_for_similarity(b)
+    if not na or not nb:
+        return 0.0
+    toks_a = set(na.split())
+    toks_b = set(nb.split())
+    if not toks_a or not toks_b:
+        token_score = 0.0
+    else:
+        token_score = len(toks_a & toks_b) / len(toks_a | toks_b)
+    seq_score = difflib.SequenceMatcher(None, na, nb).ratio()
+    # Weighted average; emphasize sequence ratio but keep token overlap
+    return 0.65 * seq_score + 0.35 * token_score
+
 def _find_quoted_phrases(text: str) -> List[str]:
     return [m.group(1).strip() for m in re.finditer(r'"([^"]+)"', text or "") if m.group(1).strip()]
 
@@ -126,6 +145,220 @@ def _extract_anchors(title: str, description: str, criteria: str) -> Dict[str, L
         "proper": _find_proper_nouns(blob),
         "tokens": _split_tokens(blob),
     }
+
+# =============================================================================
+# MARKET SNAPSHOTS (Metaculus / Manifold)
+# =============================================================================
+
+_MARKET_SIMILARITY_THRESHOLD = 0.55
+
+def _find_numeric_value(obj: Any) -> Optional[float]:
+    """Recursively search for the first numeric value in a nested structure."""
+    if isinstance(obj, (int, float)):
+        val = float(obj)
+        if math.isnan(val):
+            return None
+        return val
+    if isinstance(obj, dict):
+        preferred_keys = (
+            "p_yes",
+            "probability",
+            "p",
+            "yes",
+            "value",
+            "q2",
+            "median",
+        )
+        for key in preferred_keys:
+            if key in obj and isinstance(obj[key], (int, float)):
+                val = float(obj[key])
+                if math.isnan(val):
+                    continue
+                return val
+        for val in obj.values():
+            got = _find_numeric_value(val)
+            if got is not None:
+                return got
+    elif isinstance(obj, list):
+        for item in obj:
+            got = _find_numeric_value(item)
+            if got is not None:
+                return got
+    return None
+
+def _format_percent(prob: float) -> str:
+    return f"{max(0.0, min(prob, 1.0)) * 100:.1f}%"
+
+def _metaculus_snapshot(query_title: str) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+    url = "https://www.metaculus.com/api2/questions/"
+    params = {"search": query_title, "limit": 12, "status": "open"}
+    debug: List[str] = []
+    try:
+        resp = requests.get(url, params=params, timeout=12)
+    except Exception as exc:
+        debug.append(f"Metaculus: request error {exc!r}")
+        return None, debug
+    if resp.status_code != 200:
+        debug.append(f"Metaculus: HTTP {resp.status_code}")
+        return None, debug
+    try:
+        data = resp.json()
+    except Exception as exc:
+        debug.append(f"Metaculus: JSON error {exc!r}")
+        return None, debug
+    best: Tuple[float, Dict[str, Any]] = (0.0, {})
+    for result in data.get("results", []) or []:
+        if (result.get("status") or "").lower() != "open":
+            continue
+        qtype = (result.get("type") or "").lower()
+        if qtype != "binary":
+            continue
+        title = result.get("title") or ""
+        score = _title_similarity(query_title, title)
+        if score > best[0]:
+            best = (score, result)
+    if not best[1]:
+        debug.append("Metaculus: no open binary results in response")
+        return None, debug
+    if best[0] < _MARKET_SIMILARITY_THRESHOLD:
+        best_title = (best[1].get("title") if isinstance(best[1], dict) else "") or "(none)"
+        debug.append(
+            f"Metaculus: best score {best[0]:.2f} below threshold {_MARKET_SIMILARITY_THRESHOLD:.2f} for '{best_title}'"
+        )
+        return None, debug
+    chosen = best[1]
+    prob = _find_numeric_value(chosen.get("community_prediction"))
+    if prob is None:
+        debug.append("Metaculus: match missing community prediction")
+        return None, debug
+    if prob > 1:
+        prob /= 100.0
+    debug.append(
+        f"Metaculus: matched '{(chosen.get('title') or '')[:80]}' (score {best[0]:.2f}, {prob * 100:.1f}%)"
+    )
+    return {
+        "platform": "Metaculus",
+        "title": chosen.get("title") or "",
+        "url": f"https://www.metaculus.com/questions/{chosen.get('id')}/",
+        "prob": prob,
+    }, debug
+
+def _manifold_snapshot(query_title: str) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+    url = "https://api.manifold.markets/v0/search-markets"
+    params = {"term": query_title, "limit": 40}
+    debug: List[str] = []
+    try:
+        resp = requests.get(url, params=params, timeout=12)
+    except Exception as exc:
+        debug.append(f"Manifold: request error {exc!r}")
+        return None, debug
+    if resp.status_code != 200:
+        debug.append(f"Manifold: HTTP {resp.status_code}")
+        return None, debug
+    try:
+        markets = resp.json()
+    except Exception as exc:
+        debug.append(f"Manifold: JSON error {exc!r}")
+        return None, debug
+    if not isinstance(markets, list):
+        debug.append("Manifold: unexpected payload (not a list)")
+        return None, debug
+    best: Tuple[float, Dict[str, Any]] = (0.0, {})
+    for market in markets:
+        if not isinstance(market, dict):
+            continue
+        if market.get("isResolved"):
+            continue
+        if (market.get("outcomeType") or "").upper() != "BINARY":
+            continue
+        title = market.get("question") or market.get("title") or ""
+        score = _title_similarity(query_title, title)
+        if score > best[0]:
+            best = (score, market)
+    if not best[1]:
+        debug.append("Manifold: no open binary results in response")
+        return None, debug
+    if best[0] < _MARKET_SIMILARITY_THRESHOLD:
+        best_title = ""
+        if isinstance(best[1], dict):
+            best_title = best[1].get("question") or best[1].get("title") or ""
+        debug.append(
+            f"Manifold: best score {best[0]:.2f} below threshold {_MARKET_SIMILARITY_THRESHOLD:.2f} for '{best_title or '(none)'}'"
+        )
+        return None, debug
+    chosen = best[1]
+    prob = chosen.get("probability")
+    if prob is None:
+        prob = chosen.get("p")
+    if isinstance(prob, (int, float)):
+        prob = float(prob)
+        if prob > 1:
+            prob /= 100.0
+    else:
+        debug.append("Manifold: match missing probability field")
+        return None, debug
+    url = chosen.get("url")
+    if not url:
+        slug = chosen.get("slug") or ""
+        creator = chosen.get("creatorUsername") or ""
+        if slug and creator:
+            url = f"https://manifold.markets/{creator}/{slug}"
+    debug.append(
+        f"Manifold: matched '{(chosen.get('question') or chosen.get('title') or '')[:80]}' (score {best[0]:.2f}, {prob * 100:.1f}%)"
+    )
+    return {
+        "platform": "Manifold",
+        "title": chosen.get("question") or chosen.get("title") or "",
+        "url": url or "",
+        "prob": prob,
+    }, debug
+
+def _collect_market_snapshots(query_title: str) -> Tuple[str, Dict[str, bool], List[str]]:
+    """Return markdown snippet + meta flags for market matches plus debug info."""
+    matches: List[Dict[str, Any]] = []
+    found = {"metaculus": False, "manifold": False}
+    debug_lines: List[str] = []
+
+    m1, dbg1 = _metaculus_snapshot(query_title)
+    if dbg1:
+        debug_lines.extend(dbg1)
+    if m1:
+        matches.append(m1)
+        found["metaculus"] = True
+
+    m2, dbg2 = _manifold_snapshot(query_title)
+    if dbg2:
+        debug_lines.extend(dbg2)
+    if m2:
+        matches.append(m2)
+        found["manifold"] = True
+
+    if not matches:
+        if not debug_lines:
+            debug_lines.append("Market snapshots: no matches")
+        return "", found, debug_lines
+
+    lines = [
+        "### Market Snapshots (community forecasts)",
+    ]
+    for item in matches:
+        title = item.get("title") or "(untitled)"
+        url = item.get("url") or ""
+        prob = item.get("prob")
+        prob_text = _format_percent(prob) if isinstance(prob, (int, float)) else "N/A"
+        if url:
+            question_txt = f"[{title}]({url})"
+        else:
+            question_txt = title
+        lines.append(f"- **{item.get('platform','?')}**: {question_txt} — Community forecast: {prob_text}")
+
+    matched_names = sorted(name for name, present in found.items() if present)
+    if matched_names:
+        debug_lines.append("Market snapshots: found " + ", ".join(matched_names))
+    else:
+        debug_lines.append("Market snapshots: found none")
+
+    return "\n".join(lines), found, debug_lines
 
 # =============================================================================
 # GROUNDING with GOOGLE via Gemini API
@@ -516,6 +749,24 @@ async def run_research_async(
         else:
             llm_text = "No recent external sources found; proceeding with general knowledge and base rates."
 
+    # 5b) Supplement with market snapshots (Metaculus / Manifold)
+    try:
+        market_section, market_flags, market_debug_lines = await asyncio.to_thread(
+            _collect_market_snapshots, title
+        )
+    except Exception as exc:
+        market_section = ""
+        market_flags = {"metaculus": False, "manifold": False}
+        market_debug_lines = [f"Market snapshots: exception {exc!r}"]
+    if market_section:
+        llm_text = llm_text.rstrip() + "\n\n" + market_section.strip()
+    markets_found = ",".join([
+        name for name, present in (market_flags or {}).items() if present
+    ]) or "none"
+    if not isinstance(market_debug_lines, list):
+        market_debug_lines = [str(market_debug_lines)] if market_debug_lines else []
+    market_debug = [str(line) for line in market_debug_lines if str(line).strip()]
+
     # --- cost estimation ---
     prompt_tokens = _rough_token_count(json.dumps(req_body))
     output_tokens = _rough_token_count(llm_text)
@@ -525,7 +776,11 @@ async def run_research_async(
     research_cost_usd = (prompt_tokens/1000)*in_rate + (output_tokens/1000)*out_rate
 
     # 6) Final text for the human log: brief + source list (+ optional pre-filter dump)
-    parts = [_CAL_PREFIX + llm_text, "", _format_sources_for_log(picked)]
+    parts = [_CAL_PREFIX + llm_text]
+    if market_debug:
+        debug_block = ["Market snapshot debug:"] + [f"- {line}" for line in market_debug]
+        parts += ["", "\n".join(debug_block)]
+    parts += ["", _format_sources_for_log(picked)]
     if RESEARCH_LOG_ALL_CANDIDATES and raw_items:
         parts += ["", _format_all_candidates_for_log(raw_items)]
     final_text = "\n".join(parts)
@@ -544,6 +799,9 @@ async def run_research_async(
                 "research_error": (LAST_RESEARCH_ERROR or ""),
                 "research_usage": usage or {},
                 "research_cost_usd": round(research_cost_usd, 6),
+                "research_markets_found": markets_found,
+                "research_market_summary": market_section,
+                "research_market_debug": "\n".join(market_debug),
             },
         }, ensure_ascii=False)
         write_cache("research", ck, cache_blob)
@@ -561,5 +819,8 @@ async def run_research_async(
         "research_error": (LAST_RESEARCH_ERROR or ""),
         "research_usage": usage or {},
         "research_cost_usd": round(research_cost_usd, 6),
+        "research_markets_found": markets_found,
+        "research_market_summary": market_section,
+        "research_market_debug": "\n".join(market_debug),
     }
     return final_text, meta
