@@ -1052,14 +1052,47 @@ async def _run_one_question_body(
                 f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | "
                 f"n_raw={_r_raw} | n_kept={_r_kept} | cost=${float(_r_cost):.6f}"
             )
-    
+
             if _r_q:
                 md.append(f"- query: {_r_q}")
             if _r_err:
                 md.append(f"- error: {_r_err}")
         except Exception:
             pass
-    
+
+        # --- Market snapshots (Metaculus & Manifold) -----------------------------
+        try:
+            md.append("### Market snapshots (Metaculus & Manifold)")
+            _markets_found = str(research_meta.get("research_markets_found", "") or "").strip()
+            markets_found = _markets_found or "none"
+            md.append(f"- markets_found={markets_found}")
+
+            summary_block = str(research_meta.get("research_market_summary") or "").strip()
+            summary_lines = [ln.rstrip() for ln in summary_block.splitlines() if ln.strip()]
+            if summary_lines and summary_lines[0].lstrip("# ").lower().startswith("market snapshots"):
+                summary_lines = summary_lines[1:]
+            if summary_lines:
+                md.extend(summary_lines)
+            else:
+                md.append("- No matching open binary markets identified on Metaculus or Manifold.")
+
+            debug_text = str(research_meta.get("research_market_debug") or "").strip()
+            debug_lines = [ln.strip() for ln in debug_text.splitlines() if ln.strip()]
+            md.append("#### Market debug")
+            if debug_lines:
+                for line in debug_lines:
+                    if line.startswith("-"):
+                        md.append(line)
+                    else:
+                        md.append(f"- {line}")
+            else:
+                md.append("- (no debug info returned)")
+        except Exception as _market_dbg_ex:
+            md.append("### Market snapshots (Metaculus & Manifold)")
+            md.append(
+                f"- market_debug_error={type(_market_dbg_ex).__name__}: {str(_market_dbg_ex)[:200]}"
+            )
+
         # --- GTMC1 (debug) --------------------------------------------------------
         try:
             md.append("### GTMC1 (debug)")
