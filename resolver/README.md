@@ -76,3 +76,12 @@ resolver/staging/*.csv (one per source)
 resolver/exports/facts.csv (+ optional Parquet)
 
 resolver/snapshots/YYYY-MM/{facts.parquet,manifest.json}
+
+
+---
+
+**Definition of Done (DoD)**  
+- `resolver/ingestion/README.md` + `resolver/ingestion/checklist.yml` exist.  
+- Stubs exist and write staging CSVs: `reliefweb.csv`, `ifrc_go.csv`, `unhcr.csv`, `dtm.csv`, `who.csv`, `ipc.csv`.  
+- `run_all_stubs.py` runs all stubs and prints **✅ all stubs completed**.  
+- Root `resolver/README.md` shows the end-to-end commands.
