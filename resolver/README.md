@@ -22,3 +22,14 @@ Blocks metric = in_need if source_type = media.
 Requires unit = persons_cases when metric = cases.
 
 PR checklist addition: ✅ Facts validate against registries (countries.csv, shocks.csv) with validate_facts.py.
+
+## Snapshots
+
+Create a monthly snapshot (validated, parquet + manifest):
+
+```bash
+pip install pandas pyarrow pyyaml
+python resolver/tools/freeze_snapshot.py --facts resolver/samples/facts_sample.csv --month 2025-09
+```
+
+PR checklist addition: ✅ If this PR changes facts or resolver logic, ensure a snapshot plan is documented and (when appropriate) a new snapshot was produced with the freezer.
