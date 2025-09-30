@@ -118,6 +118,9 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
+      - name: Refresh lockfile
+        run: poetry lock --no-interaction --no-ansi
+
       - name: Install deps
         run: poetry install --no-interaction --no-ansi
 

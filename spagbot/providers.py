@@ -214,29 +214,87 @@ async def _call_gemini_direct(model_id: str, prompt: str, temperature: float) ->
 async def _call_grok_direct(model_id: str, prompt: str, temperature: float) -> tuple[str, Dict[str,int], str]:
     if not XAI_API_KEY:
         return "", {}, "no XAI_API_KEY"
+
+    def _dig(d: Any, path: list[str], default: str = "") -> str:
+        cur: Any = d
+        for key in path:
+            if isinstance(cur, dict) and key in cur:
+                cur = cur[key]
+            else:
+                return default
+        return cur if isinstance(cur, str) else default
+
+    def _to_json(obj: Any) -> Dict[str, Any]:
+        if isinstance(obj, dict):
+            return obj
+        if isinstance(obj, (bytes, str)):
+            try:
+                parsed = json.loads(obj)
+                return parsed if isinstance(parsed, dict) else {}
+            except Exception:
+                return {}
+        return {}
+
+    def _err_msg_from_json(j: Dict[str, Any]) -> str:
+        err = j.get("error")
+        if isinstance(err, dict):
+            for key in ("message", "error"):
+                val = err.get(key)
+                if isinstance(val, str) and val:
+                    return val[:500]
+        if isinstance(err, str) and err:
+            return err[:500]
+        for path in (["message"], ["detail"], ["error_message"]):
+            val = _dig(j, path, "")
+            if val:
+                return val[:500]
+        return ""
+
     def _do():
         headers = {"Authorization": f"Bearer {XAI_API_KEY}", "Content-Type":"application/json"}
         body = {"model": model_id, "messages":[{"role":"user","content":prompt}], "temperature": float(temperature)}
         try:
             r = requests.post(XAI_BASE_URL, json=body, headers=headers, timeout=_GROK_TIMEOUT)
-            j = r.json()
         except Exception as e:
-            return "", {}, f"Grok request error: {e!r}"
-        if r.status_code != 200:
-            msg = j.get("error", {}).get("message","")
-            return "", {}, f"Grok HTTP {r.status_code}: {msg[:160]}"
-        text = ""
+            return "", {}, f"RequestError: {type(e).__name__}: {str(e)[:300]}"
+
         try:
-            text = j["choices"][0]["message"].get("content","").strip()
+            payload = r.json()
         except Exception:
-            text = ""
-        u = j.get("usage", {}) or {}
+            payload = r.text
+        j = _to_json(payload)
+
+        if not r.ok:
+            msg = _err_msg_from_json(j)
+            if not msg and isinstance(r.text, str):
+                msg = r.text[:500]
+            return "", {}, f"HTTP {r.status_code}: {msg}"
+
+        text = ""
+        choices = j.get("choices")
+        if isinstance(choices, list) and choices:
+            choice0 = choices[0] if isinstance(choices[0], dict) else {}
+            message = choice0.get("message") if isinstance(choice0, dict) else {}
+            if isinstance(message, dict):
+                content = message.get("content")
+                if isinstance(content, str):
+                    text = content.strip()
+        if not text and isinstance(j.get("message"), str):
+            text = j["message"].strip()
+
+        usage_obj = j.get("usage") if isinstance(j.get("usage"), dict) else {}
         usage = {
-            "prompt_tokens": int(u.get("prompt_tokens", 0)),
-            "completion_tokens": int(u.get("completion_tokens", 0)),
-            "total_tokens": int(u.get("total_tokens", u.get("totalTokens", 0)) or (u.get("prompt_tokens",0)+u.get("completion_tokens",0))),
+            "prompt_tokens": int(usage_obj.get("prompt_tokens", 0) or 0),
+            "completion_tokens": int(usage_obj.get("completion_tokens", 0) or 0),
+            "total_tokens": int(
+                usage_obj.get("total_tokens")
+                or usage_obj.get("totalTokens", 0)
+                or (usage_obj.get("prompt_tokens", 0) or 0)
+                + (usage_obj.get("completion_tokens", 0) or 0)
+            ),
         }
         return text, usage, ""
+
     return await asyncio.to_thread(_do)
 
 # -------------- public: one call to rule them all --------------
@@ -250,7 +308,14 @@ async def call_chat_ms(ms: ModelSpec, prompt: str, temperature: float = 0.2) -> 
     if ms.provider == "gemini":
         return await _call_gemini_direct(ms.model_id, prompt, temperature)
     if ms.provider == "grok":
-        return await _call_grok_direct(ms.model_id, prompt, temperature)
+        text, usage, err = await _call_grok_direct(ms.model_id, prompt, temperature)
+        if not isinstance(usage, dict):
+            usage = {}
+        if not isinstance(text, str):
+            text = "" if text is None else str(text)
+        if not isinstance(err, str):
+            err = "" if err is None else str(err)
+        return text, usage, err
     return "", {}, f"unsupported provider {ms.provider}"
 
 # -------- Gemini helper used by research.py fallback ----------
