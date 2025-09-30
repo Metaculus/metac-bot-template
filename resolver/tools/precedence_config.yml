@@ -1,0 +1,37 @@
+# Policy knobs (kept here so we don't hardcode in code)
+metric_preference: [in_need, affected]   # PIN first, else PA
+source_precedence:                       # highest → lowest
+  - inter_agency_plan
+  - ifrc_or_gov_sitrep
+  - un_cluster_snapshot
+  - reputable_ingo_un
+  - agency                               # generic agency
+  - media_discovery_only
+
+# Map source_type/publisher patterns to the policy tiers above
+source_mapping:
+  inter_agency_plan:
+    source_type: ["appeal", "sitrep"]
+    publisher: ["OCHA"]                  # includes HNO/HRP/Flash/Addendum, OCHA sitreps
+  ifrc_or_gov_sitrep:
+    source_type: ["sitrep", "gov"]
+    publisher: ["IFRC", "NDMA", "AFAD", "NDRMC"]
+  un_cluster_snapshot:
+    source_type: ["cluster"]
+    publisher: ["UNHCR", "IOM-DTM", "WHO", "IPC"]
+  reputable_ingo_un:
+    source_type: ["agency"]
+    publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "HDX (CKAN)", "FEWS NET", "WFP mVAM"]
+  agency:
+    source_type: ["agency"]
+    publisher: ["*"]                     # any other agency-like source
+  media_discovery_only:
+    source_type: ["media"]
+
+conflict_rule:
+  threshold_pct: 20
+  tie_breaker: latest_as_of
+
+cutoff:
+  timezone: "Europe/Istanbul"
+  lag_days_allowed: 7

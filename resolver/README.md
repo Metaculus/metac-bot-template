@@ -78,10 +78,37 @@ resolver/exports/facts.csv (+ optional Parquet)
 resolver/snapshots/YYYY-MM/{facts.parquet,manifest.json}
 
 
+## Resolve at a cutoff (precedence engine)
+
+Select one authoritative total per `(iso3, hazard_code)` applying A2 policy:
+
+```bash
+pip install pandas pyarrow pyyaml python-dateutil
+python resolver/tools/precedence_engine.py \
+  --facts resolver/exports/facts.csv \
+  --cutoff 2025-09-30
+```
+
+
+Outputs:
+
+resolver/exports/resolved.csv
+
+resolver/exports/resolved.jsonl
+
+resolver/exports/resolved_diagnostics.csv (conflict notes)
+
+PR checklist addition: ✅ Precedence config reviewed (tools/precedence_config.yml) and results inspected (exports/resolved*.{csv,jsonl}).
+
+
 ---
 
-**Definition of Done (DoD)**  
-- `resolver/ingestion/README.md` + `resolver/ingestion/checklist.yml` exist.  
-- Stubs exist and write staging CSVs: `reliefweb.csv`, `ifrc_go.csv`, `unhcr.csv`, `dtm.csv`, `who.csv`, `ipc.csv`.  
-- `run_all_stubs.py` runs all stubs and prints **✅ all stubs completed**.  
+**Definition of Done (DoD)**
+- `resolver/ingestion/README.md` + `resolver/ingestion/checklist.yml` exist.
+- Stubs exist and write staging CSVs: `reliefweb.csv`, `ifrc_go.csv`, `unhcr.csv`, `dtm.csv`, `who.csv`, `ipc.csv`.
+- `run_all_stubs.py` runs all stubs and prints **✅ all stubs completed**.
 - Root `resolver/README.md` shows the end-to-end commands.
+- `resolver/tools/precedence_config.yml` exists with tiers and mapping that match A2.
+- `resolver/tools/precedence_engine.py` runs on your exported facts and writes `resolved.csv/jsonl` + diagnostics.
+- A local smoke test with `resolver/exports/facts_minimal.csv` succeeds and selects the expected rows.
+- `resolver/README.md` updated with usage and a PR checklist line.
