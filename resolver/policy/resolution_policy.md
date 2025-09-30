@@ -1,0 +1,1 @@
+# Resolution Policy (A2)
