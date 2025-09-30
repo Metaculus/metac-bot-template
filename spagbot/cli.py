@@ -34,7 +34,16 @@ from typing import Optional, List, Dict, Any, Tuple
 import inspect
 
 import numpy as np
-import requests
+
+# Defensive import: guide users if poetry deps aren’t installed locally.
+try:
+    import requests
+except ModuleNotFoundError:
+    raise SystemExit(
+        "Missing dependency 'requests'.\n"
+        "Fix: run `poetry install` (recommended), or `pip install requests`.\n"
+        "If you use VSCode, also pick the Poetry venv as your interpreter."
+    )
 
 import json
 from pathlib import Path
@@ -48,21 +57,19 @@ def _safe_json_load(s: str):
         return None
 
 
-def _as_dict(x):
-    """
-    Normalize possibly-string/None payloads into dicts.
-    - dict -> dict
-    - JSON string -> parsed dict (if possible)
-    - anything else -> {}
-    """
+def _as_dict(x) -> dict:
+    """Best-effort normalize unknown objects (None/str/json) into a dict."""
     if isinstance(x, dict):
         return x
     if isinstance(x, str):
         s = x.strip()
         if s.startswith("{") and s.endswith("}"):
-            obj = _safe_json_load(s)
-            if isinstance(obj, dict):
-                return obj
+            import json as _json
+            try:
+                return dict(_json.loads(s))
+            except Exception:
+                return {}
+        return {}
     return {}
 
 
@@ -543,7 +550,10 @@ async def _run_one_question_body(
             units=str(units) if units else None,
             slug=f"q{question_id}",
         )
-    
+
+        # Normalize meta to a dict so downstream `.get(...)` calls never crash.
+        research_meta = _as_dict(research_meta)
+
         t_research_ms = _ms(t0)
     
     
@@ -698,7 +708,9 @@ async def _run_one_question_body(
         else:
             quantiles_main, bmc_summary = aggregate_numeric(ens_res, calib_weights_map)
             final_main = dict(quantiles_main)
-    
+
+        bmc_summary = _as_dict(bmc_summary)
+
         # ------------------ 7) Diagnostic variants (WITH research) ------------------
         if qtype == "binary":
             v_nogtmc1, _ = aggregate_binary(ens_res, None, calib_weights_map)
@@ -918,8 +930,9 @@ async def _run_one_question_body(
         _fill_ablation_variant("no_gtmc1", ab_main)
         _fill_ablation_variant("uniform_weights", ab_uniform)
         _fill_ablation_variant("no_bmc_no_gtmc1", ab_simple if isinstance(ab_simple, dict) else ({"P50": ab_simple} if isinstance(ab_simple, float) else ab_simple))
-    
+
         # Diagnostics, timings, submission, weights used
+        gtmc1_signal = _as_dict(gtmc1_signal)
         row.update({
             "gtmc1_active": "1" if gtmc1_active else "0",
             "actors_cached": "0",
