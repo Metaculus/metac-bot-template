@@ -132,3 +132,20 @@ python resolver/cli/resolver_cli.py --iso3 PHL --hazard_code TC --cutoff 2025-09
 - `resolver/tools/precedence_engine.py` runs on your exported facts and writes `resolved.csv/jsonl` + diagnostics.
 - A local smoke test with `resolver/exports/facts_minimal.csv` succeeds and selects the expected rows.
 - `resolver/README.md` updated with usage and a PR checklist line.
+
+## HTTP API
+
+Run a tiny FastAPI server:
+
+```bash
+pip install -r resolver/requirements.txt
+uvicorn resolver.api.app:app --reload --port 8000
+```
+
+Query it:
+
+```bash
+curl "http://127.0.0.1:8000/resolve?iso3=PHL&hazard_code=TC&cutoff=2025-09-30"
+```
+
+OpenAPI docs at /docs.
