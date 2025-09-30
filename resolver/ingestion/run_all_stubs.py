@@ -15,6 +15,16 @@ STUBS = [
     "dtm_stub.py",
     "who_stub.py",
     "ipc_stub.py",
+    "emdat_stub.py",
+    "gdacs_stub.py",
+    "copernicus_stub.py",
+    "unosat_stub.py",
+    "hdx_stub.py",
+    "acled_stub.py",
+    "ucdp_stub.py",
+    "fews_stub.py",
+    "wfp_mvam_stub.py",
+    "gov_ndma_stub.py",
 ]
 
 def main():
