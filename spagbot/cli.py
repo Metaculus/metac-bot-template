@@ -1228,6 +1228,12 @@ async def _run_one_question_body(
     
     
     except Exception as _e:
+        import traceback
+
+        print("[error] Exception in _run_one_question_body:")
+        print(f"[error] {type(_e).__name__}: {str(_e)}")
+        print("[error] Traceback:")
+        traceback.print_exc()
         _post_t = type(_post_original).__name__
         try:
             _q_t = type(q).__name__
