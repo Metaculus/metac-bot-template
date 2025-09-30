@@ -30,9 +30,45 @@ def _is_date(s: str) -> bool:
 
 
 def load_or_empty(path: Path) -> pd.DataFrame:
-    if not path.exists():
-        return pd.DataFrame()
-    return pd.read_csv(path, dtype=str).fillna("")
+    """Return empty DataFrame if file missing OR empty."""
+    if not path.exists() or path.stat().st_size == 0:
+        # return an empty frame with expected columns so downstream code is happy
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "hazard_code",
+                "metric",
+                "kept_value",
+                "kept_publisher",
+                "kept_source_url",
+                "alt_value",
+                "alt_publisher",
+                "alt_source_url",
+                "pct_diff",
+                "note",
+                "key",
+            ]
+        )
+    try:
+        return pd.read_csv(path, dtype=str).fillna("")
+    except Exception:
+        # if it's unreadable for any reason, treat as empty (fail-soft)
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "hazard_code",
+                "metric",
+                "kept_value",
+                "kept_publisher",
+                "kept_source_url",
+                "alt_value",
+                "alt_publisher",
+                "alt_source_url",
+                "pct_diff",
+                "note",
+                "key",
+            ]
+        )
 
 
 def main():
@@ -50,7 +86,7 @@ def main():
         + "|"
         + resolved["metric"].astype(str)
     )
-    if not diags.empty:
+    if not diags.empty and "key" not in diags.columns:
         diags["key"] = (
             diags["iso3"].astype(str)
             + "|"
@@ -58,9 +94,8 @@ def main():
             + "|"
             + diags["metric"].astype(str)
         )
-        conflict_keys = set(diags["key"])
-    else:
-        conflict_keys = set()
+
+    conflict_keys = set(diags["key"]) if (not diags.empty and "key" in diags.columns) else set()
 
     today = dt.date.today().isoformat()
 
