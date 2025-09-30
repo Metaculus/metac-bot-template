@@ -48,3 +48,31 @@ python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --mo
 
 
 If you see validation errors, fix the staging inputs or tweak resolver/tools/export_config.yml.
+
+## End-to-end (Stubs → Export → Validate → Freeze)
+
+```bash
+# 0) Ensure registries exist and include your latest countries/hazards
+#    resolver/data/countries.csv
+#    resolver/data/shocks.csv
+
+# 1) Generate staging CSVs from stub connectors (no network)
+python resolver/ingestion/run_all_stubs.py
+
+# 2) Export canonical facts from staging
+python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
+
+# 3) Validate against registries & schema
+python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+# 4) Freeze a monthly snapshot
+python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month YYYY-MM
+```
+
+This will create:
+
+resolver/staging/*.csv (one per source)
+
+resolver/exports/facts.csv (+ optional Parquet)
+
+resolver/snapshots/YYYY-MM/{facts.parquet,manifest.json}
