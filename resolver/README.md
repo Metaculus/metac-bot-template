@@ -101,6 +101,26 @@ resolver/exports/resolved_diagnostics.csv (conflict notes)
 PR checklist addition: ✅ Precedence config reviewed (tools/precedence_config.yml) and results inspected (exports/resolved*.{csv,jsonl}).
 
 
+## Ask the resolver (CLI)
+
+```bash
+# Country/Hazard by names
+python resolver/cli/resolver_cli.py --country "Philippines" --hazard "Tropical Cyclone" --cutoff 2025-09-30
+
+# Or by codes
+python resolver/cli/resolver_cli.py --iso3 PHL --hazard_code TC --cutoff 2025-09-30
+```
+
+### Selection logic
+
+- If the month of `--cutoff` is in the past, use `snapshots/YYYY-MM/facts.parquet`.
+- If current month, use `exports/resolved_reviewed.csv` if present, else `exports/resolved.csv`.
+
+---
+### Outputs
+
+- A single JSON line (always) and a human-readable summary (unless `--json_only`).
+
 ---
 
 **Definition of Done (DoD)**
