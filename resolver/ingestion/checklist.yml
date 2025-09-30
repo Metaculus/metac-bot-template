@@ -30,6 +30,56 @@ sources:
     output: resolver/staging/ipc.csv
     owner: ingestion
     status: stub
+  emdat:
+    cadence: low
+    output: resolver/staging/emdat.csv
+    owner: ingestion
+    status: stub   # real: bulk CSV export; standardized "people affected"
+  gdacs:
+    cadence: high
+    output: resolver/staging/gdacs.csv
+    owner: ingestion
+    status: stub   # real: JSON/RSS feeds; near-real-time alerts & modeled impact
+  copernicus_ems:
+    cadence: medium
+    output: resolver/staging/copernicus.csv
+    owner: ingestion
+    status: stub   # real: activation API/pages; footprint/exposure products
+  unosat:
+    cadence: medium
+    output: resolver/staging/unosat.csv
+    owner: ingestion
+    status: stub   # real: map services/WMS; damage assessments
+  hdx_ckan:
+    cadence: medium
+    output: resolver/staging/hdx.csv
+    owner: ingestion
+    status: stub   # real: CKAN API for dataset discovery (country/hazard filters)
+  acled:
+    cadence: high
+    output: resolver/staging/acled.csv
+    owner: ingestion
+    status: stub   # real: API requires key; conflict event volumes
+  ucdp:
+    cadence: medium
+    output: resolver/staging/ucdp.csv
+    owner: ingestion
+    status: stub   # real: open API; conflict datasets
+  fews_net:
+    cadence: low
+    output: resolver/staging/fews.csv
+    owner: ingestion
+    status: stub   # real: CSV/portal; early warning narrative & phase mapping
+  wfp_mvam:
+    cadence: medium
+    output: resolver/staging/wfp_mvam.csv
+    owner: ingestion
+    status: stub   # real: price/food security indicators where available
+  gov_ndma:
+    cadence: high
+    output: resolver/staging/gov_ndma.csv
+    owner: ingestion
+    status: stub   # real: per-country feeds/RSS; official sitreps
 notes:
   - Replace "stub" with "api" when real connectors land in Epic C.
   - All outputs must validate with resolver/tools/validate_facts.py
