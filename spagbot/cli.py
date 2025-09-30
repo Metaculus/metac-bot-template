@@ -1253,15 +1253,21 @@ async def run_one_question(
     q = _as_dict(post.get("question"))
     question_id = int(q.get("id") or post.get("id") or post.get("post_id") or 0)
 
+    sg_available = False
+    try:
+        sg_available = seen_guard is not None and hasattr(seen_guard, "lock")
+    except (NameError, AttributeError):
+        sg_available = False
+
     seen_guard_state: Dict[str, Any] = {
-        "enabled": bool(seen_guard),
+        "enabled": sg_available,
         "lock_acquired": None,
         "lock_error": "",
     }
 
     lock_stack = ExitStack()
     try:
-        if seen_guard:
+        if sg_available:
             try:
                 acquired = lock_stack.enter_context(seen_guard.lock(question_id))
                 seen_guard_state["lock_acquired"] = bool(acquired)
