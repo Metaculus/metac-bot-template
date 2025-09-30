@@ -664,6 +664,22 @@ def _format_all_candidates_for_log(items: List[Dict[str, Any]]) -> str:
 # MAIN ENTRYPOINT
 # =============================================================================
 
+
+def _ensure_dict(x) -> dict:
+    if isinstance(x, dict):
+        return x
+    if isinstance(x, str):
+        s = x.strip()
+        if s.startswith("{") and s.endswith("}"):
+            import json as _json
+            try:
+                return dict(_json.loads(s))
+            except Exception:
+                return {}
+        return {}
+    return {}
+
+
 async def run_research_async(
     title: str,
     description: str,
@@ -701,7 +717,7 @@ async def run_research_async(
                 meta = {}
 
             meta["research_cached"] = "1"
-            return final_text, meta
+            return final_text, _ensure_dict(meta)
         except Exception:
             pass
 
@@ -823,4 +839,4 @@ async def run_research_async(
         "research_market_summary": market_section,
         "research_market_debug": "\n".join(market_debug),
     }
-    return final_text, meta
+    return final_text, _ensure_dict(meta)
