@@ -1,0 +1,35 @@
+# Ingestion Checklist (C1 → C2)
+sources:
+  reliefweb:
+    cadence: high
+    output: resolver/staging/reliefweb.csv
+    owner: ingestion
+    status: stub
+  ifrc_go:
+    cadence: high
+    output: resolver/staging/ifrc_go.csv
+    owner: ingestion
+    status: stub
+  unhcr_odp:
+    cadence: medium
+    output: resolver/staging/unhcr.csv
+    owner: ingestion
+    status: stub
+  iom_dtm:
+    cadence: medium
+    output: resolver/staging/dtm.csv
+    owner: ingestion
+    status: stub
+  who_emergencies:
+    cadence: high
+    output: resolver/staging/who.csv
+    owner: ingestion
+    status: stub
+  ipc:
+    cadence: low
+    output: resolver/staging/ipc.csv
+    owner: ingestion
+    status: stub
+notes:
+  - Replace "stub" with "api" when real connectors land in Epic C.
+  - All outputs must validate with resolver/tools/validate_facts.py
