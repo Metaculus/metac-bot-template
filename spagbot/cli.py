@@ -197,6 +197,35 @@ def _safe_float(x: Any) -> Optional[float]:
     except Exception:
         return None
 
+
+def _sanitize_markdown_chunks(chunks: List[Any]) -> List[str]:
+    """Return a list of strings suitable for ``"\n\n".join(...)``.
+
+    The markdown builder collects many diagnostic entries, some of which
+    originate from optional integrations (GTMC1 raw dumps, prediction-market
+    lookups, etc.).  When any of those helpers return ``None`` we previously
+    propagated the ``None`` directly into the markdown list.  Later, when we
+    attempted to join the chunks we hit ``TypeError: sequence item X: expected
+    str instance, NoneType found``.  This helper drops ``None`` entries and
+    coerces any remaining values to strings so the join is always safe.
+    """
+
+    sanitized: List[str] = []
+    for chunk in chunks:
+        if chunk is None:
+            continue
+        if isinstance(chunk, str):
+            sanitized.append(chunk)
+            continue
+        try:
+            sanitized.append(str(chunk))
+        except Exception:
+            # If ``str(chunk)`` itself fails we silently drop the entry; the
+            # surrounding debug output already makes it clear something odd
+            # happened, and failing to write the human log is worse.
+            continue
+    return sanitized
+
 def _maybe_dump_raw_gtmc1(content: str, *, run_id: str, question_id: int) -> Optional[str]:
     """
     If SPAGBOT_DEBUG_RAW=1, write the raw LLM JSON-ish text we received for the
@@ -1095,8 +1124,11 @@ Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
 
     # Write human-readable markdown file
     try:
-               write_human_markdown(run_id=run_id, question_id=question_id, content="\n\n".join(md))
-
+        safe_md = _sanitize_markdown_chunks(md)
+        if len(safe_md) < len(md):
+            dropped = len(md) - len(safe_md)
+            print(f"[warn] Dropped {dropped} non-string markdown line(s) for Q{question_id}.")
+        write_human_markdown(run_id=run_id, question_id=question_id, content="\n\n".join(safe_md))
     except Exception as _md_ex:
         print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
 
@@ -1354,13 +1386,43 @@ async def run_job(mode: str, limit: int, submit: bool, purpose: str) -> None:
             print(f"[warn] finalize_and_commit failed: {type(e).__name__}: {str(e)[:180]}")
         return
 
-    for idx, post in enumerate(posts[: max(1, limit)], start=1):
+    batch = posts[: max(1, limit)]
+    for idx, raw_post in enumerate(batch, start=1):
+        post = raw_post
+        if not isinstance(post, dict):
+            post_id = None
+            if isinstance(post, (int, float)):
+                post_id = int(post)
+            elif isinstance(post, str) and post.strip():
+                try:
+                    post_id = int(float(post))
+                except Exception:
+                    post_id = None
+            if post_id is not None:
+                try:
+                    post = get_post_details(int(post_id))
+                    if not isinstance(post, dict):
+                        raise TypeError("post details response was not a dict")
+                    print(f"[info] Normalized post {post_id} via get_post_details().")
+                except Exception as _fetch_ex:
+                    print(
+                        f"[error] Could not load post details for {post_id}: "
+                        f"{type(_fetch_ex).__name__}: {str(_fetch_ex)[:180]}"
+                    )
+                    continue
+            else:
+                print(
+                    f"[error] Skipping entry #{idx}: unexpected post type "
+                    f"{type(raw_post).__name__}"
+                )
+                continue
+
         q = post.get("question") or {}
         qid = q.get("id") or post.get("id") or "?"
         title = (q.get("title") or post.get("title") or "").strip()
         print("")
         print("----------------------------------------------------------------------------------------")
-        print(f"[{idx}/{len(posts[: max(1, limit)])}] ❓ {title}  (QID: {qid})")
+        print(f"[{idx}/{len(batch)}] ❓ {title}  (QID: {qid})")
         try:
             await run_one_question(
                 post,
