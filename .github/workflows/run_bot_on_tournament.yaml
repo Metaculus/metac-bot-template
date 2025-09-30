@@ -113,8 +113,31 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
-      - name: Install deps
-        run: poetry install --no-interaction --no-ansi
+      - name: Ensure lock is current, then install
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "==> Checking/refreshing poetry.lock …"
+          # Try a quick check; if mismatched, regenerate.
+          if poetry lock --check; then
+            echo "poetry.lock up-to-date."
+          else
+            echo "poetry.lock out-of-date; regenerating…"
+            poetry lock --no-interaction
+            echo "Regenerated poetry.lock."
+            # Optionally commit the updated lock so subsequent CI runs don't redo this.
+            if [[ "${COMMIT_LOCKFILE:-1}" == "1" ]]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add poetry.lock
+              if ! git diff --cached --quiet; then
+                git commit -m "chore(deps): refresh poetry.lock [skip ci]"
+                git push
+              fi
+            fi
+          fi
+          echo "==> Installing dependencies…"
+          poetry install --no-interaction --no-ansi --sync
 
       - name: Run Spagbot (AIB Tournament)
         run: |

@@ -48,6 +48,15 @@ except ModuleNotFoundError:
 from pathlib import Path
 
 
+def _advise_poetry_lock_if_needed():
+    # Dev convenience: if Poetry complains about a stale lock, print the fix.
+    import os
+    if os.getenv("CI"):
+        return  # CI already handles regeneration
+    # Lightweight hint only; we don't try to run Poetry here.
+    os.environ.setdefault("SPAGBOT_LOCK_HINT_SHOWN", "0")
+
+
 def _safe_json_load(s: str):
     try:
         import json as _json
@@ -1552,6 +1561,11 @@ def _parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 def main() -> None:
+    try:
+        _advise_poetry_lock_if_needed()
+    except Exception:
+        # Never block the run because of the hint
+        pass
     args = _parse_args()
     print("🚀 Spagbot ensemble starting…")
     print(f"Mode: {args.mode} | Limit: {args.limit} | Purpose: {args.purpose} | Submit: {bool(args.submit)}")
