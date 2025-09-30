@@ -40,6 +40,31 @@ import json
 from pathlib import Path
 
 
+def _safe_json_load(s: str):
+    try:
+        import json as _json
+        return _json.loads(s)
+    except Exception:
+        return None
+
+
+def _as_dict(x):
+    """
+    Normalize possibly-string/None payloads into dicts.
+    - dict -> dict
+    - JSON string -> parsed dict (if possible)
+    - anything else -> {}
+    """
+    if isinstance(x, dict):
+        return x
+    if isinstance(x, str):
+        s = x.strip()
+        if s.startswith("{") and s.endswith("}"):
+            obj = _safe_json_load(s)
+            if isinstance(obj, dict):
+                return obj
+    return {}
+
 
 # ---- Spagbot internals (all relative imports) --------------------------------
 from .config import (
@@ -250,31 +275,49 @@ async def _run_classifier_safe(title: str, description: str, criteria: str, *, s
     Calls should_run_gtmc1(...) whether it's sync or async, and normalizes outputs.
     Returns (use_gtmc1: bool, cls_info: dict).
     """
+    import asyncio as _aio
+
+    def _dictify(obj):
+        if isinstance(obj, dict):
+            return obj
+        if isinstance(obj, str):
+            d = _safe_json_load(obj)
+            return d if isinstance(d, dict) else {}
+        return {}
+
     try:
-        import asyncio as _aio
+        # Handle both async and sync classifier implementations + older signatures
         if _aio.iscoroutinefunction(should_run_gtmc1):
-            res = await should_run_gtmc1(title, description, criteria, slug=slug)
+            try:
+                res = await should_run_gtmc1(title, description, criteria, slug=slug)
+            except TypeError:
+                res = await should_run_gtmc1(title, description, criteria)
         else:
-            # sync function
             try:
                 res = should_run_gtmc1(title, description, criteria, slug=slug)
             except TypeError:
-                # older signature without slug
                 res = should_run_gtmc1(title, description, criteria)
-    except Exception as e:
-        return False, {"primary":"", "secondary":"", "is_strategic": False, "strategic_score": 0.0,
-                       "source":"", "rationale": f"classifier error: {e}"}
+    except Exception:
+        # On any classifier failure, fall back safely
+        return False, {}
 
-    # Normalize return formats:
-    # - preferred: (use_gtmc1: bool, cls_info: dict)
-    # - acceptable: cls_info dict only
+    # Normalize shapes:
+    # (a) tuple -> (flag, info)
     if isinstance(res, tuple) and len(res) == 2:
         use_flag = bool(res[0])
-        info = res[1] if isinstance(res[1], dict) else {}
+        info = _dictify(res[1])
         return use_flag, info
+
+    # (b) dict -> infer flag from field
     if isinstance(res, dict):
         return bool(res.get("is_strategic", False)), res
-    # Unknown shape → safe default
+
+    # (c) JSON string -> parse
+    if isinstance(res, str):
+        info = _dictify(res)
+        return bool(info.get("is_strategic", False)), info
+
+    # Unknown shape -> safe default
     return False, {}
 
 # --------------------------------------------------------------------------------
@@ -463,679 +506,697 @@ async def _run_one_question_body(
     seen_guard_run_report: Optional[Dict[str, Any]] = None,
 ) -> None:
     t_start_total = time.time()
-
-    q = post.get("question") or {}
-    post_id = int(post.get("id") or post.get("post_id") or 0)
-    question_id = int(q.get("id") or 0)
-
-    seen_guard_enabled = bool(seen_guard_state.get("enabled", False))
-    seen_guard_lock_acquired = seen_guard_state.get("lock_acquired")
-    seen_guard_lock_error = str(seen_guard_state.get("lock_error") or "")
+    _post_original = post
+    try:
     
-    title = str(q.get("title") or post.get("title") or "").strip()
-    url = f"https://www.metaculus.com/questions/{question_id}/" if question_id else ""
-    qtype = (q.get("type") or "binary").strip()
-    description = str(post.get("description") or q.get("description") or "")
-    criteria = str(q.get("resolution_criteria") or q.get("fine_print") or q.get("resolution") or "")
-    units = q.get("unit") or q.get("units") or ""
-    tournament_id = post.get("tournaments") or q.get("tournaments") or TOURNAMENT_ID
+        post = _as_dict(post)
+        q = _as_dict(post.get("question") if isinstance(post, dict) else {})
 
-    # Options / discrete values
-    options = _get_options_list(q)
-    n_options = len(options) if qtype == "multiple_choice" else 0
-    discrete_values = _discrete_values(q) if qtype in ("numeric", "discrete") and _is_discrete(q) else []
-
-    # ------------------ 1) Research step (LLM brief + sources appended) ---------
-    t0 = time.time()
-    research_text, research_meta = await run_research_async(
-        title=title,
-        description=description,
-        criteria=criteria,
-        qtype=qtype,
-        options=options if qtype == "multiple_choice" else None,
-        units=str(units) if units else None,
-        slug=f"q{question_id}",
-    )
-
-    t_research_ms = _ms(t0)
-
-
-    # ------------------ 2) Topic/strategic classification (for GTMC1 gate) -----
-    use_gtmc1, cls_info = await _run_classifier_safe(title, description, criteria, slug=f"q{question_id}")
-    class_primary = (cls_info or {}).get("primary") or ""
-    class_secondary = (cls_info or {}).get("secondary") or ""
-    is_strategic = bool((cls_info or {}).get("is_strategic", False))
-    strategic_score = float((cls_info or {}).get("strategic_score", 0.0))
-    classifier_source = (cls_info or {}).get("source") or ""
-    classifier_rationale = (cls_info or {}).get("rationale") or ""
-    classifier_cost = float(cls_info.get("cost_usd", 0.0) or 0.0)
-
-    # ------------------ 3) Optional GTMC1 (binary + strategic) ------------------
-    gtmc1_active = bool(use_gtmc1 and qtype == "binary")
-    actors_table: Optional[List[Dict[str, Any]]] = None
-    gtmc1_signal: Dict[str, Any] = {}
-    gtmc1_policy_sentence: str = ""
-    t_gtmc1_ms = 0
-
-    # Raw-dump debugging fields (only populated on failure / deactivation)
-    gtmc1_raw_dump_path: str = ""
-    gtmc1_raw_excerpt: str = ""
-    gtmc1_raw_reason: str = ""
-
-    if gtmc1_active:
-        try:
-            from .config import OPENROUTER_FALLBACK_ID
-            client = _get_or_client()
-            if client is None:
-                gtmc1_active = False
-            else:
-                prompt = f"""You are a research analyst preparing inputs for a Bruce Bueno de Mesquita-style
-game-theoretic bargaining model (BDM/Scholz). Identify actors and quantitative inputs on four dimensions.
-TITLE:
-{title}
-CONTEXT:
-{description}
-LATEST RESEARCH:
-{research_text}
-INSTRUCTIONS
-1) Define a POLICY CONTINUUM 0–100 for this question:
-   0 = outcome least favorable to YES resolution; 100 = most favorable to YES resolution.
-2) Identify 3–8 ACTORS that materially influence the outcome (government, opposition, factions,
-   mediators, veto players, firms, unions, external patrons).
-3) For each actor, provide:
-   - "position" (0–100)
-   - "capability" (0–100)
-   - "salience" (0–100)
-   - "risk_threshold" (0.00–0.10)
-4) OUTPUT STRICT JSON ONLY; NO commentary; schema:
-{{
-  "policy_continuum": "Short one-sentence description of the 0–100 axis.",
-  "actors": [
-    {{"name":"Government","position":62,"capability":70,"salience":80,"risk_threshold":0.04}},
-    {{"name":"Opposition","position":35,"capability":60,"salience":85,"risk_threshold":0.05}}
-  ]
-}}
-Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
-"""
-                t_gt0 = time.time()
-                async with llm_semaphore:
-                    resp = await client.chat.completions.create(
-                        model=OPENROUTER_FALLBACK_ID,
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.2,
-                    )
-                text = (resp.choices[0].message.content or "").strip()
-                raw_text_for_debug = text  # keep exactly what the LLM sent
-                try:
-                    data = json.loads(re.sub(r"^```json\s*|\s*```$", "", text, flags=re.S))
-                except Exception:
-                    data = {}
-                    gtmc1_active = False
-                    gtmc1_raw_reason = "json_parse_error"
-                    # Dump raw if requested; otherwise keep a short excerpt for the human log
-                    gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
-                    if not gtmc1_raw_dump_path:
-                        # Use the same limit used elsewhere for model raw content
-                        MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
-                        gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
-
-                actors = data.get("actors") or []
-                gtmc1_policy_sentence = str(data.get("policy_continuum") or "").strip()
-                cleaned: List[Dict[str, Any]] = []
-                for a in actors:
-                    try:
-                        nm = str(a.get("name") or "").strip()
-                        pos = float(a.get("position")); cap = float(a.get("capability"))
-                        sal = float(a.get("salience")); thr = float(a.get("risk_threshold"))
-                        if not nm: continue
-                        if not (0.0 <= pos <= 100.0): continue
-                        if not (0.0 <= cap <= 100.0): continue
-                        if not (0.0 <= sal <= 100.0): continue
-                        if not (0.0 <= thr <= 0.10): continue
-                        cleaned.append({
-                            "name": nm, "position": pos, "capability": cap,
-                            "salience": sal, "risk_threshold": thr
-                        })
-                    except Exception:
-                        continue
-                if len(cleaned) >= 3:
-                    actors_table = cleaned
-                    gtmc1_signal, _df_like = await asyncio.to_thread(
-                        GTMC1.run_monte_carlo_from_actor_table,
-                        actor_rows=actors_table,
-                        num_runs=60,
-                        log_dir="gtmc_logs",
-                        run_slug=f"q{question_id}",
-                    )
-                else:
-                    gtmc1_active = False
-                    gtmc1_raw_reason = "actors_lt_3"
-                    gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
-                    if not gtmc1_raw_dump_path:
-                        MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
-                        gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
-        except Exception:
-            gtmc1_active = False
-            t_gtmc1_ms = 0
-
-    # ------------------ 4) Build main prompts (WITH research) -------------------
-    if qtype == "binary":
-        main_prompt = build_binary_prompt(title, description, research_text, criteria)
-    elif qtype == "multiple_choice":
-        main_prompt = build_mcq_prompt(title, options, description, research_text, criteria)
-    else:
-        main_prompt = build_numeric_prompt(title, str(units or ""), description, research_text, criteria)
-
-    # ------------------ 5) Ensemble calls (WITH research) -----------------------
-    t0 = time.time()
-    if qtype == "binary":
-        ens_res = await run_ensemble_binary(main_prompt, DEFAULT_ENSEMBLE)
-    elif qtype == "multiple_choice":
-        ens_res = await run_ensemble_mcq(main_prompt, n_options, DEFAULT_ENSEMBLE)
-    else:
-        ens_res = await run_ensemble_numeric(main_prompt, DEFAULT_ENSEMBLE)
-    t_ensemble_ms = _ms(t0)
-
-    # ------------------ 6) Choose calibration weights & aggregate ---------------
-    calib_weights_map, weights_profile = _choose_weights_for_question(
-        _load_calibration_weights(), class_primary=class_primary, qtype=qtype
-    )
-
-    # MAIN aggregation (with optional GTMC1 for binary)
-    if qtype == "binary":
-        final_main, bmc_summary = aggregate_binary(ens_res, gtmc1_signal if gtmc1_active else None, calib_weights_map)
-    elif qtype == "multiple_choice":
-        vec_main, bmc_summary = aggregate_mcq(ens_res, n_options, calib_weights_map)
-        final_main = {options[i]: vec_main[i] for i in range(n_options)} if n_options else {}
-    else:
-        quantiles_main, bmc_summary = aggregate_numeric(ens_res, calib_weights_map)
-        final_main = dict(quantiles_main)
-
-    # ------------------ 7) Diagnostic variants (WITH research) ------------------
-    if qtype == "binary":
-        v_nogtmc1, _ = aggregate_binary(ens_res, None, calib_weights_map)
-        v_uniform, _ = aggregate_binary(ens_res, gtmc1_signal if gtmc1_active else None, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        v_simple = _simple_average_binary(ens_res.members)
-    elif qtype == "multiple_choice":
-        v_nogtmc1_vec, _ = aggregate_mcq(ens_res, n_options, calib_weights_map)
-        v_nogtmc1 = {options[i]: v_nogtmc1_vec[i] for i in range(n_options)} if n_options else {}
-        v_uniform_vec, _ = aggregate_mcq(ens_res, n_options, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        v_uniform = {options[i]: v_uniform_vec[i] for i in range(n_options)} if n_options else {}
-        v_simple_vec = _simple_average_mcq(ens_res.members, n_options)
-        v_simple = {options[i]: v_simple_vec[i] for i in range(n_options)} if (n_options and v_simple_vec) else {}
-    else:
-        v_nogtmc1, _ = aggregate_numeric(ens_res, calib_weights_map)
-        v_uniform, _ = aggregate_numeric(ens_res, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        v_simple = _simple_average_numeric(ens_res.members) or {}
-
-    # ------------------ 8) Ablation pass: NO RESEARCH ---------------------------
-    if qtype == "binary":
-        ab_prompt = build_binary_prompt(title, description, "", criteria)
-        ens_res_ab = await run_ensemble_binary(ab_prompt, DEFAULT_ENSEMBLE)
-        ab_main, _ = aggregate_binary(ens_res_ab, None, calib_weights_map)
-        ab_uniform, _ = aggregate_binary(ens_res_ab, None, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        ab_simple = _simple_average_binary(ens_res_ab.members)
-    elif qtype == "multiple_choice":
-        ab_prompt = build_mcq_prompt(title, options, description, "", criteria)
-        ens_res_ab = await run_ensemble_mcq(ab_prompt, n_options, DEFAULT_ENSEMBLE)
-        ab_vec, _ = aggregate_mcq(ens_res_ab, n_options, calib_weights_map)
-        ab_main = {options[i]: ab_vec[i] for i in range(n_options)} if n_options else {}
-        ab_uniform_vec, _ = aggregate_mcq(ens_res_ab, n_options, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        ab_uniform = {options[i]: ab_uniform_vec[i] for i in range(n_options)} if n_options else {}
-        ab_simple_vec = _simple_average_mcq(ens_res_ab.members, n_options)
-        ab_simple = {options[i]: ab_simple_vec[i] for i in range(n_options)} if (n_options and ab_simple_vec) else {}
-    else:
-        ab_prompt = build_numeric_prompt(title, str(units or ""), description, "", criteria)
-        ens_res_ab = await run_ensemble_numeric(ab_prompt, DEFAULT_ENSEMBLE)
-        ab_main, _ = aggregate_numeric(ens_res_ab, calib_weights_map)
-        ab_uniform, _ = aggregate_numeric(ens_res_ab, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
-        ab_simple = _simple_average_numeric(ens_res_ab.members) or {}
-
-    # ------------------ 9) Submission (optional) --------------------------------
-    submit_status_code = ""
-    submit_error = ""
-    explanation_short = ""
-    t_submit_ms = 0
-
-    if submit_ok and question_id:
-        t_sub0 = time.time()
-        try:
-            if qtype == "binary" and isinstance(final_main, float):
-                payload = _build_payload_for_submission("binary", _clip01(final_main))
-                code, err = post_forecast(question_id, payload)
-                submit_status_code = str(code)
-                submit_error = "" if err is None else err[:280]
-
-            elif qtype == "multiple_choice" and isinstance(final_main, dict):
-                probs = [float(final_main.get(lbl, 0.0)) for lbl in options]
-                s = sum(probs)
-                if s <= 0 and options:
-                    probs = [1.0 / len(options)] * len(options)
-                elif s > 0:
-                    probs = [p / s for p in probs]
-                label_map = {str(options[i]): float(probs[i]) for i in range(len(options))}
-                payload = _build_payload_for_submission("multiple_choice", label_map)
-                code, err = post_forecast(question_id, payload)
-                submit_status_code = str(code)
-                submit_error = "" if err is None else err[:280]
-
-            elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
-                pass
-        except Exception as e:
-            submit_status_code = submit_status_code or "EXC"
-            submit_error = (str(e) or "")[:280]
-
-        # Console confirmation of submit
-        if submit_status_code:
-            if submit_status_code.isdigit() and int(submit_status_code) == 201:
-                print("Submit: 201 Created ✅")
-            else:
-                print(f"Submit: {submit_status_code} ❌ {submit_error[:120]}")
-        t_submit_ms = _ms(t_sub0)
-
-    # ------------------ 10) Build ONE wide CSV row and write it -----------------
-    ensure_unified_csv()
-
-    row: Dict[str, Any] = {
-        # Run metadata
-        "run_id": run_id,
-        "run_time_iso": ist_iso(),
-        "purpose": purpose,
-        "git_sha": os.getenv("GIT_SHA", ""),
-        "config_profile": "default",
-        "weights_profile": "class_calibration",
-        "openrouter_models_json": [
-            {"name": ms.name, "provider": ms.provider, "model_id": ms.model_id, "weight": ms.weight}
-            for ms in DEFAULT_ENSEMBLE
-        ],
-
-        # Question metadata
-        "question_id": str(question_id),
-        "question_url": url,
-        "question_title": title,
-        "question_type": qtype,
-        "tournament_id": tournament_id if isinstance(tournament_id, str) else str(tournament_id),
-        "created_time_iso": post.get("creation_time") or q.get("creation_time") or "",
-        "closes_time_iso": post.get("close_time") or q.get("close_time") or "",
-        "resolves_time_iso": post.get("scheduled_resolve_time") or q.get("scheduled_resolve_time") or "",
-
-        # Classification
-        "class_primary": class_primary,
-        "class_secondary": class_secondary or "",
-        "is_strategic": str(is_strategic),
-        "strategic_score": f"{strategic_score:.3f}",
-        "classifier_source": classifier_source,
-        "classifier_rationale": classifier_rationale,
-
-        # Research
-        "research_llm": research_meta.get("research_llm", ""),
-        "research_source": research_meta.get("research_source", ""),
-        "research_query": research_meta.get("research_query", ""),
-        "research_n_raw": str(research_meta.get("research_n_raw", "")),
-        "research_n_kept": str(research_meta.get("research_n_kept", "")),
-        "research_cached": research_meta.get("research_cached", ""),
-        "research_error": research_meta.get("research_error", ""),
-
-
-        # Options/values
-        "n_options": str(n_options if qtype == "multiple_choice" else 0),
-        "options_json": options if qtype == "multiple_choice" else "",
-        "discrete_values_json": discrete_values if (qtype in ("numeric", "discrete") and discrete_values) else "",
-    }
-
-    row["seen_guard_triggered"] = (
-        "1"
-        if seen_guard_enabled and bool(seen_guard_lock_acquired)
-        else ("0" if seen_guard_enabled else "")
-    )
-
-    # Per-model outputs
-    for i, ms in enumerate(DEFAULT_ENSEMBLE):
-        mo: Optional[MemberOutput] = None
-        if isinstance(ens_res, EnsembleResult) and i < len(ens_res.members):
-            mo = ens_res.members[i]
-
-        ok = bool(mo and mo.ok)
-        row[f"model_ok__{ms.name}"] = "1" if ok else "0"
-        row[f"model_time_ms__{ms.name}"] = str(getattr(mo, "elapsed_ms", 0) or "")
-
-        if ok and mo is not None:
-            if qtype == "binary" and isinstance(mo.parsed, (float, int)):
-                row[f"binary_prob__{ms.name}"] = f"{_clip01(float(mo.parsed)):.6f}"
-            elif qtype == "multiple_choice" and isinstance(mo.parsed, list):
-                row[f"mcq_json__{ms.name}"] = mo.parsed
-            elif qtype in ("numeric", "discrete") and isinstance(mo.parsed, dict):
-                p10 = _safe_float(mo.parsed.get("P10"))
-                p50 = _safe_float(mo.parsed.get("P50"))
-                p90 = _safe_float(mo.parsed.get("P90"))
-                if p10 is not None: row[f"numeric_p10__{ms.name}"] = f"{p10:.6f}"
-                if p50 is not None: row[f"numeric_p50__{ms.name}"] = f"{p50:.6f}"
-                if p90 is not None: row[f"numeric_p90__{ms.name}"] = f"{p90:.6f}"
-
-        row[f"cost_usd__{ms.name}"] = f"{getattr(mo,'cost_usd',0.0):.6f}" if mo else ""
-
-    # Ensemble (main)
-    if qtype == "binary" and isinstance(final_main, float):
-        row["binary_prob__ensemble"] = f"{_clip01(final_main):.6f}"
-    elif qtype == "multiple_choice" and isinstance(final_main, dict):
-        row["mcq_json__ensemble"] = final_main
-        for j in range(min(15, n_options)):
-            row[f"mcq_{j+1}__ensemble"] = f"{_clip01(float(final_main.get(options[j], 0.0))):.6f}"
-    elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
-        for k in ("P10", "P50", "P90"):
-            if k in final_main:
-                row[f"numeric_{k.lower()}__ensemble"] = f"{float(final_main[k]):.6f}"
-
-    # Variants (WITH research)
-    def _fill_variant(tag: str, val: Any):
-        if qtype == "binary" and isinstance(val, float):
-            row[f"binary_prob__ensemble_{tag}"] = f"{_clip01(val):.6f}"
-        elif qtype == "multiple_choice" and isinstance(val, dict):
-            row[f"mcq_json__ensemble_{tag}"] = val
-        elif qtype in ("numeric", "discrete") and isinstance(val, dict):
-            for k in ("P10", "P50", "P90"):
-                if k in val:
-                    row[f"numeric_{k.lower()}__ensemble_{tag}"] = f"{float(val[k]):.6f}"
-
-    _fill_variant("no_gtmc1", v_nogtmc1)
-    _fill_variant("uniform_weights", v_uniform)
-    if qtype == "binary":
-        _fill_variant("no_bmc_no_gtmc1", v_simple)  # float for binary
-    else:
-        _fill_variant("no_bmc_no_gtmc1", v_simple if isinstance(v_simple, dict) else v_simple)
-
-    # Ablation (NO research)
-    row["ablation_no_research"] = "1"
-    if qtype == "binary" and isinstance(ab_main, float):
-        row["binary_prob__ensemble_no_research"] = f"{_clip01(ab_main):.6f}"
-    elif qtype == "multiple_choice" and isinstance(ab_main, dict):
-        row["mcq_json__ensemble_no_research"] = ab_main
-        for j in range(min(15, n_options)):
-            row[f"mcq_{j+1}__ensemble_no_research"] = f"{_clip01(float(ab_main.get(options[j], 0.0))):.6f}"
-    elif qtype in ("numeric", "discrete") and isinstance(ab_main, dict):
-        for k in ("P10", "P50", "P90"):
-            if k in ab_main:
-                row[f"numeric_{k.lower()}__ensemble_no_research"] = f"{float(ab_main[k]):.6f}"
-
-    def _fill_ablation_variant(tag: str, val: Any):
-        if qtype == "binary" and isinstance(val, float):
-            row[f"binary_prob__ensemble_no_research_{tag}"] = f"{_clip01(val):.6f}"
-        elif qtype == "multiple_choice" and isinstance(val, dict):
-            row[f"mcq_json__ensemble_no_research_{tag}"] = val
-        elif qtype in ("numeric", "discrete") and isinstance(val, dict):
-            for k in ("P10", "P50", "P90"):
-                if k in val:
-                    row[f"numeric_{k.lower()}__ensemble_no_research_{tag}"] = f"{float(val[k]):.6f}"
-
-    _fill_ablation_variant("no_gtmc1", ab_main)
-    _fill_ablation_variant("uniform_weights", ab_uniform)
-    _fill_ablation_variant("no_bmc_no_gtmc1", ab_simple if isinstance(ab_simple, dict) else ({"P50": ab_simple} if isinstance(ab_simple, float) else ab_simple))
-
-    # Diagnostics, timings, submission, weights used
-    row.update({
-        "gtmc1_active": "1" if gtmc1_active else "0",
-        "actors_cached": "0",
-        "gtmc1_actor_count": str(len(actors_table) if actors_table else 0),
-        "gtmc1_coalition_rate": (gtmc1_signal.get("coalition_rate") if gtmc1_signal else ""),
-        "gtmc1_exceedance_ge_50": (gtmc1_signal.get("exceedance_ge_50") if gtmc1_signal else ""),
-        "gtmc1_dispersion": (gtmc1_signal.get("dispersion") if gtmc1_signal else ""),
-        "gtmc1_median_rounds": (gtmc1_signal.get("median_rounds") if gtmc1_signal else ""),
-        "gtmc1_num_runs": (gtmc1_signal.get("num_runs") if gtmc1_signal else ""),
-        "gtmc1_policy_sentence": gtmc1_policy_sentence or "",
-        "gtmc1_signal_json": gtmc1_signal or "",
-
-        "bmc_summary_json": "",
-
-        "cdf_steps_clamped": "",
-        "cdf_upper_open_adjusted": "",
-        "prob_sum_renormalized": "",
-
-        "t_research_ms": str(t_research_ms),
-        "t_ensemble_ms": str(t_ensemble_ms),
-        "t_gtmc1_ms": str(t_gtmc1_ms),
-        "t_submit_ms": str(t_submit_ms),
-        "t_total_ms": str(_ms(t_start_total)),
-
-        "explanation_short": explanation_short,
-        "submit_confirm": "1" if (submit_ok and submit_status_code and submit_status_code.isdigit() and int(submit_status_code) < 400) else "0",
-        "submit_status_code": submit_status_code,
-        "submit_error": submit_error,
-
-        "resolved": "",
-        "resolved_time_iso": "",
-        "resolved_outcome_label": "",
-        "resolved_value": "",
-        "score_brier": "",
-        "score_log": "",
-        "score_crps": "",
-
-        "score_brier__no_research": "",
-        "score_log__no_research": "",
-        "score_crps__no_research": "",
-
-        "weights_profile_applied": weights_profile,
-        "weights_per_model_json": calib_weights_map,
-        "dedupe_hash": "",
-        "seen_guard_triggered": "",
-    })
-
-    # Human-readable markdown log
-    MAX_RAW_CHARS = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS","5000"))
-    RESEARCH_MAX = int(os.getenv("HUMAN_LOG_RESEARCH_MAX_CHARS","20000"))
-    md = []
-    md.append(f"# {title} (QID: {question_id})")
-    md.append(f"- Type: {qtype}")
-    md.append(f"- URL: {url}")
-    md.append(f"- Classifier: {class_primary} | strategic={is_strategic} (score={strategic_score:.2f})")
-    md.append("### SeenGuard")
-    lock_status = "n/a"
-    if seen_guard_enabled:
-        lock_status = "acquired" if seen_guard_lock_acquired else "not_acquired"
-    md.append(f"- enabled={seen_guard_enabled} | lock_status={lock_status}")
-    if seen_guard_run_report:
-        before = seen_guard_run_report.get("before")
-        skipped = seen_guard_run_report.get("skipped")
-        after = seen_guard_run_report.get("after")
-        md.append(f"- run_filter: before={before} | skipped={skipped} | after={after}")
-        if seen_guard_run_report.get("error"):
-            md.append(f"- filter_error={seen_guard_run_report['error']}")
-    debug_note = "lock disabled"
-    if seen_guard_enabled:
-        debug_note = "lock acquired" if seen_guard_lock_acquired else "lock fallback"
-    if seen_guard_lock_error:
-        debug_note += f" | error={seen_guard_lock_error}"
-    md.append(f"- debug_note={debug_note}")
-
-    md.append("## Research (summary)")
-    md.append((research_text or "").strip()[:RESEARCH_MAX])
-    # Research (debug)
-    try:
-        _r_src   = research_meta.get("research_source","")
-        _r_llm   = research_meta.get("research_llm","")
-        _r_q     = research_meta.get("research_query","")
-        _r_raw   = research_meta.get("research_n_raw","")
-        _r_kept  = research_meta.get("research_n_kept","")
-        _r_cache = research_meta.get("research_cached","")
-        _r_err   = research_meta.get("research_error","")
-        md.append("### Research (debug)")
-        _r_cost  = research_meta.get("research_cost_usd", 0.0)
-        md.append(
-            f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | "
-            f"n_raw={_r_raw} | n_kept={_r_kept} | cost=${float(_r_cost):.6f}"
+        post_id = int((post.get("id") or post.get("post_id") or 0) or 0)
+        question_id = int((q.get("id") or 0) or 0)
+    
+        seen_guard_enabled = bool(seen_guard_state.get("enabled", False))
+        seen_guard_lock_acquired = seen_guard_state.get("lock_acquired")
+        seen_guard_lock_error = str(seen_guard_state.get("lock_error") or "")
+        
+        title = str(q.get("title") or post.get("title") or "").strip()
+        url = f"https://www.metaculus.com/questions/{question_id}/" if question_id else ""
+        qtype = (q.get("type") or "binary").strip()
+        description = str(post.get("description") or q.get("description") or "")
+        criteria = str(q.get("resolution_criteria") or q.get("fine_print") or q.get("resolution") or "")
+        units = q.get("unit") or q.get("units") or ""
+        tournament_id = post.get("tournaments") or q.get("tournaments") or TOURNAMENT_ID
+    
+        # Options / discrete values
+        options = _get_options_list(q)
+        n_options = len(options) if qtype == "multiple_choice" else 0
+        discrete_values = _discrete_values(q) if qtype in ("numeric", "discrete") and _is_discrete(q) else []
+    
+        # ------------------ 1) Research step (LLM brief + sources appended) ---------
+        t0 = time.time()
+        research_text, research_meta = await run_research_async(
+            title=title,
+            description=description,
+            criteria=criteria,
+            qtype=qtype,
+            options=options if qtype == "multiple_choice" else None,
+            units=str(units) if units else None,
+            slug=f"q{question_id}",
         )
-
-        if _r_q:
-            md.append(f"- query: {_r_q}")
-        if _r_err:
-            md.append(f"- error: {_r_err}")
-    except Exception:
-        pass
-
-    # --- GTMC1 (debug) --------------------------------------------------------
-    try:
-        md.append("### GTMC1 (debug)")
-        # Basic flags
-        md.append(f"- strategic_class={is_strategic} | strategic_score={strategic_score:.2f} | source={classifier_source}")
-        md.append(f"- gtmc1_active={gtmc1_active} | qtype={qtype} | t_ms={t_gtmc1_ms}")
-
-        # Actor extraction outcome
-        _n_actors = len(actors_table) if actors_table else 0
-        md.append(f"- actors_parsed={_n_actors}")
-
-        # Key Monte Carlo outputs (if any)
-        _sig = gtmc1_signal or {}
-        _ex = _sig.get("exceedance_ge_50")
-        _coal = _sig.get("coalition_rate")
-        _med = _sig.get("median_of_final_medians")
-        _disp = _sig.get("dispersion")
-
-        md.append(f"- exceedance_ge_50={_ex} | coalition_rate={_coal} | median={_med} | dispersion={_disp}")
-        _runs_csv = _sig.get("runs_csv")
-        if _runs_csv:
-            md.append(f"- runs_csv={_runs_csv}")
-        _meta_json = _sig.get("meta_json")
-        if _meta_json:
-            md.append(f"- meta_json={_meta_json}")
-
-        # If GTMC1 was expected but didn’t apply, say why (best effort).
-        if use_gtmc1 and qtype == "binary" and not gtmc1_active:
-            md.append("- note=GTMC1 gate opened (strategic) but deactivated later (client/JSON/actors<3).")
-        # If we captured raw (on failure), surface it.
-        if gtmc1_raw_reason:
-            md.append(f"- raw_reason={gtmc1_raw_reason}")
-        if gtmc1_raw_dump_path or gtmc1_raw_excerpt:
-            md.append("### GTMC1 (raw)")
-            if gtmc1_raw_dump_path:
-                md.append(f"- raw_file={gtmc1_raw_dump_path}")
-            if gtmc1_raw_excerpt:
-                md.append("```json")
-                md.append(gtmc1_raw_excerpt)
-                md.append("```")
-    except Exception as _gtmc1_dbg_ex:
-        md.append(f"- gtmc1_debug_error={type(_gtmc1_dbg_ex).__name__}: {str(_gtmc1_dbg_ex)[:200]}")
-    # --------------------------------------------------------------------------
-
-    # --- GTMC1 (actors used) ---------------------------------------------------
-    # Show the actual table we fed into GTMC1 so you can audit inputs later.
-    if gtmc1_active and actors_table:
-        try:
-            md.append("### GTMC1 (actors used)")
-            md.append("| Actor | Position | Capability | Salience | Risk thresh |")
-            md.append("|---|---:|---:|---:|---:|")
-            for a in actors_table:
-                md.append(
-                    f"| {a['name']} | {float(a['position']):.0f} | "
-                    f"{float(a['capability']):.0f} | {float(a['salience']):.0f} | "
-                    f"{float(a['risk_threshold']):.3f} |"
-                )
-        except Exception as _gtmc1_tbl_ex:
-            md.append(f"- actors_table_render_error={type(_gtmc1_tbl_ex).__name__}: {str(_gtmc1_tbl_ex)[:160]}")
-
-    # --- Ensemble outputs (compact) --------------------------------------------
-    try:
-        md.append("### Ensemble (model outputs)")
-        for m in ens_res.members:
-            if not isinstance(m, MemberOutput):
-                continue
-            _line = f"- {m.name}: ok={m.ok} t_ms={getattr(m,'elapsed_ms',0)}"
-            if qtype == "binary" and m.ok and isinstance(m.parsed, (float, int)):
-                _line += f" p={_clip01(float(m.parsed)):.4f}"
-            elif qtype == "multiple_choice" and m.ok and isinstance(m.parsed, list):
-                # just show top-3
-                try:
-                    vec = [float(x) for x in m.parsed]
-                    idxs = np.argsort(vec)[::-1][:3]
-                    _line += " top3=" + ", ".join([f"{options[i]}:{_clip01(vec[i]):.3f}" for i in idxs])
-                except Exception:
+    
+        t_research_ms = _ms(t0)
+    
+    
+        # ------------------ 2) Topic/strategic classification (for GTMC1 gate) -----
+        use_gtmc1, cls_info = await _run_classifier_safe(title, description, criteria, slug=f"q{question_id}")
+        cls_info = _as_dict(cls_info)
+        class_primary = (cls_info or {}).get("primary") or ""
+        class_secondary = (cls_info or {}).get("secondary") or ""
+        is_strategic = bool((cls_info or {}).get("is_strategic", False))
+        strategic_score = float((cls_info or {}).get("strategic_score", 0.0))
+        classifier_source = (cls_info or {}).get("source") or ""
+        classifier_rationale = (cls_info or {}).get("rationale") or ""
+        classifier_cost = float(cls_info.get("cost_usd", 0.0) or 0.0)
+    
+        # ------------------ 3) Optional GTMC1 (binary + strategic) ------------------
+        gtmc1_active = bool(use_gtmc1 and qtype == "binary")
+        actors_table: Optional[List[Dict[str, Any]]] = None
+        gtmc1_signal: Dict[str, Any] = {}
+        gtmc1_policy_sentence: str = ""
+        t_gtmc1_ms = 0
+    
+        # Raw-dump debugging fields (only populated on failure / deactivation)
+        gtmc1_raw_dump_path: str = ""
+        gtmc1_raw_excerpt: str = ""
+        gtmc1_raw_reason: str = ""
+    
+        if gtmc1_active:
+            try:
+                from .config import OPENROUTER_FALLBACK_ID
+                client = _get_or_client()
+                if client is None:
+                    gtmc1_active = False
+                else:
+                    prompt = f"""You are a research analyst preparing inputs for a Bruce Bueno de Mesquita-style
+    game-theoretic bargaining model (BDM/Scholz). Identify actors and quantitative inputs on four dimensions.
+    TITLE:
+    {title}
+    CONTEXT:
+    {description}
+    LATEST RESEARCH:
+    {research_text}
+    INSTRUCTIONS
+    1) Define a POLICY CONTINUUM 0–100 for this question:
+       0 = outcome least favorable to YES resolution; 100 = most favorable to YES resolution.
+    2) Identify 3–8 ACTORS that materially influence the outcome (government, opposition, factions,
+       mediators, veto players, firms, unions, external patrons).
+    3) For each actor, provide:
+       - "position" (0–100)
+       - "capability" (0–100)
+       - "salience" (0–100)
+       - "risk_threshold" (0.00–0.10)
+    4) OUTPUT STRICT JSON ONLY; NO commentary; schema:
+    {{
+      "policy_continuum": "Short one-sentence description of the 0–100 axis.",
+      "actors": [
+        {{"name":"Government","position":62,"capability":70,"salience":80,"risk_threshold":0.04}},
+        {{"name":"Opposition","position":35,"capability":60,"salience":85,"risk_threshold":0.05}}
+      ]
+    }}
+    Constraints: All numbers within ranges; 3–8 total actors; valid JSON.
+    """
+                    t_gt0 = time.time()
+                    async with llm_semaphore:
+                        resp = await client.chat.completions.create(
+                            model=OPENROUTER_FALLBACK_ID,
+                            messages=[{"role": "user", "content": prompt}],
+                            temperature=0.2,
+                        )
+                    text = (resp.choices[0].message.content or "").strip()
+                    raw_text_for_debug = text  # keep exactly what the LLM sent
+                    try:
+                        data = json.loads(re.sub(r"^```json\s*|\s*```$", "", text, flags=re.S))
+                    except Exception:
+                        data = {}
+                        gtmc1_active = False
+                        gtmc1_raw_reason = "json_parse_error"
+                        # Dump raw if requested; otherwise keep a short excerpt for the human log
+                        gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
+                        if not gtmc1_raw_dump_path:
+                            # Use the same limit used elsewhere for model raw content
+                            MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+                            gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
+    
+                    actors = data.get("actors") or []
+                    gtmc1_policy_sentence = str(data.get("policy_continuum") or "").strip()
+                    cleaned: List[Dict[str, Any]] = []
+                    for a in actors:
+                        try:
+                            nm = str(a.get("name") or "").strip()
+                            pos = float(a.get("position")); cap = float(a.get("capability"))
+                            sal = float(a.get("salience")); thr = float(a.get("risk_threshold"))
+                            if not nm: continue
+                            if not (0.0 <= pos <= 100.0): continue
+                            if not (0.0 <= cap <= 100.0): continue
+                            if not (0.0 <= sal <= 100.0): continue
+                            if not (0.0 <= thr <= 0.10): continue
+                            cleaned.append({
+                                "name": nm, "position": pos, "capability": cap,
+                                "salience": sal, "risk_threshold": thr
+                            })
+                        except Exception:
+                            continue
+                    if len(cleaned) >= 3:
+                        actors_table = cleaned
+                        gtmc1_signal, _df_like = await asyncio.to_thread(
+                            GTMC1.run_monte_carlo_from_actor_table,
+                            actor_rows=actors_table,
+                            num_runs=60,
+                            log_dir="gtmc_logs",
+                            run_slug=f"q{question_id}",
+                        )
+                    else:
+                        gtmc1_active = False
+                        gtmc1_raw_reason = "actors_lt_3"
+                        gtmc1_raw_dump_path = _maybe_dump_raw_gtmc1(raw_text_for_debug, run_id=run_id, question_id=question_id) or ""
+                        if not gtmc1_raw_dump_path:
+                            MAX_RAW = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+                            gtmc1_raw_excerpt = raw_text_for_debug[:MAX_RAW]
+            except Exception:
+                gtmc1_active = False
+                t_gtmc1_ms = 0
+    
+        # ------------------ 4) Build main prompts (WITH research) -------------------
+        if qtype == "binary":
+            main_prompt = build_binary_prompt(title, description, research_text, criteria)
+        elif qtype == "multiple_choice":
+            main_prompt = build_mcq_prompt(title, options, description, research_text, criteria)
+        else:
+            main_prompt = build_numeric_prompt(title, str(units or ""), description, research_text, criteria)
+    
+        # ------------------ 5) Ensemble calls (WITH research) -----------------------
+        t0 = time.time()
+        if qtype == "binary":
+            ens_res = await run_ensemble_binary(main_prompt, DEFAULT_ENSEMBLE)
+        elif qtype == "multiple_choice":
+            ens_res = await run_ensemble_mcq(main_prompt, n_options, DEFAULT_ENSEMBLE)
+        else:
+            ens_res = await run_ensemble_numeric(main_prompt, DEFAULT_ENSEMBLE)
+        t_ensemble_ms = _ms(t0)
+    
+        # ------------------ 6) Choose calibration weights & aggregate ---------------
+        calib_weights_map, weights_profile = _choose_weights_for_question(
+            _load_calibration_weights(), class_primary=class_primary, qtype=qtype
+        )
+    
+        # MAIN aggregation (with optional GTMC1 for binary)
+        if qtype == "binary":
+            final_main, bmc_summary = aggregate_binary(ens_res, gtmc1_signal if gtmc1_active else None, calib_weights_map)
+        elif qtype == "multiple_choice":
+            vec_main, bmc_summary = aggregate_mcq(ens_res, n_options, calib_weights_map)
+            final_main = {options[i]: vec_main[i] for i in range(n_options)} if n_options else {}
+        else:
+            quantiles_main, bmc_summary = aggregate_numeric(ens_res, calib_weights_map)
+            final_main = dict(quantiles_main)
+    
+        # ------------------ 7) Diagnostic variants (WITH research) ------------------
+        if qtype == "binary":
+            v_nogtmc1, _ = aggregate_binary(ens_res, None, calib_weights_map)
+            v_uniform, _ = aggregate_binary(ens_res, gtmc1_signal if gtmc1_active else None, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            v_simple = _simple_average_binary(ens_res.members)
+        elif qtype == "multiple_choice":
+            v_nogtmc1_vec, _ = aggregate_mcq(ens_res, n_options, calib_weights_map)
+            v_nogtmc1 = {options[i]: v_nogtmc1_vec[i] for i in range(n_options)} if n_options else {}
+            v_uniform_vec, _ = aggregate_mcq(ens_res, n_options, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            v_uniform = {options[i]: v_uniform_vec[i] for i in range(n_options)} if n_options else {}
+            v_simple_vec = _simple_average_mcq(ens_res.members, n_options)
+            v_simple = {options[i]: v_simple_vec[i] for i in range(n_options)} if (n_options and v_simple_vec) else {}
+        else:
+            v_nogtmc1, _ = aggregate_numeric(ens_res, calib_weights_map)
+            v_uniform, _ = aggregate_numeric(ens_res, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            v_simple = _simple_average_numeric(ens_res.members) or {}
+    
+        # ------------------ 8) Ablation pass: NO RESEARCH ---------------------------
+        if qtype == "binary":
+            ab_prompt = build_binary_prompt(title, description, "", criteria)
+            ens_res_ab = await run_ensemble_binary(ab_prompt, DEFAULT_ENSEMBLE)
+            ab_main, _ = aggregate_binary(ens_res_ab, None, calib_weights_map)
+            ab_uniform, _ = aggregate_binary(ens_res_ab, None, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            ab_simple = _simple_average_binary(ens_res_ab.members)
+        elif qtype == "multiple_choice":
+            ab_prompt = build_mcq_prompt(title, options, description, "", criteria)
+            ens_res_ab = await run_ensemble_mcq(ab_prompt, n_options, DEFAULT_ENSEMBLE)
+            ab_vec, _ = aggregate_mcq(ens_res_ab, n_options, calib_weights_map)
+            ab_main = {options[i]: ab_vec[i] for i in range(n_options)} if n_options else {}
+            ab_uniform_vec, _ = aggregate_mcq(ens_res_ab, n_options, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            ab_uniform = {options[i]: ab_uniform_vec[i] for i in range(n_options)} if n_options else {}
+            ab_simple_vec = _simple_average_mcq(ens_res_ab.members, n_options)
+            ab_simple = {options[i]: ab_simple_vec[i] for i in range(n_options)} if (n_options and ab_simple_vec) else {}
+        else:
+            ab_prompt = build_numeric_prompt(title, str(units or ""), description, "", criteria)
+            ens_res_ab = await run_ensemble_numeric(ab_prompt, DEFAULT_ENSEMBLE)
+            ab_main, _ = aggregate_numeric(ens_res_ab, calib_weights_map)
+            ab_uniform, _ = aggregate_numeric(ens_res_ab, {m.name: 1.0 for m in DEFAULT_ENSEMBLE})
+            ab_simple = _simple_average_numeric(ens_res_ab.members) or {}
+    
+        # ------------------ 9) Submission (optional) --------------------------------
+        submit_status_code = ""
+        submit_error = ""
+        explanation_short = ""
+        t_submit_ms = 0
+    
+        if submit_ok and question_id:
+            t_sub0 = time.time()
+            try:
+                if qtype == "binary" and isinstance(final_main, float):
+                    payload = _build_payload_for_submission("binary", _clip01(final_main))
+                    code, err = post_forecast(question_id, payload)
+                    submit_status_code = str(code)
+                    submit_error = "" if err is None else err[:280]
+    
+                elif qtype == "multiple_choice" and isinstance(final_main, dict):
+                    probs = [float(final_main.get(lbl, 0.0)) for lbl in options]
+                    s = sum(probs)
+                    if s <= 0 and options:
+                        probs = [1.0 / len(options)] * len(options)
+                    elif s > 0:
+                        probs = [p / s for p in probs]
+                    label_map = {str(options[i]): float(probs[i]) for i in range(len(options))}
+                    payload = _build_payload_for_submission("multiple_choice", label_map)
+                    code, err = post_forecast(question_id, payload)
+                    submit_status_code = str(code)
+                    submit_error = "" if err is None else err[:280]
+    
+                elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
                     pass
-            elif qtype in ("numeric", "discrete") and m.ok and isinstance(m.parsed, dict):
-                p10 = _safe_float(m.parsed.get("P10"))
-                p50 = _safe_float(m.parsed.get("P50"))
-                p90 = _safe_float(m.parsed.get("P90"))
-                if p10 is not None and p90 is not None:
-                    if p50 is None:
-                        p50 = 0.5 * (p10 + p90)
-                    _line += f" P10={p10:.3f}, P50={p50:.3f}, P90={p90:.3f}"
-            md.append(_line)
-    except Exception as _ens_dbg_ex:
-        md.append(f"- ensemble_debug_error={type(_ens_dbg_ex).__name__}: {str(_ens_dbg_ex)[:200]}")
-
-    # --- Per-model details: reasoning + usage/cost --------------------------------
-    try:
-        MODEL_RAW_MAX = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
-        md.append("")
-        md.append("### Per-model (raw + usage/cost)")
-
-        for m in ens_res.members:
-            if not isinstance(m, MemberOutput):
-                continue
-            md.append(f"#### {m.name}")
-            md.append(
-                f"- ok={m.ok} | t_ms={getattr(m,'elapsed_ms',0)} | "
-                f"tokens: prompt={getattr(m,'prompt_tokens',0)}, "
-                f"completion={getattr(m,'completion_tokens',0)}, "
-                f"total={getattr(m,'total_tokens',0)} | "
-                f"cost=${float(getattr(m,'cost_usd',0.0)):.6f}"
-            )
-            if getattr(m, "error", None):
-                md.append(f"- error={str(m.error)[:240]}")
-            if getattr(m, "raw_text", None):
-                raw = (m.raw_text or "").strip()
-                if raw:
-                    md.append("```md")
-                    md.append(raw[:MODEL_RAW_MAX])
-                    md.append("```")
-    except Exception as _pm_ex:
-        md.append(f"- per_model_dump_error={type(_pm_ex).__name__}: {str(_pm_ex)[:200]}")
-
-    # --- Aggregation summary (BMC) ---------------------------------------------
-    try:
-        md.append("### Aggregation (BMC)")
-        # Make the BMC summary JSON-safe and also visible in the human log
-        bmc_json = {}
-        if isinstance(bmc_summary, dict):
-            # strip large arrays already removed; copy select keys if present
-            for k in ("mean", "var", "std", "n_evidence", "p10", "p50", "p90"):
-                if k in bmc_summary:
-                    bmc_json[k] = bmc_summary[k]
-        # Put a human line:
+            except Exception as e:
+                submit_status_code = submit_status_code or "EXC"
+                submit_error = (str(e) or "")[:280]
+    
+            # Console confirmation of submit
+            if submit_status_code:
+                if submit_status_code.isdigit() and int(submit_status_code) == 201:
+                    print("Submit: 201 Created ✅")
+                else:
+                    print(f"Submit: {submit_status_code} ❌ {submit_error[:120]}")
+            t_submit_ms = _ms(t_sub0)
+    
+        # ------------------ 10) Build ONE wide CSV row and write it -----------------
+        ensure_unified_csv()
+    
+        row: Dict[str, Any] = {
+            # Run metadata
+            "run_id": run_id,
+            "run_time_iso": ist_iso(),
+            "purpose": purpose,
+            "git_sha": os.getenv("GIT_SHA", ""),
+            "config_profile": "default",
+            "weights_profile": "class_calibration",
+            "openrouter_models_json": [
+                {"name": ms.name, "provider": ms.provider, "model_id": ms.model_id, "weight": ms.weight}
+                for ms in DEFAULT_ENSEMBLE
+            ],
+    
+            # Question metadata
+            "question_id": str(question_id),
+            "question_url": url,
+            "question_title": title,
+            "question_type": qtype,
+            "tournament_id": tournament_id if isinstance(tournament_id, str) else str(tournament_id),
+            "created_time_iso": post.get("creation_time") or q.get("creation_time") or "",
+            "closes_time_iso": post.get("close_time") or q.get("close_time") or "",
+            "resolves_time_iso": post.get("scheduled_resolve_time") or q.get("scheduled_resolve_time") or "",
+    
+            # Classification
+            "class_primary": class_primary,
+            "class_secondary": class_secondary or "",
+            "is_strategic": str(is_strategic),
+            "strategic_score": f"{strategic_score:.3f}",
+            "classifier_source": classifier_source,
+            "classifier_rationale": classifier_rationale,
+    
+            # Research
+            "research_llm": research_meta.get("research_llm", ""),
+            "research_source": research_meta.get("research_source", ""),
+            "research_query": research_meta.get("research_query", ""),
+            "research_n_raw": str(research_meta.get("research_n_raw", "")),
+            "research_n_kept": str(research_meta.get("research_n_kept", "")),
+            "research_cached": research_meta.get("research_cached", ""),
+            "research_error": research_meta.get("research_error", ""),
+    
+    
+            # Options/values
+            "n_options": str(n_options if qtype == "multiple_choice" else 0),
+            "options_json": options if qtype == "multiple_choice" else "",
+            "discrete_values_json": discrete_values if (qtype in ("numeric", "discrete") and discrete_values) else "",
+        }
+    
+        row["seen_guard_triggered"] = (
+            "1"
+            if seen_guard_enabled and bool(seen_guard_lock_acquired)
+            else ("0" if seen_guard_enabled else "")
+        )
+    
+        # Per-model outputs
+        for i, ms in enumerate(DEFAULT_ENSEMBLE):
+            mo: Optional[MemberOutput] = None
+            if isinstance(ens_res, EnsembleResult) and i < len(ens_res.members):
+                mo = ens_res.members[i]
+    
+            ok = bool(mo and mo.ok)
+            row[f"model_ok__{ms.name}"] = "1" if ok else "0"
+            row[f"model_time_ms__{ms.name}"] = str(getattr(mo, "elapsed_ms", 0) or "")
+    
+            if ok and mo is not None:
+                if qtype == "binary" and isinstance(mo.parsed, (float, int)):
+                    row[f"binary_prob__{ms.name}"] = f"{_clip01(float(mo.parsed)):.6f}"
+                elif qtype == "multiple_choice" and isinstance(mo.parsed, list):
+                    row[f"mcq_json__{ms.name}"] = mo.parsed
+                elif qtype in ("numeric", "discrete") and isinstance(mo.parsed, dict):
+                    p10 = _safe_float(mo.parsed.get("P10"))
+                    p50 = _safe_float(mo.parsed.get("P50"))
+                    p90 = _safe_float(mo.parsed.get("P90"))
+                    if p10 is not None: row[f"numeric_p10__{ms.name}"] = f"{p10:.6f}"
+                    if p50 is not None: row[f"numeric_p50__{ms.name}"] = f"{p50:.6f}"
+                    if p90 is not None: row[f"numeric_p90__{ms.name}"] = f"{p90:.6f}"
+    
+            row[f"cost_usd__{ms.name}"] = f"{getattr(mo,'cost_usd',0.0):.6f}" if mo else ""
+    
+        # Ensemble (main)
         if qtype == "binary" and isinstance(final_main, float):
-            md.append(f"- final_probability={_clip01(final_main):.4f}")
+            row["binary_prob__ensemble"] = f"{_clip01(final_main):.6f}"
         elif qtype == "multiple_choice" and isinstance(final_main, dict):
-            # show top-3
-            items = sorted(final_main.items(), key=lambda kv: kv[1], reverse=True)[:3]
-            md.append("- final_top3=" + ", ".join([f"{k}:{_clip01(float(v)):.3f}" for k, v in items]))
+            row["mcq_json__ensemble"] = final_main
+            for j in range(min(15, n_options)):
+                row[f"mcq_{j+1}__ensemble"] = f"{_clip01(float(final_main.get(options[j], 0.0))):.6f}"
         elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
-            _p10 = final_main.get("P10"); _p50 = final_main.get("P50"); _p90 = final_main.get("P90")
-            md.append(f"- final_quantiles: P10={_p10}, P50={_p50}, P90={_p90}")
-        md.append(f"- bmc_summary={json.dumps(bmc_json)}")
-    except Exception as _bmc_dbg_ex:
-        md.append(f"- bmc_debug_error={type(_bmc_dbg_ex).__name__}: {str(_bmc_dbg_ex)[:200]}")
-
-    # --------------------------------------------------------------------------
-    # Attach BMC summary into CSV row (JSON), then persist both CSV + human log
-    # --------------------------------------------------------------------------
-    try:
-        if isinstance(bmc_summary, dict):
-            row["bmc_summary_json"] = {k: v for k, v in bmc_summary.items() if k != "samples"}
-    except Exception:
-        # keep whatever default is in row already
-        pass
-
-    # Write human-readable markdown file
-    try:
-        safe_md = _sanitize_markdown_chunks(md)
-        if len(safe_md) < len(md):
-            dropped = len(md) - len(safe_md)
-            print(f"[warn] Dropped {dropped} non-string markdown line(s) for Q{question_id}.")
-        write_human_markdown(run_id=run_id, question_id=question_id, content="\n\n".join(safe_md))
-    except Exception as _md_ex:
-        print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
-
-    # Finally, write the unified CSV row
-    write_unified_row(row)
-    print("✔ logged to forecasts.csv")
-    return
+            for k in ("P10", "P50", "P90"):
+                if k in final_main:
+                    row[f"numeric_{k.lower()}__ensemble"] = f"{float(final_main[k]):.6f}"
+    
+        # Variants (WITH research)
+        def _fill_variant(tag: str, val: Any):
+            if qtype == "binary" and isinstance(val, float):
+                row[f"binary_prob__ensemble_{tag}"] = f"{_clip01(val):.6f}"
+            elif qtype == "multiple_choice" and isinstance(val, dict):
+                row[f"mcq_json__ensemble_{tag}"] = val
+            elif qtype in ("numeric", "discrete") and isinstance(val, dict):
+                for k in ("P10", "P50", "P90"):
+                    if k in val:
+                        row[f"numeric_{k.lower()}__ensemble_{tag}"] = f"{float(val[k]):.6f}"
+    
+        _fill_variant("no_gtmc1", v_nogtmc1)
+        _fill_variant("uniform_weights", v_uniform)
+        if qtype == "binary":
+            _fill_variant("no_bmc_no_gtmc1", v_simple)  # float for binary
+        else:
+            _fill_variant("no_bmc_no_gtmc1", v_simple if isinstance(v_simple, dict) else v_simple)
+    
+        # Ablation (NO research)
+        row["ablation_no_research"] = "1"
+        if qtype == "binary" and isinstance(ab_main, float):
+            row["binary_prob__ensemble_no_research"] = f"{_clip01(ab_main):.6f}"
+        elif qtype == "multiple_choice" and isinstance(ab_main, dict):
+            row["mcq_json__ensemble_no_research"] = ab_main
+            for j in range(min(15, n_options)):
+                row[f"mcq_{j+1}__ensemble_no_research"] = f"{_clip01(float(ab_main.get(options[j], 0.0))):.6f}"
+        elif qtype in ("numeric", "discrete") and isinstance(ab_main, dict):
+            for k in ("P10", "P50", "P90"):
+                if k in ab_main:
+                    row[f"numeric_{k.lower()}__ensemble_no_research"] = f"{float(ab_main[k]):.6f}"
+    
+        def _fill_ablation_variant(tag: str, val: Any):
+            if qtype == "binary" and isinstance(val, float):
+                row[f"binary_prob__ensemble_no_research_{tag}"] = f"{_clip01(val):.6f}"
+            elif qtype == "multiple_choice" and isinstance(val, dict):
+                row[f"mcq_json__ensemble_no_research_{tag}"] = val
+            elif qtype in ("numeric", "discrete") and isinstance(val, dict):
+                for k in ("P10", "P50", "P90"):
+                    if k in val:
+                        row[f"numeric_{k.lower()}__ensemble_no_research_{tag}"] = f"{float(val[k]):.6f}"
+    
+        _fill_ablation_variant("no_gtmc1", ab_main)
+        _fill_ablation_variant("uniform_weights", ab_uniform)
+        _fill_ablation_variant("no_bmc_no_gtmc1", ab_simple if isinstance(ab_simple, dict) else ({"P50": ab_simple} if isinstance(ab_simple, float) else ab_simple))
+    
+        # Diagnostics, timings, submission, weights used
+        row.update({
+            "gtmc1_active": "1" if gtmc1_active else "0",
+            "actors_cached": "0",
+            "gtmc1_actor_count": str(len(actors_table) if actors_table else 0),
+            "gtmc1_coalition_rate": (gtmc1_signal.get("coalition_rate") if gtmc1_signal else ""),
+            "gtmc1_exceedance_ge_50": (gtmc1_signal.get("exceedance_ge_50") if gtmc1_signal else ""),
+            "gtmc1_dispersion": (gtmc1_signal.get("dispersion") if gtmc1_signal else ""),
+            "gtmc1_median_rounds": (gtmc1_signal.get("median_rounds") if gtmc1_signal else ""),
+            "gtmc1_num_runs": (gtmc1_signal.get("num_runs") if gtmc1_signal else ""),
+            "gtmc1_policy_sentence": gtmc1_policy_sentence or "",
+            "gtmc1_signal_json": gtmc1_signal or "",
+    
+            "bmc_summary_json": "",
+    
+            "cdf_steps_clamped": "",
+            "cdf_upper_open_adjusted": "",
+            "prob_sum_renormalized": "",
+    
+            "t_research_ms": str(t_research_ms),
+            "t_ensemble_ms": str(t_ensemble_ms),
+            "t_gtmc1_ms": str(t_gtmc1_ms),
+            "t_submit_ms": str(t_submit_ms),
+            "t_total_ms": str(_ms(t_start_total)),
+    
+            "explanation_short": explanation_short,
+            "submit_confirm": "1" if (submit_ok and submit_status_code and submit_status_code.isdigit() and int(submit_status_code) < 400) else "0",
+            "submit_status_code": submit_status_code,
+            "submit_error": submit_error,
+    
+            "resolved": "",
+            "resolved_time_iso": "",
+            "resolved_outcome_label": "",
+            "resolved_value": "",
+            "score_brier": "",
+            "score_log": "",
+            "score_crps": "",
+    
+            "score_brier__no_research": "",
+            "score_log__no_research": "",
+            "score_crps__no_research": "",
+    
+            "weights_profile_applied": weights_profile,
+            "weights_per_model_json": calib_weights_map,
+            "dedupe_hash": "",
+            "seen_guard_triggered": "",
+        })
+    
+        # Human-readable markdown log
+        MAX_RAW_CHARS = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS","5000"))
+        RESEARCH_MAX = int(os.getenv("HUMAN_LOG_RESEARCH_MAX_CHARS","20000"))
+        md = []
+        md.append(f"# {title} (QID: {question_id})")
+        md.append(f"- Type: {qtype}")
+        md.append(f"- URL: {url}")
+        md.append(f"- Classifier: {class_primary} | strategic={is_strategic} (score={strategic_score:.2f})")
+        md.append("### SeenGuard")
+        lock_status = "n/a"
+        if seen_guard_enabled:
+            lock_status = "acquired" if seen_guard_lock_acquired else "not_acquired"
+        md.append(f"- enabled={seen_guard_enabled} | lock_status={lock_status}")
+        if seen_guard_run_report:
+            before = seen_guard_run_report.get("before")
+            skipped = seen_guard_run_report.get("skipped")
+            after = seen_guard_run_report.get("after")
+            md.append(f"- run_filter: before={before} | skipped={skipped} | after={after}")
+            if seen_guard_run_report.get("error"):
+                md.append(f"- filter_error={seen_guard_run_report['error']}")
+        debug_note = "lock disabled"
+        if seen_guard_enabled:
+            debug_note = "lock acquired" if seen_guard_lock_acquired else "lock fallback"
+        if seen_guard_lock_error:
+            debug_note += f" | error={seen_guard_lock_error}"
+        md.append(f"- debug_note={debug_note}")
+    
+        md.append("## Research (summary)")
+        md.append((research_text or "").strip()[:RESEARCH_MAX])
+        # Research (debug)
+        try:
+            _r_src   = research_meta.get("research_source","")
+            _r_llm   = research_meta.get("research_llm","")
+            _r_q     = research_meta.get("research_query","")
+            _r_raw   = research_meta.get("research_n_raw","")
+            _r_kept  = research_meta.get("research_n_kept","")
+            _r_cache = research_meta.get("research_cached","")
+            _r_err   = research_meta.get("research_error","")
+            md.append("### Research (debug)")
+            _r_cost  = research_meta.get("research_cost_usd", 0.0)
+            md.append(
+                f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | "
+                f"n_raw={_r_raw} | n_kept={_r_kept} | cost=${float(_r_cost):.6f}"
+            )
+    
+            if _r_q:
+                md.append(f"- query: {_r_q}")
+            if _r_err:
+                md.append(f"- error: {_r_err}")
+        except Exception:
+            pass
+    
+        # --- GTMC1 (debug) --------------------------------------------------------
+        try:
+            md.append("### GTMC1 (debug)")
+            # Basic flags
+            md.append(f"- strategic_class={is_strategic} | strategic_score={strategic_score:.2f} | source={classifier_source}")
+            md.append(f"- gtmc1_active={gtmc1_active} | qtype={qtype} | t_ms={t_gtmc1_ms}")
+    
+            # Actor extraction outcome
+            _n_actors = len(actors_table) if actors_table else 0
+            md.append(f"- actors_parsed={_n_actors}")
+    
+            # Key Monte Carlo outputs (if any)
+            _sig = gtmc1_signal or {}
+            _ex = _sig.get("exceedance_ge_50")
+            _coal = _sig.get("coalition_rate")
+            _med = _sig.get("median_of_final_medians")
+            _disp = _sig.get("dispersion")
+    
+            md.append(f"- exceedance_ge_50={_ex} | coalition_rate={_coal} | median={_med} | dispersion={_disp}")
+            _runs_csv = _sig.get("runs_csv")
+            if _runs_csv:
+                md.append(f"- runs_csv={_runs_csv}")
+            _meta_json = _sig.get("meta_json")
+            if _meta_json:
+                md.append(f"- meta_json={_meta_json}")
+    
+            # If GTMC1 was expected but didn’t apply, say why (best effort).
+            if use_gtmc1 and qtype == "binary" and not gtmc1_active:
+                md.append("- note=GTMC1 gate opened (strategic) but deactivated later (client/JSON/actors<3).")
+            # If we captured raw (on failure), surface it.
+            if gtmc1_raw_reason:
+                md.append(f"- raw_reason={gtmc1_raw_reason}")
+            if gtmc1_raw_dump_path or gtmc1_raw_excerpt:
+                md.append("### GTMC1 (raw)")
+                if gtmc1_raw_dump_path:
+                    md.append(f"- raw_file={gtmc1_raw_dump_path}")
+                if gtmc1_raw_excerpt:
+                    md.append("```json")
+                    md.append(gtmc1_raw_excerpt)
+                    md.append("```")
+        except Exception as _gtmc1_dbg_ex:
+            md.append(f"- gtmc1_debug_error={type(_gtmc1_dbg_ex).__name__}: {str(_gtmc1_dbg_ex)[:200]}")
+        # --------------------------------------------------------------------------
+    
+        # --- GTMC1 (actors used) ---------------------------------------------------
+        # Show the actual table we fed into GTMC1 so you can audit inputs later.
+        if gtmc1_active and actors_table:
+            try:
+                md.append("### GTMC1 (actors used)")
+                md.append("| Actor | Position | Capability | Salience | Risk thresh |")
+                md.append("|---|---:|---:|---:|---:|")
+                for a in actors_table:
+                    md.append(
+                        f"| {a['name']} | {float(a['position']):.0f} | "
+                        f"{float(a['capability']):.0f} | {float(a['salience']):.0f} | "
+                        f"{float(a['risk_threshold']):.3f} |"
+                    )
+            except Exception as _gtmc1_tbl_ex:
+                md.append(f"- actors_table_render_error={type(_gtmc1_tbl_ex).__name__}: {str(_gtmc1_tbl_ex)[:160]}")
+    
+        # --- Ensemble outputs (compact) --------------------------------------------
+        try:
+            md.append("### Ensemble (model outputs)")
+            for m in ens_res.members:
+                if not isinstance(m, MemberOutput):
+                    continue
+                _line = f"- {m.name}: ok={m.ok} t_ms={getattr(m,'elapsed_ms',0)}"
+                if qtype == "binary" and m.ok and isinstance(m.parsed, (float, int)):
+                    _line += f" p={_clip01(float(m.parsed)):.4f}"
+                elif qtype == "multiple_choice" and m.ok and isinstance(m.parsed, list):
+                    # just show top-3
+                    try:
+                        vec = [float(x) for x in m.parsed]
+                        idxs = np.argsort(vec)[::-1][:3]
+                        _line += " top3=" + ", ".join([f"{options[i]}:{_clip01(vec[i]):.3f}" for i in idxs])
+                    except Exception:
+                        pass
+                elif qtype in ("numeric", "discrete") and m.ok and isinstance(m.parsed, dict):
+                    p10 = _safe_float(m.parsed.get("P10"))
+                    p50 = _safe_float(m.parsed.get("P50"))
+                    p90 = _safe_float(m.parsed.get("P90"))
+                    if p10 is not None and p90 is not None:
+                        if p50 is None:
+                            p50 = 0.5 * (p10 + p90)
+                        _line += f" P10={p10:.3f}, P50={p50:.3f}, P90={p90:.3f}"
+                md.append(_line)
+        except Exception as _ens_dbg_ex:
+            md.append(f"- ensemble_debug_error={type(_ens_dbg_ex).__name__}: {str(_ens_dbg_ex)[:200]}")
+    
+        # --- Per-model details: reasoning + usage/cost --------------------------------
+        try:
+            MODEL_RAW_MAX = int(os.getenv("HUMAN_LOG_MODEL_RAW_MAX_CHARS", "5000"))
+            md.append("")
+            md.append("### Per-model (raw + usage/cost)")
+    
+            for m in ens_res.members:
+                if not isinstance(m, MemberOutput):
+                    continue
+                md.append(f"#### {m.name}")
+                md.append(
+                    f"- ok={m.ok} | t_ms={getattr(m,'elapsed_ms',0)} | "
+                    f"tokens: prompt={getattr(m,'prompt_tokens',0)}, "
+                    f"completion={getattr(m,'completion_tokens',0)}, "
+                    f"total={getattr(m,'total_tokens',0)} | "
+                    f"cost=${float(getattr(m,'cost_usd',0.0)):.6f}"
+                )
+                if getattr(m, "error", None):
+                    md.append(f"- error={str(m.error)[:240]}")
+                if getattr(m, "raw_text", None):
+                    raw = (m.raw_text or "").strip()
+                    if raw:
+                        md.append("```md")
+                        md.append(raw[:MODEL_RAW_MAX])
+                        md.append("```")
+        except Exception as _pm_ex:
+            md.append(f"- per_model_dump_error={type(_pm_ex).__name__}: {str(_pm_ex)[:200]}")
+    
+        # --- Aggregation summary (BMC) ---------------------------------------------
+        try:
+            md.append("### Aggregation (BMC)")
+            # Make the BMC summary JSON-safe and also visible in the human log
+            bmc_json = {}
+            if isinstance(bmc_summary, dict):
+                # strip large arrays already removed; copy select keys if present
+                for k in ("mean", "var", "std", "n_evidence", "p10", "p50", "p90"):
+                    if k in bmc_summary:
+                        bmc_json[k] = bmc_summary[k]
+            # Put a human line:
+            if qtype == "binary" and isinstance(final_main, float):
+                md.append(f"- final_probability={_clip01(final_main):.4f}")
+            elif qtype == "multiple_choice" and isinstance(final_main, dict):
+                # show top-3
+                items = sorted(final_main.items(), key=lambda kv: kv[1], reverse=True)[:3]
+                md.append("- final_top3=" + ", ".join([f"{k}:{_clip01(float(v)):.3f}" for k, v in items]))
+            elif qtype in ("numeric", "discrete") and isinstance(final_main, dict):
+                _p10 = final_main.get("P10"); _p50 = final_main.get("P50"); _p90 = final_main.get("P90")
+                md.append(f"- final_quantiles: P10={_p10}, P50={_p50}, P90={_p90}")
+            md.append(f"- bmc_summary={json.dumps(bmc_json)}")
+        except Exception as _bmc_dbg_ex:
+            md.append(f"- bmc_debug_error={type(_bmc_dbg_ex).__name__}: {str(_bmc_dbg_ex)[:200]}")
+    
+        # --------------------------------------------------------------------------
+        # Attach BMC summary into CSV row (JSON), then persist both CSV + human log
+        # --------------------------------------------------------------------------
+        try:
+            if isinstance(bmc_summary, dict):
+                row["bmc_summary_json"] = {k: v for k, v in bmc_summary.items() if k != "samples"}
+        except Exception:
+            # keep whatever default is in row already
+            pass
+    
+        # Write human-readable markdown file
+        try:
+            safe_md = _sanitize_markdown_chunks(md)
+            if len(safe_md) < len(md):
+                dropped = len(md) - len(safe_md)
+                print(f"[warn] Dropped {dropped} non-string markdown line(s) for Q{question_id}.")
+            write_human_markdown(run_id=run_id, question_id=question_id, content="\n\n".join(safe_md))
+        except Exception as _md_ex:
+            print(f"[warn] failed to write human markdown for Q{question_id}: {type(_md_ex).__name__}: {str(_md_ex)[:180]}")
+    
+        # Finally, write the unified CSV row
+        write_unified_row(row)
+        print("✔ logged to forecasts.csv")
+        return
+    
+    
+    except Exception as _e:
+        _post_t = type(_post_original).__name__
+        try:
+            _q_t = type(q).__name__
+        except Exception:
+            _q_t = "unknown"
+        try:
+            _cls_t = type(cls_info).__name__
+        except Exception:
+            _cls_t = "unknown"
+        raise RuntimeError(f"run_one_question failed (post={_post_t}, q={_q_t}, cls_info={_cls_t})") from _e
 
 
 async def run_one_question(
