@@ -1,24 +1,23 @@
-# Minimal example mapping for staging CSVs like resolver/staging/sample_source.csv
-mapping:
-  event_id:        ["event_id","evt_id"]
-  country_name:    ["country_name","country"]
-  iso3:            ["iso3","iso_code3"]
-  hazard_code:     ["hazard_code","hz_code"]
-  hazard_label:    ["hazard_label","hz_label"]
-  hazard_class:    ["hazard_class","hz_class"]
-  metric:          ["metric","measure"]
-  value:           ["value","count","people"]
+﻿mapping:
+  event_id:        ["event_id", "evt_id"]
+  country_name:    ["country_name", "country"]
+  iso3:            ["iso3", "iso_code3"]
+  hazard_code:     ["hazard_code", "hz_code"]
+  hazard_label:    ["hazard_label", "hz_label"]
+  hazard_class:    ["hazard_class", "hz_class"]
+  metric:          ["metric", "measure"]
+  value:           ["value", "count", "people"]
   unit:            ["unit"]
-  as_of_date:      ["as_of_date","as_of"]
-  publication_date:["publication_date","published"]
-  publisher:       ["publisher","org"]
-  source_type:     ["source_type","source"]
-  source_url:      ["source_url","url"]
-  doc_title:       ["doc_title","title"]
-  definition_text: ["definition_text","definition","note"]
-  method:          ["method","ingest_method"]
+  as_of_date:      ["as_of_date", "as_of"]
+  publication_date: ["publication_date", "published"]
+  publisher:       ["publisher", "org"]
+  source_type:     ["source_type", "source"]
+  source_url:      ["source_url", "url"]
+  doc_title:       ["doc_title", "title"]
+  definition_text: ["definition_text", "definition", "note"]
+  method:          ["method", "ingest_method"]
   confidence:      ["confidence"]
-  revision:        ["revision","rev"]
+  revision:        ["revision", "rev"]
   artifact_id:     ["artifact_id"]
   artifact_sha256: ["artifact_sha256"]
   notes:           ["notes"]
@@ -28,22 +27,19 @@ mapping:
   precedence_decision: ["precedence_decision"]
   ingested_at:     ["ingested_at"]
 
-# Default fills if missing
 constants:
   unit: "persons"
   method: "api"
   confidence: "med"
   revision: 1
 
-# Normalize free-text metrics to canonical enums
 transforms:
   metric:
-    in_need:    ["pin","people_in_need","in need","in-need"]
-    affected:   ["pa","people_affected","affected"]
-    displaced:  ["idps","displaced","internal_displacement"]
-    cases:      ["cases","confirmed_cases","suspected_cases"]
+    in_need:    ["pin", "people_in_need", "in need", "in-need"]
+    affected:   ["pa", "people_affected", "affected"]
+    displaced:  ["idps", "displaced", "internal_displacement"]
+    cases:      ["cases", "confirmed_cases", "suspected_cases"]
 
-# Alternative date field names if needed
 dates:
-  as_of_date: ["date_as_of","asof"]
-  publication_date: ["pub_date","pub"]
+  as_of_date: ["date_as_of", "asof"]
+  publication_date: ["pub_date", "pub"]
