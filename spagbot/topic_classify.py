@@ -142,11 +142,18 @@ async def classify_topics(
     Returns a dict with fields: source, primary, secondary, is_strategic, strategic_score, rationale, scores?
     Uses cache if available. LLM first (if enabled), else keyword fallback.
     """
-    # Cache first
+    # Cache first (accept dict or JSON string)
     if os.getenv("SPAGBOT_DISABLE_CLASSIFIER_CACHE","0").lower() not in ("1","true","yes"):
-        got = read_cache("topic_classify", slug)
-        if isinstance(got, dict) and got.get("primary"):
-            return got
+        cached = read_cache("topic_classify", slug)
+        if isinstance(cached, dict) and cached.get("primary"):
+            return cached
+        if isinstance(cached, (str, bytes)):
+            try:
+                parsed = json.loads(cached)
+                if isinstance(parsed, dict) and parsed.get("primary"):
+                    return parsed
+            except Exception:
+                pass
 
     use_llm = os.getenv("SPAGBOT_USE_LLM_CLASSIFIER","1").lower() in ("1","true","yes")
     client = _get_or_client() if use_llm else None

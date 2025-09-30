@@ -499,7 +499,10 @@ def _grounded_search(query: str, *, max_results: int = 12, timeout: float = None
     # Parse candidates
     text_blobs: List[str] = []
     for cand in (data_ok.get("candidates") or []):
-        for part in ((cand.get("content") or {}).get("parts") or []):
+        content = cand.get("content")
+        if not isinstance(content, dict):
+            continue
+        for part in (content.get("parts") or []):
             t = part.get("text")
             if t:
                 text_blobs.append(t)
@@ -578,18 +581,22 @@ def _rank_and_filter_items(items: List[Dict[str, Any]], anchors: Dict[str, List[
 # =============================================================================
 
 async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict, dict]:
-    """Generate the research brief using Gemini 2.5 Pro.
-    Returns (text, used_model_id, usage_dict, request_body)."""
+    """
+    Returns (text, used_model_id, usage_dict, request_body).
+    Never references undefined 'body'; always returns a body dict.
+    """
     api_key = _gemini_api_key()
-    if not api_key:
-        _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for research composition")
-        return "", "", {}, body
     model = (_GEMINI_MODEL_ENV or "gemini-2.5-pro").strip()
 
     body = {
         "contents": [{"role": "user", "parts": [{"text": prompt_text}]}],
         "generationConfig": {"temperature": float(RESEARCH_TEMP), "maxOutputTokens": 5000},
     }
+
+    if not api_key:
+        _set_research_error("no GEMINI_API_KEY (or GOOGLE_API_KEY) for research composition")
+        return "", "", {}, body
+
     try:
         resp = requests.post(
             _gemini_base_url(model),
@@ -605,15 +612,19 @@ async def _compose_research_via_gemini(prompt_text: str) -> tuple[str, str, dict
                 msg = (resp.text or "")[:200]
             _set_research_error(f"compose HTTP {resp.status_code}: {msg}")
             return "", "", {}, body
-        data = resp.json()
 
+        data = resp.json()
         texts = []
         for cand in (data.get("candidates") or []):
-            for part in ((cand.get("content") or {}).get("parts") or []):
+            content = cand.get("content")
+            if not isinstance(content, dict):
+                continue
+            for part in (content.get("parts") or []):
                 t = part.get("text")
-                if t:
+                if isinstance(t, str) and t.strip():
                     texts.append(t)
         return ("\n".join(texts).strip(), f"google/{model}", {}, body)
+
     except Exception as e:
         _set_research_error(f"compose request error: {e!r}")
         return "", "", {}, body

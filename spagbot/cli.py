@@ -30,7 +30,7 @@ import os
 import re
 import time
 from contextlib import ExitStack
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import inspect
 
 import numpy as np
@@ -45,7 +45,6 @@ except ModuleNotFoundError:
         "If you use VSCode, also pick the Poetry venv as your interpreter."
     )
 
-import json
 from pathlib import Path
 
 
@@ -57,20 +56,25 @@ def _safe_json_load(s: str):
         return None
 
 
-def _as_dict(x) -> dict:
-    """Best-effort normalize unknown objects (None/str/json) into a dict."""
-    if isinstance(x, dict):
-        return x
-    if isinstance(x, str):
-        s = x.strip()
-        if s.startswith("{") and s.endswith("}"):
-            import json as _json
-            try:
-                return dict(_json.loads(s))
-            except Exception:
-                return {}
-        return {}
+def _as_dict(obj: Any) -> Dict[str, Any]:
+    """Return a dict from obj. If obj is a JSON string, parse it. Else {}."""
+    if isinstance(obj, dict):
+        return obj
+    if isinstance(obj, (str, bytes)):
+        try:
+            parsed = json.loads(obj)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
     return {}
+
+
+def _must_dict(name: str, obj: Any) -> Dict[str, Any]:
+    d = _as_dict(obj)
+    if not d:
+        # Keep this very explicit so CI logs are helpful and not a vague AttributeError
+        raise RuntimeError(f"{name} is not a dict after coercion (type={type(obj).__name__})")
+    return d
 
 
 # ---- Spagbot internals (all relative imports) --------------------------------
@@ -292,6 +296,16 @@ async def _run_classifier_safe(title: str, description: str, criteria: str, *, s
             return d if isinstance(d, dict) else {}
         return {}
 
+    fallback_info: Dict[str, Any] = {
+        "primary": "",
+        "secondary": "",
+        "is_strategic": False,
+        "strategic_score": 0.0,
+        "source": "",
+        "rationale": "",
+        "cost_usd": 0.0,
+    }
+
     try:
         # Handle both async and sync classifier implementations + older signatures
         if _aio.iscoroutinefunction(should_run_gtmc1):
@@ -306,26 +320,26 @@ async def _run_classifier_safe(title: str, description: str, criteria: str, *, s
                 res = should_run_gtmc1(title, description, criteria)
     except Exception:
         # On any classifier failure, fall back safely
-        return False, {}
+        return False, fallback_info
 
     # Normalize shapes:
     # (a) tuple -> (flag, info)
     if isinstance(res, tuple) and len(res) == 2:
         use_flag = bool(res[0])
         info = _dictify(res[1])
-        return use_flag, info
+        return use_flag, info if info else fallback_info
 
     # (b) dict -> infer flag from field
     if isinstance(res, dict):
-        return bool(res.get("is_strategic", False)), res
+        return bool(res.get("is_strategic", False)), res if res else fallback_info
 
     # (c) JSON string -> parse
     if isinstance(res, str):
         info = _dictify(res)
-        return bool(info.get("is_strategic", False)), info
+        return bool(info.get("is_strategic", False)), info if info else fallback_info
 
     # Unknown shape -> safe default
-    return False, {}
+    return False, fallback_info
 
 # --------------------------------------------------------------------------------
 # Calibration weights loader (optional). You periodically run update_calibration.py
@@ -516,8 +530,13 @@ async def _run_one_question_body(
     _post_original = post
     try:
     
-        post = _as_dict(post)
-        q = _as_dict(post.get("question") if isinstance(post, dict) else {})
+        post = _must_dict("post", post)
+        q = _must_dict("q", post.get("question"))
+
+        required = ("title", "type")
+        missing = [k for k in required if not str(q.get(k, "")).strip()]
+        if missing:
+            raise RuntimeError(f"question payload missing required keys: {missing}")
 
         post_id = int((post.get("id") or post.get("post_id") or 0) or 0)
         question_id = int((q.get("id") or 0) or 0)
@@ -559,13 +578,13 @@ async def _run_one_question_body(
     
         # ------------------ 2) Topic/strategic classification (for GTMC1 gate) -----
         use_gtmc1, cls_info = await _run_classifier_safe(title, description, criteria, slug=f"q{question_id}")
-        cls_info = _as_dict(cls_info)
-        class_primary = (cls_info or {}).get("primary") or ""
-        class_secondary = (cls_info or {}).get("secondary") or ""
-        is_strategic = bool((cls_info or {}).get("is_strategic", False))
-        strategic_score = float((cls_info or {}).get("strategic_score", 0.0))
-        classifier_source = (cls_info or {}).get("source") or ""
-        classifier_rationale = (cls_info or {}).get("rationale") or ""
+        cls_info = _must_dict("cls_info", cls_info)
+        class_primary = cls_info.get("primary") or ""
+        class_secondary = cls_info.get("secondary") or ""
+        is_strategic = bool(cls_info.get("is_strategic", False))
+        strategic_score = float(cls_info.get("strategic_score", 0.0) or 0.0)
+        classifier_source = cls_info.get("source") or ""
+        classifier_rationale = cls_info.get("rationale") or ""
         classifier_cost = float(cls_info.get("cost_usd", 0.0) or 0.0)
     
         # ------------------ 3) Optional GTMC1 (binary + strategic) ------------------
@@ -1221,7 +1240,8 @@ async def run_one_question(
     calib: Dict[str, Any],
     seen_guard_run_report: Optional[Dict[str, Any]] = None,
 ) -> None:
-    q = post.get("question") or {}
+    post = _must_dict("post", post)
+    q = _as_dict(post.get("question"))
     question_id = int(q.get("id") or post.get("id") or post.get("post_id") or 0)
 
     seen_guard_state: Dict[str, Any] = {
