@@ -165,9 +165,18 @@ def rw_request(
         response = requests.get(url, params=params, headers=headers, timeout=30)
         if response.status_code == 200:
             return response.json()
+        if (
+            response.status_code == 202
+            and response.headers.get("x-amzn-waf-action", "").lower() == "challenge"
+        ):
+            if DEBUG:
+                print("[reliefweb] GET WAF challenge:", _dump(response))
+            raise RuntimeError("WAF_CHALLENGE_GET")
         if DEBUG:
             print("[reliefweb] GET debug:", _dump(response))
     except Exception as exc:
+        if str(exc).startswith("WAF_CHALLENGE"):
+            raise
         if DEBUG:
             print("[reliefweb] GET exception:", str(exc))
 
@@ -185,10 +194,20 @@ def rw_request(
                     )
                 time.sleep((backoff**attempt) + 0.3 * attempt)
                 continue
+            if (
+                response.status_code == 202
+                and response.headers.get("x-amzn-waf-action", "").lower()
+                == "challenge"
+            ):
+                if DEBUG:
+                    print("[reliefweb] POST WAF challenge:", _dump(response))
+                raise RuntimeError("WAF_CHALLENGE_POST")
             err = _dump(response)
             break
         except Exception as exc:  # pragma: no cover - network failure paths
             err = str(exc)
+            if err.startswith("WAF_CHALLENGE"):
+                raise RuntimeError(err)
             if DEBUG:
                 print(f"[reliefweb] POST exception attempt {attempt}: {err}")
     raise RuntimeError(f"ReliefWeb API error: {err or 'no 200 after retries'}")
@@ -353,7 +372,18 @@ def main() -> None:
 
     STAGING.mkdir(parents=True, exist_ok=True)
     output = STAGING / "reliefweb.csv"
-    rows = make_rows()
+    try:
+        rows = make_rows()
+    except RuntimeError as exc:
+        message = str(exc)
+        if "WAF_CHALLENGE" in message:
+            print(
+                "ReliefWeb blocked by AWS WAF challenge (202 + x-amzn-waf-action=challenge). "
+                "Writing empty CSV and continuing."
+            )
+            pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
+            return
+        raise
 
     if not rows:
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
