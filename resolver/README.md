@@ -78,6 +78,17 @@ resolver/exports/facts.csv (+ optional Parquet)
 resolver/snapshots/YYYY-MM/{facts.parquet,manifest.json}
 
 
+## Remote-first state layout
+
+When CI runs, it commits outputs into the repo so you can consume them directly:
+
+- **PR state:** `resolver/state/pr/<PR_NUMBER>/...`
+- **Nightly state:** `resolver/state/daily/<YYYY-MM-DD>/...`
+- **Monthly snapshots (authoritative for grading):** `resolver/snapshots/<YYYY-MM>/...`
+
+This means the resolver can run from the remote alone (clone/pull → read files).
+
+
 ## Resolve at a cutoff (precedence engine)
 
 Select one authoritative total per `(iso3, hazard_code)` applying A2 policy:
