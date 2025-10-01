@@ -148,13 +148,17 @@ def rw_request(
         if response.status_code in (429, 502, 503):
             time.sleep((backoff ** attempt) + 0.3 * attempt)
             continue
-        response.raise_for_status()
-    raise RuntimeError("ReliefWeb API failed after retries")
+        message = response.text.strip()
+        snippet = message[:500]
+        raise RuntimeError(
+            f"ReliefWeb API error: HTTP {response.status_code}: {snippet}"
+        )
+    raise RuntimeError("ReliefWeb API failed after retries (no 200 after backoff)")
 
 
 def build_payload(cfg: Dict[str, Any]) -> Dict[str, Any]:
     since = (
-        dt.datetime.utcnow() - dt.timedelta(days=int(cfg["window_days"]))
+        dt.datetime.now(dt.UTC) - dt.timedelta(days=int(cfg["window_days"]))
     ).strftime("%Y-%m-%dT00:00:00Z")
     fields = [
         "id",
@@ -207,8 +211,11 @@ def make_rows() -> List[List[str]]:
     headers = {
         "User-Agent": cfg.get("user_agent", "spagbot-resolver"),
         "Content-Type": "application/json",
+        "Accept": cfg.get("accept_header", "application/json"),
     }
-    url = cfg["base_url"]
+    base_url = cfg["base_url"]
+    appname = cfg.get("appname", "spagbot-resolver")
+    url = f"{base_url}?appname={appname}"
     payload = build_payload(cfg)
 
     rows: List[List[str]] = []
@@ -259,7 +266,7 @@ def make_rows() -> List[List[str]]:
             source_url = fields.get("url", "")
             doc_title = title
 
-            ingested_at = dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            ingested_at = dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
             for country_name, iso3 in iso_pairs:
                 if iso3 in iso_exclude:
