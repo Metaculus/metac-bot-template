@@ -50,6 +50,17 @@ PHRASE_PAD = 80
 def _debug() -> bool:
     return os.getenv("RESOLVER_DEBUG", "") == "1"
 
+def _int_env(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, "").strip() or default)
+    except Exception:
+        return default
+
+# Paging / debug controls (hard caps)
+MAX_PAGES = _int_env("RESOLVER_MAX_PAGES", 50)         # hard stop per endpoint
+MAX_RESULTS = _int_env("RESOLVER_MAX_RESULTS", 5000)   # hard stop total rows per endpoint
+DEBUG_EVERY = _int_env("RESOLVER_DEBUG_EVERY", 10)     # log every N pages when DEBUG=1
+
 def dbg(msg: str):
     if _debug():
         print(f"[IFRC-GO] {msg}")
@@ -169,7 +180,8 @@ def collect_rows() -> List[List[str]]:
 
     base = cfg["base_url"]
     page_size = int(cfg["page_size"])
-    since = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=int(cfg["window_days"]))).date().isoformat()
+    since_dt = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=int(cfg["window_days"]))
+    since = since_dt.date().isoformat()
 
     token = os.getenv("GO_API_TOKEN", "").strip()
     headers = {
@@ -184,17 +196,21 @@ def collect_rows() -> List[List[str]]:
     # Each endpoint paginates with ?limit=&offset= ; Admin v2 documents pagination on Swagger/wiki.
     for key, path in cfg["endpoints"].items():
         offset = 0
+        page_count = 0
+        made_rows = 0
+        older_pages_in_row = 0
         while True:
             params = {
                 "limit": page_size,
                 "offset": offset,
                 "ordering": "-created_at",
-                # Ask for expanded relations + the fields we use
                 "fields": (
                     "id,title,name,summary,description,created_at,updated_at,report_date,"
                     "document_url,external_link,source,disaster_type,disaster_type_details,"
                     "countries,countries_details,num_affected,people_in_need"
                 ),
+                "created_at__gte": since,
+                "updated_at__gte": since,
             }
             # Some endpoints support created_at__gte or date filters; we try conservative filter via ordering + manual cutoff.
             data = req_json(base, path, params, headers)
@@ -210,10 +226,33 @@ def collect_rows() -> List[List[str]]:
             if not results:
                 break
 
+            page_count += 1
+            if _debug() and (page_count % DEBUG_EVERY == 1):
+                dbg(f"[{key}] page={page_count} offset={offset} since={since}")
+
+            # Early-exit: if every record on this page is older than both created_at and updated_at window
+            all_older = True
+            for r in results:
+                created = str(r.get("created_at") or "")[:10]
+                updated = str(r.get("updated_at") or "")[:10]
+                # if either created or updated is within window, keep going
+                if (created and created >= since) or (updated and updated >= since):
+                    all_older = False
+                    break
+            if all_older:
+                older_pages_in_row += 1
+            else:
+                older_pages_in_row = 0
+            if older_pages_in_row >= 2:
+                dbg(f"[{key}] early-exit: consecutive pages older than window (since {since})")
+                break
+
+            stop_endpoint = False
             for r in results:
                 # Dates
-                created = str(r.get("created_at") or r.get("updated_at") or "")[:10]
-                if created and created < since:
+                created = str(r.get("created_at") or "")[:10]
+                updated = str(r.get("updated_at") or "")[:10]
+                if (not created or created < since) and (not updated or updated < since):
                     continue  # outside window
 
                 # Country list
@@ -272,8 +311,21 @@ def collect_rows() -> List[List[str]]:
                         "api", "med", 1, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
                     ])
 
-            # Pagination advance
-            if isinstance(data, dict) and data.get("next"):
+                    made_rows += 1
+                    if made_rows >= MAX_RESULTS:
+                        dbg(f"[{key}] hit MAX_RESULTS={MAX_RESULTS}, stopping")
+                        stop_endpoint = True
+                        break
+
+                if stop_endpoint:
+                    break
+
+            if stop_endpoint:
+                break
+
+            # Pagination advance with caps
+            has_next = isinstance(data, dict) and bool(data.get("next"))
+            if has_next and page_count < MAX_PAGES and made_rows < MAX_RESULTS:
                 offset += page_size
                 time.sleep(0.25)
                 continue

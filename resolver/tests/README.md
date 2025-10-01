@@ -8,12 +8,15 @@ These tests enforce basic contracts across:
 - Snapshots (`resolver/snapshots/YYYY-MM/facts.parquet`), if present
 - Remote-first state files under `resolver/state/**/exports/*.csv`
 
-## Run locally
+## Run locally (cross-platform)
 
 ```bash
-pip install pytest pandas pyarrow pyyaml python-dateutil
-pytest resolver/tests -q
+python -m pytest resolver/tests -q
 ```
+
+Use python -m pytest on Windows to avoid PATH issues (fixes “pytest is not recognized”).
+
+**CI already uses `pytest` in PATH** (via `pip install pytest`). That’s fine for Linux runners; no change needed there.
 
 Tests will skip gracefully if an expected file isn't present (e.g., snapshots),
 but will fail if a file exists and violates the contract.
