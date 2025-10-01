@@ -141,19 +141,34 @@ def rw_request(
     tries: int = 4,
     backoff: float = 1.2,
 ) -> Dict[str, Any]:
-    for attempt in range(1, tries + 1):
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+    # 1) Attempt a simple GET for the basic pagination params.
+    params = {
+        "limit": payload.get("limit", 100),
+        "offset": payload.get("offset", 0),
+    }
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=30)
         if response.status_code == 200:
             return response.json()
-        if response.status_code in (429, 502, 503):
-            time.sleep((backoff ** attempt) + 0.3 * attempt)
-            continue
-        message = response.text.strip()
-        snippet = message[:500]
-        raise RuntimeError(
-            f"ReliefWeb API error: HTTP {response.status_code}: {snippet}"
-        )
-    raise RuntimeError("ReliefWeb API failed after retries (no 200 after backoff)")
+    except Exception:
+        # We'll fall back to POST logic below.
+        pass
+
+    # 2) Fall back to POST requests which support the full payload.
+    err: Optional[str] = None
+    for attempt in range(1, tries + 1):
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code in (429, 502, 503):
+                time.sleep((backoff**attempt) + 0.3 * attempt)
+                continue
+            err = f"HTTP {response.status_code}: {response.text[:500]}"
+            break
+        except Exception as exc:  # pragma: no cover - network failure paths
+            err = str(exc)
+    raise RuntimeError(f"ReliefWeb API error: {err or 'no 200 after retries'}")
 
 
 def build_payload(cfg: Dict[str, Any]) -> Dict[str, Any]:
