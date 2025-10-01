@@ -1,8 +1,8 @@
 # Ingestion (Scaffold)
 
 This folder holds **connectors** that generate **staging CSVs**. Most are currently stubs
-(no external calls yet) so you can exercise the pipeline end-to-end. ReliefWeb is now a
-real API client.
+(no external calls yet) so you can exercise the pipeline end-to-end. ReliefWeb and IFRC
+GO are now real API clients.
 
 **Stubs → Export → Validate → Freeze**
 
@@ -11,7 +11,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 ## Sources covered
 
 - ReliefWeb — **API connector** (`reliefweb_client.py`) → `staging/reliefweb.csv`
-- IFRC GO — stub (`ifrc_go_stub.py`)
+- IFRC GO — **API connector** (`ifrc_go_client.py`) → `staging/ifrc_go.csv`
 - UNHCR ODP — stub (`unhcr_stub.py`)
 - IOM DTM — stub (`dtm_stub.py`)
 - WHO Emergencies — stub (`who_stub.py`)
@@ -43,6 +43,23 @@ python resolver/tools/export_facts.py --in resolver/staging --out resolver/expor
 python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
 python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month YYYY-MM
 ```
+
+## IFRC GO (Admin v2) — real connector
+
+- **Endpoints:** Admin v2 (`https://goadmin.ifrc.org/api/v2/`) — see GO wiki and Swagger for details.  
+  - Field Reports: `field-report/`  (data dictionary on GO wiki)  
+  - Appeals: `appeal/`              (data dictionary on GO wiki)  
+  - Situation Reports: `situation_report/` (document stream)  
+  Docs & references: GO API overview + data dictionaries + Swagger UI. :contentReference[oaicite:2]{index=2}
+
+- **Auth:** Public for many endpoints. Optional `GO_API_TOKEN` header supported if required later.
+
+- **Selection:** We prefer numeric fields like `num_affected`/`people_in_need` when present; else conservative text heuristics (title/summary) with regex.  
+  `metric_preference = in_need → affected → cases` (PHE only for `cases` with unit `persons_cases`).
+
+- **Env switches:**  
+  - `RESOLVER_SKIP_IFRCGO=1` — skip the connector (writes header-only CSV)  
+  - `RESOLVER_DEBUG=1` — verbose logging
 
 Notes
 

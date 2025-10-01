@@ -1,0 +1,50 @@
+base_url: "https://goadmin.ifrc.org/api/v2/"
+user_agent: "spagbot-resolver/1.0 (github.com/kwyjad/Spagbot_metac-bot)"
+window_days: 45
+page_size: 100
+
+# Endpoints we will poll (Admin v2 per GO wiki)
+endpoints:
+  field_report: "field-report/"
+  appeal: "appeal/"
+  situation_report: "situation_report/"   # document-style sitreps
+
+# Source type mapping per endpoint/type
+source_type_map:
+  field_report: "sitrep"
+  appeal: "appeal"
+  situation_report: "sitrep"
+
+# Hazard keyword heuristics (lowercase contains)
+# Keep conservative; we only match clear signals.
+hazard_keywords:
+  FL: ["flood", "flash flood", "river flooding", "inundation"]
+  DR: ["drought", "rainfall deficit", "dry spell", "water shortage"]
+  TC: ["tropical cyclone", "typhoon", "hurricane", "cyclone", "storm"]
+  HW: ["heat wave", "heatwave", "extreme heat", "high temperatures"]
+  ACO: ["outbreak of fighting", "hostilities broke out"]
+  ACE: ["escalation", "intensified clashes", "surge in fighting", "offensive launched"]
+  ACC: ["ceasefire", "cessation of hostilities", "peace agreement"]
+  DI: ["influx", "cross-border displacement", "refugee influx"]
+  CU: ["protest", "civil unrest", "demonstration", "riots"]
+  EC: ["economic crisis", "inflation", "price shock", "currency depreciation"]
+  PHE: ["cholera", "measles", "dengue", "ebola", "outbreak", "epidemic", "pandemic"]
+
+# Metric selection/extraction
+metric_preference: ["in_need", "affected", "cases"]
+numeric_fields:   # try these first if present in API objects (Field Reports often include affected)
+  - "num_affected"
+  - "affected"          # keep flexible in case of schema variants
+  - "people_in_need"
+regex_patterns:  # fallback: look around these phrases for numbers
+  - metric: "in_need"
+    unit: "persons"
+    phrases: ["people in need", "in need of assistance", "pin"]
+  - metric: "affected"
+    unit: "persons"
+    phrases: ["people affected", "affected people", "population affected"]
+  - metric: "cases"
+    unit: "persons_cases"
+    phrases: ["cases", "confirmed cases", "suspected cases"]
+
+iso3_exclude: []
