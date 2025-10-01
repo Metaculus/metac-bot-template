@@ -26,6 +26,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Optional, Tuple
+from zoneinfo import ZoneInfo
 
 try:
     import pandas as pd
@@ -98,9 +99,17 @@ def resolve_hazard(
     )
 
 
-def current_ym_utc() -> str:
-    now = dt.datetime.utcnow()
+IST = ZoneInfo("Europe/Istanbul")
+
+
+def current_ym_istanbul() -> str:
+    now = dt.datetime.now(IST)
     return f"{now.year:04d}-{now.month:02d}"
+
+
+def current_ym_utc() -> str:
+    """Backwards-compatible alias; resolver now tracks Istanbul month boundary."""
+    return current_ym_istanbul()
 
 
 def ym_from_cutoff(cutoff: str) -> str:
@@ -191,7 +200,7 @@ def main() -> None:
     hazard_label, hazard_code, hazard_class = resolve_hazard(shocks, args.hazard, args.hazard_code)
 
     ym = ym_from_cutoff(args.cutoff)
-    current_month = ym == current_ym_utc()
+    current_month = ym == current_ym_istanbul()
     df, source_dataset = load_resolved_for_month(ym, current_month)
 
     if df is None:

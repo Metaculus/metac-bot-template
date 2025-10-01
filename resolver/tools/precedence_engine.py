@@ -55,14 +55,17 @@ def _load_cfg() -> Dict[str, Any]:
     with open(CONFIG, "r", encoding="utf-8") as fp:
         return yaml.safe_load(fp)
 
-def _to_date(s: str) -> dt.date:
-    return dt.date.fromisoformat(s)
+def _to_date(s: str) -> dt.date | None:
+    try:
+        return dt.date.fromisoformat(str(s)[:10])
+    except Exception:
+        return None
 
 def _within_pub_lag(pub: str, cutoff: dt.date, lag_days: int) -> bool:
-    try:
-        return _to_date(pub) <= cutoff + dt.timedelta(days=lag_days)
-    except Exception:
+    pub_date = _to_date(pub)
+    if pub_date is None:
         return False
+    return pub_date <= cutoff + dt.timedelta(days=lag_days)
 
 def _assign_tier(row, mapping: Dict[str, Any], tiers: List[str]) -> int:
     st = str(row.get("source_type",""))
@@ -110,8 +113,13 @@ def main():
     lag_days = int(cfg["cutoff"]["lag_days_allowed"])
 
     eligible = facts.copy()
+
+    def _as_of_valid(value: str) -> bool:
+        parsed = _to_date(value)
+        return (parsed is not None) and (parsed <= cutoff_date)
+
     # as_of must be <= cutoff
-    eligible = eligible[eligible["as_of_date"].apply(lambda x: x and x <= args.cutoff)]
+    eligible = eligible[eligible["as_of_date"].apply(_as_of_valid)]
     # publication must be <= cutoff + lag
     eligible = eligible[eligible["publication_date"].apply(lambda x: _within_pub_lag(x, cutoff_date, lag_days))]
 

@@ -156,31 +156,30 @@ def rw_request(
     tries: int = 4,
     backoff: float = 1.2,
 ) -> Dict[str, Any]:
-    # 1) Attempt a simple GET for the basic pagination params.
-    params = {
-        "limit": payload.get("limit", 100),
-        "offset": payload.get("offset", 0),
-    }
+    # 0) Connectivity probe (optional; ignore body)
     try:
-        response = requests.get(url, params=params, headers=headers, timeout=30)
-        if response.status_code == 200:
-            return response.json()
+        probe = requests.get(
+            url,
+            params={"limit": 1},
+            headers=headers,
+            timeout=15,
+        )
+        if DEBUG:
+            print(f"[reliefweb] GET probe status={probe.status_code}")
         if (
-            response.status_code == 202
-            and response.headers.get("x-amzn-waf-action", "").lower() == "challenge"
+            probe.status_code == 202
+            and probe.headers.get("x-amzn-waf-action", "").lower() == "challenge"
         ):
             if DEBUG:
-                print("[reliefweb] GET WAF challenge:", _dump(response))
+                print("[reliefweb] GET WAF challenge:", _dump(probe))
             raise RuntimeError("WAF_CHALLENGE_GET")
-        if DEBUG:
-            print("[reliefweb] GET debug:", _dump(response))
+    except RuntimeError:
+        raise
     except Exception as exc:
-        if str(exc).startswith("WAF_CHALLENGE"):
-            raise
         if DEBUG:
-            print("[reliefweb] GET exception:", str(exc))
+            print("[reliefweb] GET probe exception:", str(exc))
 
-    # 2) Fall back to POST requests which support the full payload.
+    # 1) Real request with filters via POST
     err: Optional[str] = None
     for attempt in range(1, tries + 1):
         try:

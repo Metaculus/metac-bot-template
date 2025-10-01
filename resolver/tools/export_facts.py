@@ -115,7 +115,7 @@ def _apply_mapping(df: pd.DataFrame, cfg: Dict[str, Any]) -> pd.DataFrame:
         if val is None:
             out[target] = ""  # will fill from constants/defaults later
         else:
-            out[target] = val.astype(str).fillna("")
+            out[target] = val.fillna("").astype(str)
 
     # Date mapping (same approach)
     for target, sources in dates.items():
