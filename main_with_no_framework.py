@@ -234,7 +234,7 @@ CONCURRENT_REQUESTS_LIMIT = 8
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
 
-async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4-5", temperature: float = 0.3) -> str:
+async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4.5", temperature: float = 0.3) -> str:
     """
     Makes a streaming completion request to OpenAI's API with concurrent request limiting.
     """
