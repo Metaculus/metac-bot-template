@@ -73,16 +73,6 @@ $env:RESOLVER_DEBUG="1"
 python resolver/ingestion/reliefweb_client.py
 ```
 
-### ReliefWeb appname
-
-- Default appname: `UNICEF-Resolver-P1L1T6` (set in `ingestion/config/reliefweb.yml`).
-- Override without code changes:
-  - Windows PowerShell: `$env:RELIEFWEB_APPNAME = "UNICEF-Resolver-P1L1T6"`
-  - Bash: `export RELIEFWEB_APPNAME="UNICEF-Resolver-P1L1T6"`
-
-After ReliefWeb approves your appname/IP:
-- Remove/avoid `RESOLVER_SKIP_RELIEFWEB=1` in CI/local.
-- (Optional) set `RESOLVER_DEBUG=1` once to verify 200/JSON, then turn it off.
 
 ## Source notes (what each adds)
 
