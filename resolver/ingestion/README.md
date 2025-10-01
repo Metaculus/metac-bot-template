@@ -136,10 +136,16 @@ Flip it to `"0"` once ReliefWeb confirms your appname/IP.
 ## UNHCR Population — real connector
 
 - **Endpoint (configurable):** `https://api.unhcr.org/population/v1/` (see `config/unhcr.yml`).
-- **What we extract:** recent **arrivals** per country of asylum → mapped to **Displacement Influx (DI)** with `metric=affected`, `unit=persons`.
+- **What we extract:** recent **asylum applications** per country of asylum → mapped to **Displacement Influx (DI)** with `metric=affected`, `unit=persons`.
 - **Dates:** Prefer year+month (mid-month as_of), else `updated_at`; publication_date mirrors as_of unless `record_date` present.
 - **Env:** `RESOLVER_SKIP_UNHCR=1`, `RESOLVER_DEBUG=1`, `RESOLVER_MAX_PAGES`, `RESOLVER_MAX_RESULTS`, `RESOLVER_DEBUG_EVERY`.
 - **Fail-soft:** Writes header-only CSV on errors so the pipeline keeps running.
+
+**Endpoint & mapping**
+
+UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-decisions/` (no `/arrivals/`). We query
+`/asylum-applications/` with `cf_type=ISO` and a **year window** (this year + previous if needed) and map the count to
+**DI (Displacement Influx)** with `metric=affected, unit=persons`. See the official API docs.  
 
 ## Source notes (what each adds)
 
