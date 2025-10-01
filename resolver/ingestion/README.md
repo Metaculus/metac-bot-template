@@ -61,6 +61,13 @@ python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --mo
   - `RESOLVER_SKIP_IFRCGO=1` — skip the connector (writes header-only CSV)
   - `RESOLVER_DEBUG=1` — verbose logging
 
+**Windowing & late edits**
+The connector now filters at the API with:
+- `created_at__gte=<YYYY-MM-DD>`
+- `updated_at__gte=<YYYY-MM-DD>`
+and early-exits paging when consecutive pages are fully older than the window. Hard caps guard against runaway pagination:
+`MAX_PAGES=50`, `MAX_RESULTS=5000`, and debug is throttled with `DEBUG_EVERY=10`.
+
 **Admin v2 details expansion**
 
 GO Admin v2 returns related fields as IDs unless you request `*_details`.
