@@ -1,0 +1,180 @@
+name: resolver-ci
+
+on:
+  pull_request:
+    paths:
+      - "resolver/**"
+      - ".github/workflows/resolver-ci.yml"
+  workflow_dispatch: {}
+  schedule:
+    # Daily at 20:10 UTC ≈ 23:10 Europe/Istanbul
+    - cron: "10 20 * * *"
+
+permissions:
+  contents: write   # <-- needed to push commits
+
+concurrency:
+  group: resolver-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-checks:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow pyyaml python-dateutil
+
+      - name: Generate ingestion stubs (no network)
+        run: |
+          python resolver/ingestion/run_all_stubs.py
+
+      - name: Export facts
+        run: |
+          python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
+
+      - name: Validate facts
+        run: |
+          python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+      - name: Precedence at provisional cutoff (end of current month)
+        run: |
+          LAST=$(date -u -d "$(date -u +%Y-%m-01) +1 month -1 day" +%Y-%m-%d)
+          python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff $LAST
+
+      - name: Build review queue
+        run: |
+          python resolver/review/make_review_queue.py
+
+      - name: Stage repo state for this PR
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python resolver/tools/write_repo_state.py --mode pr --id "$PR_NUMBER"
+
+      - name: Commit & push PR state to branch
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add resolver/state/pr/"$PR_NUMBER"/exports/*.csv || true
+          git add resolver/state/pr/"$PR_NUMBER"/exports/*.jsonl || true
+          git add resolver/state/pr/"$PR_NUMBER"/review/review_queue.csv || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(resolver): PR state for #$PR_NUMBER [skip ci]"
+            git push origin HEAD:${GITHUB_REF##refs/heads/}
+          else
+            echo "No changes to commit."
+          fi
+
+  nightly:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow pyyaml python-dateutil
+
+      - name: Generate ingestion stubs (no network)
+        run: |
+          python resolver/ingestion/run_all_stubs.py
+
+      - name: Export facts
+        run: |
+          python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
+
+      - name: Validate facts
+        run: |
+          python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+      - name: Precedence at Istanbul date
+        run: |
+          python resolver/tools/schedule_gate.py > gate.json
+          CUT=$(python - << 'PY'
+import json
+print(json.load(open('gate.json'))['istanbul_today'])
+PY
+)
+          python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff $CUT
+
+      - name: Build review queue
+        run: |
+          python resolver/review/make_review_queue.py
+
+      - name: Freeze snapshot if last Istanbul day
+        id: freeze
+        run: |
+          python resolver/tools/schedule_gate.py > gate.json
+          echo "gate=$(cat gate.json)" >> $GITHUB_OUTPUT
+          IS_LAST=$(python - << 'PY'
+import json
+print("true" if json.load(open('gate.json'))['is_last_day_istanbul'] else "false")
+PY
+)
+          if [ "$IS_LAST" = "true" ]; then
+            YM=$(python - << 'PY'
+import json
+print(json.load(open('gate.json'))['istanbul_today'][:7])
+PY
+)
+            python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month "$YM" --overwrite
+            echo "ym=$YM" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stage repo state for nightly
+        run: |
+          D=$(date -u +%Y-%m-%d)
+          python resolver/tools/write_repo_state.py --mode daily --id "$D"
+
+      - name: Commit & push nightly state (and snapshot if created)
+        env:
+          YM: ${{ steps.freeze.outputs.ym }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Nightly state
+          git add resolver/state/daily/*/exports/*.csv || true
+          git add resolver/state/daily/*/exports/*.jsonl || true
+          git add resolver/state/daily/*/review/review_queue.csv || true
+
+          # Snapshot (if created this run)
+          if [ -n "$YM" ]; then
+            git add resolver/snapshots/"$YM"/facts.parquet || true
+            git add resolver/snapshots/"$YM"/manifest.json || true
+          fi
+
+          if ! git diff --cached --quiet; then
+            MSG="chore(resolver): nightly state"
+            if [ -n "$YM" ]; then MSG="$MSG + snapshot $YM"; fi
+            git commit -m "$MSG [skip ci]"
+            git push origin HEAD:${GITHUB_REF##refs/heads/}
+          else
+            echo "No changes to commit."
+          fi
