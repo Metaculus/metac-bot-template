@@ -138,24 +138,26 @@ def req_json(base: str, path: str, params: dict, headers: dict, tries=4, backoff
 def map_source_type(endpoint_key: str, cfg: Dict[str, Any]) -> str:
     return cfg["source_type_map"].get(endpoint_key, "sitrep")
 
-def iso3_pairs_from_go(countries_df: pd.DataFrame, go_countries: list) -> List[Tuple[str,str]]:
+def iso3_pairs_from_go(countries_df: pd.DataFrame, rec: dict) -> List[Tuple[str,str]]:
     """
-    GO returns countries as list of dicts with 'name' and 'iso3' in many endpoints.
-    We try iso3 first, then match by name in our registry as fallback.
+    Return [(country_name, ISO3), ...] using countries_details if present,
+    else fallback to empty (we don't chase IDs here).
     """
-    out = []
-    for c in go_countries or []:
-        iso = (c.get("iso3") or "").strip().upper()
-        name = (c.get("name") or c.get("name_en") or "").strip()
-        if iso:
-            row = countries_df[countries_df["iso3"] == iso]
-            if not row.empty:
-                out.append((row.iloc[0]["country_name"], iso))
-                continue
-        if name:
-            row = countries_df[countries_df["country_name"].str.lower() == name.lower()]
-            if not row.empty:
-                out.append((row.iloc[0]["country_name"], row.iloc[0]["iso3"]))
+    out: List[Tuple[str,str]] = []
+    details = rec.get("countries_details") or []
+    if isinstance(details, list) and details:
+        for c in details:
+            iso = str(c.get("iso3", "")).strip().upper()
+            name = str(c.get("name", "") or c.get("name_en","")).strip()
+            if iso:
+                row = countries_df[countries_df["iso3"] == iso]
+                if not row.empty:
+                    out.append((row.iloc[0]["country_name"], iso))
+                    continue
+            if name:
+                row = countries_df[countries_df["country_name"].str.lower() == name.lower()]
+                if not row.empty:
+                    out.append((row.iloc[0]["country_name"], row.iloc[0]["iso3"]))
     return out
 
 def collect_rows() -> List[List[str]]:
@@ -183,7 +185,17 @@ def collect_rows() -> List[List[str]]:
     for key, path in cfg["endpoints"].items():
         offset = 0
         while True:
-            params = {"limit": page_size, "offset": offset, "ordering": "-created_at"}
+            params = {
+                "limit": page_size,
+                "offset": offset,
+                "ordering": "-created_at",
+                # Ask for expanded relations + the fields we use
+                "fields": (
+                    "id,title,name,summary,description,created_at,updated_at,report_date,"
+                    "document_url,external_link,source,disaster_type,disaster_type_details,"
+                    "countries,countries_details,num_affected,people_in_need"
+                ),
+            }
             # Some endpoints support created_at__gte or date filters; we try conservative filter via ordering + manual cutoff.
             data = req_json(base, path, params, headers)
             if not data:
@@ -205,8 +217,7 @@ def collect_rows() -> List[List[str]]:
                     continue  # outside window
 
                 # Country list
-                go_countries = r.get("countries") or r.get("country") or []
-                iso_pairs = iso3_pairs_from_go(countries, go_countries)
+                iso_pairs = iso3_pairs_from_go(countries, r)
                 if not iso_pairs:
                     continue
 
@@ -214,12 +225,11 @@ def collect_rows() -> List[List[str]]:
                 title = str(r.get("title") or r.get("name") or "")
                 summary = str(r.get("summary") or r.get("description") or "")
                 dtype = ""
-                # Some objects have disaster_type dict or list
-                dt_obj = r.get("disaster_type") or r.get("dtype") or {}
+                dt_obj = r.get("disaster_type_details") or r.get("disaster_type") or r.get("dtype") or {}
                 if isinstance(dt_obj, dict):
                     dtype = dt_obj.get("name") or ""
                 elif isinstance(dt_obj, list) and dt_obj:
-                    dtype = dt_obj[0].get("name") or ""
+                    dtype = (dt_obj[0].get("name") or "") if isinstance(dt_obj[0], dict) else ""
 
                 hz_text = " ".join([title, summary, dtype])
                 hazard_code = detect_hazard(hz_text, cfg)

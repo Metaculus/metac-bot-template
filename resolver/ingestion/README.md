@@ -57,9 +57,18 @@ python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --mo
 - **Selection:** We prefer numeric fields like `num_affected`/`people_in_need` when present; else conservative text heuristics (title/summary) with regex.  
   `metric_preference = in_need → affected → cases` (PHE only for `cases` with unit `persons_cases`).
 
-- **Env switches:**  
-  - `RESOLVER_SKIP_IFRCGO=1` — skip the connector (writes header-only CSV)  
+- **Env switches:**
+  - `RESOLVER_SKIP_IFRCGO=1` — skip the connector (writes header-only CSV)
   - `RESOLVER_DEBUG=1` — verbose logging
+
+**Admin v2 details expansion**
+
+GO Admin v2 returns related fields as IDs unless you request `*_details`.
+The connector now requests `countries_details` and `disaster_type_details` via the `fields` param,
+and handles both shapes. This fixes cases where `countries` was `[123, 456]` (IDs) and avoids crashes.
+
+Tests include a **connector header check** that ensures each connector always writes a canonical CSV
+(even when the API is unavailable), keeping the pipeline green and contracts stable.
 
 Notes
 
