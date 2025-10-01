@@ -1,0 +1,36 @@
+appname: "spagbot-resolver"
+user_agent: "spagbot-resolver/1.0 (github.com/kwyjad/Spagbot_metac-bot)"
+base_url: "https://api.reliefweb.int/v1/reports"
+window_days: 45
+page_size: 100
+
+source_type_map:
+  report: "sitrep"
+  appeal: "appeal"
+  update: "sitrep"
+
+hazard_keywords:
+  FL: ["flood", "flash flood", "river flooding", "inundation"]
+  DR: ["drought", "rainfall deficit", "dry spell", "water shortage"]
+  TC: ["tropical cyclone", "typhoon", "hurricane", "cyclone"]
+  HW: ["heat wave", "heatwave", "extreme heat", "high temperatures"]
+  ACO: ["outbreak of fighting", "hostilities broke out"]
+  ACE: ["escalation", "intensified clashes", "surge in fighting", "offensive launched"]
+  ACC: ["ceasefire", "cessation of hostilities", "peace agreement"]
+  DI: ["influx", "cross-border displacement", "refugee influx"]
+  CU: ["protest", "civil unrest", "demonstration", "riots"]
+  EC: ["economic crisis", "inflation", "price shock", "currency depreciation"]
+  PHE: ["cholera", "measles", "dengue", "ebola", "outbreak", "epidemic", "pandemic"]
+
+metric_patterns:
+  - metric: "in_need"
+    unit: "persons"
+    patterns: ["people in need", "in need of assistance", "pin"]
+  - metric: "affected"
+    unit: "persons"
+    patterns: ["people affected", "affected people", "population affected"]
+  - metric: "cases"
+    unit: "persons_cases"
+    patterns: ["cases", "confirmed cases", "suspected cases"]
+
+iso3_exclude: []

@@ -9,7 +9,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 STUBS = [
-    "reliefweb_stub.py",
     "ifrc_go_stub.py",
     "unhcr_stub.py",
     "dtm_stub.py",
@@ -29,6 +28,16 @@ STUBS = [
 
 def main():
     failed = 0
+    reliefweb_client = ROOT / "reliefweb_client.py"
+    if reliefweb_client.exists():
+        print("==> running reliefweb_client.py")
+        res = subprocess.run([sys.executable, str(reliefweb_client)])
+        if res.returncode != 0:
+            print("reliefweb_client.py failed; continuing with stubs", file=sys.stderr)
+            failed += 1
+    else:
+        print("reliefweb_client.py missing; skipping real connector", file=sys.stderr)
+
     for stub in STUBS:
         path = ROOT / stub
         print(f"==> running {stub}")
