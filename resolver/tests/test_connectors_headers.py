@@ -1,16 +1,3 @@
-"""
-Guarantee each connector writes a CSV with the canonical header,
-even if it's empty (fail-soft). This prevents pipeline stalls and
-catches accidental column drift early.
-
-Connectors covered (import and run main):
-- IFRC GO:    resolver/ingestion/ifrc_go_client.py
-- ReliefWeb:  resolver/ingestion/reliefweb_client.py
-(Add more here as you create them.)
-
-We don't assert row count — only that the file exists and has the exact columns.
-"""
-
 from pathlib import Path
 import importlib
 import pandas as pd
@@ -34,12 +21,15 @@ def _assert_header(csv_path: Path):
     assert list(df.columns) == CANON, f"{csv_path} columns differ: {list(df.columns)}"
 
 def test_ifrc_go_header(tmp_path, monkeypatch):
-    # Allow skipping network in CI: if env set, just ensure header exists after main()
+    # Hermetic: skip network and force header-only CSV if needed
+    monkeypatch.setenv("RESOLVER_SKIP_IFRCGO", "1")
     mod = importlib.import_module("resolver.ingestion.ifrc_go_client")
     mod.main()
     _assert_header(STAGING / "ifrc_go.csv")
 
 def test_reliefweb_header(tmp_path, monkeypatch):
+    # Hermetic: skip network and force header-only CSV (WAF/proxy-safe)
+    monkeypatch.setenv("RESOLVER_SKIP_RELIEFWEB", "1")
     mod = importlib.import_module("resolver.ingestion.reliefweb_client")
     mod.main()
     _assert_header(STAGING / "reliefweb.csv")
