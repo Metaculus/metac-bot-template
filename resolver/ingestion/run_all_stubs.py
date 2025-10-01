@@ -8,7 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 STUBS = [
-    "ifrc_go_stub.py",
+    "ifrc_go_client.py",      # real connector (fail-soft on error/skip)
+    "reliefweb_client.py",    # real connector (may be skipped via env)
     "unhcr_stub.py",
     "dtm_stub.py",
     "who_stub.py",
@@ -27,27 +28,46 @@ STUBS = [
 
 def main():
     failed = 0
-    reliefweb_client = ROOT / "reliefweb_client.py"
-    if reliefweb_client.exists():
-        print("==> running reliefweb_client.py (real API)")
-        env = os.environ.copy()
-        if env.get("RESOLVER_SKIP_RELIEFWEB") == "1":
-            print("RESOLVER_SKIP_RELIEFWEB=1 — ReliefWeb connector will be skipped")
-        res = subprocess.run([sys.executable, str(reliefweb_client)], env=env)
-        if res.returncode != 0:
-            print(
-                "ReliefWeb client failed; continuing with other sources…",
-                file=sys.stderr,
-            )
-    else:
-        print("reliefweb_client.py missing; skipping real connector", file=sys.stderr)
+    env = os.environ.copy()
 
-    for stub in STUBS:
-        path = ROOT / stub
-        print(f"==> running {stub}")
+    for script in STUBS:
+        path = ROOT / script
+
+        if script == "ifrc_go_client.py":
+            if env.get("RESOLVER_SKIP_IFRCGO") == "1":
+                print("RESOLVER_SKIP_IFRCGO=1 — IFRC GO connector will be skipped")
+                continue
+            if not path.exists():
+                print("ifrc_go_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running ifrc_go_client.py (real connector)")
+            try:
+                res = subprocess.run([sys.executable, str(path)], env=env)
+            except Exception as exc:
+                print(f"IFRC GO client raised {exc}; continuing with other sources…", file=sys.stderr)
+                continue
+            if res.returncode != 0:
+                print("IFRC GO client failed; continuing with other sources…", file=sys.stderr)
+            continue
+
+        if script == "reliefweb_client.py":
+            if env.get("RESOLVER_SKIP_RELIEFWEB") == "1":
+                print("RESOLVER_SKIP_RELIEFWEB=1 — ReliefWeb connector will be skipped")
+                continue
+            if not path.exists():
+                print("reliefweb_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running reliefweb_client.py (real connector)")
+            res = subprocess.run([sys.executable, str(path)], env=env)
+            if res.returncode != 0:
+                print("ReliefWeb client failed; continuing with other sources…", file=sys.stderr)
+            continue
+
+        print(f"==> running {script}")
         res = subprocess.run([sys.executable, str(path)])
         if res.returncode != 0:
             failed += 1
+
     if failed:
         print(f"{failed} stub(s) failed", file=sys.stderr)
         sys.exit(1)
