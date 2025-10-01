@@ -61,6 +61,7 @@ def main():
             res = subprocess.run([sys.executable, str(path)], env=env)
             if res.returncode != 0:
                 print("ReliefWeb client failed; continuing with other sources…", file=sys.stderr)
+                failed += 1
             continue
 
         print(f"==> running {script}")

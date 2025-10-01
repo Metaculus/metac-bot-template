@@ -192,145 +192,167 @@ def collect_rows() -> List[List[str]]:
         headers["Authorization"] = f"Token {token}"
 
     rows: List[List[str]] = []
+    seen_ids: set[str] = set()
 
     # Each endpoint paginates with ?limit=&offset= ; Admin v2 documents pagination on Swagger/wiki.
     for key, path in cfg["endpoints"].items():
-        offset = 0
-        page_count = 0
+        seen_ids.clear()
         made_rows = 0
-        older_pages_in_row = 0
-        while True:
-            params = {
-                "limit": page_size,
-                "offset": offset,
-                "ordering": "-created_at",
-                "fields": (
-                    "id,title,name,summary,description,created_at,updated_at,report_date,"
-                    "document_url,external_link,source,disaster_type,disaster_type_details,"
-                    "countries,countries_details,num_affected,people_in_need"
-                ),
-                "created_at__gte": since,
-                "updated_at__gte": since,
-            }
-            # Some endpoints support created_at__gte or date filters; we try conservative filter via ordering + manual cutoff.
-            data = req_json(base, path, params, headers)
-            if not data:
-                break
 
-            # Admin v2 commonly returns { 'count': N, 'next': URL, 'previous': URL, 'results': [ ... ] }
-            results = data.get("results") if isinstance(data, dict) else None
-            if results is None:
-                # Some deployments return a plain list
-                results = data if isinstance(data, list) else []
+        def run_pass(pass_name: str, filter_key: str):
+            nonlocal made_rows
+            offset = 0
+            page_count = 0
+            older_pages_in_row = 0
+            while True:
+                params = {
+                    "limit": page_size,
+                    "offset": offset,
+                    "ordering": "-created_at",
+                    "fields": (
+                        "id,title,name,summary,description,created_at,updated_at,report_date,"
+                        "document_url,external_link,source,disaster_type,disaster_type_details,"
+                        "countries,countries_details,num_affected,people_in_need,affected"
+                    ),
+                    filter_key: since,
+                }
+                data = req_json(base, path, params, headers)
+                page_count += 1
+                if _debug() and (page_count % DEBUG_EVERY == 1):
+                    dbg(f"[{key}:{pass_name}] page={page_count} offset={offset} since={since}")
 
-            if not results:
-                break
-
-            page_count += 1
-            if _debug() and (page_count % DEBUG_EVERY == 1):
-                dbg(f"[{key}] page={page_count} offset={offset} since={since}")
-
-            # Early-exit: if every record on this page is older than both created_at and updated_at window
-            all_older = True
-            for r in results:
-                created = str(r.get("created_at") or "")[:10]
-                updated = str(r.get("updated_at") or "")[:10]
-                # if either created or updated is within window, keep going
-                if (created and created >= since) or (updated and updated >= since):
-                    all_older = False
+                results = data.get("results") if isinstance(data, dict) else (
+                    data if isinstance(data, list) else []
+                )
+                if not results:
                     break
-            if all_older:
-                older_pages_in_row += 1
-            else:
-                older_pages_in_row = 0
-            if older_pages_in_row >= 2:
-                dbg(f"[{key}] early-exit: consecutive pages older than window (since {since})")
-                break
 
-            stop_endpoint = False
-            for r in results:
-                # Dates
-                created = str(r.get("created_at") or "")[:10]
-                updated = str(r.get("updated_at") or "")[:10]
-                if (not created or created < since) and (not updated or updated < since):
-                    continue  # outside window
+                # Early-exit: if ENTIRE page older than window on BOTH created/updated
+                all_older = True
+                for r in results:
+                    created = str(r.get("created_at") or "")[:10]
+                    updated = str(r.get("updated_at") or "")[:10]
+                    if (created and created >= since) or (updated and updated >= since):
+                        all_older = False
+                        break
+                if all_older:
+                    older_pages_in_row += 1
+                else:
+                    older_pages_in_row = 0
+                if older_pages_in_row >= 2:
+                    dbg(f"[{key}:{pass_name}] early-exit: consecutive older-only pages")
+                    break
 
-                # Country list
-                iso_pairs = iso3_pairs_from_go(countries, r)
-                if not iso_pairs:
-                    continue
+                for r in results:
+                    rid = str(r.get("id") or "")
+                    if not rid or rid in seen_ids:
+                        continue
 
-                # Hazard detection (title + summary/description + disaster_type names)
-                title = str(r.get("title") or r.get("name") or "")
-                summary = str(r.get("summary") or r.get("description") or "")
-                dtype = ""
-                dt_obj = r.get("disaster_type_details") or r.get("disaster_type") or r.get("dtype") or {}
-                if isinstance(dt_obj, dict):
-                    dtype = dt_obj.get("name") or ""
-                elif isinstance(dt_obj, list) and dt_obj:
-                    dtype = (dt_obj[0].get("name") or "") if isinstance(dt_obj[0], dict) else ""
+                    created = str(r.get("created_at") or "")[:10]
+                    updated = str(r.get("updated_at") or "")[:10]
+                    if (not created or created < since) and (not updated or updated < since):
+                        continue
 
-                hz_text = " ".join([title, summary, dtype])
-                hazard_code = detect_hazard(hz_text, cfg)
-                if not hazard_code:
-                    continue  # conservative
+                    iso_pairs = iso3_pairs_from_go(countries, r)
+                    if not iso_pairs:
+                        continue
 
-                srow = shocks[shocks["hazard_code"] == hazard_code]
-                if srow.empty:
-                    continue
-                hz_label = srow.iloc[0]["hazard_label"]
-                hz_class = srow.iloc[0]["hazard_class"]
+                    title = str(r.get("title") or r.get("name") or "")
+                    summary = str(r.get("summary") or r.get("description") or "")
+                    dtype = ""
+                    dt_obj = (
+                        r.get("disaster_type_details")
+                        or r.get("disaster_type")
+                        or r.get("dtype")
+                        or {}
+                    )
+                    if isinstance(dt_obj, dict):
+                        dtype = dt_obj.get("name") or ""
+                    elif isinstance(dt_obj, list) and dt_obj:
+                        dtype = (dt_obj[0].get("name") or "") if isinstance(dt_obj[0], dict) else ""
 
-                # Metric extraction: numeric fields first, then text regex (title+summary)
-                metric_pack = extract_metric_record_first(r, cfg)
-                if not metric_pack:
-                    metric_pack = extract_metric_text(" ".join([title, summary]), cfg)
-                if not metric_pack:
-                    continue
+                    hz_text = " ".join([title, summary, dtype])
+                    hazard_code = detect_hazard(hz_text, cfg)
+                    if not hazard_code:
+                        continue
 
-                metric, value, unit, why = metric_pack
+                    srow = shocks[shocks["hazard_code"] == hazard_code]
+                    if srow.empty:
+                        continue
+                    hz_label = srow.iloc[0]["hazard_label"]
+                    hz_class = srow.iloc[0]["hazard_class"]
 
-                # As-of vs publication dates: use 'updated_at' or 'report_date' as as_of if present
-                as_of = (str(r.get("report_date") or r.get("updated_at") or created) or "")[:10]
-                pub   = created or as_of
+                    metric_pack = extract_metric_record_first(r, cfg)
+                    if not metric_pack:
+                        metric_pack = extract_metric_text(" ".join([title, summary]), cfg)
+                    if not metric_pack:
+                        continue
 
-                # URLs & doc title
-                url = (r.get("document_url") or r.get("document") or r.get("external_link") or r.get("source") or "")
-                doc_title = title
+                    metric, value, unit, why = metric_pack
 
-                # Compose rows (one per country match)
-                for country_name, iso3 in iso_pairs:
-                    event_id = f"{iso3}-{hazard_code}-ifrcgo-{r.get('id','0')}"
-                    rows.append([
-                        event_id, country_name, iso3,
-                        hazard_code, hz_label, hz_class,
-                        metric, str(value), unit,
-                        as_of, pub,
-                        "IFRC", map_source_type(key, cfg), url, doc_title,
-                        f"Extracted {metric} via {why} from IFRC GO {key.replace('_',' ')}.",
-                        "api", "med", 1, dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-                    ])
+                    as_of = (str(r.get("report_date") or r.get("updated_at") or created) or "")[:10]
+                    pub = created or as_of
 
-                    made_rows += 1
+                    url = (
+                        r.get("document_url")
+                        or r.get("document")
+                        or r.get("external_link")
+                        or r.get("source")
+                        or ""
+                    )
+                    doc_title = title
+
+                    emitted = False
+                    for country_name, iso3 in iso_pairs:
+                        event_id = f"{iso3}-{hazard_code}-ifrcgo-{r.get('id','0')}"
+                        rows.append([
+                            event_id,
+                            country_name,
+                            iso3,
+                            hazard_code,
+                            hz_label,
+                            hz_class,
+                            metric,
+                            str(value),
+                            unit,
+                            as_of,
+                            pub,
+                            "IFRC",
+                            map_source_type(key, cfg),
+                            url,
+                            doc_title,
+                            f"Extracted {metric} via {why} from IFRC GO {key.replace('_',' ')}.",
+                            "api",
+                            "med",
+                            1,
+                            dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                        ])
+                        emitted = True
+                        made_rows += 1
+                        if made_rows >= MAX_RESULTS:
+                            dbg(f"[{key}:{pass_name}] hit MAX_RESULTS={MAX_RESULTS}, stopping")
+                            break
+
+                    if emitted:
+                        seen_ids.add(rid)
+
                     if made_rows >= MAX_RESULTS:
-                        dbg(f"[{key}] hit MAX_RESULTS={MAX_RESULTS}, stopping")
-                        stop_endpoint = True
                         break
 
-                if stop_endpoint:
+                if made_rows >= MAX_RESULTS:
                     break
 
-            if stop_endpoint:
-                break
+                has_next = isinstance(data, dict) and bool(data.get("next"))
+                if has_next and page_count < MAX_PAGES and made_rows < MAX_RESULTS:
+                    offset += page_size
+                    time.sleep(0.25)
+                    continue
+                else:
+                    break
 
-            # Pagination advance with caps
-            has_next = isinstance(data, dict) and bool(data.get("next"))
-            if has_next and page_count < MAX_PAGES and made_rows < MAX_RESULTS:
-                offset += page_size
-                time.sleep(0.25)
-                continue
-            else:
-                break
+        run_pass("created", "created_at__gte")
+        if made_rows < MAX_RESULTS:
+            run_pass("updated", "updated_at__gte")
 
     return rows
 

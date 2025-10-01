@@ -82,7 +82,7 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore(resolver): PR state for #$PR_NUMBER [skip ci]"
             # push back to the PR branch
-            git push
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
           else
             echo "No changes to commit."
           fi

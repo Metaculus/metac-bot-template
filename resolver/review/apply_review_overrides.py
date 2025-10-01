@@ -35,14 +35,14 @@ def main():
     merged = resolved.merge(dec, on="key", how="left", suffixes=("", "_dec"))
 
     out_rows = []
-    status = []
+    out_status = []
 
     for _, r in merged.iterrows():
         action = (r.get("analyst_decision", "") or "").strip().lower()
         row = r.copy()
+        status_label = "no_decision"
 
         if action == "drop":
-            status.append("dropped")
             continue
 
         elif action == "override":
@@ -58,20 +58,21 @@ def main():
                     row["definition_text"] = (
                         row.get("definition_text", "") + f" [OVERRIDE NOTE: {notes}]"
                     ).strip()
-                status.append("overridden")
+                status_label = "overridden"
             except Exception:
-                status.append("no_decision")
+                status_label = "no_decision"
 
         elif action == "keep":
-            status.append("kept")
+            status_label = "kept"
 
         else:
-            status.append("no_decision")
+            status_label = "no_decision"
 
         out_rows.append(row)
+        out_status.append(status_label)
 
     out = pd.DataFrame(out_rows).drop(columns=["key"], errors="ignore")
-    out["review_status"] = status[: len(out)]
+    out["review_status"] = out_status
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     out.to_csv(args.out, index=False)

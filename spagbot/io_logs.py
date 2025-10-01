@@ -370,8 +370,12 @@ def commit_and_push_logs(changed_paths: Iterable[Path], commit_message: Optional
                 check=True,
             )
         except subprocess.CalledProcessError as pull_err:
+            try:
+                subprocess.run(["git", "rebase", "--abort"], cwd=repo, check=False)
+            except Exception:
+                pass
             print(
-                f"[git] pull --rebase failed ({pull_err.returncode}); leaving commit local",
+                f"[git] pull --rebase failed ({pull_err.returncode}); aborted rebase; leaving commit local",
                 file=sys.stderr,
             )
             return True
