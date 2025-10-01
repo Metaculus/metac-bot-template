@@ -58,6 +58,11 @@ jobs:
         run: |
           python resolver/review/make_review_queue.py
 
+      - name: Run data-contract tests (pytest)
+        run: |
+          pip install pytest
+          pytest resolver/tests -q
+
       - name: Stage repo state for this PR
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -125,6 +130,11 @@ PY
       - name: Build review queue
         run: |
           python resolver/review/make_review_queue.py
+
+      - name: Run data-contract tests (pytest)
+        run: |
+          pip install pytest
+          pytest resolver/tests -q
 
       - name: Freeze snapshot if last Istanbul day
         id: freeze
