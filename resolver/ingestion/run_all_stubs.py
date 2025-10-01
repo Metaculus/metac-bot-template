@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 STUBS = [
     "ifrc_go_client.py",      # real connector (fail-soft on error/skip)
     "reliefweb_client.py",    # real connector (may be skipped via env)
-    "unhcr_stub.py",
+    "unhcr_client.py",          # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
     "who_stub.py",
     "ipc_stub.py",
@@ -62,6 +62,23 @@ def main():
             if res.returncode != 0:
                 print("ReliefWeb client failed; continuing with other sources…", file=sys.stderr)
                 failed += 1
+            continue
+
+        if script == "unhcr_client.py":
+            if env.get("RESOLVER_SKIP_UNHCR") == "1":
+                print("RESOLVER_SKIP_UNHCR=1 — UNHCR connector will be skipped")
+                continue
+            if not path.exists():
+                print("unhcr_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running unhcr_client.py (real connector)")
+            try:
+                res = subprocess.run([sys.executable, str(path)], env=env)
+            except Exception as exc:
+                print(f"UNHCR client raised {exc}; continuing with other sources…", file=sys.stderr)
+                continue
+            if res.returncode != 0:
+                print("UNHCR client failed; continuing with other sources…", file=sys.stderr)
             continue
 
         print(f"==> running {script}")

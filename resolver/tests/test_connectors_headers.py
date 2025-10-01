@@ -33,3 +33,10 @@ def test_reliefweb_header(tmp_path, monkeypatch):
     mod = importlib.import_module("resolver.ingestion.reliefweb_client")
     mod.main()
     _assert_header(STAGING / "reliefweb.csv")
+
+
+def test_unhcr_header(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_UNHCR", "1")
+    mod = importlib.import_module("resolver.ingestion.unhcr_client")
+    mod.main()
+    _assert_header(STAGING / "unhcr.csv")
