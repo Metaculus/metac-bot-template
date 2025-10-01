@@ -12,7 +12,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 
 - ReliefWeb — **API connector** (`reliefweb_client.py`) → `staging/reliefweb.csv`
 - IFRC GO — **API connector** (`ifrc_go_client.py`) → `staging/ifrc_go.csv`
-- UNHCR ODP — stub (`unhcr_stub.py`)
+- UNHCR ODP — **API connector** (`unhcr_odp_client.py`) → `staging/unhcr_odp.csv`
 - IOM DTM — stub (`dtm_stub.py`)
 - WHO Emergencies — stub (`who_stub.py`)
 - IPC — stub (`ipc_stub.py`)
@@ -138,8 +138,12 @@ Flip it to `"0"` once ReliefWeb confirms your appname/IP.
 - **Endpoint (configurable):** `https://api.unhcr.org/population/v1/` (see `config/unhcr.yml`).
 - **What we extract:** recent **asylum applications** per country of asylum → mapped to **Displacement Influx (DI)** with `metric=affected`, `unit=persons`.
 - **Dates:** Prefer year+month (mid-month as_of), else `updated_at`; publication_date mirrors as_of unless `record_date` present.
-- **Env:** `RESOLVER_SKIP_UNHCR=1`, `RESOLVER_DEBUG=1`, `RESOLVER_MAX_PAGES`, `RESOLVER_MAX_RESULTS`, `RESOLVER_DEBUG_EVERY`.
+- **Env:** `RESOLVER_SKIP_UNHCR=1`, `RESOLVER_DEBUG=1`, `RESOLVER_MAX_RESULTS`, `RESOLVER_DEBUG_EVERY`.
 - **Fail-soft:** Writes header-only CSV on errors so the pipeline keeps running.
+
+*Monthly handling*: The Refugee Statistics API is documented as **yearly**. If the response includes a `month`/`date` field or
+if `params.granularity: month` is used and supported, the connector derives a monthly `as_of` (YYYY-MM-15) and includes it in
+`event_id` so different months never deduplicate. Otherwise, it falls back to annual `as_of` on 31 December. :contentReference[oaicite:2]{index=2}
 
 **Endpoint & mapping**
 

@@ -12,9 +12,9 @@ sources:
     status: api   # real connector
   unhcr_odp:
     cadence: medium
-    output: resolver/staging/unhcr.csv
+    output: resolver/staging/unhcr_odp.csv
     owner: ingestion
-    status: stub
+    status: api
   unhcr:
     cadence: high
     output: resolver/staging/unhcr.csv

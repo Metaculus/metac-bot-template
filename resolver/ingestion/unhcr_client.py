@@ -8,7 +8,6 @@ DI (Displacement Influx) with metric=affected, unit=persons.
 ENV:
   RESOLVER_SKIP_UNHCR=1   → skip network, write header-only CSV
   RESOLVER_DEBUG=1        → verbose logs (throttled)
-  RESOLVER_MAX_PAGES=     → override caps
   RESOLVER_MAX_RESULTS=
   RESOLVER_DEBUG_EVERY=
 
@@ -102,17 +101,11 @@ def make_rows() -> List[List[str]]:
         years.add(since.year)
 
     params_cfg = cfg.get("params", {}) or {}
-    common_params = {
-        "cf_type": params_cfg.get("cf_type", "ISO"),
-        "coo_all": params_cfg.get("coo_all", "true"),
-        "coa_all": params_cfg.get("coa_all", "true"),
-    }
 
     rows: List[List[str]] = []
-    MAX_PAGES = _int_env("RESOLVER_MAX_PAGES", int(cfg["defaults"]["max_pages"]))
     MAX_RESULTS = _int_env("RESOLVER_MAX_RESULTS", int(cfg["defaults"]["max_results"]))
     DEBUG_EVERY = _int_env("RESOLVER_DEBUG_EVERY", int(cfg["defaults"]["debug_every"]))
-    page_size = int(cfg["page_size"])
+    gran = (params_cfg.get("granularity") or "year").lower()
 
     df_countries, df_shocks = load_registries()
     di = df_shocks[df_shocks["hazard_code"] == "DI"]
@@ -121,95 +114,125 @@ def make_rows() -> List[List[str]]:
     hz_code, hz_label, hz_class = "DI", di.iloc[0]["hazard_label"], di.iloc[0]["hazard_class"]
 
     total = 0
-    for yr in sorted(years, reverse=True):
-        page = 0
-        offset = 0
-        while True:
-            params = {
-                "limit": page_size,
-                "page": (offset // page_size) + 1,
-                "yearFrom": yr,
-                "yearTo": yr,
-                **common_params,
-            }
-            url = base.rstrip("/") + "/" + path.lstrip("/")
+    for idx, yr in enumerate(sorted(years, reverse=True), start=1):
+        params = {
+            "cf_type": params_cfg.get("cf_type", "ISO"),
+            "coo_all": params_cfg.get("coo_all", "true"),
+            "coa_all": params_cfg.get("coa_all", "true"),
+            "year[]": str(yr),
+        }
+        if gran == "month":
+            params["month[]"] = [f"{m:02d}" for m in range(1, 13)]
+
+        url = base.rstrip("/") + "/" + path.lstrip("/")
+        try:
             r = requests.get(url, params=params, headers=headers, timeout=30)
-            page += 1
-            if _debug() and (page % DEBUG_EVERY == 1):
-                dbg(f"GET {r.url} -> {r.status_code}")
-            if r.status_code != 200:
-                break
+        except requests.RequestException as exc:
+            dbg(f"request for {yr} raised {exc}")
+            continue
+        if _debug() and (idx % DEBUG_EVERY == 1):
+            dbg(f"GET {r.url} -> {r.status_code}")
+        if r.status_code != 200:
+            continue
 
+        try:
             data = r.json()
-            results = data.get("results") if isinstance(data, dict) else (data if isinstance(data, list) else [])
-            if not results:
-                break
+        except ValueError:
+            dbg("response JSON decode failed; skipping year %s" % yr)
+            continue
 
-            for it in results:
-                asylum_iso = (it.get("coa") or it.get("country_of_asylum") or "").strip().upper()
-                country_name = iso3_to_name(df_countries, asylum_iso)
-                if not asylum_iso or not country_name:
-                    continue
+        results: List[Dict[str, Any]] = []
+        if isinstance(data, list):
+            results = [item for item in data if isinstance(item, dict)]
+        elif isinstance(data, dict):
+            for key in ("results", "data", "items"):
+                candidate = data.get(key)
+                if isinstance(candidate, list):
+                    results = [item for item in candidate if isinstance(item, dict)]
+                    if results:
+                        break
+        if not results:
+            continue
 
-                val = it.get("value") or it.get("applications") or it.get("individuals")
-                try:
-                    value = int(val) if val is not None else None
-                except Exception:
-                    value = None
-                if value is None or value < 0:
-                    continue
+        for it in results:
+            asylum_iso = (
+                it.get("coa_iso")
+                or it.get("coa")
+                or it.get("country_of_asylum")
+                or ""
+            ).strip().upper()
+            country_name = iso3_to_name(df_countries, asylum_iso)
+            if not asylum_iso or not country_name:
+                continue
 
+            val = it.get("value") or it.get("applications") or it.get("individuals")
+            try:
+                value = int(val) if val is not None else None
+            except Exception:
+                value = None
+            if value is None or value < 0:
+                continue
+
+            m_raw = it.get("month") or it.get("mnth") or it.get("date") or ""
+            as_of = ""
+            if m_raw:
+                s = str(m_raw)
+                if len(s) == 2 and s.isdigit():
+                    as_of = f"{yr}-{s}-15"
+                elif s.isdigit():
+                    as_of = f"{yr}-{int(s):02d}-15"
+                elif len(s) >= 7 and s[4] == "-":
+                    as_of = f"{s[:7]}-15"
+            if not as_of:
                 as_of = f"{yr}-12-31"
-                pub = dt.date.today().isoformat()
 
-                if dt.date.fromisoformat(as_of) < since and dt.date.fromisoformat(pub) < since:
-                    continue
+            pub = dt.date.today().isoformat()
 
-                title = f"UNHCR asylum applications — {country_name} ({yr})"
-                definition = (
-                    "Applications for international protection filed in the year; used here as a proxy for cross-border "
-                    "Displacement Influx (DI)."
-                )
-                src_url = url
+            if dt.date.fromisoformat(as_of) < since and dt.date.fromisoformat(pub) < since:
+                continue
 
-                origin_iso = (it.get("coo") or it.get("country_of_origin") or "").strip().upper() or "-"
-                rid = _stable_digest([asylum_iso, origin_iso, str(yr), "apps", as_of, str(value)], length=12)
-                event_id = f"{asylum_iso}-DI-unhcr-apps-{yr}-{rid}"
+            title = f"UNHCR asylum applications — {country_name} ({yr})"
+            definition = (
+                "Applications for international protection in the year; used here as a proxy for cross-border "
+                "Displacement Influx (DI)."
+            )
+            src_url = url
 
-                rows.append([
-                    event_id,
-                    country_name,
-                    asylum_iso,
-                    hz_code,
-                    hz_label,
-                    hz_class,
-                    "affected",
-                    str(value),
-                    "persons",
-                    as_of,
-                    pub,
-                    "UNHCR",
-                    "stat",
-                    src_url,
-                    title,
-                    definition,
-                    "api",
-                    "med",
-                    1,
-                    dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                ])
-                total += 1
-                if total >= MAX_RESULTS:
-                    dbg(f"hit MAX_RESULTS={MAX_RESULTS}, stopping")
-                    break
+            origin_iso = (
+                it.get("coo_iso")
+                or it.get("coo")
+                or it.get("country_of_origin")
+                or ""
+            ).strip().upper() or "-"
+            rid = _stable_digest([asylum_iso, origin_iso, as_of, "apps", str(value)], length=12)
+            event_id = f"{asylum_iso}-DI-unhcr-apps-{as_of}-{rid}"
 
+            rows.append([
+                event_id,
+                country_name,
+                asylum_iso,
+                hz_code,
+                hz_label,
+                hz_class,
+                "affected",
+                str(value),
+                "persons",
+                as_of,
+                pub,
+                "UNHCR",
+                "stat",
+                src_url,
+                title,
+                definition,
+                "api",
+                "med",
+                1,
+                dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            ])
+            total += 1
             if total >= MAX_RESULTS:
+                dbg(f"hit MAX_RESULTS={MAX_RESULTS}, stopping")
                 break
-
-            if len(results) < page_size or page >= MAX_PAGES:
-                break
-            offset += page_size
-
         if total >= MAX_RESULTS:
             break
 

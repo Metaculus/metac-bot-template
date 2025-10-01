@@ -12,8 +12,10 @@ endpoints:
 params:
   cf_type: "ISO"
   # coo_all/coa_all let the API expand dimensions instead of aggregating away
-  coo_all: "true"
-  coa_all: "true"
+  coo_all: "true"   # API expects string "true"
+  coa_all: "true"   # API expects string "true"
+  granularity: "year"   # "year" (default) or "month" if UNHCR enables month[]
+# NOTE: UNHCR uses array-style years: year[]=2025&year[]=2024 (no yearFrom/yearTo)
 
 defaults:
   max_pages: 40

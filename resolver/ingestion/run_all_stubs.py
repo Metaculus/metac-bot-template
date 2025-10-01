@@ -11,6 +11,7 @@ STUBS = [
     "ifrc_go_client.py",      # real connector (fail-soft on error/skip)
     "reliefweb_client.py",    # real connector (may be skipped via env)
     "unhcr_client.py",          # real connector (fail-soft/skip-capable)
+    "unhcr_odp_client.py",    # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
     "who_stub.py",
     "ipc_stub.py",
@@ -79,6 +80,24 @@ def main():
                 continue
             if res.returncode != 0:
                 print("UNHCR client failed; continuing with other sources…", file=sys.stderr)
+            continue
+
+        if script == "unhcr_odp_client.py":
+            if env.get("RESOLVER_SKIP_UNHCR_ODP") == "1":
+                print("RESOLVER_SKIP_UNHCR_ODP=1 — UNHCR ODP connector will be skipped")
+                continue
+            if not path.exists():
+                print("unhcr_odp_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running unhcr_odp_client.py (real ODP)")
+            try:
+                res = subprocess.run([sys.executable, str(path)], env=env)
+            except Exception as exc:
+                print(f"UNHCR ODP client raised {exc}; continuing with other sources…", file=sys.stderr)
+                continue
+            if res.returncode != 0:
+                print("UNHCR ODP client failed; continuing with other sources…", file=sys.stderr)
+                failed += 1
             continue
 
         print(f"==> running {script}")
