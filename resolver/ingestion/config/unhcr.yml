@@ -1,0 +1,28 @@
+base_url: "https://api.unhcr.org/population/v1/"
+user_agent: "spagbot-resolver/1.0 (github.com/kwyjad/Spagbot_metac-bot)"
+window_days: 60
+page_size: 500
+
+# Endpoint for monthly arrivals by asylum country (configurable)
+# We keep this generic so you can swap paths without code changes if UNHCR adjusts names.
+endpoints:
+  arrivals: "arrivals/"
+
+# Columns in the response we prefer (connector will tolerate missing ones)
+# Common UNHCR fields include: year, month, origin_country_iso3, asylum_country_iso3, individuals, updated_at
+preferred_fields:
+  - "year"
+  - "month"
+  - "asylum_country_iso3"
+  - "country_of_asylum_iso3"
+  - "origin_country_iso3"
+  - "individuals"
+  - "updated_at"
+  - "date"
+  - "record_date"
+
+# Caps and throttle (mirrors other connectors; can be overridden via env)
+defaults:
+  max_pages: 40
+  max_results: 20000
+  debug_every: 10

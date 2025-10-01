@@ -15,6 +15,11 @@ sources:
     output: resolver/staging/unhcr.csv
     owner: ingestion
     status: stub
+  unhcr:
+    cadence: high
+    output: resolver/staging/unhcr.csv
+    owner: ingestion
+    status: api
   iom_dtm:
     cadence: medium
     output: resolver/staging/dtm.csv
