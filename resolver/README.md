@@ -159,4 +159,18 @@ Query it:
 curl "http://127.0.0.1:8000/resolve?iso3=PHL&hazard_code=TC&cutoff=2025-09-30"
 ```
 
+### Developer setup (tests)
+
+For local tests, install dev deps once:
+
+```
+python -m pip install -r resolver/requirements-dev.txt
+```
+
+Then run:
+
+```
+python -m pytest resolver/tests -q
+```
+
 OpenAPI docs at /docs.

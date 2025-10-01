@@ -10,13 +10,23 @@ These tests enforce basic contracts across:
 
 ## Run locally (cross-platform)
 
+First install dev requirements:
+
+```powershell
+# Windows PowerShell
+python -m pip install -r resolver/requirements-dev.txt
+```
+
+```bash
+# macOS/Linux
+python3 -m pip install -r resolver/requirements-dev.txt
+```
+
+Then run tests:
+
 ```bash
 python -m pytest resolver/tests -q
 ```
-
-Use python -m pytest on Windows to avoid PATH issues (fixes “pytest is not recognized”).
-
-**CI already uses `pytest` in PATH** (via `pip install pytest`). That’s fine for Linux runners; no change needed there.
 
 Tests will skip gracefully if an expected file isn't present (e.g., snapshots),
 but will fail if a file exists and violates the contract.
