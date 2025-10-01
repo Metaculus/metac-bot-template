@@ -271,7 +271,8 @@ def make_rows() -> List[List[str]]:
         "Accept": cfg.get("accept_header", "application/json"),
     }
     base_url = cfg["base_url"]
-    appname = cfg.get("appname", "spagbot-resolver")
+    appname_cfg = cfg.get("appname", "spagbot-resolver")
+    appname = os.getenv("RELIEFWEB_APPNAME", appname_cfg)
     url = f"{base_url}?appname={appname}"
     payload = build_payload(cfg)
 

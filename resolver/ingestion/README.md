@@ -73,23 +73,6 @@ $env:RESOLVER_DEBUG="1"
 python resolver/ingestion/reliefweb_client.py
 ```
 
-### ReliefWeb WAF / appname
-
-- The API requires `appname` (v2). From **1 Nov 2025** you need a **pre-approved appname**. See docs: <https://apidoc.reliefweb.int/parameters>
-- If requests return `202` with header `x-amzn-waf-action: challenge`, AWS WAF is blocking non-browser clients. The connector will **fail-soft** (empty `staging/reliefweb.csv`) and log a message.
-- Workarounds:
-  1. Register a pre-approved appname with ReliefWeb and request allowlisting for your appname/IP.
-  2. Temporarily set `RESOLVER_SKIP_RELIEFWEB=1` in CI/local to bypass the connector.
-  3. Use `RESOLVER_DEBUG=1` to print HTTP status/headers.
-
-Until allowlisted, configure CI with:
-
-```yaml
-env:
-  RESOLVER_SKIP_RELIEFWEB: "1"
-```
-
-Flip it to `"0"` once ReliefWeb confirms your appname/IP.
 
 ## Source notes (what each adds)
 
