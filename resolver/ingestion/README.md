@@ -61,6 +61,18 @@ Hazards must match resolver/data/shocks.csv (e.g., FL, DR, TC, HW, ACO, ACE, ACC
 
 Earthquakes are out of scope by policy and are not included in stubs.
 
+### ReliefWeb troubleshooting
+
+- Set `RESOLVER_DEBUG=1` to log HTTP status, headers, and first 500 chars of any non-200 response.
+- Set `RESOLVER_SKIP_RELIEFWEB=1` to bypass the connector (writes an empty header-only CSV), useful if a proxy/WAF blocks the API.
+
+Example:
+
+```bash
+$env:RESOLVER_DEBUG="1"
+python resolver/ingestion/reliefweb_client.py
+```
+
 ## Source notes (what each adds)
 
 - **EM-DAT** — standardized disaster records and “people affected”; lagged but consistent.

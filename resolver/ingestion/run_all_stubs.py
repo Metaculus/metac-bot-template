@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""
-Run all ingestion stubs to populate resolver/staging/*.csv
-"""
+"""Run all ingestion stubs to populate resolver/staging/*.csv."""
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -31,7 +30,10 @@ def main():
     reliefweb_client = ROOT / "reliefweb_client.py"
     if reliefweb_client.exists():
         print("==> running reliefweb_client.py (real API)")
-        res = subprocess.run([sys.executable, str(reliefweb_client)])
+        env = os.environ.copy()
+        if env.get("RESOLVER_SKIP_RELIEFWEB") == "1":
+            print("RESOLVER_SKIP_RELIEFWEB=1 — ReliefWeb connector will be skipped")
+        res = subprocess.run([sys.executable, str(reliefweb_client)], env=env)
         if res.returncode != 0:
             print(
                 "ReliefWeb client failed; continuing with other sources…",

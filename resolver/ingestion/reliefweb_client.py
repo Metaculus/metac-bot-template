@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import datetime as dt
+import os
 import re
 import time
 from pathlib import Path
@@ -28,6 +29,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
 CONFIG = ROOT / "ingestion" / "config" / "reliefweb.yml"
+
+DEBUG = os.getenv("RESOLVER_DEBUG", "0") == "1"
 
 COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
@@ -134,6 +137,18 @@ def iso3_from_reliefweb_countries(
     return rows
 
 
+def _dump(resp: requests.Response) -> str:
+    try:
+        body = resp.text[:500]
+    except Exception:  # pragma: no cover - defensive
+        body = "<no-body>"
+    try:
+        hdrs = dict(resp.headers)
+    except Exception:  # pragma: no cover - defensive
+        hdrs = {}
+    return f"HTTP {resp.status_code}, headers={hdrs}, body[0:500]={body}"
+
+
 def rw_request(
     url: str,
     payload: Dict[str, Any],
@@ -150,9 +165,11 @@ def rw_request(
         response = requests.get(url, params=params, headers=headers, timeout=30)
         if response.status_code == 200:
             return response.json()
-    except Exception:
-        # We'll fall back to POST logic below.
-        pass
+        if DEBUG:
+            print("[reliefweb] GET debug:", _dump(response))
+    except Exception as exc:
+        if DEBUG:
+            print("[reliefweb] GET exception:", str(exc))
 
     # 2) Fall back to POST requests which support the full payload.
     err: Optional[str] = None
@@ -162,12 +179,18 @@ def rw_request(
             if response.status_code == 200:
                 return response.json()
             if response.status_code in (429, 502, 503):
+                if DEBUG:
+                    print(
+                        f"[reliefweb] POST attempt {attempt} backoff; status={response.status_code}"
+                    )
                 time.sleep((backoff**attempt) + 0.3 * attempt)
                 continue
-            err = f"HTTP {response.status_code}: {response.text[:500]}"
+            err = _dump(response)
             break
         except Exception as exc:  # pragma: no cover - network failure paths
             err = str(exc)
+            if DEBUG:
+                print(f"[reliefweb] POST exception attempt {attempt}: {err}")
     raise RuntimeError(f"ReliefWeb API error: {err or 'no 200 after retries'}")
 
 
@@ -321,6 +344,13 @@ def make_rows() -> List[List[str]]:
 
 
 def main() -> None:
+    if os.getenv("RESOLVER_SKIP_RELIEFWEB", "0") == "1":
+        print("ReliefWeb connector skipped due to RESOLVER_SKIP_RELIEFWEB=1")
+        STAGING.mkdir(parents=True, exist_ok=True)
+        output = STAGING / "reliefweb.csv"
+        pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
+        return
+
     STAGING.mkdir(parents=True, exist_ok=True)
     output = STAGING / "reliefweb.csv"
     rows = make_rows()
