@@ -261,6 +261,9 @@ def pick_dates(rec: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def make_rows() -> List[List[str]]:
+    if os.getenv("RESOLVER_SKIP_RELIEFWEB", "") == "1":
+        return []
+
     cfg = load_cfg()
     countries, shocks = load_registries()
     iso_exclude = {code.upper() for code in cfg.get("iso3_exclude", [])}
