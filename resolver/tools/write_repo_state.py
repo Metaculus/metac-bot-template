@@ -42,10 +42,38 @@ def copy_dir(src_dir: Path, dst_dir: Path, patterns: list[str]):
             if p.is_file():
                 shutil.copy2(p, dst_dir / p.name)
 
+
+def prune_old_daily(retain_days: int) -> None:
+    """Keep only the newest ``retain_days`` daily state folders."""
+    if retain_days < 0:
+        return
+    daily_root = STATE / "daily"
+    if not daily_root.exists():
+        return
+
+    folders = sorted([d for d in daily_root.iterdir() if d.is_dir()])
+    if len(folders) <= retain_days:
+        return
+
+    to_remove = folders[: max(0, len(folders) - retain_days)]
+    for folder in to_remove:
+        try:
+            shutil.rmtree(folder)
+        except FileNotFoundError:
+            pass
+        except Exception as exc:
+            print(f"Warning: could not prune {folder}: {exc}")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", required=True, choices=["pr","daily"])
     ap.add_argument("--id", required=True, help="PR number for mode=pr, or YYYY-MM-DD for mode=daily")
+    ap.add_argument(
+        "--retain-days",
+        type=int,
+        default=10,
+        help="When mode=daily, keep only this many most recent daily state folders",
+    )
     args = ap.parse_args()
 
     if args.mode == "pr":
@@ -74,6 +102,9 @@ def main():
                 pass
 
     write_monthly_outputs(EXPORTS / "resolved.csv", EXPORTS / "deltas.csv")
+
+    if args.mode == "daily":
+        prune_old_daily(args.retain_days)
 
 
 def read_rows_by_month(src: Path) -> tuple[dict[str, list[dict[str, str]]], list[str]]:

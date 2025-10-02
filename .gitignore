@@ -43,6 +43,7 @@ cover/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+*.ipynb_checkpoints/
 
 # PyBuilder
 target/
@@ -97,3 +98,10 @@ Thumbs.db
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Resolver exports and scratch space
+resolver/exports/*.tmp
+resolver/exports/*_working.csv
+resolver/exports/*_working.parquet
+resolver/exports/cache_*/
+resolver/tmp/
