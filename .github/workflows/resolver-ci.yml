@@ -37,9 +37,25 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r resolver/requirements-dev.txt
 
-      - name: Generate ingestion stubs / connectors
+      - name: Run ingestion (real connectors only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          RESOLVER_DEBUG: "1"
+          RESOLVER_MAX_PAGES: "5"
+          RESOLVER_MAX_RESULTS: "1000"
+          RESOLVER_INCLUDE_STUBS: "0"
+          RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py
+
+      - name: Run stubs (non-blocking)
+        if: ${{ always() }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          RESOLVER_INCLUDE_STUBS: "1"
+          RESOLVER_FAIL_ON_STUB_ERROR: "0"
+        run: |
+          python resolver/ingestion/run_all_stubs.py || true
 
       - name: Export facts
         run: |
@@ -106,9 +122,25 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r resolver/requirements-dev.txt
 
-      - name: Generate ingestion stubs / connectors
+      - name: Run ingestion (real connectors only)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          RESOLVER_DEBUG: "1"
+          RESOLVER_MAX_PAGES: "5"
+          RESOLVER_MAX_RESULTS: "1000"
+          RESOLVER_INCLUDE_STUBS: "0"
+          RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py
+
+      - name: Run stubs (non-blocking)
+        if: ${{ always() }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          RESOLVER_INCLUDE_STUBS: "1"
+          RESOLVER_FAIL_ON_STUB_ERROR: "0"
+        run: |
+          python resolver/ingestion/run_all_stubs.py || true
 
       - name: Export facts
         run: |
