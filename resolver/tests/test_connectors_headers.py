@@ -70,3 +70,12 @@ def test_dtm_header_written(tmp_path, monkeypatch):
     with open(dtm_client.OUT_PATH, newline="", encoding="utf-8") as f:
         row = next(csv.reader(f))
     assert row == dtm_client.CANONICAL_HEADERS
+
+
+def test_ipc_header_written(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_IPC", "1")
+    mod = importlib.import_module("resolver.ingestion.ipc_client")
+    tmp_out = Path(tmp_path) / "ipc.csv"
+    mod.OUT_PATH = tmp_out
+    mod.main()
+    _assert_header(tmp_out)

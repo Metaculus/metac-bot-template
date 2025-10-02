@@ -1,0 +1,28 @@
+sources:
+  - name: ipc_global_rounds
+    kind: csv
+    url: https://example.com/ipc.csv
+    country_keys: ["iso3", "country", "adm0_name", "#country+code"]
+    period_start_keys: ["period_start", "start", "start_month", "#date+start", "#date"]
+    period_end_keys: ["period_end", "end", "end_month", "#date+end"]
+    phase3p_keys: ["phase3plus", "p3plus", "ipc3plus", "#population+phase+3plus", "#inneed"]
+    phase4p_keys: ["phase4plus", "ipc4plus", "#population+phase+4plus"]
+    phase5_keys: ["phase5", "#population+phase+5"]
+    drivers_keys: ["drivers", "driver", "hazard", "cause", "tags", "notes"]
+    title_keys: ["doc_title", "title"]
+    publication_keys: ["publication_date", "pub_date", "date"]
+    source_url_keys: ["source_url", "source", "url"]
+    publisher: "IPC"
+    source_type: "official"
+prefer_hxl: true
+monthly_first: true
+shock_keywords:
+  drought: ["drought", "dry spell", "rainfall deficit"]
+  flood: ["flood", "heavy rain", "inundation"]
+  armed_conflict_escalation: ["conflict", "insecurity", "violence", "hostilities", "armed"]
+  economic_crisis: ["economic", "inflation", "market", "prices", "currency", "livelihoods"]
+  phe: ["cholera", "measles", "outbreak", "epidemic", "pandemic"]
+emit_stock: true
+emit_incident: true
+include_first_month_delta: false
+default_hazard: multi

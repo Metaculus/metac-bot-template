@@ -14,6 +14,7 @@ STUBS = [
     "unhcr_odp_client.py",    # real connector (fail-soft/skip-capable)
     "dtm_client.py",          # real connector (fail-soft/skip-capable)
     "who_phe_client.py",      # real connector (fail-soft/skip-capable)
+    "ipc_client.py",          # real connector (fail-soft/skip-capable)
     "reliefweb_client.py",    # real connector (may be skipped via env)
     "hdx_client.py",          # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
@@ -139,6 +140,25 @@ def main():
                 continue
             if not ok:
                 print("WHO PHE connector produced no rows", file=sys.stderr)
+            continue
+
+        if script == "ipc_client.py":
+            if env.get("RESOLVER_SKIP_IPC") == "1":
+                print("RESOLVER_SKIP_IPC=1 — IPC connector will be skipped")
+                continue
+            if not path.exists():
+                print("ipc_client.py missing; skipping IPC connector", file=sys.stderr)
+                continue
+            print("==> running ipc_client.py")
+            try:
+                mod = importlib.import_module("resolver.ingestion.ipc_client")
+                ok = mod.main()
+            except Exception as exc:
+                print(f"IPC connector raised {exc}; continuing with other sources…", file=sys.stderr)
+                failed += 1
+                continue
+            if not ok:
+                print("IPC connector produced no rows", file=sys.stderr)
             continue
 
         if script == "hdx_client.py":
