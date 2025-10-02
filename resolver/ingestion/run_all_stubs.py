@@ -13,6 +13,7 @@ STUBS = [
     "unhcr_client.py",        # real connector (fail-soft/skip-capable)
     "unhcr_odp_client.py",    # real connector (fail-soft/skip-capable)
     "dtm_client.py",          # real connector (fail-soft/skip-capable)
+    "who_phe_client.py",      # real connector (fail-soft/skip-capable)
     "reliefweb_client.py",    # real connector (may be skipped via env)
     "hdx_client.py",          # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
@@ -119,6 +120,25 @@ def main():
                 continue
             if not ok:
                 print("DTM client produced no rows", file=sys.stderr)
+            continue
+
+        if script == "who_phe_client.py":
+            if env.get("RESOLVER_SKIP_WHO") == "1":
+                print("RESOLVER_SKIP_WHO=1 — WHO PHE connector will be skipped")
+                continue
+            if not path.exists():
+                print("who_phe_client.py missing; skipping WHO connector", file=sys.stderr)
+                continue
+            print("==> running who_phe_client.py")
+            try:
+                mod = importlib.import_module("resolver.ingestion.who_phe_client")
+                ok = mod.main()
+            except Exception as exc:
+                print(f"WHO PHE client raised {exc}; continuing with other sources…", file=sys.stderr)
+                failed += 1
+                continue
+            if not ok:
+                print("WHO PHE connector produced no rows", file=sys.stderr)
             continue
 
         if script == "hdx_client.py":

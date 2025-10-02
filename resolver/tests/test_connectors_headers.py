@@ -50,6 +50,15 @@ def test_hdx_header(tmp_path, monkeypatch):
     _assert_header(STAGING / "hdx.csv")
 
 
+def test_who_phe_header(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_WHO", "1")
+    mod = importlib.import_module("resolver.ingestion.who_phe_client")
+    tmp_out = Path(tmp_path) / "who_phe.csv"
+    mod.OUT_PATH = tmp_out
+    mod.main()
+    _assert_header(tmp_out)
+
+
 def test_dtm_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_DTM", "1")
     from resolver.ingestion import dtm_client
