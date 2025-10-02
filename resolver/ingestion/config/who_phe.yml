@@ -1,0 +1,23 @@
+# Phase-1 WHO Public Health Emergency sources
+sources:
+  - name: cholera_global
+    kind: csv
+    url: https://example.org/cholera_cases_by_week.csv
+    time_keys: ["week", "year"]
+    country_keys: ["iso3", "country", "country_code", "#country+code"]
+    case_keys: ["cases", "new_cases", "#affected+cases"]
+    disease: cholera
+    series_hint: incident
+
+  - name: measles_global
+    kind: csv
+    url: https://example.org/measles_cases_by_week.csv
+    time_keys: ["week", "year"]
+    country_keys: ["iso3", "country", "country_code", "#country+code"]
+    case_keys: ["cases", "new_cases", "#affected+cases"]
+    disease: measles
+    series_hint: incident
+
+prefer_hxl: true
+monthly_first: true
+allow_first_month_delta: false

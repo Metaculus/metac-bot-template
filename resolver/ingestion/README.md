@@ -14,6 +14,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - IFRC GO — **API connector** (`ifrc_go_client.py`) → `staging/ifrc_go.csv`
 - UNHCR ODP — **API connector** (`unhcr_odp_client.py`) → `staging/unhcr_odp.csv`
 - IOM DTM — **API connector** (`dtm_client.py`) → `staging/dtm.csv`
+- WHO Public Health Emergencies — **API connector** (`who_phe_client.py`) → `staging/who_phe.csv`
 - WHO Emergencies — stub (`who_stub.py`)
 - IPC — stub (`ipc_stub.py`)
 - EM-DAT — stub (`emdat_stub.py`)
@@ -172,6 +173,19 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
 - `DTM_DEFAULT_HAZARD=<key>` — override the fallback hazard keyword (default `displacement_influx`).
 - `DTM_BASE=<url>` — override the base discovery endpoint (defaults to `https://data.humdata.org`).
 - `RELIEFWEB_APPNAME` — reused for User-Agent hints when hitting HDX mirrors.
+
+## WHO Public Health Emergencies — real connector
+
+- **Phase 1 sources:** Config-driven CSV/XLSX feeds listed in `ingestion/config/who_phe.yml` (WHO direct or HDX mirrors).
+- **Metric:** Monthly-first **new cases** per ISO3 mapped to `hazard_code=PHE`, `metric=affected`, `unit=persons`.
+- **Series semantics:** Daily/weekly incident series are summed to month start; cumulative series are converted to month-over-month deltas (first month dropped unless `WHO_PHE_ALLOW_FIRST_MONTH=1`).
+- **PIN expansion:** Optional `WHO_PHE_PIN_RATIO=<float>` emits parallel `metric=in_need` rows using an integer-rounded ratio of cases.
+- **Output:** Deterministic `event_id` (`<iso3>-WHO-phe-<metric>-YYYY-MM-<digest>`), `publisher="WHO"`, `source_type="official"`, `method="WHO PHE; monthly-first; …"` with frequency/delta hints.
+- **Env toggles:**
+  - `RESOLVER_SKIP_WHO=1` — skip connector (writes header-only CSV).
+  - `WHO_PHE_ALLOW_FIRST_MONTH=1` — retain the first month from cumulative series instead of dropping it.
+  - `WHO_PHE_PIN_RATIO=0.2` (example) — emit `in_need` rows alongside `affected`.
+  - `RESOLVER_MAX_RESULTS=<int>` / `RESOLVER_DEBUG=1` follow the shared ingestion conventions.
 
 ## HDX (CKAN) — real connector
 

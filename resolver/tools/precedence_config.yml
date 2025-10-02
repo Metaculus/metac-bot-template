@@ -4,6 +4,7 @@ source_precedence:                       # highest → lowest
   - inter_agency_plan
   - ifrc_or_gov_sitrep
   - un_cluster_snapshot
+  - who
   - reputable_ingo_un
   - dtm                                   # DTM alongside HDX for movement PIN
   - hdx                                   # HDX connector (between direct agency and media)
@@ -21,6 +22,9 @@ source_mapping:
   un_cluster_snapshot:
     source_type: ["cluster"]
     publisher: ["UNHCR", "IOM-DTM", "WHO", "IPC"]
+  who:
+    source_type: ["official"]
+    publisher: ["WHO"]
   reputable_ingo_un:
     source_type: ["agency"]
     publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "FEWS NET", "WFP mVAM"]
@@ -48,5 +52,6 @@ cutoff:
   lag_days_allowed: 7
 
 lags:
+  who: 2d
   dtm: 2d
   hdx: 3d
