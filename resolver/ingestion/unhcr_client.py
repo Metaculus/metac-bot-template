@@ -113,57 +113,77 @@ def make_rows() -> List[List[str]]:
         return []
     hz_code, hz_label, hz_class = "DI", di.iloc[0]["hazard_label"], di.iloc[0]["hazard_class"]
 
+    try:
+        limit_default = int(cfg.get("page_size", 1000) or 1000)
+    except Exception:
+        limit_default = 1000
+    LIMIT = _int_env("UNHCR_LIMIT", limit_default)
+    defaults = cfg.get("defaults", {}) or {}
+    try:
+        max_pages_default = int(defaults.get("max_pages", 10) or 10)
+    except Exception:
+        max_pages_default = 10
+    MAX_PAGES = _int_env("RESOLVER_MAX_PAGES", max_pages_default)
+
     total = 0
-    for idx, yr in enumerate(sorted(years, reverse=True), start=1):
-        params = {
+    request_idx = 0
+    stop = False
+    for yr in sorted(years, reverse=True):
+        base_params = {
             "cf_type": params_cfg.get("cf_type", "ISO"),
             "coo_all": params_cfg.get("coo_all", "true"),
             "coa_all": params_cfg.get("coa_all", "true"),
             "year[]": str(yr),
+            "limit": str(LIMIT),
         }
         if gran == "month":
-            params["month[]"] = [f"{m:02d}" for m in range(1, 13)]
+            base_params["month[]"] = [f"{m:02d}" for m in range(1, 13)]
 
         url = base.rstrip("/") + "/" + path.lstrip("/")
-        try:
-            r = requests.get(url, params=params, headers=headers, timeout=30)
-        except requests.RequestException as exc:
-            dbg(f"request for {yr} raised {exc}")
-            continue
-        if _debug() and (idx % DEBUG_EVERY == 1):
-            dbg(f"GET {r.url} -> {r.status_code}")
-        if r.status_code != 200:
-            continue
+        page = 1
+        while page <= MAX_PAGES:
+            params = dict(base_params)
+            params["page"] = str(page)
+            try:
+                r = requests.get(url, params=params, headers=headers, timeout=30)
+            except requests.RequestException as exc:
+                dbg(f"request for {yr} page {page} raised {exc}")
+                break
+            request_idx += 1
+            if _debug() and (request_idx % DEBUG_EVERY == 1):
+                dbg(f"GET {r.url} -> {r.status_code}")
+            if r.status_code != 200:
+                break
 
-        try:
-            data = r.json()
-        except ValueError:
-            dbg("response JSON decode failed; skipping year %s" % yr)
-            continue
+            try:
+                data = r.json()
+            except ValueError:
+                dbg("response JSON decode failed; skipping year %s page %s" % (yr, page))
+                break
 
-        results: List[Dict[str, Any]] = []
-        if isinstance(data, list):
-            results = [item for item in data if isinstance(item, dict)]
-        elif isinstance(data, dict):
-            for key in ("results", "data", "items"):
-                candidate = data.get(key)
-                if isinstance(candidate, list):
-                    results = [item for item in candidate if isinstance(item, dict)]
-                    if results:
-                        break
-        if not results:
-            continue
+            results: List[Dict[str, Any]] = []
+            if isinstance(data, list):
+                results = [item for item in data if isinstance(item, dict)]
+            elif isinstance(data, dict):
+                for key in ("results", "data", "items"):
+                    candidate = data.get(key)
+                    if isinstance(candidate, list):
+                        results = [item for item in candidate if isinstance(item, dict)]
+                        if results:
+                            break
+            if not results:
+                break
 
-        for it in results:
-            asylum_iso = (
-                it.get("coa_iso")
-                or it.get("coa")
-                or it.get("country_of_asylum")
-                or ""
-            ).strip().upper()
-            country_name = iso3_to_name(df_countries, asylum_iso)
-            if not asylum_iso or not country_name:
-                continue
+            for it in results:
+                asylum_iso = (
+                    it.get("coa_iso")
+                    or it.get("coa")
+                    or it.get("country_of_asylum")
+                    or ""
+                ).strip().upper()
+                country_name = iso3_to_name(df_countries, asylum_iso)
+                if not asylum_iso or not country_name:
+                    continue
 
             val = it.get("value") or it.get("applications") or it.get("individuals")
             try:
@@ -196,7 +216,7 @@ def make_rows() -> List[List[str]]:
                 "Applications for international protection in the year; used here as a proxy for cross-border "
                 "Displacement Influx (DI)."
             )
-            src_url = url
+            src_url = r.url
 
             origin_iso = (
                 it.get("coo_iso")
@@ -233,9 +253,15 @@ def make_rows() -> List[List[str]]:
             total += 1
             if total >= MAX_RESULTS:
                 dbg(f"hit MAX_RESULTS={MAX_RESULTS}, stopping")
+                stop = True
                 break
-        if total >= MAX_RESULTS:
+        if stop:
             break
+        if len(results) < LIMIT:
+            break
+        page += 1
+    if stop:
+        return rows
 
     return rows
 

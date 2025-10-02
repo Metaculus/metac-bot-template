@@ -159,14 +159,25 @@ def _find_column(frame: SourceFrame, candidates: Sequence[str]) -> Optional[str]
 def _parse_value(value: Any) -> Optional[float]:
     if value is None:
         return None
-    if isinstance(value, str):
-        value = value.strip()
-        if not value:
-            return None
-    try:
-        return float(value)
-    except Exception:
+    if pd.isna(value):
         return None
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.lower() in {"na", "nan", "none"}:
+        return None
+    try:
+        parsed = float(text.replace(",", ""))
+    except Exception:
+        try:
+            parsed = float(value)
+        except Exception:
+            return None
+    if pd.isna(parsed) or not math.isfinite(parsed):
+        return None
+    return parsed
 
 
 def _parse_date(value: Any) -> Optional[pd.Timestamp]:
@@ -418,7 +429,13 @@ def _aggregate_monthly(
 def _round_persons(value: float) -> int:
     if value is None:
         return 0
-    return int(round(float(value)))
+    try:
+        numeric = float(value)
+    except Exception:
+        return 0
+    if pd.isna(numeric) or not math.isfinite(numeric):
+        return 0
+    return int(round(numeric))
 
 
 def build_event_id(

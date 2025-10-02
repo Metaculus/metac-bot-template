@@ -79,3 +79,13 @@ def test_ipc_header_written(tmp_path, monkeypatch):
     mod.OUT_PATH = tmp_out
     mod.main()
     _assert_header(tmp_out)
+
+
+def test_who_parse_value_nan_guard():
+    from resolver.ingestion.who_phe_client import _parse_value, _round_persons
+
+    assert _parse_value(None) is None
+    assert _parse_value("NaN") is None
+    assert _parse_value("1,234") == 1234.0
+    assert _round_persons(None) == 0
+    assert _round_persons(float("nan")) == 0
