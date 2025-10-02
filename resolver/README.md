@@ -156,12 +156,16 @@ python resolver/cli/resolver_cli.py --country "Philippines" --hazard "Tropical C
 
 # Or by codes
 python resolver/cli/resolver_cli.py --iso3 PHL --hazard_code TC --cutoff 2025-09-30
+
+# Ask for stock totals instead of monthly new deltas
+python resolver/cli/resolver_cli.py --iso3 PHL --hazard_code TC --cutoff 2025-09-30 --series stock
 ```
 
 ### Selection logic
 
 - If the month of `--cutoff` is in the past, use `snapshots/YYYY-MM/facts.parquet`.
 - If current month, use `exports/resolved_reviewed.csv` if present, else `exports/resolved.csv`.
+- Default series is monthly `new` deltas when available; pass `--series stock` for totals. Missing deltas trigger a note and a stock fallback.
 
 ---
 ### Outputs
