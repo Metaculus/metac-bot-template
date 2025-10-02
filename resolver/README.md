@@ -43,7 +43,17 @@ python resolver/tools/export_facts.py --in resolver/staging --out resolver/expor
 # 2) Validate against registries and schema
 python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
 
-# 3) Freeze a monthly snapshot for grading
+# 3) Resolve canonical totals to resolved.csv
+python resolver/tools/precedence_engine.py \
+  --facts resolver/exports/facts.csv \
+  --cutoff 2025-09-30
+
+# 4) Build monthly new deltas (resolver/exports/deltas.csv)
+python resolver/tools/make_deltas.py \
+  --resolved resolver/exports/resolved.csv \
+  --out resolver/exports/deltas.csv
+
+# 5) Freeze a monthly snapshot for grading (facts + deltas)
 python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month 2025-09
 
 
@@ -65,7 +75,17 @@ python resolver/tools/export_facts.py --in resolver/staging --out resolver/expor
 # 3) Validate against registries & schema
 python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
 
-# 4) Freeze a monthly snapshot
+# 4) Resolve canonical totals to resolved.csv/jsonl
+python resolver/tools/precedence_engine.py \
+  --facts resolver/exports/facts.csv \
+  --cutoff YYYY-MM-30
+
+# 5) Build monthly new deltas (resolver/exports/deltas.csv)
+python resolver/tools/make_deltas.py \
+  --resolved resolver/exports/resolved.csv \
+  --out resolver/exports/deltas.csv
+
+# 6) Freeze a monthly snapshot (facts + deltas)
 python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month YYYY-MM
 ```
 
@@ -110,6 +130,19 @@ resolver/exports/resolved.jsonl
 resolver/exports/resolved_diagnostics.csv (conflict notes)
 
 PR checklist addition: ✅ Precedence config reviewed (tools/precedence_config.yml) and results inspected (exports/resolved*.{csv,jsonl}).
+
+## Monthly deltas (new PIN/PA)
+
+Convert resolved totals into normalized monthly new values for downstream aggregation:
+
+```bash
+python resolver/tools/make_deltas.py \
+  --resolved resolver/exports/resolved.csv \
+  --out resolver/exports/deltas.csv \
+  --lookback-months 24  # optional
+```
+
+All rows in `deltas.csv` are monthly "new" values with provenance. Stock series are differenced month over month; detected rebases set `rebase_flag=1` and clamp deltas to zero. Minor negative blips are clamped with `delta_negative_clamped=1`.
 
 
 ## Ask the resolver (CLI)

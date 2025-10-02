@@ -18,7 +18,7 @@ Notes:
   - Never mutates existing snapshots; you may overwrite only by passing --overwrite.
 """
 
-import argparse, os, sys, json, subprocess, datetime as dt
+import argparse, os, sys, json, subprocess, datetime as dt, shutil
 from pathlib import Path
 
 try:
@@ -65,6 +65,10 @@ def main():
     ap.add_argument("--facts", required=True, help="Path to the facts CSV/Parquet to freeze")
     ap.add_argument("--month", help="Target month YYYY-MM; defaults to current UTC year-month")
     ap.add_argument("--overwrite", action="store_true", help="Allow overwriting existing snapshot files")
+    ap.add_argument(
+        "--deltas",
+        help="Optional path to deltas.csv to include in the snapshot (defaults to sibling of --facts)",
+    )
     args = ap.parse_args()
 
     facts_path = Path(args.facts)
@@ -92,7 +96,19 @@ def main():
     facts_out = out_dir / "facts.parquet"
     manifest_out = out_dir / "manifest.json"
 
-    if (facts_out.exists() or manifest_out.exists()) and not args.overwrite:
+    if args.deltas:
+        deltas_path = Path(args.deltas)
+        if not deltas_path.exists():
+            print(f"Deltas file not found: {deltas_path}", file=sys.stderr)
+            sys.exit(2)
+    else:
+        default_deltas = facts_path.with_name("deltas.csv")
+        deltas_path = default_deltas if default_deltas.exists() else None
+
+    deltas_out = out_dir / "deltas.csv" if deltas_path else None
+
+    existing_targets = [p for p in [facts_out, manifest_out, deltas_out] if p and p.exists()]
+    if existing_targets and not args.overwrite:
         print(f"Snapshot already exists for {ym}: {out_dir}", file=sys.stderr)
         print("Use --overwrite to replace.", file=sys.stderr)
         sys.exit(1)
@@ -114,7 +130,12 @@ def main():
     with open(manifest_out, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
+    if deltas_path:
+        shutil.copy2(deltas_path, deltas_out)
+
     print(f"✅ Snapshot written:\n - {facts_out}\n - {manifest_out}")
+    if deltas_out:
+        print(f" - {deltas_out}")
 
 if __name__ == "__main__":
     main()

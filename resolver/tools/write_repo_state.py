@@ -10,9 +10,10 @@ Usage examples:
   python resolver/tools/write_repo_state.py --mode daily --id 2025-09-30
 
 This script copies:
-- exports/facts.csv, exports/resolved.csv, exports/resolved_diagnostics.csv
+- exports/facts.csv, exports/resolved.csv, exports/resolved_diagnostics.csv, exports/deltas.csv
 - review/review_queue.csv
 - snapshots/YYYY-MM/facts.parquet + manifest.json (if exist)
+- monthly deltas split to resolver/state/monthly/YYYY-MM/deltas.csv
 
 To:
 - PR:     resolver/state/pr/<PR_NUMBER>/{exports/*,review/*}
@@ -20,7 +21,7 @@ To:
 - Snap:   resolver/snapshots/<YYYY-MM>/*  (if present)
 """
 
-import argparse, shutil
+import argparse, csv, shutil
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,7 +54,11 @@ def main():
         base = STATE / "daily" / str(args.id)
 
     # Copy exports files
-    copy_dir(EXPORTS, base / "exports", ["facts.csv","resolved.csv","resolved.jsonl","resolved_diagnostics.csv"])
+    copy_dir(
+        EXPORTS,
+        base / "exports",
+        ["facts.csv","resolved.csv","resolved.jsonl","resolved_diagnostics.csv","deltas.csv"],
+    )
 
     # Copy review file
     safe_copy(REVIEW / "review_queue.csv", base / "review" / "review_queue.csv")
@@ -67,6 +72,36 @@ def main():
                 # We copy snapshots in-place (they already live under resolver/snapshots/),
                 # so no duplicate under state/. Leaving them where they are is enough.
                 pass
+
+    write_monthly_deltas(EXPORTS / "deltas.csv")
+
+
+def write_monthly_deltas(src: Path) -> None:
+    if not src.exists():
+        return
+
+    with src.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        fieldnames = reader.fieldnames
+        if not fieldnames or "ym" not in fieldnames:
+            return
+
+        rows_by_month: dict[str, list[dict[str, str]]] = {}
+        for row in reader:
+            ym = row.get("ym")
+            if not ym:
+                continue
+            rows_by_month.setdefault(ym, []).append(row)
+
+    monthly_base = STATE / "monthly"
+    for ym, rows in rows_by_month.items():
+        out_dir = monthly_base / ym
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / "deltas.csv"
+        with out_path.open("w", encoding="utf-8", newline="") as out_f:
+            writer = csv.DictWriter(out_f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
 
 if __name__ == "__main__":
     main()
