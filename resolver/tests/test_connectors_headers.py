@@ -59,6 +59,15 @@ def test_who_phe_header(tmp_path, monkeypatch):
     _assert_header(tmp_out)
 
 
+def test_wfp_mvam_header(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_WFP_MVAM", "1")
+    mod = importlib.import_module("resolver.ingestion.wfp_mvam_client")
+    tmp_out = Path(tmp_path) / "wfp_mvam.csv"
+    mod.OUT_PATH = tmp_out
+    mod.main()
+    _assert_header(tmp_out)
+
+
 def test_dtm_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_DTM", "1")
     from resolver.ingestion import dtm_client
