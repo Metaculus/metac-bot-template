@@ -104,6 +104,7 @@ When CI runs, it commits outputs into the repo so you can consume them directly:
 
 - **PR state:** `resolver/state/pr/<PR_NUMBER>/...`
 - **Nightly state:** `resolver/state/daily/<YYYY-MM-DD>/...`
+- **Monthly state:** `resolver/state/monthly/<YYYY-MM>/{resolved.csv,deltas.csv}`
 - **Monthly snapshots (authoritative for grading):** `resolver/snapshots/<YYYY-MM>/...`
 
 This means the resolver can run from the remote alone (clone/pull → read files).
@@ -143,6 +144,8 @@ python resolver/tools/make_deltas.py \
 ```
 
 All rows in `deltas.csv` are monthly "new" values with provenance. Stock series are differenced month over month; detected rebases set `rebase_flag=1` and clamp deltas to zero. Minor negative blips are clamped with `delta_negative_clamped=1`.
+
+`resolved.csv` now includes a normalized `ym` column derived from the figure's `as_of_date` in the Europe/Istanbul timezone. The precedence engine enforces the configured publication lag when evaluating rows for a cutoff, ensuring deltas align to the month of the figure rather than the publication date.
 
 
 ## Ask the resolver (CLI)

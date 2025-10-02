@@ -13,7 +13,7 @@ This script copies:
 - exports/facts.csv, exports/resolved.csv, exports/resolved_diagnostics.csv, exports/deltas.csv
 - review/review_queue.csv
 - snapshots/YYYY-MM/facts.parquet + manifest.json (if exist)
-- monthly deltas split to resolver/state/monthly/YYYY-MM/deltas.csv
+- monthly resolved + deltas split to resolver/state/monthly/YYYY-MM/{resolved.csv,deltas.csv}
 
 To:
 - PR:     resolver/state/pr/<PR_NUMBER>/{exports/*,review/*}
@@ -73,35 +73,56 @@ def main():
                 # so no duplicate under state/. Leaving them where they are is enough.
                 pass
 
-    write_monthly_deltas(EXPORTS / "deltas.csv")
+    write_monthly_outputs(EXPORTS / "resolved.csv", EXPORTS / "deltas.csv")
 
 
-def write_monthly_deltas(src: Path) -> None:
+def read_rows_by_month(src: Path) -> tuple[dict[str, list[dict[str, str]]], list[str]]:
     if not src.exists():
-        return
+        return {}, []
 
     with src.open("r", encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        fieldnames = reader.fieldnames
-        if not fieldnames or "ym" not in fieldnames:
-            return
+        fieldnames = reader.fieldnames or []
+        if "ym" not in fieldnames:
+            return {}, []
 
         rows_by_month: dict[str, list[dict[str, str]]] = {}
         for row in reader:
-            ym = row.get("ym")
+            ym = (row.get("ym") or "").strip()
             if not ym:
                 continue
             rows_by_month.setdefault(ym, []).append(row)
 
+    return rows_by_month, fieldnames
+
+
+def write_monthly_outputs(resolved: Path, deltas: Path) -> None:
+    resolved_by_month, resolved_fields = read_rows_by_month(resolved)
+    deltas_by_month, deltas_fields = read_rows_by_month(deltas)
+
+    if not resolved_by_month and not deltas_by_month:
+        return
+
+    months = sorted(set(resolved_by_month) | set(deltas_by_month))
     monthly_base = STATE / "monthly"
-    for ym, rows in rows_by_month.items():
+
+    for ym in months:
         out_dir = monthly_base / ym
         out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = out_dir / "deltas.csv"
-        with out_path.open("w", encoding="utf-8", newline="") as out_f:
-            writer = csv.DictWriter(out_f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
+
+        if resolved_fields:
+            out_path = out_dir / "resolved.csv"
+            with out_path.open("w", encoding="utf-8", newline="") as out_f:
+                writer = csv.DictWriter(out_f, fieldnames=resolved_fields)
+                writer.writeheader()
+                writer.writerows(resolved_by_month.get(ym, []))
+
+        if deltas_fields:
+            out_path = out_dir / "deltas.csv"
+            with out_path.open("w", encoding="utf-8", newline="") as out_f:
+                writer = csv.DictWriter(out_f, fieldnames=deltas_fields)
+                writer.writeheader()
+                writer.writerows(deltas_by_month.get(ym, []))
 
 if __name__ == "__main__":
     main()
