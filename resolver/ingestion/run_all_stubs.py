@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run all ingestion stubs to populate resolver/staging/*.csv."""
 
+import importlib
 import os
 import subprocess
 import sys
@@ -12,6 +13,7 @@ STUBS = [
     "reliefweb_client.py",    # real connector (may be skipped via env)
     "unhcr_client.py",          # real connector (fail-soft/skip-capable)
     "unhcr_odp_client.py",    # real connector (fail-soft/skip-capable)
+    "hdx_client.py",          # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
     "who_stub.py",
     "ipc_stub.py",
@@ -19,7 +21,6 @@ STUBS = [
     "gdacs_stub.py",
     "copernicus_stub.py",
     "unosat_stub.py",
-    "hdx_stub.py",
     "acled_stub.py",
     "ucdp_stub.py",
     "fews_stub.py",
@@ -97,6 +98,22 @@ def main():
                 continue
             if res.returncode != 0:
                 print("UNHCR ODP client failed; continuing with other sources…", file=sys.stderr)
+                failed += 1
+            continue
+
+        if script == "hdx_client.py":
+            if env.get("RESOLVER_SKIP_HDX") == "1":
+                print("RESOLVER_SKIP_HDX=1 — HDX connector will be skipped")
+                continue
+            if not path.exists():
+                print("hdx_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running hdx_client.py (real connector)")
+            try:
+                mod = importlib.import_module("resolver.ingestion.hdx_client")
+                mod.main()
+            except Exception as exc:
+                print(f"HDX client raised {exc}; continuing with other sources…", file=sys.stderr)
                 failed += 1
             continue
 

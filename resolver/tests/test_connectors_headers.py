@@ -40,3 +40,10 @@ def test_unhcr_header(tmp_path, monkeypatch):
     mod = importlib.import_module("resolver.ingestion.unhcr_client")
     mod.main()
     _assert_header(STAGING / "unhcr.csv")
+
+
+def test_hdx_header(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_HDX", "1")
+    mod = importlib.import_module("resolver.ingestion.hdx_client")
+    mod.main()
+    _assert_header(STAGING / "hdx.csv")
