@@ -43,7 +43,7 @@ jobs:
           RESOLVER_DEBUG: "1"
           RESOLVER_MAX_PAGES: "5"
           RESOLVER_MAX_RESULTS: "1000"
-          RESOLVER_INCLUDE_STUBS: "0"
+          RESOLVER_INGESTION_MODE: real
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py
@@ -52,7 +52,7 @@ jobs:
         if: ${{ always() }}
         env:
           PYTHONPATH: ${{ github.workspace }}
-          RESOLVER_INCLUDE_STUBS: "1"
+          RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py || true
@@ -128,7 +128,7 @@ jobs:
           RESOLVER_DEBUG: "1"
           RESOLVER_MAX_PAGES: "5"
           RESOLVER_MAX_RESULTS: "1000"
-          RESOLVER_INCLUDE_STUBS: "0"
+          RESOLVER_INGESTION_MODE: real
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py
@@ -137,7 +137,7 @@ jobs:
         if: ${{ always() }}
         env:
           PYTHONPATH: ${{ github.workspace }}
-          RESOLVER_INCLUDE_STUBS: "1"
+          RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
           python resolver/ingestion/run_all_stubs.py || true
