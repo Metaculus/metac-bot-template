@@ -72,6 +72,19 @@ def test_dtm_header_written(tmp_path, monkeypatch):
     assert row == dtm_client.CANONICAL_HEADERS
 
 
+def test_emdat_header_written(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_EMDAT", "1")
+    from resolver.ingestion import emdat_client
+
+    emdat_client.OUT_DIR = Path(tmp_path)
+    emdat_client.OUT_PATH = Path(tmp_path) / "emdat.csv"
+    assert emdat_client.main() is False
+
+    with open(emdat_client.OUT_PATH, newline="", encoding="utf-8") as f:
+        row = next(csv.reader(f))
+    assert row == emdat_client.CANONICAL_HEADERS
+
+
 def test_ipc_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_IPC", "1")
     mod = importlib.import_module("resolver.ingestion.ipc_client")

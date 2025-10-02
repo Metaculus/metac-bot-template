@@ -1,0 +1,32 @@
+sources:
+  - name: emdat_events
+    kind: csv
+    url: https://data.humdata.org/dataset/emdat-example.csv
+    country_keys: ["ISO", "iso3", "#country+code", "Country ISO3", "Country"]
+    start_date_keys: ["Start Date", "Start", "Began", "#date+start"]
+    end_date_keys: ["End Date", "End", "Finished", "#date+end"]
+    type_keys: ["Disaster Type", "Type"]
+    subtype_keys: ["Disaster Subtype", "Subtype"]
+    total_affected_keys: ["Total Affected", "#affected+total", "Affected Total"]
+    affected_keys: ["Affected", "#affected"]
+    injured_keys: ["Injured", "#affected+injured"]
+    homeless_keys: ["Homeless", "#affected+homeless"]
+    id_keys: ["Dis No", "Event ID", "EMDAT ID"]
+    title_keys: ["Event Name", "Title"]
+    publisher: "CRED/EM-DAT"
+    source_type: "other"
+prefer_hxl: true
+allocation_policy: prorata
+shock_map:
+  flood: ["Flood"]
+  drought: ["Drought"]
+  tropical_cyclone: ["Storm", "Tropical cyclone", "Hurricane", "Typhoon"]
+  heat_wave: ["Heat wave", "Extreme temperature", "Heat"]
+  cold_wave: ["Cold wave", "Extreme cold", "Cold"]
+  wildfire: ["Wildfire", "Forest fire", "Fire"]
+  earthquake: ["Earthquake", "Seismic"]
+  landslide: ["Landslide"]
+  volcano: ["Volcanic activity", "Volcano"]
+  phe: ["Epidemic", "Infectious disease", "Outbreak"]
+  other: ["Industrial accident", "Technological", "Transport"]
+default_hazard: other

@@ -19,8 +19,9 @@ REAL = [
     "reliefweb_client.py",
     "unhcr_client.py",
     "unhcr_odp_client.py",
-    "hdx_client.py",
     "dtm_client.py",
+    "emdat_client.py",
+    "hdx_client.py",
     "who_phe_client.py",
     "ipc_client.py",
 ]
@@ -56,6 +57,7 @@ SKIP_ENVS = {
     "unhcr_client.py": ("RESOLVER_SKIP_UNHCR", "UNHCR connector"),
     "unhcr_odp_client.py": ("RESOLVER_SKIP_UNHCR_ODP", "UNHCR ODP connector"),
     "dtm_client.py": ("RESOLVER_SKIP_DTM", "DTM connector"),
+    "emdat_client.py": ("RESOLVER_SKIP_EMDAT", "EM-DAT connector"),
     "who_phe_client.py": ("RESOLVER_SKIP_WHO", "WHO PHE connector"),
     "ipc_client.py": ("RESOLVER_SKIP_IPC", "IPC connector"),
     "hdx_client.py": ("RESOLVER_SKIP_HDX", "HDX connector"),
