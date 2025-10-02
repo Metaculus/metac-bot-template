@@ -23,3 +23,24 @@ required:
 enums:
   metric: [in_need, affected, displaced, cases]
   unit: [persons, persons_cases]
+
+optional:
+  series_semantics:
+    type: string
+    enum: [stock, new]
+    required: false
+  value_new:
+    type: number
+    required: false
+  value_stock:
+    type: number
+    required: false
+  rebase_flag:
+    type: integer
+    required: false
+  first_observation:
+    type: integer
+    required: false
+  delta_negative_clamped:
+    type: integer
+    required: false
