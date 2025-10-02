@@ -1,8 +1,8 @@
 # Policy knobs (kept here so we don't hardcode in code)
 metric_preference: [in_need, affected]   # PIN first, else PA
 tiers:
-  - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc"]
-  - ["dtm", "hdx"]
+  - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc", "dtm"]
+  - ["hdx", "emdat"]
   - ["reliefweb", "media"]
 source_precedence:                       # highest → lowest (legacy policy tiers)
   - inter_agency_plan
@@ -30,8 +30,8 @@ source_mapping:
     source_type: ["official"]
     publisher: ["WHO"]
   reputable_ingo_un:
-    source_type: ["agency"]
-    publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "FEWS NET", "WFP mVAM"]
+    source_type: ["agency", "other"]
+    publisher: ["EM-DAT", "CRED/EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "FEWS NET", "WFP mVAM"]
   dtm:
     source_type: ["cluster", "agency"]
     publisher: ["IOM-DTM"]
@@ -60,3 +60,4 @@ lags:
   who: 2d
   dtm: 2d
   hdx: 3d
+  emdat: 7d

@@ -32,6 +32,12 @@ Each connector:
 - Reads `resolver/data/countries.csv` and `resolver/data/shocks.csv`
 - Produces `resolver/staging/<source>.csv` using the exporter’s expected columns
 
+### EM-DAT allocation example
+
+- Event spans **15 Jan – 10 Mar 2025** with **9,000 Total Affected** → prorata policy yields
+  `2025-01: 2,782`, `2025-02: 4,582`, `2025-03: 1,636` (days-in-month share; last bucket keeps the remainder).
+- Start-month policy instead puts the full **9,000** on `2025-01` and omits later months.
+
 ## Run all stubs
 
 ```bash
