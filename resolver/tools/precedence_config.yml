@@ -1,6 +1,10 @@
 # Policy knobs (kept here so we don't hardcode in code)
 metric_preference: [in_need, affected]   # PIN first, else PA
-source_precedence:                       # highest → lowest
+tiers:
+  - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc"]
+  - ["dtm", "hdx"]
+  - ["reliefweb", "media"]
+source_precedence:                       # highest → lowest (legacy policy tiers)
   - inter_agency_plan
   - ifrc_or_gov_sitrep
   - un_cluster_snapshot
@@ -52,6 +56,7 @@ cutoff:
   lag_days_allowed: 7
 
 lags:
+  ipc: 7d
   who: 2d
   dtm: 2d
   hdx: 3d
