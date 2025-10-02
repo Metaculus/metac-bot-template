@@ -28,5 +28,5 @@ def make_rows():
     return rows
 
 if __name__ == "__main__":
-    p = write_staging(make_rows(), OUT)
+    p = write_staging(make_rows(), OUT, series_semantics="stock")
     print(f"wrote {p}")

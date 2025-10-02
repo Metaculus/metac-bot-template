@@ -37,7 +37,7 @@ SHOCKS = DATA / "shocks.csv"
 COLUMNS = [
     "event_id","country_name","iso3",
     "hazard_code","hazard_label","hazard_class",
-    "metric","value","unit",
+    "metric","series_semantics","value","unit",
     "as_of_date","publication_date",
     "publisher","source_type","source_url","doc_title",
     "definition_text","method","confidence",
@@ -313,6 +313,7 @@ def collect_rows() -> List[List[str]]:
                             hz_label,
                             hz_class,
                             metric,
+                            "stock",
                             str(value),
                             unit,
                             as_of,

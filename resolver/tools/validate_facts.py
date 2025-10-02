@@ -45,6 +45,7 @@ ALLOWED_CONFIDENCE   = {"high","med","low"}
 ALLOWED_UNITS        = {"persons","persons_cases"}
 
 SERIES_NEW_CONTRADICTIONS = ["cumulative", "to date", "since", "total to date"]
+SERIES_STOCK_HINTS = ["in the last 30 days", "this month"]
 YM_REGEX = re.compile(r"^\d{4}-\d{2}$")
 
 def _load_schema() -> Dict[str, Any]:
@@ -184,12 +185,18 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
         # Series semantics + deltas metadata
         series_semantics = str(row.get("series_semantics", "")).strip().lower()
         definition_text = str(row.get("definition_text", ""))
+        lower_def = definition_text.lower()
         if series_semantics == "new":
-            lower_def = definition_text.lower()
             contradictions = [phrase for phrase in SERIES_NEW_CONTRADICTIONS if phrase in lower_def]
             if contradictions:
                 warnings.append(
                     f"{prefix}: series_semantics 'new' but definition_text contains {contradictions}"
+                )
+        elif series_semantics == "stock":
+            hints = [phrase for phrase in SERIES_STOCK_HINTS if phrase in lower_def]
+            if hints:
+                warnings.append(
+                    f"{prefix}: series_semantics 'stock' but definition_text contains {hints}"
                 )
 
         value_new = row.get("value_new")
