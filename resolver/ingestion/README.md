@@ -13,7 +13,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - ReliefWeb — **API connector** (`reliefweb_client.py`) → `staging/reliefweb.csv`
 - IFRC GO — **API connector** (`ifrc_go_client.py`) → `staging/ifrc_go.csv`
 - UNHCR ODP — **API connector** (`unhcr_odp_client.py`) → `staging/unhcr_odp.csv`
-- IOM DTM — stub (`dtm_stub.py`)
+- IOM DTM — **API connector** (`dtm_client.py`) → `staging/dtm.csv`
 - WHO Emergencies — stub (`who_stub.py`)
 - IPC — stub (`ipc_stub.py`)
 - EM-DAT — stub (`emdat_stub.py`)
@@ -150,6 +150,28 @@ if `params.granularity: month` is used and supported, the connector derives a mo
 UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-decisions/` (no `/arrivals/`). We query
 `/asylum-applications/` with `cf_type=ISO` and a **year window** (this year + previous if needed) and map the count to
 **DI (Displacement Influx)** with `metric=affected, unit=persons`. See the official API docs.
+
+## IOM DTM — real connector
+
+- **Phase 1 source:** HDX mirrors of DTM datasets (CSV/XLSX). Discovery terms configurable via `ingestion/config/dtm.yml`.
+- **Scope:** Monthly-first ingestion of displacement / needs (`metric ∈ {in_need, affected}`) by ISO3 and mapped shock.
+- **Series semantics:** Incident / flow series pass through. Cumulative series are converted to **month-over-month deltas**
+  (first month dropped unless `DTM_ALLOW_FIRST_MONTH=1`). Negative deltas clip to `0`.
+- **Aggregation:** Subnational rows are summed to national totals before the delta step. Output rows are always monthly and
+  carry deterministic `event_id`s derived from `(iso3, hazard_code, metric, as_of_month, value, source_url)`.
+- **Hazard mapping:** Uses the `shock_keywords` lexicon from `config/dtm.yml`. Ambiguous titles fall back to
+  `hazard_code=multi`; pure movement defaults to `displacement_influx` unless overridden by `DTM_DEFAULT_HAZARD`.
+- **Publisher metadata:** `publisher="IOM-DTM"`, `source_type="cluster"`, `method="DTM; HXL-aware; monthly-first; delta-on-cumulative"`.
+
+**Env toggles:**
+
+- `RESOLVER_SKIP_DTM=1` — skip the connector (writes header-only CSV).
+- `RESOLVER_MAX_RESULTS=<int>` — optional cap for emitted rows.
+- `RESOLVER_DEBUG=1` — verbose logging (shared convention across ingestion clients).
+- `DTM_ALLOW_FIRST_MONTH=1` — include the first month from cumulative series as a delta (default 0 → drop it).
+- `DTM_DEFAULT_HAZARD=<key>` — override the fallback hazard keyword (default `displacement_influx`).
+- `DTM_BASE=<url>` — override the base discovery endpoint (defaults to `https://data.humdata.org`).
+- `RELIEFWEB_APPNAME` — reused for User-Agent hints when hitting HDX mirrors.
 
 ## HDX (CKAN) — real connector
 

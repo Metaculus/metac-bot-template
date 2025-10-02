@@ -1,0 +1,27 @@
+base_url: https://data.humdata.org
+package_query_terms: ["IOM DTM", "Displacement Tracking Matrix", "DTM"]
+prefer_hxl: true
+max_datasets: 400
+monthly_first: true
+
+shock_keywords:
+  flood: ["flood", "inundation", "inondation"]
+  drought: ["drought", "aridity"]
+  tropical_cyclone: ["cyclone", "typhoon", "hurricane", "tc"]
+  heat_wave: ["heat wave", "heatwave", "extreme heat"]
+  armed_conflict_onset: ["conflict onset", "outbreak of conflict"]
+  armed_conflict_escalation: ["escalation", "clashes", "intensification"]
+  armed_conflict_cessation: ["ceasefire", "cessation"]
+  civil_unrest: ["protest", "unrest", "riots"]
+  displacement_influx: ["arrivals", "influx", "flow monitoring", "fmp", "ett", "mt"]
+  economic_crisis: ["economic crisis", "inflation", "currency"]
+  phe: ["outbreak", "epidemic", "pandemic", "cholera", "measles", "covid"]
+
+series_hints:
+  fmp: incident
+  ett: incident
+  mt: incident
+  idp_stock: cumulative
+
+allow_first_month_delta: false
+default_hazard: displacement_influx

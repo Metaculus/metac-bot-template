@@ -4,7 +4,7 @@ import importlib
 CANONICAL = [
     "source","source_event_id","as_of_date","country_iso3","country_name",
     "hazard_code","hazard_label","hazard_class","metric_name","metric_unit",
-    "value","evidence_url","evidence_label",
+    "series_semantics","value","evidence_url","evidence_label",
 ]
 
 
