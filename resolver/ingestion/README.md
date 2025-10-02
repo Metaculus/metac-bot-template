@@ -20,7 +20,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - GDACS — stub (`gdacs_stub.py`)
 - Copernicus EMS — stub (`copernicus_stub.py`)
 - UNOSAT — stub (`unosat_stub.py`)
-- HDX (CKAN) — stub (`hdx_stub.py`)
+- HDX (CKAN) — **API connector** (`hdx_client.py`) → `staging/hdx.csv`
 - ACLED — stub (`acled_stub.py`)
 - UCDP — stub (`ucdp_stub.py`)
 - FEWS NET — stub (`fews_stub.py`)
@@ -149,7 +149,23 @@ if `params.granularity: month` is used and supported, the connector derives a mo
 
 UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-decisions/` (no `/arrivals/`). We query
 `/asylum-applications/` with `cf_type=ISO` and a **year window** (this year + previous if needed) and map the count to
-**DI (Displacement Influx)** with `metric=affected, unit=persons`. See the official API docs.  
+**DI (Displacement Influx)** with `metric=affected, unit=persons`. See the official API docs.
+
+## HDX (CKAN) — real connector
+
+- **Endpoint:** CKAN Action API (`/api/3/action/package_search`) for dataset discovery, plus resource download URLs (CSV/XLSX).
+- **Selection:** iterates ISO3s from `data/countries.csv`, filtering to HNO/HRP topics and preferring HXL-tagged resources.
+- **Metrics:** extracts **People in Need** monthly first (`metric=in_need`). Falls back to **People Affected** monthly when PIN is absent.
+- **Time handling:** requires month granularity (`YYYY-MM`). Annual rows are emitted only when `ALLOW_ANNUAL_FALLBACK=1`.
+- **Hazards:** keyword lexicon maps dataset/resource metadata to `resolver/data/shocks.csv`. Ambiguity defaults to `multi`.
+- **Output:** canonical `staging/hdx.csv` with deterministic IDs, `unit=persons`, `publisher="HDX (CKAN)"`, and fail-soft header-only writes.
+- **Env toggles:**
+  - `RESOLVER_SKIP_HDX=1` — skip connector (writes header-only CSV).
+  - `ALLOW_ANNUAL_FALLBACK=1` — permit yearly totals when no monthly data is present (default 0).
+  - `RESOLVER_MAX_RESULTS=<int>` — cap emitted rows (shared with other connectors).
+  - `RESOLVER_DEBUG=1` — verbose logging for troubleshooting.
+  - `HDX_BASE=<url>` — override base URL (default `https://data.humdata.org`).
+  - `RELIEFWEB_APPNAME` — optional User-Agent override reused from the ReliefWeb connector.
 
 ## Source notes (what each adds)
 

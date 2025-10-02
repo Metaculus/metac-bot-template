@@ -5,6 +5,7 @@ source_precedence:                       # highest → lowest
   - ifrc_or_gov_sitrep
   - un_cluster_snapshot
   - reputable_ingo_un
+  - hdx                                   # HDX connector (between direct agency and media)
   - agency                               # generic agency
   - media_discovery_only
 
@@ -21,7 +22,10 @@ source_mapping:
     publisher: ["UNHCR", "IOM-DTM", "WHO", "IPC"]
   reputable_ingo_un:
     source_type: ["agency"]
-    publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "HDX (CKAN)", "FEWS NET", "WFP mVAM"]
+    publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "FEWS NET", "WFP mVAM"]
+  hdx:
+    source_type: ["agency"]
+    publisher: ["HDX (CKAN)"]
   agency:
     source_type: ["agency"]
     publisher: ["*"]                     # any other agency-like source
@@ -35,3 +39,6 @@ conflict_rule:
 cutoff:
   timezone: "Europe/Istanbul"
   lag_days_allowed: 7
+
+lags:
+  hdx: 3d

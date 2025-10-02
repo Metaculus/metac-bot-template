@@ -1,0 +1,20 @@
+base_url: https://data.humdata.org
+query_text: people in need
+prefer_hxl: true
+topic_filters:
+  - humanitarian needs overview-hno
+  - humanitarian response plan-hrp
+max_datasets: 500
+shock_keywords:
+  flood: ["flood", "inondation", "inundation"]
+  drought: ["drought", "aridity"]
+  tropical_cyclone: ["cyclone", "typhoon", "hurricane", "tc"]
+  heat_wave: ["heat wave", "heatwave", "extreme heat", "hot spell"]
+  armed_conflict_onset: ["conflict onset", "outbreak of conflict"]
+  armed_conflict_escalation: ["escalation", "intensification"]
+  armed_conflict_cessation: ["ceasefire", "cessation"]
+  civil_unrest: ["protest", "unrest", "riots"]
+  displacement_influx: ["arrivals", "displacement influx", "influx"]
+  economic_crisis: ["economic crisis", "inflation crisis", "currency crisis"]
+  phe: ["outbreak", "epidemic", "pandemic", "public health emergency"]
+allow_annual_fallback: false
