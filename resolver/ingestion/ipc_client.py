@@ -14,6 +14,8 @@ from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence
 import pandas as pd
 import yaml
 
+from resolver.tools.denominators import get_population_record, safe_pct_to_people
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -23,6 +25,7 @@ COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
 
 OUT_PATH = STAGING / "ipc.csv"
+DEFAULT_DENOMINATOR = DATA / "population.csv"
 
 CANONICAL_HEADERS = [
     "event_id",
@@ -229,6 +232,28 @@ def _parse_people(value: Any) -> Optional[float]:
     return float(number)
 
 
+def _parse_percent(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    lowered = text.lower()
+    if "%" not in text and "percent" not in lowered:
+        return None
+    cleaned = text.replace("%", "")
+    cleaned = cleaned.replace("percent", "")
+    cleaned = cleaned.replace("Percent", "")
+    cleaned = cleaned.replace(",", "").strip()
+    try:
+        number = float(cleaned)
+    except ValueError:
+        return None
+    if math.isnan(number):
+        return None
+    return float(number)
+
+
 def _digest(parts: Sequence[Any]) -> str:
     joined = "|".join(str(p) for p in parts)
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:12]
@@ -290,6 +315,18 @@ def _merge_definition(existing: List[str], addition: str) -> List[str]:
     if addition not in existing:
         existing.append(addition)
     return existing
+
+
+def _merge_method(existing: str, addition: str) -> str:
+    addition = (addition or "").strip()
+    if not addition:
+        return existing
+    if not existing:
+        return addition
+    parts = [part.strip() for part in existing.split(";") if part.strip()]
+    if addition not in parts:
+        parts.append(addition)
+    return "; ".join(parts)
 
 
 def _load_source_frame(source: Dict[str, Any]) -> SourceFrame:
@@ -359,6 +396,16 @@ def _collect_rows(
     stock_rows: Dict[Tuple[str, str, str, str], MonthlyRecord] = {}
 
     default_hazard_key = os.getenv("IPC_DEFAULT_HAZARD", cfg.get("default_hazard", "multi"))
+    allow_percent = _env_bool("IPC_ALLOW_PERCENT", False)
+    denom_override = os.getenv("IPC_DENOMINATOR_FILE")
+    denom_cfg = cfg.get("denominator_file")
+    if denom_override:
+        denominator_path = denom_override
+    elif denom_cfg:
+        denominator_path = str(denom_cfg)
+    else:
+        denominator_path = str(DEFAULT_DENOMINATOR)
+    worldpop_hint = os.getenv("WORLDPOP_PRODUCT", "").strip()
 
     for source in cfg.get("sources", []):
         frame = _load_source_frame(source)
@@ -404,7 +451,10 @@ def _collect_rows(
 
             phase3_val = _best_of(record, frame, phase3p_keys)
             phase3 = _parse_people(phase3_val)
-            if phase3 is None:
+            phase3_pct = None
+            if phase3 is None and allow_percent:
+                phase3_pct = _parse_percent(phase3_val)
+            if phase3 is None and phase3_pct is None:
                 continue
 
             phase4 = _parse_people(_best_of(record, frame, phase4p_keys))
@@ -458,11 +508,50 @@ def _collect_rows(
                         source_type=source_type,
                     )
                 stock_rec = stock_rows[key]
-                stock_rec.value += phase3
+                month_value: Optional[float]
+                month_value = float(phase3) if phase3 is not None else None
+                method_note = ""
+                if month_value is None and phase3_pct is not None:
+                    try:
+                        year = int(month.split("-", 1)[0])
+                    except Exception:
+                        year = None
+                    if year is None:
+                        continue
+                    converted = safe_pct_to_people(
+                        phase3_pct,
+                        iso,
+                        year,
+                        denom_path=denominator_path,
+                    )
+                    if converted is None or converted <= 0:
+                        dbg(
+                            f"unable to convert {iso} {month} percent {phase3_pct} → people (denominator missing)"
+                        )
+                        continue
+                    month_value = float(converted)
+                    record_meta = get_population_record(iso, year, denominator_path)
+                    product_label = "WorldPop"
+                    if record_meta and record_meta.product:
+                        product_label = f"WorldPop {record_meta.product}".strip()
+                    elif worldpop_hint:
+                        product_label = f"WorldPop {worldpop_hint}"
+                    if record_meta and record_meta.year < year:
+                        detail = f"{product_label} year={record_meta.year} (fallback for {year})"
+                    elif record_meta:
+                        detail = f"{product_label} year={record_meta.year}"
+                    else:
+                        detail = f"{product_label}"
+                    method_note = f"pct→people ({detail})"
+                if month_value is None or month_value <= 0:
+                    continue
+                stock_rec.value += month_value
                 stock_rec.source_url = stock_rec.source_url or source_url
                 stock_rec.doc_title = stock_rec.doc_title or doc_title
                 stock_rec.publication_date = stock_rec.publication_date or publication_date
                 stock_rec.definition_parts = _merge_definition(stock_rec.definition_parts, definition)
+                if method_note:
+                    stock_rec.method_notes = _merge_method(stock_rec.method_notes, method_note)
 
     if not stock_rows:
         return [], []
@@ -485,6 +574,10 @@ def _collect_rows(
             value,
             record.source_url,
         )
+        method_note = record.method_notes.strip()
+        method = "IPC; Phase 3+ stock; period→month expansion; national sum"
+        if method_note:
+            method = f"{method}; {method_note}"
         stock_output.append(
             {
                 "event_id": event_id,
@@ -504,11 +597,12 @@ def _collect_rows(
                 "source_url": record.source_url,
                 "doc_title": record.doc_title or "IPC Acute Food Insecurity",
                 "definition_text": " ".join(record.definition_parts).strip(),
-                "method": "IPC; Phase 3+ stock; period→month expansion; national sum",
+                "method": method,
                 "confidence": "",
                 "revision": "",
                 "ingested_at": ingested_at,
                 "_source_key": record.source_key,
+                "_method_note": method_note,
             }
         )
 
@@ -542,19 +636,26 @@ def _collect_rows(
                     delta,
                     row.get("source_url", ""),
                 )
+                incident_method = (
+                    "IPC; Phase 3+ stock; period→month expansion; national sum; incident=new PIN (MoM positive delta)"
+                )
+                method_note = (row.get("_method_note") or "").strip()
+                if method_note:
+                    incident_method = f"{incident_method}; {method_note}"
                 incident_output.append(
                     {
                         **{k: v for k, v in row.items() if k not in {"value", "series_semantics", "event_id", "_source_key"}},
                         "event_id": event_id,
                         "series_semantics": SERIES_INCIDENT,
                         "value": round(delta, 3),
-                        "method": "IPC; Phase 3+ stock; period→month expansion; national sum; incident=new PIN (MoM positive delta)",
+                        "method": incident_method,
                         "_source_key": row.get("_source_key", ""),
                     }
                 )
 
     for row in stock_output + incident_output:
         row.pop("_source_key", None)
+        row.pop("_method_note", None)
 
     return stock_output, incident_output
 

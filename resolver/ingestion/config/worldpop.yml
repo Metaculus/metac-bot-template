@@ -1,0 +1,12 @@
+product: un_adj_unconstrained
+years_back: 0
+prefer_hxl: false
+keys:
+  iso3: ["iso3", "country_code", "country_iso3", "#country+code"]
+  year: ["year", "#date+year"]
+  population: ["population", "pop_total", "#population"]
+  notes: ["notes", "comment", "#meta+notes"]
+source:
+  publisher: "WorldPop"
+  source_type: "official"
+  url_template: "https://example.org/worldpop/{product}_{year}.csv"

@@ -17,6 +17,8 @@ import pandas as pd
 import requests
 import yaml
 
+from resolver.tools.denominators import get_population_record, safe_pct_to_people
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -24,6 +26,7 @@ CONFIG = ROOT / "ingestion" / "config" / "hdx.yml"
 
 COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
+DEFAULT_DENOMINATOR = DATA / "population.csv"
 
 COLUMNS = [
     "event_id",
@@ -94,8 +97,9 @@ class Hazard:
 @dataclass
 class SeriesRow:
     as_of_date: str
-    value: int
+    value: float
     is_total: bool
+    is_percent: bool = False
 
 
 def dbg(msg: str) -> None:
@@ -284,11 +288,49 @@ def _normalize_value(value: Any) -> Optional[int]:
     text = str(value).strip()
     if not text:
         return None
+    lowered = text.lower()
+    if "%" in text or "percent" in lowered:
+        return None
     cleaned = re.sub(r"[^0-9.+-]", "", text).replace(",", "")
     if not cleaned:
         return None
     try:
         return int(round(float(cleaned)))
+    except Exception:
+        return None
+
+
+def _parse_percent(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    lowered = text.lower()
+    if "%" not in text and "percent" not in lowered:
+        return None
+    cleaned = text.replace("%", "")
+    cleaned = cleaned.replace("percent", "")
+    cleaned = cleaned.replace("Percent", "")
+    cleaned = cleaned.replace(",", "").strip()
+    if not cleaned:
+        return None
+    try:
+        number = float(cleaned)
+    except Exception:
+        return None
+    if math.isnan(number):
+        return None
+    return float(number)
+
+
+def _year_from_as_of(as_of: str) -> Optional[int]:
+    if not as_of:
+        return None
+    try:
+        if len(as_of) == 4:
+            return int(as_of)
+        return int(as_of.split("-", 1)[0])
     except Exception:
         return None
 
@@ -345,17 +387,39 @@ def extract_metric_timeseries(df: pd.DataFrame, allow_annual: bool = False) -> O
         else:
             continue
 
-        value = _normalize_value(row.get(metric_col))
+        raw_value = row.get(metric_col)
+        value = _normalize_value(raw_value)
         if value is None:
+            pct = _parse_percent(raw_value)
+            if pct is None:
+                continue
+            rows.append(
+                SeriesRow(as_of, float(pct), _is_total_row(row, columns, metric_col), True)
+            )
             continue
 
-        rows.append(SeriesRow(as_of, value, _is_total_row(row, columns, metric_col)))
+        rows.append(SeriesRow(as_of, float(value), _is_total_row(row, columns, metric_col), False))
 
     if not rows:
         return None
 
+    percent_rows = [row for row in rows if row.is_percent]
+    count_rows = [row for row in rows if not row.is_percent]
+
+    if percent_rows and not count_rows:
+        latest: Dict[str, SeriesRow] = {}
+        for item in percent_rows:
+            current = latest.get(item.as_of_date)
+            if current is None or (item.is_total and not current.is_total):
+                latest[item.as_of_date] = item
+        aggregated = sorted(latest.values(), key=lambda r: r.as_of_date)
+        return metric, aggregated
+
+    if not count_rows:
+        return None
+
     grouped: Dict[str, Dict[str, Any]] = defaultdict(lambda: {"total": None, "parts": []})
-    for item in rows:
+    for item in count_rows:
         entry = grouped[item.as_of_date]
         if item.is_total and entry["total"] is None:
             entry["total"] = item.value
@@ -365,9 +429,9 @@ def extract_metric_timeseries(df: pd.DataFrame, allow_annual: bool = False) -> O
     aggregated: List[SeriesRow] = []
     for as_of_date, info in grouped.items():
         if info["total"] is not None:
-            aggregated.append(SeriesRow(as_of_date, int(info["total"]), True))
+            aggregated.append(SeriesRow(as_of_date, float(info["total"]), True, False))
         elif info["parts"]:
-            aggregated.append(SeriesRow(as_of_date, int(sum(info["parts"])), False))
+            aggregated.append(SeriesRow(as_of_date, float(sum(info["parts"])), False, False))
 
     aggregated.sort(key=lambda r: r.as_of_date)
     if not aggregated:
@@ -463,6 +527,16 @@ def collect_rows() -> List[List[Any]]:
     max_datasets = int(cfg.get("max_datasets", 200))
 
     keywords_cfg = cfg.get("shock_keywords", {})
+    allow_percent = _env_bool("HDX_ALLOW_PERCENT", False)
+    denom_override = os.getenv("HDX_DENOMINATOR_FILE")
+    denom_cfg = cfg.get("denominator_file")
+    if denom_override:
+        denominator_path = denom_override
+    elif denom_cfg:
+        denominator_path = str(denom_cfg)
+    else:
+        denominator_path = str(DEFAULT_DENOMINATOR)
+    worldpop_hint = os.getenv("WORLDPOP_PRODUCT", "").strip()
 
     user_agent = os.getenv("RELIEFWEB_APPNAME", "resolver-ingestion")
 
@@ -547,6 +621,57 @@ def collect_rows() -> List[List[Any]]:
                     if len(as_of) == 4 and not allow_annual:
                         continue
                     value = item.value
+                    conversion_note = ""
+                    method_value = "api"
+                    percent_value: Optional[float] = None
+                    if getattr(item, "is_percent", False):
+                        if not allow_percent:
+                            continue
+                        percent_value = float(value)
+                        year = _year_from_as_of(as_of)
+                        if year is None:
+                            continue
+                        converted = safe_pct_to_people(
+                            percent_value,
+                            iso3,
+                            year,
+                            denom_path=denominator_path,
+                        )
+                        if converted is None or converted <= 0:
+                            dbg(
+                                f"unable to convert HDX percent for {iso3} {as_of} ({percent_value})"
+                            )
+                            continue
+                        value = int(converted)
+                        record = get_population_record(iso3, year, denominator_path)
+                        product_label = (
+                            record.product
+                            if record and record.product
+                            else (worldpop_hint or "population")
+                        )
+                        denom_label = f"WorldPop {product_label}".strip()
+                        if record and record.year < year:
+                            detail = f"{denom_label} year={record.year} (fallback for {year})"
+                        elif record:
+                            detail = f"{denom_label} year={record.year}"
+                        else:
+                            detail = denom_label
+                        conversion_note = (
+                            f"Converted from prevalence {percent_value:.2f}% using {detail}."
+                        )
+                        method_value = f"api; pct→people ({detail})"
+                    else:
+                        value = int(round(float(value)))
+                    if value <= 0:
+                        continue
+                    definition_base = (
+                        f"Aggregated {metric.replace('_', ' ')} figures from HDX resource."
+                    )
+                    definition_text = (
+                        f"{definition_base} {conversion_note}".strip()
+                        if conversion_note
+                        else definition_base
+                    )
                     hazard_code = hazard.code
                     hazard_label = hazard.label
                     hazard_class = hazard.hclass
@@ -574,8 +699,8 @@ def collect_rows() -> List[List[Any]]:
                         "agency",
                         source_url,
                         doc_title,
-                        f"Aggregated {metric.replace('_', ' ')} figures from HDX resource.",
-                        "api",
+                        definition_text,
+                        method_value,
                         "med",
                         1,
                         ingested_at,

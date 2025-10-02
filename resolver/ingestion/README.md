@@ -25,7 +25,8 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - ACLED — stub (`acled_stub.py`)
 - UCDP — stub (`ucdp_stub.py`)
 - FEWS NET — stub (`fews_stub.py`)
-- WFP mVAM — stub (`wfp_mvam_stub.py`)
+- WorldPop — **API connector** (`worldpop_client.py`) → `staging/worldpop.csv` + `data/population.csv`
+- WFP mVAM — **API connector** (`wfp_mvam_client.py`) → `staging/wfp_mvam.csv`
 - Gov NDMA — stub (`gov_ndma_stub.py`)
 
 Each connector:
@@ -211,20 +212,39 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
   - `RESOLVER_DEBUG=1` — verbose logging for troubleshooting.
   - `HDX_BASE=<url>` — override base URL (default `https://data.humdata.org`).
   - `RELIEFWEB_APPNAME` — optional User-Agent override reused from the ReliefWeb connector.
+  - `HDX_ALLOW_PERCENT=1` + `HDX_DENOMINATOR_FILE` — opt-in percent→people conversion using the shared WorldPop denominators.
+
+## WorldPop population denominators — real connector
+
+- **Endpoint:** Configurable CSV mirrors (default template provided in `ingestion/config/worldpop.yml`) exposing national population totals by ISO3 and year.
+- **Outputs:**
+  - `staging/worldpop.csv` — canonical staging snapshot for auditing the latest fetch.
+  - `data/population.csv` — versioned denominator table (`iso3,year,population,source,product,download_date,source_url,notes`).
+- **Semantics:** Upserts the most recent year per ISO3 (plus `WORLDPOP_YEARS_BACK` historic years) with overwrite-by-key semantics on reruns.
+- **Env toggles:**
+  - `RESOLVER_SKIP_WORLDPOP=1` — emit header-only CSVs (no network calls).
+  - `WORLDPOP_PRODUCT` — choose dataset variant (`un_adj_unconstrained` default; `un_adj_constrained` supported).
+  - `WORLDPOP_YEARS_BACK` — fetch additional previous years (default `0`).
+  - `WORLDPOP_URL_TEMPLATE` — override the configured URL pattern (handy for mirrors/tests).
+  - `RESOLVER_DEBUG=1` — verbose logging and fetch diagnostics.
+- **Consumers:** Shared by `WFP mVAM` and (opt-in) `IPC` / `HDX` (via `IPC_ALLOW_PERCENT=1` / `HDX_ALLOW_PERCENT=1`) to turn prevalence into people counts when datasets lack denominators.
 
 ## WFP mVAM — real connector
 
 - **Config-driven:** Sources defined in `ingestion/config/wfp_mvam.yml`; supports CSV/XLSX/JSON exports with optional HXL tags.
 - **Monthly-first:** Daily/weekly series are averaged to the month before conversion. Example: two February IFC readings of
   `10%` and `12%` with a 100,000-person population average to `11%`, yielding `round(0.11 * 100000) = 11,000` people in need.
-- **Percent → people:** Prefer direct people columns. If only prevalence is available and `WFP_MVAM_ALLOW_PERCENT=1`, the
-  connector multiplies the monthly mean (%) by a population denominator (dataset column first, then `WFP_MVAM_DENOMINATOR_FILE`).
+- **Percent → people:** Prefer direct people columns. When only prevalence is present, the connector converts the monthly mean (%)
+  using dataset-provided populations or the shared WorldPop denominators (`resolver/data/population.csv`). Fallback notes (e.g.,
+  `WorldPop un_adj_unconstrained year=2023 (fallback for 2024)`) are written into both `definition_text` and `method` for
+  auditability.
 - **Outputs:** Emits national **stock** (`series_semantics=stock`) and optional **incident** (`incident` delta) streams with
   deterministic IDs per ISO3/hazard/month. Negative deltas are clipped to zero.
 - **Shocks:** Keyword lexicon maps drivers/tags to drought, economic crisis, conflict, flood, or `MULTI` (Multi-driver Food
   Insecurity) when ambiguous.
-- **Env toggles:** `RESOLVER_SKIP_WFP_MVAM=1`, `WFP_MVAM_ALLOW_PERCENT`, `WFP_MVAM_STOCK`, `WFP_MVAM_INCIDENT`,
-  `WFP_MVAM_INCLUDE_FIRST_MONTH_DELTA`, `WFP_MVAM_DENOMINATOR_FILE`, `WFP_MVAM_INDICATOR_PRIORITY`.
+- **Env toggles:** `RESOLVER_SKIP_WFP_MVAM=1`, `WFP_MVAM_ALLOW_PERCENT` (default `1`), `WFP_MVAM_STOCK`, `WFP_MVAM_INCIDENT`,
+  `WFP_MVAM_INCLUDE_FIRST_MONTH_DELTA`, `WFP_MVAM_DENOMINATOR_FILE`, `WFP_MVAM_INDICATOR_PRIORITY`, `WORLDPOP_PRODUCT` (shared
+  denominator label hint).
 
 ## Source notes (what each adds)
 
@@ -232,6 +252,7 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
 - **GDACS** — near-real-time alerts and modeled impact for hydro-meteo hazards.
 - **Copernicus EMS / UNOSAT** — activation footprints, damage/exposure mapping (good PA proxies).
 - **HDX (CKAN)** — dataset discovery hub; many country datasets flow here.
+- **WorldPop** — annual national population denominators to support percent→people conversions.
 - **ACLED / UCDP** — conflict event data (drivers/attribution context; not PIN).
 - **FEWS NET** — early warning analyses; aligns with IPC phases for DR/EC.
 - **WFP mVAM** — market/price/food security indicators (context for EC/DR).
