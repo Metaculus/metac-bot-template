@@ -212,6 +212,20 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
   - `HDX_BASE=<url>` — override base URL (default `https://data.humdata.org`).
   - `RELIEFWEB_APPNAME` — optional User-Agent override reused from the ReliefWeb connector.
 
+## WFP mVAM — real connector
+
+- **Config-driven:** Sources defined in `ingestion/config/wfp_mvam.yml`; supports CSV/XLSX/JSON exports with optional HXL tags.
+- **Monthly-first:** Daily/weekly series are averaged to the month before conversion. Example: two February IFC readings of
+  `10%` and `12%` with a 100,000-person population average to `11%`, yielding `round(0.11 * 100000) = 11,000` people in need.
+- **Percent → people:** Prefer direct people columns. If only prevalence is available and `WFP_MVAM_ALLOW_PERCENT=1`, the
+  connector multiplies the monthly mean (%) by a population denominator (dataset column first, then `WFP_MVAM_DENOMINATOR_FILE`).
+- **Outputs:** Emits national **stock** (`series_semantics=stock`) and optional **incident** (`incident` delta) streams with
+  deterministic IDs per ISO3/hazard/month. Negative deltas are clipped to zero.
+- **Shocks:** Keyword lexicon maps drivers/tags to drought, economic crisis, conflict, flood, or `MULTI` (Multi-driver Food
+  Insecurity) when ambiguous.
+- **Env toggles:** `RESOLVER_SKIP_WFP_MVAM=1`, `WFP_MVAM_ALLOW_PERCENT`, `WFP_MVAM_STOCK`, `WFP_MVAM_INCIDENT`,
+  `WFP_MVAM_INCLUDE_FIRST_MONTH_DELTA`, `WFP_MVAM_DENOMINATOR_FILE`, `WFP_MVAM_INDICATOR_PRIORITY`.
+
 ## Source notes (what each adds)
 
 - **EM-DAT** — standardized disaster records and “people affected”; lagged but consistent.
