@@ -20,14 +20,15 @@ REAL = [
     "reliefweb_client.py",
     "unhcr_client.py",
     "unhcr_odp_client.py",
-    "dtm_client.py",
-    "emdat_client.py",
-    "gdacs_client.py",
-    "hdx_client.py",
     "who_phe_client.py",
     "ipc_client.py",
-    "worldpop_client.py",
     "wfp_mvam_client.py",
+    "acled_client.py",
+    "dtm_client.py",
+    "hdx_client.py",
+    "emdat_client.py",
+    "gdacs_client.py",
+    "worldpop_client.py",
 ]
 
 STUBS = [
@@ -60,6 +61,7 @@ SKIP_ENVS = {
     "reliefweb_client.py": ("RESOLVER_SKIP_RELIEFWEB", "ReliefWeb connector"),
     "unhcr_client.py": ("RESOLVER_SKIP_UNHCR", "UNHCR connector"),
     "unhcr_odp_client.py": ("RESOLVER_SKIP_UNHCR_ODP", "UNHCR ODP connector"),
+    "acled_client.py": ("RESOLVER_SKIP_ACLED", "ACLED connector"),
     "dtm_client.py": ("RESOLVER_SKIP_DTM", "DTM connector"),
     "emdat_client.py": ("RESOLVER_SKIP_EMDAT", "EM-DAT connector"),
     "gdacs_client.py": ("RESOLVER_SKIP_GDACS", "GDACS connector"),

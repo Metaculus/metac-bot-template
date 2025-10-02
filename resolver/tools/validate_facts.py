@@ -42,7 +42,15 @@ SHOCKS_CSV = os.path.join(DATA_DIR, "shocks.csv")
 
 ALLOWED_SOURCE_TYPES = {"appeal","sitrep","gov","cluster","agency","media"}
 ALLOWED_CONFIDENCE   = {"high","med","low"}
-ALLOWED_UNITS        = {"persons","persons_cases"}
+ALLOWED_UNITS        = {"persons","persons_cases","events"}
+
+INTEGER_METRICS = {"fatalities", "events", "participants"}
+METRIC_UNIT_RULES = {
+    "cases": {"persons_cases"},
+    "fatalities": {"persons"},
+    "events": {"events"},
+    "participants": {"persons"},
+}
 
 SERIES_NEW_CONTRADICTIONS = ["cumulative", "to date", "since", "total to date"]
 SERIES_STOCK_HINTS = ["in the last 30 days", "this month"]
@@ -141,6 +149,12 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
             errors.append(f"{prefix}: metric '{metric}' not in {sorted(metric_enum)}")
         if unit not in unit_enum:
             errors.append(f"{prefix}: unit '{unit}' not in {sorted(unit_enum)}")
+        rule_units = METRIC_UNIT_RULES.get(metric)
+        if rule_units and unit not in rule_units:
+            allowed = ", ".join(sorted(rule_units))
+            errors.append(
+                f"{prefix}: metric '{metric}' must use unit in {{{allowed}}} (got '{unit}')"
+            )
 
         # value >= 0 and numeric
         val_raw = row.get("value","")
@@ -148,6 +162,10 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
             val = float(val_raw)
             if val < 0:
                 errors.append(f"{prefix}: value {val} < 0")
+            if metric in INTEGER_METRICS and not float(val).is_integer():
+                errors.append(
+                    f"{prefix}: metric '{metric}' requires integer values (got {val_raw})"
+                )
         except Exception:
             errors.append(f"{prefix}: value '{val_raw}' is not numeric")
 
@@ -156,14 +174,37 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
         as_of = as_of.strip()
         pub   = str(row.get("publication_date",""))
         pub = pub.strip()
-        if not _is_date(as_of):
-            errors.append(f"{prefix}: as_of_date '{as_of}' not ISO YYYY-MM-DD")
+        is_month = bool(YM_REGEX.match(as_of))
+        is_date = _is_date(as_of)
+        as_of_date_obj = None
+        if metric in INTEGER_METRICS:
+            if not is_month:
+                errors.append(
+                    f"{prefix}: metric '{metric}' requires as_of_date in YYYY-MM format (got '{as_of}')"
+                )
+            else:
+                try:
+                    as_of_date_obj = dt.date.fromisoformat(f"{as_of}-01")
+                except ValueError:
+                    errors.append(
+                        f"{prefix}: as_of_date '{as_of}' not parsable as YYYY-MM"
+                    )
+        elif not is_month and not is_date:
+            errors.append(f"{prefix}: as_of_date '{as_of}' not ISO YYYY-MM or YYYY-MM-DD")
+        elif is_date:
+            as_of_date_obj = _as_date(as_of)
+        else:  # monthly but not integer metric
+            try:
+                as_of_date_obj = dt.date.fromisoformat(f"{as_of}-01")
+            except ValueError:
+                errors.append(f"{prefix}: as_of_date '{as_of}' not parsable as YYYY-MM")
         if not _is_date(pub):
             errors.append(f"{prefix}: publication_date '{pub}' not ISO YYYY-MM-DD")
-        if _is_date(as_of) and _is_date(pub):
-            if _as_date(as_of) > _as_date(pub):
+        if as_of_date_obj and _is_date(pub):
+            pub_date = _as_date(pub)
+            if as_of_date_obj > pub_date:
                 errors.append(f"{prefix}: as_of_date {as_of} > publication_date {pub}")
-            if _as_date(pub) > today:
+            if pub_date > today:
                 errors.append(f"{prefix}: publication_date {pub} > today {today.isoformat()}")
 
         # Source & confidence enums

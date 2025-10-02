@@ -1,7 +1,7 @@
 # Policy knobs (kept here so we don't hardcode in code)
 metric_preference: [in_need, affected]   # PIN first, else PA
 tiers:
-  - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc", "wfp_mvam", "dtm"]
+  - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc", "wfp_mvam", "dtm", "acled"]
   - ["hdx", "emdat", "gdacs"]
   - ["reliefweb", "media"]
 source_precedence:                       # highest → lowest (legacy policy tiers)
@@ -59,6 +59,7 @@ lags:
   ipc: 7d
   who: 2d
   dtm: 2d
+  acled: 2d
   hdx: 3d
   emdat: 7d
   gdacs: 1d

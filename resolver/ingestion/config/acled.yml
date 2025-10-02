@@ -1,0 +1,18 @@
+base_url: "https://api.acleddata.com"
+window_days: 450
+limit: 1000
+keys:
+  date: ["event_date", "event_date_new", "date"]
+  event_type: ["event_type"]
+  sub_event_type: ["sub_event_type"]
+  iso3: ["iso3", "country_iso3", "#country+code"]
+  country: ["country"]
+  fatalities: ["fatalities", "#affected+killed", "#fatalities"]
+  notes: ["notes", "description"]
+unrest_types: ["Protests", "Riots"]
+participants:
+  enabled: false
+  regex: "(?:participants?|protesters?)\\D{0,10}([0-9][0-9,\\.]+)"
+  aggregate: "sum"
+publisher: "ACLED"
+source_type: "other"
