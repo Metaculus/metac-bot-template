@@ -94,7 +94,7 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
     missing = [c for c in required if c not in df.columns]
     if missing:
         errors.append(f"Missing required columns: {missing}")
-        return errors  # can't proceed
+        return errors, warnings  # can't proceed
 
     # Enum checks
     metric_enum = set(schema["enums"]["metric"])

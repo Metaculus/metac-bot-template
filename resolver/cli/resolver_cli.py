@@ -339,16 +339,17 @@ def main() -> None:
     series_requested = args.series
     df, source_dataset, series_used = load_series_for_month(ym, current_month, series_requested)
 
-    if df is None and series_requested == "new":
-        note = f"Note: No deltas for {ym}; returning stock totals."
-        print(note, file=sys.stderr)
-        df, source_dataset, series_used = load_series_for_month(ym, current_month, "stock")
-
-    if df is None:
-        message = (
-            "No data found. Expected snapshot at snapshots/"
-            f"{ym}/facts.parquet, exports/resolved(_reviewed).csv, or exports/deltas.csv."
+    def fallback_to_stock(reason: str) -> None:
+        nonlocal df, source_dataset, series_used
+        print(reason, file=sys.stderr)
+        df_stock, stock_dataset, stock_series = load_series_for_month(
+            ym, current_month, "stock"
         )
+        df = df_stock
+        source_dataset = stock_dataset
+        series_used = stock_series
+
+    def emit_no_data(message: str) -> None:
         print(
             json.dumps(
                 {
@@ -366,7 +367,28 @@ def main() -> None:
             print("\n" + message, file=sys.stderr)
         sys.exit(1)
 
+    if df is None and series_requested == "new":
+        fallback_to_stock(f"Note: No deltas for {ym}; returning stock totals.")
+
+    if df is None:
+        message = (
+            "No data found. Expected snapshot at snapshots/"
+            f"{ym}/facts.parquet, exports/resolved(_reviewed).csv, or exports/deltas.csv."
+        )
+        emit_no_data(message)
+
     row = select_row(df, iso3, hazard_code, args.cutoff)
+    if not row and series_requested == "new" and series_used == "new":
+        fallback_to_stock(
+            f"Note: No delta record for iso3={iso3}, hazard={hazard_code} at {ym}; returning stock totals."
+        )
+        if df is None:
+            message = (
+                "No data found. Expected snapshot at snapshots/"
+                f"{ym}/facts.parquet, exports/resolved(_reviewed).csv, or exports/deltas.csv."
+            )
+            emit_no_data(message)
+        row = select_row(df, iso3, hazard_code, args.cutoff)
     if not row:
         message = (
             f"No eligible record for iso3={iso3}, hazard={hazard_code} at cutoff {args.cutoff}."
@@ -379,6 +401,7 @@ def main() -> None:
                     "iso3": iso3,
                     "hazard_code": hazard_code,
                     "cutoff": args.cutoff,
+                    "series_requested": series_requested,
                 }
             ),
             flush=True,
