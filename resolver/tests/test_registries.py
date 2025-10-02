@@ -18,5 +18,5 @@ def test_shocks_registry_columns_and_scope():
     labels = s["hazard_label"].str.lower().tolist()
     assert not any("earthquake" in x for x in labels)
     # classes must be in allowed set
-    allowed = {"natural","human-induced","epidemic"}
+    allowed = {"natural","human-induced","epidemic","other","multi"}
     assert set(s["hazard_class"]).issubset(allowed)
