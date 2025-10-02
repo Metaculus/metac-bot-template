@@ -24,6 +24,7 @@ Rules implemented (from policy A2):
 import argparse, sys, json, datetime as dt
 from pathlib import Path
 from typing import List, Dict, Any
+from zoneinfo import ZoneInfo
 
 try:
     import pandas as pd
@@ -37,10 +38,17 @@ except ImportError:
     print("Please 'pip install pyyaml' to run the engine.", file=sys.stderr)
     sys.exit(2)
 
+try:
+    from dateutil import parser as date_parser
+except ImportError:
+    print("Please 'pip install python-dateutil' to run the engine.", file=sys.stderr)
+    sys.exit(2)
+
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
 EXPORTS = ROOT / "exports"
 CONFIG = TOOLS / "precedence_config.yml"
+ISTANBUL_TZ = ZoneInfo("Europe/Istanbul")
 
 def _load(f: Path) -> pd.DataFrame:
     ext = f.suffix.lower()
@@ -60,6 +68,23 @@ def _to_date(s: str) -> dt.date | None:
         return dt.date.fromisoformat(str(s)[:10])
     except Exception:
         return None
+
+
+def _parse_as_of(value: str) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = date_parser.isoparse(str(value))
+    except (ValueError, TypeError):
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=ISTANBUL_TZ)
+    return parsed.astimezone(ISTANBUL_TZ)
+
+
+def _as_of_local_date(value: str) -> dt.date | None:
+    parsed = _parse_as_of(value)
+    return parsed.date() if parsed else None
 
 def _within_pub_lag(pub: str, cutoff: dt.date, lag_days: int) -> bool:
     pub_date = _to_date(pub)
@@ -115,7 +140,7 @@ def main():
     eligible = facts.copy()
 
     def _as_of_valid(value: str) -> bool:
-        parsed = _to_date(value)
+        parsed = _as_of_local_date(value)
         return (parsed is not None) and (parsed <= cutoff_date)
 
     # as_of must be <= cutoff
@@ -186,6 +211,10 @@ def main():
             # Nothing for preferred metrics; skip this iso3/hazard
             continue
 
+        as_of_dt = _parse_as_of(chosen_row["as_of_date"])
+        ym_label = as_of_dt.strftime("%Y-%m") if as_of_dt else ""
+        as_of_norm = as_of_dt.strftime("%Y-%m-%d") if as_of_dt else str(chosen_row.get("as_of_date", "") or "")
+
         rec = {
             # Keys for downstream
             "iso3": iso3,
@@ -195,11 +224,14 @@ def main():
             "metric": chosen_metric,
             "value": int(float(chosen_row["val"])),
             "unit": chosen_row.get("unit","persons"),
-            "as_of_date": chosen_row["as_of_date"],
+            "ym": ym_label,
+            "as_of": as_of_norm,
+            "as_of_date": as_of_norm,
             "publication_date": chosen_row["publication_date"],
             "publisher": chosen_row["publisher"],
             "source_type": chosen_row["source_type"],
             "source_url": chosen_row["source_url"],
+            "source_name": chosen_row["publisher"],
             "doc_title": chosen_row["doc_title"],
             "definition_text": chosen_row["definition_text"],
             "precedence_tier": tiers[int(chosen_row["source_tier"])] if int(chosen_row["source_tier"]) < len(tiers) else "unknown",
