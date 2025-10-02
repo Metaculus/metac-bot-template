@@ -26,6 +26,7 @@ REAL = [
     "hdx_client.py",
     "who_phe_client.py",
     "ipc_client.py",
+    "worldpop_client.py",
     "wfp_mvam_client.py",
 ]
 
@@ -65,6 +66,7 @@ SKIP_ENVS = {
     "who_phe_client.py": ("RESOLVER_SKIP_WHO", "WHO PHE connector"),
     "ipc_client.py": ("RESOLVER_SKIP_IPC", "IPC connector"),
     "hdx_client.py": ("RESOLVER_SKIP_HDX", "HDX connector"),
+    "worldpop_client.py": ("RESOLVER_SKIP_WORLDPOP", "WorldPop connector"),
     "wfp_mvam_client.py": ("RESOLVER_SKIP_WFP_MVAM", "WFP mVAM connector"),
 }
 

@@ -45,6 +45,9 @@ jobs:
           RESOLVER_MAX_RESULTS: "1000"
           RESOLVER_INGESTION_MODE: real
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
+          WFP_MVAM_ALLOW_PERCENT: "1"
+          WFP_MVAM_DENOMINATOR_FILE: "resolver/data/population.csv"
+          WORLDPOP_PRODUCT: "un_adj_unconstrained"
         run: |
           python resolver/ingestion/run_all_stubs.py
 
@@ -130,6 +133,9 @@ jobs:
           RESOLVER_MAX_RESULTS: "1000"
           RESOLVER_INGESTION_MODE: real
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
+          WFP_MVAM_ALLOW_PERCENT: "1"
+          WFP_MVAM_DENOMINATOR_FILE: "resolver/data/population.csv"
+          WORLDPOP_PRODUCT: "un_adj_unconstrained"
         run: |
           python resolver/ingestion/run_all_stubs.py
 

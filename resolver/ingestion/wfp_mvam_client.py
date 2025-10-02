@@ -16,6 +16,10 @@ import pandas as pd
 import requests
 import yaml
 
+from resolver.tools.denominators import (
+    get_population_record,
+    safe_pct_to_people,
+)
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -24,6 +28,7 @@ CONFIG = DEFAULT_CONFIG
 COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
 OUT_PATH = STAGING / "wfp_mvam.csv"
+DEFAULT_DENOMINATOR = DATA / "population.csv"
 
 CANONICAL_HEADERS = [
     "event_id",
@@ -241,53 +246,6 @@ def _load_dataframe(source: Dict[str, Any]) -> Optional[pd.DataFrame]:
     return pd.read_csv(path)
 
 
-def _load_denominator_table(path: Optional[str]) -> Optional[pd.DataFrame]:
-    if not path:
-        return None
-    denom_path = Path(path)
-    if not denom_path.exists():
-        dbg(f"denominator file {path} missing")
-        return None
-    df = pd.read_csv(denom_path, dtype=str)
-    df = df.rename(columns={c: c.strip().lower() for c in df.columns})
-    for col in ["population", "pop", "value"]:
-        if col in df.columns:
-            df[col] = df[col].apply(_parse_float)
-    if "year" in df.columns:
-        df["year"] = df["year"].apply(lambda x: int(float(x)) if _parse_float(x) is not None else None)
-    return df
-
-
-def _lookup_denominator(df: Optional[pd.DataFrame], iso3: str, year: int) -> Optional[float]:
-    if df is None or df.empty:
-        return None
-    data = df.copy()
-    if "iso3" not in data.columns:
-        return None
-    sample = data[data["iso3"].str.upper() == iso3.upper()]
-    if sample.empty:
-        return None
-    if "population" in sample.columns:
-        pop_col = "population"
-    elif "pop" in sample.columns:
-        pop_col = "pop"
-    else:
-        pop_col = None
-    if pop_col is None:
-        return None
-    if "year" in sample.columns and sample["year"].notna().any():
-        exact = sample[sample["year"] == year]
-        if exact.empty:
-            exact = sample[sample["year"] < year]
-        if exact.empty:
-            exact = sample
-        sample = exact
-    population = sample[pop_col].dropna()
-    if population.empty:
-        return None
-    return float(population.iloc[-1])
-
-
 def _resolve_hazard(code: str, shocks: pd.DataFrame) -> Hazard:
     match = shocks[shocks["hazard_code"].str.upper() == code.upper()]
     if match.empty:
@@ -344,7 +302,7 @@ def collect_rows() -> List[List[Any]]:
 
     country_lookup = {row.iso3.upper(): row.country_name for row in countries.itertuples()}
 
-    allow_percent = _env_bool("WFP_MVAM_ALLOW_PERCENT", bool(cfg.get("allow_percent", False)))
+    allow_percent = _env_bool("WFP_MVAM_ALLOW_PERCENT", bool(cfg.get("allow_percent", True)))
     emit_stock = _env_bool("WFP_MVAM_STOCK", bool(cfg.get("emit_stock", True)))
     emit_incident = _env_bool("WFP_MVAM_INCIDENT", bool(cfg.get("emit_incident", True)))
     include_first_month = _env_bool(
@@ -360,8 +318,15 @@ def collect_rows() -> List[List[Any]]:
 
     prefer_hxl = bool(cfg.get("prefer_hxl", False))
     denominator_override = os.getenv("WFP_MVAM_DENOMINATOR_FILE")
-    denominator_path = denominator_override or cfg.get("denominator_file")
-    denominator_table = _load_denominator_table(denominator_path) if allow_percent else None
+    denominator_cfg = cfg.get("denominator_file")
+    if denominator_override:
+        denominator_path = denominator_override
+    elif denominator_cfg:
+        denominator_path = str(denominator_cfg)
+    else:
+        denominator_path = str(DEFAULT_DENOMINATOR)
+
+    worldpop_product_hint = os.getenv("WORLDPOP_PRODUCT", "").strip()
 
     records: List[Dict[str, Any]] = []
 
@@ -539,21 +504,47 @@ def collect_rows() -> List[List[Any]]:
             pct_value = _aggregate_percent(chosen)
             if pct_value is None:
                 continue
-            population_value = chosen["population"].dropna()
-            denominator = float(population_value.iloc[0]) if not population_value.empty else None
-            denominator_source = "dataset population"
-            if denominator is None:
+            population_value = chosen["population"].apply(_parse_float).dropna()
+            population_value = population_value[population_value > 0]
+            if not population_value.empty:
+                denominator = float(population_value.iloc[0])
+                agg_value = int(round(pct_value / 100.0 * denominator))
+                conversion_method = "pct→people (dataset population)"
+                definition_note = (
+                    f"Monthly mean prevalence {pct_value:.2f}% converted using dataset population"
+                )
+                chosen = chosen.iloc[[0]]
+            else:
                 year = int(month.split("-")[0])
-                denominator = _lookup_denominator(denominator_table, iso3, year)
-                denominator_source = "denominator file"
-            if denominator is None or denominator <= 0:
-                continue
-            agg_value = round(pct_value / 100.0 * denominator)
-            conversion_method = f"pct→people ({denominator_source})"
-            definition_note = (
-                f"Monthly mean prevalence {pct_value:.2f}% converted using {denominator_source}"
-            )
-            chosen = chosen.iloc[[0]]
+                record = get_population_record(iso3, year, denominator_path)
+                if record is None:
+                    dbg(
+                        f"no denominator available for {iso3} in {year}; skipping {month}"
+                    )
+                    continue
+                converted = safe_pct_to_people(
+                    pct_value,
+                    iso3,
+                    year,
+                    denom_path=denominator_path,
+                )
+                if converted is None or converted <= 0:
+                    dbg(
+                        f"denominator conversion returned {converted} for {iso3} in {year}; skipping"
+                    )
+                    continue
+                agg_value = int(converted)
+                product_label = record.product or worldpop_product_hint or "population"
+                denominator_label = f"WorldPop {product_label}"
+                if record.year < year:
+                    denominator_detail = f"{denominator_label} year={record.year} (fallback for {year})"
+                else:
+                    denominator_detail = f"{denominator_label} year={record.year}"
+                conversion_method = f"pct→people (denominator={denominator_detail})"
+                definition_note = (
+                    f"Monthly mean prevalence {pct_value:.2f}% converted using {denominator_detail}"
+                )
+                chosen = chosen.iloc[[0]]
         else:
             continue
 

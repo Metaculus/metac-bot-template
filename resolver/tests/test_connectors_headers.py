@@ -68,6 +68,22 @@ def test_wfp_mvam_header(tmp_path, monkeypatch):
     _assert_header(tmp_out)
 
 
+def test_worldpop_header(tmp_path, monkeypatch):
+    from resolver.ingestion import worldpop_client
+
+    data_path = Path(tmp_path) / "population.csv"
+    staging_path = Path(tmp_path) / "worldpop.csv"
+
+    monkeypatch.setenv("RESOLVER_SKIP_WORLDPOP", "1")
+    monkeypatch.setattr(worldpop_client, "OUT_DATA", data_path)
+    monkeypatch.setattr(worldpop_client, "OUT_STAGING", staging_path)
+
+    worldpop_client.main()
+
+    data_df = pd.read_csv(data_path)
+    staging_df = pd.read_csv(staging_path)
+    assert list(data_df.columns) == worldpop_client.CANONICAL_COLUMNS
+    assert list(staging_df.columns) == worldpop_client.CANONICAL_COLUMNS
 def test_dtm_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_DTM", "1")
     from resolver.ingestion import dtm_client
