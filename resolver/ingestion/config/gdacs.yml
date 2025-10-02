@@ -1,0 +1,32 @@
+base_urls:
+  # Provide concrete endpoints/feeds here; support list in case multiple are needed
+  event_list: "<GDACS event-list endpoint with from/to params>"
+  event_details: "<GDACS event-details endpoint with event_id & episode_id>"
+
+window_days: 60
+prefer_hxl: false
+
+keys:
+  id: ["event_id","id"]
+  episode: ["episode_id","episode"]
+  type: ["event_type","type","hazard"]
+  start: ["start_date","fromdate","begindate"]
+  end:   ["end_date","todate","enddate"]
+  iso3:  ["iso3","country_iso3","iso"]
+  country: ["country","country_name"]
+  impact: ["population","population_exposed","affected","total_affected"]
+  title: ["title","name"]
+  updated: ["updated","last_update","report_time"]
+  url: ["url","detail_url","link"]
+
+hazard_map:
+  earthquake: ["EQ","Earthquake"]
+  tropical_cyclone: ["TC","ST","CY","Tropical Cyclone","Storm"]
+  flood: ["FL","Flood"]
+  volcano: ["VO","Volcano"]
+default_hazard: "other"
+
+allocation_policy: "prorata"   # prorata | start
+dedup_strategy: "max"          # max | sum
+source_type: "other"
+publisher: "GDACS"

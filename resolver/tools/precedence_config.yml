@@ -2,7 +2,7 @@
 metric_preference: [in_need, affected]   # PIN first, else PA
 tiers:
   - ["unhcr_api", "unhcr_odp", "ifrc_go", "who", "ipc", "dtm"]
-  - ["hdx", "emdat"]
+  - ["hdx", "emdat", "gdacs"]
   - ["reliefweb", "media"]
 source_precedence:                       # highest → lowest (legacy policy tiers)
   - inter_agency_plan
@@ -61,3 +61,4 @@ lags:
   dtm: 2d
   hdx: 3d
   emdat: 7d
+  gdacs: 1d
