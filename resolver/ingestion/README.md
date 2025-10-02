@@ -22,7 +22,7 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - Copernicus EMS — stub (`copernicus_stub.py`)
 - UNOSAT — stub (`unosat_stub.py`)
 - HDX (CKAN) — **API connector** (`hdx_client.py`) → `staging/hdx.csv`
-- ACLED — stub (`acled_stub.py`)
+- ACLED — **API connector** (`acled_client.py`) → `staging/acled.csv`
 - UCDP — stub (`ucdp_stub.py`)
 - FEWS NET — stub (`fews_stub.py`)
 - WorldPop — **API connector** (`worldpop_client.py`) → `staging/worldpop.csv` + `data/population.csv`
@@ -101,7 +101,7 @@ with real pulls in Epic C.
 - Metrics: PIN preferred (if phrase found), else PA; PHE allows `cases` (unit = persons_cases)
 - No PDF parsing in v1; title/summary only
 
-Hazards must match resolver/data/shocks.csv (e.g., FL, DR, TC, HW, ACO, ACE, ACC, DI, CU, EC, PHE).
+Hazards must match resolver/data/shocks.csv (e.g., FL, DR, TC, HW, ACO, ACE, DI, CU, EC, PHE).
 
 Earthquakes are out of scope by policy and are not included in stubs.
 
@@ -183,6 +183,24 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
 - `DTM_DEFAULT_HAZARD=<key>` — override the fallback hazard keyword (default `displacement_influx`).
 - `DTM_BASE=<url>` — override the base discovery endpoint (defaults to `https://data.humdata.org`).
 - `RELIEFWEB_APPNAME` — reused for User-Agent hints when hitting HDX mirrors.
+
+## ACLED — real connector
+
+- **Endpoint:** Configurable via `ingestion/config/acled.yml` (default `https://api.acleddata.com`). Auth requires
+  `ACLED_TOKEN`; override the base with `ACLED_BASE`.
+- **Window & paging:** Pulls the last `window_days` (default 450) so that the previous 12 months of battle fatalities are
+  available for the onset rule. `ACLED_MAX_LIMIT`, `RESOLVER_MAX_PAGES`, and `RESOLVER_MAX_RESULTS` gate pagination.
+- **Conflict fatalities:** All event types are summed per ISO3 × month. Rows emit `metric=fatalities`, `unit=persons`, and
+  default to `hazard_code=ACE` (armed_conflict_escalation).
+- **Onset detection:** When a country’s battle fatalities over the previous 12 months are `< 25` and the current month is
+  `≥ 25`, the hazard switches to `hazard_code=ACO` (armed_conflict_onset). Each row records the inputs in
+  `definition_text`/`method`, e.g. `Onset rule inputs: prev12m=24, current_month=30`.
+- **Civil unrest:** Counts `event_type ∈ {Protests, Riots}` as `metric=events`, `unit=events`. Optional participant totals
+  parse `notes` via a regex when `participants.enabled` or `ACLED_PARSE_PARTICIPANTS=1` (aggregate `sum|median`).
+- **Output contract:** `as_of_date=YYYY-MM`, deterministic IDs (`<ISO3>-ACLED-<hazard>-<metric>-YYYY-MM-<digest>`),
+  `publisher="ACLED"`, `source_type="other"`, `doc_title="ACLED monthly aggregation"`,
+  `method="ACLED; monthly-first; fatality sum across all event types; unrest events=Protests+Riots; onset rule applied"`.
+- **Fail-soft:** `RESOLVER_SKIP_ACLED=1` or any runtime error writes a header-only `staging/acled.csv`, keeping CI green.
 
 ## WHO Public Health Emergencies — real connector
 

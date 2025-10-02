@@ -97,6 +97,18 @@ def test_dtm_header_written(tmp_path, monkeypatch):
     assert row == dtm_client.CANONICAL_HEADERS
 
 
+def test_acled_header_written(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_ACLED", "1")
+    from resolver.ingestion import acled_client
+
+    acled_client.OUT_PATH = Path(tmp_path) / "acled.csv"
+    assert acled_client.main() is False
+
+    with open(acled_client.OUT_PATH, newline="", encoding="utf-8") as f:
+        row = next(csv.reader(f))
+    assert row == acled_client.CANONICAL_HEADERS
+
+
 def test_emdat_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_EMDAT", "1")
     from resolver.ingestion import emdat_client

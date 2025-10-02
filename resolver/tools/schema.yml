@@ -21,8 +21,8 @@ required:
   - ingested_at
 
 enums:
-  metric: [in_need, affected, displaced, cases]
-  unit: [persons, persons_cases]
+  metric: [in_need, affected, displaced, cases, fatalities, events, participants]
+  unit: [persons, persons_cases, events]
 
 optional:
   series_semantics:
