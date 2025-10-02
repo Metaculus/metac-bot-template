@@ -196,14 +196,15 @@ def main():
     pq_path  = out_dir / "facts.parquet"
     facts.to_csv(csv_path, index=False)
     try:
+        # Parquet writes use snappy compression by default which keeps artifacts lean
         facts.to_parquet(pq_path, index=False)
     except Exception as e:
         print(f"Warning: could not write Parquet ({e}). CSV written.", file=sys.stderr)
 
-    print(f"✅ Exported {len(facts)} rows to:")
-    print(f" - {csv_path}")
+    print(f"✅ Exported {len(facts)} rows")
     if pq_path.exists():
-        print(f" - {pq_path}")
+        print(f" - parquet: {pq_path}")
+    print(f" - csv (diagnostic): {csv_path}")
 
 if __name__ == "__main__":
     main()

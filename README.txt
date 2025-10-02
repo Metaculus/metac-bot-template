@@ -113,6 +113,14 @@ update calibration weights on a schedule,
 
 commit/push changes automatically.
 
+Resolver artifact hygiene
+
+Nightly resolver runs can generate sizeable exports. The CI workflow calls
+`resolver/tools/check_sizes.py` to warn when CSV/Parquet artifacts cross the
+recommended 25 MB / 150 MB thresholds and to fail if the tracked repo contents
+grow beyond ~2 GB. Temporary scratch files (`resolver/tmp/`,
+`resolver/exports/*_working.*`, etc.) stay out of Git history via `.gitignore`.
+
 What Spagbot Does (Pipeline)
 
 Select question(s)

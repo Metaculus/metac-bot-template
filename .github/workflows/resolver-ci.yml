@@ -78,6 +78,14 @@ jobs:
         run: |
           python resolver/review/make_review_queue.py
 
+      - name: Check artifact and repo sizes
+        run: |
+          python resolver/tools/check_sizes.py
+        env:
+          RESOLVER_LIMIT_PARQUET_MB: "150"
+          RESOLVER_LIMIT_CSV_MB: "25"
+          RESOLVER_LIMIT_REPO_MB: "2000"
+
       - name: Run data-contract tests (pytest)
         run: |
           pytest resolver/tests -q
@@ -166,6 +174,14 @@ jobs:
       - name: Build review queue
         run: |
           python resolver/review/make_review_queue.py
+
+      - name: Check artifact and repo sizes
+        run: |
+          python resolver/tools/check_sizes.py
+        env:
+          RESOLVER_LIMIT_PARQUET_MB: "150"
+          RESOLVER_LIMIT_CSV_MB: "25"
+          RESOLVER_LIMIT_REPO_MB: "2000"
 
       - name: Run data-contract tests (pytest)
         run: |
