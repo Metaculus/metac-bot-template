@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
+INGESTION_MODE = (os.environ.get("RESOLVER_INGESTION_MODE") or "").strip().lower()
 INCLUDE_STUBS = os.environ.get("RESOLVER_INCLUDE_STUBS", "0") == "1"
 FAIL_ON_STUB_ERROR = os.environ.get("RESOLVER_FAIL_ON_STUB_ERROR", "0") == "1"
 FORCE_DTM_STUB = os.environ.get("RESOLVER_FORCE_DTM_STUB", "0") == "1"
@@ -79,24 +80,40 @@ def _run_script(path: Path) -> int:
 
 
 def main() -> None:
-    real_failed = 0
-    for name in REAL:
-        path = ROOT / name
-        if _should_skip(name):
-            continue
-        if not path.exists():
-            print(f"{name} missing; skipping", file=sys.stderr)
-            continue
-        rc = _run_script(path)
-        if rc != 0:
-            print(f"{name} failed with rc={rc}", file=sys.stderr)
-            real_failed += 1
+    if INGESTION_MODE and INGESTION_MODE not in {"real", "stubs", "all"}:
+        print(
+            f"Unknown RESOLVER_INGESTION_MODE={INGESTION_MODE!r}; expected one of real|stubs|all"
+        )
+        return
 
-    if real_failed:
-        print(f"{real_failed} real connector(s) failed", file=sys.stderr)
-        sys.exit(1)
+    if INGESTION_MODE:
+        run_real = INGESTION_MODE in {"real", "all"}
+        run_stubs = INGESTION_MODE in {"stubs", "all"}
+    else:
+        run_real = True
+        run_stubs = INCLUDE_STUBS
 
-    run_stubs = INCLUDE_STUBS or FORCE_DTM_STUB
+    if FORCE_DTM_STUB:
+        run_stubs = True
+
+    if run_real:
+        real_failed = 0
+        for name in REAL:
+            path = ROOT / name
+            if _should_skip(name):
+                continue
+            if not path.exists():
+                print(f"{name} missing; skipping", file=sys.stderr)
+                continue
+            rc = _run_script(path)
+            if rc != 0:
+                print(f"{name} failed with rc={rc}", file=sys.stderr)
+                real_failed += 1
+
+        if real_failed:
+            print(f"{real_failed} real connector(s) failed", file=sys.stderr)
+            sys.exit(1)
+
     if not run_stubs:
         return
 
@@ -118,7 +135,7 @@ def main() -> None:
         if FAIL_ON_STUB_ERROR:
             sys.exit(1)
     else:
-        print("All optional stubs ran successfully")
+        print("All stubs ran successfully")
 
 
 if __name__ == "__main__":

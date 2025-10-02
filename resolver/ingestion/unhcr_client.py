@@ -144,11 +144,15 @@ def make_rows() -> List[List[str]]:
         while page <= MAX_PAGES:
             params = dict(base_params)
             params["page"] = str(page)
+
+            results: List[Dict[str, Any]] = []
+            r = None
             try:
                 r = requests.get(url, params=params, headers=headers, timeout=30)
             except requests.RequestException as exc:
                 dbg(f"request for {yr} page {page} raised {exc}")
                 break
+
             request_idx += 1
             if _debug() and (request_idx % DEBUG_EVERY == 1):
                 dbg(f"GET {r.url} -> {r.status_code}")
@@ -157,11 +161,13 @@ def make_rows() -> List[List[str]]:
 
             try:
                 data = r.json()
-            except ValueError:
-                dbg("response JSON decode failed; skipping year %s page %s" % (yr, page))
+            except ValueError as exc:
+                dbg(
+                    "response JSON decode failed; skipping year %s page %s (%s)"
+                    % (yr, page, exc)
+                )
                 break
 
-            results: List[Dict[str, Any]] = []
             if isinstance(data, list):
                 results = [item for item in data if isinstance(item, dict)]
             elif isinstance(data, dict):
