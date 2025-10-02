@@ -5,8 +5,9 @@ source_precedence:                       # highest → lowest
   - ifrc_or_gov_sitrep
   - un_cluster_snapshot
   - reputable_ingo_un
+  - dtm                                   # DTM alongside HDX for movement PIN
   - hdx                                   # HDX connector (between direct agency and media)
-  - agency                               # generic agency
+  - reliefweb
   - media_discovery_only
 
 # Map source_type/publisher patterns to the policy tiers above
@@ -23,9 +24,15 @@ source_mapping:
   reputable_ingo_un:
     source_type: ["agency"]
     publisher: ["EM-DAT", "GDACS", "Copernicus EMS", "UNOSAT", "FEWS NET", "WFP mVAM"]
+  dtm:
+    source_type: ["cluster", "agency"]
+    publisher: ["IOM-DTM"]
   hdx:
     source_type: ["agency"]
     publisher: ["HDX (CKAN)"]
+  reliefweb:
+    source_type: ["media", "appeal", "sitrep"]
+    publisher: ["ReliefWeb"]
   agency:
     source_type: ["agency"]
     publisher: ["*"]                     # any other agency-like source
@@ -41,4 +48,5 @@ cutoff:
   lag_days_allowed: 7
 
 lags:
+  dtm: 2d
   hdx: 3d

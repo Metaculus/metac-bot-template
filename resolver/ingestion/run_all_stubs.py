@@ -10,9 +10,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 STUBS = [
     "ifrc_go_client.py",      # real connector (fail-soft on error/skip)
-    "reliefweb_client.py",    # real connector (may be skipped via env)
-    "unhcr_client.py",          # real connector (fail-soft/skip-capable)
+    "unhcr_client.py",        # real connector (fail-soft/skip-capable)
     "unhcr_odp_client.py",    # real connector (fail-soft/skip-capable)
+    "dtm_client.py",          # real connector (fail-soft/skip-capable)
+    "reliefweb_client.py",    # real connector (may be skipped via env)
     "hdx_client.py",          # real connector (fail-soft/skip-capable)
     "dtm_stub.py",
     "who_stub.py",
@@ -99,6 +100,25 @@ def main():
             if res.returncode != 0:
                 print("UNHCR ODP client failed; continuing with other sources…", file=sys.stderr)
                 failed += 1
+            continue
+
+        if script == "dtm_client.py":
+            if env.get("RESOLVER_SKIP_DTM") == "1":
+                print("RESOLVER_SKIP_DTM=1 — DTM connector will be skipped")
+                continue
+            if not path.exists():
+                print("dtm_client.py missing; skipping real connector", file=sys.stderr)
+                continue
+            print("==> running dtm_client.py (real connector)")
+            try:
+                mod = importlib.import_module("resolver.ingestion.dtm_client")
+                ok = mod.main()
+            except Exception as exc:
+                print(f"DTM client raised {exc}; continuing with other sources…", file=sys.stderr)
+                failed += 1
+                continue
+            if not ok:
+                print("DTM client produced no rows", file=sys.stderr)
             continue
 
         if script == "hdx_client.py":

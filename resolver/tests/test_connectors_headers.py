@@ -1,4 +1,5 @@
 from pathlib import Path
+import csv
 import importlib
 import pandas as pd
 
@@ -47,3 +48,16 @@ def test_hdx_header(tmp_path, monkeypatch):
     mod = importlib.import_module("resolver.ingestion.hdx_client")
     mod.main()
     _assert_header(STAGING / "hdx.csv")
+
+
+def test_dtm_header_written(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_DTM", "1")
+    from resolver.ingestion import dtm_client
+
+    dtm_client.OUT_DIR = Path(tmp_path)
+    dtm_client.OUT_PATH = Path(tmp_path) / "dtm.csv"
+    assert dtm_client.main() is False
+
+    with open(dtm_client.OUT_PATH, newline="", encoding="utf-8") as f:
+        row = next(csv.reader(f))
+    assert row == dtm_client.CANONICAL_HEADERS
