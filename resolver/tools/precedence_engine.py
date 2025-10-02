@@ -180,8 +180,12 @@ def main():
             if mg.empty:
                 continue
 
-            # Sort by as_of desc, then publication_date desc
-            mg = mg.sort_values(by=["as_of_date","publication_date"], ascending=[False, False])
+            # Sort by Istanbul-aware timestamps to respect localized cutoff semantics
+            sentinel = dt.datetime(1900, 1, 1, tzinfo=ISTANBUL_TZ)
+            mg["_as_of_sort"] = mg["as_of_date"].apply(lambda x: _parse_as_of(x) or sentinel)
+            mg["_pub_sort"] = mg["publication_date"].apply(lambda x: _parse_as_of(x) or sentinel)
+            mg = mg.sort_values(by=["_as_of_sort", "_pub_sort"], ascending=[False, False])
+            mg = mg.drop(columns=["_as_of_sort", "_pub_sort"], errors="ignore")
 
             top = mg.iloc[0]
             chosen_metric = metric

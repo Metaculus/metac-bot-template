@@ -109,6 +109,7 @@ def process_group(group: pd.DataFrame) -> List[dict]:
         else:
             # stock series
             base_record["value_stock"] = value
+            update_prev = True
             if prev_stock is None:
                 base_record["value_new"] = 0.0
                 base_record["first_observation"] = 1
@@ -124,7 +125,9 @@ def process_group(group: pd.DataFrame) -> List[dict]:
                     else:
                         base_record["value_new"] = 0.0
                         base_record["delta_negative_clamped"] = 1
-            prev_stock = value
+                        update_prev = False
+            if update_prev:
+                prev_stock = value
 
         records.append(base_record)
     return records
