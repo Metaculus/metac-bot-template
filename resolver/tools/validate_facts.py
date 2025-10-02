@@ -16,8 +16,8 @@ The script:
 Exits non-zero if any errors are found; prints a concise summary.
 """
 
-import argparse, sys, os, json, datetime as dt
-from typing import List, Dict, Any
+import argparse, sys, os, json, datetime as dt, re
+from typing import List, Dict, Any, Tuple
 
 # Local imports safe even if pandas isn't available yet.
 try:
@@ -43,6 +43,9 @@ SHOCKS_CSV = os.path.join(DATA_DIR, "shocks.csv")
 ALLOWED_SOURCE_TYPES = {"appeal","sitrep","gov","cluster","agency","media"}
 ALLOWED_CONFIDENCE   = {"high","med","low"}
 ALLOWED_UNITS        = {"persons","persons_cases"}
+
+SERIES_NEW_CONTRADICTIONS = ["cumulative", "to date", "since", "total to date"]
+YM_REGEX = re.compile(r"^\d{4}-\d{2}$")
 
 def _load_schema() -> Dict[str, Any]:
     with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
@@ -71,8 +74,19 @@ def _is_date(s: str) -> bool:
 def _as_date(s: str) -> dt.date:
     return dt.date.fromisoformat(s)
 
-def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, shocks: pd.DataFrame) -> List[str]:
+def _is_missing(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, float) and pd.isna(value):
+        return True
+    if isinstance(value, str):
+        return value.strip() == "" or value.strip().lower() == "nan"
+    return False
+
+
+def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, shocks: pd.DataFrame) -> Tuple[List[str], List[str]]:
     errors: List[str] = []
+    warnings: List[str] = []
 
     # Required columns
     required = schema.get("required", [])
@@ -167,7 +181,31 @@ def validate(df: pd.DataFrame, schema: Dict[str, Any], countries: pd.DataFrame, 
         if metric == "cases" and unit != "persons_cases":
             errors.append(f"{prefix}: metric 'cases' must use unit 'persons_cases'")
 
-    return errors
+        # Series semantics + deltas metadata
+        series_semantics = str(row.get("series_semantics", "")).strip().lower()
+        definition_text = str(row.get("definition_text", ""))
+        if series_semantics == "new":
+            lower_def = definition_text.lower()
+            contradictions = [phrase for phrase in SERIES_NEW_CONTRADICTIONS if phrase in lower_def]
+            if contradictions:
+                warnings.append(
+                    f"{prefix}: series_semantics 'new' but definition_text contains {contradictions}"
+                )
+
+        value_new = row.get("value_new")
+        value_stock = row.get("value_stock")
+        if not _is_missing(value_new) and not _is_missing(value_stock):
+            warnings.append(
+                f"{prefix}: both value_new and value_stock provided; typically only one should be set"
+            )
+
+        ym_value = row.get("ym")
+        if not _is_missing(ym_value):
+            ym_str = str(ym_value).strip()
+            if not YM_REGEX.match(ym_str):
+                errors.append(f"{prefix}: ym '{ym_str}' must match YYYY-MM")
+
+    return errors, warnings
 
 def main():
     ap = argparse.ArgumentParser()
@@ -188,7 +226,11 @@ def main():
     countries = _load_csv(COUNTRIES_CSV)
     shocks    = _load_csv(SHOCKS_CSV)
 
-    errors = validate(df, schema, countries, shocks)
+    errors, warnings = validate(df, schema, countries, shocks)
+    if warnings:
+        print("⚠️ Warnings:")
+        for w in warnings:
+            print(" -", w)
     if errors:
         print("❌ Validation failed:")
         for e in errors:
