@@ -85,6 +85,19 @@ def test_emdat_header_written(tmp_path, monkeypatch):
     assert row == emdat_client.CANONICAL_HEADERS
 
 
+def test_gdacs_header_written(tmp_path, monkeypatch):
+    monkeypatch.setenv("RESOLVER_SKIP_GDACS", "1")
+    from resolver.ingestion import gdacs_client
+
+    gdacs_client.OUT_DIR = Path(tmp_path)
+    gdacs_client.OUT_PATH = Path(tmp_path) / "gdacs.csv"
+    assert gdacs_client.main() is False
+
+    with open(gdacs_client.OUT_PATH, newline="", encoding="utf-8") as f:
+        row = next(csv.reader(f))
+    assert row == gdacs_client.CANONICAL_HEADERS
+
+
 def test_ipc_header_written(tmp_path, monkeypatch):
     monkeypatch.setenv("RESOLVER_SKIP_IPC", "1")
     mod = importlib.import_module("resolver.ingestion.ipc_client")
