@@ -148,6 +148,30 @@ All rows in `deltas.csv` are monthly "new" values with provenance. Stock series 
 `resolved.csv` now includes a normalized `ym` column derived from the figure's `as_of_date` in the Europe/Istanbul timezone. The precedence engine enforces the configured publication lag when evaluating rows for a cutoff, ensuring deltas align to the month of the figure rather than the publication date.
 
 
+### End-to-end (monthly)
+
+```bash
+# 1) Stage connectors → facts
+python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
+python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+# 2) Select authoritative values (stock totals)
+python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff YYYY-MM-DD
+
+# 3) Build monthly NEW deltas (this enables summation across months)
+python resolver/tools/make_deltas.py --resolved resolver/exports/resolved.csv --out resolver/exports/deltas.csv
+
+# 4) Freeze snapshot (now includes deltas)
+python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month YYYY-MM
+
+# 5) Write repo state (per-month folder with resolved + deltas)
+python resolver/tools/write_repo_state.py --month YYYY-MM
+
+# Optional: coverage/gaps
+python resolver/tools/gaps_report.py --deltas resolver/exports/deltas.csv --resolved resolver/exports/resolved.csv --months 3 --out resolver/exports/gaps_report.csv
+```
+
+
 ## Ask the resolver (CLI)
 
 ```bash
