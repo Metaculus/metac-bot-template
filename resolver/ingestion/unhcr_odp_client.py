@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 import requests
 
@@ -235,6 +235,63 @@ def _extract_json_links(location_html: str) -> List[str]:
     return links
 
 
+def _discover_widget_links(location_html: str) -> List[str]:
+    combos: List[Dict[str, str]] = []
+    pattern = re.compile(r"widget_id[\"']?\s*[:=]\s*[\"']?([0-9A-Za-z_-]+)", re.IGNORECASE)
+    for match in pattern.finditer(location_html):
+        widget_id = match.group(1)
+        context_start = max(match.start() - 200, 0)
+        context_end = match.end() + 200
+        context = location_html[context_start:context_end]
+        geo_match = re.search(r"geo_id[\"']?\s*[:=]\s*[\"']?([0-9A-Za-z_-]+)", context, re.IGNORECASE)
+        sv_match = re.search(r"sv_id[\"']?\s*[:=]\s*[\"']?([0-9A-Za-z_-]+)", context, re.IGNORECASE)
+        combos.append({"widget_id": widget_id})
+        if geo_match:
+            combos.append({"widget_id": widget_id, "geo_id": geo_match.group(1)})
+        if sv_match:
+            combos.append({"widget_id": widget_id, "sv_id": sv_match.group(1)})
+        if geo_match and sv_match:
+            combos.append(
+                {
+                    "widget_id": widget_id,
+                    "geo_id": geo_match.group(1),
+                    "sv_id": sv_match.group(1),
+                }
+            )
+
+    data_attr_matches = re.findall(
+        r'data-url="(/population/get/timeseries\?[^"#]+)"', location_html
+    )
+    for raw in data_attr_matches:
+        if "?" not in raw:
+            continue
+        query = raw.split("?", 1)[1]
+        parsed = parse_qs(query)
+        params = {key: values[0] for key, values in parsed.items() if values}
+        if params:
+            combos.append(params)
+
+    unique_params: List[Dict[str, str]] = []
+    seen: set[Tuple[Tuple[str, str], ...]] = set()
+    for combo in combos:
+        if isinstance(combo, dict):
+            flattened = tuple(sorted((str(k), str(v)) for k, v in combo.items()))
+            if flattened in seen:
+                continue
+            seen.add(flattened)
+            unique_params.append({str(k): str(v) for k, v in combo.items()})
+
+    links: List[str] = []
+    for params in unique_params:
+        if not params:
+            continue
+        query = urlencode(params, doseq=True)
+        full = urljoin(BASE, f"/population/get/timeseries?{query}")
+        if full not in links:
+            links.append(full)
+    return links
+
+
 def _select_series(
     json_links: Iterable[str],
     desired_frequency: str,
@@ -303,8 +360,12 @@ def make_rows() -> List[Dict[str, str]]:
                 country_name = title_match.group(1).strip()
         json_links = _extract_json_links(loc_html)
         if not json_links:
-            _debug(f"[ODP] no JSON links for {loc_url}")
-            continue
+            widget_links = _discover_widget_links(loc_html)
+            if widget_links:
+                json_links = widget_links
+            else:
+                print(f"[ODP] no ODP widgets discovered for URL={loc_url}")
+                continue
         series_url = _select_series(json_links, desired_frequency, population_group)
         if not series_url:
             _debug(f"[ODP] no matching series for {loc_url}")
@@ -358,6 +419,17 @@ def make_rows() -> List[Dict[str, str]]:
                 "evidence_url": series_url,
                 "evidence_label": "UNHCR ODP population timeseries (monthly sea arrivals)",
             })
+    if rows:
+        deduped: Dict[Tuple[str, str, str], Dict[str, str]] = {}
+        for row in rows:
+            key = (
+                row.get("country_iso3", ""),
+                row.get("as_of_date", ""),
+                row.get("metric_name", ""),
+            )
+            deduped[key] = row
+        rows = list(deduped.values())
+        rows.sort(key=lambda r: (r.get("country_iso3", ""), r.get("as_of_date", "")))
     return rows
 
 

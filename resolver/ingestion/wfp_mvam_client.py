@@ -25,6 +25,7 @@ DATA = ROOT / "data"
 STAGING = ROOT / "staging"
 DEFAULT_CONFIG = ROOT / "ingestion" / "config" / "wfp_mvam.yml"
 CONFIG = DEFAULT_CONFIG
+SOURCES_CONFIG = ROOT / "ingestion" / "config" / "wfp_mvam_sources.yml"
 COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
 OUT_PATH = STAGING / "wfp_mvam.csv"
@@ -318,10 +319,23 @@ def _load_dataframe(source: Dict[str, Any]) -> Optional[pd.DataFrame]:
     kind = (source.get("kind") or "csv").lower()
     appname = os.getenv("RELIEFWEB_APPNAME")
     if url.startswith("http://") or url.startswith("https://"):
-        headers = {"User-Agent": appname} if appname else None
-        resp = requests.get(url, headers=headers, timeout=60)
-        if resp.status_code != 200:
-            dbg(f"download failed for {url}: {resp.status_code}")
+        headers = {}
+        if appname:
+            headers["User-Agent"] = appname
+        if isinstance(source.get("headers"), dict):
+            headers.update({str(k): str(v) for k, v in source["headers"].items()})
+        try:
+            resp = requests.get(url, headers=headers or None, timeout=60)
+            if resp.status_code == 404:
+                print(f"[wfp_mvam] {url} returned 404; skipping source")
+                return None
+            resp.raise_for_status()
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else "HTTPError"
+            print(f"[wfp_mvam] {url} returned {status}; skipping source")
+            return None
+        except requests.RequestException as exc:
+            print(f"[wfp_mvam] request error for {url}: {exc}")
             return None
         data = io.BytesIO(resp.content)
         if kind == "csv":
@@ -395,6 +409,62 @@ def _aggregate_percent(group: pd.DataFrame) -> Optional[float]:
 
 def collect_rows() -> List[List[Any]]:
     cfg = load_config()
+    override_cfg = load_source_overrides()
+
+    if not override_cfg.get("enabled", False):
+        print("WFP mVAM disabled via config; writing header-only CSV")
+        return []
+
+    templates: Dict[str, Dict[str, Any]] = {}
+    for source in cfg.get("sources", []) or []:
+        name = str(source.get("name") or "").strip()
+        if not name:
+            continue
+        clone = dict(source)
+        templates[name] = clone
+    for name, template in DEFAULT_SOURCE_TEMPLATES.items():
+        templates.setdefault(name, dict(template))
+
+    auth_headers = override_cfg.get("auth") if isinstance(override_cfg.get("auth"), dict) else {}
+    prepared_sources: List[Dict[str, Any]] = []
+    overrides = override_cfg.get("sources", []) or []
+    for entry in overrides:
+        if isinstance(entry, str):
+            if not templates:
+                continue
+            name = next(iter(templates))
+            override = {"name": name, "url": entry}
+        elif isinstance(entry, dict):
+            override = dict(entry)
+            name = str(override.get("name") or "").strip()
+            if not name and templates:
+                name = next(iter(templates))
+                override["name"] = name
+        else:
+            continue
+        name = str(override.get("name") or "").strip()
+        url = str(override.get("url", "")).strip()
+        if not name or not url:
+            continue
+        template = dict(templates.get(name) or {})
+        if not template:
+            template = dict(DEFAULT_SOURCE_TEMPLATES.get(name, {}))
+        template.setdefault("name", name)
+        template["url"] = url
+        for key, value in override.items():
+            if key == "url":
+                continue
+            template[key] = value
+        if auth_headers and not template.get("headers"):
+            template["headers"] = dict(auth_headers)
+        prepared_sources.append(template)
+
+    if not prepared_sources:
+        print("WFP mVAM enabled but no sources configured; writing header-only CSV")
+        return []
+
+    cfg = dict(cfg)
+    cfg["sources"] = prepared_sources
     countries = load_countries()
     shocks = load_shocks()
 
@@ -1162,3 +1232,43 @@ def main() -> bool:
 
 if __name__ == "__main__":
     main()
+DEFAULT_SOURCE_TEMPLATES: Dict[str, Dict[str, Any]] = {
+    "mvam_ifc_global": {
+        "name": "mvam_ifc_global",
+        "kind": "csv",
+        "time_keys": ["date", "week", "month", "#date"],
+        "country_keys": ["iso3", "#country+code", "country_iso3", "country"],
+        "admin_keys": ["adm1", "adm2", "#adm1+name", "#adm2+name"],
+        "pct_keys": [
+            "ifc_pct",
+            "insufficient_food_consumption_pct",
+            "#food+consumption:insufficient+%",
+        ],
+        "people_keys": ["ifc_people", "people_ifc", "#inneed"],
+        "population_keys": ["pop", "population", "#population"],
+        "driver_keys": ["driver", "drivers", "tags", "notes"],
+        "series_hint": "stock",
+        "publisher": "WFP",
+        "source_type": "official",
+        "metric": "in_need",
+    }
+}
+
+
+def load_source_overrides() -> Dict[str, Any]:
+    if not SOURCES_CONFIG.exists():
+        return {"enabled": False, "sources": [], "auth": {}}
+    with open(SOURCES_CONFIG, "r", encoding="utf-8") as fp:
+        data = yaml.safe_load(fp) or {}
+    if not isinstance(data, dict):
+        return {"enabled": False, "sources": [], "auth": {}}
+    data.setdefault("enabled", False)
+    sources = data.get("sources") or []
+    if isinstance(sources, dict):
+        sources = [dict(name=name, **(value or {})) for name, value in sources.items()]
+    elif not isinstance(sources, list):
+        sources = []
+    data["sources"] = sources
+    if not isinstance(data.get("auth"), dict):
+        data["auth"] = {}
+    return data

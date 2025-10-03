@@ -377,6 +377,9 @@ def main() -> bool:
 
     if not rows:
         dbg("no rows collected; writing header only")
+        print(
+            "DTM: 0 rows (no matching datasets or empty window). Configure datasets in config/dtm.yml"
+        )
         _write_header_only(OUT_PATH)
         return False
 

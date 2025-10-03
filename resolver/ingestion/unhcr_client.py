@@ -84,7 +84,7 @@ def _stable_digest(parts: list[str], length: int = 12) -> str:
     return hashlib.sha256(key).hexdigest()[:length]
 
 def make_rows() -> List[List[str]]:
-    if os.getenv("RESOLVER_SKIP_UNHCR","") == "1":
+    if os.getenv("RESOLVER_SKIP_UNHCR", "") == "1":
         return []
 
     cfg = load_cfg()
@@ -95,16 +95,30 @@ def make_rows() -> List[List[str]]:
     since_dt = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=int(cfg["window_days"]))
     since = since_dt.date()
 
-    today = dt.date.today()
-    years = {today.year}
-    if since.year < today.year:
-        years.add(since.year)
-
     params_cfg = cfg.get("params", {}) or {}
+    defaults = cfg.get("defaults", {}) or {}
+
+    today = dt.date.today()
+    include_years_cfg = cfg.get("include_years") or []
+    years: List[int] = []
+    for value in include_years_cfg:
+        try:
+            years.append(int(str(value).strip()))
+        except Exception:
+            continue
+    if not years:
+        try:
+            years_back = int(cfg.get("years_back", 3) or 0)
+        except Exception:
+            years_back = 3
+        years = [today.year - offset for offset in range(years_back + 1)]
+    years = sorted({year for year in years if isinstance(year, int) and year > 0}, reverse=True)
+    if not years:
+        years = [today.year]
 
     rows: List[List[str]] = []
-    MAX_RESULTS = _int_env("RESOLVER_MAX_RESULTS", int(cfg["defaults"]["max_results"]))
-    DEBUG_EVERY = _int_env("RESOLVER_DEBUG_EVERY", int(cfg["defaults"]["debug_every"]))
+    MAX_RESULTS = _int_env("RESOLVER_MAX_RESULTS", int(defaults.get("max_results", 20000) or 20000))
+    DEBUG_EVERY = _int_env("RESOLVER_DEBUG_EVERY", int(defaults.get("debug_every", 10) or 10))
     gran = (params_cfg.get("granularity") or "year").lower()
 
     df_countries, df_shocks = load_registries()
@@ -114,120 +128,138 @@ def make_rows() -> List[List[str]]:
     hz_code, hz_label, hz_class = "DI", di.iloc[0]["hazard_label"], di.iloc[0]["hazard_class"]
 
     try:
-        limit_default = int(cfg.get("page_size", 1000) or 1000)
+        limit_default = int(cfg.get("page_limit") or cfg.get("page_size") or 500)
     except Exception:
-        limit_default = 1000
+        limit_default = 500
     LIMIT = _int_env("UNHCR_LIMIT", limit_default)
-    defaults = cfg.get("defaults", {}) or {}
+
     try:
         max_pages_default = int(defaults.get("max_pages", 10) or 10)
     except Exception:
         max_pages_default = 10
     MAX_PAGES = _int_env("RESOLVER_MAX_PAGES", max_pages_default)
 
+    base_params: Dict[str, Any] = {
+        "cf_type": params_cfg.get("cf_type", "ISO"),
+        "coo_all": params_cfg.get("coo_all", "true"),
+        "coa_all": params_cfg.get("coa_all", "true"),
+        "limit": str(LIMIT),
+        "year[]": [str(year) for year in years],
+    }
+    if gran == "month":
+        base_params["month[]"] = [f"{m:02d}" for m in range(1, 13)]
+
+    url = base.rstrip("/") + "/" + path.lstrip("/")
     total = 0
     request_idx = 0
-    stop = False
-    for yr in sorted(years, reverse=True):
-        base_params = {
-            "cf_type": params_cfg.get("cf_type", "ISO"),
-            "coo_all": params_cfg.get("coo_all", "true"),
-            "coa_all": params_cfg.get("coa_all", "true"),
-            "year[]": str(yr),
-            "limit": str(LIMIT),
-        }
-        if gran == "month":
-            base_params["month[]"] = [f"{m:02d}" for m in range(1, 13)]
+    page = 1
+    more = True
 
-        url = base.rstrip("/") + "/" + path.lstrip("/")
-        page = 1
-        while page <= MAX_PAGES:
-            params = dict(base_params)
-            params["page"] = str(page)
+    while more and page <= MAX_PAGES:
+        params = dict(base_params)
+        params["page"] = str(page)
 
-            results: List[Dict[str, Any]] = []
-            r = None
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=30)
+        except requests.RequestException as exc:
+            dbg(f"request for page {page} raised {exc}")
+            break
+
+        request_idx += 1
+        if _debug() and (request_idx % DEBUG_EVERY == 1):
+            dbg(f"GET {response.url} -> {response.status_code}")
+        if response.status_code != 200:
+            dbg(f"UNHCR request failed with status {response.status_code}")
+            break
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            dbg(f"response JSON decode failed for page {page}: {exc}")
+            break
+
+        results: List[Dict[str, Any]] = []
+        if isinstance(payload, list):
+            results = [item for item in payload if isinstance(item, dict)]
+        elif isinstance(payload, dict):
+            for key in ("results", "data", "items"):
+                candidate = payload.get(key)
+                if isinstance(candidate, list):
+                    results = [item for item in candidate if isinstance(item, dict)]
+                    if results:
+                        break
+        if not results:
+            break
+
+        for item in results:
+            asylum_iso = (
+                item.get("coa_iso")
+                or item.get("coa")
+                or item.get("country_of_asylum")
+                or ""
+            ).strip().upper()
+            country_name = iso3_to_name(df_countries, asylum_iso)
+            if not asylum_iso or not country_name:
+                continue
+
+            year_value = None
+            for key in ("year", "yr", "year_data", "yearvalue"):
+                if key in item and item[key] is not None:
+                    year_value = item[key]
+                    break
+            year_int: Optional[int] = None
+            if year_value is not None:
+                try:
+                    year_int = int(str(year_value).strip())
+                except Exception:
+                    year_int = None
+            if year_int is None:
+                date_candidate = item.get("date") or item.get("month")
+                if date_candidate:
+                    text = str(date_candidate)
+                    if len(text) >= 4 and text[:4].isdigit():
+                        year_int = int(text[:4])
+            if year_int is None and years:
+                year_int = years[0]
+            if year_int not in years:
+                continue
+
+            raw_value = item.get("value") or item.get("applications") or item.get("individuals")
             try:
-                r = requests.get(url, params=params, headers=headers, timeout=30)
-            except requests.RequestException as exc:
-                dbg(f"request for {yr} page {page} raised {exc}")
-                break
-
-            request_idx += 1
-            if _debug() and (request_idx % DEBUG_EVERY == 1):
-                dbg(f"GET {r.url} -> {r.status_code}")
-            if r.status_code != 200:
-                break
-
-            try:
-                data = r.json()
-            except ValueError as exc:
-                dbg(
-                    "response JSON decode failed; skipping year %s page %s (%s)"
-                    % (yr, page, exc)
-                )
-                break
-
-            if isinstance(data, list):
-                results = [item for item in data if isinstance(item, dict)]
-            elif isinstance(data, dict):
-                for key in ("results", "data", "items"):
-                    candidate = data.get(key)
-                    if isinstance(candidate, list):
-                        results = [item for item in candidate if isinstance(item, dict)]
-                        if results:
-                            break
-            if not results:
-                break
-
-            for it in results:
-                asylum_iso = (
-                    it.get("coa_iso")
-                    or it.get("coa")
-                    or it.get("country_of_asylum")
-                    or ""
-                ).strip().upper()
-                country_name = iso3_to_name(df_countries, asylum_iso)
-                if not asylum_iso or not country_name:
-                    continue
-
-            val = it.get("value") or it.get("applications") or it.get("individuals")
-            try:
-                value = int(val) if val is not None else None
+                value = int(raw_value) if raw_value is not None else None
             except Exception:
                 value = None
             if value is None or value < 0:
                 continue
 
-            m_raw = it.get("month") or it.get("mnth") or it.get("date") or ""
+            month_raw = item.get("month") or item.get("mnth") or item.get("date") or ""
             as_of = ""
-            if m_raw:
-                s = str(m_raw)
-                if len(s) == 2 and s.isdigit():
-                    as_of = f"{yr}-{s}-15"
-                elif s.isdigit():
-                    as_of = f"{yr}-{int(s):02d}-15"
-                elif len(s) >= 7 and s[4] == "-":
-                    as_of = f"{s[:7]}-15"
+            if month_raw:
+                text = str(month_raw)
+                if len(text) == 2 and text.isdigit():
+                    as_of = f"{year_int}-{text}-15"
+                elif text.isdigit():
+                    as_of = f"{year_int}-{int(text):02d}-15"
+                elif len(text) >= 7 and text[4] == "-":
+                    as_of = f"{text[:7]}-15"
             if not as_of:
-                as_of = f"{yr}-12-31"
+                as_of = f"{year_int}-12-31"
 
-            pub = dt.date.today().isoformat()
-
-            if dt.date.fromisoformat(as_of) < since and dt.date.fromisoformat(pub) < since:
+            publication_date = dt.date.today().isoformat()
+            if dt.date.fromisoformat(as_of) < since and dt.date.fromisoformat(publication_date) < since:
                 continue
 
-            title = f"UNHCR asylum applications — {country_name} ({yr})"
+            title = f"UNHCR asylum applications — {country_name} ({year_int})"
             definition = (
-                "Applications for international protection in the year; used here as a proxy for cross-border "
+                "Applications for international protection in the requested period; used here as a proxy for cross-border "
                 "Displacement Influx (DI)."
             )
-            src_url = r.url
+            src_url = response.url
 
             origin_iso = (
-                it.get("coo_iso")
-                or it.get("coo")
-                or it.get("country_of_origin")
+                item.get("coo_iso")
+                or item.get("coo")
+                or item.get("country_of_origin")
                 or ""
             ).strip().upper() or "-"
             rid = _stable_digest([asylum_iso, origin_iso, as_of, "apps", str(value)], length=12)
@@ -245,7 +277,7 @@ def make_rows() -> List[List[str]]:
                 str(value),
                 "persons",
                 as_of,
-                pub,
+                publication_date,
                 "UNHCR",
                 "stat",
                 src_url,
@@ -259,16 +291,33 @@ def make_rows() -> List[List[str]]:
             total += 1
             if total >= MAX_RESULTS:
                 dbg(f"hit MAX_RESULTS={MAX_RESULTS}, stopping")
-                stop = True
+                more = False
                 break
-        if stop:
-            break
-        if len(results) < LIMIT:
-            break
-        page += 1
-    if stop:
-        return rows
 
+        if total >= MAX_RESULTS:
+            break
+
+        next_link = None
+        if isinstance(payload, dict):
+            links = payload.get("links")
+            if isinstance(links, dict):
+                next_link = links.get("next")
+            if not next_link:
+                metadata = payload.get("metadata")
+                if isinstance(metadata, dict):
+                    next_link = metadata.get("next") or metadata.get("links", {}).get("next")
+            if not next_link:
+                next_link = payload.get("next")
+
+        if next_link or len(results) == LIMIT:
+            page += 1
+            more = True
+        else:
+            more = False
+
+    if not rows:
+        years_text = ",".join(str(year) for year in years)
+        print(f"UNHCR returned 0 rows for requested years={years_text}; writing header only.")
     return rows
 
 def main():
