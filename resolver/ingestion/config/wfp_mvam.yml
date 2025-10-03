@@ -16,6 +16,7 @@ sources:
 prefer_hxl: true
 monthly_first: true
 allow_percent: true
+# suppress admin-level conversions when no subpopulation weights are available
 suppress_admin_when_no_subpop: true
 denominator_file: "resolver/data/population.csv"
 indicator_priority: ["people_ifc", "ifc_pct", "rcsi"]

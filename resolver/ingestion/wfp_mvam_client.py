@@ -608,25 +608,107 @@ def collect_rows() -> List[List[Any]]:
         driver_texts = sorted({text for text in group["driver_text"].dropna() if str(text).strip()})
         driver_text = "; ".join(driver_texts)
 
-        if group["indicator_kind"].eq("people").any():
-            people_rows = group[group["indicator_kind"] == "people"]
-            people_groups = people_rows.groupby("admin_name", dropna=False)
-            admin_totals: List[float] = []
-            conversion_methods = set()
-            definition_notes = set()
-            for _, admin_group in people_groups:
-                agg_value = _aggregate_people(admin_group)
-                if agg_value is None or agg_value <= 0:
-                    continue
-                admin_totals.append(float(agg_value))
-                conversion_methods.add("people direct")
-                names = admin_group["indicator_name"].dropna()
-                indicator_label = names.iloc[0] if not names.empty else "people"
-                definition_notes.add(f"Direct people counts ({indicator_label})")
-            if not admin_totals:
+        percent_rows = group[group["indicator_kind"] == "percent"]
+
+        conversion_methods: set[str] = set()
+        definition_notes: set[str] = set()
+        denominator_sources: set[str] = set()
+        people_sum = 0.0
+        any_admin_convertible = False
+        percent_entries: List[Dict[str, Any]] = []
+        unconvertible_admins: List[str] = []
+
+        for admin_name, admin_group in group.groupby("admin_name", dropna=False):
+            admin_label = str(admin_name or "")
+            people_rows = admin_group[admin_group["indicator_kind"] == "people"]
+            if not people_rows.empty:
+                agg_value = _aggregate_people(people_rows)
+                if agg_value is not None:
+                    any_admin_convertible = True
+                    if agg_value > 0:
+                        people_sum += float(agg_value)
+                        conversion_methods.add("people direct")
+                        definition_notes.add("Direct people counts")
+                        dbg(
+                            "admin people direct for "
+                            f"{iso3} {month} {metric} {source_id} admin={admin_label or '<national>'}"
+                        )
                 continue
-            total_value = float(sum(admin_totals))
+
+            percent_subset = admin_group[admin_group["indicator_kind"] == "percent"]
+            if percent_subset.empty:
+                continue
+            if not allow_percent:
+                continue
+
+            pct_value = _aggregate_percent(percent_subset)
+            if pct_value is None:
+                continue
+
+            dataset_pops = percent_subset["population"].apply(_parse_float).dropna()
+            dataset_pops = dataset_pops[dataset_pops > 0]
+            population = None
+            population_source = None
+            if not dataset_pops.empty:
+                population = float(dataset_pops.iloc[0])
+                population_source = "dataset population"
+            else:
+                lookup_population, lookup_source = _lookup_admin_population(
+                    admin_population_table,
+                    iso3,
+                    admin_label,
+                    year,
+                )
+                if lookup_population is not None and lookup_population > 0:
+                    population = float(lookup_population)
+                    population_source = lookup_source or "lookup population"
+
+            percent_entries.append(
+                {
+                    "admin_name": admin_label,
+                    "pct_value": float(pct_value),
+                    "population": float(population) if population else None,
+                    "population_source": population_source,
+                }
+            )
+
+            if population is not None and population > 0:
+                any_admin_convertible = True
+                converted_people = pct_value / 100.0 * population
+                if converted_people > 0:
+                    people_sum += converted_people
+                conversion_methods.add("pct→people (admin pop)")
+                definition_notes.add("Percent converted with admin population")
+                if population_source:
+                    denominator_sources.add(population_source)
+                dbg(
+                    "admin percent×pop conversion for "
+                    f"{iso3} {month} {metric} {source_id} admin={admin_label or '<national>'}"
+                )
+            else:
+                name_for_log = admin_label or "<no admin>"
+                unconvertible_admins.append(name_for_log)
+                dbg(
+                    "admin percent-only without population for "
+                    f"{iso3} {month} {metric} {source_id} admin={name_for_log}"
+                )
+
+        if people_sum > 0:
+            dbg(
+                "national admin people sum for "
+                f"{iso3} {month} {metric} {source_id} = {people_sum:.2f}"
+            )
             has_admin_people_sum_keys.add(key)
+            definition_note_parts = [
+                "Sum of admin direct counts and admin percent×pop conversions",
+            ]
+            if definition_notes:
+                definition_note_parts.append("; ".join(sorted(definition_notes)))
+            if unconvertible_admins:
+                definition_note_parts.append(
+                    "Percent-only admins without population excluded from sum"
+                )
+            denominator_source = "; ".join(sorted(denominator_sources))
             national_records.append(
                 {
                     "iso3": iso3,
@@ -637,109 +719,33 @@ def collect_rows() -> List[List[Any]]:
                     "metric": metric,
                     "source_id": source_id,
                     "month": month,
-                    "value": total_value,
+                    "value": people_sum,
                     "publisher": publisher,
                     "source_type": source_type,
                     "source_url": source_url,
                     "doc_title": doc_title,
                     "driver_text": driver_text,
-                    "conversion_method": " | ".join(sorted(conversion_methods)) or "people direct",
-                    "definition_note": "; ".join(sorted(definition_notes)),
-                    "denominator_source": "",
-                    "aggregation_note": "national=sum(admin people)",
+                    "conversion_method": "national=sum(admin people)",
+                    "definition_note": " | ".join(definition_note_parts),
+                    "denominator_source": denominator_source,
+                    "aggregation_note": "national=Σadmin",
                     "unit": DEFAULT_UNIT,
                     "series_semantics": "stock",
                 }
             )
             continue
 
-        percent_rows = group[group["indicator_kind"] == "percent"]
-        if percent_rows.empty or not allow_percent:
+        if any_admin_convertible:
+            # Convertible data existed but did not produce a positive sum (likely zeros).
             continue
 
-        # When percent data lack admin populations we must avoid multiplying a single
-        # national denominator across many admin rows. The legacy approach inflated
-        # totals dramatically. We instead require admin populations for per-admin
-        # conversion, fall back to a single national conversion using population
-        # weights, or keep the data in percent form when no safe weighting exists.
-        admin_percent_data: List[Dict[str, Any]] = []
-        missing_weights: List[str] = []
-        has_dataset_population = False
-
-        for admin_name, admin_group in percent_rows.groupby("admin_name", dropna=False):
-            pct_value = _aggregate_percent(admin_group)
-            if pct_value is None:
-                continue
-            population = None
-            population_source = None
-            dataset_pops = admin_group["population"].apply(_parse_float).dropna()
-            dataset_pops = dataset_pops[dataset_pops > 0]
-            if not dataset_pops.empty:
-                population = float(dataset_pops.iloc[0])
-                population_source = "dataset population"
-                has_dataset_population = True
-            else:
-                lookup_population, lookup_source = _lookup_admin_population(
-                    admin_population_table,
-                    iso3,
-                    str(admin_name or ""),
-                    year,
-                )
-                if lookup_population is not None and lookup_population > 0:
-                    population = float(lookup_population)
-                    population_source = lookup_source or "lookup population"
-            if population is None or population <= 0:
-                missing_weights.append(str(admin_name or ""))
-            admin_percent_data.append(
-                {
-                    "admin_name": str(admin_name or ""),
-                    "pct_value": float(pct_value),
-                    "population": float(population) if population else None,
-                    "population_source": population_source,
-                }
-            )
-
-        if not admin_percent_data:
+        if not percent_entries:
             continue
 
-        if missing_weights:
-            if suppress_admin_when_no_subpop:
-                pct_mean = _aggregate_percent(percent_rows)
-                if pct_mean is None:
-                    continue
-                dbg(
-                    "percent-only fallback (missing admin population) for "
-                    f"{iso3} {month} {metric} {source_id}"
-                )
-                national_records.append(
-                    {
-                        "iso3": iso3,
-                        "country_name": country_name,
-                        "hazard_code": hz_code,
-                        "hazard_label": hz_label,
-                        "hazard_class": hz_class,
-                        "metric": metric,
-                        "source_id": source_id,
-                        "month": month,
-                        "value": float(pct_mean),
-                        "publisher": publisher,
-                        "source_type": source_type,
-                        "source_url": source_url,
-                        "doc_title": doc_title,
-                        "driver_text": driver_text,
-                        "conversion_method": "percent only (no admin population; not converted to people)",
-                        "definition_note": (
-                            f"Monthly mean prevalence {pct_mean:.2f}% reported without people conversion "
-                            "due to missing admin population weights"
-                        ),
-                        "denominator_source": "",
-                        "aggregation_note": "percent-only output",
-                        "unit": "percent",
-                        "series_semantics": "ratio",
-                    }
-                )
-                continue
+        if not allow_percent:
+            continue
 
+        if not suppress_admin_when_no_subpop:
             dbg(
                 "legacy national denominator path (suppress flag off) for "
                 f"{iso3} {month} {metric} {source_id}"
@@ -757,7 +763,7 @@ def collect_rows() -> List[List[Any]]:
             else:
                 denominator_detail = f"{denominator_label} year={record.year}"
             total_value = 0.0
-            for entry in admin_percent_data:
+            for entry in percent_entries:
                 pct_value = entry["pct_value"]
                 converted = safe_pct_to_people(
                     pct_value,
@@ -799,65 +805,28 @@ def collect_rows() -> List[List[Any]]:
             )
             continue
 
-        if has_dataset_population or not suppress_admin_when_no_subpop:
-            admin_total = 0.0
-            denominator_sources = set()
-            for entry in admin_percent_data:
-                population = entry["population"]
-                pct_value = entry["pct_value"]
-                if population is None or population <= 0:
-                    continue
-                people_value = pct_value / 100.0 * population
-                if people_value <= 0:
-                    continue
-                admin_total += people_value
-                if entry["population_source"]:
-                    denominator_sources.add(entry["population_source"])
-            if admin_total <= 0:
-                continue
-            has_admin_people_sum_keys.add(key)
-            denominator_source = "; ".join(sorted(denominator_sources))
-            dbg(
-                "admin-level percent→people conversion using admin populations for "
-                f"{iso3} {month} {metric} {source_id}"
-            )
-            national_records.append(
-                {
-                    "iso3": iso3,
-                    "country_name": country_name,
-                    "hazard_code": hz_code,
-                    "hazard_label": hz_label,
-                    "hazard_class": hz_class,
-                    "metric": metric,
-                    "source_id": source_id,
-                    "month": month,
-                    "value": admin_total,
-                    "publisher": publisher,
-                    "source_type": source_type,
-                    "source_url": source_url,
-                    "doc_title": doc_title,
-                    "driver_text": driver_text,
-                    "conversion_method": "pct→people (admin pop available)",
-                    "definition_note": (
-                        "Admin-level prevalence converted to people using available admin populations"
-                    ),
-                    "denominator_source": denominator_source,
-                    "aggregation_note": "national=sum(admin people)",
-                    "unit": DEFAULT_UNIT,
-                    "series_semantics": "stock",
-                }
-            )
-            continue
+        weights: List[Tuple[float, float, Optional[str]]] = []
+        for entry in percent_entries:
+            weight = entry["population"]
+            source_label = entry["population_source"]
+            if weight is None or weight <= 0:
+                weight, source_label = _lookup_admin_population(
+                    admin_population_table,
+                    iso3,
+                    entry["admin_name"],
+                    year,
+                )
+            if weight is None or weight <= 0:
+                weights = []
+                break
+            weights.append((entry["pct_value"], float(weight), source_label))
 
-        # suppress_admin_when_no_subpop is True and no dataset population available but
-        # we have complete weights (from lookup). We convert once at national level.
-        total_weight = sum(entry["population"] or 0 for entry in admin_percent_data)
-        if total_weight <= 0:
+        if not weights:
             pct_mean = _aggregate_percent(percent_rows)
             if pct_mean is None:
                 continue
             dbg(
-                "percent-only fallback (zero weight) for "
+                "percent-only fallback (missing admin population) for "
                 f"{iso3} {month} {metric} {source_id}"
             )
             national_records.append(
@@ -876,7 +845,45 @@ def collect_rows() -> List[List[Any]]:
                     "source_url": source_url,
                     "doc_title": doc_title,
                     "driver_text": driver_text,
-                    "conversion_method": "percent only (no admin population; not converted to people)",
+                    "conversion_method": "percent only (no admin population; not converted)",
+                    "definition_note": (
+                        f"Monthly mean prevalence {pct_mean:.2f}% reported without people conversion "
+                        "due to missing admin population weights"
+                    ),
+                    "denominator_source": "",
+                    "aggregation_note": "percent-only output",
+                    "unit": "percent",
+                    "series_semantics": "ratio",
+                }
+            )
+            continue
+
+        total_weight = sum(weight for _, weight, _ in weights)
+        if total_weight <= 0:
+            pct_mean = _aggregate_percent(percent_rows)
+            if pct_mean is None:
+                continue
+            dbg(
+                "percent-only fallback (zero total weight) for "
+                f"{iso3} {month} {metric} {source_id}"
+            )
+            national_records.append(
+                {
+                    "iso3": iso3,
+                    "country_name": country_name,
+                    "hazard_code": hz_code,
+                    "hazard_label": hz_label,
+                    "hazard_class": hz_class,
+                    "metric": metric,
+                    "source_id": source_id,
+                    "month": month,
+                    "value": float(pct_mean),
+                    "publisher": publisher,
+                    "source_type": source_type,
+                    "source_url": source_url,
+                    "doc_title": doc_title,
+                    "driver_text": driver_text,
+                    "conversion_method": "percent only (no admin population; not converted)",
                     "definition_note": (
                         f"Monthly mean prevalence {pct_mean:.2f}% reported without people conversion "
                         "due to zero admin population weight"
@@ -889,10 +896,7 @@ def collect_rows() -> List[List[Any]]:
             )
             continue
 
-        weighted_fraction = sum(
-            (entry["pct_value"] / 100.0) * (entry["population"] or 0)
-            for entry in admin_percent_data
-        ) / total_weight
+        weighted_fraction = sum((pct / 100.0) * weight for pct, weight, _ in weights) / total_weight
         pct_weighted = weighted_fraction * 100.0
         record = get_population_record(iso3, year, denominator_path)
         if record is None:
@@ -939,7 +943,7 @@ def collect_rows() -> List[List[Any]]:
                     "due to missing admin population data"
                 ),
                 "denominator_source": denominator_detail,
-                "aggregation_note": "national=single conversion (population-weighted)",
+                "aggregation_note": "national=weighted(pct)×pop",
                 "unit": DEFAULT_UNIT,
                 "series_semantics": "stock",
             }
