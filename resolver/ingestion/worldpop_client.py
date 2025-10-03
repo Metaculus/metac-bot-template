@@ -322,14 +322,32 @@ def collect_rows() -> List[PopulationRow]:
                 continue
             _register(rows)
 
-    min_year = latest_year - years_back if years_back >= 0 else latest_year
     filtered: List[PopulationRow] = []
+    grouped: Dict[tuple[str, str], List[PopulationRow]] = {}
     for row in collected.values():
-        if row.year < min_year:
-            continue
-        filtered.append(row)
+        grouped.setdefault((row.iso3, row.product), []).append(row)
 
-    filtered.sort(key=lambda r: (r.iso3, r.year))
+    for (iso3, product_label), rows in grouped.items():
+        years = {row.year for row in rows}
+        if not years:
+            continue
+        iso_max_year = max(years)
+        iso_min_year = (
+            iso_max_year - years_back if years_back >= 0 else iso_max_year
+        )
+        kept_years = []
+        for row in rows:
+            if iso_min_year <= row.year <= iso_max_year:
+                filtered.append(row)
+                kept_years.append(row.year)
+        if DEBUG:
+            kept_years_sorted = sorted(set(kept_years))
+            dbg(
+                f"{iso3} product={product_label!r} kept years={kept_years_sorted} "
+                f"(iso_max={iso_max_year}, years_back={years_back})"
+            )
+
+    filtered.sort(key=lambda r: (r.iso3, r.product, r.year))
     return filtered
 
 
