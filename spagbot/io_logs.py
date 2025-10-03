@@ -58,6 +58,15 @@ def _bool_env(name: str, default: bool = False) -> bool:
     return str(val).strip().lower() in {"1", "true", "yes", "y"}
 
 
+def _git_push_disabled() -> bool:
+    if _bool_env("DISABLE_GIT_PUSH", default=False):
+        return True
+    gha = os.getenv("GITHUB_ACTIONS", "").strip().lower()
+    if gha == "true":
+        return True
+    return False
+
+
 @dataclass(frozen=True)
 class LogPaths:
     base_dir: Path
@@ -263,6 +272,8 @@ def _current_branch(repo: Path) -> str:
 
 def _ensure_git_identity(repo: Path) -> None:
     """Set git user if not set (helps in CI)."""
+    if _git_push_disabled():
+        return
     try:
         name = _run(["git", "config", "--get", "user.name"], cwd=repo, check=False).stdout.strip()
         email = _run(["git", "config", "--get", "user.email"], cwd=repo, check=False).stdout.strip()
@@ -287,6 +298,9 @@ def commit_and_push_logs(changed_paths: Iterable[Path], commit_message: Optional
       - CI auto-commit disabled, OR
       - Local auto-commit not opted-in
     """
+    if _git_push_disabled():
+        return False
+
     repo = _find_repo_root()
     if not repo:
         return False  # Not a git repo; nothing to do
@@ -443,6 +457,8 @@ def finalize_and_commit(*args, **kwargs) -> None:
 
     # Delegate to the robust helper that already handles CI/local policy,
     # git identity, branch detection, and push.
+    if _git_push_disabled():
+        return
     commit_and_push_logs(paths_to_commit, commit_message=message)
 
 # -----------------------------------------------------------------------------

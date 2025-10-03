@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple
 
 import pandas as pd
+from pandas.errors import EmptyDataError, ParserError
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -165,13 +166,24 @@ def _read_source_frame(
         raise ValueError("source url missing")
 
     hxl_tags: Dict[int, str] = {}
-    if kind == "xlsx":
-        frame = pd.read_excel(url, dtype=str, keep_default_na=False)
-    else:
-        frame = pd.read_csv(url, dtype=str, keep_default_na=False)
+    try:
+        if kind == "xlsx":
+            frame = pd.read_excel(url, dtype=str, keep_default_na=False)
+        else:
+            frame = pd.read_csv(url, dtype=str, keep_default_na=False)
+    except (EmptyDataError, ParserError) as exc:
+        print(f"[emdat] failed to load source {url}: {exc}")
+        return pd.DataFrame(), hxl_tags
+    except ValueError as exc:
+        message = str(exc)
+        if "No columns to parse" in message:
+            print(f"[emdat] failed to load source {url}: {message}")
+            return pd.DataFrame(), hxl_tags
+        raise
 
     frame = frame.fillna("")
     if frame.empty:
+        print(f"[emdat] source {url} empty; skipping")
         return frame, hxl_tags
 
     first_row = frame.iloc[0]

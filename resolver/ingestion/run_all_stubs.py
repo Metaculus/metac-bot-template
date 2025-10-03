@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
+import datetime as dt
 import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
@@ -214,16 +216,43 @@ def _should_skip(script: str) -> bool:
 
 def _run_script(path: Path) -> int:
     print(f"==> running {path.name}")
-    proc = subprocess.run([sys.executable, str(path)])
-    return proc.returncode
+    try:
+        proc = subprocess.run([sys.executable, str(path)])
+        return proc.returncode
+    except OSError as exc:
+        print(f"{path.name} failed to start: {exc}", file=sys.stderr)
+        return 1
 
 
-def main() -> None:
+def _safe_summary(name: str) -> None:
+    try:
+        summary_line = _summarise_connector(name)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        print(f"[summary] {name} failed: {exc}", file=sys.stderr)
+        return
+    if summary_line:
+        print(summary_line)
+
+
+def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="treat connector/stub failures as fatal (non-zero exit)",
+    )
+    return parser.parse_args(argv or [])
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = _parse_args(argv)
+    strict_mode = bool(args.strict)
+
     if INGESTION_MODE and INGESTION_MODE not in {"real", "stubs", "all"}:
         print(
             f"Unknown RESOLVER_INGESTION_MODE={INGESTION_MODE!r}; expected one of real|stubs|all"
         )
-        return
+        return 0
 
     if INGESTION_MODE:
         run_real = INGESTION_MODE in {"real", "all"}
@@ -235,8 +264,8 @@ def main() -> None:
     if FORCE_DTM_STUB:
         run_stubs = True
 
+    real_failures = 0
     if run_real:
-        real_failed = 0
         for name in REAL:
             path = ROOT / name
             if _should_skip(name):
@@ -247,22 +276,16 @@ def main() -> None:
             rc = _run_script(path)
             if rc != 0:
                 print(f"{name} failed with rc={rc}", file=sys.stderr)
-                real_failed += 1
+                real_failures += 1
 
         for summary_name in SUMMARY_TARGETS:
             if summary_name in REAL:
-                summary_line = _summarise_connector(summary_name)
-                if summary_line:
-                    print(summary_line)
-
-        if real_failed:
-            print(f"{real_failed} real connector(s) failed", file=sys.stderr)
-            sys.exit(1)
+                _safe_summary(summary_name)
 
     if not run_stubs:
-        return
+        return 1 if (strict_mode and real_failures) else 0
 
-    stub_failed = 0
+    stub_failures = 0
     for name in STUBS:
         if FORCE_DTM_STUB and not INCLUDE_STUBS and name != "dtm_stub.py":
             continue
@@ -273,15 +296,23 @@ def main() -> None:
         rc = _run_script(path)
         if rc != 0:
             print(f"{name} failed with rc={rc}", file=sys.stderr)
-            stub_failed += 1
+            stub_failures += 1
 
-    if stub_failed:
-        print(f"{stub_failed} stub(s) failed", file=sys.stderr)
-        if FAIL_ON_STUB_ERROR:
-            sys.exit(1)
+    if stub_failures:
+        print(f"{stub_failures} stub(s) failed", file=sys.stderr)
     else:
         print("All stubs ran successfully")
 
+    strict_failures = 0
+    if strict_mode and (real_failures or stub_failures):
+        strict_failures = real_failures + stub_failures
+    elif FAIL_ON_STUB_ERROR and stub_failures:
+        strict_failures = stub_failures
+
+    if strict_failures:
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

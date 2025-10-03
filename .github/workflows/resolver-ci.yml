@@ -11,7 +11,7 @@ on:
     - cron: "10 20 * * *"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: resolver-ci-${{ github.ref }}
@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
           ref: ${{ github.ref }}
 
       - name: Set up Python
@@ -37,13 +37,30 @@ jobs:
           cache-dependency-path: |
             resolver/requirements.txt
             resolver/requirements-dev.txt
+            pyproject.toml
+            poetry.lock
 
-      - name: Install deps
+      - name: Install dependencies
+        shell: bash
         run: |
+          set -euxo pipefail
           python -m pip install --upgrade pip
-          python -m pip install -r resolver/requirements-dev.txt
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+          python -m pip install -r resolver/requirements.txt -r resolver/requirements-dev.txt
+
+      - name: Configure CI environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source .github/workflows/partials/ci_env.sh
+          for var in DISABLE_GIT_PUSH RESOLVER_CI PYTHONWARNINGS; do
+            echo "$var=${!var}" >> "$GITHUB_ENV"
+          done
 
       - name: Run ingestion (real connectors only)
+        shell: bash
         env:
           PYTHONPATH: ${{ github.workspace }}
           RESOLVER_DEBUG: "1"
@@ -55,24 +72,37 @@ jobs:
           WFP_MVAM_DENOMINATOR_FILE: "resolver/data/population.csv"
           WORLDPOP_PRODUCT: "un_adj_unconstrained"
         run: |
+          set -euxo pipefail
           python resolver/ingestion/run_all_stubs.py
 
       - name: Run stubs (non-blocking)
         if: ${{ always() }}
+        shell: bash
         env:
           PYTHONPATH: ${{ github.workspace }}
           RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
-          python resolver/ingestion/run_all_stubs.py || true
+          set -euxo pipefail
+          python resolver/ingestion/run_all_stubs.py
 
       - name: Export facts
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
 
       - name: Validate facts
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+      - name: Freeze snapshot
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month $(date -u +%Y-%m)
 
       - name: Precedence at provisional cutoff (last day of current month UTC)
         shell: bash
@@ -81,11 +111,15 @@ jobs:
           python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff "$LAST_UTC"
 
       - name: Build review queue
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/review/make_review_queue.py
 
       - name: Check artifact and repo sizes
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/check_sizes.py
         env:
           RESOLVER_LIMIT_PARQUET_MB: "150"
@@ -93,14 +127,21 @@ jobs:
           RESOLVER_LIMIT_REPO_MB: "2000"
 
       - name: Run data-contract tests (pytest)
+        shell: bash
         run: |
+          set -euxo pipefail
           pytest resolver/tests -q
 
-      - name: Stage repo state for this PR
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          python resolver/tools/write_repo_state.py --mode pr --id "$PR_NUMBER"
+      - name: Upload resolver artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolver-pr-${{ github.run_id }}
+          path: |
+            resolver/staging/*
+            resolver/exports/*
+            resolver/snapshots/**
+          if-no-files-found: warn
 
   nightly_state:
     if: github.event_name != 'pull_request'
@@ -110,7 +151,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
           ref: ${{ github.ref }}
 
       - name: Set up Python
@@ -121,13 +162,30 @@ jobs:
           cache-dependency-path: |
             resolver/requirements.txt
             resolver/requirements-dev.txt
+            pyproject.toml
+            poetry.lock
 
-      - name: Install deps
+      - name: Install dependencies
+        shell: bash
         run: |
+          set -euxo pipefail
           python -m pip install --upgrade pip
-          python -m pip install -r resolver/requirements-dev.txt
+          if [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          fi
+          python -m pip install -r resolver/requirements.txt -r resolver/requirements-dev.txt
+
+      - name: Configure CI environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          source .github/workflows/partials/ci_env.sh
+          for var in DISABLE_GIT_PUSH RESOLVER_CI PYTHONWARNINGS; do
+            echo "$var=${!var}" >> "$GITHUB_ENV"
+          done
 
       - name: Run ingestion (real connectors only)
+        shell: bash
         env:
           PYTHONPATH: ${{ github.workspace }}
           RESOLVER_DEBUG: "1"
@@ -139,24 +197,37 @@ jobs:
           WFP_MVAM_DENOMINATOR_FILE: "resolver/data/population.csv"
           WORLDPOP_PRODUCT: "un_adj_unconstrained"
         run: |
+          set -euxo pipefail
           python resolver/ingestion/run_all_stubs.py
 
       - name: Run stubs (non-blocking)
         if: ${{ always() }}
+        shell: bash
         env:
           PYTHONPATH: ${{ github.workspace }}
           RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
-          python resolver/ingestion/run_all_stubs.py || true
+          set -euxo pipefail
+          python resolver/ingestion/run_all_stubs.py
 
       - name: Export facts
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/export_facts.py --in resolver/staging --out resolver/exports
 
       - name: Validate facts
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
+
+      - name: Freeze snapshot
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month $(date -u +%Y-%m)
 
       - name: Gate schedule (optional)
         id: schedule_gate
@@ -194,11 +265,15 @@ jobs:
           python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff "$CUT"
 
       - name: Build review queue
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/review/make_review_queue.py
 
       - name: Check artifact and repo sizes
+        shell: bash
         run: |
+          set -euxo pipefail
           python resolver/tools/check_sizes.py
         env:
           RESOLVER_LIMIT_PARQUET_MB: "150"
@@ -206,8 +281,21 @@ jobs:
           RESOLVER_LIMIT_REPO_MB: "2000"
 
       - name: Run data-contract tests (pytest)
+        shell: bash
         run: |
+          set -euxo pipefail
           pytest resolver/tests -q
+
+      - name: Upload resolver artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolver-nightly-${{ github.run_id }}
+          path: |
+            resolver/staging/*
+            resolver/exports/*
+            resolver/snapshots/**
+          if-no-files-found: warn
 
       - name: Freeze monthly snapshot
         if: steps.schedule_gate.outputs.is_last == 'true'
@@ -217,57 +305,3 @@ jobs:
         run: |
           python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month "$SNAPSHOT_MONTH" --overwrite
 
-      - name: Stage repo state for nightly
-        shell: bash
-        run: |
-          D=$(date -u +%Y-%m-%d)
-          python resolver/tools/write_repo_state.py --mode daily --id "$D"
-
-      - name: Commit nightly state
-        shell: bash
-        env:
-          YM: ${{ steps.schedule_gate.outputs.ym }}
-        run: |
-          set -e
-          echo "DID_COMMIT=false" >> "$GITHUB_ENV"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add resolver/exports/*.csv 2>/dev/null || true
-          git add resolver/exports/*.jsonl 2>/dev/null || true
-          git add resolver/exports/*.parquet 2>/dev/null || true
-          git add resolver/exports/*diagnostics*.csv 2>/dev/null || true
-          git add resolver/state/daily/*/exports/*.csv 2>/dev/null || true
-          git add resolver/state/daily/*/exports/*.jsonl 2>/dev/null || true
-          git add resolver/state/daily/*/review/review_queue.csv 2>/dev/null || true
-
-          if [ -n "$YM" ]; then
-            git add resolver/snapshots/"$YM"/facts.parquet 2>/dev/null || true
-            git add resolver/snapshots/"$YM"/manifest.json 2>/dev/null || true
-          fi
-
-          if ! git diff --cached --quiet; then
-            MSG="chore(resolver): nightly state"
-            if [ -n "$YM" ]; then MSG="$MSG + snapshot $YM"; fi
-            git commit -m "$MSG [skip ci]"
-            echo "DID_COMMIT=true" >> "$GITHUB_ENV"
-          else
-            echo "No changes to commit."
-          fi
-
-      - name: Push nightly state
-        if: env.DID_COMMIT == 'true'
-        shell: bash
-        run: |
-          set -e
-          if git log -1 --pretty=%B | grep -q "nightly state"; then
-            BRANCH="${GITHUB_REF#refs/heads/}"
-            if [ -z "$BRANCH" ]; then
-              echo "::error ::Could not resolve branch from $GITHUB_REF"
-              exit 1
-            fi
-            git push origin "HEAD:refs/heads/${BRANCH}"
-            echo "Pushed to ${BRANCH}"
-          else
-            echo "Latest commit is not a nightly state commit. Skipping push."
-          fi

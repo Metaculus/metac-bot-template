@@ -93,6 +93,18 @@ DEFAULT_SOURCE_TEMPLATES: Dict[str, Dict[str, Any]] = {
 }
 
 
+def get_source_templates(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    templates: Dict[str, Dict[str, Any]] = {}
+    for source in cfg.get("sources", []) or []:
+        name = str(source.get("name") or "").strip()
+        if not name:
+            continue
+        templates[name] = dict(source)
+    for name, template in DEFAULT_SOURCE_TEMPLATES.items():
+        templates.setdefault(name, dict(template))
+    return templates
+
+
 @dataclass
 class Hazard:
     code: str
@@ -447,18 +459,6 @@ def _aggregate_percent(group: pd.DataFrame) -> Optional[float]:
     if values.empty:
         return None
     return float(values.mean())
-
-
-def get_source_templates(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    templates: Dict[str, Dict[str, Any]] = {}
-    for source in cfg.get("sources", []) or []:
-        name = str(source.get("name") or "").strip()
-        if not name:
-            continue
-        templates[name] = dict(source)
-    for name, template in DEFAULT_SOURCE_TEMPLATES.items():
-        templates.setdefault(name, dict(template))
-    return templates
 
 
 def collect_rows() -> List[List[Any]]:
