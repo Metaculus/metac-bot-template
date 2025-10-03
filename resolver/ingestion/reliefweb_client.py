@@ -150,41 +150,62 @@ def _dump(resp: requests.Response) -> str:
     return f"HTTP {resp.status_code}, headers={hdrs}, body[0:500]={body}"
 
 
+def _is_waf_challenge(resp: requests.Response) -> bool:
+    return (
+        resp.status_code == 202
+        and resp.headers.get("x-amzn-waf-action", "").lower() == "challenge"
+    )
+
+
 def rw_request(
     url: str,
     payload: Dict[str, Any],
     headers: Dict[str, str],
-    tries: int = 4,
-    backoff: float = 1.2,
-) -> Dict[str, Any]:
+    max_retries: int,
+    retry_backoff: float,
+    timeout: float,
+    challenge_tracker: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
     # 0) Connectivity probe (optional; ignore body)
-    try:
-        probe = requests.get(
-            url,
-            params={"limit": 1},
-            headers=headers,
-            timeout=15,
-        )
-        if DEBUG:
-            print(f"[reliefweb] GET probe status={probe.status_code}")
-        if (
-            probe.status_code == 202
-            and probe.headers.get("x-amzn-waf-action", "").lower() == "challenge"
-        ):
+    for attempt in range(1, max_retries + 1):
+        try:
+            probe = requests.get(
+                url,
+                params={"limit": 1},
+                headers=headers,
+                timeout=timeout,
+            )
             if DEBUG:
-                print("[reliefweb] GET WAF challenge:", _dump(probe))
-            raise RuntimeError("WAF_CHALLENGE_GET")
-    except RuntimeError:
-        raise
-    except Exception as exc:
-        if DEBUG:
-            print("[reliefweb] GET probe exception:", str(exc))
+                print(f"[reliefweb] GET probe status={probe.status_code}")
+            if _is_waf_challenge(probe):
+                challenge_tracker["count"] += 1
+                if DEBUG:
+                    print("[reliefweb] GET WAF challenge:", _dump(probe))
+                if attempt >= max_retries:
+                    challenge_tracker["persisted"] = True
+                    return None
+                time.sleep(retry_backoff * attempt)
+                continue
+            if probe.status_code == 200:
+                try:
+                    probe.json()
+                except ValueError:
+                    if DEBUG:
+                        print("[reliefweb] GET probe invalid JSON")
+                break
+            break
+        except Exception as exc:
+            if DEBUG:
+                print("[reliefweb] GET probe exception:", str(exc))
+            break
 
     # 1) Real request with filters via POST
     err: Optional[str] = None
-    for attempt in range(1, tries + 1):
+    for attempt in range(1, max_retries + 1):
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=30)
+            response = requests.post(
+                url, json=payload, headers=headers, timeout=timeout
+            )
             if response.status_code == 200:
                 return response.json()
             if response.status_code in (429, 502, 503):
@@ -192,24 +213,25 @@ def rw_request(
                     print(
                         f"[reliefweb] POST attempt {attempt} backoff; status={response.status_code}"
                     )
-                time.sleep((backoff**attempt) + 0.3 * attempt)
+                time.sleep((1.2**attempt) + 0.3 * attempt)
                 continue
-            if (
-                response.status_code == 202
-                and response.headers.get("x-amzn-waf-action", "").lower()
-                == "challenge"
-            ):
+            if _is_waf_challenge(response):
+                challenge_tracker["count"] += 1
                 if DEBUG:
                     print("[reliefweb] POST WAF challenge:", _dump(response))
-                raise RuntimeError("WAF_CHALLENGE_POST")
+                if attempt >= max_retries:
+                    challenge_tracker["persisted"] = True
+                    return None
+                time.sleep(retry_backoff * attempt)
+                continue
             err = _dump(response)
             break
         except Exception as exc:  # pragma: no cover - network failure paths
             err = str(exc)
-            if err.startswith("WAF_CHALLENGE"):
-                raise RuntimeError(err)
             if DEBUG:
                 print(f"[reliefweb] POST exception attempt {attempt}: {err}")
+    if challenge_tracker.get("persisted"):
+        return None
     raise RuntimeError(f"ReliefWeb API error: {err or 'no 200 after retries'}")
 
 
@@ -260,16 +282,18 @@ def pick_dates(rec: Dict[str, Any]) -> Tuple[str, str]:
     return as_of, publication
 
 
-def make_rows() -> List[List[str]]:
+def make_rows() -> Tuple[List[List[str]], Dict[str, Any]]:
     if os.getenv("RESOLVER_SKIP_RELIEFWEB", "") == "1":
-        return []
+        return [], {"count": 0, "persisted": False}
 
     cfg = load_cfg()
     countries, shocks = load_registries()
     iso_exclude = {code.upper() for code in cfg.get("iso3_exclude", [])}
 
     headers = {
-        "User-Agent": cfg.get("user_agent", "spagbot-resolver"),
+        "User-Agent": cfg.get(
+            "user_agent", "spagbot-resolver/1.0 (+https://github.com/kwyjad/Spagbot_metac-bot)"
+        ),
         "Content-Type": "application/json",
         "Accept": cfg.get("accept_header", "application/json"),
     }
@@ -278,6 +302,10 @@ def make_rows() -> List[List[str]]:
     appname = os.getenv("RELIEFWEB_APPNAME", appname_cfg)
     url = f"{base_url}?appname={appname}"
     payload = build_payload(cfg)
+    timeout = float(cfg.get("timeout_seconds", 30))
+    max_retries = int(cfg.get("max_retries", 5))
+    retry_backoff = float(cfg.get("retry_backoff_seconds", 2))
+    challenge_tracker: Dict[str, Any] = {"count": 0, "persisted": False}
 
     rows: List[List[str]] = []
     offset = 0
@@ -285,7 +313,17 @@ def make_rows() -> List[List[str]]:
 
     while True:
         payload["offset"] = offset
-        data = rw_request(url, payload, headers)
+        data = rw_request(
+            url,
+            payload,
+            headers,
+            max_retries=max_retries,
+            retry_backoff=retry_backoff,
+            timeout=timeout,
+            challenge_tracker=challenge_tracker,
+        )
+        if data is None:
+            return rows, challenge_tracker
         total = total or data.get("totalCount", 0)
         items = data.get("data", [])
         if not items:
@@ -364,7 +402,7 @@ def make_rows() -> List[List[str]]:
             break
         time.sleep(0.25)
 
-    return rows
+    return rows, challenge_tracker
 
 
 def main() -> None:
@@ -373,12 +411,13 @@ def main() -> None:
         STAGING.mkdir(parents=True, exist_ok=True)
         output = STAGING / "reliefweb.csv"
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
+        print("[reliefweb] rows=0 challenged=0")
         return
 
     STAGING.mkdir(parents=True, exist_ok=True)
     output = STAGING / "reliefweb.csv"
     try:
-        rows = make_rows()
+        rows, challenge_tracker = make_rows()
     except RuntimeError as exc:
         message = str(exc)
         if "WAF_CHALLENGE" in message:
@@ -387,17 +426,24 @@ def main() -> None:
                 "Writing empty CSV and continuing."
             )
             pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
+            print("[reliefweb] rows=0 challenged=0")
             return
         raise
+    challenged = int(challenge_tracker.get("count", 0))
+    if challenge_tracker.get("persisted"):
+        print("ReliefWeb WAF challenge persisted; writing empty CSV this run,")
+        pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
+        print(f"[reliefweb] rows=0 challenged={challenged}")
+        return
 
     if not rows:
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
-        print(f"wrote empty {output}")
+        print(f"[reliefweb] rows=0 challenged={challenged}")
         return
 
     df = pd.DataFrame(rows, columns=COLUMNS)
     df.to_csv(output, index=False)
-    print(f"wrote {output} rows={len(df)}")
+    print(f"[reliefweb] rows={len(df)} challenged={challenged}")
 
 
 if __name__ == "__main__":

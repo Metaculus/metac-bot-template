@@ -1,7 +1,10 @@
 appname: "UNICEF-Resolver-P1L1T6"
-user_agent: "spagbot-resolver/1.0 (github.com/kwyjad/Spagbot_metac-bot)"
+user_agent: "spagbot-resolver/1.0 (+https://github.com/kwyjad/Spagbot_metac-bot)"
 base_url: "https://api.reliefweb.int/v2/reports"
 accept_header: "application/json"
+max_retries: 5
+retry_backoff_seconds: 2
+timeout_seconds: 30
 window_days: 45
 page_size: 100
 
