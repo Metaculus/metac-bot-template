@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: context-pack
+        name: Refresh Context Pack
+        entry: python tools/context_pack.py --base origin/main --outdir context/last
+        language: system
+        pass_filenames: false
+        files: "(\\.py$|\\.tsx?$|\\.js$|\\.json$|\\.ya?ml$|\\.toml$|^schemas/)"
+        stages: [commit]
