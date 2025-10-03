@@ -148,6 +148,23 @@ jobs:
           set -euxo pipefail
           pytest resolver/tests -q
 
+      - name: Generate SCHEMAS.md (no commit)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python resolver/tools/generate_schemas_md.py \
+            --in resolver/tools/schema.yml \
+            --out SCHEMAS.md \
+            --title "Resolver Canonical Schemas" \
+            --sort
+
+      - name: Upload schemas doc
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schemas-md-${{ github.run_id }}
+          path: SCHEMAS.md
+
       - name: Upload resolver artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
@@ -317,6 +334,23 @@ jobs:
         run: |
           set -euxo pipefail
           pytest resolver/tests -q
+
+      - name: Generate SCHEMAS.md (no commit)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python resolver/tools/generate_schemas_md.py \
+            --in resolver/tools/schema.yml \
+            --out SCHEMAS.md \
+            --title "Resolver Canonical Schemas" \
+            --sort
+
+      - name: Upload schemas doc
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schemas-md-${{ github.run_id }}
+          path: SCHEMAS.md
 
       - name: Upload resolver artifacts
         if: ${{ always() }}
