@@ -141,6 +141,19 @@ def _pick(mapping: MutableMapping[str, Any], keys: Sequence[str]) -> Optional[An
     return None
 
 
+def _coerce_to_list(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value).strip()
+    if not text:
+        return []
+    if "," in text:
+        return [part.strip() for part in text.split(",") if part.strip()]
+    return [text]
+
+
 def hazard_from_key(key: str) -> Hazard:
     key_norm = str(key or "").strip().lower()
     return HAZARD_METADATA.get(key_norm, HAZARD_METADATA["other"])
@@ -372,18 +385,28 @@ def _resolve_iso3(
     event: MutableMapping[str, Any],
     keys: Dict[str, Sequence[str]],
     name_to_iso: Dict[str, str],
-) -> Optional[str]:
-    iso_val = _pick(event, keys.get("iso3", []))
-    if iso_val:
-        iso = str(iso_val).strip().upper()
-        if len(iso) == 3:
-            return iso
+) -> List[str]:
+    iso_candidates: List[str] = []
+    seen: set[str] = set()
+
+    iso_raw = _pick(event, keys.get("iso3", []))
+    for value in _coerce_to_list(iso_raw):
+        iso = value.upper()
+        if len(iso) == 3 and iso not in seen:
+            iso_candidates.append(iso)
+            seen.add(iso)
+
+    if iso_candidates:
+        return iso_candidates
+
     country_val = _pick(event, keys.get("country", []))
-    if country_val:
-        iso = name_to_iso.get(_normalise_text(country_val))
-        if iso:
-            return iso
-    return None
+    for name in _coerce_to_list(country_val):
+        iso = name_to_iso.get(_normalise_text(name))
+        if iso and iso not in seen:
+            iso_candidates.append(iso)
+            seen.add(iso)
+
+    return iso_candidates
 
 
 def _extract_publication_date(event: MutableMapping[str, Any], keys: Dict[str, Sequence[str]]) -> Optional[date]:
@@ -404,8 +427,8 @@ def _prepare_events(
 ) -> List[GDACSEvent]:
     events: List[GDACSEvent] = []
     for raw in raw_events:
-        iso3 = _resolve_iso3(raw, keys, name_to_iso)
-        if not iso3:
+        iso_codes = _resolve_iso3(raw, keys, name_to_iso)
+        if not iso_codes:
             dbg(f"skip event missing ISO3: {raw}")
             continue
         hazard = map_hazard(_pick(raw, keys.get("type", [])), hazard_map, default_hazard)
@@ -439,21 +462,23 @@ def _prepare_events(
         source_url = str(_pick(raw, keys.get("url", [])) or "").strip()
         doc_title = str(_pick(raw, keys.get("title", [])) or "").strip()
         publication_date = _extract_publication_date(raw, keys)
-        events.append(
-            GDACSEvent(
-                event_id=event_id,
-                episode_id=episode_id,
-                iso3=iso3,
-                hazard=hazard,
-                start_date=start_date,
-                end_date=end_date or start_date,
-                impact_value=impact_int,
-                source_url=source_url,
-                doc_title=doc_title,
-                publication_date=publication_date,
-                impact_field=impact_field or "impact",
+
+        for iso3 in iso_codes:
+            events.append(
+                GDACSEvent(
+                    event_id=event_id,
+                    episode_id=episode_id,
+                    iso3=iso3,
+                    hazard=hazard,
+                    start_date=start_date,
+                    end_date=end_date or start_date,
+                    impact_value=impact_int,
+                    source_url=source_url,
+                    doc_title=doc_title,
+                    publication_date=publication_date,
+                    impact_field=impact_field or "impact",
+                )
             )
-        )
     return events
 
 

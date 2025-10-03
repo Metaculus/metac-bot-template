@@ -60,6 +60,17 @@ HAZARD_KEY_TO_CODE = {
     "multi": "MULTI",
 }
 
+# Hazards that appear in EM-DAT but are intentionally excluded from this project.
+# We detect them explicitly so they are dropped instead of being mislabelled as
+# "other" when the registry does not carry a matching class/code.
+UNSUPPORTED_HAZARD_KEYWORDS = {
+    "earthquake": ("earthquake", "seismic", "aftershock"),
+    "volcano": ("volcano", "volcanic", "volcaniceruption"),
+    "landslide": ("landslide", "mudslide", "massmovementwet"),
+    "wildfire": ("wildfire", "forestfire", "bushfire"),
+}
+UNSUPPORTED_HAZARD_KEYS = set(UNSUPPORTED_HAZARD_KEYWORDS.keys())
+
 DEFAULT_METHOD_PREFIX = "EM-DAT event→month allocation"
 DEFAULT_DEFINITION_PRORATA = (
     "Total affected people from EM-DAT events allocated to each overlapping month "
@@ -346,6 +357,19 @@ def _infer_hazard_key(
                 if candidate == target or candidate.startswith(target) or target in candidate:
                     return hazard_key
 
+    for candidate in norm_texts:
+        for unsupported_key, keywords in UNSUPPORTED_HAZARD_KEYWORDS.items():
+            for keyword in keywords:
+                norm_keyword = _normalise_text(keyword)
+                if not norm_keyword:
+                    continue
+                if (
+                    candidate == norm_keyword
+                    or candidate.startswith(norm_keyword)
+                    or norm_keyword in candidate
+                ):
+                    return unsupported_key
+
     return default_key
 
 
@@ -485,6 +509,7 @@ def main() -> bool:
 
             dis_no = str(record.get(id_col, "")) if id_col else ""
             event_name = str(record.get(title_col, "")) if title_col else ""
+            event_ref = dis_no or event_name or "unknown"
 
             hazard_key = _infer_hazard_key(
                 record.get(type_col) if type_col else "",
@@ -492,6 +517,9 @@ def main() -> bool:
                 shock_map=shock_map,
                 default_key=default_hazard_key,
             )
+            if hazard_key in UNSUPPORTED_HAZARD_KEYS:
+                dbg(f"skip unsupported hazard {hazard_key} for event {event_ref}")
+                continue
             hazard = _resolve_hazard(hazard_key, hazard_lookup=hazard_lookup)
 
             total_value = None

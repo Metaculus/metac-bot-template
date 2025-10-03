@@ -183,7 +183,21 @@ def fetch_events(config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], str]:
         dbg(f"fetching page {page}")
         resp = session.get(base_url, params=params, timeout=60)
         resp.raise_for_status()
-        payload = resp.json() or {}
+        try:
+            payload = resp.json() or {}
+        except ValueError as exc:  # pragma: no cover - JSON decode errors
+            dbg("ACLED payload was not valid JSON")
+            raise RuntimeError("ACLED payload was not valid JSON") from exc
+        if not isinstance(payload, dict):
+            dbg(f"ACLED payload unexpected type: {type(payload)!r}")
+            raise RuntimeError("ACLED payload missing expected fields (data/results/count)")
+        if page == 1:
+            expected = {"data", "results", "count"}
+            present = sorted(key for key in expected if key in payload)
+            if not present:
+                dbg(f"ACLED payload missing expected keys; received: {sorted(payload.keys())}")
+                raise RuntimeError("ACLED payload missing expected fields (data/results/count)")
+            dbg(f"ACLED connectivity ok; payload keys include: {', '.join(present)}")
         data = payload.get("data") or payload.get("results") or []
         if not isinstance(data, list):
             raise RuntimeError("Unexpected ACLED payload structure")
