@@ -1,0 +1,13 @@
+# .pre-commit-config.yaml
+repos:
+- repo: local
+  hooks:
+  - id: context-pack
+    name: Refresh Context Pack (for GPT-5)
+    entry: python tools/context_pack.py --base origin/main --outdir context/last
+    language: system
+    pass_filenames: false
+    stages: [commit]
+    # Only run when relevant code/config changes are staged
+    files: |
+      ^(spagbot/|resolver/|tools/|schemas/|config/|data/|scripts/|\.github/|pyproject\.toml|poetry\.lock|requirements\.txt|package\.json|tsconfig\.json)
