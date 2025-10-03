@@ -16,6 +16,8 @@ import requests
 import yaml
 from urllib.parse import urlencode
 
+from .acled_auth import get_auth_header
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -146,7 +148,7 @@ def _build_source_url(base_url: str, params: Dict[str, Any], token_keys: Sequenc
     return f"{base_url}?{urlencode(safe_params, doseq=True)}"
 
 
-def fetch_events(config: Dict[str, Any], token: str) -> Tuple[List[Dict[str, Any]], str]:
+def fetch_events(config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], str]:
     base_url = os.getenv("ACLED_BASE", config.get("base_url", "https://api.acleddata.com"))
 
     window_days = int(os.getenv("ACLED_WINDOW_DAYS", config.get("window_days", 450)))
@@ -162,7 +164,6 @@ def fetch_events(config: Dict[str, Any], token: str) -> Tuple[List[Dict[str, Any
         "limit": limit,
         "page": 1,
         "format": "json",
-        "access_token": token,
     }
 
     token_keys = {"access_token", "key", "token"}
@@ -170,6 +171,7 @@ def fetch_events(config: Dict[str, Any], token: str) -> Tuple[List[Dict[str, Any
 
     records: List[Dict[str, Any]] = []
     session = requests.Session()
+    headers = get_auth_header()
 
     page = 1
     while True:
@@ -178,7 +180,7 @@ def fetch_events(config: Dict[str, Any], token: str) -> Tuple[List[Dict[str, Any
             break
         params["page"] = page
         dbg(f"fetching page {page}")
-        resp = session.get(base_url, params=params, timeout=60)
+        resp = session.get(base_url, params=params, headers=headers, timeout=60)
         resp.raise_for_status()
         try:
             payload = resp.json() or {}
@@ -584,19 +586,22 @@ def _build_rows(
 def collect_rows() -> List[Dict[str, Any]]:
     config = load_config()
     countries, shocks = load_registries()
-    token = os.getenv("ACLED_TOKEN") or str(config.get("token", ""))
     ingestion_mode = (os.getenv("RESOLVER_INGESTION_MODE") or "").strip().lower()
-    if not token:
-        message = "ACLED disabled: set ACLED_TOKEN (and ensure base_url=/acled/read)."
+    legacy_token = os.getenv("ACLED_TOKEN") or str(config.get("token", ""))
+    if legacy_token:
+        os.environ.setdefault("ACLED_ACCESS_TOKEN", legacy_token)
+
+    try:
+        records, source_url = fetch_events(config)
+    except RuntimeError as exc:
+        message = f"ACLED auth failed: {exc}"
         if ingestion_mode == "real":
             print(message)
             if os.getenv("RESOLVER_FAIL_ON_STUB_ERROR") == "1":
-                raise RuntimeError(message)
+                raise
             return []
-        dbg("ACLED token missing; skipping fetch")
+        dbg(message)
         return []
-
-    records, source_url = fetch_events(config, token)
     if not records:
         return []
     publication_date = date.today().isoformat()

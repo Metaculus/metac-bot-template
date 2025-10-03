@@ -81,6 +81,16 @@ def dbg(message: str) -> None:
         print(f"[dtm] {message}")
 
 
+def _dtm_headers() -> Dict[str, str]:
+    """Return API key headers for the DTM portal if credentials are configured."""
+
+    key = os.environ.get("DTM_API_PRIMARY_KEY") or os.environ.get("DTM_API_SECONDARY_KEY")
+    if not key:
+        return {}
+    header_name = os.environ.get("DTM_API_HEADER_NAME", "x-api-key")
+    return {header_name: key}
+
+
 def _env_bool(name: str, default: bool) -> bool:
     val = os.getenv(name)
     if val is None:

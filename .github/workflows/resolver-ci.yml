@@ -21,6 +21,13 @@ jobs:
   pr_check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
+      ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
+      ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}
+      DTM_API_PRIMARY_KEY: ${{ secrets.DTM_API_PRIMARY_KEY }}
+      DTM_API_SECONDARY_KEY: ${{ secrets.DTM_API_SECONDARY_KEY }}
+      DTM_API_HEADER_NAME: ${{ vars.DTM_API_HEADER_NAME }}
     steps:
       - name: Checkout (full)
         uses: actions/checkout@v4
@@ -146,6 +153,13 @@ jobs:
   nightly_state:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
+      ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
+      ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}
+      DTM_API_PRIMARY_KEY: ${{ secrets.DTM_API_PRIMARY_KEY }}
+      DTM_API_SECONDARY_KEY: ${{ secrets.DTM_API_SECONDARY_KEY }}
+      DTM_API_HEADER_NAME: ${{ vars.DTM_API_HEADER_NAME }}
     steps:
       - name: Checkout (full)
         uses: actions/checkout@v4
