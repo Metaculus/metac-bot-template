@@ -40,6 +40,19 @@ def _run_connector(tmp_path: Path, monkeypatch, data: pd.DataFrame) -> pd.DataFr
     with open(cfg_path, "w", encoding="utf-8") as fp:
         yaml.safe_dump(cfg, fp)
 
+    overrides_path = tmp_path / "wfp_mvam_sources.yml"
+    overrides = {
+        "enabled": True,
+        "sources": [
+            {
+                "name": "test-delta",
+                "url": str(data_path),
+            }
+        ],
+    }
+    with open(overrides_path, "w", encoding="utf-8") as fp:
+        yaml.safe_dump(overrides, fp)
+
     out_path = tmp_path / "wfp_mvam.csv"
     monkeypatch.setenv("RESOLVER_SKIP_WFP_MVAM", "0")
     monkeypatch.setenv("WFP_MVAM_ALLOW_PERCENT", "0")
@@ -48,6 +61,7 @@ def _run_connector(tmp_path: Path, monkeypatch, data: pd.DataFrame) -> pd.DataFr
     monkeypatch.delenv("WFP_MVAM_DENOMINATOR_FILE", raising=False)
 
     monkeypatch.setattr(wfp_mvam_client, "CONFIG", cfg_path)
+    monkeypatch.setattr(wfp_mvam_client, "SOURCES_CONFIG", overrides_path)
     monkeypatch.setattr(wfp_mvam_client, "OUT_PATH", out_path)
 
     wfp_mvam_client.main()

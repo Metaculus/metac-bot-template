@@ -31,6 +31,7 @@ def _write_config(tmp_path, data_path):
         "emit_stock": True,
         "emit_incident": True,
         "include_first_month_delta": False,
+        "suppress_admin_when_no_subpop": False,
     }
     cfg_path = tmp_path / "config.yml"
     with open(cfg_path, "w", encoding="utf-8") as fp:
@@ -45,6 +46,19 @@ def _run_connector(tmp_path, monkeypatch, data_df, denom_df):
     denom_df.to_csv(denom_path, index=False)
 
     cfg_path = _write_config(tmp_path, data_path)
+    overrides_path = tmp_path / "wfp_mvam_sources.yml"
+    overrides = {
+        "enabled": True,
+        "sources": [
+            {
+                "name": "test",
+                "url": str(data_path),
+            }
+        ],
+    }
+    with open(overrides_path, "w", encoding="utf-8") as fp:
+        yaml.safe_dump(overrides, fp)
+
     out_path = tmp_path / "wfp_mvam.csv"
 
     monkeypatch.delenv("RESOLVER_SKIP_WFP_MVAM", raising=False)
@@ -55,6 +69,7 @@ def _run_connector(tmp_path, monkeypatch, data_df, denom_df):
     monkeypatch.setenv("WORLDPOP_PRODUCT", "test_product")
 
     monkeypatch.setattr(wfp_mvam_client, "CONFIG", cfg_path)
+    monkeypatch.setattr(wfp_mvam_client, "SOURCES_CONFIG", overrides_path)
     monkeypatch.setattr(wfp_mvam_client, "OUT_PATH", out_path)
 
     clear_population_cache()

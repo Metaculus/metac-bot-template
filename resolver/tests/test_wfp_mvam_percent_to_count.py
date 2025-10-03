@@ -40,6 +40,7 @@ def _write_config(tmp_path: Path, data_path: Path, allow_percent: bool, denom_pa
         "emit_stock": True,
         "emit_incident": False,
         "include_first_month_delta": False,
+        "suppress_admin_when_no_subpop": False,
     }
     if denom_path is not None:
         cfg["denominator_file"] = str(denom_path)
@@ -60,6 +61,19 @@ def _run_connector(tmp_path: Path, monkeypatch, data: pd.DataFrame, *, allow_per
 
     cfg_path = _write_config(tmp_path, data_path, allow_percent, denom_path)
 
+    overrides_path = tmp_path / "wfp_mvam_sources.yml"
+    overrides = {
+        "enabled": True,
+        "sources": [
+            {
+                "name": "test",
+                "url": str(data_path),
+            }
+        ],
+    }
+    with open(overrides_path, "w", encoding="utf-8") as fp:
+        yaml.safe_dump(overrides, fp)
+
     out_path = tmp_path / "wfp_mvam.csv"
     monkeypatch.setenv("RESOLVER_SKIP_WFP_MVAM", "0")
     monkeypatch.setenv("WFP_MVAM_ALLOW_PERCENT", "1" if allow_percent else "0")
@@ -71,6 +85,7 @@ def _run_connector(tmp_path: Path, monkeypatch, data: pd.DataFrame, *, allow_per
         monkeypatch.delenv("WFP_MVAM_DENOMINATOR_FILE", raising=False)
 
     monkeypatch.setattr(wfp_mvam_client, "CONFIG", cfg_path)
+    monkeypatch.setattr(wfp_mvam_client, "SOURCES_CONFIG", overrides_path)
     monkeypatch.setattr(wfp_mvam_client, "OUT_PATH", out_path)
 
     wfp_mvam_client.main()
