@@ -114,57 +114,67 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
-      - name: Ensure lock is current, then install
+      - name: Refresh lock (portable)
         shell: bash
         run: |
           set -euo pipefail
-          echo "==> Checking/refreshing poetry.lock …"
-          # Try a quick check; if mismatched, regenerate.
-          if poetry lock --check; then
-            echo "poetry.lock up-to-date."
-          else
-            echo "poetry.lock out-of-date; regenerating…"
-            poetry lock --no-interaction
-            echo "Regenerated poetry.lock."
-            # Optionally commit the updated lock so subsequent CI runs don't redo this.
-            if [[ "${COMMIT_LOCKFILE:-1}" == "1" ]]; then
-              git config user.name "github-actions[bot]"
-              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-              git add poetry.lock
-              if ! git diff --cached --quiet; then
-                git commit -m "chore(deps): refresh poetry.lock [skip ci]"
-                git push
-              fi
+          echo "==> Refreshing poetry.lock (portable)…"
+          # On Poetry 2.2.x there’s no --check. Keep it simple & deterministic.
+          poetry lock --no-interaction
+          echo "Regenerated/validated poetry.lock."
+          if [[ "${COMMIT_LOCKFILE:-0}" == "1" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add poetry.lock
+            if ! git diff --cached --quiet; then
+              git commit -m "chore(deps): refresh poetry.lock [skip ci]"
+              # Rebase to avoid “fetch first” rejects on busy branches.
+              git pull --rebase origin "${GIT_BRANCH_NAME:-main}" || true
+              git push origin "HEAD:${GIT_BRANCH_NAME:-main}"
+            else
+              echo "poetry.lock unchanged; skip commit."
             fi
           fi
-          echo "==> Installing dependencies…"
-          poetry install --no-interaction --no-ansi --sync
+
+      - name: Install dependencies
+        run: poetry sync --no-interaction --no-ansi
 
       - name: Run Spagbot (Metaculus Cup)
         run: |
           poetry run python run_spagbot.py --mode tournament --limit 20 --submit --purpose metaculus_cup
 
-      - name: Commit updated forecasts
+      - name: Commit & push forecasts (only if changed)
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add forecasts.csv
-          git commit -m "chore(ci): update forecasts" || echo "No changes"
-          git push
+          # Add both CSV and logs; either may change.
+          git add -A forecasts.csv forecast_logs || true
+          if git diff --cached --quiet; then
+            echo "No forecast changes; skipping push."
+            exit 0
+          fi
+          git commit -m "chore(ci): update forecasts"
+          # Avoid non-fast-forward errors on busy main.
+          git pull --rebase origin "${GIT_BRANCH_NAME:-main}" || true
+          git push origin "HEAD:${GIT_BRANCH_NAME:-main}"
 
       - name: Commit logs (if changed)
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add forecast_logs/** || true
-          if ! git diff --cached --quiet; then
-            git commit -m "feat: Metaculus Cup forecasts [skip ci]"
-            git push
-          else
+          if git diff --cached --quiet; then
             echo "No new forecast data to commit."
+            exit 0
           fi
+          git commit -m "feat: Metaculus Cup forecasts [skip ci]"
+          git pull --rebase origin "${GIT_BRANCH_NAME:-main}" || true
+          git push origin "HEAD:${GIT_BRANCH_NAME:-main}"
 
-      - name: Upload artifacts
+      - id: upload_artifact
+        name: Upload run artifacts (if present)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -172,3 +182,7 @@ jobs:
           path: |
             forecast_logs/**
             forecasts.csv
+
+      - name: Skip note
+        if: steps.upload_artifact.outcome == 'skipped'
+        run: echo "No posts processed; artifact may be empty."
