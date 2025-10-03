@@ -251,6 +251,18 @@ def _parse_float(value: Any) -> Optional[float]:
     return float(parsed)
 
 
+def _clamp_pct(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(numeric):
+        return None
+    return min(100.0, max(0.0, numeric))
+
+
 def _parse_date(value: Any) -> Optional[pd.Timestamp]:
     if value is None:
         return None
@@ -455,10 +467,16 @@ def _aggregate_people(group: pd.DataFrame) -> Optional[float]:
 
 
 def _aggregate_percent(group: pd.DataFrame) -> Optional[float]:
-    values = group["value"].apply(_parse_float).dropna()
-    if values.empty:
+    parsed = group["value"].apply(_parse_float).dropna()
+    if parsed.empty:
         return None
-    return float(values.mean())
+    clamped_values = [
+        value for value in (_clamp_pct(v) for v in parsed) if value is not None
+    ]
+    if not clamped_values:
+        return None
+    mean_value = float(sum(clamped_values) / len(clamped_values))
+    return _clamp_pct(mean_value)
 
 
 def collect_rows() -> List[List[Any]]:
@@ -760,8 +778,10 @@ def collect_rows() -> List[List[Any]]:
             if not allow_percent:
                 continue
 
-            pct_value = _aggregate_percent(percent_subset)
+            pct_value = _clamp_pct(_aggregate_percent(percent_subset))
             if pct_value is None:
+                continue
+            if math.isnan(pct_value) or pct_value < 0:
                 continue
 
             dataset_pops = percent_subset["population"].apply(_parse_float).dropna()
@@ -793,7 +813,10 @@ def collect_rows() -> List[List[Any]]:
 
             if population is not None and population > 0:
                 any_admin_convertible = True
-                converted_people = pct_value / 100.0 * population
+                pct_for_conversion = _clamp_pct(pct_value)
+                if pct_for_conversion is None or pct_for_conversion < 0:
+                    continue
+                converted_people = pct_for_conversion / 100.0 * population
                 if converted_people > 0:
                     people_sum += converted_people
                 conversion_methods.add("pct→people (admin pop)")
@@ -883,7 +906,9 @@ def collect_rows() -> List[List[Any]]:
                 denominator_detail = f"{denominator_label} year={record.year}"
             total_value = 0.0
             for entry in percent_entries:
-                pct_value = entry["pct_value"]
+                pct_value = _clamp_pct(entry["pct_value"])
+                if pct_value is None or pct_value < 0:
+                    continue
                 converted = safe_pct_to_people(
                     pct_value,
                     iso3,
@@ -938,11 +963,17 @@ def collect_rows() -> List[List[Any]]:
             if weight is None or weight <= 0:
                 weights = []
                 break
-            weights.append((entry["pct_value"], float(weight), source_label))
+            pct_value = _clamp_pct(entry["pct_value"])
+            if pct_value is None or pct_value < 0:
+                weights = []
+                break
+            weights.append((pct_value, float(weight), source_label))
 
         if not weights:
-            pct_mean = _aggregate_percent(percent_rows)
+            pct_mean = _clamp_pct(_aggregate_percent(percent_rows))
             if pct_mean is None:
+                continue
+            if math.isnan(pct_mean) or pct_mean < 0:
                 continue
             dbg(
                 "percent-only fallback (missing admin population) for "
@@ -979,8 +1010,10 @@ def collect_rows() -> List[List[Any]]:
 
         total_weight = sum(weight for _, weight, _ in weights)
         if total_weight <= 0:
-            pct_mean = _aggregate_percent(percent_rows)
+            pct_mean = _clamp_pct(_aggregate_percent(percent_rows))
             if pct_mean is None:
+                continue
+            if math.isnan(pct_mean) or pct_mean < 0:
                 continue
             dbg(
                 "percent-only fallback (zero total weight) for "
