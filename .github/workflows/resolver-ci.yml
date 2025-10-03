@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pr-checks:
+  pr_check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -26,11 +26,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
+          ref: ${{ github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            resolver/requirements.txt
+            resolver/requirements-dev.txt
 
       - name: Install deps
         run: |
@@ -96,25 +102,7 @@ jobs:
         run: |
           python resolver/tools/write_repo_state.py --mode pr --id "$PR_NUMBER"
 
-      - name: Commit & push PR state to branch
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add resolver/state/pr/"$PR_NUMBER"/exports/*.csv 2>/dev/null || true
-          git add resolver/state/pr/"$PR_NUMBER"/exports/*.jsonl 2>/dev/null || true
-          git add resolver/state/pr/"$PR_NUMBER"/review/review_queue.csv 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(resolver): PR state for #$PR_NUMBER [skip ci]"
-            # push back to the PR branch
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          else
-            echo "No changes to commit."
-          fi
-
-  nightly:
+  nightly_state:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -122,11 +110,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
+          ref: ${{ github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            resolver/requirements.txt
+            resolver/requirements-dev.txt
 
       - name: Install deps
         run: |
@@ -164,11 +158,39 @@ jobs:
         run: |
           python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
 
-      - name: Precedence at Istanbul date
+      - name: Gate schedule (optional)
+        id: schedule_gate
         shell: bash
         run: |
-          python resolver/tools/schedule_gate.py > gate.json
-          CUT=$(python -c "import json;print(json.load(open('gate.json'))['istanbul_today'])")
+          set -e
+          ls -la resolver/tools || true
+          if [ -f "resolver/tools/schedule_gate.py" ]; then
+            python resolver/tools/schedule_gate.py > gate.json
+            echo "GATE RESULT:"
+            cat gate.json
+            ISTANBUL_TODAY=$(python -c "import json;print(json.load(open('gate.json'))['istanbul_today'])")
+            IS_LAST=$(python -c "import json;print('true' if json.load(open('gate.json'))['is_last_day_istanbul'] else 'false')")
+            YM=$(python -c "import json;print(json.load(open('gate.json'))['istanbul_today'][:7])")
+            echo "istanbul_today=$ISTANBUL_TODAY" >> "$GITHUB_OUTPUT"
+            echo "is_last=$IS_LAST" >> "$GITHUB_OUTPUT"
+            echo "ym=$YM" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Schedule Gate Missing::resolver/tools/schedule_gate.py not found. Skipping gate."
+            echo "istanbul_today=" >> "$GITHUB_OUTPUT"
+            echo "is_last=false" >> "$GITHUB_OUTPUT"
+            echo "ym=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Precedence at Istanbul date
+        shell: bash
+        env:
+          ISTANBUL_TODAY: ${{ steps.schedule_gate.outputs.istanbul_today }}
+        run: |
+          CUT="$ISTANBUL_TODAY"
+          if [ -z "$CUT" ]; then
+            CUT=$(date -u +%Y-%m-%d)
+            echo "::notice title=Schedule Gate Skipped::Using UTC date $CUT as cutoff"
+          fi
           python resolver/tools/precedence_engine.py --facts resolver/exports/facts.csv --cutoff "$CUT"
 
       - name: Build review queue
@@ -187,21 +209,13 @@ jobs:
         run: |
           pytest resolver/tests -q
 
-      - name: Snapshot check (is last Istanbul day?)
-        id: gate
-        shell: bash
-        run: |
-          python resolver/tools/schedule_gate.py > gate.json
-          IS_LAST=$(python -c "import json;print('true' if json.load(open('gate.json'))['is_last_day_istanbul'] else 'false')")
-          YM=$(python -c "import json;print(json.load(open('gate.json'))['istanbul_today'][:7])")
-          echo "is_last=$IS_LAST" >> "$GITHUB_OUTPUT"
-          echo "ym=$YM" >> "$GITHUB_OUTPUT"
-
       - name: Freeze monthly snapshot
-        if: steps.gate.outputs.is_last == 'true'
+        if: steps.schedule_gate.outputs.is_last == 'true'
         shell: bash
+        env:
+          SNAPSHOT_MONTH: ${{ steps.schedule_gate.outputs.ym }}
         run: |
-          python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month "${{ steps.gate.outputs.ym }}" --overwrite
+          python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month "$SNAPSHOT_MONTH" --overwrite
 
       - name: Stage repo state for nightly
         shell: bash
@@ -209,20 +223,24 @@ jobs:
           D=$(date -u +%Y-%m-%d)
           python resolver/tools/write_repo_state.py --mode daily --id "$D"
 
-      - name: Commit & push nightly state (and snapshot if created)
-        env:
-          YM: ${{ steps.gate.outputs.ym }}
+      - name: Commit nightly state
         shell: bash
+        env:
+          YM: ${{ steps.schedule_gate.outputs.ym }}
         run: |
+          set -e
+          echo "DID_COMMIT=false" >> "$GITHUB_ENV"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Nightly state
+          git add resolver/exports/*.csv 2>/dev/null || true
+          git add resolver/exports/*.jsonl 2>/dev/null || true
+          git add resolver/exports/*.parquet 2>/dev/null || true
+          git add resolver/exports/*diagnostics*.csv 2>/dev/null || true
           git add resolver/state/daily/*/exports/*.csv 2>/dev/null || true
           git add resolver/state/daily/*/exports/*.jsonl 2>/dev/null || true
           git add resolver/state/daily/*/review/review_queue.csv 2>/dev/null || true
 
-          # Snapshot (if present)
           if [ -n "$YM" ]; then
             git add resolver/snapshots/"$YM"/facts.parquet 2>/dev/null || true
             git add resolver/snapshots/"$YM"/manifest.json 2>/dev/null || true
@@ -232,7 +250,24 @@ jobs:
             MSG="chore(resolver): nightly state"
             if [ -n "$YM" ]; then MSG="$MSG + snapshot $YM"; fi
             git commit -m "$MSG [skip ci]"
-            git push
+            echo "DID_COMMIT=true" >> "$GITHUB_ENV"
           else
             echo "No changes to commit."
+          fi
+
+      - name: Push nightly state
+        if: env.DID_COMMIT == 'true'
+        shell: bash
+        run: |
+          set -e
+          if git log -1 --pretty=%B | grep -q "nightly state"; then
+            BRANCH="${GITHUB_REF#refs/heads/}"
+            if [ -z "$BRANCH" ]; then
+              echo "::error ::Could not resolve branch from $GITHUB_REF"
+              exit 1
+            fi
+            git push origin "HEAD:refs/heads/${BRANCH}"
+            echo "Pushed to ${BRANCH}"
+          else
+            echo "Latest commit is not a nightly state commit. Skipping push."
           fi
