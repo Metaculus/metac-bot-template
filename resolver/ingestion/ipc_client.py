@@ -27,6 +27,8 @@ SHOCKS = DATA / "shocks.csv"
 OUT_PATH = STAGING / "ipc.csv"
 DEFAULT_DENOMINATOR = DATA / "population.csv"
 
+_DATE_PARSE_DAYFIRST = False
+
 CANONICAL_HEADERS = [
     "event_id",
     "country_name",
@@ -90,12 +92,53 @@ def _env_int(name: str) -> Optional[int]:
 
 
 def load_config() -> Dict[str, Any]:
-    if not CONFIG.exists():
-        return {"sources": []}
-    with open(CONFIG, "r", encoding="utf-8") as fp:
-        cfg = yaml.safe_load(fp) or {}
-    cfg.setdefault("sources", [])
-    return cfg
+    base: Dict[str, Any] = {
+        "enabled": False,
+        "feeds": [],
+        "sources": [],
+        "dayfirst": False,
+    }
+    if CONFIG.exists():
+        with open(CONFIG, "r", encoding="utf-8") as fp:
+            loaded = yaml.safe_load(fp) or {}
+        if isinstance(loaded, dict):
+            base.update(loaded)
+
+    feeds = base.get("feeds", [])
+    if isinstance(feeds, dict):
+        feed_list: List[Dict[str, Any]] = []
+        for name, value in feeds.items():
+            entry = dict(value or {})
+            entry.setdefault("name", name)
+            feed_list.append(entry)
+        feeds = feed_list
+    elif not isinstance(feeds, list):
+        feeds = []
+
+    sources: List[Dict[str, Any]] = []
+    for entry in feeds:
+        if isinstance(entry, str):
+            sources.append({"name": "ipc_feed", "url": entry})
+            continue
+        if isinstance(entry, dict):
+            entry_copy = dict(entry)
+            if str(entry_copy.get("url", "")).strip():
+                sources.append(entry_copy)
+
+    legacy_sources = base.get("sources")
+    if isinstance(legacy_sources, list) and legacy_sources:
+        sources = legacy_sources
+
+    result = dict(base)
+    result["feeds"] = feeds
+    result["sources"] = sources if base.get("enabled", False) else []
+    result.setdefault("emit_stock", True)
+    result.setdefault("emit_incident", True)
+    result.setdefault("include_first_month_delta", False)
+    result.setdefault("default_hazard", "multi")
+    result.setdefault("shock_keywords", {})
+    result.setdefault("denominator_file", str(DEFAULT_DENOMINATOR))
+    return result
 
 
 def load_registries() -> Tuple[pd.DataFrame, Dict[str, str], Dict[str, Tuple[str, str]]]:
@@ -176,7 +219,7 @@ def _normalise_month(value: Any) -> Optional[str]:
     if not text:
         return None
     try:
-        parsed = pd.to_datetime(text, errors="coerce")
+        parsed = pd.to_datetime(text, errors="coerce", dayfirst=_DATE_PARSE_DAYFIRST)
     except Exception:
         parsed = pd.NaT
     if pd.isna(parsed):
@@ -191,7 +234,7 @@ def _normalise_date(value: Any) -> str:
     if not text:
         return ""
     try:
-        parsed = pd.to_datetime(text, errors="coerce")
+        parsed = pd.to_datetime(text, errors="coerce", dayfirst=_DATE_PARSE_DAYFIRST)
     except Exception:
         parsed = pd.NaT
     if pd.isna(parsed):
@@ -695,6 +738,19 @@ def main() -> bool:
         dbg(f"failed to load config: {exc}")
         _write_header_only(OUT_PATH)
         return False
+
+    if not cfg.get("enabled", False):
+        print("IPC disabled via config; writing header-only CSV")
+        _write_header_only(OUT_PATH)
+        return False
+
+    if not cfg.get("sources"):
+        print("IPC enabled but no feeds configured; writing header-only CSV")
+        _write_header_only(OUT_PATH)
+        return False
+
+    global _DATE_PARSE_DAYFIRST
+    _DATE_PARSE_DAYFIRST = bool(cfg.get("dayfirst", False))
 
     emit_stock = _env_bool("IPC_EMIT_STOCK", bool(cfg.get("emit_stock", True)))
     emit_incident = _env_bool("IPC_EMIT_INCIDENT", bool(cfg.get("emit_incident", True)))

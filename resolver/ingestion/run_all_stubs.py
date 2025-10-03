@@ -3,12 +3,18 @@
 
 from __future__ import annotations
 
+import csv
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
+
+import yaml
 
 ROOT = Path(__file__).resolve().parent
+STAGING = ROOT.parent / "staging"
+CONFIG_DIR = ROOT / "config"
 
 INGESTION_MODE = (os.environ.get("RESOLVER_INGESTION_MODE") or "").strip().lower()
 INCLUDE_STUBS = os.environ.get("RESOLVER_INCLUDE_STUBS", "0") == "1"
@@ -30,6 +36,131 @@ REAL = [
     "gdacs_client.py",
     "worldpop_client.py",
 ]
+
+SUMMARY_TARGETS = {
+    "who_phe_client.py": {
+        "label": "WHO-PHE",
+        "staging": STAGING / "who_phe.csv",
+        "config": CONFIG_DIR / "who_phe.yml",
+    },
+    "wfp_mvam_client.py": {
+        "label": "WFP-mVAM",
+        "staging": STAGING / "wfp_mvam.csv",
+        "config": CONFIG_DIR / "wfp_mvam_sources.yml",
+    },
+    "ipc_client.py": {
+        "label": "IPC",
+        "staging": STAGING / "ipc.csv",
+        "config": CONFIG_DIR / "ipc.yml",
+    },
+    "unhcr_client.py": {
+        "label": "UNHCR",
+        "staging": STAGING / "unhcr.csv",
+        "config": CONFIG_DIR / "unhcr.yml",
+    },
+    "unhcr_odp_client.py": {
+        "label": "UNHCR-ODP",
+        "staging": STAGING / "unhcr_odp.csv",
+        "config": None,
+    },
+    "acled_client.py": {
+        "label": "ACLED",
+        "staging": STAGING / "acled.csv",
+        "config": CONFIG_DIR / "acled.yml",
+    },
+    "dtm_client.py": {
+        "label": "DTM",
+        "staging": STAGING / "dtm.csv",
+        "config": CONFIG_DIR / "dtm.yml",
+    },
+}
+
+
+def _load_yaml(path: Optional[Path]) -> dict:
+    if path is None or not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+    return data if isinstance(data, dict) else {}
+
+
+def _count_rows(path: Path) -> int:
+    if not path.exists():
+        return 0
+    try:
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.reader(handle)
+            next(reader, None)
+            return sum(1 for _ in reader)
+    except Exception:
+        return 0
+
+
+def _summarise_connector(name: str) -> str | None:
+    meta = SUMMARY_TARGETS.get(name)
+    if not meta:
+        return None
+    label = meta["label"]
+    rows = _count_rows(meta["staging"])
+    parts = [f"[{label}] rows:{rows}"]
+    cfg = _load_yaml(meta.get("config"))
+
+    if name == "who_phe_client.py":
+        enabled = bool(cfg.get("enabled", False))
+        sources_cfg = cfg.get("sources", {})
+        configured = 0
+        if isinstance(sources_cfg, dict):
+            for value in sources_cfg.values():
+                if isinstance(value, dict):
+                    url = str(value.get("url", "")).strip()
+                else:
+                    url = str(value).strip()
+                if url:
+                    configured += 1
+        parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        parts.append(f"sources:{configured}")
+    elif name == "wfp_mvam_client.py":
+        enabled = bool(cfg.get("enabled", False))
+        sources = cfg.get("sources", [])
+        count = 0
+        if isinstance(sources, dict):
+            sources = list(sources.values())
+        if isinstance(sources, list):
+            for entry in sources:
+                if isinstance(entry, dict) and str(entry.get("url", "")).strip():
+                    count += 1
+                elif isinstance(entry, str) and entry.strip():
+                    count += 1
+        parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        parts.append(f"sources:{count}")
+    elif name == "ipc_client.py":
+        enabled = bool(cfg.get("enabled", False))
+        feeds = cfg.get("feeds", [])
+        if isinstance(feeds, dict):
+            feed_count = sum(1 for value in feeds.values() if value)
+        elif isinstance(feeds, list):
+            feed_count = len(feeds)
+        else:
+            feed_count = 0
+        parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        parts.append(f"feeds:{feed_count}")
+    elif name == "unhcr_client.py":
+        years = cfg.get("include_years") or []
+        years_text: str
+        if isinstance(years, list) and years:
+            years_text = ",".join(str(y) for y in years)
+        else:
+            try:
+                years_back = int(cfg.get("years_back", 3) or 0)
+            except Exception:
+                years_back = 3
+            current = dt.date.today().year
+            years_text = ",".join(str(current - offset) for offset in range(years_back + 1))
+        parts.append(f"years:{years_text}")
+    elif name == "acled_client.py":
+        token_present = bool(os.getenv("ACLED_TOKEN") or str(cfg.get("token", "")).strip())
+        parts.append(f"token:{'yes' if token_present else 'no'}")
+    return " ".join(parts)
 
 STUBS = [
     "ifrc_go_stub.py",
@@ -117,6 +248,12 @@ def main() -> None:
             if rc != 0:
                 print(f"{name} failed with rc={rc}", file=sys.stderr)
                 real_failed += 1
+
+        for summary_name in SUMMARY_TARGETS:
+            if summary_name in REAL:
+                summary_line = _summarise_connector(summary_name)
+                if summary_line:
+                    print(summary_line)
 
         if real_failed:
             print(f"{real_failed} real connector(s) failed", file=sys.stderr)

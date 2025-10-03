@@ -146,11 +146,8 @@ def _build_source_url(base_url: str, params: Dict[str, Any], token_keys: Sequenc
     return f"{base_url}?{urlencode(safe_params, doseq=True)}"
 
 
-def fetch_events(config: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], str]:
+def fetch_events(config: Dict[str, Any], token: str) -> Tuple[List[Dict[str, Any]], str]:
     base_url = os.getenv("ACLED_BASE", config.get("base_url", "https://api.acleddata.com"))
-    token = os.getenv("ACLED_TOKEN")
-    if not token:
-        raise RuntimeError("ACLED_TOKEN is required for ACLED ingestion")
 
     window_days = int(os.getenv("ACLED_WINDOW_DAYS", config.get("window_days", 450)))
     limit = int(os.getenv("ACLED_MAX_LIMIT", config.get("limit", 1000)))
@@ -587,7 +584,19 @@ def _build_rows(
 def collect_rows() -> List[Dict[str, Any]]:
     config = load_config()
     countries, shocks = load_registries()
-    records, source_url = fetch_events(config)
+    token = os.getenv("ACLED_TOKEN") or str(config.get("token", ""))
+    ingestion_mode = (os.getenv("RESOLVER_INGESTION_MODE") or "").strip().lower()
+    if not token:
+        message = "ACLED disabled: set ACLED_TOKEN (and ensure base_url=/acled/read)."
+        if ingestion_mode == "real":
+            print(message)
+            if os.getenv("RESOLVER_FAIL_ON_STUB_ERROR") == "1":
+                raise RuntimeError(message)
+            return []
+        dbg("ACLED token missing; skipping fetch")
+        return []
+
+    records, source_url = fetch_events(config, token)
     if not records:
         return []
     publication_date = date.today().isoformat()
