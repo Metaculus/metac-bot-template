@@ -54,6 +54,7 @@ CANONICAL_HEADERS = [
 
 SERIES_SEMANTICS = "incident"
 DOC_TITLE = "ACLED monthly aggregation"
+CONFLICT_METRIC = "fatalities_battle_month"
 
 HAZARD_KEY_TO_CODE = {
     "armed_conflict_onset": "ACO",
@@ -127,6 +128,126 @@ def _to_int(value: Any) -> int:
         return int(float(text))
     except Exception:
         return 0
+
+
+def compute_conflict_onset_flags(
+    df: pd.DataFrame,
+    *,
+    iso_col: str = "iso3",
+    date_col: str = "month",
+    event_type_col: str = "event_type",
+    fatalities_col: str = "fatalities",
+    battle_event_types: Sequence[str] = ("Battles",),
+    lookback_months: int = 12,
+    threshold: int = 25,
+) -> pd.DataFrame:
+    """Return battle fatalities with rolling lookback totals and onset flags."""
+
+    if df is None or df.empty:
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "month",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+
+    lookback = max(int(lookback_months or 0), 1)
+    threshold_value = int(threshold or 0)
+
+    work = df[[iso_col, date_col, event_type_col, fatalities_col]].copy()
+    work[iso_col] = work[iso_col].astype(str).str.strip().str.upper()
+    work[date_col] = pd.to_datetime(work[date_col], errors="coerce")
+    work = work.dropna(subset=[iso_col, date_col])
+    if work.empty:
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "month",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+
+    battle_types = {str(v).strip().lower() for v in battle_event_types if str(v).strip()}
+    work["event_type_lower"] = work[event_type_col].astype(str).str.strip().str.lower()
+    if battle_types:
+        work = work[work["event_type_lower"].isin(battle_types)]
+    if work.empty:
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "month",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+
+    work[fatalities_col] = work[fatalities_col].map(_to_int)
+    work["month_period"] = work[date_col].dt.to_period("M")
+    work = work.dropna(subset=["month_period"])
+    if work.empty:
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "month",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+
+    grouped = (
+        work.groupby([iso_col, "month_period"], as_index=False)[fatalities_col].sum()
+    )
+    grouped.rename(
+        columns={iso_col: "iso3", "month_period": "month", fatalities_col: "battle_fatalities"},
+        inplace=True,
+    )
+
+    rows: List[pd.DataFrame] = []
+    for iso3, group in grouped.groupby("iso3"):
+        group = group.sort_values("month")
+        start = group["month"].min()
+        end = group["month"].max()
+        idx = pd.period_range(start, end, freq="M")
+        series = pd.Series(0, index=idx, dtype="int64")
+        for record in group.itertuples(index=False):
+            series.loc[record.month] = int(record.battle_fatalities)
+        prev_window = (
+            series.shift(1).rolling(window=lookback, min_periods=1).sum().fillna(0).astype(int)
+        )
+        frame = pd.DataFrame(
+            {
+                "iso3": iso3,
+                "month": idx.strftime("%Y-%m"),
+                "battle_fatalities": series.astype(int).to_list(),
+                "prev12_battle_fatalities": prev_window.to_list(),
+            }
+        )
+        frame["is_onset"] = (
+            (frame["prev12_battle_fatalities"] < threshold_value)
+            & (frame["battle_fatalities"] >= threshold_value)
+        )
+        rows.append(frame)
+
+    if not rows:
+        return pd.DataFrame(
+            columns=[
+                "iso3",
+                "month",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+
+    result = pd.concat(rows, ignore_index=True)
+    return result
 
 
 def _digest(parts: Iterable[str]) -> str:
@@ -310,78 +431,112 @@ def _parse_participants(df: pd.DataFrame, config: Dict[str, Any]) -> pd.Series:
     return pd.Series(values)
 
 
-def _compute_battle_windows(battle_df: pd.DataFrame) -> Dict[Tuple[str, str], Tuple[int, int]]:
-    if battle_df.empty:
-        return {}
-    battle_df = battle_df.copy()
-    battle_df["period"] = pd.PeriodIndex(battle_df["month"], freq="M")
-    result: Dict[Tuple[str, str], Tuple[int, int]] = {}
-    for iso3, group in battle_df.groupby("iso3"):
-        group = group.sort_values("period")
-        idx = pd.period_range(group["period"].min(), group["period"].max(), freq="M")
-        series = pd.Series(0, index=idx)
-        for _, row in group.iterrows():
-            series.loc[row["period"]] = int(row["fatalities"])
-        prev12 = series.shift(1).rolling(window=12, min_periods=1).sum().fillna(0)
-        for period in idx:
-            prev_value = int(prev12.loc[period])
-            current_value = int(series.loc[period])
-            result[(iso3, period.strftime("%Y-%m"))] = (prev_value, current_value)
-    return result
-
-
 def _make_conflict_rows(
-    totals: pd.DataFrame,
-    battle_windows: Dict[Tuple[str, str], Tuple[int, int]],
+    conflict_stats: pd.DataFrame,
     shocks: pd.DataFrame,
     source_url: str,
     publication_date: str,
     ingested_at: str,
     method_base: str,
     definition_base: str,
+    threshold: int,
+    lookback_months: int,
+    onset_enabled: bool,
 ) -> List[Dict[str, Any]]:
-    rows: List[Dict[str, Any]] = []
+    if conflict_stats.empty:
+        return []
+
     shocks_index = shocks.set_index("hazard_code")
-    for record in totals.sort_values(["iso3", "month"]).itertuples(index=False):
-        key = (record.iso3, record.month)
-        prev12, current = battle_windows.get(key, (0, 0))
-        hazard_key = "armed_conflict_onset" if prev12 < 25 and current >= 25 else "armed_conflict_escalation"
-        hazard_code = HAZARD_KEY_TO_CODE[hazard_key]
+    lookback = max(int(lookback_months or 0), 1)
+    threshold_value = int(threshold or 0)
+
+    rows: List[Dict[str, Any]] = []
+    sorted_stats = conflict_stats.sort_values(["iso3", "month"])
+    for record in sorted_stats.itertuples(index=False):
+        fatalities = int(getattr(record, "battle_fatalities", 0))
+        if fatalities <= 0:
+            continue
+        prev_value = int(getattr(record, "prev12_battle_fatalities", 0))
+        hazard_code = HAZARD_KEY_TO_CODE["armed_conflict_escalation"]
         hazard_row = shocks_index.loc[hazard_code]
-        value = int(record.fatalities)
-        digest = _digest([record.iso3, hazard_code, "fatalities", record.month, str(value), source_url])
+        digest = _digest(
+            [
+                record.iso3,
+                hazard_code,
+                CONFLICT_METRIC,
+                record.month,
+                str(fatalities),
+                source_url,
+            ]
+        )
         year, month = record.month.split("-")
         definition_text = (
-            f"{definition_base} Onset rule inputs: prev12m={prev12}, current_month={current}."
+            f"{definition_base} Prev{lookback}m battle fatalities={prev_value}; "
+            f"current month battle fatalities={fatalities}; threshold={threshold_value}."
         )
-        method = (
-            f"{method_base}; onset_prev12m={prev12}; onset_current_month={current}"
-        )
+        method_parts = [
+            method_base,
+            f"battle_fatalities={fatalities}",
+            f"prev{lookback}m_battle_fatalities={prev_value}",
+            f"threshold={threshold_value}",
+        ]
+        method = "; ".join(method_parts)
+        common_row = {
+            "country_name": record.country_name,
+            "iso3": record.iso3,
+            "metric": CONFLICT_METRIC,
+            "series_semantics": SERIES_SEMANTICS,
+            "value": fatalities,
+            "unit": "persons",
+            "as_of_date": record.month,
+            "publication_date": publication_date,
+            "publisher": record.publisher,
+            "source_type": record.source_type,
+            "source_url": source_url,
+            "doc_title": DOC_TITLE,
+            "definition_text": definition_text,
+            "method": method,
+            "confidence": "",
+            "revision": 0,
+            "ingested_at": ingested_at,
+        }
         rows.append(
             {
-                "event_id": f"{record.iso3}-ACLED-{hazard_code}-fatalities-{year}-{month}-{digest}",
-                "country_name": record.country_name,
-                "iso3": record.iso3,
+                "event_id": f"{record.iso3}-ACLED-{hazard_code}-{CONFLICT_METRIC}-{year}-{month}-{digest}",
                 "hazard_code": hazard_code,
                 "hazard_label": hazard_row["hazard_label"],
                 "hazard_class": hazard_row["hazard_class"],
-                "metric": "fatalities",
-                "series_semantics": SERIES_SEMANTICS,
-                "value": value,
-                "unit": "persons",
-                "as_of_date": record.month,
-                "publication_date": publication_date,
-                "publisher": record.publisher,
-                "source_type": record.source_type,
-                "source_url": source_url,
-                "doc_title": DOC_TITLE,
-                "definition_text": definition_text,
-                "method": method,
-                "confidence": "",
-                "revision": 0,
-                "ingested_at": ingested_at,
+                **common_row,
             }
         )
+
+        if onset_enabled and bool(getattr(record, "is_onset", False)):
+            onset_code = HAZARD_KEY_TO_CODE["armed_conflict_onset"]
+            onset_row = shocks_index.loc[onset_code]
+            onset_digest = _digest(
+                [
+                    record.iso3,
+                    onset_code,
+                    CONFLICT_METRIC,
+                    record.month,
+                    str(fatalities),
+                    source_url,
+                    "onset",
+                ]
+            )
+            onset_method = method + "; onset_rule_v1"
+            onset_definition = definition_text + " Onset rule triggered."
+            onset_common = dict(common_row)
+            onset_common.update({"definition_text": onset_definition, "method": onset_method})
+            rows.append(
+                {
+                    "event_id": f"{record.iso3}-ACLED-{onset_code}-{CONFLICT_METRIC}-{year}-{month}-{onset_digest}",
+                    "hazard_code": onset_code,
+                    "hazard_label": onset_row["hazard_label"],
+                    "hazard_class": onset_row["hazard_class"],
+                    **onset_common,
+                }
+            )
     return rows
 
 
@@ -521,22 +676,81 @@ def _build_rows(
         .rename(columns={"size": "events"})
     )
 
-    totals = (
-        df.groupby(["iso3", "country_name", "month", "publisher", "source_type"], as_index=False)["fatalities"].sum()
+    onset_cfg = config.get("onset", {})
+    onset_enabled = bool(onset_cfg.get("enabled", True))
+    lookback_months = int(onset_cfg.get("lookback_months", 12) or 12)
+    threshold = int(onset_cfg.get("threshold_battle_deaths", 25) or 25)
+    battle_event_types_cfg = onset_cfg.get("battle_event_types", ["Battles"])
+    if not battle_event_types_cfg:
+        battle_event_types_cfg = ["Battles"]
+    battle_types_lower = {str(v).strip().lower() for v in battle_event_types_cfg if str(v).strip()}
+    if not battle_types_lower:
+        battle_types_lower = {"battles"}
+
+    battle_events = df[df["event_type_lower"].isin(battle_types_lower)]
+    battle_totals = (
+        battle_events.groupby(
+            ["iso3", "country_name", "month", "publisher", "source_type"], as_index=False
+        )["fatalities"].sum()
     )
-    battle_df = (
-        df[df["event_type_lower"] == "battles"]
-        .groupby(["iso3", "country_name", "month"], as_index=False)["fatalities"].sum()
+    battle_totals.rename(columns={"fatalities": "battle_fatalities"}, inplace=True)
+
+    onset_flags = pd.DataFrame(
+        columns=["iso3", "month", "battle_fatalities", "prev12_battle_fatalities", "is_onset"]
     )
-    battle_windows = _compute_battle_windows(battle_df)
+    if onset_enabled and not df.empty:
+        onset_input = df[["iso3", "month", "event_type", "fatalities"]].copy()
+        onset_flags = compute_conflict_onset_flags(
+            onset_input,
+            iso_col="iso3",
+            date_col="month",
+            event_type_col="event_type",
+            fatalities_col="fatalities",
+            battle_event_types=tuple(battle_event_types_cfg),
+            lookback_months=lookback_months,
+            threshold=threshold,
+        )
+
+    conflict_stats = battle_totals.copy()
+    if conflict_stats.empty:
+        conflict_stats = pd.DataFrame(
+            columns=[
+                "iso3",
+                "country_name",
+                "month",
+                "publisher",
+                "source_type",
+                "battle_fatalities",
+                "prev12_battle_fatalities",
+                "is_onset",
+            ]
+        )
+    else:
+        if not onset_flags.empty:
+            conflict_stats = conflict_stats.merge(
+                onset_flags[["iso3", "month", "prev12_battle_fatalities", "is_onset"]],
+                on=["iso3", "month"],
+                how="left",
+            )
+        if "prev12_battle_fatalities" not in conflict_stats.columns:
+            conflict_stats["prev12_battle_fatalities"] = 0
+        conflict_stats["prev12_battle_fatalities"] = (
+            conflict_stats["prev12_battle_fatalities"].fillna(0).astype(int)
+        )
+        if "is_onset" not in conflict_stats.columns:
+            conflict_stats["is_onset"] = False
+        conflict_stats["is_onset"] = conflict_stats["is_onset"].fillna(False).astype(bool)
+        if not onset_enabled:
+            conflict_stats["is_onset"] = False
 
     unrest_label = " + ".join(sorted(config.get("unrest_types", []))) or "Protests + Riots"
+    battle_label = ", ".join(str(v).strip() for v in battle_event_types_cfg if str(v).strip()) or "Battles"
     definition_base = (
-        "ACLED monthly-first aggregation; fatalities sum across all event types; "
-        f"civil unrest events counted from {unrest_label}."
+        "ACLED monthly-first aggregation; battle fatalities aggregated from "
+        f"{battle_label}; civil unrest events counted from {unrest_label}."
     )
     method_base = (
-        "ACLED; monthly-first; fatality sum across all event types; "
+        "ACLED; monthly-first; battle fatalities aggregated; "
         f"unrest events={unrest_label}; onset rule applied"
     )
 
@@ -559,14 +773,16 @@ def _build_rows(
             )
 
     conflict_rows = _make_conflict_rows(
-        totals,
-        battle_windows,
+        conflict_stats,
         shocks,
         source_url,
         publication_date,
         ingested_at,
         method_base,
         definition_base,
+        threshold,
+        lookback_months,
+        onset_enabled,
     )
     unrest_rows = _make_unrest_rows(
         unrest_counts,

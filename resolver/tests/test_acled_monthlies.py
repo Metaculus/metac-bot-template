@@ -6,7 +6,7 @@ from resolver.ingestion import acled_client
 def _rows_to_map(rows):
     out = {}
     for row in rows:
-        key = (row["iso3"], row["metric"], row["as_of_date"])
+        key = (row["iso3"], row["hazard_code"], row["metric"], row["as_of_date"])
         out[key] = row
     return out
 
@@ -83,27 +83,29 @@ def test_acled_monthly_aggregation(monkeypatch):
 
     rows_map = _rows_to_map(rows)
 
-    kenya_conflict = rows_map[("KEN", "fatalities", "2023-01")]
-    assert kenya_conflict["value"] == 4
-    assert kenya_conflict["hazard_code"] == "ACE"
-    assert "prev12m=0" in kenya_conflict["definition_text"]
+    kenya_conflict = rows_map[("KEN", "ACE", "fatalities_battle_month", "2023-01")]
+    assert kenya_conflict["value"] == 3
+    assert "Prev12m" in kenya_conflict["definition_text"]
 
-    uganda_conflict = rows_map[("UGA", "fatalities", "2023-02")]
-    assert uganda_conflict["value"] == 35
-    assert uganda_conflict["hazard_code"] == "ACO"
-    assert "onset_prev12m=0" in uganda_conflict["method"]
+    uganda_escalation = rows_map[("UGA", "ACE", "fatalities_battle_month", "2023-02")]
+    assert uganda_escalation["value"] == 35
+    assert "battle_fatalities=35" in uganda_escalation["method"]
 
-    kenya_unrest = rows_map[("KEN", "events", "2023-01")]
+    uganda_onset = rows_map[("UGA", "ACO", "fatalities_battle_month", "2023-02")]
+    assert "onset_rule_v1" in uganda_onset["method"]
+    assert uganda_onset["value"] == 35
+
+    kenya_unrest = rows_map[("KEN", "CU", "events", "2023-01")]
     assert kenya_unrest["value"] == 2
     assert kenya_unrest["unit"] == "events"
 
-    uganda_unrest = rows_map[("UGA", "events", "2023-02")]
+    uganda_unrest = rows_map[("UGA", "CU", "events", "2023-02")]
     assert uganda_unrest["value"] == 1
 
-    kenya_participants = rows_map[("KEN", "participants", "2023-01")]
+    kenya_participants = rows_map[("KEN", "CU", "participants", "2023-01")]
     assert kenya_participants["value"] == 1700
     assert kenya_participants["unit"] == "persons"
 
-    uganda_participants = rows_map[("UGA", "participants", "2023-02")]
+    uganda_participants = rows_map[("UGA", "CU", "participants", "2023-02")]
     assert uganda_participants["value"] == 200
     assert uganda_participants["unit"] == "persons"
