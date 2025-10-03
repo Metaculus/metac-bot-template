@@ -93,6 +93,15 @@ jobs:
           set -euxo pipefail
           python resolver/ingestion/run_all_stubs.py
 
+      - name: Upload ingestion logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-logs-${{ github.run_id }}
+          path: |
+            resolver/logs/ingestion/**
+            !resolver/logs/ingestion/**/.gitkeep
+
       - name: Export facts
         shell: bash
         run: |
@@ -224,6 +233,15 @@ jobs:
         run: |
           set -euxo pipefail
           python resolver/ingestion/run_all_stubs.py
+
+      - name: Upload ingestion logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-logs-${{ github.run_id }}
+          path: |
+            resolver/logs/ingestion/**
+            !resolver/logs/ingestion/**/.gitkeep
 
       - name: Export facts
         shell: bash

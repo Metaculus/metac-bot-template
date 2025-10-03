@@ -55,6 +55,26 @@ python resolver/tools/validate_facts.py --facts resolver/exports/facts.csv
 python resolver/tools/freeze_snapshot.py --facts resolver/exports/facts.csv --month YYYY-MM
 ```
 
+### Structured logging & retries
+
+`run_all_stubs.py` now emits detailed run metadata and per-connector logs. Each run creates
+plain text and JSONL logs in `resolver/logs/ingestion/` (configurable via `RUNNER_LOG_DIR`).
+A subdirectory per run (named with the UTC start timestamp) contains per-connector logs, so
+`resolver/logs/ingestion/20250101-010203/ifrc_go_stub.log` holds only the IFRC stub output
+for that run.
+
+Key CLI switches:
+
+- `--connector foo --connector bar` — only run the selected connectors/stubs.
+- `--retries N` — retry flaky connectors with exponential backoff (defaults to `2`).
+- `--retry-base`, `--retry-max`, `--retry-no-jitter` — tune the retry backoff curve.
+- `--strict` — exit non-zero if any connector fails (default is soft-fail to keep CI green).
+- `--log-format plain|json`, `--log-level INFO|DEBUG|...` — tweak console verbosity.
+
+The logger also prints an environment summary (git commit, Python version, selected env
+flags) to help debug CI runs. Sensitive values (tokens, secrets, long random strings) are
+redacted automatically in both console and file output.
+
 ## IFRC GO (Admin v2) — real connector
 
 - **Endpoints:** Admin v2 (`https://goadmin.ifrc.org/api/v2/`) — see GO wiki and Swagger for details.  
