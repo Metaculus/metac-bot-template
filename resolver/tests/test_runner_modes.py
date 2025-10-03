@@ -27,9 +27,13 @@ def test_runner_stubs_mode_runs_only_stubs(monkeypatch, tmp_path):
 
     calls: list[str] = []
 
-    monkeypatch.setattr(module, "_run_script", lambda path: calls.append(path.name) or 0)
+    def _record(spec, _logger):
+        calls.append(spec.path.name)
+        return {"status": "ok", "rows": 0, "duration_ms": 0}
 
-    module.main()
+    monkeypatch.setattr(module, "_run_connector", _record)
+
+    module.main([])
 
     assert calls, "expected stub scripts to run"
     assert set(calls) == set(module.STUBS)
@@ -43,12 +47,36 @@ def test_runner_real_mode_skips_stubs(monkeypatch, tmp_path):
 
     calls: list[str] = []
 
-    monkeypatch.setattr(module, "_run_script", lambda path: calls.append(path.name) or 0)
+    def _record(spec, _logger):
+        calls.append(spec.path.name)
+        return {"status": "ok", "rows": 0, "duration_ms": 0}
 
-    module.main()
+    monkeypatch.setattr(module, "_run_connector", _record)
+
+    module.main([])
 
     assert calls, "expected real connectors to run"
     assert set(calls) == set(module.REAL)
+
+    monkeypatch.delenv("RESOLVER_INGESTION_MODE", raising=False)
+    importlib.reload(module)
+
+
+def test_real_mode_failure_returns_non_zero(monkeypatch, tmp_path):
+    module = _prepare_module(monkeypatch, tmp_path, "real")
+
+    module.REAL = ["failing_real.py"]
+    module.STUBS = []
+    (tmp_path / "failing_real.py").write_text("", encoding="utf-8")
+
+    def _fail(spec, logger):  # pragma: no cover - signature documentation
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(module, "_run_connector", _fail)
+
+    exit_code = module.main([])
+
+    assert exit_code == 1
 
     monkeypatch.delenv("RESOLVER_INGESTION_MODE", raising=False)
     importlib.reload(module)

@@ -80,7 +80,7 @@ jobs:
           WORLDPOP_PRODUCT: "un_adj_unconstrained"
         run: |
           set -euxo pipefail
-          python resolver/ingestion/run_all_stubs.py
+          python resolver/ingestion/run_all_stubs.py --mode real --run-stubs=0 --strict
 
       - name: Run stubs (non-blocking)
         if: ${{ always() }}

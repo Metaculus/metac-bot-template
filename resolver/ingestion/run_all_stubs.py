@@ -239,6 +239,19 @@ def _summarise_connector(name: str) -> str | None:
     return " ".join(parts)
 
 
+def _safe_summary(name: str) -> str | None:
+    try:
+        summary = _summarise_connector(name)
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger(__name__).warning(
+            "failed to summarise connector %s", name, exc_info=exc
+        )
+        return None
+    if summary:
+        print(summary)
+    return summary
+
+
 def _should_skip(script: str) -> Optional[str]:
     env_name, label = SKIP_ENVS.get(script, (None, None))
     if env_name and os.environ.get(env_name) == "1":
@@ -279,7 +292,7 @@ def _build_specs(
 def _create_spec(filename: str, kind: str) -> ConnectorSpec:
     path = ROOT / filename
     meta = SUMMARY_TARGETS.get(filename, {})
-    summary = _summarise_connector(filename)
+    summary = _safe_summary(filename)
     output_path = meta.get("staging") if isinstance(meta, dict) else None
     skip_reason = None
     skip_env = _should_skip(filename)
@@ -378,6 +391,19 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="treat connector/stub failures as fatal (non-zero exit)",
     )
+    parser.add_argument(
+        "--mode",
+        choices=("real", "stubs", "all"),
+        default=None,
+        help="override RESOLVER_INGESTION_MODE",
+    )
+    parser.add_argument(
+        "--run-stubs",
+        type=int,
+        choices=(0, 1),
+        default=None,
+        help="force running stub connectors (1) or skip them (0)",
+    )
     parser.add_argument("--retries", type=int, default=2, help="number of retries per connector")
     parser.add_argument("--retry-base", type=float, default=1.0, help="initial retry delay in seconds")
     parser.add_argument("--retry-max", type=float, default=30.0, help="maximum retry delay in seconds")
@@ -414,6 +440,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     requested = { _normalise_name(name) for name in args.connector if name }
     selected: Optional[set[str]] = requested or None
 
+    ingestion_mode = (args.mode or INGESTION_MODE).strip().lower()
+    include_stubs = INCLUDE_STUBS if args.run_stubs is None else bool(args.run_stubs)
+
     run_id = dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     root = init_logger(run_id, level=args.log_level, fmt=args.log_format, log_dir=None)
     log_env_summary(root)
@@ -423,6 +452,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "event": "args",
             "connector_args": list(args.connector),
             "raw_argv": root_input[1:],
+            "mode": args.mode,
+            "run_stubs_arg": args.run_stubs,
         },
     )
 
@@ -436,10 +467,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     warnings.showwarning = _warn_to_log  # type: ignore[assignment]
 
-    if INGESTION_MODE and INGESTION_MODE not in {"real", "stubs", "all"}:
+    if ingestion_mode and ingestion_mode not in {"real", "stubs", "all"}:
         root.error(
             "Unknown RESOLVER_INGESTION_MODE=%s; expected one of real|stubs|all",
-            INGESTION_MODE,
+            ingestion_mode,
             extra={"event": "config_error"},
         )
         return 0
@@ -450,10 +481,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     stub_set = set(stub_list)
 
     run_real = True
-    run_stubs = INCLUDE_STUBS
-    if INGESTION_MODE:
-        run_real = INGESTION_MODE in {"real", "all"}
-        run_stubs = INGESTION_MODE in {"stubs", "all"}
+    run_stubs = include_stubs
+    if ingestion_mode:
+        run_real = ingestion_mode in {"real", "all"}
+        run_stubs = ingestion_mode in {"stubs", "all"}
     if FORCE_DTM_STUB:
         run_stubs = True
 
@@ -601,11 +632,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     real_failures = sum(
-        1 for entry in connectors_summary if entry.get("kind") == "real" and entry.get("status") == "error"
+        1
+        for entry in connectors_summary
+        if entry.get("kind") == "real" and entry.get("status") == "error"
     )
     stub_failures = sum(
-        1 for entry in connectors_summary if entry.get("kind") == "stub" and entry.get("status") == "error"
+        1
+        for entry in connectors_summary
+        if entry.get("kind") == "stub" and entry.get("status") == "error"
     )
+
+    if run_real and not run_stubs:
+        return 1 if real_failures else 0
 
     if args.strict and (real_failures or stub_failures):
         return 1

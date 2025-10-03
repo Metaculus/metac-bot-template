@@ -75,10 +75,23 @@ def get_access_token() -> str:
     """Return a valid ACLED access token, refreshing credentials when required."""
 
     existing = os.environ.get("ACLED_ACCESS_TOKEN")
-    if existing and _jwt_is_valid(existing):
-        return existing
-
     refresh_token = os.environ.get("ACLED_REFRESH_TOKEN")
+    username = os.environ.get("ACLED_USERNAME")
+    password = os.environ.get("ACLED_PASSWORD")
+    have_password_creds = bool(username and password)
+    have_refresh_creds = bool(refresh_token or have_password_creds)
+
+    if existing:
+        if _jwt_is_valid(existing):
+            return existing
+        if not have_refresh_creds:
+            return existing
+
+    legacy = os.environ.get("ACLED_TOKEN")
+    if not existing and legacy:
+        os.environ.setdefault("ACLED_ACCESS_TOKEN", legacy)
+        return legacy
+
     if refresh_token:
         tokens = _exchange_refresh(refresh_token)
         access_token = tokens.get("access_token")
@@ -90,10 +103,8 @@ def get_access_token() -> str:
         os.environ["ACLED_ACCESS_TOKEN"] = access_token
         return access_token
 
-    username = os.environ.get("ACLED_USERNAME")
-    password = os.environ.get("ACLED_PASSWORD")
-    if username and password:
-        tokens = _password_grant(username, password)
+    if have_password_creds:
+        tokens = _password_grant(username or "", password or "")
         access_token = tokens.get("access_token")
         if not access_token:
             raise RuntimeError("ACLED password grant response missing access_token")
@@ -104,8 +115,8 @@ def get_access_token() -> str:
         return access_token
 
     raise RuntimeError(
-        "ACLED authentication failed: provide ACLED_REFRESH_TOKEN or "
-        "ACLED_USERNAME/ACLED_PASSWORD credentials."
+        "ACLED authentication failed: provide ACLED_ACCESS_TOKEN/ACLED_TOKEN or "
+        "ACLED_REFRESH_TOKEN or ACLED_USERNAME/ACLED_PASSWORD credentials."
     )
 
 
