@@ -70,6 +70,29 @@ HAZARD_KEY_TO_CODE = {
     "phe": "PHE",
 }
 
+DEFAULT_SOURCE_TEMPLATES: Dict[str, Dict[str, Any]] = {
+    "mvam_ifc_global": {
+        "name": "mvam_ifc_global",
+        "kind": "csv",
+        "time_keys": ["date", "week", "month", "#date"],
+        "country_keys": ["iso3", "#country+code", "country_iso3", "country"],
+        "admin_keys": ["adm1", "adm2", "#adm1+name", "#adm2+name"],
+        "pct_keys": [
+            "ifc_pct",
+            "insufficient_food_consumption_pct",
+            "#food+consumption:insufficient+%",
+        ],
+        "people_keys": ["ifc_people", "people_ifc", "#inneed"],
+        "population_keys": ["pop", "population", "#population"],
+        "driver_keys": ["driver", "drivers", "tags", "notes"],
+        "series_hint": "stock",
+        "publisher": "WFP",
+        "source_type": "official",
+        "metric": "in_need",
+    }
+}
+
+
 @dataclass
 class Hazard:
     code: str
@@ -243,6 +266,25 @@ def load_config() -> Dict[str, Any]:
         return yaml.safe_load(fp) or {}
 
 
+def load_source_overrides() -> Dict[str, Any]:
+    if not SOURCES_CONFIG.exists():
+        return {"enabled": False, "sources": [], "auth": {}}
+    with open(SOURCES_CONFIG, "r", encoding="utf-8") as fp:
+        data = yaml.safe_load(fp) or {}
+    if not isinstance(data, dict):
+        return {"enabled": False, "sources": [], "auth": {}}
+    data.setdefault("enabled", False)
+    sources = data.get("sources") or []
+    if isinstance(sources, dict):
+        sources = [dict(name=name, **(value or {})) for name, value in sources.items()]
+    elif not isinstance(sources, list):
+        sources = []
+    data["sources"] = sources
+    if not isinstance(data.get("auth"), dict):
+        data["auth"] = {}
+    return data
+
+
 def load_countries() -> pd.DataFrame:
     df = pd.read_csv(COUNTRIES, dtype=str).fillna("")
     return df
@@ -407,23 +449,30 @@ def _aggregate_percent(group: pd.DataFrame) -> Optional[float]:
     return float(values.mean())
 
 
-def collect_rows() -> List[List[Any]]:
-    cfg = load_config()
-    override_cfg = load_source_overrides()
-
-    if not override_cfg.get("enabled", False):
-        print("WFP mVAM disabled via config; writing header-only CSV")
-        return []
-
+def get_source_templates(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     templates: Dict[str, Dict[str, Any]] = {}
     for source in cfg.get("sources", []) or []:
         name = str(source.get("name") or "").strip()
         if not name:
             continue
-        clone = dict(source)
-        templates[name] = clone
+        templates[name] = dict(source)
     for name, template in DEFAULT_SOURCE_TEMPLATES.items():
         templates.setdefault(name, dict(template))
+    return templates
+
+
+def collect_rows() -> List[List[Any]]:
+    cfg = load_config()
+    templates = get_source_templates(cfg)
+    dbg(
+        "loaded source templates: "
+        + (", ".join(sorted(templates)) if templates else "<none>")
+    )
+    override_cfg = load_source_overrides()
+
+    if not override_cfg.get("enabled", False):
+        print("WFP mVAM disabled via config; writing header-only CSV")
+        return []
 
     auth_headers = override_cfg.get("auth") if isinstance(override_cfg.get("auth"), dict) else {}
     prepared_sources: List[Dict[str, Any]] = []
@@ -1232,43 +1281,3 @@ def main() -> bool:
 
 if __name__ == "__main__":
     main()
-DEFAULT_SOURCE_TEMPLATES: Dict[str, Dict[str, Any]] = {
-    "mvam_ifc_global": {
-        "name": "mvam_ifc_global",
-        "kind": "csv",
-        "time_keys": ["date", "week", "month", "#date"],
-        "country_keys": ["iso3", "#country+code", "country_iso3", "country"],
-        "admin_keys": ["adm1", "adm2", "#adm1+name", "#adm2+name"],
-        "pct_keys": [
-            "ifc_pct",
-            "insufficient_food_consumption_pct",
-            "#food+consumption:insufficient+%",
-        ],
-        "people_keys": ["ifc_people", "people_ifc", "#inneed"],
-        "population_keys": ["pop", "population", "#population"],
-        "driver_keys": ["driver", "drivers", "tags", "notes"],
-        "series_hint": "stock",
-        "publisher": "WFP",
-        "source_type": "official",
-        "metric": "in_need",
-    }
-}
-
-
-def load_source_overrides() -> Dict[str, Any]:
-    if not SOURCES_CONFIG.exists():
-        return {"enabled": False, "sources": [], "auth": {}}
-    with open(SOURCES_CONFIG, "r", encoding="utf-8") as fp:
-        data = yaml.safe_load(fp) or {}
-    if not isinstance(data, dict):
-        return {"enabled": False, "sources": [], "auth": {}}
-    data.setdefault("enabled", False)
-    sources = data.get("sources") or []
-    if isinstance(sources, dict):
-        sources = [dict(name=name, **(value or {})) for name, value in sources.items()]
-    elif not isinstance(sources, list):
-        sources = []
-    data["sources"] = sources
-    if not isinstance(data.get("auth"), dict):
-        data["auth"] = {}
-    return data
