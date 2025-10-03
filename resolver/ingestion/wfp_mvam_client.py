@@ -88,6 +88,104 @@ def _env_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _select_first_text(series: pd.Series, default: str = "") -> str:
+    """Return the first non-empty string from ``series``."""
+
+    if series is None:
+        return default
+    for value in series.dropna():
+        text = str(value).strip()
+        if text:
+            return text
+    return default
+
+
+def _load_admin_population_table(path: Optional[str]) -> Optional[pd.DataFrame]:
+    """Load an optional admin-level population lookup table."""
+
+    if not path:
+        return None
+    table_path = Path(path)
+    if not table_path.exists():
+        dbg(f"admin population table {path} missing")
+        return None
+    try:
+        df = pd.read_csv(table_path)
+    except Exception as exc:  # pragma: no cover - defensive
+        dbg(f"failed to read admin population table {path}: {exc}")
+        return None
+    if df.empty:
+        return None
+    mapping = {str(col).strip().lower(): col for col in df.columns}
+    iso_col = mapping.get("iso3") or mapping.get("#country+code")
+    admin_col = (
+        mapping.get("admin_name")
+        or mapping.get("admin")
+        or mapping.get("admin_id")
+        or mapping.get("admin_code")
+        or mapping.get("adm1_name")
+        or mapping.get("adm2_name")
+    )
+    pop_col = mapping.get("population") or mapping.get("pop")
+    year_col = mapping.get("year")
+    source_col = mapping.get("source")
+    if not iso_col or not admin_col or not pop_col:
+        dbg("admin population table missing required columns; ignoring")
+        return None
+    normalised = pd.DataFrame()
+    normalised["iso3"] = df[iso_col].astype(str).str.strip().str.upper()
+    normalised["admin_name"] = df[admin_col].astype(str).str.strip()
+    normalised["population"] = df[pop_col].apply(_parse_float)
+    if year_col:
+        normalised["year"] = df[year_col].apply(_parse_float).apply(
+            lambda v: int(v) if v is not None else None
+        )
+    else:
+        normalised["year"] = None
+    if source_col:
+        normalised["source"] = df[source_col].astype(str).str.strip()
+    else:
+        normalised["source"] = ""
+    normalised = normalised.dropna(subset=["iso3", "admin_name", "population"], how="any")
+    normalised = normalised[normalised["population"] > 0]
+    if normalised.empty:
+        return None
+    return normalised
+
+
+def _lookup_admin_population(
+    table: Optional[pd.DataFrame], iso3: str, admin_name: str, year: int
+) -> Tuple[Optional[float], Optional[str]]:
+    """Return an optional admin population from ``table``."""
+
+    if table is None or not admin_name:
+        return None, None
+    subset = table[table["iso3"] == str(iso3).upper()]
+    if subset.empty:
+        return None, None
+    subset_admin = subset[subset["admin_name"].str.lower() == admin_name.lower()]
+    if subset_admin.empty:
+        return None, None
+    if "year" in subset_admin.columns and subset_admin["year"].notna().any():
+        subset_year = subset_admin[subset_admin["year"].notna()].copy()
+        subset_year["year"] = subset_year["year"].astype(int)
+        candidates = subset_year[subset_year["year"] <= year]
+        if candidates.empty:
+            row = subset_year.sort_values("year").iloc[-1]
+        else:
+            row = candidates.sort_values("year").iloc[-1]
+    else:
+        row = subset_admin.iloc[-1]
+    population = row.get("population")
+    if population is None or pd.isna(population):
+        return None, None
+    source = str(row.get("source", "")).strip()
+    label = "lookup population"
+    if source:
+        label = f"lookup population ({source})"
+    return float(population), label
+
+
 def _ingested_timestamp() -> str:
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -309,6 +407,10 @@ def collect_rows() -> List[List[Any]]:
         "WFP_MVAM_INCLUDE_FIRST_MONTH_DELTA",
         bool(cfg.get("include_first_month_delta", False)),
     )
+    suppress_admin_when_no_subpop = _env_bool(
+        "WFP_MVAM_SUPPRESS_ADMIN_IF_NO_SUBPOP",
+        bool(cfg.get("suppress_admin_when_no_subpop", True)),
+    )
 
     priority_env = os.getenv("WFP_MVAM_INDICATOR_PRIORITY")
     if priority_env:
@@ -327,6 +429,9 @@ def collect_rows() -> List[List[Any]]:
         denominator_path = str(DEFAULT_DENOMINATOR)
 
     worldpop_product_hint = os.getenv("WORLDPOP_PRODUCT", "").strip()
+    admin_population_table = _load_admin_population_table(
+        cfg.get("admin_population_table")
+    )
 
     records: List[Dict[str, Any]] = []
 
@@ -471,57 +576,189 @@ def collect_rows() -> List[List[Any]]:
 
     df_records = pd.DataFrame(records)
 
-    admin_groups = (
-        df_records.groupby(
-            [
-                "iso3",
-                "hazard_code",
-                "hazard_label",
-                "hazard_class",
-                "metric",
-                "source_id",
-                "month",
-                "admin_name",
-            ],
-            dropna=False,
-        )
-    )
+    key_columns = [
+        "iso3",
+        "hazard_code",
+        "hazard_label",
+        "hazard_class",
+        "metric",
+        "source_id",
+        "month",
+    ]
+    grouped_keys = df_records.groupby(key_columns, dropna=False)
 
-    admin_aggregated: List[Dict[str, Any]] = []
+    national_records: List[Dict[str, Any]] = []
+    has_admin_people_sum_keys: set[Tuple[str, ...]] = set()
 
-    for (iso3, hz_code, hz_label, hz_class, metric, source_id, month, admin_name), group in admin_groups:
+    for key, group in grouped_keys:
+        iso3, hz_code, hz_label, hz_class, metric, source_id, month = key
+        month = str(month)
+        if not month or "-" not in month:
+            continue
+        try:
+            year = int(month.split("-")[0])
+        except Exception:
+            continue
+
+        country_name = _select_first_text(group["country_name"], "")
+        doc_title = _select_first_text(group["doc_title"], "WFP mVAM")
+        source_url = _select_first_text(group["source_url"], "")
+        publisher = _select_first_text(group["publisher"], DEFAULT_PUBLISHER)
+        source_type = _select_first_text(group["source_type"], DEFAULT_SOURCE_TYPE)
+        driver_texts = sorted({text for text in group["driver_text"].dropna() if str(text).strip()})
+        driver_text = "; ".join(driver_texts)
+
         if group["indicator_kind"].eq("people").any():
-            chosen = group[group["indicator_kind"] == "people"]
-            agg_value = _aggregate_people(chosen)
-            if agg_value is None:
+            people_rows = group[group["indicator_kind"] == "people"]
+            people_groups = people_rows.groupby("admin_name", dropna=False)
+            admin_totals: List[float] = []
+            conversion_methods = set()
+            definition_notes = set()
+            for _, admin_group in people_groups:
+                agg_value = _aggregate_people(admin_group)
+                if agg_value is None or agg_value <= 0:
+                    continue
+                admin_totals.append(float(agg_value))
+                conversion_methods.add("people direct")
+                names = admin_group["indicator_name"].dropna()
+                indicator_label = names.iloc[0] if not names.empty else "people"
+                definition_notes.add(f"Direct people counts ({indicator_label})")
+            if not admin_totals:
                 continue
-            conversion_method = "people direct"
-            names = chosen["indicator_name"].dropna()
-            indicator_label = names.iloc[0] if not names.empty else "people"
-            definition_note = f"Direct people counts ({indicator_label})"
-        elif group["indicator_kind"].eq("percent").any() and allow_percent:
-            chosen = group[group["indicator_kind"] == "percent"]
-            pct_value = _aggregate_percent(chosen)
+            total_value = float(sum(admin_totals))
+            has_admin_people_sum_keys.add(key)
+            national_records.append(
+                {
+                    "iso3": iso3,
+                    "country_name": country_name,
+                    "hazard_code": hz_code,
+                    "hazard_label": hz_label,
+                    "hazard_class": hz_class,
+                    "metric": metric,
+                    "source_id": source_id,
+                    "month": month,
+                    "value": total_value,
+                    "publisher": publisher,
+                    "source_type": source_type,
+                    "source_url": source_url,
+                    "doc_title": doc_title,
+                    "driver_text": driver_text,
+                    "conversion_method": " | ".join(sorted(conversion_methods)) or "people direct",
+                    "definition_note": "; ".join(sorted(definition_notes)),
+                    "denominator_source": "",
+                    "aggregation_note": "national=sum(admin people)",
+                    "unit": DEFAULT_UNIT,
+                    "series_semantics": "stock",
+                }
+            )
+            continue
+
+        percent_rows = group[group["indicator_kind"] == "percent"]
+        if percent_rows.empty or not allow_percent:
+            continue
+
+        # When percent data lack admin populations we must avoid multiplying a single
+        # national denominator across many admin rows. The legacy approach inflated
+        # totals dramatically. We instead require admin populations for per-admin
+        # conversion, fall back to a single national conversion using population
+        # weights, or keep the data in percent form when no safe weighting exists.
+        admin_percent_data: List[Dict[str, Any]] = []
+        missing_weights: List[str] = []
+        has_dataset_population = False
+
+        for admin_name, admin_group in percent_rows.groupby("admin_name", dropna=False):
+            pct_value = _aggregate_percent(admin_group)
             if pct_value is None:
                 continue
-            population_value = chosen["population"].apply(_parse_float).dropna()
-            population_value = population_value[population_value > 0]
-            if not population_value.empty:
-                denominator = float(population_value.iloc[0])
-                agg_value = int(round(pct_value / 100.0 * denominator))
-                conversion_method = "pct→people (dataset population)"
-                definition_note = (
-                    f"Monthly mean prevalence {pct_value:.2f}% converted using dataset population"
-                )
-                chosen = chosen.iloc[[0]]
+            population = None
+            population_source = None
+            dataset_pops = admin_group["population"].apply(_parse_float).dropna()
+            dataset_pops = dataset_pops[dataset_pops > 0]
+            if not dataset_pops.empty:
+                population = float(dataset_pops.iloc[0])
+                population_source = "dataset population"
+                has_dataset_population = True
             else:
-                year = int(month.split("-")[0])
-                record = get_population_record(iso3, year, denominator_path)
-                if record is None:
-                    dbg(
-                        f"no denominator available for {iso3} in {year}; skipping {month}"
-                    )
+                lookup_population, lookup_source = _lookup_admin_population(
+                    admin_population_table,
+                    iso3,
+                    str(admin_name or ""),
+                    year,
+                )
+                if lookup_population is not None and lookup_population > 0:
+                    population = float(lookup_population)
+                    population_source = lookup_source or "lookup population"
+            if population is None or population <= 0:
+                missing_weights.append(str(admin_name or ""))
+            admin_percent_data.append(
+                {
+                    "admin_name": str(admin_name or ""),
+                    "pct_value": float(pct_value),
+                    "population": float(population) if population else None,
+                    "population_source": population_source,
+                }
+            )
+
+        if not admin_percent_data:
+            continue
+
+        if missing_weights:
+            if suppress_admin_when_no_subpop:
+                pct_mean = _aggregate_percent(percent_rows)
+                if pct_mean is None:
                     continue
+                dbg(
+                    "percent-only fallback (missing admin population) for "
+                    f"{iso3} {month} {metric} {source_id}"
+                )
+                national_records.append(
+                    {
+                        "iso3": iso3,
+                        "country_name": country_name,
+                        "hazard_code": hz_code,
+                        "hazard_label": hz_label,
+                        "hazard_class": hz_class,
+                        "metric": metric,
+                        "source_id": source_id,
+                        "month": month,
+                        "value": float(pct_mean),
+                        "publisher": publisher,
+                        "source_type": source_type,
+                        "source_url": source_url,
+                        "doc_title": doc_title,
+                        "driver_text": driver_text,
+                        "conversion_method": "percent only (no admin population; not converted to people)",
+                        "definition_note": (
+                            f"Monthly mean prevalence {pct_mean:.2f}% reported without people conversion "
+                            "due to missing admin population weights"
+                        ),
+                        "denominator_source": "",
+                        "aggregation_note": "percent-only output",
+                        "unit": "percent",
+                        "series_semantics": "ratio",
+                    }
+                )
+                continue
+
+            dbg(
+                "legacy national denominator path (suppress flag off) for "
+                f"{iso3} {month} {metric} {source_id}"
+            )
+            record = get_population_record(iso3, year, denominator_path)
+            if record is None:
+                dbg(
+                    f"no denominator available for {iso3} in {year}; skipping {month} legacy conversion"
+                )
+                continue
+            product_label = record.product or worldpop_product_hint or "population"
+            denominator_label = f"WorldPop {product_label}"
+            if record.year < year:
+                denominator_detail = f"{denominator_label} year={record.year} (fallback for {year})"
+            else:
+                denominator_detail = f"{denominator_label} year={record.year}"
+            total_value = 0.0
+            for entry in admin_percent_data:
+                pct_value = entry["pct_value"]
                 converted = safe_pct_to_people(
                     pct_value,
                     iso3,
@@ -529,102 +766,191 @@ def collect_rows() -> List[List[Any]]:
                     denom_path=denominator_path,
                 )
                 if converted is None or converted <= 0:
-                    dbg(
-                        f"denominator conversion returned {converted} for {iso3} in {year}; skipping"
-                    )
                     continue
-                agg_value = int(converted)
-                product_label = record.product or worldpop_product_hint or "population"
-                denominator_label = f"WorldPop {product_label}"
-                if record.year < year:
-                    denominator_detail = f"{denominator_label} year={record.year} (fallback for {year})"
-                else:
-                    denominator_detail = f"{denominator_label} year={record.year}"
-                conversion_method = f"pct→people (denominator={denominator_detail})"
-                definition_note = (
-                    f"Monthly mean prevalence {pct_value:.2f}% converted using {denominator_detail}"
-                )
-                chosen = chosen.iloc[[0]]
+                total_value += float(converted)
+            if total_value <= 0:
+                continue
+            has_admin_people_sum_keys.add(key)
+            national_records.append(
+                {
+                    "iso3": iso3,
+                    "country_name": country_name,
+                    "hazard_code": hz_code,
+                    "hazard_label": hz_label,
+                    "hazard_class": hz_class,
+                    "metric": metric,
+                    "source_id": source_id,
+                    "month": month,
+                    "value": total_value,
+                    "publisher": publisher,
+                    "source_type": source_type,
+                    "source_url": source_url,
+                    "doc_title": doc_title,
+                    "driver_text": driver_text,
+                    "conversion_method": f"pct→people (denominator={denominator_detail})",
+                    "definition_note": (
+                        "Legacy conversion: monthly prevalence converted per admin using national denominator"
+                    ),
+                    "denominator_source": denominator_detail,
+                    "aggregation_note": "national=sum(admin people) (legacy)",
+                    "unit": DEFAULT_UNIT,
+                    "series_semantics": "stock",
+                }
+            )
+            continue
+
+        if has_dataset_population or not suppress_admin_when_no_subpop:
+            admin_total = 0.0
+            denominator_sources = set()
+            for entry in admin_percent_data:
+                population = entry["population"]
+                pct_value = entry["pct_value"]
+                if population is None or population <= 0:
+                    continue
+                people_value = pct_value / 100.0 * population
+                if people_value <= 0:
+                    continue
+                admin_total += people_value
+                if entry["population_source"]:
+                    denominator_sources.add(entry["population_source"])
+            if admin_total <= 0:
+                continue
+            has_admin_people_sum_keys.add(key)
+            denominator_source = "; ".join(sorted(denominator_sources))
+            dbg(
+                "admin-level percent→people conversion using admin populations for "
+                f"{iso3} {month} {metric} {source_id}"
+            )
+            national_records.append(
+                {
+                    "iso3": iso3,
+                    "country_name": country_name,
+                    "hazard_code": hz_code,
+                    "hazard_label": hz_label,
+                    "hazard_class": hz_class,
+                    "metric": metric,
+                    "source_id": source_id,
+                    "month": month,
+                    "value": admin_total,
+                    "publisher": publisher,
+                    "source_type": source_type,
+                    "source_url": source_url,
+                    "doc_title": doc_title,
+                    "driver_text": driver_text,
+                    "conversion_method": "pct→people (admin pop available)",
+                    "definition_note": (
+                        "Admin-level prevalence converted to people using available admin populations"
+                    ),
+                    "denominator_source": denominator_source,
+                    "aggregation_note": "national=sum(admin people)",
+                    "unit": DEFAULT_UNIT,
+                    "series_semantics": "stock",
+                }
+            )
+            continue
+
+        # suppress_admin_when_no_subpop is True and no dataset population available but
+        # we have complete weights (from lookup). We convert once at national level.
+        total_weight = sum(entry["population"] or 0 for entry in admin_percent_data)
+        if total_weight <= 0:
+            pct_mean = _aggregate_percent(percent_rows)
+            if pct_mean is None:
+                continue
+            dbg(
+                "percent-only fallback (zero weight) for "
+                f"{iso3} {month} {metric} {source_id}"
+            )
+            national_records.append(
+                {
+                    "iso3": iso3,
+                    "country_name": country_name,
+                    "hazard_code": hz_code,
+                    "hazard_label": hz_label,
+                    "hazard_class": hz_class,
+                    "metric": metric,
+                    "source_id": source_id,
+                    "month": month,
+                    "value": float(pct_mean),
+                    "publisher": publisher,
+                    "source_type": source_type,
+                    "source_url": source_url,
+                    "doc_title": doc_title,
+                    "driver_text": driver_text,
+                    "conversion_method": "percent only (no admin population; not converted to people)",
+                    "definition_note": (
+                        f"Monthly mean prevalence {pct_mean:.2f}% reported without people conversion "
+                        "due to zero admin population weight"
+                    ),
+                    "denominator_source": "",
+                    "aggregation_note": "percent-only output",
+                    "unit": "percent",
+                    "series_semantics": "ratio",
+                }
+            )
+            continue
+
+        weighted_fraction = sum(
+            (entry["pct_value"] / 100.0) * (entry["population"] or 0)
+            for entry in admin_percent_data
+        ) / total_weight
+        pct_weighted = weighted_fraction * 100.0
+        record = get_population_record(iso3, year, denominator_path)
+        if record is None:
+            dbg(
+                f"no national denominator for {iso3} in {year}; cannot convert weighted percent"
+            )
+            continue
+        national_population = record.population
+        converted_people = weighted_fraction * national_population
+        if converted_people <= 0:
+            dbg(
+                f"weighted conversion produced {converted_people} for {iso3} {month}; skipping"
+            )
+            continue
+        product_label = record.product or worldpop_product_hint or "population"
+        denominator_label = f"WorldPop {product_label}"
+        if record.year < year:
+            denominator_detail = f"{denominator_label} year={record.year} (fallback for {year})"
         else:
-            continue
-
-        if agg_value is None or agg_value <= 0:
-            continue
-
-        row_template = chosen.iloc[0]
-        admin_aggregated.append(
-            {
-                "iso3": iso3,
-                "country_name": row_template.get("country_name", ""),
-                "hazard_code": hz_code,
-                "hazard_label": hz_label,
-                "hazard_class": hz_class,
-                "metric": metric,
-                "source_id": source_id,
-                "month": month,
-                "admin_name": admin_name,
-                "value": float(agg_value),
-                "publisher": row_template.get("publisher", DEFAULT_PUBLISHER),
-                "source_type": row_template.get("source_type", DEFAULT_SOURCE_TYPE),
-                "source_url": row_template.get("source_url", ""),
-                "doc_title": row_template.get("doc_title", "WFP mVAM"),
-                "driver_text": row_template.get("driver_text", ""),
-                "conversion_method": conversion_method,
-                "definition_note": definition_note,
-            }
+            denominator_detail = f"{denominator_label} year={record.year}"
+        dbg(
+            "national single-conversion path (population-weighted) for "
+            f"{iso3} {month} {metric} {source_id}"
         )
-
-    if not admin_aggregated:
-        return []
-
-    df_admin = pd.DataFrame(admin_aggregated)
-
-    national_groups = (
-        df_admin.groupby(
-            ["iso3", "hazard_code", "hazard_label", "hazard_class", "metric", "source_id", "month"],
-            dropna=False,
-        )
-    )
-
-    national_records: List[Dict[str, Any]] = []
-
-    for (iso3, hz_code, hz_label, hz_class, metric, source_id, month), group in national_groups:
-        total_value = group["value"].sum()
-        if total_value <= 0:
-            continue
-        conversion_methods = sorted(set(group["conversion_method"].dropna()))
-        definition_notes = sorted(set(group["definition_note"].dropna()))
-        doc_title = group["doc_title"].dropna().iloc[0] if not group["doc_title"].dropna().empty else "WFP mVAM"
-        source_url = group["source_url"].dropna().iloc[0] if not group["source_url"].dropna().empty else ""
-        publisher = group["publisher"].dropna().iloc[0] if not group["publisher"].dropna().empty else DEFAULT_PUBLISHER
-        source_type = group["source_type"].dropna().iloc[0] if not group["source_type"].dropna().empty else DEFAULT_SOURCE_TYPE
-        driver_texts = sorted({text for text in group["driver_text"].dropna() if text})
-
         national_records.append(
             {
                 "iso3": iso3,
-                "country_name": group["country_name"].dropna().iloc[0] if not group["country_name"].dropna().empty else "",
+                "country_name": country_name,
                 "hazard_code": hz_code,
                 "hazard_label": hz_label,
                 "hazard_class": hz_class,
                 "metric": metric,
                 "source_id": source_id,
                 "month": month,
-                "value": int(round(total_value)),
+                "value": converted_people,
                 "publisher": publisher,
                 "source_type": source_type,
                 "source_url": source_url,
                 "doc_title": doc_title,
-                "driver_text": "; ".join(driver_texts),
-                "conversion_method": " | ".join(conversion_methods),
-                "definition_note": "; ".join(definition_notes),
+                "driver_text": driver_text,
+                "conversion_method": "pct→people (national single-conversion; population-weighted)",
+                "definition_note": (
+                    f"Population-weighted prevalence {pct_weighted:.2f}% converted once at national level "
+                    "due to missing admin population data"
+                ),
+                "denominator_source": denominator_detail,
+                "aggregation_note": "national=single conversion (population-weighted)",
+                "unit": DEFAULT_UNIT,
+                "series_semantics": "stock",
             }
         )
 
     if not national_records:
         return []
 
-    national_records.sort(key=lambda r: (r["iso3"], r["hazard_code"], r["metric"], r["source_id"], r["month"]))
+    national_records.sort(
+        key=lambda r: (r["iso3"], r["hazard_code"], r["metric"], r["source_id"], r["month"])
+    )
 
     rows: List[List[Any]] = []
     ingested_at = _ingested_timestamp()
@@ -639,13 +965,40 @@ def collect_rows() -> List[List[Any]]:
     if emit_stock:
         for rec in national_records:
             as_of = rec["month"]
-            value = rec["value"]
-            if value <= 0:
+            value_raw = rec.get("value")
+            if isinstance(value_raw, (int, float)) and not isinstance(value_raw, bool):
+                numeric_value = float(value_raw)
+            else:
+                numeric_value = _parse_float(value_raw)
+            if numeric_value is None:
                 continue
-            digest = _digest([rec["iso3"], rec["hazard_code"], rec["metric"], as_of, value, rec["source_url"]])
+            unit = rec.get("unit", DEFAULT_UNIT)
+            series_semantics = rec.get("series_semantics", "stock")
+            if unit == DEFAULT_UNIT:
+                if numeric_value <= 0:
+                    continue
+                value_str = str(int(round(numeric_value)))
+            else:
+                if numeric_value < 0:
+                    continue
+                value_str = f"{numeric_value:.2f}".rstrip("0").rstrip(".")
+            digest = _digest(
+                [rec["iso3"], rec["hazard_code"], rec["metric"], as_of, value_str, rec["source_url"]]
+            )
             year, month = as_of.split("-")
             event_id = f"{rec['iso3']}-WFP-mVAM-{rec['hazard_code']}-{rec['metric']}-{year}-{month}-{digest}"
             publication_date = f"{as_of}-01"
+            conversion_method = rec.get("conversion_method") or "people direct"
+            definition_parts: List[str] = []
+            if rec.get("definition_note"):
+                definition_parts.append(str(rec["definition_note"]).strip())
+            denominator_source = rec.get("denominator_source")
+            if denominator_source:
+                definition_parts.append(f"Denominator source: {denominator_source}.")
+            aggregation_note = rec.get("aggregation_note")
+            if aggregation_note:
+                definition_parts.append(f"Aggregation: {aggregation_note}.")
+            definition_text = " ".join(part for part in definition_parts if part)
             rows.append(
                 [
                     event_id,
@@ -655,17 +1008,17 @@ def collect_rows() -> List[List[Any]]:
                     rec["hazard_label"],
                     rec["hazard_class"],
                     rec["metric"],
-                    "stock",
-                    str(int(value)),
-                    DEFAULT_UNIT,
+                    series_semantics,
+                    value_str,
+                    unit,
                     as_of,
                     publication_date,
                     rec["publisher"],
                     rec["source_type"],
                     rec["source_url"],
                     rec["doc_title"],
-                    definition_template.format(note=rec["definition_note"] or ""),
-                    method_template.format(conversion=rec["conversion_method"] or "people direct"),
+                    definition_template.format(note=definition_text),
+                    method_template.format(conversion=conversion_method),
                     "",
                     0,
                     ingested_at,
@@ -675,14 +1028,39 @@ def collect_rows() -> List[List[Any]]:
     if emit_incident:
         grouped: Dict[Tuple[str, str, str, str], List[Dict[str, Any]]] = {}
         for rec in national_records:
+            if rec.get("unit", DEFAULT_UNIT) != DEFAULT_UNIT:
+                continue
             key = (rec["iso3"], rec["hazard_code"], rec["metric"], rec["source_id"])
             grouped.setdefault(key, []).append(rec)
         for key, group in grouped.items():
             group.sort(key=lambda r: r["month"])
-            prev_value: Optional[int] = None
+            prev_value: Optional[float] = None
             for idx, rec in enumerate(group):
-                current = rec["value"]
+                raw_value = rec.get("value")
+                if isinstance(raw_value, (int, float)) and not isinstance(raw_value, bool):
+                    current_value = float(raw_value)
+                else:
+                    parsed = _parse_float(raw_value)
+                    if parsed is None:
+                        continue
+                    current_value = float(parsed)
+                if current_value <= 0:
+                    continue
+                current = current_value
                 as_of = rec["month"]
+                incident_conversion_method = rec.get("conversion_method") or "people direct"
+                incident_definition_parts: List[str] = []
+                if rec.get("definition_note"):
+                    incident_definition_parts.append(str(rec["definition_note"]).strip())
+                denominator_source = rec.get("denominator_source")
+                if denominator_source:
+                    incident_definition_parts.append(f"Denominator source: {denominator_source}.")
+                aggregation_note = rec.get("aggregation_note")
+                if aggregation_note:
+                    incident_definition_parts.append(f"Aggregation: {aggregation_note}.")
+                incident_definition_text = " ".join(
+                    part for part in incident_definition_parts if part
+                )
                 if prev_value is None:
                     prev_value = current
                     if include_first_month and current > 0:
@@ -710,8 +1088,8 @@ def collect_rows() -> List[List[Any]]:
                                 rec["source_type"],
                                 rec["source_url"],
                                 rec["doc_title"],
-                                definition_template.format(note=rec["definition_note"] or ""),
-                                method_template.format(conversion=rec["conversion_method"] or "people direct"),
+                                definition_template.format(note=incident_definition_text),
+                                method_template.format(conversion=incident_conversion_method),
                                 "",
                                 0,
                                 ingested_at,
@@ -744,8 +1122,8 @@ def collect_rows() -> List[List[Any]]:
                         rec["source_type"],
                         rec["source_url"],
                         rec["doc_title"],
-                        definition_template.format(note=rec["definition_note"] or ""),
-                        method_template.format(conversion=rec["conversion_method"] or "people direct"),
+                        definition_template.format(note=incident_definition_text),
+                        method_template.format(conversion=incident_conversion_method),
                         "",
                         0,
                         ingested_at,
