@@ -6,6 +6,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import io
+import math
 import os
 import re
 from collections import defaultdict
@@ -118,6 +119,12 @@ def load_registries() -> Tuple[pd.DataFrame, pd.DataFrame]:
     return countries, shocks
 
 
+def _read_csv_text(text: str) -> pd.DataFrame:
+    """Read HDX CSV payloads as strings to avoid dtype inference churn."""
+
+    return pd.read_csv(io.StringIO(text), dtype=str, low_memory=False)
+
+
 def _env_bool(name: str, default: bool) -> bool:
     val = os.getenv(name)
     if val is None:
@@ -185,10 +192,17 @@ def _parse_date(value: Any) -> Optional[dt.date]:
     text = str(value).strip()
     if not text:
         return None
-    try:
-        parsed = pd.to_datetime(text, errors="coerce")
-    except Exception:
-        parsed = pd.to_datetime(text[:10], errors="coerce")
+
+    def _coerce_datetime(candidate: str) -> pd.Timestamp:
+        # HDX date columns frequently use DD/MM/YYYY, so prefer day-first parsing
+        # when the pattern matches to avoid ambiguous date warnings.
+        if re.match(r"^\d{1,2}/\d{1,2}/\d{4}$", candidate):
+            return pd.to_datetime(candidate, dayfirst=True, errors="coerce")
+        return pd.to_datetime(candidate, errors="coerce")
+
+    parsed = _coerce_datetime(text)
+    if pd.isna(parsed) and len(text) > 10:
+        parsed = _coerce_datetime(text[:10])
     if pd.isna(parsed):
         return None
     if isinstance(parsed, dt.datetime):
@@ -503,10 +517,10 @@ def _download_resource(session: requests.Session, url: str) -> Optional[pd.DataF
             return None
     try:
         text = resp.content.decode("utf-8", errors="replace")
-        return pd.read_csv(io.StringIO(text))
+        return _read_csv_text(text)
     except Exception:
         try:
-            return pd.read_csv(io.BytesIO(resp.content))
+            return pd.read_csv(io.BytesIO(resp.content), dtype=str, low_memory=False)
         except Exception:
             return None
 
