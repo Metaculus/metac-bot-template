@@ -50,6 +50,15 @@ If eligible figures differ by **>20%**:
 - If same tier, pick the **newest as-of** date (then latest publication date).
 - Record the discarded value in `alt_value` + `alt_source_url`; add a short note in `precedence_decision`.
 
+### Conflict Onset Rule (ACLED ingestion)
+For ACLED-derived conflict monitoring we apply an explicit **conflict onset** rule in addition to standard escalation checks:
+
+- Track **battle fatalities** each month for every ISO3 country code, counting only ACLED events whose `event_type` is in the configurable `onset.battle_event_types` list (default: `Battles`).
+- Compute the rolling sum of battle fatalities over the **previous 12 months**, excluding the current month. Missing months are treated as zero so gaps do not break the window.
+- When the previous-12-month total is **< 25** battle deaths and the current month records **≥ 25** battle deaths, we create an additional Resolver fact with `hazard_code=ACO` (*Armed Conflict – Onset*).
+- The same monthly battle fatality total is emitted as the escalation series (`hazard_code=ACE`). Diagnostics capture the rolling lookback, threshold, and applied configuration (`onset_rule_v1`).
+- Threshold and lookback parameters live in `resolver/ingestion/config/acled.yml` (`onset.threshold_battle_deaths` and `onset.lookback_months`) so policy changes are auditable without code edits.
+
 ## 8) Proxy Ladder (aligned to the uploaded hazard classes)
 > The exact `hazard_class` values come from `resolver/data/shocks.csv`. Use these class rules; refine per sub-type as needed.
 

@@ -4,7 +4,7 @@ from resolver.ingestion import acled_client
 def _rows_to_map(rows):
     mapping = {}
     for row in rows:
-        mapping[(row["iso3"], row["metric"], row["as_of_date"])] = row
+        mapping[(row["iso3"], row["hazard_code"], row["metric"], row["as_of_date"])] = row
     return mapping
 
 
@@ -56,12 +56,17 @@ def test_acled_onset_detection(monkeypatch):
     )
 
     rows_map = _rows_to_map(rows)
-    jan_row = rows_map[("ETH", "fatalities", "2023-01")]
-    assert jan_row["hazard_code"] == "ACO"
-    assert "onset_prev12m=24" in jan_row["method"]
-    assert "prev12m=24" in jan_row["definition_text"]
 
-    feb_row = rows_map[("ETH", "fatalities", "2023-02")]
-    assert feb_row["hazard_code"] == "ACE"
-    assert "onset_prev12m=52" in feb_row["method"]
-    assert "current_month=40" in feb_row["definition_text"]
+    jan_onset = rows_map[("ETH", "ACO", "fatalities_battle_month", "2023-01")]
+    assert "onset_rule_v1" in jan_onset["method"]
+    assert "Prev12m" in jan_onset["definition_text"]
+    assert jan_onset["value"] == 30
+
+    jan_escalation = rows_map[("ETH", "ACE", "fatalities_battle_month", "2023-01")]
+    assert "battle_fatalities=30" in jan_escalation["method"]
+    assert "threshold=25" in jan_escalation["method"]
+
+    feb_escalation = rows_map[("ETH", "ACE", "fatalities_battle_month", "2023-02")]
+    assert "prev12m_battle_fatalities=52" in feb_escalation["method"]
+    assert feb_escalation["value"] == 40
+    assert "onset_rule_v1" not in feb_escalation["method"]

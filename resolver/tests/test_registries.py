@@ -20,3 +20,11 @@ def test_shocks_registry_columns_and_scope():
     # classes must be in allowed set
     allowed = {"natural","human-induced","epidemic","other","multi"}
     assert set(s["hazard_class"]).issubset(allowed)
+
+
+def test_conflict_hazard_entries_present_without_cessation():
+    shocks = load_shocks()
+    codes = set(shocks["hazard_code"].tolist())
+    assert "ACO" in codes, "conflict onset hazard missing"
+    assert "ACE" in codes, "conflict escalation hazard missing"
+    assert not shocks["hazard_label"].str.lower().str.contains("cessation").any()
