@@ -1052,47 +1052,14 @@ async def _run_one_question_body(
                 f"- source={_r_src} | llm={_r_llm} | cached={_r_cache} | "
                 f"n_raw={_r_raw} | n_kept={_r_kept} | cost=${float(_r_cost):.6f}"
             )
-
+    
             if _r_q:
                 md.append(f"- query: {_r_q}")
             if _r_err:
                 md.append(f"- error: {_r_err}")
         except Exception:
             pass
-
-        # --- Market snapshots (Metaculus & Manifold) -----------------------------
-        try:
-            md.append("### Market snapshots (Metaculus & Manifold)")
-            _markets_found = str(research_meta.get("research_markets_found", "") or "").strip()
-            markets_found = _markets_found or "none"
-            md.append(f"- markets_found={markets_found}")
-
-            summary_block = str(research_meta.get("research_market_summary") or "").strip()
-            summary_lines = [ln.rstrip() for ln in summary_block.splitlines() if ln.strip()]
-            if summary_lines and summary_lines[0].lstrip("# ").lower().startswith("market snapshots"):
-                summary_lines = summary_lines[1:]
-            if summary_lines:
-                md.extend(summary_lines)
-            else:
-                md.append("- No matching open binary markets identified on Metaculus or Manifold.")
-
-            debug_text = str(research_meta.get("research_market_debug") or "").strip()
-            debug_lines = [ln.strip() for ln in debug_text.splitlines() if ln.strip()]
-            md.append("#### Market debug")
-            if debug_lines:
-                for line in debug_lines:
-                    if line.startswith("-"):
-                        md.append(line)
-                    else:
-                        md.append(f"- {line}")
-            else:
-                md.append("- (no debug info returned)")
-        except Exception as _market_dbg_ex:
-            md.append("### Market snapshots (Metaculus & Manifold)")
-            md.append(
-                f"- market_debug_error={type(_market_dbg_ex).__name__}: {str(_market_dbg_ex)[:200]}"
-            )
-
+    
         # --- GTMC1 (debug) --------------------------------------------------------
         try:
             md.append("### GTMC1 (debug)")
@@ -1261,12 +1228,6 @@ async def _run_one_question_body(
     
     
     except Exception as _e:
-        import traceback
-
-        print("[error] Exception in _run_one_question_body:")
-        print(f"[error] {type(_e).__name__}: {str(_e)}")
-        print("[error] Traceback:")
-        traceback.print_exc()
         _post_t = type(_post_original).__name__
         try:
             _q_t = type(q).__name__
@@ -1292,21 +1253,15 @@ async def run_one_question(
     q = _as_dict(post.get("question"))
     question_id = int(q.get("id") or post.get("id") or post.get("post_id") or 0)
 
-    sg_available = False
-    try:
-        sg_available = seen_guard is not None and hasattr(seen_guard, "lock")
-    except (NameError, AttributeError):
-        sg_available = False
-
     seen_guard_state: Dict[str, Any] = {
-        "enabled": sg_available,
+        "enabled": bool(seen_guard),
         "lock_acquired": None,
         "lock_error": "",
     }
 
     lock_stack = ExitStack()
     try:
-        if sg_available:
+        if seen_guard:
             try:
                 acquired = lock_stack.enter_context(seen_guard.lock(question_id))
                 seen_guard_state["lock_acquired"] = bool(acquired)
