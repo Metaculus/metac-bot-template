@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -87,6 +88,27 @@ def dbg(message: str) -> None:
         print(f"[gdacs] {message}")
 
 
+def _is_placeholder_url(value: Any) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return True
+    lowered = text.lower()
+    if "<" in text or ">" in text:
+        return True
+    if "event-list endpoint" in lowered or "event_list endpoint" in lowered:
+        return True
+    if "event-details endpoint" in lowered or "event_details endpoint" in lowered:
+        return True
+    if "placeholder" in lowered:
+        return True
+    parsed = urlparse(text)
+    if not parsed.scheme or parsed.scheme not in {"http", "https"}:
+        return True
+    if not parsed.netloc:
+        return True
+    return False
+
+
 def _env_bool(name: str, default: bool) -> bool:
     value = os.getenv(name)
     if value is None:
@@ -102,6 +124,17 @@ def _env_int(name: str) -> Optional[int]:
         return int(value)
     except ValueError:
         return None
+
+
+def _config_invalid_reason(cfg: Dict[str, Any]) -> Optional[str]:
+    base_urls = cfg.get("base_urls") or {}
+    event_list_url = base_urls.get("event_list")
+    if _is_placeholder_url(event_list_url):
+        return "event_list endpoint"
+    details_url = base_urls.get("event_details")
+    if details_url and _is_placeholder_url(details_url):
+        return "event_details endpoint"
+    return None
 
 
 def load_config() -> Dict[str, Any]:
@@ -630,6 +663,10 @@ def run(cfg: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     if not cfg:
         dbg("missing GDACS config; returning no rows")
         return []
+    reason = _config_invalid_reason(cfg)
+    if reason:
+        dbg(f"invalid config reason: {reason}")
+        return []
     skip = _env_bool("RESOLVER_SKIP_GDACS", False)
     if skip:
         dbg("RESOLVER_SKIP_GDACS=1 → skip network fetch")
@@ -720,8 +757,15 @@ def main() -> bool:
     if _env_bool("RESOLVER_SKIP_GDACS", False):
         _write_header_only(OUT_PATH)
         return False
+    cfg = load_config()
+    reason = _config_invalid_reason(cfg)
+    if reason:
+        print(f"[gdacs] disabled/invalid config; writing header-only ({reason})")
+        dbg(f"invalid config reason: {reason}")
+        _write_header_only(OUT_PATH)
+        return False
     try:
-        rows = run()
+        rows = run(cfg)
     except Exception as exc:  # pragma: no cover - defensive fail-soft
         dbg(f"gdacs main failed: {exc}")
         _write_header_only(OUT_PATH)

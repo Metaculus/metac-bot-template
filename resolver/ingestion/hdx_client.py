@@ -196,7 +196,7 @@ def _parse_date(value: Any) -> Optional[dt.date]:
     def _coerce_datetime(candidate: str) -> pd.Timestamp:
         # HDX date columns frequently use DD/MM/YYYY, so prefer day-first parsing
         # when the pattern matches to avoid ambiguous date warnings.
-        if re.match(r"^\d{1,2}/\d{1,2}/\d{4}$", candidate):
+        if re.match(r"^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$", candidate):
             return pd.to_datetime(candidate, dayfirst=True, errors="coerce")
         return pd.to_datetime(candidate, errors="coerce")
 

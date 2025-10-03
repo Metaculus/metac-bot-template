@@ -9,6 +9,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -56,6 +57,35 @@ class _DefaultDict(dict):
 def dbg(message: str) -> None:
     if DEBUG:
         print(f"[worldpop] {message}")
+
+
+def _is_placeholder_url(url: str) -> bool:
+    text = str(url or "").strip()
+    if not text:
+        return True
+    lowered = text.lower()
+    if "<" in text or ">" in text:
+        return True
+    parsed = urlparse(text)
+    if not parsed.scheme or parsed.scheme not in {"http", "https"}:
+        return True
+    host = parsed.netloc.lower()
+    if not host:
+        return True
+    placeholder_hosts = (
+        "example.com",
+        "example.org",
+        "example.net",
+        "example.edu",
+        "example.gov",
+    )
+    if any(host == candidate or host.endswith(f".{candidate}") for candidate in placeholder_hosts):
+        return True
+    if "placeholder" in host:
+        return True
+    if "placeholder" in lowered:
+        return True
+    return False
 
 
 def _env_int(name: str, default: int) -> int:
@@ -255,6 +285,12 @@ def collect_rows() -> List[PopulationRow]:
     static_url = source_cfg.get("url")
     source_kind = (source_cfg.get("kind") or "csv").lower()
     download_date = dt.date.today().isoformat()
+
+    for candidate in (url_template, static_url):
+        if candidate and _is_placeholder_url(str(candidate)):
+            print("[worldpop] disabled/placeholder config; header-only")
+            dbg(f"placeholder url detected: {candidate}")
+            return []
 
     if not url_template and not static_url:
         raise RuntimeError("worldpop config missing url or url_template")
