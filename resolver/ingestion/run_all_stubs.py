@@ -8,6 +8,7 @@ import csv
 import datetime as dt
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -135,6 +136,110 @@ SKIP_ENVS = {
     "worldpop_client.py": ("RESOLVER_SKIP_WORLDPOP", "WorldPop connector"),
     "wfp_mvam_client.py": ("RESOLVER_SKIP_WFP_MVAM", "WFP mVAM connector"),
 }
+
+
+# Prefer known "fatal" / non-retryable exit codes (sysexits) when available
+_EX_USAGE = getattr(os, "EX_USAGE", 64)
+_EX_DATAERR = getattr(os, "EX_DATAERR", 65)
+_EX_NOINPUT = getattr(os, "EX_NOINPUT", 66)
+_EX_NOUSER = getattr(os, "EX_NOUSER", 67)
+_EX_NOHOST = getattr(os, "EX_NOHOST", 68)
+_EX_UNAVAILABLE = getattr(os, "EX_UNAVAILABLE", 69)
+_EX_SOFTWARE = getattr(os, "EX_SOFTWARE", 70)
+_EX_OSERR = getattr(os, "EX_OSERR", 71)
+_EX_OSFILE = getattr(os, "EX_OSFILE", 72)
+_EX_CANTCREAT = getattr(os, "EX_CANTCREAT", 73)
+_EX_IOERR = getattr(os, "EX_IOERR", 74)
+_EX_TEMPFAIL = getattr(os, "EX_TEMPFAIL", 75)
+_EX_PROTOCOL = getattr(os, "EX_PROTOCOL", 76)
+_EX_NOPERM = getattr(os, "EX_NOPERM", 77)
+_EX_CONFIG = getattr(os, "EX_CONFIG", 78)
+
+# Treat these as non-retryable (usage/config/software errors)
+NON_RETRYABLE_EXIT_CODES = {
+    2,  # bad CLI usage (common)
+    _EX_USAGE,
+    _EX_DATAERR,
+    _EX_NOINPUT,
+    _EX_NOUSER,
+    _EX_NOHOST,
+    _EX_UNAVAILABLE,
+    _EX_SOFTWARE,
+    _EX_OSERR,
+    _EX_OSFILE,
+    _EX_CANTCREAT,
+    _EX_IOERR,
+    _EX_PROTOCOL,
+    _EX_NOPERM,
+    _EX_CONFIG,
+}
+
+# Heuristics for transient errors in stderr/stdout
+_TRANSIENT_PAT = re.compile(
+    r"(timed out|timeout|temporar\w+ unavailable|connection reset|"
+    r"connection aborted|connection refused|network is unreachable|"
+    r"ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENETUNREACH|EAI_AGAIN|"
+    r"rate limit|429|5\d{2}\b|service unavailable|try again)",
+    re.IGNORECASE,
+)
+
+
+def _coerce_process_stream(stream: object | None) -> str:
+    if stream is None:
+        return ""
+    if isinstance(stream, (bytes, bytearray)):
+        try:
+            return stream.decode(errors="ignore")
+        except Exception:  # noqa: BLE001
+            return ""
+    return str(stream)
+
+
+def _is_retryable_exception(
+    exc: BaseException,
+    *,
+    exit_code: int | None = None,
+    stderr: str | None = None,
+    stdout: str | None = None,
+) -> bool:
+    # Network/timeouts raised as exceptions by helpers remain retryable
+    transient_types = (TimeoutError, ConnectionError)
+    if isinstance(exc, transient_types):
+        return True
+
+    # Subprocess script failures: retry unless clearly non-retryable
+    if isinstance(exc, subprocess.CalledProcessError):
+        code = exc.returncode if exit_code is None else exit_code
+        if code in NON_RETRYABLE_EXIT_CODES:
+            return False
+        text_parts: list[str] = []
+        if stderr is not None:
+            text_parts.append(stderr)
+        if stdout is not None:
+            text_parts.append(stdout)
+        if not text_parts:
+            if hasattr(exc, "stderr") and exc.stderr:
+                text_parts.append(_coerce_process_stream(exc.stderr))
+            if hasattr(exc, "stdout") and exc.stdout:
+                text_parts.append(_coerce_process_stream(exc.stdout))
+        text = "\n".join(part for part in text_parts if part)
+        # Retry on unknown codes if we see transient hints; otherwise still retry (assume transient)
+        return True if not text else bool(_TRANSIENT_PAT.search(text))
+
+    # Default to non-retryable
+    exc_name = exc.__class__.__name__
+    transient_names = (
+        "Timeout",
+        "ConnectionError",
+        "SSLError",
+        "ReadTimeout",
+        "ChunkedEncodingError",
+    )
+    if any(name in exc_name for name in transient_names):
+        return True
+    message = str(exc).lower()
+    transient_phrases = ("rate limit", "waf", "temporarily unavailable")
+    return any(phrase in message for phrase in transient_phrases)
 
 
 @dataclass
@@ -557,6 +662,27 @@ def main(argv: Optional[List[str]] = None) -> int:
                 attempt_logger.info("starting", extra=start_extra)
                 return _run_connector(spec, attempt_logger)
 
+            def _should_retry(exc: BaseException) -> bool:
+                exit_code: int | None = None
+                stderr_text = ""
+                stdout_text = ""
+                if isinstance(exc, subprocess.CalledProcessError):
+                    exit_code = exc.returncode
+                    try:
+                        if getattr(exc, "stderr", None):
+                            stderr_text = _coerce_process_stream(exc.stderr)
+                        if getattr(exc, "stdout", None):
+                            stdout_text = _coerce_process_stream(exc.stdout)
+                    except Exception:  # noqa: BLE001
+                        stderr_text = ""
+                        stdout_text = ""
+                return _is_retryable_exception(
+                    exc,
+                    exit_code=exit_code,
+                    stderr=stderr_text or None,
+                    stdout=stdout_text or None,
+                )
+
             result = retry_call(
                 _attempt,
                 retries=max(0, args.retries),
@@ -565,6 +691,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 jitter=not args.retry_no_jitter,
                 logger=child,
                 connector=spec.name,
+                is_retryable=_should_retry,
             )
             rows = int(result.get("rows", 0))
             duration_ms = int((time.perf_counter() - connector_start) * 1000)
