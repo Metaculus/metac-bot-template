@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import csv
 import datetime as dt
 import logging
@@ -23,6 +24,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import yaml
+
+import resolver.ingestion.feature_flags as ff
 
 from resolver.ingestion._manifest import (
     count_csv_rows,
@@ -303,6 +306,8 @@ class ConnectorSpec:
     metadata: Dict[str, str] = field(default_factory=dict)
     config_path: Optional[Path] = None
     config_enabled: Optional[bool] = None
+    flag_config_path: Optional[Path] = None
+    canonical_name: str = ""
 
     @property
     def name(self) -> str:
@@ -458,6 +463,28 @@ def _normalise_name(name: str) -> str:
     return name
 
 
+def _filter_by_pattern(specs: Sequence[ConnectorSpec], pattern: str) -> List[ConnectorSpec]:
+    pattern_lower = pattern.lower()
+    try:
+        regex = re.compile(pattern, re.IGNORECASE)
+    except re.error:
+        regex = None
+    matched: List[ConnectorSpec] = []
+    for spec in specs:
+        identifiers = {spec.filename, spec.name, spec.canonical_name}
+        if spec.flag_config_path:
+            identifiers.add(spec.flag_config_path.stem)
+        identifiers = {value for value in identifiers if value}
+        fnmatch_hit = any(
+            fnmatch.fnmatch(value.lower(), pattern_lower) for value in identifiers
+        )
+        regex_hit = bool(regex and any(regex.search(value) for value in identifiers))
+        substr_hit = any(pattern_lower in value.lower() for value in identifiers)
+        if fnmatch_hit or regex_hit or substr_hit:
+            matched.append(spec)
+    return matched
+
+
 def _build_specs(
     real: Sequence[str],
     stubs: Sequence[str],
@@ -502,6 +529,12 @@ def _create_spec(filename: str, kind: str) -> ConnectorSpec:
                 config_enabled = bool(cfg.get("enabled"))
             except Exception:  # noqa: BLE001
                 config_enabled = None
+    canonical_name = ff.norm(filename)
+    flag_config_path: Optional[Path] = None
+    if canonical_name:
+        candidate = CONFIG_DIR / f"{canonical_name}.yml"
+        if candidate.exists():
+            flag_config_path = candidate
     return ConnectorSpec(
         filename=filename,
         path=path,
@@ -512,6 +545,8 @@ def _create_spec(filename: str, kind: str) -> ConnectorSpec:
         metadata=metadata,
         config_path=config_path if isinstance(config_path, Path) else None,
         config_enabled=config_enabled,
+        flag_config_path=flag_config_path,
+        canonical_name=canonical_name,
     )
 
 
@@ -654,6 +689,22 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="limit run to specific connector(s) (filename without .py or with)",
     )
     parser.add_argument(
+        "--only",
+        default=None,
+        help=(
+            "run a single connector by name (matches config/file stem); "
+            "combine with RESOLVER_FORCE_ENABLE=<name> to override enable flags"
+        ),
+    )
+    parser.add_argument(
+        "--pattern",
+        default=None,
+        help=(
+            "filter connectors by case-insensitive glob/regex/substring before "
+            "enable checks"
+        ),
+    )
+    parser.add_argument(
         "--log-format",
         choices=("plain", "json"),
         default=None,
@@ -672,8 +723,10 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[List[str]] = None) -> int:
     args = _parse_args(argv)
     root_input = sys.argv if argv is None else ['<custom>'] + list(argv)
-    requested = { _normalise_name(name) for name in args.connector if name }
+    requested = {_normalise_name(name) for name in args.connector if name}
     selected: Optional[set[str]] = requested or None
+    only_target = ff.norm(args.only) if args.only else None
+    pattern_text = args.pattern
 
     ingestion_mode = (args.mode or INGESTION_MODE).strip().lower()
     include_stubs = INCLUDE_STUBS if args.run_stubs is None else bool(args.run_stubs)
@@ -715,6 +768,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "raw_argv": root_input[1:],
             "mode": args.mode,
             "run_stubs_arg": args.run_stubs,
+            "only": args.only,
+            "pattern": args.pattern,
         },
     )
 
@@ -770,13 +825,69 @@ def main(argv: Optional[List[str]] = None) -> int:
             "run_real": run_real,
             "run_stubs": run_stubs,
             "count": len(specs),
+            "only": only_target,
+            "pattern": pattern_text,
         },
     )
     if requested:
         specs = [spec for spec in specs if spec.filename in requested]
+    if only_target:
+        specs = [spec for spec in specs if spec.canonical_name == only_target]
+        if not specs:
+            root.error(
+                "No connector matched --only %s",
+                args.only,
+                extra={"event": "no_only_match", "only": args.only},
+            )
+            return 1
+    if pattern_text:
+        specs = _filter_by_pattern(specs, pattern_text)
+        if not specs:
+            root.info(
+                "No connectors matched pattern '%s'",
+                pattern_text,
+                extra={"event": "no_pattern_match", "pattern": pattern_text},
+            )
+            return 0
     if not specs:
         root.info("No connectors to run", extra={"event": "no_connectors"})
         return 0
+
+    flag_checked_specs: List[ConnectorSpec] = []
+    for spec in specs:
+        cfg = _load_yaml(spec.flag_config_path) if spec.flag_config_path else {}
+        has_enable_flag = isinstance(cfg, dict) and "enable" in cfg
+        config_enable = bool(cfg.get("enable", False)) if has_enable_flag else None
+        name_for_flags = spec.canonical_name or spec.name
+        if has_enable_flag:
+            enabled = ff.is_enabled(name_for_flags, cfg, os.environ)
+            reason = ff.explain_enable(name_for_flags, cfg, os.environ)
+        else:
+            enabled = True
+            reason = "no_config"
+        log_message = (
+            f"connector={name_for_flags} enabled={'true' if enabled else 'false'}"
+            f" reason={reason}"
+        )
+        if only_target:
+            log_message += " selected_by=only"
+        root.info(
+            log_message,
+            extra={
+                "event": "enable_check",
+                "connector": name_for_flags,
+                "enabled": enabled,
+                "reason": reason,
+                "config_enable": config_enable,
+                "has_enable_flag": has_enable_flag,
+                "selected_by": "only" if only_target else None,
+            },
+        )
+        if has_enable_flag and not enabled and not spec.skip_reason:
+            spec.skip_reason = f"disabled: {reason}"
+        flag_checked_specs.append(spec)
+
+    specs = flag_checked_specs
 
     connectors_summary: List[Dict[str, object]] = []
     total_start = time.perf_counter()
