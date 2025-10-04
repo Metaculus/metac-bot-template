@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+import os
 from pathlib import Path
+
 from _stub_utils import load_registries, now_dates, write_staging
 
 OUT = Path(__file__).resolve().parents[1] / "staging" / "unhcr.csv"
+RESOLVER_DEBUG = bool(int(os.getenv("RESOLVER_DEBUG", "0") or 0))
 
 def make_rows():
     countries, shocks = load_registries()
@@ -28,5 +31,14 @@ def make_rows():
     return rows
 
 if __name__ == "__main__":
-    p = write_staging(make_rows(), OUT, series_semantics="stock")
+    rows = make_rows()
+    p = write_staging(rows, OUT, series_semantics="stock")
     print(f"wrote {p}")
+    if RESOLVER_DEBUG:
+        final = len(rows)
+        summary = (
+            "summary | "
+            f"raw_count={final} final_rows={final} "
+            "dropped_value_cast=0 dropped_country_unmatched=0 page_cap_hit=0"
+        )
+        print(summary)

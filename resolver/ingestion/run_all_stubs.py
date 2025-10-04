@@ -37,6 +37,7 @@ from resolver.ingestion._runner_logging import (
 STAGING = ROOT.parent / "staging"
 CONFIG_DIR = ROOT / "config"
 LOGS_DIR = ROOT.parent / "logs" / "ingestion"
+RESOLVER_DEBUG = bool(int(os.getenv("RESOLVER_DEBUG", "0") or 0))
 
 
 def _repo_root() -> Path:
@@ -604,12 +605,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     os.makedirs(effective_log_dir, exist_ok=True)
 
     run_id = dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    effective_level = args.log_level
+    if RESOLVER_DEBUG and not effective_level:
+        effective_level = "DEBUG"
     root = init_logger(
         run_id,
-        level=args.log_level,
+        level=effective_level,
         fmt=args.log_format,
         log_dir=effective_log_dir,
     )
+    if RESOLVER_DEBUG:
+        logging.getLogger().setLevel(logging.DEBUG)
+        root.setLevel(logging.DEBUG)
     root.info(
         "initialised logging",
         extra={

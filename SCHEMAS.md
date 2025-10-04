@@ -36,3 +36,9 @@
 | series_semantics | string | no | stock, new |  |
 | value_new | number | no |  |  |
 | value_stock | number | no |  |  |
+
+## Debug & Test Flags (UNHCR)
+
+- `RESOLVER_DEBUG=1` enables detailed debug logging and summary counters for UNHCR ingestion clients.
+- `UNHCR_TEST_ISO3=GRC` (or `test_iso3` in `resolver/ingestion/config/unhcr.yml`) narrows Population API runs to the specified country for smoke testing.
+- Summary counters include `raw_count`, `after_keymap`, `after_date_parse`, `after_country_match`, `after_window`, `final_rows`, `dropped_value_cast`, `dropped_country_unmatched`, `country_unmatched`, and `page_cap_hit`.

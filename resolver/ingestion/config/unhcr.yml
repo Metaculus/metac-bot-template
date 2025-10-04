@@ -1,26 +1,26 @@
 base_url: "https://api.unhcr.org/population/v1/"
 user_agent: "spagbot-resolver/1.0 (github.com/kwyjad/Spagbot_metac-bot)"
 window_days: 60
-page_size: 500
-years_back: 3
-include_years: []
 page_limit: 500
 
 endpoints:
-  # Use official public endpoint (docs show these resources)
-  # https://api.unhcr.org/population/v1/asylum-applications/
   asylum_applications: "asylum-applications/"
 
-# Request parameters to keep results ISO3-coded and broad by default
 params:
   cf_type: "ISO"
-  # coo_all/coa_all let the API expand dimensions instead of aggregating away
-  coo_all: "true"   # API expects string "true"
-  coa_all: "true"   # API expects string "true"
-  granularity: "year"   # "year" (default) or "month" if UNHCR enables month[]
-# NOTE: UNHCR uses array-style years: year[]=2025&year[]=2024 (no yearFrom/yearTo)
+  coo_all: "true"
+  coa_all: "true"
+  granularity: "month"   # month|year
+  years_back: 3
+  include_years: []
+
+paging:
+  max_pages: 2
+
+debug:
+  debug_every: 10
 
 defaults:
-  max_pages: 40
   max_results: 20000
-  debug_every: 10
+
+test_iso3: ""
