@@ -126,8 +126,23 @@ SUMMARY_TARGETS = {
     },
     "dtm_client.py": {
         "label": "DTM",
-        "staging": STAGING / "dtm.csv",
+        "staging": STAGING / "dtm_displacement.csv",
         "config": CONFIG_DIR / "dtm.yml",
+    },
+    "gdacs_client.py": {
+        "label": "GDACS",
+        "staging": STAGING / "gdacs_signals.csv",
+        "config": CONFIG_DIR / "gdacs.yml",
+    },
+    "emdat_client.py": {
+        "label": "EM-DAT",
+        "staging": STAGING / "emdat_pa.csv",
+        "config": CONFIG_DIR / "emdat.yml",
+    },
+    "worldpop_client.py": {
+        "label": "WorldPop",
+        "staging": STAGING / "worldpop_denominators.csv",
+        "config": CONFIG_DIR / "worldpop.yml",
     },
 }
 
@@ -286,6 +301,8 @@ class ConnectorSpec:
     summary: Optional[str] = None
     skip_reason: Optional[str] = None
     metadata: Dict[str, str] = field(default_factory=dict)
+    config_path: Optional[Path] = None
+    config_enabled: Optional[bool] = None
 
     @property
     def name(self) -> str:
@@ -344,6 +361,10 @@ def _summarise_connector(name: str) -> str | None:
     if method in {"recount", "manifest+verified"}:
         parts.append(f"rows_method:{method}")
     cfg = _load_yaml(meta.get("config"))
+    enabled_flag: Optional[bool] = None
+    if cfg and isinstance(cfg.get("enabled"), bool):
+        enabled_flag = bool(cfg.get("enabled"))
+    added_enabled = False
 
     if name == "who_phe_client.py":
         enabled = bool(cfg.get("enabled", False))
@@ -358,6 +379,7 @@ def _summarise_connector(name: str) -> str | None:
                 if url:
                     configured += 1
         parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        added_enabled = True
         parts.append(f"sources:{configured}")
     elif name == "wfp_mvam_client.py":
         enabled = bool(cfg.get("enabled", False))
@@ -372,6 +394,7 @@ def _summarise_connector(name: str) -> str | None:
                 elif isinstance(entry, str) and entry.strip():
                     count += 1
         parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        added_enabled = True
         parts.append(f"sources:{count}")
     elif name == "ipc_client.py":
         enabled = bool(cfg.get("enabled", False))
@@ -383,6 +406,7 @@ def _summarise_connector(name: str) -> str | None:
         else:
             feed_count = 0
         parts.append(f"enabled:{'yes' if enabled else 'no'}")
+        added_enabled = True
         parts.append(f"feeds:{feed_count}")
     elif name == "unhcr_client.py":
         years = cfg.get("include_years") or []
@@ -400,6 +424,8 @@ def _summarise_connector(name: str) -> str | None:
     elif name == "acled_client.py":
         token_present = bool(os.getenv("ACLED_TOKEN") or str(cfg.get("token", "")).strip())
         parts.append(f"token:{'yes' if token_present else 'no'}")
+    if not added_enabled and enabled_flag is not None:
+        parts.append(f"enabled:{'yes' if enabled_flag else 'no'}")
     return " ".join(parts)
 
 
@@ -467,6 +493,15 @@ def _create_spec(filename: str, kind: str) -> ConnectorSpec:
     metadata: Dict[str, str] = {}
     if output_path:
         metadata["output_path"] = str(output_path)
+    config_path = meta.get("config") if isinstance(meta, dict) else None
+    config_enabled: Optional[bool] = None
+    if isinstance(config_path, Path):
+        cfg = _load_yaml(config_path)
+        if isinstance(cfg, dict) and "enabled" in cfg:
+            try:
+                config_enabled = bool(cfg.get("enabled"))
+            except Exception:  # noqa: BLE001
+                config_enabled = None
     return ConnectorSpec(
         filename=filename,
         path=path,
@@ -475,6 +510,8 @@ def _create_spec(filename: str, kind: str) -> ConnectorSpec:
         summary=summary,
         skip_reason=skip_reason,
         metadata=metadata,
+        config_path=config_path if isinstance(config_path, Path) else None,
+        config_enabled=config_enabled,
     )
 
 
@@ -553,6 +590,12 @@ def _rows_written(before: int, after: int) -> int:
 def _run_connector(spec: ConnectorSpec, logger: logging.LoggerAdapter) -> Dict[str, object]:
     start = time.perf_counter()
     rows_before, method_before = _rows_and_method(spec.output_path)
+    if spec.config_enabled is False:
+        logger.info(
+            "%s: disabled (header-only).",
+            spec.name,
+            extra={"event": "config_disabled", "connector": spec.name},
+        )
     _invoke_connector(spec.path, logger=logger)
     rows_after, method_after = _rows_and_method(spec.output_path)
     duration_ms = int((time.perf_counter() - start) * 1000)

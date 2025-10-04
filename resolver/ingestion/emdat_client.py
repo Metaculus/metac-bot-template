@@ -1,675 +1,277 @@
 #!/usr/bin/env python3
-"""EM-DAT connector that allocates event impacts to monthly incident totals."""
+"""EM-DAT connector emitting monthly people-affected style records."""
 
 from __future__ import annotations
 
-import hashlib
-import os
-from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+import csv
+import json
+import logging
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
-import pandas as pd
-from pandas.errors import EmptyDataError, ParserError
 import yaml
 
+from resolver.ingestion._manifest import ensure_manifest_for_csv
+from resolver.ingestion.utils import (
+    linear_split,
+    map_hazard,
+    month_start,
+    parse_date,
+    stable_digest,
+    to_iso3,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data"
 STAGING = ROOT / "staging"
-CONFIG = ROOT / "ingestion" / "config" / "emdat.yml"
+CONFIG_PATH = ROOT / "ingestion" / "config" / "emdat.yml"
+OUTPUT_PATH = STAGING / "emdat_pa.csv"
 
-COUNTRIES = DATA / "countries.csv"
-SHOCKS = DATA / "shocks.csv"
+LOG = logging.getLogger("resolver.ingestion.emdat")
 
-OUT_DIR = STAGING
-OUT_PATH = OUT_DIR / "emdat.csv"
-
-CANONICAL_HEADERS = [
+COLUMNS = [
+    "source",
+    "hazard_type",
+    "country_iso3",
     "event_id",
-    "country_name",
-    "iso3",
-    "hazard_code",
-    "hazard_label",
-    "hazard_class",
-    "metric",
-    "series_semantics",
+    "as_of",
+    "month_start",
+    "value_type",
     "value",
     "unit",
-    "as_of_date",
-    "publication_date",
-    "publisher",
-    "source_type",
-    "source_url",
-    "doc_title",
-    "definition_text",
     "method",
     "confidence",
-    "revision",
-    "ingested_at",
+    "raw_event_id",
+    "raw_fields_json",
 ]
 
-SERIES_SEMANTICS = "incident"
-
-HAZARD_KEY_TO_CODE = {
-    "flood": "FL",
-    "drought": "DR",
-    "tropical_cyclone": "TC",
-    "heat_wave": "HW",
-    "phe": "PHE",
-    "other": "OT",
-    "multi": "MULTI",
+VALUE_COLUMN_HINTS = {
+    "affected": ["total affected", "affected", "no affected"],
+    "deaths": ["total deaths", "deaths", "no deaths"],
+    "injured": ["total injured", "injured"],
+    "homeless": ["total homeless", "homeless"],
 }
 
-# Hazards that appear in EM-DAT but are intentionally excluded from this project.
-# We detect them explicitly so they are dropped instead of being mislabelled as
-# "other" when the registry does not carry a matching class/code.
-UNSUPPORTED_HAZARD_KEYWORDS = {
-    "earthquake": ("earthquake", "seismic", "aftershock"),
-    "volcano": ("volcano", "volcanic", "volcaniceruption"),
-    "landslide": ("landslide", "mudslide", "massmovementwet"),
-    "wildfire": ("wildfire", "forestfire", "bushfire"),
-}
-UNSUPPORTED_HAZARD_KEYS = set(UNSUPPORTED_HAZARD_KEYWORDS.keys())
 
-DEFAULT_METHOD_PREFIX = "EM-DAT event→month allocation"
-DEFAULT_DEFINITION_PRORATA = (
-    "Total affected people from EM-DAT events allocated to each overlapping month "
-    "proportionally by days (incident new affected)."
-)
-DEFAULT_DEFINITION_START = (
-    "Total affected people from EM-DAT events allocated entirely to the event start month "
-    "(incident new affected)."
-)
-
-DEBUG = os.getenv("RESOLVER_DEBUG", "0") == "1"
+def load_config() -> dict[str, Any]:
+    if not CONFIG_PATH.exists():
+        return {}
+    with CONFIG_PATH.open("r", encoding="utf-8") as handle:
+        return yaml.safe_load(handle) or {}
 
 
-@dataclass(frozen=True)
-class Hazard:
-    code: str
-    label: str
-    hazard_class: str
+def ensure_header_only() -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(COLUMNS)
+    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
 
 
-def dbg(message: str) -> None:
-    if DEBUG:
-        print(f"[emdat] {message}")
+def _normalise_key(text: str) -> str:
+    return "".join(ch for ch in text.lower() if ch.isalnum())
 
 
-def _env_bool(name: str, default: bool) -> bool:
-    value = os.getenv(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
-
-
-def _env_int(name: str) -> Optional[int]:
-    value = os.getenv(name)
-    if value is None:
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return None
-
-
-def load_config() -> Dict[str, Any]:
-    if not CONFIG.exists():
-        return {"sources": []}
-    with open(CONFIG, "r", encoding="utf-8") as fp:
-        cfg = yaml.safe_load(fp) or {}
-    cfg.setdefault("sources", [])
-    return cfg
-
-
-def load_registries() -> Tuple[Dict[str, str], Dict[str, str], Dict[str, Hazard]]:
-    countries_df = pd.read_csv(COUNTRIES, dtype=str).fillna("")
-    shocks_df = pd.read_csv(SHOCKS, dtype=str).fillna("")
-
-    iso3_to_name = {}
-    name_to_iso3 = {}
-    for row in countries_df.itertuples(index=False):
-        iso = str(row.iso3).strip().upper()
-        name = str(row.country_name).strip()
-        if not iso:
-            continue
-        iso3_to_name[iso] = name
-        key = _normalise_text(name)
-        if key:
-            name_to_iso3[key] = iso
-
-    hazard_lookup: Dict[str, Hazard] = {}
-    for row in shocks_df.itertuples(index=False):
-        code = str(row.hazard_code).strip().upper()
-        hazard_lookup[code] = Hazard(
-            code=code,
-            label=str(row.hazard_label).strip(),
-            hazard_class=str(row.hazard_class).strip(),
-        )
-
-    return iso3_to_name, name_to_iso3, hazard_lookup
-
-
-def _normalise_text(value: Any) -> str:
-    return "".join(ch for ch in str(value or "").strip().lower() if ch.isalnum())
-
-
-def _read_source_frame(
-    source: MutableMapping[str, Any],
-    *,
-    prefer_hxl: bool,
-) -> Tuple[pd.DataFrame, Dict[int, str]]:
-    kind = str(source.get("kind", "csv")).strip().lower() or "csv"
-    url = source.get("url")
-    if not url:
-        raise ValueError("source url missing")
-
-    hxl_tags: Dict[int, str] = {}
-    try:
-        if kind == "xlsx":
-            frame = pd.read_excel(url, dtype=str, keep_default_na=False)
-        else:
-            frame = pd.read_csv(url, dtype=str, keep_default_na=False)
-    except (EmptyDataError, ParserError) as exc:
-        print(f"[emdat] failed to load source {url}: {exc}")
-        return pd.DataFrame(), hxl_tags
-    except ValueError as exc:
-        message = str(exc)
-        if "No columns to parse" in message:
-            print(f"[emdat] failed to load source {url}: {message}")
-            return pd.DataFrame(), hxl_tags
-        raise
-
-    frame = frame.fillna("")
-    if frame.empty:
-        print(f"[emdat] source {url} empty; skipping")
-        return frame, hxl_tags
-
-    first_row = frame.iloc[0]
-    if prefer_hxl and any(str(val).strip().startswith("#") for val in first_row):
-        hxl_tags = {idx: str(val).strip() for idx, val in enumerate(first_row)}
-        frame = frame.iloc[1:].reset_index(drop=True)
-
-    return frame, hxl_tags
-
-
-def _match_column(
-    frame: pd.DataFrame,
-    candidates: Sequence[str],
-    hxl_tags: Dict[int, str],
-    prefer_hxl: bool,
-) -> Optional[str]:
-    if not candidates:
-        return None
-    normalised_candidates = [_normalise_text(cand) for cand in candidates if cand]
-    if not normalised_candidates:
-        return None
-
-    def _match_from_tags() -> Optional[str]:
-        for idx, tag in hxl_tags.items():
-            norm_tag = _normalise_text(tag)
-            if norm_tag in normalised_candidates and idx < len(frame.columns):
-                return frame.columns[idx]
-        return None
-
-    if prefer_hxl and hxl_tags:
-        matched = _match_from_tags()
-        if matched:
-            return matched
-
-    for column in frame.columns:
-        norm = _normalise_text(column)
-        if norm in normalised_candidates:
+def _lookup_column(row: Mapping[str, Any], hints: Iterable[str]) -> Optional[str]:
+    lowered = {col.lower(): col for col in row.keys()}
+    for hint in hints:
+        key = hint.lower()
+        if key in lowered:
+            return lowered[key]
+    for column in row.keys():
+        if _normalise_key(column) in {_normalise_key(hint) for hint in hints}:
             return column
-
-    if not prefer_hxl and hxl_tags:
-        matched = _match_from_tags()
-        if matched:
-            return matched
-
     return None
 
 
-def _parse_date(value: Any) -> Optional[date]:
-    text = str(value or "").strip()
-    if not text:
-        return None
-    try:
-        parsed = pd.to_datetime(text, errors="coerce")
-    except Exception:
-        parsed = pd.NaT
-    if pd.isna(parsed):
-        return None
-    return parsed.date()
-
-
-def _parse_persons(value: Any) -> Optional[int]:
+def _parse_number(value: Any) -> Optional[float]:
     if value is None:
         return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
     text = str(value).strip()
     if not text:
         return None
-    cleaned = "".join(ch for ch in text if ch.isdigit() or ch in {".", "-"})
-    if not cleaned:
-        return None
+    cleaned = text.replace(",", "")
     try:
-        number = float(cleaned)
+        return float(cleaned)
     except ValueError:
         return None
-    if number <= 0:
+
+
+def _build_date(row: Mapping[str, Any], prefix: str) -> Optional[date]:
+    year = _parse_number(row.get(f"{prefix} Year")) or _parse_number(row.get(f"{prefix}_Year"))
+    month = _parse_number(row.get(f"{prefix} Month")) or _parse_number(row.get(f"{prefix}_Month"))
+    day = _parse_number(row.get(f"{prefix} Day")) or _parse_number(row.get(f"{prefix}_Day"))
+    direct = parse_date(row.get(prefix))
+    if direct:
+        return direct
+    if not year:
         return None
-    return int(round(number))
-
-
-def _normalise_iso3(
-    value: Any,
-    *,
-    iso3_to_name: Dict[str, str],
-    name_to_iso3: Dict[str, str],
-) -> Optional[str]:
-    text = str(value or "").strip()
-    if not text:
+    try:
+        y = int(year)
+        m = int(month or 1)
+        d = int(day or 1)
+        m = max(1, min(12, m))
+        d = max(1, min(28, d))
+        return date(y, m, d)
+    except ValueError:
         return None
-    upper = text.upper()
-    if len(upper) == 3 and upper.isalpha() and upper in iso3_to_name:
-        return upper
-    key = _normalise_text(text)
-    return name_to_iso3.get(key)
 
 
-def _next_month(value: date) -> date:
-    if value.month == 12:
-        return date(value.year + 1, 1, 1)
-    return date(value.year, value.month + 1, 1)
+def _as_iso_date(value: Any, default: str) -> str:
+    parsed = parse_date(value)
+    if parsed:
+        return parsed.isoformat()
+    return default
 
 
-def _month_end(value: date) -> date:
-    return _next_month(value) - timedelta(days=1)
+def _raw_event_id(row: Mapping[str, Any]) -> str:
+    for key in ("Dis No", "Disaster No", "Dis No.", "DIS_NO"):
+        value = row.get(key)
+        if value:
+            return str(value).strip()
+    return ""
 
 
-def _iter_month_segments(start: date, end: date) -> Iterable[Tuple[str, int]]:
-    if end < start:
-        end = start
-    current = date(start.year, start.month, 1)
-    segments: List[Tuple[str, int]] = []
-    while current <= end:
-        month_end = _month_end(current)
-        seg_start = start if current < start else current
-        seg_end = end if month_end > end else month_end
-        if seg_end >= seg_start:
-            month_key = f"{current.year:04d}-{current.month:02d}"
-            days = (seg_end - seg_start).days + 1
-            segments.append((month_key, days))
-        current = _next_month(current)
-    return segments
+def _hazard_label(row: Mapping[str, Any], overrides: Mapping[str, str]) -> Optional[str]:
+    for key in ("Disaster Type", "Disaster Subtype", "Disaster Group"):
+        value = row.get(key)
+        hazard = map_hazard(value, overrides)
+        if hazard:
+            return hazard
+    combined = " ".join(str(row.get(key) or "") for key in ("Disaster Type", "Disaster Subtype"))
+    return map_hazard(combined, overrides)
 
 
-def _allocate_event(
-    start: date,
-    end: date,
-    total: int,
-    *,
-    policy: str,
-) -> List[Tuple[str, int]]:
-    if total <= 0:
-        return []
-    if policy == "start":
-        month_key = f"{start.year:04d}-{start.month:02d}"
-        return [(month_key, int(total))]
-
-    segments = list(_iter_month_segments(start, end))
-    if not segments:
-        month_key = f"{start.year:04d}-{start.month:02d}"
-        return [(month_key, int(total))]
-
-    total_days = sum(days for _, days in segments)
-    if total_days <= 0:
-        month_key = f"{start.year:04d}-{start.month:02d}"
-        return [(month_key, int(total))]
-
-    allocations: List[Tuple[str, int]] = []
-    running = 0
-    for idx, (month_key, days) in enumerate(segments):
-        last = idx == len(segments) - 1
-        if last:
-            value = total - running
-        else:
-            raw = total * days / total_days
-            value = int(round(raw))
-            if running + value > total:
-                value = max(total - running, 0)
-            running += value
-        if last:
-            running += value
-        value = int(value)
-        if value > 0:
-            allocations.append((month_key, value))
-    return allocations
-
-
-def _infer_hazard_key(
-    type_value: Any,
-    subtype_value: Any,
-    *,
-    shock_map: Dict[str, Sequence[str]],
-    default_key: str,
-) -> str:
-    texts = [str(type_value or "").strip(), str(subtype_value or "").strip()]
-    norm_texts = [_normalise_text(text) for text in texts if text]
-
-    for hazard_key, keywords in shock_map.items():
-        targets = [_normalise_text(keyword) for keyword in keywords if keyword]
-        if not targets:
-            continue
-        for candidate in norm_texts:
-            for target in targets:
-                if not target:
-                    continue
-                if candidate == target or candidate.startswith(target) or target in candidate:
-                    return hazard_key
-
-    for candidate in norm_texts:
-        for unsupported_key, keywords in UNSUPPORTED_HAZARD_KEYWORDS.items():
-            for keyword in keywords:
-                norm_keyword = _normalise_text(keyword)
-                if not norm_keyword:
-                    continue
-                if (
-                    candidate == norm_keyword
-                    or candidate.startswith(norm_keyword)
-                    or norm_keyword in candidate
-                ):
-                    return unsupported_key
-
-    return default_key
-
-
-def _resolve_hazard(
-    hazard_key: str,
-    *,
-    hazard_lookup: Dict[str, Hazard],
-) -> Hazard:
-    code = HAZARD_KEY_TO_CODE.get(hazard_key, HAZARD_KEY_TO_CODE.get("other", "OT"))
-    if code in hazard_lookup:
-        return hazard_lookup[code]
-    label = hazard_key.replace("_", " ").title() if hazard_key else "Other"
-    return Hazard(code=code, label=label, hazard_class="other")
-
-
-def _build_event_id(
-    iso3: str,
-    hazard_code: str,
-    month: str,
-    value: int,
-    source_url: str,
-    dis_refs: Sequence[str],
-) -> str:
-    digest_input = "|".join([
-        iso3,
-        hazard_code,
-        month,
-        str(value),
-        source_url,
-        ",".join(sorted({ref for ref in dis_refs if ref})),
-    ])
-    digest = hashlib.sha256(digest_input.encode("utf-8")).hexdigest()[:12]
-    year, month_part = month.split("-")
-    return f"{iso3}-EMDAT-{hazard_code}-affected-{year}-{month_part}-{digest}"
-
-
-def _write_header_only(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as fp:
-        fp.write(",".join(CANONICAL_HEADERS) + "\n")
-
-
-def _write_rows(rows: Sequence[Sequence[Any]], path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    frame = pd.DataFrame(rows, columns=CANONICAL_HEADERS)
-    frame.to_csv(path, index=False)
-
-
-def main() -> bool:
-    if _env_bool("RESOLVER_SKIP_EMDAT", False):
-        dbg("RESOLVER_SKIP_EMDAT=1 — writing header only")
-        _write_header_only(OUT_PATH)
-        return False
-
-    try:
-        cfg = load_config()
-    except Exception as exc:  # pragma: no cover - defensive
-        dbg(f"failed to load config: {exc}")
-        _write_header_only(OUT_PATH)
-        return False
-
-    sources = cfg.get("sources", [])
-    if not sources:
-        dbg("no EM-DAT sources configured")
-        _write_header_only(OUT_PATH)
-        return False
-
-    try:
-        iso3_to_name, name_to_iso3, hazard_lookup = load_registries()
-    except Exception as exc:  # pragma: no cover - defensive
-        dbg(f"failed to load registries: {exc}")
-        _write_header_only(OUT_PATH)
-        return False
-
-    prefer_hxl = bool(cfg.get("prefer_hxl", False))
-    alloc_policy = os.getenv("EMDAT_ALLOC_POLICY", str(cfg.get("allocation_policy", "prorata")))
-    alloc_policy = alloc_policy.strip().lower() or "prorata"
-    if alloc_policy not in {"prorata", "start"}:
-        alloc_policy = "prorata"
-
-    definition_text = (
-        DEFAULT_DEFINITION_PRORATA if alloc_policy == "prorata" else DEFAULT_DEFINITION_START
-    )
-    method = f"{DEFAULT_METHOD_PREFIX}; {alloc_policy}"
-
-    default_hazard_key = str(cfg.get("default_hazard", "other")).strip().lower() or "other"
-    shock_map = cfg.get("shock_map", {}) or {}
-
-    allocations: List[Dict[str, Any]] = []
-    seen_events: set[Tuple[str, str, date, date]] = set()
-
-    for source in sources:
-        try:
-            frame, hxl_tags = _read_source_frame(source, prefer_hxl=prefer_hxl)
-        except Exception as exc:
-            dbg(f"failed to load source {source.get('name')}: {exc}")
-            continue
-
-        if frame.empty:
-            continue
-
-        country_col = _match_column(frame, source.get("country_keys", []), hxl_tags, prefer_hxl)
-        start_col = _match_column(frame, source.get("start_date_keys", []), hxl_tags, prefer_hxl)
-        end_col = _match_column(frame, source.get("end_date_keys", []), hxl_tags, prefer_hxl)
-        type_col = _match_column(frame, source.get("type_keys", []), hxl_tags, prefer_hxl)
-        subtype_col = _match_column(frame, source.get("subtype_keys", []), hxl_tags, prefer_hxl)
-        total_col = _match_column(frame, source.get("total_affected_keys", []), hxl_tags, prefer_hxl)
-        affected_col = _match_column(frame, source.get("affected_keys", []), hxl_tags, prefer_hxl)
-        injured_col = _match_column(frame, source.get("injured_keys", []), hxl_tags, prefer_hxl)
-        homeless_col = _match_column(frame, source.get("homeless_keys", []), hxl_tags, prefer_hxl)
-        id_col = _match_column(frame, source.get("id_keys", []), hxl_tags, prefer_hxl)
-        title_col = _match_column(frame, source.get("title_keys", []), hxl_tags, prefer_hxl)
-
-        dedup_cols = [
-            col
-            for col in [country_col, start_col, end_col, id_col, type_col, subtype_col, total_col]
-            if col
-        ]
-        if dedup_cols:
-            frame = frame.drop_duplicates(subset=dedup_cols)
-
-        publisher = str(source.get("publisher", cfg.get("publisher", "CRED/EM-DAT")))
-        source_type = str(source.get("source_type", cfg.get("source_type", "other")))
-        source_url = str(source.get("url", ""))
-        doc_title = source.get("doc_title") or f"{source.get('name', 'EM-DAT')} event table"
-
-        for record in frame.to_dict("records"):
-            iso_candidate = record.get(country_col) if country_col else None
-            iso3 = _normalise_iso3(iso_candidate, iso3_to_name=iso3_to_name, name_to_iso3=name_to_iso3)
+def read_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
+    source_cfg = cfg.get("source") or {}
+    source_type = str(source_cfg.get("type") or "file").strip().lower()
+    if source_type != "file":
+        raise ValueError("Only file sources are supported for EM-DAT connector")
+    path = source_cfg.get("path")
+    if not path:
+        raise FileNotFoundError("emdat source path is empty")
+    csv_path = Path(path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"emdat source path not found: {csv_path}")
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames is None:
+            return []
+        aliases = cfg.get("country_aliases") or {}
+        hazard_overrides = cfg.get("hazard_map") or {}
+        value_types = cfg.get("value_types") or ["affected"]
+        as_of_default = datetime.utcnow().date().isoformat()
+        method = "emdat_linear_allocation"
+        dedup: dict[tuple[str, str, str, str, str], Dict[str, Any]] = {}
+        for row in reader:
+            iso3 = to_iso3(row.get("ISO"), aliases) or to_iso3(row.get("Country"), aliases)
             if not iso3:
                 continue
-
-            start_date = _parse_date(record.get(start_col) if start_col else None)
-            if not start_date:
+            hazard = _hazard_label(row, hazard_overrides)
+            if not hazard:
                 continue
-            end_date = _parse_date(record.get(end_col) if end_col else None) or start_date
-
-            dis_no = str(record.get(id_col, "")) if id_col else ""
-            event_name = str(record.get(title_col, "")) if title_col else ""
-            event_ref = dis_no or event_name or "unknown"
-
-            hazard_key = _infer_hazard_key(
-                record.get(type_col) if type_col else "",
-                record.get(subtype_col) if subtype_col else "",
-                shock_map=shock_map,
-                default_key=default_hazard_key,
-            )
-            if hazard_key in UNSUPPORTED_HAZARD_KEYS:
-                dbg(f"skip unsupported hazard {hazard_key} for event {event_ref}")
+            start = _build_date(row, "Start")
+            end = _build_date(row, "End") or start
+            if not start:
+                start = end
+            if not start:
                 continue
-            hazard = _resolve_hazard(hazard_key, hazard_lookup=hazard_lookup)
-
-            total_value = None
-            if total_col:
-                total_value = _parse_persons(record.get(total_col))
-            if total_value is None and affected_col:
-                total_value = _parse_persons(record.get(affected_col))
-            if total_value is None:
-                components: List[int] = []
-                for col in (affected_col, injured_col, homeless_col):
-                    if not col:
-                        continue
-                    parsed = _parse_persons(record.get(col))
-                    if parsed is not None:
-                        components.append(parsed)
-                if components:
-                    total_value = int(sum(components)) if sum(components) > 0 else None
-
-            if total_value is None or total_value <= 0:
-                continue
-
-            event_key = (iso3, dis_no, start_date, end_date)
-            if dis_no and event_key in seen_events:
-                continue
-            if dis_no:
-                seen_events.add(event_key)
-
-            month_allocations = _allocate_event(start_date, end_date, int(total_value), policy=alloc_policy)
-            for month, value in month_allocations:
-                if value <= 0:
+            if end and end < start:
+                end = start
+            duration = (end - start).days if end else 0
+            raw_id = _raw_event_id(row)
+            as_of = _as_iso_date(row.get("Entry Date"), as_of_default)
+            raw_json = json.dumps({
+                "dis_no": raw_id,
+                "country": row.get("Country"),
+                "hazard_type": row.get("Disaster Type"),
+            }, ensure_ascii=False)
+            for value_type in value_types:
+                column = _lookup_column(row, VALUE_COLUMN_HINTS.get(value_type, []))
+                if not column:
                     continue
-                allocations.append(
-                    {
-                        "iso3": iso3,
-                        "hazard": hazard,
-                        "month": month,
-                        "value": int(value),
-                        "publisher": publisher,
-                        "source_type": source_type,
-                        "source_url": source_url,
-                        "doc_title": doc_title,
-                        "dis_ref": dis_no or event_name or f"{iso3}-{month}",
-                        "event_name": event_name,
+                total = _parse_number(row.get(column))
+                if not total or total <= 0:
+                    continue
+                if duration > 14 and end:
+                    allocations = linear_split(total, start, end)
+                else:
+                    bucket = month_start(start) or start.replace(day=1)
+                    allocations = [(bucket, total)]
+                for bucket, amount in allocations:
+                    if amount is None:
+                        continue
+                    value = float(amount)
+                    if value <= 0:
+                        continue
+                    month_iso = bucket.isoformat()
+                    digest = stable_digest([iso3, hazard, month_iso, raw_id, value_type])
+                    event_id = f"{iso3}-{hazard}-{bucket.strftime('%Y%m')}-{digest}"
+                    record = {
+                        "source": "emdat",
+                        "hazard_type": hazard,
+                        "country_iso3": iso3,
+                        "event_id": event_id,
+                        "as_of": as_of,
+                        "month_start": month_iso,
+                        "value_type": value_type,
+                        "value": int(round(value)),
+                        "unit": "people",
+                        "method": method,
+                        "confidence": "",
+                        "raw_event_id": raw_id,
+                        "raw_fields_json": raw_json,
                     }
-                )
-
-    if not allocations:
-        dbg("no allocations generated")
-        _write_header_only(OUT_PATH)
-        return False
-
-    ingested_at = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
-    max_results = _env_int("RESOLVER_MAX_RESULTS")
-
-    aggregated: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
-    for entry in allocations:
-        key = (entry["iso3"], entry["hazard"].code, entry["month"])
-        bucket = aggregated.setdefault(
-            key,
-            {
-                "iso3": entry["iso3"],
-                "hazard": entry["hazard"],
-                "month": entry["month"],
-                "value": 0,
-                "publishers": set(),
-                "source_types": set(),
-                "source_urls": set(),
-                "doc_titles": set(),
-                "dis_refs": [],
-            },
-        )
-        bucket["value"] += int(entry["value"])
-        bucket["publishers"].add(entry["publisher"])
-        bucket["source_types"].add(entry["source_type"])
-        if entry["source_url"]:
-            bucket["source_urls"].add(entry["source_url"])
-        if entry["doc_title"]:
-            bucket["doc_titles"].add(entry["doc_title"])
-        if entry["dis_ref"]:
-            bucket["dis_refs"].append(entry["dis_ref"])
-
-    rows: List[List[Any]] = []
-    for (iso3, hazard_code, month), bucket in sorted(aggregated.items()):
-        hazard = bucket["hazard"]
-        country_name = iso3_to_name.get(iso3, "")
-        if not country_name:
-            continue
-        value = int(round(bucket["value"]))
-        if value <= 0:
-            continue
-
-        dis_refs = bucket["dis_refs"] or [f"{iso3}-{month}"]
-        source_url = " | ".join(sorted(bucket["source_urls"]))
-        doc_title = " | ".join(sorted(bucket["doc_titles"])) or "EM-DAT events"
-        publisher = " | ".join(sorted(bucket["publishers"]))
-        source_type = " | ".join(sorted(bucket["source_types"]))
-        event_id = _build_event_id(iso3, hazard.code, month, value, source_url, dis_refs)
-
-        publication_date = f"{month}-01"
-
-        rows.append(
+                    key = (iso3, hazard, month_iso, raw_id, value_type)
+                    existing = dedup.get(key)
+                    if existing and existing["as_of"] >= record["as_of"]:
+                        continue
+                    dedup[key] = record
+        rows = [
             [
-                event_id,
-                country_name,
-                iso3,
-                hazard.code,
-                hazard.label,
-                hazard.hazard_class,
-                "affected",
-                SERIES_SEMANTICS,
-                str(int(value)),
-                "persons",
-                month,
-                publication_date,
-                publisher,
-                source_type,
-                source_url,
-                doc_title,
-                definition_text,
-                method,
-                "low",
-                "0",
-                ingested_at,
+                rec["source"],
+                rec["hazard_type"],
+                rec["country_iso3"],
+                rec["event_id"],
+                rec["as_of"],
+                rec["month_start"],
+                rec["value_type"],
+                rec["value"],
+                rec["unit"],
+                rec["method"],
+                rec["confidence"],
+                rec["raw_event_id"],
+                rec["raw_fields_json"],
             ]
-        )
+            for rec in dedup.values()
+        ]
+        rows.sort(key=lambda row: (row[2], row[1], row[5], row[6]))
+        return rows
 
-    if not rows:
-        dbg("no valid rows after aggregation")
-        _write_header_only(OUT_PATH)
-        return False
 
-    if max_results is not None and max_results >= 0:
-        rows = rows[: max_results]
+def write_rows(rows: List[List[Any]]) -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(COLUMNS)
+        writer.writerows(rows)
+    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
 
-    _write_rows(rows, OUT_PATH)
-    dbg(f"wrote {len(rows)} EM-DAT rows")
-    return True
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    cfg = load_config()
+    if not cfg.get("enabled"):
+        LOG.info("emdat: disabled via config; writing header only")
+        ensure_header_only()
+        return 0
+    rows = read_rows(cfg)
+    write_rows(rows)
+    LOG.info("emdat: wrote %s rows", len(rows))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

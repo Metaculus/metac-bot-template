@@ -1,0 +1,29 @@
+version: 1
+name: gdacs_signals
+columns:
+  - name: source
+    description: Data source identifier ("gdacs").
+  - name: hazard_type
+    description: Canonical hazard name (e.g. earthquake, flood).
+  - name: country_iso3
+    description: ISO3 country code for the affected location.
+  - name: event_id
+    description: Deterministic Resolver event identifier.
+  - name: as_of
+    description: Timestamp when the alert was last updated (ISO8601 date).
+  - name: month_start
+    description: First day of the month representing the alert bucket.
+  - name: value_type
+    description: Metric captured; for GDACS this is "signal_level".
+  - name: value
+    description: Severity level mapped to numeric categories.
+  - name: unit
+    description: Unit for value (blank for GDACS alerts).
+  - name: method
+    description: Processing pipeline or allocation method label.
+  - name: confidence
+    description: Qualitative confidence string if available.
+  - name: raw_event_id
+    description: Native GDACS event identifier used for deduplication.
+  - name: raw_fields_json
+    description: JSON blob with key raw fields for traceability.

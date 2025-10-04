@@ -1,406 +1,316 @@
 #!/usr/bin/env python3
-"""IOM DTM connector scaffolding with monthly-first logic and helpers."""
+"""DTM connector that converts stock or flow tables into monthly displacement flows."""
 
 from __future__ import annotations
 
-import hashlib
-import os
+import csv
+import json
+import logging
 from collections import defaultdict
-from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
-import pandas as pd
 import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
+from resolver.ingestion.utils import flow_from_stock, month_start, stable_digest, to_iso3
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data"
 STAGING = ROOT / "staging"
-CONFIG = ROOT / "ingestion" / "config" / "dtm.yml"
+CONFIG_PATH = ROOT / "ingestion" / "config" / "dtm.yml"
+OUTPUT_PATH = STAGING / "dtm_displacement.csv"
 
-COUNTRIES = DATA / "countries.csv"
-SHOCKS = DATA / "shocks.csv"
+LOG = logging.getLogger("resolver.ingestion.dtm")
 
-OUT_DIR = STAGING
-OUT_PATH = OUT_DIR / "dtm.csv"
-
-CANONICAL_HEADERS = [
+COLUMNS = [
+    "source",
+    "country_iso3",
+    "admin1",
     "event_id",
-    "country_name",
-    "iso3",
-    "hazard_code",
-    "hazard_label",
-    "hazard_class",
-    "metric",
-    "series_semantics",
+    "as_of",
+    "month_start",
+    "value_type",
     "value",
     "unit",
-    "as_of_date",
-    "publication_date",
-    "publisher",
-    "source_type",
-    "source_url",
-    "doc_title",
-    "definition_text",
     "method",
     "confidence",
-    "revision",
-    "ingested_at",
+    "raw_event_id",
+    "raw_fields_json",
 ]
 
-SERIES_INCIDENT = "incident"
-SERIES_CUMULATIVE = "cumulative"
-
-HAZARD_KEY_TO_CODE = {
-    "flood": "FL",
-    "drought": "DR",
-    "tropical_cyclone": "TC",
-    "heat_wave": "HW",
-    "armed_conflict_onset": "ACO",
-    "armed_conflict_escalation": "ACE",
-    "civil_unrest": "CU",
-    "displacement_influx": "DI",
-    "economic_crisis": "EC",
-    "phe": "PHE",
-}
-
-MULTI_HAZARD = ("multi", "Multi-shock Displacement/Needs", "all")
-
-DEBUG = os.getenv("RESOLVER_DEBUG", "0") == "1"
+DEFAULT_CAUSE = "unknown"
 
 
-@dataclass
-class Hazard:
-    code: str
-    label: str
-    hclass: str
-
-
-def dbg(message: str) -> None:
-    if DEBUG:
-        print(f"[dtm] {message}")
-
-
-def _dtm_headers() -> Dict[str, str]:
-    """Return API key headers for the DTM portal if credentials are configured."""
-
-    key = os.environ.get("DTM_API_PRIMARY_KEY") or os.environ.get("DTM_API_SECONDARY_KEY")
-    if not key:
+def load_config() -> dict[str, Any]:
+    if not CONFIG_PATH.exists():
         return {}
-    header_name = os.environ.get("DTM_API_HEADER_NAME", "x-api-key")
-    return {header_name: key}
+    with CONFIG_PATH.open("r", encoding="utf-8") as handle:
+        return yaml.safe_load(handle) or {}
 
 
-def _env_bool(name: str, default: bool) -> bool:
-    val = os.getenv(name)
-    if val is None:
-        return default
-    return val.strip().lower() in {"1", "true", "y", "yes", "on"}
+def ensure_header_only() -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(COLUMNS)
+    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
 
 
-def load_config() -> Dict[str, Any]:
-    with open(CONFIG, "r", encoding="utf-8") as fp:
-        return yaml.safe_load(fp)
+def _load_csv(path: Path) -> Iterable[Mapping[str, Any]]:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            yield row
 
 
-def load_registries() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    countries = pd.read_csv(COUNTRIES, dtype=str).fillna("")
-    shocks = pd.read_csv(SHOCKS, dtype=str).fillna("")
-    return countries, shocks
-
-
-def _parse_month(value: Any) -> Optional[Tuple[int, int]]:
+def _parse_float(value: Any) -> Optional[float]:
     if value is None:
         return None
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return float(value)
     text = str(value).strip()
     if not text:
         return None
     try:
-        parsed = pd.to_datetime(text, errors="coerce")
-    except Exception:
-        parsed = pd.NaT
-    if pd.isna(parsed):
+        return float(text.replace(",", ""))
+    except ValueError:
         return None
-    return int(parsed.year), int(parsed.month)
 
 
-def _normalise_month(value: Any) -> Optional[str]:
-    parsed = _parse_month(value)
-    if not parsed:
-        return None
-    year, month = parsed
-    return f"{year:04d}-{month:02d}"
+def _resolve_cause(row: Mapping[str, Any], cause_map: Mapping[str, str]) -> str:
+    for key in ("cause", "cause_category", "reason"):
+        value = row.get(key)
+        if value:
+            norm = str(value).strip().lower()
+            mapped = cause_map.get(norm)
+            if mapped:
+                return mapped
+            return norm
+    return DEFAULT_CAUSE
 
 
-def _is_subnational(record: MutableMapping[str, Any]) -> bool:
-    for key in ("admin1", "admin2", "admin_pcode", "admin_name"):
-        if str(record.get(key, "")).strip():
-            return True
-    return False
+def _source_label(entry: Mapping[str, Any]) -> str:
+    return str(entry.get("id") or entry.get("name") or entry.get("id_or_path") or "dtm_source")
 
 
-def rollup_subnational(records: Sequence[MutableMapping[str, Any]]) -> List[MutableMapping[str, Any]]:
-    """Aggregate subnational rows into national totals per month and source."""
+def _column(row: Mapping[str, Any], *candidates: str) -> Optional[str]:
+    lowered = {col.lower(): col for col in row.keys()}
+    for candidate in candidates:
+        key = candidate.lower()
+        if key in lowered:
+            return lowered[key]
+    for candidate in candidates:
+        for col in row.keys():
+            if col.lower().replace(" ", "") == candidate.lower().replace(" ", ""):
+                return col
+    return None
 
-    grouped: Dict[Tuple[str, str, str, str, str, str], List[MutableMapping[str, Any]]] = defaultdict(list)
-    for rec in records:
-        as_of = _normalise_month(rec.get("as_of_date")) or ""
-        key = (
-            str(rec.get("iso3", "")),
-            str(rec.get("hazard_code", "")),
-            str(rec.get("metric", "")),
-            as_of,
-            str(rec.get("source_id", "")),
-            str(rec.get("series_type", SERIES_INCIDENT)),
-        )
-        rec = dict(rec)
-        rec["as_of_date"] = as_of
-        grouped[key].append(rec)
 
-    rolled: List[MutableMapping[str, Any]] = []
-    for key, rows in grouped.items():
-        nationals = [r for r in rows if not _is_subnational(r)]
-        if nationals:
-            nationals.sort(key=lambda r: r.get("as_of_date", ""))
-            rolled.extend(nationals)
+def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    source_type = str(entry.get("type") or "file").strip().lower()
+    if source_type != "file":
+        raise ValueError("DTM connector currently supports file sources only")
+    path = entry.get("id_or_path")
+    if not path:
+        raise FileNotFoundError("DTM source missing id_or_path")
+    csv_path = Path(path)
+    if not csv_path.exists():
+        raise FileNotFoundError(f"DTM source not found: {csv_path}")
+    aliases = cfg.get("country_aliases") or {}
+    measure = str(entry.get("measure") or "stock").strip().lower()
+    cause_map = {str(k).strip().lower(): str(v) for k, v in (cfg.get("cause_map") or {}).items()}
+    country_column = entry.get("country_column")
+    admin_column = entry.get("admin1_column")
+    date_column = entry.get("date_column")
+    value_column = entry.get("value_column")
+    cause_column = entry.get("cause_column")
+    rows = list(_load_csv(csv_path))
+    if not rows:
+        return []
+    if not country_column:
+        country_column = _column(rows[0], "country_iso3", "iso3", "country")
+    if not admin_column:
+        admin_column = _column(rows[0], "admin1", "adm1", "province", "state")
+    if not date_column:
+        date_column = _column(rows[0], "date", "month", "period")
+    if not value_column:
+        value_column = _column(rows[0], "value", "count", "population", "total")
+    if not value_column or not date_column or not country_column:
+        raise ValueError("DTM source missing required columns")
+    per_admin: dict[tuple[str, str], dict[datetime, float]] = defaultdict(dict)
+    causes: dict[tuple[str, str], str] = {}
+    for row in rows:
+        iso = to_iso3(row.get(country_column), aliases)
+        if not iso:
             continue
-        total = 0.0
-        template = dict(rows[0])
-        for row in rows:
-            try:
-                total += float(row.get("value", 0) or 0)
-            except Exception:
+        bucket = month_start(row.get(date_column))
+        if not bucket:
+            continue
+        admin1 = str(row.get(admin_column) or "").strip() if admin_column else ""
+        value = _parse_float(row.get(value_column))
+        if value is None or value < 0:
+            continue
+        per_admin[(iso, admin1)][bucket] = value
+        if cause_column and row.get(cause_column):
+            causes[(iso, admin1)] = _resolve_cause({cause_column: row.get(cause_column)}, cause_map)
+        else:
+            causes[(iso, admin1)] = _resolve_cause(row, cause_map)
+    records: List[Dict[str, Any]] = []
+    source_label = _source_label(entry)
+    for key, series in per_admin.items():
+        iso, admin1 = key
+        if measure == "stock":
+            flows = flow_from_stock(series)
+        else:
+            flows = {month_start(k): float(v) for k, v in series.items() if month_start(k)}
+        cause = causes.get(key, DEFAULT_CAUSE)
+        for bucket, value in flows.items():
+            if not bucket or value is None:
                 continue
-        template["value"] = max(total, 0.0)
-        for drop_key in ("admin1", "admin2", "admin_pcode", "admin_name"):
-            template.pop(drop_key, None)
-        rolled.append(template)
+            if value <= 0:
+                continue
+            records.append(
+                {
+                    "iso3": iso,
+                    "admin1": admin1,
+                    "month": bucket,
+                    "value": float(value),
+                    "cause": cause,
+                    "measure": measure,
+                    "source_id": source_label,
+                }
+            )
+    return records
 
-    rolled.sort(key=lambda r: (
-        str(r.get("iso3", "")),
-        str(r.get("hazard_code", "")),
-        str(r.get("metric", "")),
-        str(r.get("as_of_date", "")),
-    ))
-    return rolled
+
+def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
+    sources = cfg.get("sources") or []
+    admin_mode = str(cfg.get("admin_agg") or "both").strip().lower()
+    all_records: List[Dict[str, Any]] = []
+    for entry in sources:
+        if not isinstance(entry, Mapping):
+            continue
+        records = _read_source(entry, cfg)
+        all_records.extend(records)
+    if not all_records:
+        return []
+    as_of = datetime.utcnow().date().isoformat()
+    method = "dtm_stock_to_flow" if any(rec.get("measure") == "stock" for rec in all_records) else "dtm_flow"
+    dedup: dict[tuple[str, str, str, str], Dict[str, Any]] = {}
+    country_totals: dict[tuple[str, str, str], float] = defaultdict(float)
+    for rec in all_records:
+        iso3 = rec["iso3"]
+        admin1 = rec.get("admin1") or ""
+        month = rec["month"]
+        month_iso = month.isoformat()
+        value = float(rec.get("value", 0.0))
+        if admin_mode in {"admin1", "both"} and admin1:
+            key = (iso3, admin1, month_iso, rec["source_id"])
+            event_id = f"{iso3}-displacement-{month.strftime('%Y%m')}-{stable_digest(key)}"
+            record = {
+                "source": "dtm",
+                "country_iso3": iso3,
+                "admin1": admin1,
+                "event_id": event_id,
+                "as_of": as_of,
+                "month_start": month_iso,
+                "value_type": "new_displaced",
+                "value": int(round(value)),
+                "unit": "people",
+                "method": method,
+                "confidence": rec.get("cause", DEFAULT_CAUSE),
+                "raw_event_id": f"{rec['source_id']}::{admin1 or 'national'}::{month.strftime('%Y%m')}",
+                "raw_fields_json": json.dumps(
+                    {
+                        "source_id": rec["source_id"],
+                        "admin1": admin1,
+                        "cause": rec.get("cause", DEFAULT_CAUSE),
+                        "measure": rec.get("measure"),
+                    },
+                    ensure_ascii=False,
+                ),
+            }
+            existing = dedup.get(key)
+            if existing and existing["as_of"] >= record["as_of"]:
+                pass
+            dedup[key] = record
+        if admin_mode in {"country", "both"}:
+            country_totals[(iso3, month_iso, rec["source_id"])] += value
+    rows = list(dedup.values())
+    if admin_mode in {"country", "both"}:
+        for (iso3, month_iso, source_id), total in country_totals.items():
+            if total <= 0:
+                continue
+            month = datetime.strptime(month_iso, "%Y-%m-%d").date()
+            event_id = f"{iso3}-displacement-{month.strftime('%Y%m')}-{stable_digest([iso3, month_iso, source_id])}"
+            rows.append(
+                {
+                    "source": "dtm",
+                    "country_iso3": iso3,
+                    "admin1": "",
+                    "event_id": event_id,
+                    "as_of": as_of,
+                    "month_start": month_iso,
+                    "value_type": "new_displaced",
+                    "value": int(round(total)),
+                    "unit": "people",
+                    "method": method,
+                    "confidence": DEFAULT_CAUSE,
+                    "raw_event_id": f"{source_id}::country::{month.strftime('%Y%m')}",
+                    "raw_fields_json": json.dumps(
+                        {
+                            "source_id": source_id,
+                            "aggregation": "country",
+                            "total_value": total,
+                        },
+                        ensure_ascii=False,
+                    ),
+                }
+            )
+    formatted = [
+        [
+            rec["source"],
+            rec["country_iso3"],
+            rec.get("admin1", ""),
+            rec["event_id"],
+            rec["as_of"],
+            rec["month_start"],
+            rec["value_type"],
+            rec["value"],
+            rec["unit"],
+            rec["method"],
+            rec["confidence"],
+            rec["raw_event_id"],
+            rec["raw_fields_json"],
+        ]
+        for rec in rows
+    ]
+    formatted.sort(key=lambda row: (row[1], row[2], row[5], row[3]))
+    return formatted
 
 
-def compute_monthly_deltas(
-    records: Sequence[MutableMapping[str, Any]],
-    *,
-    allow_first_month: Optional[bool] = None,
-) -> List[MutableMapping[str, Any]]:
-    """Convert cumulative series to month-over-month deltas.
+def write_rows(rows: List[List[Any]]) -> None:
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(COLUMNS)
+        writer.writerows(rows)
+    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
 
-    Incident series are passed through. Values are clipped to zero to avoid
-    negative deltas from noisy cumulative plateaus.
-    """
 
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
     cfg = load_config()
-    if allow_first_month is None:
-        allow_first_month = _env_bool(
-            "DTM_ALLOW_FIRST_MONTH",
-            bool(cfg.get("allow_first_month_delta", False)),
-        )
-
-    grouped: Dict[Tuple[str, str, str, str], List[MutableMapping[str, Any]]] = defaultdict(list)
-    for rec in records:
-        as_of = _normalise_month(rec.get("as_of_date")) or ""
-        rec = dict(rec)
-        rec["as_of_date"] = as_of
-        key = (
-            str(rec.get("iso3", "")),
-            str(rec.get("hazard_code", "")),
-            str(rec.get("metric", "")),
-            str(rec.get("source_id", "")),
-        )
-        grouped[key].append(rec)
-
-    output: List[MutableMapping[str, Any]] = []
-    for key, rows in grouped.items():
-        rows.sort(key=lambda r: _parse_month(r.get("as_of_date")) or (0, 0))
-        series_type = str(rows[0].get("series_type", SERIES_INCIDENT)).strip().lower()
-        prev_value: Optional[float] = None
-        for idx, row in enumerate(rows):
-            value = row.get("value", 0)
-            try:
-                value_num = float(value)
-            except Exception:
-                value_num = 0.0
-            if series_type != SERIES_CUMULATIVE:
-                new_val = max(value_num, 0.0)
-            else:
-                if prev_value is None:
-                    if allow_first_month:
-                        new_val = max(value_num, 0.0)
-                        prev_value = value_num
-                    else:
-                        prev_value = value_num
-                        continue
-                else:
-                    delta = value_num - prev_value
-                    if delta < 0:
-                        delta = 0.0
-                    new_val = delta
-                    prev_value = value_num
-            out_row = dict(row)
-            out_row["value"] = new_val
-            out_row["series_type"] = SERIES_INCIDENT
-            output.append(out_row)
-
-    output.sort(key=lambda r: (
-        str(r.get("iso3", "")),
-        str(r.get("hazard_code", "")),
-        str(r.get("metric", "")),
-        str(r.get("as_of_date", "")),
-    ))
-    return output
-
-
-def _hazard_from_code(code: str, shocks: pd.DataFrame) -> Hazard:
-    if not code:
-        return Hazard(*MULTI_HAZARD)
-    if code.lower() == "multi":
-        return Hazard(*MULTI_HAZARD)
-    match = shocks[shocks["hazard_code"].str.upper() == code.upper()]
-    if match.empty:
-        return Hazard(*MULTI_HAZARD)
-    row = match.iloc[0]
-    return Hazard(row["hazard_code"], row["hazard_label"], row["hazard_class"])
-
-
-def infer_hazard(
-    texts: Iterable[str],
-    shocks: Optional[pd.DataFrame] = None,
-    keywords_cfg: Optional[Dict[str, List[str]]] = None,
-    *,
-    default_key: Optional[str] = None,
-) -> Hazard:
-    """Map dataset metadata to a forecastable hazard."""
-
-    if shocks is None:
-        _, shocks = load_registries()
-    if keywords_cfg is None:
-        keywords_cfg = load_config().get("shock_keywords", {})
-    if default_key is None:
-        default_key = os.getenv(
-            "DTM_DEFAULT_HAZARD",
-            load_config().get("default_hazard", "displacement_influx"),
-        )
-
-    text_blob = " ".join([str(t).lower() for t in texts if t])
-    matches: List[str] = []
-    for key, keywords in keywords_cfg.items():
-        for kw in keywords:
-            if kw.lower() in text_blob:
-                matches.append(key)
-                break
-
-    if not matches:
-        mapped = HAZARD_KEY_TO_CODE.get(str(default_key).strip().lower())
-        if not mapped:
-            return Hazard(*MULTI_HAZARD)
-        return _hazard_from_code(mapped, shocks)
-
-    unique = sorted(set(matches))
-    if len(unique) > 1:
-        return Hazard(*MULTI_HAZARD)
-
-    mapped = HAZARD_KEY_TO_CODE.get(unique[0])
-    if not mapped:
-        return Hazard(*MULTI_HAZARD)
-    return _hazard_from_code(mapped, shocks)
-
-
-def build_event_id(
-    iso3: str,
-    hazard_code: str,
-    metric: str,
-    as_of_date: str,
-    value: Any,
-    source_url: str,
-) -> str:
-    """Construct deterministic event IDs for downstream dedupe."""
-
-    year, month = _parse_month(as_of_date) or (0, 0)
-    digest = hashlib.sha1(
-        "|".join([
-            str(iso3 or "UNK"),
-            str(hazard_code or ""),
-            str(metric or ""),
-            f"{year:04d}-{month:02d}",
-            str(value or 0),
-            str(source_url or ""),
-        ]).encode("utf-8")
-    ).hexdigest()[:12]
-    iso = iso3 or "UNK"
-    hz = hazard_code or "UNK"
-    metric = metric or "metric"
-    return f"{iso}-DTM-{hz}-{metric}-{year:04d}-{month:02d}-{digest}"
-
-
-def _write_header_only(path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(columns=CANONICAL_HEADERS).to_csv(path, index=False)
-    ensure_manifest_for_csv(path)
-
-
-def _write_rows(rows: Sequence[Dict[str, Any]], *, path: Path) -> None:
-    if not rows:
-        _write_header_only(path)
-        return
-    df = pd.DataFrame(rows)
-    if "series_semantics" not in df.columns:
-        df["series_semantics"] = SERIES_INCIDENT
-    else:
-        df["series_semantics"] = df["series_semantics"].replace("", SERIES_INCIDENT).fillna(SERIES_INCIDENT)
-    for col in CANONICAL_HEADERS:
-        if col not in df.columns:
-            df[col] = ""
-    df = df[CANONICAL_HEADERS]
-    path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(path, index=False)
-    ensure_manifest_for_csv(path)
-
-
-def collect_rows() -> List[Dict[str, Any]]:
-    """Placeholder for phased DTM ingestion (HDX mirrors in phase 1).
-
-    The network discovery and HXL parsing logic will be expanded in follow-up
-    cards. For now we fail-soft by returning no rows so the connector writes the
-    canonical header only (satisfying CI expectations).
-    """
-
-    return []
-
-
-def main() -> bool:
-    if os.getenv("RESOLVER_SKIP_DTM") == "1":
-        dbg("RESOLVER_SKIP_DTM=1 — skipping network access")
-        _write_header_only(OUT_PATH)
-        return False
-
-    try:
-        rows = collect_rows()
-    except Exception as exc:  # fail-soft
-        dbg(f"collect_rows failed: {exc}")
-        _write_header_only(OUT_PATH)
-        return False
-
-    if not rows:
-        dbg("no rows collected; writing header only")
-        print(
-            "DTM: 0 rows (no matching datasets or empty window). Configure datasets in config/dtm.yml"
-        )
-        _write_header_only(OUT_PATH)
-        return False
-
-    _write_rows(rows, path=OUT_PATH)
-    dbg(f"wrote {len(rows)} DTM rows")
-    return True
+    if not cfg.get("enabled"):
+        LOG.info("dtm: disabled via config; writing header only")
+        ensure_header_only()
+        return 0
+    rows = build_rows(cfg)
+    write_rows(rows)
+    LOG.info("dtm: wrote %s rows", len(rows))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
