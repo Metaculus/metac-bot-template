@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import datetime as dt
 import os
+import random
 import re
 import time
 from pathlib import Path
@@ -24,6 +25,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import requests
 import yaml
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -64,6 +67,8 @@ NUM_RE = re.compile(
     r"\b(?:about|approx\.?|around)?\s*([0-9][0-9., ]{0,15})(?:\s*(?:people|persons|individuals))?\b",
     re.I,
 )
+
+# Future fallback consideration: https://reliefweb.int/updates/rss
 
 
 def load_cfg() -> Dict[str, Any]:
@@ -158,23 +163,21 @@ def _is_waf_challenge(resp: requests.Response) -> bool:
 
 
 def rw_request(
+    session: requests.Session,
     url: str,
     payload: Dict[str, Any],
-    headers: Dict[str, str],
+    since: str,
     max_retries: int,
     retry_backoff: float,
     timeout: float,
     challenge_tracker: Dict[str, Any],
-) -> Optional[Dict[str, Any]]:
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    last_err: Optional[str] = None
+
     # 0) Connectivity probe (optional; ignore body)
     for attempt in range(1, max_retries + 1):
         try:
-            probe = requests.get(
-                url,
-                params={"limit": 1},
-                headers=headers,
-                timeout=timeout,
-            )
+            probe = session.get(url, params={"limit": 1}, timeout=timeout)
             if DEBUG:
                 print(f"[reliefweb] GET probe status={probe.status_code}")
             if _is_waf_challenge(probe):
@@ -183,8 +186,18 @@ def rw_request(
                     print("[reliefweb] GET WAF challenge:", _dump(probe))
                 if attempt >= max_retries:
                     challenge_tracker["persisted"] = True
-                    return None
-                time.sleep(retry_backoff * attempt)
+                    return None, "empty"
+                time.sleep(retry_backoff * attempt + random.uniform(0, 0.5))
+                continue
+            if probe.status_code in (429, 502, 503):
+                if DEBUG:
+                    print(
+                        f"[reliefweb] GET probe rate limit status={probe.status_code}"
+                    )
+                last_err = _dump(probe)
+                if attempt >= max_retries:
+                    break
+                time.sleep((1.5 ** attempt) + random.uniform(0, 0.5))
                 continue
             if probe.status_code == 200:
                 try:
@@ -200,20 +213,17 @@ def rw_request(
             break
 
     # 1) Real request with filters via POST
-    err: Optional[str] = None
     for attempt in range(1, max_retries + 1):
         try:
-            response = requests.post(
-                url, json=payload, headers=headers, timeout=timeout
-            )
+            response = session.post(url, json=payload, timeout=timeout)
             if response.status_code == 200:
-                return response.json()
+                return response.json(), "post"
             if response.status_code in (429, 502, 503):
                 if DEBUG:
                     print(
                         f"[reliefweb] POST attempt {attempt} backoff; status={response.status_code}"
                     )
-                time.sleep((1.2**attempt) + 0.3 * attempt)
+                time.sleep((1.5 ** attempt) + random.uniform(0, 0.5))
                 continue
             if _is_waf_challenge(response):
                 challenge_tracker["count"] += 1
@@ -221,21 +231,95 @@ def rw_request(
                     print("[reliefweb] POST WAF challenge:", _dump(response))
                 if attempt >= max_retries:
                     challenge_tracker["persisted"] = True
-                    return None
-                time.sleep(retry_backoff * attempt)
+                    return None, "empty"
+                time.sleep(retry_backoff * attempt + random.uniform(0, 0.5))
                 continue
-            err = _dump(response)
+            last_err = _dump(response)
             break
         except Exception as exc:  # pragma: no cover - network failure paths
-            err = str(exc)
+            last_err = str(exc)
             if DEBUG:
-                print(f"[reliefweb] POST exception attempt {attempt}: {err}")
+                print(f"[reliefweb] POST exception attempt {attempt}: {last_err}")
+            if attempt >= max_retries:
+                break
+            time.sleep((1.5 ** attempt) + random.uniform(0, 0.5))
+
     if challenge_tracker.get("persisted"):
-        return None
-    raise RuntimeError(f"ReliefWeb API error: {err or 'no 200 after retries'}")
+        return None, "empty"
+
+    # 2) GET fallback (single flow with retry loop)
+    offset = int(payload.get("offset", 0))
+    get_params: List[Tuple[str, str]] = []
+    for field in payload.get("fields", {}).get("include", []):
+        get_params.append(("fields[include][]", field))
+
+    # Date filter
+    get_params.append(("filter[conditions][0][field]", "date.created"))
+    get_params.append(("filter[conditions][0][value][from]", since))
+    # Language filter
+    get_params.append(("filter[conditions][1][field]", "language"))
+    get_params.append(("filter[conditions][1][value]", "en"))
+    # Format filter(s)
+    formats = payload.get("filter", {}).get("conditions", [])
+    format_values: List[str] = []
+    if len(formats) >= 3:
+        format_entry = formats[2]
+        value = format_entry.get("value", []) if isinstance(format_entry, dict) else []
+        if isinstance(value, list):
+            format_values = [str(v) for v in value]
+    get_params.append(("filter[conditions][2][field]", "format"))
+    for fmt in format_values:
+        get_params.append(("filter[conditions][2][value][]", fmt))
+
+    get_params.append(("sort[]", "date.created:desc"))
+    get_params.append(("limit", str(payload.get("limit", 100))))
+    get_params.append(("offset", str(offset)))
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = session.get(url, params=get_params, timeout=timeout)
+        except Exception as exc:  # pragma: no cover - defensive network handling
+            last_err = str(exc)
+            if attempt >= max_retries:
+                break
+            time.sleep((1.5 ** attempt) + random.uniform(0, 0.5))
+            continue
+
+        if response.status_code == 200:
+            try:
+                return response.json(), "get"
+            except ValueError as exc:  # pragma: no cover - malformed payload
+                last_err = str(exc)
+                break
+        if _is_waf_challenge(response):
+            challenge_tracker["count"] += 1
+            if DEBUG:
+                print("[reliefweb] GET fallback WAF challenge:", _dump(response))
+            if attempt >= max_retries:
+                challenge_tracker["persisted"] = True
+                return None, "empty"
+            time.sleep(retry_backoff * attempt + random.uniform(0, 0.5))
+            continue
+        if response.status_code in (429, 502, 503):
+            if DEBUG:
+                print(
+                    f"[reliefweb] GET fallback rate limit attempt {attempt}; status={response.status_code}"
+                )
+            if attempt >= max_retries:
+                last_err = _dump(response)
+                break
+            time.sleep((1.5 ** attempt) + random.uniform(0, 0.5))
+            continue
+        last_err = _dump(response)
+        break
+
+    if challenge_tracker.get("persisted"):
+        return None, "empty"
+
+    raise RuntimeError(f"ReliefWeb API error: {last_err or 'no 200 after retries'}")
 
 
-def build_payload(cfg: Dict[str, Any]) -> Dict[str, Any]:
+def build_payload(cfg: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
     since = (
         dt.datetime.now(dt.UTC) - dt.timedelta(days=int(cfg["window_days"]))
     ).strftime("%Y-%m-%dT00:00:00Z")
@@ -253,7 +337,7 @@ def build_payload(cfg: Dict[str, Any]) -> Dict[str, Any]:
         "disaster_type",
         "country",
     ]
-    return {
+    payload = {
         "appname": cfg["appname"],
         "filter": {
             "operator": "AND",
@@ -267,6 +351,7 @@ def build_payload(cfg: Dict[str, Any]) -> Dict[str, Any]:
         "sort": ["date.created:desc"],
         "limit": int(cfg["page_size"]),
     }
+    return payload, since
 
 
 def map_source_type(rw_type: str, cfg: Dict[str, Any]) -> str:
@@ -284,46 +369,62 @@ def pick_dates(rec: Dict[str, Any]) -> Tuple[str, str]:
 
 def make_rows() -> Tuple[List[List[str]], Dict[str, Any]]:
     if os.getenv("RESOLVER_SKIP_RELIEFWEB", "") == "1":
-        return [], {"count": 0, "persisted": False}
+        return [], {"count": 0, "persisted": False, "mode": "empty"}
 
     cfg = load_cfg()
     countries, shocks = load_registries()
     iso_exclude = {code.upper() for code in cfg.get("iso3_exclude", [])}
 
-    headers = {
-        "User-Agent": cfg.get(
-            "user_agent", "spagbot-resolver/1.0 (+https://github.com/kwyjad/Spagbot_metac-bot)"
-        ),
-        "Content-Type": "application/json",
-        "Accept": cfg.get("accept_header", "application/json"),
-    }
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": cfg.get(
+                "user_agent",
+                "spagbot-resolver/1.0 (+https://github.com/kwyjad/Spagbot_metac-bot)",
+            ),
+            "Content-Type": "application/json",
+            "Accept": cfg.get("accept_header", "application/json"),
+        }
+    )
+    adapter = HTTPAdapter(
+        max_retries=Retry(total=0, connect=4, read=4, backoff_factor=0)
+    )
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+
     base_url = cfg["base_url"]
     appname_cfg = cfg.get("appname", "spagbot-resolver")
     appname = os.getenv("RELIEFWEB_APPNAME", appname_cfg)
     url = f"{base_url}?appname={appname}"
-    payload = build_payload(cfg)
+    payload, since = build_payload(cfg)
     timeout = float(cfg.get("timeout_seconds", 30))
-    max_retries = int(cfg.get("max_retries", 5))
+    max_retries = int(cfg.get("max_retries", 6))
     retry_backoff = float(cfg.get("retry_backoff_seconds", 2))
     challenge_tracker: Dict[str, Any] = {"count": 0, "persisted": False}
+    page_pause = float(cfg.get("min_page_pause_seconds", 0.6))
 
     rows: List[List[str]] = []
     offset = 0
     total = None
+    mode_used = "post"
 
     while True:
         payload["offset"] = offset
-        data = rw_request(
+        data, mode = rw_request(
+            session,
             url,
             payload,
-            headers,
+            since,
             max_retries=max_retries,
             retry_backoff=retry_backoff,
             timeout=timeout,
             challenge_tracker=challenge_tracker,
         )
         if data is None:
+            challenge_tracker["mode"] = mode
             return rows, challenge_tracker
+        if mode == "get":
+            mode_used = "get"
         total = total or data.get("totalCount", 0)
         items = data.get("data", [])
         if not items:
@@ -400,7 +501,9 @@ def make_rows() -> Tuple[List[List[str]], Dict[str, Any]]:
         offset += len(items)
         if offset >= total:
             break
-        time.sleep(0.25)
+        time.sleep(page_pause)
+
+    challenge_tracker["mode"] = mode_used
 
     return rows, challenge_tracker
 
@@ -411,7 +514,7 @@ def main() -> None:
         STAGING.mkdir(parents=True, exist_ok=True)
         output = STAGING / "reliefweb.csv"
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
-        print("[reliefweb] rows=0 challenged=0")
+        print("[reliefweb] rows=0 challenged=0 mode=empty")
         return
 
     STAGING.mkdir(parents=True, exist_ok=True)
@@ -426,24 +529,25 @@ def main() -> None:
                 "Writing empty CSV and continuing."
             )
             pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
-            print("[reliefweb] rows=0 challenged=0")
+            print("[reliefweb] rows=0 challenged=0 mode=empty")
             return
         raise
     challenged = int(challenge_tracker.get("count", 0))
+    mode = challenge_tracker.get("mode", "post")
     if challenge_tracker.get("persisted"):
-        print("ReliefWeb WAF challenge persisted; writing empty CSV this run,")
+        print("ReliefWeb WAF challenge persisted; writing empty CSV this run")
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
-        print(f"[reliefweb] rows=0 challenged={challenged}")
+        print(f"[reliefweb] rows=0 challenged={challenged} mode=empty")
         return
 
     if not rows:
         pd.DataFrame(columns=COLUMNS).to_csv(output, index=False)
-        print(f"[reliefweb] rows=0 challenged={challenged}")
+        print(f"[reliefweb] rows=0 challenged={challenged} mode={mode}")
         return
 
     df = pd.DataFrame(rows, columns=COLUMNS)
     df.to_csv(output, index=False)
-    print(f"[reliefweb] rows={len(df)} challenged={challenged}")
+    print(f"[reliefweb] rows={len(df)} challenged={challenged} mode={mode}")
 
 
 if __name__ == "__main__":
