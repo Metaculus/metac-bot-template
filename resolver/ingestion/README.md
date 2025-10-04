@@ -206,6 +206,9 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
   (first month dropped unless `DTM_ALLOW_FIRST_MONTH=1`). Negative deltas clip to `0`.
 - **Aggregation:** Subnational rows are summed to national totals before the delta step. Output rows are always monthly and
   carry deterministic `event_id`s derived from `(iso3, hazard_code, metric, as_of_month, value, source_url)`.
+- **Deduplication:** `as_of` aware. Prefer per-row timestamps (e.g. `updated_at`, `report_date`), then a date embedded in the
+  filename, then file modified time, and only lastly the run date. The newest `as_of` wins per `(country, admin1, month,
+  source)` key.
 - **Hazard mapping:** Uses the `shock_keywords` lexicon from `config/dtm.yml`. Ambiguous titles fall back to
   `hazard_code=multi`; pure movement defaults to `displacement_influx` unless overridden by `DTM_DEFAULT_HAZARD`.
 - **Publisher metadata:** `publisher="IOM-DTM"`, `source_type="cluster"`, `method="DTM; HXL-aware; monthly-first; delta-on-cumulative"`.

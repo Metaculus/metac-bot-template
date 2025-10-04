@@ -9,7 +9,7 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 import yaml
 
@@ -40,6 +40,98 @@ COLUMNS = [
 ]
 
 DEFAULT_CAUSE = "unknown"
+
+
+_CANDIDATE_DATE_FIELDS = [
+    "as_of",
+    "updated_at",
+    "last_updated",
+    "update_date",
+    "report_date",
+    "reporting_date",
+    "date",
+    "dtm_date",
+]
+
+
+def _parse_iso_date_or_none(s: str):
+    # Fast path: YYYY-MM-DD or YYYY-MM
+    if not s:
+        return None
+    s = str(s).strip()
+    # Normalize common formats
+    try:
+        # Try YYYY-MM-DD
+        if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+            return s[:10]
+        # Try YYYY/MM/DD
+        if len(s) >= 10 and s[4] in "/." and s[7] in "/.":
+            return f"{s[:4]}-{s[5:7]}-{s[8:10]}"
+        # Try YYYY-MM
+        if len(s) >= 7 and s[4] == "-":
+            return f"{s[:7]}-01"
+    except Exception:
+        return None
+    return None
+
+
+_FILENAME_DATE_REGEX = r"(20\d{2})[-_]?([01]\d)(?:[-_]?([0-3]\d))?"
+
+
+def _asof_from_filename(fname: str):
+    import re
+
+    m = re.search(_FILENAME_DATE_REGEX, fname or "")
+    if not m:
+        return None
+    yyyy, mm, dd = m.group(1), m.group(2), m.group(3)
+    if not dd:
+        dd = "01"
+    return f"{yyyy}-{mm}-{dd}"
+
+
+def _file_mtime_iso(path: str):
+    import os
+
+    try:
+        ts = os.path.getmtime(path)
+        d = datetime.utcfromtimestamp(ts).date().isoformat()
+        return d
+    except Exception:
+        return None
+
+
+_AS_OF_FALLBACK_COUNTS: dict[str, int] = {"filename": 0, "mtime": 0, "run": 0}
+
+
+def _extract_record_as_of(row: dict, file_ctx: dict) -> str:
+    """
+    Choose the best available per-record as_of, in order of preference:
+      1) Any known per-row timestamp field (normalized to YYYY-MM-DD or YYYY-MM-01)
+      2) File name embedded date (e.g., 2024-07-15 or 202407)
+      3) File modified time (UTC date)
+      4) Run date (UTC today) as last resort
+    """
+
+    # 1) row fields
+    for k in _CANDIDATE_DATE_FIELDS:
+        if k in row and row[k]:
+            iso = _parse_iso_date_or_none(str(row[k]))
+            if iso:
+                return iso
+    # 2) file name date
+    fname_iso = _asof_from_filename(file_ctx.get("filename") or "")
+    if fname_iso:
+        _AS_OF_FALLBACK_COUNTS["filename"] += 1
+        return fname_iso
+    # 3) file mtime
+    mtime_iso = _file_mtime_iso(file_ctx.get("path") or "")
+    if mtime_iso:
+        _AS_OF_FALLBACK_COUNTS["mtime"] += 1
+        return mtime_iso
+    # 4) run date fallback
+    _AS_OF_FALLBACK_COUNTS["run"] += 1
+    return datetime.utcnow().date().isoformat()
 
 
 def _is_candidate_newer(existing_iso: str, candidate_iso: str) -> bool:
@@ -127,6 +219,7 @@ def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[
     csv_path = Path(path)
     if not csv_path.exists():
         raise FileNotFoundError(f"DTM source not found: {csv_path}")
+    file_ctx = {"filename": csv_path.name, "path": str(csv_path)}
     aliases = cfg.get("country_aliases") or {}
     measure = str(entry.get("measure") or "stock").strip().lower()
     cause_map = {str(k).strip().lower(): str(v) for k, v in (cfg.get("cause_map") or {}).items()}
@@ -149,6 +242,7 @@ def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[
     if not value_column or not date_column or not country_column:
         raise ValueError("DTM source missing required columns")
     per_admin: dict[tuple[str, str], dict[datetime, float]] = defaultdict(dict)
+    per_admin_asof: dict[tuple[str, str], dict[datetime, str]] = defaultdict(dict)
     causes: dict[tuple[str, str], str] = {}
     for row in rows:
         iso = to_iso3(row.get(country_column), aliases)
@@ -162,6 +256,10 @@ def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[
         if value is None or value < 0:
             continue
         per_admin[(iso, admin1)][bucket] = value
+        as_of_value = _extract_record_as_of(row, file_ctx)
+        existing_asof = per_admin_asof[(iso, admin1)].get(bucket)
+        if not existing_asof or _is_candidate_newer(existing_asof, as_of_value):
+            per_admin_asof[(iso, admin1)][bucket] = as_of_value
         if cause_column and row.get(cause_column):
             causes[(iso, admin1)] = _resolve_cause({cause_column: row.get(cause_column)}, cause_map)
         else:
@@ -180,6 +278,7 @@ def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[
                 continue
             if value <= 0:
                 continue
+            record_as_of = per_admin_asof.get(key, {}).get(bucket) or datetime.utcnow().date().isoformat()
             records.append(
                 {
                     "iso3": iso,
@@ -189,6 +288,7 @@ def _read_source(entry: Mapping[str, Any], cfg: Mapping[str, Any]) -> List[Dict[
                     "cause": cause,
                     "measure": measure,
                     "source_id": source_label,
+                    "as_of": record_as_of,
                 }
             )
     return records
@@ -204,17 +304,20 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
         records = _read_source(entry, cfg)
         all_records.extend(records)
     if not all_records:
+        _log_as_of_fallbacks()
         return []
-    as_of = datetime.utcnow().date().isoformat()
+    run_date = datetime.utcnow().date().isoformat()
     method = "dtm_stock_to_flow" if any(rec.get("measure") == "stock" for rec in all_records) else "dtm_flow"
     dedup: dict[tuple[str, str, str, str], Dict[str, Any]] = {}
     country_totals: dict[tuple[str, str, str], float] = defaultdict(float)
+    country_as_of: dict[tuple[str, str, str], str] = {}
     for rec in all_records:
         iso3 = rec["iso3"]
         admin1 = rec.get("admin1") or ""
         month = rec["month"]
         month_iso = month.isoformat()
         value = float(rec.get("value", 0.0))
+        record_as_of = rec.get("as_of") or run_date
         if admin_mode in {"admin1", "both"} and admin1:
             key = (iso3, admin1, month_iso, rec["source_id"])
             event_id = f"{iso3}-displacement-{month.strftime('%Y%m')}-{stable_digest(key)}"
@@ -223,7 +326,7 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
                 "country_iso3": iso3,
                 "admin1": admin1,
                 "event_id": event_id,
-                "as_of": as_of,
+                "as_of": record_as_of,
                 "month_start": month_iso,
                 "value_type": "new_displaced",
                 "value": int(round(value)),
@@ -246,7 +349,11 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
                 continue
             dedup[key] = record
         if admin_mode in {"country", "both"}:
-            country_totals[(iso3, month_iso, rec["source_id"])] += value
+            country_key = (iso3, month_iso, rec["source_id"])
+            country_totals[country_key] += value
+            existing_country_asof = country_as_of.get(country_key)
+            if not existing_country_asof or _is_candidate_newer(existing_country_asof, record_as_of):
+                country_as_of[country_key] = record_as_of
     rows = list(dedup.values())
     if admin_mode in {"country", "both"}:
         for (iso3, month_iso, source_id), total in country_totals.items():
@@ -260,7 +367,7 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
                     "country_iso3": iso3,
                     "admin1": "",
                     "event_id": event_id,
-                    "as_of": as_of,
+                    "as_of": country_as_of.get((iso3, month_iso, source_id), run_date),
                     "month_start": month_iso,
                     "value_type": "new_displaced",
                     "value": int(round(total)),
@@ -297,7 +404,22 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
         for rec in rows
     ]
     formatted.sort(key=lambda row: (row[1], row[2], row[5], row[3]))
+    _log_as_of_fallbacks()
     return formatted
+
+
+def _log_as_of_fallbacks() -> None:
+    filename_count = _AS_OF_FALLBACK_COUNTS.get("filename", 0)
+    if filename_count:
+        LOG.info("dtm: as_of from filename for %s records", filename_count)
+    mtime_count = _AS_OF_FALLBACK_COUNTS.get("mtime", 0)
+    if mtime_count:
+        LOG.info("dtm: as_of from file mtime for %s records", mtime_count)
+    run_count = _AS_OF_FALLBACK_COUNTS.get("run", 0)
+    if run_count:
+        LOG.warning("dtm: as_of from run date fallback for %s records", run_count)
+    for key in _AS_OF_FALLBACK_COUNTS:
+        _AS_OF_FALLBACK_COUNTS[key] = 0
 
 
 def write_rows(rows: List[List[Any]]) -> None:
