@@ -36,6 +36,7 @@ from resolver.ingestion._runner_logging import (
 
 STAGING = ROOT.parent / "staging"
 CONFIG_DIR = ROOT / "config"
+LOGS_DIR = ROOT.parent / "logs" / "ingestion"
 
 
 def _repo_root() -> Path:
@@ -595,8 +596,28 @@ def main(argv: Optional[List[str]] = None) -> int:
     ingestion_mode = (args.mode or INGESTION_MODE).strip().lower()
     include_stubs = INCLUDE_STUBS if args.run_stubs is None else bool(args.run_stubs)
 
+    log_dir_env = os.environ.get("RUNNER_LOG_DIR")
+    if log_dir_env:
+        effective_log_dir = Path(log_dir_env).expanduser()
+    else:
+        effective_log_dir = LOGS_DIR
+    os.makedirs(effective_log_dir, exist_ok=True)
+
     run_id = dt.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
-    root = init_logger(run_id, level=args.log_level, fmt=args.log_format, log_dir=None)
+    root = init_logger(
+        run_id,
+        level=args.log_level,
+        fmt=args.log_format,
+        log_dir=effective_log_dir,
+    )
+    root.info(
+        "initialised logging",
+        extra={
+            "event": "logging_setup",
+            "log_dir": str(effective_log_dir),
+            "run_id": run_id,
+        },
+    )
     log_env_summary(root)
     root.info(
         "parsed arguments",
