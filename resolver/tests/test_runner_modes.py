@@ -19,6 +19,9 @@ def _prepare_module(monkeypatch, tmp_path: Path, mode: str):
     for name in set(module.REAL + module.STUBS):
         (tmp_path / name).write_text("", encoding="utf-8")
 
+    forced = sorted({module.ff.norm(name) for name in module.REAL + module.STUBS})
+    monkeypatch.setenv("RESOLVER_FORCE_ENABLE", ",".join(forced))
+
     return module
 
 
