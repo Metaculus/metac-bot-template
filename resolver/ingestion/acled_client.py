@@ -17,6 +17,7 @@ import yaml
 from urllib.parse import urlencode
 
 from .acled_auth import get_auth_header
+from resolver.ingestion._manifest import ensure_manifest_for_csv
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -830,6 +831,7 @@ def _write_header_only(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as fp:
         writer = csv.writer(fp)
         writer.writerow(CANONICAL_HEADERS)
+    ensure_manifest_for_csv(path)
 
 
 def _write_rows(rows: Sequence[MutableMapping[str, Any]], path: Path) -> None:
@@ -839,6 +841,7 @@ def _write_rows(rows: Sequence[MutableMapping[str, Any]], path: Path) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
+    ensure_manifest_for_csv(path)
 
 
 def main() -> bool:

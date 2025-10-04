@@ -25,6 +25,8 @@ import requests
 import pandas as pd
 import yaml
 
+from resolver.ingestion._manifest import ensure_manifest_for_csv
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -331,10 +333,12 @@ def main():
 
     if not rows:
         pd.DataFrame(columns=COLUMNS).to_csv(out, index=False)
+        ensure_manifest_for_csv(out)
         print(f"wrote empty {out}")
         return
 
     pd.DataFrame(rows, columns=COLUMNS).to_csv(out, index=False)
+    ensure_manifest_for_csv(out)
     print(f"wrote {out} rows={len(rows)}")
 
 if __name__ == "__main__":

@@ -13,6 +13,8 @@ from typing import Any, Dict, Iterable, List, MutableMapping, Optional, Sequence
 import pandas as pd
 import yaml
 
+from resolver.ingestion._manifest import ensure_manifest_for_csv
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -342,6 +344,7 @@ def build_event_id(
 def _write_header_only(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(columns=CANONICAL_HEADERS).to_csv(path, index=False)
+    ensure_manifest_for_csv(path)
 
 
 def _write_rows(rows: Sequence[Dict[str, Any]], *, path: Path) -> None:
@@ -359,6 +362,7 @@ def _write_rows(rows: Sequence[Dict[str, Any]], *, path: Path) -> None:
     df = df[CANONICAL_HEADERS]
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=False)
+    ensure_manifest_for_csv(path)
 
 
 def collect_rows() -> List[Dict[str, Any]]:
