@@ -42,6 +42,16 @@ COLUMNS = [
 DEFAULT_CAUSE = "unknown"
 
 
+def _is_candidate_newer(existing_iso: str, candidate_iso: str) -> bool:
+    """Return True when the candidate `as_of` timestamp is strictly newer."""
+
+    if not candidate_iso:
+        return False
+    if not existing_iso:
+        return True
+    return candidate_iso > existing_iso
+
+
 def load_config() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
         return {}
@@ -232,8 +242,8 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
                 ),
             }
             existing = dedup.get(key)
-            if existing and existing["as_of"] >= record["as_of"]:
-                pass
+            if existing and not _is_candidate_newer(existing["as_of"], record["as_of"]):
+                continue
             dedup[key] = record
         if admin_mode in {"country", "both"}:
             country_totals[(iso3, month_iso, rec["source_id"])] += value

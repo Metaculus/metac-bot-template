@@ -54,6 +54,7 @@ Each connector:
 - **DTM displacement**: Stock tables convert to monthly flows using the non-negative
   difference rule; flows are preserved as-is. National totals equal the sum of admin1 rows when the
   config sets `admin_agg: both`.
+  - Deduplication keeps the most recent `as_of` per `(country, admin1, month, source)`; older or equal timestamps are skipped to prevent regressions.
 - **WorldPop denominators**: Upserts replace previously written `(iso3, year)` rows so reruns update
   `as_of` timestamps without duplicating records.
 
