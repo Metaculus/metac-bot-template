@@ -6,7 +6,9 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
 import time
+from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
@@ -15,12 +17,21 @@ import requests
 import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
-from resolver.ingestion.utils import map_hazard, month_start, parse_date, stable_digest, to_iso3
+from resolver.ingestion.utils import (
+    map_hazard as _map_hazard_string,
+    month_start,
+    parse_date,
+    stable_digest,
+    to_iso3,
+)
+from resolver.ingestion.utils.allocators import linear_split
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "staging"
 CONFIG_PATH = ROOT / "ingestion" / "config" / "gdacs.yml"
-OUTPUT_PATH = STAGING / "gdacs_signals.csv"
+OUT_DIR = STAGING
+OUT_PATH = OUT_DIR / "gdacs_signals.csv"
+OUTPUT_PATH = OUT_PATH  # backwards compatibility alias
 
 LOG = logging.getLogger("resolver.ingestion.gdacs")
 
@@ -40,6 +51,8 @@ COLUMNS = [
     "raw_fields_json",
 ]
 
+CANONICAL_HEADERS = COLUMNS
+
 DEFAULT_ENDPOINTS = {
     "event_list": "https://www.gdacs.org/gdacsapi/api/events/geteventlist",
     "event_details": "https://www.gdacs.org/gdacsapi/api/events/getevent",
@@ -47,6 +60,218 @@ DEFAULT_ENDPOINTS = {
 DEFAULT_SEVERITY = {"green": 0, "orange": 1, "red": 2}
 
 USER_AGENT = "UNICEF-Resolver-P1L1T6"
+
+
+__all__ = [
+    "GDACSEvent",
+    "_aggregate_final_rows",
+    "allocate_event",
+    "allocate_value",
+    "dedupe_monthly_rows",
+    "hazard_from_key",
+    "load_config",
+    "map_hazard",
+]
+
+
+@dataclass(frozen=True)
+class GDACSHazard:
+    """Structured representation of a GDACS hazard."""
+
+    code: str
+    label: str
+    hazard_class: str
+
+
+@dataclass(frozen=True)
+class GDACSEvent:
+    """Container describing a GDACS event allocation request."""
+
+    event_id: str
+    episode_id: str
+    iso3: str
+    hazard: GDACSHazard
+    start_date: date
+    end_date: Optional[date]
+    impact_value: Optional[float | int]
+    source_url: str
+    doc_title: str
+    publication_date: date
+    impact_field: str
+
+
+_HAZARD_DEFINITIONS: Mapping[str, tuple[str, str]] = {
+    "earthquake": ("Earthquake", "geophysical"),
+    "tropical_cyclone": ("Tropical Cyclone", "meteorological"),
+    "flood": ("Flood", "hydrological"),
+    "volcano": ("Volcano", "volcanic"),
+    "wildfire": ("Wildfire", "environmental"),
+    "landslide": ("Landslide", "geophysical"),
+    "tsunami": ("Tsunami", "hydrological"),
+    "drought": ("Drought", "climatological"),
+    "conflict": ("Conflict", "conflict"),
+    "other": ("Other", "other"),
+}
+
+_HAZARD_OBJECTS: Dict[str, GDACSHazard] = {
+    code: GDACSHazard(code=code, label=label, hazard_class=hazard_class)
+    for code, (label, hazard_class) in _HAZARD_DEFINITIONS.items()
+}
+
+
+def _normalise_hazard_key(value: Optional[str]) -> str:
+    if not value:
+        return "other"
+    text = str(value).strip().lower()
+    if not text:
+        return "other"
+    return text.replace(" ", "_")
+
+
+def hazard_from_key(key: Optional[str]) -> GDACSHazard:
+    """Return a :class:`GDACSHazard` for ``key``.
+
+    Unknown keys fall back to the ``"other"`` hazard to preserve compatibility with
+    historical behaviour.
+    """
+
+    canonical = _map_hazard_string(key, None)
+    if canonical:
+        canonical = _normalise_hazard_key(canonical)
+    else:
+        canonical = _normalise_hazard_key(key)
+    return _HAZARD_OBJECTS.get(canonical, _HAZARD_OBJECTS["other"])
+
+
+def map_hazard(
+    token: Optional[str],
+    overrides: Optional[Mapping[str, str]] = None,
+    default_hazard: str = "other",
+) -> GDACSHazard:
+    """Return a :class:`GDACSHazard` for ``token`` using optional overrides."""
+
+    canonical = _map_hazard_string(token, overrides)
+    if not canonical:
+        canonical = _map_hazard_string(default_hazard, None) or default_hazard
+    return hazard_from_key(canonical)
+
+
+def _format_month_bucket(bucket: date) -> str:
+    return bucket.strftime("%Y-%m")
+
+
+def allocate_value(
+    total: Optional[float | int],
+    start: Optional[date],
+    end: Optional[date],
+    strategy: str,
+) -> Dict[str, float | int]:
+    """Allocate ``total`` across months according to ``strategy``."""
+
+    if total in (None, ""):
+        return {}
+    try:
+        total_value = float(total)
+    except (TypeError, ValueError):
+        return {}
+    if total_value == 0:
+        return {}
+    strategy_key = (strategy or "prorata").strip().lower()
+    start_date = parse_date(start)
+    if not start_date:
+        return {}
+    end_date = parse_date(end) if end is not None else None
+    if not end_date:
+        end_date = start_date
+    if strategy_key == "prorata":
+        buckets = linear_split(total_value, start_date, end_date)
+    elif strategy_key == "end":
+        target = month_start(end_date)
+        buckets = [(target, total_value)]
+    else:  # default "start"
+        buckets = [(month_start(start_date), total_value)]
+    allocations: Dict[str, float | int] = {}
+    for bucket, value in buckets:
+        if value is None:
+            continue
+        if isinstance(value, (int, float)) and float(value).is_integer():
+            amount: float | int = int(round(float(value)))
+        else:
+            amount = float(value)
+        if amount:
+            allocations[_format_month_bucket(bucket)] = amount
+    return allocations
+
+
+def allocate_event(event: GDACSEvent, strategy: str) -> Dict[str, float | int]:
+    """Allocate an event's impact value using ``strategy``."""
+
+    return allocate_value(event.impact_value, event.start_date, event.end_date, strategy)
+
+
+def dedupe_monthly_rows(
+    rows: Iterable[Mapping[str, Any]],
+    strategy: str,
+) -> Dict[tuple[str, str, str, str], Dict[str, Any]]:
+    """Deduplicate monthly rows by ``event_ref``/month using ``strategy``."""
+
+    dedup: Dict[tuple[str, str, str, str], Dict[str, Any]] = {}
+    mode = (strategy or "max").strip().lower()
+    for row in rows:
+        event_ref = str(row.get("event_ref", ""))
+        iso3 = str(row.get("iso3", ""))
+        hazard_code = str(row.get("hazard_code", ""))
+        month = str(row.get("as_of_date", ""))
+        key = (event_ref, iso3, hazard_code, month)
+        value = row.get("value") or 0
+        if mode == "sum":
+            existing = dedup.get(key)
+            if not existing:
+                dedup[key] = dict(row)
+                dedup[key]["value"] = value
+            else:
+                existing["value"] = (existing.get("value") or 0) + value
+        else:  # default "max"
+            existing = dedup.get(key)
+            if not existing or value > (existing.get("value") or 0):
+                dedup[key] = dict(row)
+    return dedup
+
+
+def _aggregate_final_rows(
+    rows: Iterable[Mapping[str, Any]],
+    country_names: Mapping[str, str],
+    month_strategy: str,
+    dedupe_strategy: str,
+    source_label: str,
+    default_hazard: str,
+) -> List[Dict[str, Any]]:
+    """Aggregate deduplicated rows into their final monthly representation."""
+
+    _ = month_strategy, dedupe_strategy  # maintained for signature compatibility
+    aggregated: Dict[tuple[str, str, str], Dict[str, Any]] = {}
+    fallback_hazard = hazard_from_key(default_hazard)
+    for row in rows:
+        iso3 = str(row.get("iso3", ""))
+        month = str(row.get("as_of_date", ""))
+        hazard_code = row.get("hazard_code") or fallback_hazard.code
+        hazard = hazard_from_key(hazard_code)
+        key = (iso3, hazard.code, month)
+        entry = aggregated.get(key)
+        if not entry:
+            entry = {
+                "source": source_label,
+                "iso3": iso3,
+                "country_name": country_names.get(iso3, iso3),
+                "hazard_code": hazard.code,
+                "hazard_label": hazard.label,
+                "hazard_class": hazard.hazard_class,
+                "as_of_date": month,
+                "value": 0,
+            }
+            aggregated[key] = entry
+        entry["value"] = (entry["value"] or 0) + (row.get("value") or 0)
+    return list(aggregated.values())
 
 
 def load_config() -> dict[str, Any]:
@@ -57,11 +282,11 @@ def load_config() -> dict[str, Any]:
 
 
 def ensure_header_only() -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUT_PATH.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(COLUMNS)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="gdacs_signals.v1", source_id="gdacs")
+    ensure_manifest_for_csv(OUT_PATH, schema_version="gdacs_signals.v1", source_id="gdacs")
 
 
 def _create_session() -> requests.Session:
@@ -222,7 +447,7 @@ def build_rows(cfg: Mapping[str, Any], events: Iterable[Mapping[str, Any]]) -> L
     dedup: dict[tuple[str, str, str, str], Dict[str, Any]] = {}
     for event in events:
         hazard_token = _pluck(event, "eventtype", "hazardtype", "type")
-        hazard = map_hazard(hazard_token, hazard_overrides)
+        hazard = _map_hazard_string(hazard_token, hazard_overrides)
         if not hazard:
             continue
         countries = _extract_countries(event)
@@ -294,16 +519,20 @@ def build_rows(cfg: Mapping[str, Any], events: Iterable[Mapping[str, Any]]) -> L
 
 
 def write_rows(rows: List[List[Any]]) -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUT_PATH.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(COLUMNS)
         writer.writerows(rows)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="gdacs_signals.v1", source_id="gdacs")
+    ensure_manifest_for_csv(OUT_PATH, schema_version="gdacs_signals.v1", source_id="gdacs")
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    if os.getenv("RESOLVER_SKIP_GDACS"):
+        LOG.info("gdacs: skipped via RESOLVER_SKIP_GDACS")
+        ensure_header_only()
+        return False
     cfg = load_config()
     if not cfg.get("enabled"):
         LOG.info("gdacs: disabled via config; writing header only")
