@@ -1,0 +1,107 @@
+name: resolver-ci-fast
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "resolver/**"
+      - ".github/workflows/**"
+      - "!**/*.md"
+      - "!**/README*"
+      - "!Dashboard/**"
+  pull_request:
+    paths:
+      - "resolver/**"
+      - ".github/workflows/**"
+      - "!**/*.md"
+      - "!**/README*"
+      - "!Dashboard/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resolver-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint_and_tests:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip-ci]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            resolver/requirements.txt
+            resolver/requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r resolver/requirements.txt
+          pip install -r resolver/requirements-dev.txt
+      - name: Run unit tests (fast subset)
+        run: |
+          pytest -q resolver/tests -k "not slow"
+
+  smoke_connectors:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip-ci]') }}
+    needs: lint_and_tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        connector:
+          [reliefweb, ifrc_go, unhcr, unhcr_odp, dtm, who_phe, hdx, acled, emdat, gdacs, ipc, wfp_mvam, worldpop]
+    env:
+      ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
+      ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
+      ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}
+      DTM_API_PRIMARY_KEY: ${{ secrets.DTM_API_PRIMARY_KEY }}
+      DTM_API_SECONDARY_KEY: ${{ secrets.DTM_API_SECONDARY_KEY }}
+      DTM_API_HEADER_NAME: ${{ vars.DTM_API_HEADER_NAME }}
+      PYTHONPATH: ${{ github.workspace }}
+      RESOLVER_DEBUG: "1"
+      RESOLVER_INCLUDE_STUBS: "1"
+      RESOLVER_FAIL_ON_STUB_ERROR: "0"
+      RESOLVER_WINDOW_DAYS: "7"
+      RESOLVER_MAX_PAGES: "2"
+      RESOLVER_MAX_RESULTS: "200"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            resolver/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r resolver/requirements.txt
+      - name: Smoke ${{ matrix.connector }}
+        run: |
+          python -m resolver.ingestion.run_all_stubs --mode all --only ${{ matrix.connector }} --smoke --log-level DEBUG --log-format json
+      - name: Upload smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ matrix.connector }}
+          path: |
+            resolver/logs/ingestion/**
+          retention-days: 3

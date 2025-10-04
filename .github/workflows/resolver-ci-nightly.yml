@@ -1,0 +1,166 @@
+name: resolver-ci-nightly
+
+on:
+  schedule:
+    - cron: "17 1 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resolver-nightly
+  cancel-in-progress: false
+
+jobs:
+  full_connectors:
+    if: ${{ github.event_name != 'push' && github.event_name != 'pull_request' || !contains(github.event.head_commit.message || '', '[skip-ci]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        connector:
+          [reliefweb, ifrc_go, unhcr, unhcr_odp, dtm, who_phe, hdx, acled, emdat, gdacs, ipc, wfp_mvam, worldpop]
+    env:
+      ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
+      ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
+      ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}
+      DTM_API_PRIMARY_KEY: ${{ secrets.DTM_API_PRIMARY_KEY }}
+      DTM_API_SECONDARY_KEY: ${{ secrets.DTM_API_SECONDARY_KEY }}
+      DTM_API_HEADER_NAME: ${{ vars.DTM_API_HEADER_NAME }}
+      PYTHONPATH: ${{ github.workspace }}
+      RESOLVER_DEBUG: "0"
+      RESOLVER_INCLUDE_STUBS: "0"
+      RESOLVER_WINDOW_DAYS: ""
+      RESOLVER_MAX_PAGES: ""
+      RESOLVER_MAX_RESULTS: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            resolver/requirements.txt
+            resolver/requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r resolver/requirements.txt
+      - name: Run ${{ matrix.connector }} (full)
+        env:
+          RESOLVER_FAIL_ON_STUB_ERROR: "0"
+        run: |
+          python -m resolver.ingestion.run_all_stubs --mode real --only ${{ matrix.connector }} --log-level INFO --log-format json
+      - name: Record job status
+        if: always()
+        env:
+          CONNECTOR: ${{ matrix.connector }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          python - <<'PY'
+import json
+import os
+from pathlib import Path
+
+connector = os.environ["CONNECTOR"]
+status = os.environ.get("JOB_STATUS", "unknown")
+log_dir = Path("resolver/logs/ingestion")
+log_dir.mkdir(parents=True, exist_ok=True)
+summary_path = log_dir / f"{connector}-job-status.json"
+summary_path.write_text(json.dumps({"connector": connector, "job_status": status}))
+PY
+      - name: Upload nightly artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-${{ matrix.connector }}
+          path: |
+            resolver/logs/ingestion/**
+            resolver/exports/**
+            resolver/staging/**
+          retention-days: 7
+
+  aggregate:
+    if: ${{ always() }}
+    needs: full_connectors
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: nightly-artifacts
+          merge-multiple: true
+      - name: Build summary
+        run: |
+          python - <<'PY'
+import csv
+import json
+from pathlib import Path
+
+root = Path("nightly-artifacts")
+records = []
+for status_file in root.rglob("*-job-status.json"):
+    try:
+        data = json.loads(status_file.read_text())
+    except json.JSONDecodeError:
+        continue
+    connector = data.get("connector") or status_file.stem.replace("-job-status", "")
+    job_status = data.get("job_status", "unknown")
+    record = {
+        "connector": connector,
+        "job_status": job_status,
+        "status": "unknown",
+        "attempts": None,
+        "duration_ms": None,
+        "notes": None,
+    }
+    log_dir = status_file.parent
+    for log_file in sorted(log_dir.glob("*")):
+        if not log_file.is_file():
+            continue
+        try:
+            lines = log_file.read_text().splitlines()
+        except Exception:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if payload.get("event") == "connector_summary":
+                record.update(
+                    {
+                        "status": payload.get("status", record["status"]),
+                        "attempts": payload.get("attempts", record["attempts"]),
+                        "duration_ms": payload.get("duration_ms", record["duration_ms"]),
+                        "notes": payload.get("notes", record["notes"]),
+                    }
+                )
+    records.append(record)
+records.sort(key=lambda item: item["connector"] or "")
+summary_dir = Path("nightly-summary")
+summary_dir.mkdir(exist_ok=True)
+json_path = summary_dir / "summary.json"
+csv_path = summary_dir / "summary.csv"
+json_path.write_text(json.dumps(records, indent=2, sort_keys=True))
+with csv_path.open("w", newline="", encoding="utf-8") as handle:
+    writer = csv.DictWriter(handle, fieldnames=["connector", "job_status", "status", "attempts", "duration_ms", "notes"])
+    writer.writeheader()
+    for row in records:
+        writer.writerow(row)
+PY
+      - name: Upload nightly summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-summary
+          path: nightly-summary
+          retention-days: 7

@@ -48,11 +48,35 @@ CONFIG_DIR = ROOT / "config"
 LOGS_DIR = ROOT.parent / "logs" / "ingestion"
 RESOLVER_DEBUG = bool(int(os.getenv("RESOLVER_DEBUG", "0") or 0))
 
+SMOKE_ENV_DEFAULTS = {
+    "RESOLVER_MAX_PAGES": "2",
+    "RESOLVER_MAX_RESULTS": "200",
+    "RESOLVER_WINDOW_DAYS": "7",
+    "RESOLVER_FAIL_ON_STUB_ERROR": "0",
+}
+
 
 def _repo_root() -> Path:
     """Return the repository root directory."""
 
     return Path(__file__).resolve().parents[2]
+
+
+def _apply_smoke_env_defaults(
+    logger: logging.LoggerAdapter | logging.Logger,
+) -> Dict[str, str]:
+    applied: Dict[str, str] = {}
+    for key, value in SMOKE_ENV_DEFAULTS.items():
+        if os.getenv(key):
+            continue
+        os.environ[key] = value
+        applied[key] = value
+    if applied:
+        logger.info(
+            "applied smoke defaults",
+            extra={"event": "smoke_defaults", "values": applied},
+        )
+    return applied
 
 
 def _module_name_from_path(py_path: Path) -> str:
@@ -715,6 +739,14 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         default=None,
         help="log level (defaults to RUNNER_LOG_LEVEL or INFO)",
     )
+    parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help=(
+            "enable fast smoke mode with relaxed error handling and smaller"
+            " fetch windows"
+        ),
+    )
     if argv is None:
         return parser.parse_args()
     return parser.parse_args(argv)
@@ -727,6 +759,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     selected: Optional[set[str]] = requested or None
     only_target = ff.norm(args.only) if args.only else None
     pattern_text = args.pattern
+
+    smoke_mode = bool(args.smoke)
+    fail_on_stub_error = FAIL_ON_STUB_ERROR
 
     ingestion_mode = (args.mode or INGESTION_MODE).strip().lower()
     include_stubs = INCLUDE_STUBS if args.run_stubs is None else bool(args.run_stubs)
@@ -751,6 +786,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     if RESOLVER_DEBUG:
         logging.getLogger().setLevel(logging.DEBUG)
         root.setLevel(logging.DEBUG)
+    if smoke_mode:
+        applied_defaults = _apply_smoke_env_defaults(root)
+        fail_on_stub_error = bool(
+            int(os.getenv("RESOLVER_FAIL_ON_STUB_ERROR", "0") or 0)
+        )
+        root.info(
+            "smoke mode enabled",
+            extra={
+                "event": "smoke_mode",
+                "defaults_applied": bool(applied_defaults),
+                "overrides": applied_defaults,
+            },
+        )
     root.info(
         "initialised logging",
         extra={
@@ -892,6 +940,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     connectors_summary: List[Dict[str, object]] = []
     total_start = time.perf_counter()
 
+    retries = max(0, args.retries)
+    retry_base = float(args.retry_base)
+    retry_max = float(args.retry_max)
+    if smoke_mode:
+        retries = max(retries, 2)
+        retry_base = max(retry_base, 5.0)
+
     for spec in specs:
         child = child_logger(spec.name)
         handler = attach_connector_handler(child, spec.name)
@@ -901,6 +956,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         notes: Optional[str] = None
         result: Dict[str, object] = {}
         connector_start = time.perf_counter()
+        duration_ms = 0
         try:
             if spec.skip_reason:
                 child.warning(
@@ -953,9 +1009,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
             result = retry_call(
                 _attempt,
-                retries=max(0, args.retries),
-                base_delay=args.retry_base,
-                max_delay=args.retry_max,
+                retries=retries,
+                base_delay=retry_base,
+                max_delay=retry_max,
                 jitter=not args.retry_no_jitter,
                 logger=child,
                 connector=spec.name,
@@ -991,26 +1047,52 @@ def main(argv: Optional[List[str]] = None) -> int:
             rows = 0
             if attempts == 0:
                 attempts = 1
-            child.error(
-                "failed",
-                exc_info=exc,
-                extra={
-                    "event": "error",
-                    "rows": rows,
-                    "attempts": attempts,
-                    "duration_ms": duration_ms,
-                },
-            )
+            warn_only = False
+            if smoke_mode:
+                try:
+                    warn_only = _should_retry(exc)
+                except Exception:  # noqa: BLE001
+                    warn_only = False
+            log_extra = {
+                "event": "error",
+                "rows": rows,
+                "attempts": attempts,
+                "duration_ms": duration_ms,
+            }
+            if warn_only:
+                status = "warning"
+                child.warning("failed (smoke warning)", exc_info=exc, extra=log_extra)
+                if notes:
+                    notes = f"smoke-warning: {notes}"
+            else:
+                child.error("failed", exc_info=exc, extra=log_extra)
         finally:
             detach_connector_handler(child, handler)
+            summary_notes = redact(notes) if notes else None
+            root.info(
+                "connector summary",
+                extra={
+                    "event": "connector_summary",
+                    "name": spec.name,
+                    "status": status,
+                    "attempts": attempts,
+                    "duration_ms": duration_ms,
+                    "notes": summary_notes,
+                },
+            )
+            summary_line = (
+                f"{spec.name}, status={status}, attempts={attempts}, "
+                f"duration_ms={duration_ms}, notes={summary_notes or '-'}"
+            )
+            print(summary_line)
             connectors_summary.append(
                 {
                     "name": spec.name,
                     "status": status,
                     "attempts": attempts,
                     "rows": rows,
-                    "duration_ms": int((time.perf_counter() - connector_start) * 1000),
-                    "notes": redact(notes) if notes else None,
+                    "duration_ms": duration_ms,
+                    "notes": summary_notes,
                     "kind": spec.kind,
                     "rows_method": result.get("rows_method") if result else None,
                 }
@@ -1048,7 +1130,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.strict and (real_failures or stub_failures):
         return 1
-    if FAIL_ON_STUB_ERROR and stub_failures:
+    if fail_on_stub_error and stub_failures:
         return 1
     return 0
 
