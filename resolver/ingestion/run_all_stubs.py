@@ -24,6 +24,12 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import yaml
 
+from resolver.ingestion._manifest import (
+    count_csv_rows,
+    ensure_manifest_for_csv,
+    load_manifest,
+    manifest_path_for,
+)
 from resolver.ingestion._retry import retry_call
 from resolver.ingestion._runner_logging import (
     attach_connector_handler,
@@ -294,16 +300,38 @@ def _load_yaml(path: Optional[Path]) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def _count_rows(path: Optional[Path]) -> int:
-    if not path or not path.exists():
-        return 0
-    try:
-        with path.open("r", encoding="utf-8", newline="") as handle:
-            reader = csv.reader(handle)
-            next(reader, None)
-            return sum(1 for _ in reader)
-    except Exception:
-        return 0
+def _rows_and_method(path: Optional[Path]) -> tuple[int, str]:
+    if path is None or not path.exists():
+        return 0, "missing"
+
+    manifest = load_manifest(manifest_path_for(path))
+    manifest_rows: Optional[int]
+    if manifest and isinstance(manifest.get("row_count"), int):
+        manifest_rows = int(manifest["row_count"])
+    else:
+        manifest_rows = None
+
+    rows_actual = count_csv_rows(path)
+    if manifest_rows is None:
+        return rows_actual, "recount"
+
+    if rows_actual != manifest_rows:
+        logging.getLogger(__name__).warning(
+            "Manifest row_count mismatch; recounting",
+            extra={
+                "event": "manifest_mismatch",
+                "path": redact(str(path)),
+                "manifest_rows": manifest_rows,
+                "recount_rows": rows_actual,
+            },
+        )
+        try:
+            ensure_manifest_for_csv(path)
+        except FileNotFoundError:
+            pass
+        return rows_actual, "manifest+verified"
+
+    return manifest_rows, "manifest"
 
 
 def _summarise_connector(name: str) -> str | None:
@@ -311,8 +339,10 @@ def _summarise_connector(name: str) -> str | None:
     if not meta:
         return None
     label = meta["label"]
-    rows = _count_rows(meta["staging"])
+    rows, method = _rows_and_method(meta["staging"])
     parts = [f"[{label}] rows:{rows}"]
+    if method in {"recount", "manifest+verified"}:
+        parts.append(f"rows_method:{method}")
     cfg = _load_yaml(meta.get("config"))
 
     if name == "who_phe_client.py":
@@ -522,9 +552,9 @@ def _rows_written(before: int, after: int) -> int:
 
 def _run_connector(spec: ConnectorSpec, logger: logging.LoggerAdapter) -> Dict[str, object]:
     start = time.perf_counter()
-    rows_before = _count_rows(spec.output_path)
+    rows_before, method_before = _rows_and_method(spec.output_path)
     _invoke_connector(spec.path, logger=logger)
-    rows_after = _count_rows(spec.output_path)
+    rows_after, method_after = _rows_and_method(spec.output_path)
     duration_ms = int((time.perf_counter() - start) * 1000)
     logger.info(
         "completed",
@@ -533,9 +563,17 @@ def _run_connector(spec: ConnectorSpec, logger: logging.LoggerAdapter) -> Dict[s
             "duration_ms": duration_ms,
             "rows_written": _rows_written(rows_before, rows_after),
             "rows_total": rows_after,
+            "rows_method_before": method_before,
+            "rows_method_after": method_after,
         },
     )
-    return {"status": "ok", "rows": rows_after, "duration_ms": duration_ms}
+    return {
+        "status": "ok",
+        "rows": rows_after,
+        "duration_ms": duration_ms,
+        "rows_method": method_after,
+        "rows_method_before": method_before,
+    }
 
 
 def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
@@ -707,6 +745,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         rows = 0
         status = "skipped"
         notes: Optional[str] = None
+        result: Dict[str, object] = {}
         connector_start = time.perf_counter()
         try:
             if spec.skip_reason:
@@ -769,12 +808,16 @@ def main(argv: Optional[List[str]] = None) -> int:
                 is_retryable=_should_retry,
             )
             rows = int(result.get("rows", 0))
+            rows_method = str(result.get("rows_method") or "")
             duration_ms = int((time.perf_counter() - connector_start) * 1000)
             if spec.output_path and spec.output_path.exists() and rows == 0:
                 status = "ok-empty"
                 notes = "header-only"
             else:
                 status = "ok"
+            if rows_method in {"recount", "manifest+verified"}:
+                method_note = f"rows:{rows_method}"
+                notes = f"{notes}; {method_note}" if notes else method_note
             child.info(
                 "finished",
                 extra={
@@ -783,6 +826,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     "rows": rows,
                     "attempts": attempts,
                     "duration_ms": duration_ms,
+                    "rows_method": rows_method or None,
                     "notes": redact(notes) if notes else None,
                 },
             )
@@ -814,6 +858,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     "duration_ms": int((time.perf_counter() - connector_start) * 1000),
                     "notes": redact(notes) if notes else None,
                     "kind": spec.kind,
+                    "rows_method": result.get("rows_method") if result else None,
                 }
             )
 

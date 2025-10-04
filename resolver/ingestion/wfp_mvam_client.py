@@ -16,6 +16,7 @@ import pandas as pd
 import requests
 import yaml
 
+from resolver.ingestion._manifest import ensure_manifest_for_csv
 from resolver.tools.denominators import (
     get_population_record,
     safe_pct_to_people,
@@ -322,12 +323,14 @@ def load_shocks() -> pd.DataFrame:
 def _write_header_only(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(columns=CANONICAL_HEADERS).to_csv(path, index=False)
+    ensure_manifest_for_csv(path)
 
 
 def _write_rows(rows: List[List[Any]], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows, columns=CANONICAL_HEADERS)
     df.to_csv(path, index=False)
+    ensure_manifest_for_csv(path)
 
 
 def _maybe_apply_hxl(df: pd.DataFrame) -> pd.DataFrame:

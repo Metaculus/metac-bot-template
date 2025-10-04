@@ -26,6 +26,8 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 import requests
 
+from resolver.ingestion._manifest import ensure_manifest_for_csv
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 STAGING = ROOT / "staging"
@@ -549,6 +551,7 @@ def write_rows(rows: Iterable[Dict[str, str]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in CANONICAL_HEADER})
+    ensure_manifest_for_csv(OUT_PATH)
 
 
 def main() -> int:
