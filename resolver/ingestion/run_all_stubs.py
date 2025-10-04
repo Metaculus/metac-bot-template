@@ -37,6 +37,33 @@ from resolver.ingestion._runner_logging import (
 STAGING = ROOT.parent / "staging"
 CONFIG_DIR = ROOT / "config"
 
+
+def _repo_root() -> Path:
+    """Return the repository root directory."""
+
+    return Path(__file__).resolve().parents[2]
+
+
+def _module_name_from_path(py_path: Path) -> str:
+    """Convert a Python file path to its dotted module path."""
+
+    if not py_path.exists():
+        raise FileNotFoundError(f"Connector file does not exist: {py_path}")
+
+    no_ext = py_path.with_suffix("")
+    parts = list(no_ext.parts)
+    try:
+        idx = parts.index("resolver")
+    except ValueError as exc:
+        raise RuntimeError(
+            f"Connector path '{py_path}' does not include 'resolver' package root."
+        ) from exc
+
+    module = ".".join(parts[idx:])
+    if not module:
+        raise RuntimeError(f"Failed to derive module name from {py_path}")
+    return module
+
 INGESTION_MODE = (os.environ.get("RESOLVER_INGESTION_MODE") or "").strip().lower()
 INCLUDE_STUBS = os.environ.get("RESOLVER_INCLUDE_STUBS", "0") == "1"
 FAIL_ON_STUB_ERROR = os.environ.get("RESOLVER_FAIL_ON_STUB_ERROR", "0") == "1"
@@ -419,13 +446,33 @@ def _create_spec(filename: str, kind: str) -> ConnectorSpec:
     )
 
 
-def _invoke_connector(path: Path) -> None:
+def _invoke_connector(path: Path, *, logger: logging.Logger | logging.LoggerAdapter | None = None) -> None:
+    repo_root = _repo_root()
+    module = _module_name_from_path(path)
+    log = logger if logger is not None else logging.getLogger(__name__)
+    log.info(
+        "launching connector",
+        extra={"event": "launch", "module": module, "cwd": str(repo_root)},
+    )
+    cmd = [sys.executable, "-m", module]
     try:
-        proc = subprocess.run([sys.executable, str(path)], check=False)
+        proc = subprocess.run(cmd, cwd=repo_root)
     except OSError as exc:  # pragma: no cover - defensive
-        raise RuntimeError(f"{path.name} failed to start: {exc}") from exc
+        log.error(
+            "failed to start connector",
+            extra={"event": "launch_error", "module": module, "error": str(exc)},
+        )
+        raise RuntimeError(f"{module} failed to start: {exc}") from exc
     if proc.returncode != 0:
-        raise subprocess.CalledProcessError(proc.returncode, [sys.executable, str(path)])
+        log.error(
+            "connector exited with non-zero status",
+            extra={
+                "event": "launch_failed",
+                "module": module,
+                "returncode": proc.returncode,
+            },
+        )
+        raise subprocess.CalledProcessError(proc.returncode, cmd)
 
 
 def _with_attempt_logger(
@@ -474,7 +521,7 @@ def _rows_written(before: int, after: int) -> int:
 def _run_connector(spec: ConnectorSpec, logger: logging.LoggerAdapter) -> Dict[str, object]:
     start = time.perf_counter()
     rows_before = _count_rows(spec.output_path)
-    _invoke_connector(spec.path)
+    _invoke_connector(spec.path, logger=logger)
     rows_after = _count_rows(spec.output_path)
     duration_ms = int((time.perf_counter() - start) * 1000)
     logger.info(

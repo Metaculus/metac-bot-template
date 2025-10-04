@@ -21,6 +21,9 @@ jobs:
   pr_check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     env:
       ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
       ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
@@ -39,7 +42,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
           cache-dependency-path: |
             resolver/requirements.txt
@@ -69,7 +72,6 @@ jobs:
       - name: Run ingestion (real connectors only)
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}
           RESOLVER_DEBUG: "1"
           RESOLVER_MAX_PAGES: "5"
           RESOLVER_MAX_RESULTS: "1000"
@@ -86,7 +88,6 @@ jobs:
         if: ${{ always() }}
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}
           RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
@@ -179,6 +180,9 @@ jobs:
   nightly_state:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     env:
       ACLED_REFRESH_TOKEN: ${{ secrets.ACLED_REFRESH_TOKEN }}
       ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
@@ -197,7 +201,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
           cache-dependency-path: |
             resolver/requirements.txt
@@ -227,7 +231,6 @@ jobs:
       - name: Run ingestion (real connectors only)
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}
           RESOLVER_DEBUG: "1"
           RESOLVER_MAX_PAGES: "5"
           RESOLVER_MAX_RESULTS: "1000"
@@ -244,7 +247,6 @@ jobs:
         if: ${{ always() }}
         shell: bash
         env:
-          PYTHONPATH: ${{ github.workspace }}
           RESOLVER_INGESTION_MODE: stubs
           RESOLVER_FAIL_ON_STUB_ERROR: "0"
         run: |
