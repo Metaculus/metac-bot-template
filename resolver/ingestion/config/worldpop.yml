@@ -1,12 +1,15 @@
-product: un_adj_unconstrained
-years_back: 0
-prefer_hxl: false
-keys:
-  iso3: ["iso3", "country_code", "country_iso3", "#country+code"]
-  year: ["year", "#date+year"]
-  population: ["population", "pop_total", "#population"]
-  notes: ["notes", "comment", "#meta+notes"]
-source:
-  publisher: "WorldPop"
-  source_type: "official"
-  url_template: "https://example.org/worldpop/{product}_{year}.csv"
+enabled: true
+product: unadj_national_totals
+years:
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  - 2020
+  - 2021
+  - 2022
+  - 2023
+  - 2024
+  - 2025
+country_aliases: {}

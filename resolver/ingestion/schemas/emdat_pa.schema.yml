@@ -1,0 +1,29 @@
+version: 1
+name: emdat_people_affected
+columns:
+  - name: source
+    description: Data source identifier ("emdat").
+  - name: hazard_type
+    description: Canonical hazard classification for the disaster.
+  - name: country_iso3
+    description: ISO3 country code associated with the record.
+  - name: event_id
+    description: Deterministic Resolver event identifier for the month bucket.
+  - name: as_of
+    description: ISO8601 timestamp representing latest dataset publication.
+  - name: month_start
+    description: First day of the month representing the allocation bucket.
+  - name: value_type
+    description: Impact metric emitted (affected, deaths, injured, homeless).
+  - name: value
+    description: People count for the metric in the given month.
+  - name: unit
+    description: Unit for value, typically "people".
+  - name: method
+    description: Allocation method label (e.g. emdat_linear_allocation).
+  - name: confidence
+    description: Qualitative confidence string when provided.
+  - name: raw_event_id
+    description: Native EM-DAT disaster identifier.
+  - name: raw_fields_json
+    description: JSON blob containing source fields for auditability.

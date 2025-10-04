@@ -1,0 +1,29 @@
+version: 1
+name: dtm_displacement
+columns:
+  - name: source
+    description: Data source identifier ("dtm").
+  - name: country_iso3
+    description: ISO3 country code represented by the row.
+  - name: admin1
+    description: Optional admin1 name when admin aggregation is enabled.
+  - name: event_id
+    description: Deterministic Resolver identifier for the (country, admin1, month) bucket.
+  - name: as_of
+    description: ISO8601 timestamp representing dataset freshness.
+  - name: month_start
+    description: First day of the month associated with the displacement flow.
+  - name: value_type
+    description: Metric name; for DTM this is "new_displaced".
+  - name: value
+    description: People count of new displaced persons for the month.
+  - name: unit
+    description: Unit for the value, typically "people".
+  - name: method
+    description: Processing pipeline and stock-to-flow rule used.
+  - name: confidence
+    description: Qualitative confidence if available.
+  - name: raw_event_id
+    description: Identifier built from source file/admin/month for deduplication.
+  - name: raw_fields_json
+    description: JSON blob preserving original source fields.

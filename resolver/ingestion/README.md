@@ -13,19 +13,19 @@ Later (Epic C) we will replace stubs with real API/scraper clients.
 - ReliefWeb — **API connector** (`reliefweb_client.py`) → `staging/reliefweb.csv`
 - IFRC GO — **API connector** (`ifrc_go_client.py`) → `staging/ifrc_go.csv`
 - UNHCR ODP — **API connector** (`unhcr_odp_client.py`) → `staging/unhcr_odp.csv`
-- IOM DTM — **API connector** (`dtm_client.py`) → `staging/dtm.csv`
+- IOM DTM — **API connector** (`dtm_client.py`) → `staging/dtm_displacement.csv`
 - WHO Public Health Emergencies — **API connector** (`who_phe_client.py`) → `staging/who_phe.csv`
 - WHO Emergencies — stub (`who_stub.py`)
 - IPC — stub (`ipc_stub.py`)
-- EM-DAT — stub (`emdat_stub.py`)
-- GDACS — stub (`gdacs_stub.py`)
+- EM-DAT — **file connector** (`emdat_client.py`) → `staging/emdat_pa.csv`
+- GDACS — **API connector** (`gdacs_client.py`) → `staging/gdacs_signals.csv`
 - Copernicus EMS — stub (`copernicus_stub.py`)
 - UNOSAT — stub (`unosat_stub.py`)
 - HDX (CKAN) — **API connector** (`hdx_client.py`) → `staging/hdx.csv`
 - ACLED — **API connector** (`acled_client.py`) → `staging/acled.csv`
 - UCDP — stub (`ucdp_stub.py`)
 - FEWS NET — stub (`fews_stub.py`)
-- WorldPop — **API connector** (`worldpop_client.py`) → `staging/worldpop.csv` + `data/population.csv`
+- WorldPop — **denominator loader** (`worldpop_client.py`) → `staging/worldpop_denominators.csv`
 - WFP mVAM — **API connector** (`wfp_mvam_client.py`) → `staging/wfp_mvam.csv`
 - Gov NDMA — stub (`gov_ndma_stub.py`)
 
@@ -33,14 +33,29 @@ Each connector:
 - Reads `resolver/data/countries.csv` and `resolver/data/shocks.csv`
 - Produces `resolver/staging/<source>.csv` using the exporter’s expected columns
 
-### EM-DAT / GDACS allocation examples
+## Connector toggles & outputs
 
-- Event spans **15 Jan – 10 Mar 2025** with **9,000 Total Affected** → **policy=prorata** yields
-  `2025-01: 2,782`, `2025-02: 4,582`, `2025-03: 1,636` (days-in-month share; last bucket keeps the remainder).
-- The same window with **policy=start** instead puts the full total on the first month (`2025-01`) and omits later months.
-- A GDACS cyclone (PHL) running **20 Jan – 05 Feb 2025** with **12,000 affected** splits to
-  `2025-01: 8,471`, `2025-02: 3,529` under **policy=prorata**, and to
-  `2025-01: 12,000` under **policy=start**.
+| Connector | Enabled via | Primary source | Monthly allocation | Dedup strategy | Output |
+| --- | --- | --- | --- | --- | --- |
+| GDACS alerts | `ingestion/config/gdacs.yml` → `enabled` | GDACS public API (`geteventlist`) | Alert start month bucket | `(iso3, hazard, month_start, raw_event_id)` keep latest `as_of` | `resolver/staging/gdacs_signals.csv` |
+| EM-DAT impacts | `ingestion/config/emdat.yml` → `enabled` | Licensed EM-DAT CSV/HDX mirror | Linear days-in-month split for spans >14 days | `(iso3, hazard, month_start, raw_event_id, value_type)` | `resolver/staging/emdat_pa.csv` |
+| IOM DTM displacement | `ingestion/config/dtm.yml` → `enabled` | File/HDX stock tables | Stock→flow (`diff_nonneg`) with optional admin totals | `(iso3, admin1, month_start, source_id)` | `resolver/staging/dtm_displacement.csv` |
+| WorldPop denominators | `ingestion/config/worldpop.yml` → `enabled` | Cached WorldPop national totals | Annual totals (no allocation) | `(iso3, year)` upsert on rerun | `resolver/staging/worldpop_denominators.csv` |
+
+### GDACS severity & EM-DAT allocation rules
+
+- **GDACS alerts**: Green → `0`, Orange → `1`, Red → `2`. Alerts are bucketed to the month of the
+  first alert date. If the same `(iso3, hazard, month, raw_event_id)` appears again the connector
+  keeps the latest `as_of` timestamp.
+- **EM-DAT events**: Events that span more than 14 days are split across months using
+  days-in-month weights (last month keeps the remainder after rounding). Shorter incidents keep the
+  full total on the start month. Deduplication keeps the newest record per `(iso3, hazard,
+  month_start, raw_event_id, value_type)`.
+- **DTM displacement**: Stock tables convert to monthly flows using the non-negative
+  difference rule; flows are preserved as-is. National totals equal the sum of admin1 rows when the
+  config sets `admin_agg: both`.
+- **WorldPop denominators**: Upserts replace previously written `(iso3, year)` rows so reruns update
+  `as_of` timestamps without duplicating records.
 
 ## Run all stubs
 
