@@ -1,0 +1,44 @@
+2025-10-03 18:49:49,910Z [INFO] [run:20251003-184823] [connector:ipc_client] attempt=1 starting
+2025-10-03 18:49:50,270Z [WARNING] [run:20251003-184823] [connector:ipc_client] attempt=0 attempt failed
+Traceback (most recent call last):
+  File "C:\GitHub\Spagbot\resolver\ingestion\_retry.py", line 62, in retry_call
+    result = func(attempt)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 663, in _attempt
+    return _run_connector(spec, attempt_logger)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 477, in _run_connector
+    _invoke_connector(spec.path)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 428, in _invoke_connector
+    raise subprocess.CalledProcessError(proc.returncode, [sys.executable, str(path)])
+subprocess.CalledProcessError: Command '['C:\\GitHub\\Spagbot\\.venv\\Scripts\\python.exe', 'C:\\GitHub\\Spagbot\\resolver\\ingestion\\ipc_client.py']' returned non-zero exit status 1.
+2025-10-03 18:49:51,558Z [INFO] [run:20251003-184823] [connector:ipc_client] attempt=2 starting
+2025-10-03 18:49:51,967Z [WARNING] [run:20251003-184823] [connector:ipc_client] attempt=0 attempt failed
+Traceback (most recent call last):
+  File "C:\GitHub\Spagbot\resolver\ingestion\_retry.py", line 62, in retry_call
+    result = func(attempt)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 663, in _attempt
+    return _run_connector(spec, attempt_logger)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 477, in _run_connector
+    _invoke_connector(spec.path)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 428, in _invoke_connector
+    raise subprocess.CalledProcessError(proc.returncode, [sys.executable, str(path)])
+subprocess.CalledProcessError: Command '['C:\\GitHub\\Spagbot\\.venv\\Scripts\\python.exe', 'C:\\GitHub\\Spagbot\\resolver\\ingestion\\ipc_client.py']' returned non-zero exit status 1.
+2025-10-03 18:49:51,968Z [ERROR] [run:20251003-184823] [connector:ipc_client] attempt=0 failed
+Traceback (most recent call last):
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 686, in main
+    result = retry_call(
+        _attempt,
+    ...<6 lines>...
+        is_retryable=_should_retry,
+    )
+  File "C:\GitHub\Spagbot\resolver\ingestion\_retry.py", line 62, in retry_call
+    result = func(attempt)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 663, in _attempt
+    return _run_connector(spec, attempt_logger)
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 477, in _run_connector
+    _invoke_connector(spec.path)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "C:\GitHub\Spagbot\resolver\ingestion\run_all_stubs.py", line 428, in _invoke_connector
+    raise subprocess.CalledProcessError(proc.returncode, [sys.executable, str(path)])
+subprocess.CalledProcessError: Command '['C:\\GitHub\\Spagbot\\.venv\\Scripts\\python.exe', 'C:\\GitHub\\Spagbot\\resolver\\ingestion\\ipc_client.py']' returned non-zero exit status 1.
