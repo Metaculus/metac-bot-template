@@ -96,18 +96,20 @@ def load_cfg() -> Dict[str, Any]:
     return _yaml_load(CONFIG)
 
 
-def load_registries() -> Tuple[pd.DataFrame, pd.DataFrame, Dict[str, str]]:
+def load_registries() -> Tuple[pd.DataFrame, pd.DataFrame]:
     countries = pd.read_csv(COUNTRIES, dtype=str).fillna("")
     shocks = pd.read_csv(SHOCKS, dtype=str).fillna("")
-    countries["country_norm"] = (
-        countries["country_name"].astype(str).str.strip().str.lower()
-    )
-    name_index = {
+    return countries, shocks
+
+
+def build_country_name_index(df_countries: pd.DataFrame) -> Dict[str, str]:
+    df = df_countries.copy()
+    df["country_norm"] = df["country_name"].astype(str).str.strip().str.lower()
+    return {
         row.country_norm: row.iso3
-        for row in countries.itertuples(index=False)
+        for row in df.itertuples(index=False)
         if getattr(row, "country_norm", "") and getattr(row, "iso3", "")
     }
-    return countries, shocks, name_index
 
 
 def _iso3_to_name(df_countries: pd.DataFrame, iso3: str) -> Optional[str]:
@@ -358,7 +360,8 @@ def make_rows() -> Tuple[List[List[str]], Counter]:
 
     url = f"{base_url}/{endpoint}".rstrip("/")
 
-    df_countries, df_shocks, country_index = load_registries()
+    df_countries, df_shocks = load_registries()
+    country_index = build_country_name_index(df_countries)
     di = df_shocks[df_shocks["hazard_code"] == "DI"]
     if di.empty:
         raise RuntimeError("DI hazard not found in shocks registry")

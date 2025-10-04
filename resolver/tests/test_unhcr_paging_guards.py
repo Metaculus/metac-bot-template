@@ -62,6 +62,7 @@ def test_unhcr_make_rows_handles_json_error(monkeypatch):
 
     monkeypatch.setattr(unhcr_client.requests, "get", lambda *_, **__: _Response())
 
-    rows = unhcr_client.make_rows()
+    rows, counters = unhcr_client.make_rows()
 
     assert rows == []
+    assert counters == unhcr_client.Counter()
