@@ -1,7 +1,13 @@
 situation_path: "/en/situations/europe-sea-arrivals"
+
 series:
-  type: "sea_arrivals_monthly"
   frequency: "month"
   population_group: 4797
-discovery:
-  mode: "scrape-location-pages"
+
+countries_whitelist: []
+
+paging:
+  max_pages: 1
+
+debug:
+  debug_every: 5

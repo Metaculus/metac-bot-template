@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
-"""UNHCR Operational Data Portal (ODP) arrivals → staging/unhcr_odp.csv."""
+"""UNHCR Operational Data Portal (ODP) arrivals → staging/unhcr_odp.csv.
+
+Adds debug counters, optional country whitelist for narrow test runs, and more
+structured logging to troubleshoot payload changes.
+"""
 
 from __future__ import annotations
 
 import csv
+import datetime as dt
+import hashlib
 import html
 import json
-import hashlib
+import logging
 import os
 import re
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
@@ -52,6 +59,25 @@ CANONICAL_HEADER = [
 HAZARD_CODE = "DI"
 HAZARD_LABEL = "Displacement Influx (cross-border from neighbouring country)"
 HAZARD_CLASS = "human-induced"
+
+logger = logging.getLogger(__name__)
+RESOLVER_DEBUG = bool(int(os.getenv("RESOLVER_DEBUG", "0") or 0))
+if RESOLVER_DEBUG:
+    logger.setLevel(logging.DEBUG)
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+
+
+def _dbg(msg: str, **kv: object) -> None:
+    if not RESOLVER_DEBUG:
+        return
+    if kv:
+        suffix = " ".join(f"{key}={value}" for key, value in kv.items())
+        logger.debug("%s | %s", msg, suffix)
+    else:
+        logger.debug("%s", msg)
 
 
 class _LocationLinkParser(HTMLParser):
@@ -149,18 +175,6 @@ def _normalize_name(name: str) -> str:
     return cleaned
 
 
-def _env_bool(name: str, default: bool = False) -> bool:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip() not in {"", "0", "false", "False"}
-
-
-def _debug(msg: str) -> None:
-    if _env_bool("RESOLVER_DEBUG", False):
-        print(msg, file=sys.stderr)
-
-
 def _yaml_safe_load(handle) -> Dict[str, object]:
     import yaml  # local import to avoid import-time dependency if unused
 
@@ -187,20 +201,28 @@ def _get(
     headers: Optional[Dict[str, str]] = None,
     retries: int = 4,
     backoff: float = 1.5,
+    request_tracker: Optional[Dict[str, int]] = None,
+    debug_every: int = 5,
 ) -> requests.Response:
     merged_headers = {"User-Agent": UA, "Accept": "text/html,application/json"}
     if headers:
         merged_headers.update(headers)
     last_exc: Optional[Exception] = None
+    if request_tracker is not None:
+        request_tracker.setdefault("count", 0)
     for attempt in range(retries):
         try:
             response = requests.get(url, params=params, headers=merged_headers, timeout=30)
-        except requests.RequestException as exc:
+        except requests.RequestException as exc:  # noqa: BLE001
             last_exc = exc
-            _debug(f"[ODP] GET {url} raised {exc!r}")
+            _dbg("request_error", url=url, error=str(exc))
             time.sleep(backoff * (attempt + 1))
             continue
-        _debug(f"[ODP] GET {response.url} -> {response.status_code}")
+        if request_tracker is not None:
+            request_tracker["count"] += 1
+            if RESOLVER_DEBUG and request_tracker["count"] % max(1, debug_every) == 1:
+                resolved = response.url
+                _dbg("request", url=resolved, status=response.status_code)
         if response.status_code == 200:
             return response
         if response.status_code in {429, 502, 503, 504}:
@@ -305,10 +327,12 @@ def _select_series(
         params = parse_qs(parsed.query)
         freq_values = {value.lower() for values in params.get("frequency", []) for value in values.split(",")}
         pop_values = set(params.get("population_group", []))
+        series_freq = next(iter(freq_values), "")
         if desired_frequency and desired_frequency not in freq_values:
             continue
         if population_group and population_group not in pop_values:
             continue
+        _dbg("series_candidate", url=link, frequency=series_freq or "unknown")
         return link
     return next(iter(json_links), None)
 
@@ -330,71 +354,133 @@ def _parse_series_payload(payload: object) -> List[Dict[str, object]]:
     return []
 
 
-def make_rows() -> List[Dict[str, str]]:
+def _format_summary(counters: Counter) -> str:
+    keys = (
+        "locations_processed",
+        "raw_points",
+        "after_date_parse",
+        "after_country_map",
+        "final_rows",
+        "page_cap_hit",
+    )
+    return "summary | " + " ".join(f"{key}={int(counters.get(key, 0))}" for key in keys)
+
+
+def make_rows() -> Tuple[List[Dict[str, str]], Counter]:
     if os.getenv("RESOLVER_SKIP_UNHCR_ODP", "") == "1":
-        return []
+        return [], Counter()
 
     cfg = _load_config()
     situation_path = os.getenv("ODP_SITUATION_PATH", cfg.get("situation_path", DEFAULT_SITUATION_PATH))
     series_cfg = cfg.get("series", {}) if isinstance(cfg, dict) else {}
-    desired_frequency = str(series_cfg.get("frequency", "month")) if series_cfg else "month"
+    desired_frequency = str(series_cfg.get("frequency", "month")) if isinstance(series_cfg, dict) else "month"
     population_group = None
     if isinstance(series_cfg, dict):
         pg = series_cfg.get("population_group")
         population_group = str(pg) if pg is not None else None
 
+    paging_cfg = cfg.get("paging", {}) if isinstance(cfg, dict) else {}
+    max_pages = int(paging_cfg.get("max_pages", 100) or 100)
+    debug_cfg = cfg.get("debug", {}) if isinstance(cfg, dict) else {}
+    debug_every = int(debug_cfg.get("debug_every", 5) or 5)
+
+    whitelist_raw = cfg.get("countries_whitelist", []) if isinstance(cfg, dict) else []
+    whitelist = [str(value).strip().lower() for value in whitelist_raw if str(value).strip()]
+
+    request_tracker = {"count": 0}
+
     locations = _iter_location_pages(situation_path)
-    country_index = CountryIndex.load()
+    counters: Counter = Counter()
     rows: List[Dict[str, str]] = []
 
-    for raw_name, loc_url in locations:
+    if whitelist:
+        filtered_locations = []
+        for raw_name, loc_url in locations:
+            norm = _normalize_name(raw_name)
+            if norm in {w.replace(" ", "") for w in whitelist} or raw_name.lower() in whitelist:
+                filtered_locations.append((raw_name, loc_url))
+        locations = filtered_locations
+        _dbg("countries_whitelist", count=len(locations))
+
+    country_index = CountryIndex.load()
+    page_cap = False
+
+    for idx, (raw_name, loc_url) in enumerate(locations, start=1):
+        if idx > max_pages:
+            page_cap = True
+            counters["page_cap_hit"] += 1
+            break
+        counters["locations_processed"] += 1
         try:
-            resp = _get(loc_url)
-        except Exception as exc:
-            _debug(f"[ODP] failed to fetch {loc_url}: {exc}")
+            resp = _get(loc_url, request_tracker=request_tracker, debug_every=debug_every)
+        except Exception as exc:  # noqa: BLE001
+            _dbg("location_fetch_failed", url=loc_url, error=str(exc))
             continue
         loc_html = resp.text
 
-        country_name = raw_name.strip()
-        if not country_name:
-            title_match = re.search(r"<h1[^>]*>\s*([^<]{2,100})\s*</h1>", loc_html)
-            if title_match:
-                country_name = title_match.group(1).strip()
+        country_name = raw_name.strip() or _discover_country_name(loc_html)
         json_links = _extract_json_links(loc_html)
         if not json_links:
             widget_links = _discover_widget_links(loc_html)
             if widget_links:
                 json_links = widget_links
             else:
-                print(f"[ODP] no ODP widgets discovered for URL={loc_url}")
+                logger.warning("[ODP] no ODP widgets discovered for URL=%s", loc_url)
                 continue
         series_url = _select_series(json_links, desired_frequency, population_group)
         if not series_url:
-            _debug(f"[ODP] no matching series for {loc_url}")
+            _dbg("series_missing", location=loc_url)
             continue
         try:
-            r = _get(series_url, headers={"Accept": "application/json"})
-        except Exception as exc:
-            _debug(f"[ODP] failed series fetch {series_url}: {exc}")
+            r = _get(
+                series_url,
+                headers={"Accept": "application/json"},
+                request_tracker=request_tracker,
+                debug_every=debug_every,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _dbg("series_fetch_failed", url=series_url, error=str(exc))
             continue
         try:
             payload = r.json()
         except json.JSONDecodeError as exc:
-            _debug(f"[ODP] invalid JSON from {series_url}: {exc}")
+            _dbg("series_json_error", url=series_url, error=str(exc))
             continue
         points = _parse_series_payload(payload)
+        counters["raw_points"] += len(points)
+        _dbg(
+            "series_selected",
+            series_url=series_url,
+            series_freq=desired_frequency,
+            raw_points=len(points),
+        )
         if not points:
             continue
 
         iso3, canonical_name = country_index.lookup(country_name)
+        if RESOLVER_DEBUG:
+            _dbg("country_lookup", raw=country_name, iso3=iso3 or "", canonical=canonical_name)
+
+        sample_logged = False
         for point in points:
             as_of = str(point.get("date") or point.get("as_of") or "").strip()
             if not as_of:
                 continue
+            try:
+                dt.date.fromisoformat(as_of)
+            except ValueError:
+                try:
+                    parsed = time.strptime(as_of[:10], "%Y-%m-%d")
+                    as_of = time.strftime("%Y-%m-%d", parsed)
+                except Exception:  # noqa: BLE001
+                    continue
+            counters["after_date_parse"] += 1
+
             value_raw = point.get("value")
             if value_raw is None:
                 continue
             value = str(value_raw)
+
             row_iso3, row_name = iso3, canonical_name
             if not row_iso3:
                 maybe_iso = str(point.get("iso3") or point.get("country_iso3") or "").strip().upper()
@@ -403,9 +489,12 @@ def make_rows() -> List[Dict[str, str]]:
                     row_name = country_index.iso_to_name.get(maybe_iso, row_name or country_name)
             if not row_name:
                 row_name = country_name
+            if not row_name:
+                continue
+            counters["after_country_map"] += 1
 
             event_id = _deterministic_event_id(row_iso3, as_of, value)
-            rows.append({
+            row = {
                 "source": "UNHCR-ODP",
                 "source_event_id": event_id,
                 "as_of_date": as_of,
@@ -420,19 +509,39 @@ def make_rows() -> List[Dict[str, str]]:
                 "value": value,
                 "evidence_url": series_url,
                 "evidence_label": "UNHCR ODP population timeseries (monthly sea arrivals)",
-            })
-    if rows:
-        deduped: Dict[Tuple[str, str, str], Dict[str, str]] = {}
-        for row in rows:
-            key = (
-                row.get("country_iso3", ""),
-                row.get("as_of_date", ""),
-                row.get("metric_name", ""),
-            )
-            deduped[key] = row
-        rows = list(deduped.values())
-        rows.sort(key=lambda r: (r.get("country_iso3", ""), r.get("as_of_date", "")))
-    return rows
+            }
+            rows.append(row)
+            counters["final_rows"] += 1
+            if RESOLVER_DEBUG and not sample_logged:
+                _dbg(
+                    "sample_point",
+                    country=row_name,
+                    iso3=row_iso3 or "",
+                    as_of=as_of,
+                    value=value,
+                )
+                sample_logged = True
+
+    if page_cap:
+        _dbg("page_cap_reached", max_pages=max_pages)
+
+    if not rows:
+        logger.info("UNHCR-ODP produced no rows (locations processed=%s)", counters.get("locations_processed", 0))
+
+    if RESOLVER_DEBUG:
+        _dbg("raw_points_total", count=counters.get("raw_points", 0))
+        _dbg("after_date_parse", count=counters.get("after_date_parse", 0))
+        _dbg("after_country_map", count=counters.get("after_country_map", 0))
+        _dbg("final_rows", count=counters.get("final_rows", 0))
+
+    return rows, counters
+
+
+def _discover_country_name(html_text: str) -> str:
+    title_match = re.search(r"<h1[^>]*>\s*([^<]{2,100})\s*</h1>", html_text)
+    if title_match:
+        return title_match.group(1).strip()
+    return ""
 
 
 def write_rows(rows: Iterable[Dict[str, str]]) -> None:
@@ -446,14 +555,17 @@ def write_rows(rows: Iterable[Dict[str, str]]) -> None:
 
 
 def main() -> int:
-    rows: List[Dict[str, str]] = []
+    counters: Counter
     try:
-        rows = make_rows()
-    except Exception as exc:
+        rows, counters = make_rows()
+    except Exception as exc:  # noqa: BLE001
         print(f"[ODP] ERROR: {exc}", file=sys.stderr)
-        rows = []
+        rows, counters = [], Counter()
     write_rows(rows)
     print(f"wrote {OUT_PATH.resolve()} rows={len(rows)}")
+    summary = _format_summary(counters)
+    print(summary)
+    _dbg("summary_emitted", summary=summary)
     return 0
 
 
