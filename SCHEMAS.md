@@ -42,3 +42,8 @@
 - `RESOLVER_DEBUG=1` enables detailed debug logging and summary counters for UNHCR ingestion clients.
 - `UNHCR_TEST_ISO3=GRC` (or `test_iso3` in `resolver/ingestion/config/unhcr.yml`) narrows Population API runs to the specified country for smoke testing.
 - Summary counters include `raw_count`, `after_keymap`, `after_date_parse`, `after_country_match`, `after_window`, `final_rows`, `dropped_value_cast`, `dropped_country_unmatched`, `country_unmatched`, and `page_cap_hit`.
+
+## Registry helpers
+
+- `load_registries()` returns `(countries_df, shocks_df)` for ingestion clients.
+- Use `build_country_name_index(countries_df)` to derive the UNHCR country name → ISO3 lookup when needed.
