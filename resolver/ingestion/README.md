@@ -223,6 +223,11 @@ UNHCR’s public API exposes `/asylum-applications/`, `/population/`, `/asylum-d
 - `DTM_BASE=<url>` — override the base discovery endpoint (defaults to `https://data.humdata.org`).
 - `RELIEFWEB_APPNAME` — reused for User-Agent hints when hitting HDX mirrors.
 
+**Compatibility helpers:** The module continues to expose the historic
+`SERIES_INCIDENT`/`SERIES_CUMULATIVE` constants, `load_registries`,
+`rollup_subnational`, `compute_monthly_deltas`, and `infer_hazard` so legacy
+tests and notebooks can import the same public API while the connector evolves.
+
 ## ACLED — real connector
 
 - **Endpoint:** Configurable via `ingestion/config/acled.yml` (default `https://api.acleddata.com`). Auth requires

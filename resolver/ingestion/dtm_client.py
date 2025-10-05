@@ -6,15 +6,31 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
 from resolver.ingestion.utils import flow_from_stock, month_start, stable_digest, to_iso3
+
+if TYPE_CHECKING:  # pragma: no cover - import guard for typing only
+    import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "staging"
@@ -40,6 +56,278 @@ COLUMNS = [
 ]
 
 DEFAULT_CAUSE = "unknown"
+
+
+DATA_PATH = ROOT / "data"
+COUNTRIES_PATH = DATA_PATH / "countries.csv"
+SHOCKS_PATH = DATA_PATH / "shocks.csv"
+
+SERIES_INCIDENT = "incident"
+SERIES_CUMULATIVE = "cumulative"
+
+HAZARD_KEY_TO_CODE = {
+    "flood": "FL",
+    "drought": "DR",
+    "tropical_cyclone": "TC",
+    "heat_wave": "HW",
+    "armed_conflict_onset": "ACO",
+    "armed_conflict_escalation": "ACE",
+    "armed_conflict_cessation": "ACC",
+    "civil_unrest": "CU",
+    "displacement_influx": "DI",
+    "economic_crisis": "EC",
+    "phe": "PHE",
+}
+
+MULTI_HAZARD = ("multi", "Multi-shock Displacement/Needs", "all")
+
+
+@dataclass(frozen=True)
+class Hazard:
+    """Lightweight hazard tuple for legacy helpers."""
+
+    code: str
+    label: str
+    hclass: str
+
+
+__all__ = [
+    "SERIES_INCIDENT",
+    "SERIES_CUMULATIVE",
+    "Hazard",
+    "load_registries",
+    "infer_hazard",
+    "rollup_subnational",
+    "compute_monthly_deltas",
+    "load_config",
+    "ensure_header_only",
+    "build_rows",
+    "write_rows",
+    "main",
+]
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    """Parse boolean feature flags from the environment."""
+
+    val = os.getenv(name)
+    if val is None:
+        return default
+    return str(val).strip().lower() in {"1", "true", "y", "yes", "on"}
+
+
+def _normalize_month(value: object) -> Optional[str]:
+    """Return ``YYYY-MM`` strings when ``value`` parses as a date."""
+
+    bucket = month_start(value)
+    if not bucket:
+        return None
+    return bucket.strftime("%Y-%m")
+
+
+def _is_subnational(record: Mapping[str, Any]) -> bool:
+    for key in ("admin1", "admin2", "admin_pcode", "admin_name"):
+        if str(record.get(key) or "").strip():
+            return True
+    return False
+
+
+def load_registries() -> Tuple["pd.DataFrame", "pd.DataFrame"]:
+    """Return the canonical country and shock registries used by legacy tests."""
+
+    import pandas as pd  # local import to keep module import-side-effect free
+
+    countries = pd.read_csv(COUNTRIES_PATH, dtype=str).fillna("")
+    shocks = pd.read_csv(SHOCKS_PATH, dtype=str).fillna("")
+    return countries, shocks
+
+
+def _hazard_from_code(code: str, shocks: "pd.DataFrame") -> Hazard:
+    if not code:
+        return Hazard(*MULTI_HAZARD)
+    if str(code).strip().lower() == "multi":
+        return Hazard(*MULTI_HAZARD)
+    match = shocks[shocks["hazard_code"].str.upper() == str(code).strip().upper()]
+    if match.empty:
+        return Hazard(*MULTI_HAZARD)
+    row = match.iloc[0]
+    return Hazard(row["hazard_code"], row["hazard_label"], row["hazard_class"])
+
+
+def infer_hazard(
+    texts: Iterable[str],
+    shocks: Optional["pd.DataFrame"] = None,
+    keywords_cfg: Optional[Mapping[str, Iterable[str]]] = None,
+    *,
+    default_key: Optional[str] = None,
+) -> Hazard:
+    """Map dataset text snippets to a hazard triple.
+
+    This mirrors the legacy helper relied on by resolver tests and keeps the
+    behaviour stable for CI while the production connector evolves.
+    """
+
+    if shocks is None:
+        _, shocks = load_registries()
+    if keywords_cfg is None:
+        keywords_cfg = load_config().get("shock_keywords", {})
+    if default_key is None:
+        default_key = os.getenv(
+            "DTM_DEFAULT_HAZARD",
+            load_config().get("default_hazard", "displacement_influx"),
+        )
+
+    text_blob = " ".join(str(t).lower() for t in texts if t)
+    matches: list[str] = []
+    for key, keywords in (keywords_cfg or {}).items():
+        for kw in keywords:
+            if str(kw).lower() in text_blob:
+                matches.append(str(key).strip().lower())
+                break
+
+    if not matches and shocks is not None:
+        for _, row in shocks.iterrows():
+            label = str(row.get("hazard_label", "")).strip().lower()
+            if label and label in text_blob:
+                matches.append(label)
+
+    unique = sorted({m for m in matches if m})
+    if not unique:
+        mapped = HAZARD_KEY_TO_CODE.get(str(default_key or "").strip().lower())
+        if not mapped:
+            return Hazard(*MULTI_HAZARD)
+        return _hazard_from_code(mapped, shocks)
+    if len(unique) > 1:
+        return Hazard(*MULTI_HAZARD)
+
+    mapped = HAZARD_KEY_TO_CODE.get(unique[0], unique[0])
+    return _hazard_from_code(mapped, shocks)
+
+
+def rollup_subnational(
+    records: Sequence[MutableMapping[str, Any]]
+) -> List[MutableMapping[str, Any]]:
+    """Aggregate subnational rows into national totals per month and source."""
+
+    grouped: Dict[
+        Tuple[str, str, str, str, str, str], List[MutableMapping[str, Any]]
+    ] = defaultdict(list)
+    for rec in records:
+        as_of = _normalize_month(rec.get("as_of_date")) or ""
+        key = (
+            str(rec.get("iso3", "")),
+            str(rec.get("hazard_code", "")),
+            str(rec.get("metric", "")),
+            as_of,
+            str(rec.get("source_id", "")),
+            str(rec.get("series_type", SERIES_INCIDENT)),
+        )
+        rec_copy = dict(rec)
+        rec_copy["as_of_date"] = as_of
+        grouped[key].append(rec_copy)
+
+    rolled: List[MutableMapping[str, Any]] = []
+    for key, rows in grouped.items():
+        nationals = [r for r in rows if not _is_subnational(r)]
+        if nationals:
+            nationals.sort(key=lambda r: r.get("as_of_date", ""))
+            rolled.extend(nationals)
+            continue
+        total = 0.0
+        template = dict(rows[0])
+        for row in rows:
+            try:
+                total += float(row.get("value", 0) or 0)
+            except Exception:
+                continue
+        template["value"] = max(total, 0.0)
+        for drop_key in ("admin1", "admin2", "admin_pcode", "admin_name"):
+            template.pop(drop_key, None)
+        rolled.append(template)
+
+    rolled.sort(
+        key=lambda r: (
+            str(r.get("iso3", "")),
+            str(r.get("hazard_code", "")),
+            str(r.get("metric", "")),
+            str(r.get("as_of_date", "")),
+        )
+    )
+    return rolled
+
+
+def compute_monthly_deltas(
+    records: Sequence[MutableMapping[str, Any]],
+    *,
+    allow_first_month: Optional[bool] = None,
+) -> List[MutableMapping[str, Any]]:
+    """Convert cumulative series to month-over-month deltas.
+
+    Incident series are passed through, cumulative series become non-negative
+    monthly flows. This mirrors the legacy helper that powers resolver tests.
+    """
+
+    if allow_first_month is None:
+        cfg = load_config()
+        allow_first_month = _env_bool(
+            "DTM_ALLOW_FIRST_MONTH",
+            bool(cfg.get("allow_first_month_delta", False)),
+        )
+
+    grouped: Dict[Tuple[str, str, str, str], List[MutableMapping[str, Any]]] = defaultdict(list)
+    for rec in records:
+        as_of = _normalize_month(rec.get("as_of_date")) or ""
+        rec_copy = dict(rec)
+        rec_copy["as_of_date"] = as_of
+        key = (
+            str(rec.get("iso3", "")),
+            str(rec.get("hazard_code", "")),
+            str(rec.get("metric", "")),
+            str(rec.get("source_id", "")),
+        )
+        grouped[key].append(rec_copy)
+
+    output: List[MutableMapping[str, Any]] = []
+    for rows in grouped.values():
+        rows.sort(key=lambda r: r.get("as_of_date", ""))
+        series_type = str(rows[0].get("series_type", SERIES_INCIDENT)).strip().lower()
+        prev_value: Optional[float] = None
+        for row in rows:
+            value = row.get("value", 0)
+            try:
+                value_num = float(value)
+            except Exception:
+                value_num = 0.0
+            if series_type != SERIES_CUMULATIVE:
+                new_val = max(value_num, 0.0)
+            else:
+                if prev_value is None:
+                    if allow_first_month:
+                        new_val = max(value_num, 0.0)
+                        prev_value = value_num
+                    else:
+                        prev_value = value_num
+                        continue
+                else:
+                    delta = value_num - prev_value
+                    if delta < 0:
+                        delta = 0.0
+                    new_val = delta
+                    prev_value = value_num
+            out_row = dict(row)
+            out_row["value"] = new_val
+            out_row["series_type"] = SERIES_INCIDENT
+            output.append(out_row)
+
+    output.sort(
+        key=lambda r: (
+            str(r.get("iso3", "")),
+            str(r.get("hazard_code", "")),
+            str(r.get("metric", "")),
+            str(r.get("as_of_date", "")),
+        )
+    )
+    return output
 
 
 _CANDIDATE_DATE_FIELDS = [
