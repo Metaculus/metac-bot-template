@@ -6,6 +6,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import os
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
@@ -14,6 +15,7 @@ import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
 from resolver.ingestion.utils import (
+    ensure_headers,
     linear_split,
     map_hazard,
     month_start,
@@ -25,7 +27,9 @@ from resolver.ingestion.utils import (
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "staging"
 CONFIG_PATH = ROOT / "ingestion" / "config" / "emdat.yml"
-OUTPUT_PATH = STAGING / "emdat_pa.csv"
+OUT_DIR = STAGING
+OUT_PATH = OUT_DIR / "emdat_pa.csv"
+OUTPUT_PATH = OUT_PATH  # backwards compatibility alias
 
 LOG = logging.getLogger("resolver.ingestion.emdat")
 
@@ -53,6 +57,8 @@ VALUE_COLUMN_HINTS = {
 }
 
 
+CANONICAL_HEADERS = COLUMNS
+
 def load_config() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
         return {}
@@ -61,11 +67,8 @@ def load_config() -> dict[str, Any]:
 
 
 def ensure_header_only() -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(COLUMNS)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
+    ensure_headers(OUT_PATH, COLUMNS)
+    ensure_manifest_for_csv(OUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
 
 
 def _normalise_key(text: str) -> str:
@@ -252,25 +255,29 @@ def read_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
 
 
 def write_rows(rows: List[List[Any]]) -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUT_PATH.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(COLUMNS)
         writer.writerows(rows)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
+    ensure_manifest_for_csv(OUT_PATH, schema_version="emdat_pa.v1", source_id="emdat")
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    if os.getenv("RESOLVER_SKIP_EMDAT"):
+        LOG.info("emdat: skipped via RESOLVER_SKIP_EMDAT")
+        ensure_header_only()
+        return False
     cfg = load_config()
     if not cfg.get("enabled"):
         LOG.info("emdat: disabled via config; writing header only")
         ensure_header_only()
-        return 0
+        return False
     rows = read_rows(cfg)
     write_rows(rows)
     LOG.info("emdat: wrote %s rows", len(rows))
-    return 0
+    return True
 
 
 if __name__ == "__main__":

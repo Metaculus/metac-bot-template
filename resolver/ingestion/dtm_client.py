@@ -27,7 +27,13 @@ from typing import (
 import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
-from resolver.ingestion.utils import flow_from_stock, month_start, stable_digest, to_iso3
+from resolver.ingestion.utils import (
+    ensure_headers,
+    flow_from_stock,
+    month_start,
+    stable_digest,
+    to_iso3,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - import guard for typing only
     import pandas as pd
@@ -35,7 +41,9 @@ if TYPE_CHECKING:  # pragma: no cover - import guard for typing only
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "staging"
 CONFIG_PATH = ROOT / "ingestion" / "config" / "dtm.yml"
-OUTPUT_PATH = STAGING / "dtm_displacement.csv"
+OUT_DIR = STAGING
+OUT_PATH = OUT_DIR / "dtm_displacement.csv"
+OUTPUT_PATH = OUT_PATH  # backwards compatibility alias
 
 LOG = logging.getLogger("resolver.ingestion.dtm")
 
@@ -56,6 +64,8 @@ COLUMNS = [
 ]
 
 DEFAULT_CAUSE = "unknown"
+
+CANONICAL_HEADERS = COLUMNS
 
 
 DATA_PATH = ROOT / "data"
@@ -440,11 +450,8 @@ def load_config() -> dict[str, Any]:
 
 
 def ensure_header_only() -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(COLUMNS)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
+    ensure_headers(OUT_PATH, COLUMNS)
+    ensure_manifest_for_csv(OUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
 
 
 def _load_csv(path: Path) -> Iterable[Mapping[str, Any]]:
@@ -711,21 +718,25 @@ def _log_as_of_fallbacks() -> None:
 
 
 def write_rows(rows: List[List[Any]]) -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUT_PATH.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(COLUMNS)
         writer.writerows(rows)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
+    ensure_manifest_for_csv(OUT_PATH, schema_version="dtm_displacement.v1", source_id="dtm")
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    if os.getenv("RESOLVER_SKIP_DTM"):
+        LOG.info("dtm: skipped via RESOLVER_SKIP_DTM")
+        ensure_header_only()
+        return False
     cfg = load_config()
     if not cfg.get("enabled"):
         LOG.info("dtm: disabled via config; writing header only")
         ensure_header_only()
-        return 0
+        return False
     rows = build_rows(cfg)
     write_rows(rows)
     LOG.info("dtm: wrote %s rows", len(rows))

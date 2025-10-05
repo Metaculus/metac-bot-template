@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
@@ -12,17 +13,21 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import yaml
 
 from resolver.ingestion._manifest import ensure_manifest_for_csv
-from resolver.ingestion.utils import to_iso3
+from resolver.ingestion.utils import ensure_headers, to_iso3
 
 ROOT = Path(__file__).resolve().parents[1]
 STAGING = ROOT / "staging"
 CONFIG_PATH = ROOT / "ingestion" / "config" / "worldpop.yml"
-OUTPUT_PATH = STAGING / "worldpop_denominators.csv"
+OUT_DATA = ROOT / "data" / "population.csv"
+OUT_STAGING = STAGING / "worldpop_denominators.csv"
+OUTPUT_PATH = OUT_STAGING  # backwards compatibility alias
 DATA_DIR = ROOT / "data"
 
 LOG = logging.getLogger("resolver.ingestion.worldpop")
 
 COLUMNS = ["country_iso3", "year", "population", "as_of", "source", "method"]
+
+CANONICAL_COLUMNS = COLUMNS
 
 
 def load_config() -> dict[str, Any]:
@@ -33,11 +38,9 @@ def load_config() -> dict[str, Any]:
 
 
 def ensure_header_only() -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(COLUMNS)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="worldpop_denominators.v1", source_id="worldpop")
+    ensure_headers(OUT_DATA, COLUMNS)
+    ensure_headers(OUT_STAGING, COLUMNS)
+    ensure_manifest_for_csv(OUT_STAGING, schema_version="worldpop_denominators.v1", source_id="worldpop")
 
 
 def _dataset_path(cfg: Mapping[str, Any]) -> Path:
@@ -64,10 +67,10 @@ def _load_dataset(path: Path) -> List[Mapping[str, Any]]:
 
 
 def _read_existing() -> Dict[Tuple[str, int], Dict[str, Any]]:
-    if not OUTPUT_PATH.exists():
+    if not OUT_DATA.exists():
         return {}
     existing: Dict[Tuple[str, int], Dict[str, Any]] = {}
-    with OUTPUT_PATH.open("r", encoding="utf-8") as handle:
+    with OUT_DATA.open("r", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
             iso = str(row.get("country_iso3") or "").strip().upper()
@@ -141,26 +144,35 @@ def build_rows(cfg: Mapping[str, Any]) -> List[List[Any]]:
     return rows
 
 
-def write_rows(rows: List[List[Any]]) -> None:
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with OUTPUT_PATH.open("w", newline="", encoding="utf-8") as handle:
+def _write_csv(path: Path, rows: List[List[Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(COLUMNS)
         writer.writerows(rows)
-    ensure_manifest_for_csv(OUTPUT_PATH, schema_version="worldpop_denominators.v1", source_id="worldpop")
+
+
+def write_rows(rows: List[List[Any]]) -> None:
+    _write_csv(OUT_DATA, rows)
+    _write_csv(OUT_STAGING, rows)
+    ensure_manifest_for_csv(OUT_STAGING, schema_version="worldpop_denominators.v1", source_id="worldpop")
 
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    if os.getenv("RESOLVER_SKIP_WORLDPOP"):
+        LOG.info("worldpop: skipped via RESOLVER_SKIP_WORLDPOP")
+        ensure_header_only()
+        return False
     cfg = load_config()
     if not cfg.get("enabled"):
         LOG.info("worldpop: disabled via config; writing header only")
         ensure_header_only()
-        return 0
+        return False
     rows = build_rows(cfg)
     write_rows(rows)
     LOG.info("worldpop: wrote %s rows", len(rows))
-    return 0
+    return True
 
 
 if __name__ == "__main__":
