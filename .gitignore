@@ -106,3 +106,14 @@ resolver/exports/*_working.parquet
 resolver/exports/cache_*/
 resolver/tmp/
 context/
+
+# Run artifacts / generated outputs
+resolver/logs/
+resolver/staging/
+resolver/exports/
+
+# Generic logs and scratch
+*.log
+*.jsonl
+*.tmp
+*.cache
