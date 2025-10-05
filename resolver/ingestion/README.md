@@ -288,10 +288,12 @@ respectively so downstream checks never see missing files.
   - `staging/worldpop.csv` — canonical staging snapshot for auditing the latest fetch.
   - `data/population.csv` — versioned denominator table (`iso3,year,population,source,product,download_date,source_url,notes`).
 - **Semantics:** Upserts the most recent year per ISO3 (plus `WORLDPOP_YEARS_BACK` historic years) with overwrite-by-key semantics on reruns.
+- **Public API:** `worldpop_client.collect_rows()` (no side effects), `build_rows()`, `write_rows()`, and `CANONICAL_COLUMNS` remain stable for downstream tests and stubs.
 - **Env toggles:**
   - `RESOLVER_SKIP_WORLDPOP=1` — emit header-only CSVs (no network calls) while
-    touching both `data/population.csv` and `staging/worldpop_denominators.csv` so header
-    checks remain deterministic.
+    touching both `data/population.csv` and `staging/worldpop_denominators.csv` (and the
+    compatibility alias `staging/worldpop.csv`) so header checks remain deterministic even
+    when no data is collected.
   - `WORLDPOP_PRODUCT` — choose dataset variant (`un_adj_unconstrained` default; `un_adj_constrained` supported).
   - `WORLDPOP_YEARS_BACK` — fetch additional previous years (default `0`).
   - `WORLDPOP_URL_TEMPLATE` — override the configured URL pattern (handy for mirrors/tests).
