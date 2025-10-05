@@ -741,7 +741,12 @@ def main() -> bool:
         _write_header_only(OUT_PATH)
         return False
 
-    if not cfg.get("enabled", False):
+    enabled_flag = cfg.get("enabled")
+    if enabled_flag is None:
+        enabled = bool(cfg.get("sources"))
+    else:
+        enabled = bool(enabled_flag)
+    if not enabled:
         print("IPC disabled via config; writing header-only CSV")
         _write_header_only(OUT_PATH)
         return False

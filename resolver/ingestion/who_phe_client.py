@@ -110,22 +110,26 @@ def load_config() -> Dict[str, Any]:
         if isinstance(loaded, dict):
             raw.update(loaded)
 
-    enabled = bool(raw.get("enabled", False))
     auth_headers = raw.get("auth") if isinstance(raw.get("auth"), dict) else {}
 
-    configured_sources = raw.get("sources", {})
-    if isinstance(configured_sources, list):
-        merged: Dict[str, Any] = {}
-        for item in configured_sources:
-            if isinstance(item, dict) and item.get("name"):
-                merged[str(item["name"])]=item
-        configured_sources = merged
-    elif not isinstance(configured_sources, dict):
-        configured_sources = {}
+    raw_sources = raw.get("sources", {})
+    merged: Dict[str, Any] = {}
+    if isinstance(raw_sources, list):
+        for idx, item in enumerate(raw_sources):
+            if isinstance(item, dict):
+                name = str(item.get("name") or f"source_{idx + 1}")
+                merged[name] = dict(item)
+            elif isinstance(item, str):
+                merged[f"source_{idx + 1}"] = {"url": item}
+    elif isinstance(raw_sources, dict):
+        for name, item in raw_sources.items():
+            merged[str(name)] = item
 
     sources: List[Dict[str, Any]] = []
+    remaining = dict(merged)
+
     for key, template in DEFAULT_SOURCE_TEMPLATES.items():
-        override = configured_sources.get(key)
+        override = remaining.pop(key, None)
         if not override:
             continue
         url = ""
@@ -146,6 +150,21 @@ def load_config() -> Dict[str, Any]:
         if auth_headers:
             source_cfg.setdefault("headers", dict(auth_headers))
         sources.append(source_cfg)
+
+    for name, override in remaining.items():
+        if isinstance(override, str):
+            override = {"url": override}
+        if not isinstance(override, dict):
+            continue
+        source_cfg = dict(override)
+        source_cfg.setdefault("name", name)
+        if auth_headers:
+            source_cfg.setdefault("headers", dict(auth_headers))
+        sources.append(source_cfg)
+
+    enabled = bool(raw.get("enabled", False))
+    if not enabled and sources:
+        enabled = True
 
     result: Dict[str, Any] = {
         "enabled": enabled,
