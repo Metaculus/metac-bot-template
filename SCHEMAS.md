@@ -46,4 +46,4 @@
 ## Registry helpers
 
 - `load_registries()` returns `(countries_df, shocks_df)` for ingestion clients.
-- Use `build_country_name_index(countries_df)` to derive the UNHCR country name → ISO3 lookup when needed.
+- Use `build_name_index(countries_df)` to derive the UNHCR country name → ISO3 lookup when needed.

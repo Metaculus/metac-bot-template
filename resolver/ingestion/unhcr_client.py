@@ -37,6 +37,14 @@ DATA = ROOT / "data"
 STAGING = ROOT / "staging"
 CONFIG = ROOT / "ingestion" / "config" / "unhcr.yml"
 
+__all__ = [
+    "load_cfg",
+    "load_registries",
+    "build_name_index",
+    "make_rows",
+    "main",
+]
+
 COUNTRIES = DATA / "countries.csv"
 SHOCKS = DATA / "shocks.csv"
 
@@ -102,7 +110,7 @@ def load_registries() -> Tuple[pd.DataFrame, pd.DataFrame]:
     return countries, shocks
 
 
-def build_country_name_index(df_countries: pd.DataFrame) -> Dict[str, str]:
+def build_name_index(df_countries: pd.DataFrame) -> Dict[str, str]:
     df = df_countries.copy()
     df["country_norm"] = df["country_name"].astype(str).str.strip().str.lower()
     return {
@@ -361,7 +369,7 @@ def make_rows() -> Tuple[List[List[str]], Counter]:
     url = f"{base_url}/{endpoint}".rstrip("/")
 
     df_countries, df_shocks = load_registries()
-    country_index = build_country_name_index(df_countries)
+    country_index = build_name_index(df_countries)
     di = df_shocks[df_shocks["hazard_code"] == "DI"]
     if di.empty:
         raise RuntimeError("DI hazard not found in shocks registry")

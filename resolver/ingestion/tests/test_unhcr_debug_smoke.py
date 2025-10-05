@@ -46,8 +46,7 @@ def _fake_registries():
             {"hazard_code": "DI", "hazard_label": "Displacement influx", "hazard_class": "human-induced"}
         ]
     )
-    name_index = {"greece": "GRC", "italy": "ITA"}
-    return countries, shocks, name_index
+    return countries, shocks
 
 
 class _FakeResponse:
