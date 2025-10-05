@@ -82,7 +82,6 @@ HAZARD_KEY_TO_CODE = {
     "heat_wave": "HW",
     "armed_conflict_onset": "ACO",
     "armed_conflict_escalation": "ACE",
-    "armed_conflict_cessation": "ACC",
     "civil_unrest": "CU",
     "displacement_influx": "DI",
     "economic_crisis": "EC",
