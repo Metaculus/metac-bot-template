@@ -323,7 +323,7 @@ HYDE_PROMPT = """Given the question, generate a summary of an article that helps
 For example, for the question "What is the impact of climate change on the economy?", you could generate a summary of an article titled "Climate Change and the Economy: A Comprehensive Analysis":A recent analysis explores the economic impact of climate change, highlighting risks to industries such as agriculture, insurance, and infrastructure. Rising temperatures and extreme weather events are expected to disrupt supply chains and increase financial strain. Governments and businesses are focusing on carbon pricing, green investments, and adaptation strategies to mitigate these effects. Experts emphasize that addressing climate change is crucial for long-term economic stability.
 \n\nPlease output the results in the following JSON format: {"article": str}"""
 
-GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
+GROUP_INSTRUCTIONS_DISPASSION = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
 - In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
