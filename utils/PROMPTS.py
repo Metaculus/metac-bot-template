@@ -349,3 +349,31 @@ Output your response in JSON format with the following structure:
 }}
 Ensure the JSON is valid (no trailing commas, no single quotes). 
 """
+
+GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
+
+In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
+- In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
+- Either critique their forecasts' weaknesses, or defend their strengths, using a polemic style. 
+General notes:
+- Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
+- Avoid preamble and go straight to your response. 
+- Imagine you are participating in an online discussion board; do not be too formal or civil. 
+- Use the "response" field for your answer. 
+- Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
+
+## Prior forecasts
+{phase1_results_json_string} 
+
+## List of forecasters to engage with
+{forecasters_list}
+
+## Response format:
+Output your response in JSON format with the following structure:
+{{
+  "forecaster_to_engage": str,
+  "response_type": Literal["critique", "defense"],
+  "response": str,
+}}
+Ensure the JSON is valid (no trailing commas, no single quotes). 
+"""
