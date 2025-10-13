@@ -3,7 +3,7 @@ import json
 import logging
 import os
 
-from logic.offline.forecaster import forecast_from_json, dispassion, slowly
+from logic.offline.forecaster import forecast_from_json, dispassion, slowly, main_pipeline
 from logic.utils import strip_title_to_filename
 
 # Configure logging to display INFO messages to console
@@ -41,8 +41,9 @@ def should_skip_file(input_file_path: str) -> bool:
     base_filename = strip_title_to_filename(title)
     slowly_path = f"forecasts/fall/slowly/{base_filename}_slowly.json"
     dispassion_path = f"forecasts/fall/dispassion/{base_filename}_dispassion.json"
+    recreated_path = f"forecasts/fall/recreation/{base_filename}recreated.json"
 
-    both_exist = os.path.exists(slowly_path) and os.path.exists(dispassion_path)
+    both_exist = os.path.exists(slowly_path) and os.path.exists(dispassion_path) and os.path.exists(recreated_path)
 
     if both_exist:
         logging.info("Skipping %s - both forecasts already exist", os.path.basename(input_file_path))
@@ -92,6 +93,27 @@ async def main_slowly() -> None:
 
     logging.info("=== Completed offline slowly forecasting - processed: %d, skipped: %d ===",
                 processed_count, skipped_count)
+
+
+async def main_main_pipline():
+    logging.info("=== Starting offline main pipeline recreation forecasting ===")
+    files = [f for f in os.listdir(FORECAST_DIR) if f.endswith(".json")]
+    logging.info("Found %s JSON files in %s", len(files), FORECAST_DIR)
+    processed_count = 0
+    skipped_count = 0
+    for file in files:
+        file_path = os.path.join(FORECAST_DIR, file)
+
+        if should_skip_file(file_path):
+            skipped_count += 1
+            continue
+
+        logging.info("Processing main pipeline forecast for: %s", file)
+        await forecast_from_json(forecasting_function=main_pipeline, path=file_path, is_woc=False)
+        processed_count += 1
+    logging.info("=== Completed offline main pipeline forecasting - processed: %d, skipped: %d ===",
+                processed_count, skipped_count)
+
 
 async def main() -> None:
     """Run both forecasting methods concurrently"""
