@@ -89,7 +89,7 @@ async def dispassion(
     probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
 
     group_results = await group_chat.run(
-        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=group_contextualization,
+        task=GROUP_INSTRUCTIONS_DISPASSION.format(phase1_results_json_string=group_contextualization,
                                        forecasters_list=expert_names))
 
     parsed_group_results = {
