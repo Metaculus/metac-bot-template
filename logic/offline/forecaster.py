@@ -18,8 +18,8 @@ from logic.utils import (
     get_first_phase_probabilities,
     get_relevant_contexts_to_group_discussion,
 )
-from utils.PROMPTS import GROUP_INSTRUCTIONS, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION, \
-    SPECIFIC_META_MESSAGE_EXPERTISE_SLOWLY, FIRST_PHASE_INSTRUCTIONS_SLOWLY
+from utils.PROMPTS import SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION, \
+    SPECIFIC_META_MESSAGE_EXPERTISE_SLOWLY, FIRST_PHASE_INSTRUCTIONS_SLOWLY, GROUP_INSTRUCTIONS_DISPASSION
 from utils.config import get_gpt_config
 
 EXP_NAME_DISPASSION = "_dispassion"
@@ -88,7 +88,7 @@ async def dispassion(
     probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
 
     group_results = await group_chat.run(
-        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=group_contextualization,
+        task=GROUP_INSTRUCTIONS_DISPASSION.format(phase1_results_json_string=group_contextualization,
                                        forecasters_list=expert_names))
 
     parsed_group_results = {
