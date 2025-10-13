@@ -89,7 +89,8 @@ FIRST_PHASE_INSTRUCTIONS_SLOWLY = (
     "- Provide a final probability, summarizing your reasoning in light of the news, resolution criteria, and fine print. \n"
     "General notes: \n"
     "Be as compelling as possible, knowing that later on, other forecasters will read and scrutinize your forecast. Prizes will be awarded to the most compelling arguments.\n"
-    "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"        "Remember that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time."
+    "Remember that good forecasters ground geopolitical predictions in base rates (the historical frequency of similar events) to establish an objective baseline. \n"        
+    "Remember that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time."
     "## Output Format:\n"
     "Your response should be provided as a JSON object with the following structure:\n"
     "{{\n"
@@ -322,7 +323,7 @@ HYDE_PROMPT = """Given the question, generate a summary of an article that helps
 For example, for the question "What is the impact of climate change on the economy?", you could generate a summary of an article titled "Climate Change and the Economy: A Comprehensive Analysis":A recent analysis explores the economic impact of climate change, highlighting risks to industries such as agriculture, insurance, and infrastructure. Rising temperatures and extreme weather events are expected to disrupt supply chains and increase financial strain. Governments and businesses are focusing on carbon pricing, green investments, and adaptation strategies to mitigate these effects. Experts emphasize that addressing climate change is crucial for long-term economic stability.
 \n\nPlease output the results in the following JSON format: {"article": str}"""
 
-GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
+GROUP_INSTRUCTIONS_DISPASSION = """### Phase II: Group Deliberation
 
 In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
 - In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
@@ -330,6 +331,34 @@ In this phase you will be shown predictions made by other forecasters contending
 General notes:
 - Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
 - Avoid preamble and go straight to your response. 
+- Use the "response" field for your answer. 
+- Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
+
+## Prior forecasts
+{phase1_results_json_string} 
+
+## List of forecasters to engage with
+{forecasters_list}
+
+## Response format:
+Output your response in JSON format with the following structure:
+{{
+  "forecaster_to_engage": str,
+  "response_type": Literal["critique", "defense"],
+  "response": str,
+}}
+Ensure the JSON is valid (no trailing commas, no single quotes). 
+"""
+
+GROUP_INSTRUCTIONS = """### Phase II: Group Deliberation
+
+In this phase you will be shown predictions made by other forecasters contending in the contest, with expertise in different fields relevant to this question. 
+- In your own turn, choose ONE other forecaster to engage with, who has YET TO BE ENGAGED. 
+- Either critique their forecasts' weaknesses, or defend their strengths, using a polemic style. 
+General notes:
+- Be sure NOT to simply repeat the forecaster with which you are engaging, but rather engage with them directly from your own perspective.
+- Avoid preamble and go straight to your response. 
+- Imagine you are participating in an online discussion board; do not be too formal or civil. 
 - Use the "response" field for your answer. 
 - Make sure to engage only with forecasters presented in the list below, and not with any other forecasters or experts.
 

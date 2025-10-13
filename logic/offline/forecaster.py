@@ -18,8 +18,9 @@ from logic.utils import (
     get_first_phase_probabilities,
     get_relevant_contexts_to_group_discussion,
 )
-from utils.PROMPTS import GROUP_INSTRUCTIONS, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION, \
-    SPECIFIC_META_MESSAGE_EXPERTISE_SLOWLY, FIRST_PHASE_INSTRUCTIONS_SLOWLY
+from utils.PROMPTS import SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION, \
+    SPECIFIC_META_MESSAGE_EXPERTISE_SLOWLY, FIRST_PHASE_INSTRUCTIONS_SLOWLY, GROUP_INSTRUCTIONS_DISPASSION, \
+    SPECIFIC_META_MESSAGE_EXPERTISE, GROUP_INSTRUCTIONS
 from utils.config import get_gpt_config
 
 EXP_NAME_DISPASSION = "_dispassion"
@@ -88,7 +89,7 @@ async def dispassion(
     probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
 
     group_results = await group_chat.run(
-        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=group_contextualization,
+        task=GROUP_INSTRUCTIONS_DISPASSION.format(phase1_results_json_string=group_contextualization,
                                        forecasters_list=expert_names))
 
     parsed_group_results = {
@@ -148,6 +149,61 @@ async def slowly(
     return final_answer, summarization
 
 
+
+async def main_pipeline(
+        question_details: dict,
+        news: str,
+        expert_names: List[str],
+        cache_seed: int = 42,
+        is_multiple_choice: bool = False,
+        options: List[str] | None = None,
+        is_woc: bool = False,
+) -> Tuple[Union[int, Dict[str, float]], str]:
+    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
+
+    experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE) for name in expert_names]
+    group_chat = create_group(experts)
+
+    results = await perform_forecasting_phase(experts, question_details, news=news,
+                                              is_multiple_choice=is_multiple_choice, options=options,
+                                              system_message = FIRST_PHASE_INSTRUCTIONS_SLOWLY)
+
+    group_contextualization = get_relevant_contexts_to_group_discussion(results)
+    probabilities = get_first_phase_probabilities(results, is_multiple_choice, options)
+
+    group_results = await group_chat.run(
+        task=GROUP_INSTRUCTIONS.format(phase1_results_json_string=group_contextualization,
+                                       forecasters_list=expert_names))
+
+    parsed_group_results = {
+        answer.source: validate_and_parse_response(answer.content)
+        for answer in group_results.messages if answer.source != "user"
+    }
+
+    revision_results = await perform_revised_forecasting_step(
+        experts, question_details, news=news,
+        is_multiple_choice=is_multiple_choice, options=options
+    )
+
+    summarization_assistant = create_summarization_assistant(config)
+    summarization = await run_summarization_phase(results, question_details, summarization_assistant)
+
+    probabilities = get_probabilities(results, revision_results, parsed_group_results,
+                                      is_multiple_choice, options, probabilities)
+
+    enrich_probabilities(probabilities, question_details, news, forecast_date, summarization, expert_names)
+
+    final_answer = probabilities["revision_probability_result"]
+
+    filename = strip_title_to_filename(title) + "recreated"
+    await build_and_write_json(filename, probabilities, is_woc, subdirectory="recreation")
+
+    return final_answer, summarization
+
+
+
+
 async def forecast_from_json(forecasting_function, path: str, is_woc: bool = False, cache_seed: int = 42) -> None:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -155,8 +211,10 @@ async def forecast_from_json(forecasting_function, path: str, is_woc: bool = Fal
     question_details = data.get("question_details", {})
     news = data.get("news", "")
     expert_names = data.get("forecasters", [])
-
-    await forecasting_function(question_details=question_details, news=news, expert_names=expert_names,
+    try:
+        await forecasting_function(question_details=question_details, news=news, expert_names=expert_names,
                                cache_seed=cache_seed,
                                is_multiple_choice=question_details.get("type") == "multiple_choice",
                                options=question_details.get("options"), is_woc=is_woc)
+    except Exception as e:
+        print(f"Error processing question '{question_details.get('title', 'Unknown Title')}': {e}")
