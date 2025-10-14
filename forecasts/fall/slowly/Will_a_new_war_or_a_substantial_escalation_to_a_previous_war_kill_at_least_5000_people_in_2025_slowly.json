@@ -1,481 +1,501 @@
 {
     "deliberation_results": {
         "Military Analysis (Contemporary Conflict Assessment)": {
-            "time_to_resolution": "Approximately 3 months (until December 31, 2025; may resolve as late as January 31, 2026 if data is ambiguous)",
-            "perspective_relevance": "As a military analyst specializing in contemporary conflict assessment, my expertise is highly relevant for evaluating the likelihood of new or substantially escalated wars producing high casualty counts. I bring to bear knowledge of conflict base rates, escalation dynamics, the operational tempo of ongoing crises, historical fatality data, and the mechanics of how conflicts cross the 5,000-death threshold. My perspective allows for critical parsing of which conflicts are 'new' or 'substantially escalated' per strict definitions and an assessment of whether current trends make a qualifying event likely before year's end.",
-            "status_quo": "The status quo is that, although 2021-2024 saw a sharp rise in total conflict deaths and the number of state-based conflicts (peaking at 61 in 2024), most high-casualty conflicts (Ukraine, Gaza, Ethiopia) are already well above threshold and thus ineligible; new, qualifying conflicts killing 5,000+ people in a single year remain rare. Historically, the base rate for new or substantially escalated wars crossing 5,000 deaths per year is low: most years since 2000 have seen 0-2 such events.",
+            "time_to_resolution": "Approximately 2.5 months (until end of 2025, with possible extension to January 31, 2026 for ambiguous cases)",
+            "perspective_relevance": "As a military analyst focused on contemporary conflict assessment, I bring expertise in conflict data, escalation risk, and the dynamics of armed groups and state actors. My knowledge of how wars escalate, how casualty reporting is verified, and historical patterns in major new armed conflicts informs the likelihood that a qualifying conflict (new or substantially escalated) will kill 5,000+ people in 2025.",
+            "status_quo": "In most years, there is NOT a new conflict or substantial escalation (from a previously low-casualty conflict) that kills at least 5,000 people within a single year. The base rate for such events is low, though the early 2020s have seen an unusual surge in conflict activity.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Qualifying Criteria Strictness",
-                    "effect": "Decreases probability. Most ongoing high-casualty wars (Ukraine, Gaza, Ethiopia, Yemen) are ineligible since they exceeded 1,000 deaths in 2023 and/or 2024. Only genuinely new wars or clearly escalated prior wars with sub-1,000 deaths in both prior years count, making the pool of candidates small."
+                    "factor": "Historic base rate of new or escalated wars exceeding 5,000 deaths",
+                    "effect": "Decreases probability, as even in conflict-ridden years, most new or low-level escalations do not exceed this threshold."
                 },
                 {
-                    "factor": "Conflict Base Rate",
-                    "effect": "Decreases probability. Despite a record number of conflicts in 2024, the number of new conflicts each year that escalate to 5,000 deaths is historically low\u2014often zero or one annually. The base rate for such events is likely under 10% for any given year."
+                    "factor": "2024-2025 trend of record-high number of state conflicts (UCDP: 61 in 2024, 11 wars)",
+                    "effect": "Increases probability, as more active conflicts mean more chances for escalation, and global instability is higher."
                 },
                 {
-                    "factor": "Current Conflict Trends and Hotspots",
-                    "effect": "Increases probability. There is credible evidence of escalation in the Democratic Republic of Congo (DRC) in 2025, with intensification since January, large-scale displacement, and sharp increases in casualties and severe injuries (dozens of amputees per month). The DRC's eastern conflict may plausibly cross the 5,000 deaths mark if escalation continues."
+                    "factor": "Current major wars (Ukraine, Gaza, Sudan, Ethiopia) all well above threshold, but disqualified by prior-year death counts",
+                    "effect": "Decreases probability, as these cannot newly qualify per the resolution criteria."
                 },
                 {
-                    "factor": "Sudden Onset or External Shock",
-                    "effect": "Marginally increases probability. The global environment remains volatile, and 2024 saw an uptick in inter-state tensions and proxy warfare, increasing tail risk of a new war suddenly igniting (e.g., in the Sahel, Red Sea, or elsewhere). However, no such new war has clearly emerged as of early October."
+                    "factor": "Ongoing escalation and severe violence in eastern DRC (M23, Rwanda involvement)",
+                    "effect": "Increases probability, as the news mentions intensified violence and mass displacement since Jan 2025, with evidence of mass casualties and amputees, suggesting potential for a new escalation surpassing 5,000 deaths in 2025 (if 2023 and 2024 were below 1,000)."
+                },
+                {
+                    "factor": "CrisisWatch and UCDP reports of deteriorations (Cameroon, Sudan, Venezuela, Georgia, Mozambique, South Sudan)",
+                    "effect": "Slightly increases probability, as several regions are at risk of sudden escalations, though none yet clearly above the 5,000 threshold or documented as new wars."
+                },
+                {
+                    "factor": "Requirement for credible death toll reporting and clear conflict qualification (per Metaculus fine print)",
+                    "effect": "Decreases probability, as wars often lack clear verification, and the threshold may not be confidently reached or confirmed."
+                },
+                {
+                    "factor": "Recent decrease in overall annual death toll despite more conflicts (UCDP: 160,000 in 2024, down from 2022 peak)",
+                    "effect": "Slightly decreases probability, as new conflicts are tending to be less deadly than the largest ongoing wars."
+                },
+                {
+                    "factor": "Absence of major new qualifying wars in 2025 so far, per news and conflict trackers (most deaths are in ongoing wars)",
+                    "effect": "Decreases probability, as no clear evidence of a new or escalated (from <1,000 deaths) war exceeding 5,000 fatalities has emerged as of October 2025."
+                }
+            ],
+            "no_scenario": "No new armed conflict or qualifying substantial escalation (from under 1,000 deaths/year in 2023 and 2024) surpasses 5,000 deaths in 2025. The high death tolls remain concentrated in pre-existing major wars (Ukraine, Gaza, Sudan), none of which qualify. The DRC conflict, while severe, does not clearly cross the 5,000 death threshold within 2025, or reporting remains ambiguous. Other deteriorating conflicts (Cameroon, Venezuela, Georgia, Mozambique) either do not escalate to war level or have insufficient fatalities or state actor involvement.",
+            "yes_scenario": "A conflict that had fewer than 1,000 deaths in each of 2023 and 2024 surges in 2025 to exceed 5,000 deaths, with credible reports confirming the toll. The most plausible candidate is the DRC/M23 escalation, if fighting since January 2025 is proven to have caused 5,000+ deaths. Alternatively, a major surprise escalation (e.g., sudden state-on-state war in a previously low-casualty area, or an internal conflict in a large state) erupts and is well-documented by December 2025.",
+            "final_reasoning": "The base rate for a new or substantially escalated conflict (from low prior casualties) exceeding 5,000 deaths in a single year is low, though not negligible. The early 2020s have seen an uptick in both the number and intensity of armed conflicts. However, 2025's high death tolls remain primarily in ongoing wars that are disqualified by the fine print. The most plausible candidate for a qualifying Yes is the escalation in eastern DRC, where reports indicate a surge in violence and mass displacement. Yet, there is not (as of October) clear, credible confirmation that 5,000 deaths have occurred solely in 2025 as a result of a new or newly escalated conflict (with <1,000 deaths in 2023 and 2024). Other deteriorations (Cameroon, Venezuela, etc.) have not escalated to this level per current reporting. As a result, while the risk is above the historical base rate\u2014due to the exceptional levels of instability\u2014the evidence as of now does not justify a high probability. Factoring in the possibility of late-year or underreported escalation, the probability is slightly above baseline, but not extreme.",
+            "final_probability": 23
+        },
+        "Military Analysis (Casualty Estimation Methodology)": {
+            "time_to_resolution": "Approximately 2.5 months (until December 31, 2025), with potential for final resolution by January 31, 2026 if reporting is ambiguous.",
+            "perspective_relevance": "As an expert in Military Analysis (Casualty Estimation Methodology), my approach emphasizes rigorous scrutiny of credible casualty reports, alignment with established conflict datasets (e.g., UCDP, ACLED), and knowledge of how casualty reporting lags or estimation biases can affect real-time assessments. I focus on distinguishing between escalations in ongoing wars (per fine print: must have <1000 deaths in both 2023 and 2024 to count as new/substantially escalated) and the base rate of new high-casualty conflicts emerging annually.",
+            "status_quo": "The status quo is that, in most years, few new wars or escalations reach the 5,000-death threshold in a single year, especially under the strict criteria that the conflict must have had fewer than 1,000 deaths in each of the two preceding years.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of New High-Casualty Conflicts",
+                    "effect": "Decreases probability. UCDP and PRIO data show that while the number of state conflicts and wars is at a post-WWII high, most high-fatality conflicts in 2025 are continuations/expansions of wars already above the 1,000 deaths/year threshold in 2023/2024, making them ineligible under the question's criteria."
+                },
+                {
+                    "factor": "Ongoing Violence in the DRC (Congo)",
+                    "effect": "Increases probability slightly. There are credible reports of substantial escalation in 2025 involving M23 and other groups, with dramatic rises in amputees and displacement, suggesting a surge in violence. However, DRC has been in near-constant conflict, and 2023/2024 fatalities may have already exceeded 1,000 per year, likely disqualifying it unless this specific escalation is distinct and can be isolated in the data."
+                },
+                {
+                    "factor": "Escalation in Gaza and Middle East Conflicts",
+                    "effect": "Neutral or decreases probability. The Gaza war, Yemen, Ukraine, and other high-fatality conflicts are continuations of wars that already massively exceeded 1,000 deaths in 2023/2024, so further deaths in 2025 do not meet the 'new or substantially escalated with <1,000 deaths in prior years' requirement."
+                },
+                {
+                    "factor": "Sudan, Cameroon, Venezuela, Georgia, Mozambique, Madagascar, and Nepal: Emerging or Flare-up Conflicts",
+                    "effect": "Minimal increase. CrisisWatch notes risks of escalation, but as of October 2025, there is no credible evidence that any of these have reached 5,000 deaths in 2025, nor that they were below 1,000 in both 2023 and 2024."
                 },
                 {
                     "factor": "Reporting Lag and Data Ambiguity",
-                    "effect": "Marginally increases probability. In some African or Middle Eastern theaters, underreporting or delayed reporting can obscure the true scale of violence until after the fact, occasionally leading to late recognition of qualifying events."
+                    "effect": "Decreases probability. Latency in casualty data, especially in lower-profile conflicts, reduces the likelihood that a qualifying conflict will be clearly recognized and reported as exceeding the threshold before resolution. Metaculus may err toward 'No' or 'Ambiguous' if evidence is insufficient."
+                },
+                {
+                    "factor": "Civilian Targeting and Non-State Actor Violence",
+                    "effect": "Neutral. While civilian targeting is increasing, the fine print excludes terrorist attacks not involving state armed forces as a party, and most of the increase in civilian deaths is ineligible for this question\u2019s criteria."
                 }
             ],
-            "no_scenario": "Despite ongoing violence and a record number of conflicts, no new war or substantial escalation of a previously low-intensity conflict crosses the 5,000 deaths threshold in 2025. Existing high-casualty conflicts (Ukraine, Gaza, Sudan, Ethiopia) remain ineligible. The DRC conflict, while severe, falls short of 5,000 deaths due to either successful mediation, a plateau in violence, or insufficient escalation. No other theater sees a qualifying surge. By year-end, UCDP and ACLED data confirm no new or escalated conflict met the criteria.",
-            "yes_scenario": "The conflict in eastern DRC, which intensified early in 2025, surges past the 5,000 deaths threshold due to major offensives, mass atrocities, or regional intervention. Alternatively, a previously low-fatality conflict (e.g., in Cameroon, Mozambique, or the Sahel) dramatically escalates due to state collapse, external intervention, or jihadist offensives, rapidly producing 5,000+ deaths within the year. Post hoc data from UCDP/ACLED or UN agencies confirm the threshold was crossed.",
-            "final_reasoning": "The base rate for a new or substantially escalated war breaching 5,000 deaths in a single year is historically low, even in years of heightened global violence. The fine print excludes all ongoing high-casualty wars already above threshold in 2023/2024, sharply limiting eligible candidates. The DRC is the standout risk in 2025, with credible reports of severe escalation, mass displacement, and a surge in casualties and amputations since January. However, while the humanitarian toll is grave, there is not yet clear, public evidence that deaths have reached or will reach 5,000 within the current year, and reporting from the DRC is often incomplete or delayed. Other conflicts (e.g., Sudan, Yemen, Cameroon) do not appear to meet criteria based on available October 2025 information. Given the combination of a low historical base rate, strict qualifying criteria, and only one plausible current candidate, I assess the likelihood as modest but not negligible. I assign a probability slightly above the base rate to reflect the DRC risk and general global volatility, but remain cautious due to strict definitions and the fact that the DRC escalation could still fall short or remain ambiguous in fatality accounting.",
-            "final_probability": 22
-        },
-        "Military Analysis (Casualty Estimation Methodology)": {
-            "time_to_resolution": "Approximately 3 months (resolves at end of 2025, it is now October 8, 2025)",
-            "perspective_relevance": "As an expert in Military Analysis and Casualty Estimation Methodology, I bring a rigorous, data-driven approach to determining whether reported death tolls in conflicts are credible, whether escalation thresholds have been met, and how emerging or escalating conflicts compare to historical base rates. My expertise allows critical scrutiny of both open-source and official casualty figures, identification of reporting biases, and contextualization of conflict lethality in light of recent global trends.",
-            "status_quo": "No new war or substantial escalation to a previous war (with <1,000 deaths in each of 2023 and 2024) has resulted in at least 5,000 deaths in 2025.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Base Rate of New Major Wars/Escalations (5,000+ deaths in a year)",
-                    "effect": "Slightly increases probability. Historically, 1-2 new wars/escalations pass this threshold globally in a typical year, but 2021-2024 saw an uptick. However, most high-casualty conflicts (Ukraine, Gaza, Sudan) are continuations, not new/renewed escalations under the question's criteria."
-                },
-                {
-                    "factor": "2025 Conflict Landscape & UCDP Data",
-                    "effect": "Marginally increases probability. 2024 saw a record number (61) of armed conflicts, but most major wars are continuations. UCDP and PRIO data show a continued trend of many conflicts, but only a handful reach high lethality and most are protracted, not new substantial escalations."
-                },
-                {
-                    "factor": "Notable 2025 Escalations (Congo, Sudan, Yemen, Cameroon, Venezuela)",
-                    "effect": "Increases probability. Eastern DRC (Congo) has seen a substantial escalation in 2025, with major M23 offensives, large-scale displacement, and casualty surges. The Congo conflict is the most plausible candidate for crossing 5,000 deaths in 2025, given the intensity reported. Sudan remains highly lethal but has been ongoing with high casualties since 2023, likely exceeding the 1,000/year threshold earlier."
-                },
-                {
-                    "factor": "Question Fine Print (Excludes Gaza, Ukraine, Sudan, etc.)",
-                    "effect": "Decreases probability. Gaza, Ukraine, Sudan, and Yemen are excluded as they had >1,000 deaths in 2023 and 2024. This sharply limits eligible conflicts and means ongoing headline wars don't count."
-                },
-                {
-                    "factor": "Credibility and Timeliness of Death Reporting",
-                    "effect": "Slightly decreases probability. While large-scale violence and displacement in DRC are reported, precise death tolls are often delayed, undercounted, or disputed. It may be difficult to reach a firm, widely-accepted 5,000+ death count by January 2026, especially for conflicts outside major media focus."
-                },
-                {
-                    "factor": "Potential for Q4 2025 Surprise Escalation",
-                    "effect": "Slightly increases probability. There is always a risk of a late-year escalation in a previously low-lethality conflict (e.g., Cameroon, Venezuela, Mozambique) that could rapidly cross the threshold. However, this is rare and would require an abrupt, large-scale outbreak which is not currently evident in news reporting."
-                }
-            ],
-            "no_scenario": "Despite several active and escalating conflicts (notably in Congo, Sudan, Yemen, Cameroon, Venezuela), none of the conflicts that had fewer than 1,000 deaths in both 2023 and 2024 reach 5,000 deaths in 2025. Either fighting remains below this threshold, or data is insufficient to confirm the death toll by resolution time. The biggest candidate, the DRC/M23 conflict, results in high displacement and injuries but does not conclusively reach 5,000 deaths or credible sources are lacking.",
-            "yes_scenario": "The escalation in the Democratic Republic of Congo (M23 offensive and government counteroffensives) continues or worsens through Q4 2025, and credible sources (UCDP, ICRC, UN, or major media) confirm that at least 5,000 people were killed in 2025 alone, with clear evidence that the conflict had under 1,000 deaths in both 2023 and 2024. Alternatively, a sudden, severe outbreak in another eligible conflict zone (e.g., Cameroon, Venezuela, Mozambique) produces >5,000 deaths in 2025, with credible reporting.",
-            "final_reasoning": "Base rates suggest it is uncommon but not rare for a new war or renewed escalation to surpass 5,000 deaths in a given year\u2014especially with the record number of active conflicts. However, the vast majority of high-lethality wars in 2025 are continuations from prior years and thus ineligible under question rules. The Congo/M23 conflict stands out as the most plausible candidate: reports indicate a dramatic increase in violence and casualties in 2025, with displacement of 7 million and significant rises in amputations and injuries, suggesting mass violence. However, open-source and ICRC data currently focus on injuries and displacement more than direct fatality counts. UCDP and ACLED may eventually confirm deaths crossing the threshold, but as of early October 2025, there is no explicit, widely-accepted reporting of 5,000+ deaths specifically in 2025 and specifically from a conflict under the threshold in 2023/2024. The probability is thus higher than in a typical year due to the Congo escalation, but not overwhelming: there is still meaningful uncertainty regarding whether the death toll will be credibly established and whether it will clear the threshold. I estimate the chance at 35%, reflecting a moderately elevated but still minority probability that the Congo escalation or a late-breaking conflict will meet the criteria.",
-            "final_probability": 35
-        },
-        "Crisis Early Warning (Operational Risk Assessment)": {
-            "time_to_resolution": "Approximately 3 months until the end of 2025 (question resolves on events through Dec 31, 2025, possibly waiting for evidence until Jan 31, 2026).",
-            "perspective_relevance": "As an expert in Crisis Early Warning (Operational Risk Assessment), my approach prioritizes the use of base rates, pattern recognition in escalation signals, and close monitoring of leading indicators of mass violence. I also focus on the reliability and timeliness of casualty data collection, the likelihood of conflict escalation from sub-war to war thresholds, and the operational and logistical constraints that affect conflict lethality.",
-            "status_quo": "The status quo is that no new conflict or substantial escalation of a previous conflict that had under 1,000 deaths in both 2023 and 2024 has killed at least 5,000 people so far in 2025. Most large-scale conflicts killing 5,000+ annually (Ukraine, Gaza, Sudan) are continuations of wars already above the threshold in previous years, and would not count toward a 'Yes' resolution.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Base Rate of New/Resurging Conflicts Exceeding 5,000 Deaths",
-                    "effect": "Strongly decreases probability. Historically, only a handful of new wars or escalations cross the 5,000 deaths threshold in a given year, especially when filtering for cases with <1,000 deaths in both of the two previous years."
-                },
-                {
-                    "factor": "Current Hotspots and Recent Escalations",
-                    "effect": "Moderately increases probability. Eastern DRC is experiencing intensified violence and increased casualties in 2025, with references to mass displacement and hundreds of amputees, which could signal rising fatalities. However, reliable, aggregated death tolls indicating >5,000 deaths in 2025 from a previously 'sub-war' (<1,000 annual deaths) baseline are not yet confirmed."
-                },
-                {
-                    "factor": "Conflict Data Reporting Lag and Ambiguity",
-                    "effect": "Slightly increases probability. There is sometimes a delay in reporting, and in past years, some conflicts have been recognized as having crossed war thresholds retrospectively. This creates a tail probability that a qualifying conflict is underway but not yet recognized."
-                },
-                {
-                    "factor": "Regional and Global Trends in Armed Conflict",
-                    "effect": "Marginally increases probability. 2024 saw a record number of conflicts and a high number of wars (UCDP: 61 conflicts, 11 wars), but most deaths came from a few very large conflicts. The trend toward more, smaller conflicts increases the risk, but the 5,000-death threshold is still a high bar."
-                },
-                {
-                    "factor": "Escalation Risks in the DRC and Other African Theaters",
-                    "effect": "Increases probability modestly. The DRC's M23 conflict is intensifying, with references to mass displacement and possible mass atrocities, but evidence suggests most deaths are from previous conflicts or still below the 5,000 threshold for 2025."
-                },
-                {
-                    "factor": "Fine Print: Exclusion of Ongoing Large Wars",
-                    "effect": "Strongly decreases probability. The question's criteria explicitly exclude Gaza, Ukraine, and other conflicts already above the threshold in 2023/2024, removing the main sources of mass fatalities from consideration."
-                }
-            ],
-            "no_scenario": "Despite ongoing violence in several regions (e.g., eastern DRC, Cameroon, Sudan), the death toll in each remains below 5,000 for 2025, or the only conflicts exceeding that threshold are continuations of previously high-fatality wars (e.g., Gaza, Ukraine) and thus excluded. Data sources like UCDP, ACLED, and CrisisWatch report high violence but confirm no new or substantially escalated conflict meets all resolution criteria.",
-            "yes_scenario": "A conflict such as the M23 escalation in eastern DRC, or another under-the-radar crisis (e.g., new civil war in Cameroon, Mozambique, or a sudden dramatic escalation in Sudan's Darfur outside the main war zones), spirals rapidly, with credible sources later confirming at least 5,000 deaths in 2025, and death tolls in 2023/2024 were below 1,000. Alternatively, a new interstate war or a dramatic state-backed intervention in an existing conflict (with a new, distinct frontline and qualifying state involvement) crosses the threshold.",
-            "final_reasoning": "The base rate for new or significantly escalated conflicts crossing 5,000 deaths in a single year is low, especially after excluding all conflicts with >1,000 deaths in either 2023 or 2024. The DRC's M23 escalation is the most plausible candidate, but public reporting indicates severe violence and displacement without confirmed evidence of 5,000+ deaths so far in 2025, and the UCDP/ACLED data would likely reflect such a spike. Other hotspots mentioned (Cameroon, Sudan, Mozambique) show rising tension but not mass-lethal escalation. Reporting lags and undercounting are possible, but the threshold is high and Metaculus will seek verification from credible sources. The world remains highly conflict-prone, but most large-scale death tolls are currently from ongoing wars that do not count for this question. Taking all factors into account, including the status quo bias and exclusion criteria, the probability is low but not zero; there is a plausible, though unlikely, scenario of a late-year mass escalation in DRC or another theater.",
+            "no_scenario": "No conflict that had fewer than 1,000 deaths in both 2023 and 2024 escalates or ignites to the point of causing at least 5,000 deaths in 2025. All high-casualty conflicts in 2025 (Gaza, Ukraine, Sudan, DRC, Yemen) are continuations of prior years' wars that already exceeded the threshold, or new conflicts flare up but remain below 5,000 deaths due to limited duration, international intervention, or lack of reporting.",
+            "yes_scenario": "A new or previously low-intensity conflict (with <1,000 deaths in both 2023 and 2024) undergoes a dramatic escalation or outbreak in 2025\u2014perhaps, for example, an unexpected coup in Cameroon, a sudden major war in Venezuela, or the eastern Congo violence becoming a distinct, newly-counted front\u2014resulting in credible reporting of 5,000+ deaths within 2025.",
+            "final_reasoning": "Historical base rates show that new conflicts reaching the 5,000-death threshold in a single year under these criteria are rare. Most current mass-fatality conflicts (Gaza, Ukraine, Sudan, Yemen, DRC) already exceeded 1,000 deaths/year for two years running, making them ineligible unless a new, distinct front emerges. The DRC escalation, while severe, is likely a continuation and not a distinctly new conflict per UCDP/ACLED coding, unless Metaculus rules otherwise. Other risks (e.g., in Cameroon, Venezuela, Mozambique) have not, as of October, shown evidence of mass fatalities. Reporting lags and definitional ambiguity further decrease the chance that a qualifying conflict will be recognized and counted in time. Thus, while the world remains at a high level of violence, the specific criteria of this question make a 'Yes' resolution unlikely, barring major, unexpected developments in Q4.",
             "final_probability": 12
         },
-        "Crisis Early Warning (Conflict Early Warning Models)": {
-            "time_to_resolution": "Approximately 3 months until 2026-01-01 (question resolves by end of 2025; possible extension to 2026-01-31 for ambiguous cases).",
-            "perspective_relevance": "As an expert in Crisis Early Warning (Conflict Early Warning Models), I systematically assess conflict risk by combining quantitative data (base rates, historical frequencies) with qualitative indicators (escalation signals, regional trends, actor incentives). I can disaggregate violence by conflict type and anticipate where sudden escalations or new wars are plausible, leveraging datasets (e.g., UCDP, ACLED) and the latest field/developmental warning signals.",
-            "status_quo": "In most years, no new or escalated conflict crosses the threshold of 5,000 deaths in a single year, given the UCDP base rate for new high-fatality conflicts is low. The world has many ongoing conflicts, but the emergence of a new war or major escalation resulting in 5,000+ deaths in a single year is rare.",
+        "Crisis Early Warning (Operational Risk Assessment)": {
+            "time_to_resolution": "Approximately 2.5 months until December 31, 2025 (with possible delay to January 31, 2026 for ambiguous cases).",
+            "perspective_relevance": "As a crisis early warning and operational risk assessment expert, I focus on systemic indicators of escalation, state and non-state actor capabilities, conflict base rates, and real-time signals of mass violence. My approach weighs historical context, structural risk multipliers, and the unique constraints of the question (e.g., requiring <1,000 deaths in both 2023 and 2024, and >5,000 in 2025 for a new/escalated war). This lens helps distinguish between chronic high-death conflicts and truly new/substantially escalated wars.",
+            "status_quo": "Most war deaths in 2025 are continuations of conflicts that already exceeded 1,000 annual deaths in 2023 or 2024 (e.g., Ukraine, Gaza), thus not qualifying under the question. Historically, only a few new wars each year reach the 5,000 death threshold, especially given the requirement that prior years\u2019 deaths were under 1,000.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Base rate of new high-fatality conflicts",
-                    "effect": "Decreases probability. Historically, only 0-2 new conflicts per year reach 5,000 deaths; most wars are continuations or below threshold."
+                    "factor": "Base rate of new or substantially escalated wars exceeding 5,000 deaths in a given year",
+                    "effect": "Increases probability slightly, but remains low; historically, only 0\u20132 such wars per year, with the modal outcome being zero."
                 },
                 {
-                    "factor": "Current global conflict trends (2024-2025 data)",
-                    "effect": "Increases probability. 2024 set a record for the number of state conflicts (61), with rising inter-state escalation and more civilian targeting, raising the risk of new wars or escalations."
+                    "factor": "Current conflict hotspots and early warning signals for escalation (e.g., DRC/M23, Sudan, Yemen, Venezuela, Cameroon, Georgia, Mozambique)",
+                    "effect": "Increases probability modestly, as DRC (M23) is closest to qualifying, but even there, the likelihood of surpassing 5,000 deaths from a base under 1,000 is not yet established."
                 },
                 {
-                    "factor": "Active conflict hot spots with recent escalation signals",
-                    "effect": "Increases probability. DRC (M23, Rwanda involvement), Sudan (El Fasher), and Yemen (Houthi escalation) show credible signs of possible substantial escalation or new fronts, some with external state involvement."
+                    "factor": "Reported death tolls and conflict intensity in 2025 for potential candidate conflicts",
+                    "effect": "Neutral to low. No strong evidence yet that any new conflict or escalation (per UCDP/ACLED data and news) has breached the 5,000 death mark in 2025, with deaths in DRC, Cameroon, or Venezuela likely below that threshold so far."
                 },
                 {
-                    "factor": "Threshold exclusion of ongoing high-fatality wars (Gaza, Ukraine, etc.)",
-                    "effect": "Decreases probability. The largest current wars (Ukraine, Gaza, Sudan) are excluded unless a new state joins or new front opens, limiting eligible candidates."
+                    "factor": "Temporal proximity to year-end",
+                    "effect": "Decreases probability. With less than three months left, the window for a new or recently escalated conflict to pass 5,000 deaths is closing rapidly. Most conflicts that reach this scale do so via early, rapid escalation, which is not clearly observed this year."
                 },
                 {
-                    "factor": "Recent regional diplomatic interventions and peace efforts",
-                    "effect": "Slightly decreases probability. US and international actors are actively mediating in Gaza, Sudan, and DRC; although fragile, peace efforts can dampen escalation risk in some theaters."
+                    "factor": "Reporting lag and data ambiguity",
+                    "effect": "Slightly increases probability, as some conflicts (e.g., in DRC or Sudan) may have underreported fatality numbers and could be reclassified upwards, but Metaculus is likely to wait for credible sources before resolving Yes."
                 },
                 {
-                    "factor": "Recent indicators of mass displacement and civilian targeting",
-                    "effect": "Increases probability. Reports from DRC and Sudan indicate sharp increases in displacement, amputees, and civilian casualties, which historically correlate with surges in conflict lethality."
-                },
-                {
-                    "factor": "Lack of clear, large-scale new conflict onset (Jan\u2013Oct 2025)",
-                    "effect": "Decreases probability. As of October, no clearly new war or major escalation with 5,000+ deaths has been reported, and historical base rates show that most such conflicts are evident by mid-year."
+                    "factor": "Fine print exclusions (e.g., Gaza, Ukraine, Yemen, ongoing wars all disqualified by prior death counts)",
+                    "effect": "Decreases probability sharply, as the main conflicts driving global fatality spikes are ineligible."
                 }
             ],
-            "no_scenario": "Despite high instability and localized surges (e.g., DRC, Sudan, Yemen), no single conflict that had fewer than 1,000 deaths in both 2023 and 2024 escalates to 5,000+ deaths within 2025. Ongoing diplomatic efforts prevent regional spillover, Rwanda stops short of overt, large-scale intervention in DRC, and other flashpoints remain below the mass-fatality threshold. No new interstate war or major new front emerges.",
-            "yes_scenario": "A conflict such as in eastern DRC (with M23 and possible overt Rwandan involvement) dramatically escalates, with fighting in Goma or Bukavu resulting in mass civilian casualties and surpassing 5,000 deaths, perhaps triggered by state intervention or collapse of peace talks. Alternatively, a new or previously low-fatality insurgency in a high-risk country (e.g., Cameroon, Venezuela, South Sudan) escalates rapidly due to external intervention or loss of government control, exceeding the fatality threshold within the year.",
-            "final_reasoning": "The base rate for a new or substantially escalated conflict (with <1,000 deaths in each of 2023 and 2024) surging to 5,000+ deaths within a single year is low\u2014typically 0-2 per year, often none. The current period is characterized by a record number of state conflicts and increased inter-state activity, raising the systemic risk above the historical average. However, most ongoing wars with very high death tolls (Ukraine, Gaza, Sudan) are either ineligible due to exceeding the 1,000 annual death threshold in 2023/2024, or do not meet the criteria for a new war or major new front. The most credible candidate is the DRC, where the M23 conflict\u2014with strong allegations of Rwandan support\u2014has seen sharp escalation in 2025 (surge in amputees, displacement, and military recruitment), but as of October, open-source and UCDP data do not confirm that fatalities have crossed the 5,000 threshold or that Rwanda has overtly intervened on a new scale. Other risks (Yemen, Cameroon, Venezuela, South Sudan) show deterioration but lack evidence of new, mass-fatality escalations so far. Given these factors, the probability is substantially higher than the long-term average (perhaps 10-12%), but remains below even odds due to the lack of confirmed, ongoing high-fatality new wars as of October. With three months remaining, there is a non-trivial chance that a late-year escalation or state intervention (especially in DRC) could push a conflict over the threshold, but the most likely outcome is that 2025 will not see a qualifying new or substantially escalated war with 5,000+ deaths.",
-            "final_probability": 23
+            "no_scenario": "No new or escalated conflict with <1,000 deaths in 2023/2024 crosses the 5,000-death threshold in 2025. DRC's M23 conflict, despite intensification and high displacement, remains below 5,000 deaths for the year. Other hotspots (e.g., Cameroon, Venezuela, Georgia) also fail to escalate to war-level fatality rates due to either effective containment, international mediation, or insufficient scale of violence. The question resolves No as in most recent years.",
+            "yes_scenario": "A conflict like DRC/M23 dramatically escalates in Q4 2025, with a sudden, large-scale massacre, military campaign, or regional intervention that pushes cumulative 2025 deaths above 5,000 and credible monitors confirm this. Alternatively, an unforeseen new war (e.g., between state actors in a previously cold region, or a major state-led crackdown on insurgents) erupts after October 2025 and rapidly meets the threshold by year-end.",
+            "final_reasoning": "The base rate for a new or substantially escalated war exceeding 5,000 deaths in a single year, when the same conflict had <1,000 deaths in each of the previous two years, is very low\u2014generally zero or one per year. Current news and conflict monitoring (UCDP, ACLED, CrisisWatch) do not report any such conflict reaching the threshold as of mid-October 2025. The DRC/M23 escalation is the only plausible candidate, but available data (surge in amputees, displacement, 800+ severe injuries, but no official death tolls reaching several thousand) suggests high violence but likely still below 5,000 deaths for 2025 so far. The window for a new conflict to escalate to this scale in the remaining months is tight, given the usual ramp-up time for such mass casualty events and the historical rarity of late-year, explosive escalations. Reporting lag could be a wild card, but Metaculus is likely to err on the side of caution and ambiguity if numbers are not clear. Given these factors, the probability is somewhat above 'very unlikely' but well below even odds. I set it at 13%, reflecting the elevated global conflict environment but the strong inertia of the status quo, the restrictive criteria, and lack of a clear qualifying case as of now.",
+            "final_probability": 13
+        },
+        "Crisis Early Warning (Conflict Early Warning Models)": {
+            "time_to_resolution": "Approximately 2.5 months (question resolves on December 31, 2025; today is October 14, 2025).",
+            "perspective_relevance": "As an expert in crisis early warning models, I focus on early indicators of conflict escalation, base rates of large-scale violence onset, and the structural and trigger factors that determine whether a new or sharply escalated war will break out and cause mass casualties within a short period. My perspective is especially relevant because this question is about predicting a rare but high-impact event (a new or escalated conflict causing >5,000 deaths in a single year) and requires parsing current trends, model outputs, and signals of imminent large-scale violence.",
+            "status_quo": "In a typical year, very few new wars or escalations from low-intensity conflicts cross the 5,000 deaths threshold. Most new or sharply escalated wars that do so are in fragile states with ongoing instability, and even in high-conflict years, the emergence of a wholly new mass-fatality war is rare compared to the persistence of existing major wars.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of New Major Wars",
+                    "effect": "Decreases probability. UCDP and PRIO data show that, on average, only 0-2 new conflicts per year cross the 1,000 deaths threshold, and even fewer reach 5,000 in one year. The base rate for a new or sharply escalated war reaching 5,000 deaths is likely below 10% per year."
+                },
+                {
+                    "factor": "Exceptionally High Current Conflict Levels",
+                    "effect": "Increases probability. 2024 saw a record number of state conflicts (61), with 11 crossing the war threshold (>1,000 deaths), and a high level of ongoing violence. Structural conditions (polarization, weak states, proxy warfare) are at post-Cold War highs, raising the risk."
+                },
+                {
+                    "factor": "Recent Escalation and Mass Violence in DRC (Congo)",
+                    "effect": "Strongly increases probability. News in October 2025 describes a major intensification of the DRC conflict, with M23 and other groups surging in activity, high displacement, and a dramatic rise in amputees and prosthetics produced. These are strong indirect indicators of mass casualties, possibly approaching or surpassing 5,000 deaths in 2025, and the DRC conflict was below 1,000 deaths in both 2023 and 2024 (meeting the question's criteria for a 'new' war)."
+                },
+                {
+                    "factor": "No Other Clear New Wars at Sufficient Scale in 2025",
+                    "effect": "Decreases probability. Aside from DRC, the major wars (Ukraine, Gaza, Sudan, Yemen, Ethiopia) are all continuations of conflicts well above the 1,000-death threshold in 2023 and 2024, so they don't qualify under the question's rules. Venezuela, Georgia, Cameroon, Mozambique, Nepal, and Madagascar all have notable unrest or smaller-scale violence but lack evidence of >5,000 deaths in 2025."
+                },
+                {
+                    "factor": "Reporting Lag and Data Ambiguity",
+                    "effect": "Slightly decreases probability. It is often hard to get timely, credible death tolls from new escalations by year-end; some events that might look like potential 'yes' cases (e.g., DRC) could fall short in official fatality counts or have ambiguous data leading to Metaculus ambiguity or a 'no' resolution."
+                },
+                {
+                    "factor": "Current Trajectory in DRC",
+                    "effect": "Strongly increases probability. The October 2025 news highlights continued escalation, including mass displacement and direct attacks on civilians, and strong evidence of major casualties. If this trend continues for the rest of 2025, the >5,000 deaths threshold is credible."
+                }
+            ],
+            "no_scenario": "Despite the dramatic escalation in DRC, the total number of deaths attributable to the conflict in 2025 is officially counted as less than 5,000, or credible sources are insufficient to confirm the number. Other potential flashpoints (Venezuela, Cameroon, Mozambique, Nepal, Madagascar, Georgia) do not escalate to mass-casualty events. No new state-on-state or major civil war erupts at sufficient scale elsewhere. Metaculus resolves as 'No' based on the absence of qualifying new or escalated wars with >5,000 deaths.",
+            "yes_scenario": "The DRC conflict, having sharply escalated from well below the 1,000 death threshold in 2023 and 2024, sees mass violence in 2025 due to M23 and allied offensives, government counterattacks, and associated atrocities, resulting in credible estimates of >5,000 deaths before year's end. This is well-reported by credible sources such as UCDP, ACLED, ICRC, or the UN. Metaculus resolves 'Yes' based on this single case, as no other new war appears to cross the threshold.",
+            "final_reasoning": "Base rate analysis says a new or escalated war crossing 5,000 deaths is rare (<10% per year). However, 2024-2025 is a period of exceptional global instability, and the DRC presents a textbook early warning case: a severe, sustained escalation from a multi-year low-casualty conflict, now featuring mass atrocities, displacement, and indirect indicators of high fatalities (e.g., a spike in amputees, ICRC activity, and displacement figures). No other conflict plausibly meets the criteria. The key risk is that confirmed death tolls may be hard to certify by credible sources by year's end, though the scale of violence suggested by current data makes it likely that 5,000+ deaths are reached and documented. Given the severe warning signs, base rate adjustment, and current trajectory, the probability is much higher than usual, but not near certainty due to data risks and the possibility of a late-year de-escalation. I assign a probability of 65%.",
+            "final_probability": 65
         },
         "Humanitarian Response (Complex Emergency Analysis)": {
-            "time_to_resolution": "Approx. 3 months (question resolves at the end of 2025, today is 2025-10-08)",
-            "perspective_relevance": "As a humanitarian response and complex emergency analysis expert, my perspective centers on the early detection of escalatory patterns, civilian targeting, displacement figures, and the mechanisms by which violence rapidly scales in fragile contexts. This includes understanding conflict escalation triggers, intergroup dynamics, and how humanitarian system signals (e.g., displacement, amputee rates, food insecurity) often precede or accompany large-scale mortality events. I am also attuned to the nuances of conflict data, reporting lags, and the criteria used by trackers like UCDP and ACLED.",
-            "status_quo": "No new war or substantial escalation (that previously had fewer than 1,000 deaths in 2023 or 2024) has resulted in 5,000+ deaths in 2025. Most major fatal conflicts (Ukraine, Gaza, Sudan) began earlier and would not qualify unless frontlines shifted dramatically or a new belligerent joined.",
+            "time_to_resolution": "Approximately 2.5 months (until December 31, 2025, with possible extension for ambiguous death counts to January 31, 2026)",
+            "perspective_relevance": "As a humanitarian response and complex emergency analyst, my expertise is in interpreting conflict data, civilian and combatant casualty reporting, and understanding how humanitarian crises escalate or abate based on field-level developments. This perspective is essential for distinguishing between chronic high-casualty wars and genuinely new or substantially escalated conflicts that meet the question's death threshold and base rate criteria.",
+            "status_quo": "No new war or substantial escalation (as defined: <1,000 deaths in each of 2023 and 2024, then 5,000+ deaths in 2025) has occurred or been credibly reported so far in 2025.",
             "perspective_derived_factors": [
                 {
-                    "factor": "High global baseline of conflict",
-                    "effect": "Increases probability. With 61 state conflicts in 2024, the highest since WWII, and a historic trend toward more wars, the likelihood of at least one new or sharply escalating conflict crossing 5,000 deaths is higher than in most post-Cold War years."
+                    "factor": "Recent Conflict Trends/High Base Rates",
+                    "effect": "Increases probability. 2024 saw a record number of state-involved conflicts (61, with 11 'wars'), indicating a historically high baseline for potential new escalations, though the majority of deaths are concentrated in longstanding conflicts."
                 },
                 {
-                    "factor": "Stringency of Metaculus criteria (new/escalated war, <1,000 prior deaths/year)",
-                    "effect": "Decreases probability. Most mass-fatality conflicts ongoing in 2025 (Ukraine, Gaza, Sudan, Ethiopia, Yemen) are continuations, not new, and exceeded the 1,000 deaths threshold in 2023/2024, making them ineligible unless a new state joins or a clear, separately-counted escalation occurs."
+                    "factor": "Strict Resolution Criteria on 'New' or 'Escalated' Conflicts",
+                    "effect": "Decreases probability. Most ongoing high-fatality conflicts (Ukraine, Gaza, Sudan, Ethiopia) already exceeded 1,000 deaths per year in 2023 and/or 2024, and so would not qualify as 'new' or 'substantially escalated' under the question's rules."
                 },
                 {
-                    "factor": "Ongoing escalation in DRC (Congo), especially M23 conflict",
-                    "effect": "Increases probability. Reporting points to a dramatic escalation in 2025, with major displacement (over 7 million), surging amputee cases, and drone/airstrikes. If 2023/2024 deaths were below 1,000 and 2025 sees mass killings, this could qualify, especially given increased violence and humanitarian indicators (e.g., prosthetic demand)."
+                    "factor": "Eastern DRC (M23) Escalation",
+                    "effect": "Increases probability. News reports indicate a marked surge in violence since January 2025, with new offensives, mass displacement, and a rapidly rising number of severely injured civilians. If 2023 and 2024 death tolls were below 1,000, this could qualify; however, open-source data needed for confirmation."
                 },
                 {
-                    "factor": "Data/reporting lag and ambiguity",
-                    "effect": "Decreases probability slightly. Death tolls in new/remote conflicts can take months or years to confirm, and undercounting is common, especially for non-state violence or in regions with limited access. This could delay or lower the likelihood of a clear 'Yes' resolution within the Metaculus timeframe."
+                    "factor": "Sudan Civil War, Yemen, and Other Flashpoints",
+                    "effect": "Neutral to slightly decreases probability. These conflicts are already chronic and high-fatality, so unlikely to qualify unless a truly new escalation or state entry occurs."
                 },
                 {
-                    "factor": "Other at-risk regions (Sudan, Cameroon, Mozambique, Georgia, Venezuela, etc.)",
-                    "effect": "Slightly increases probability. CrisisWatch and news reports highlight deteriorating situations and new outbreaks (e.g., Sudan\u2019s El Fasher, Cameroon\u2019s electoral violence, Mozambique IS attacks), but few have clear evidence of approaching the 5,000-death threshold in 2025\u2014though risks remain."
+                    "factor": "Base Rates of Conflict Escalation to 5,000+ Deaths",
+                    "effect": "Decreases probability. Historically, the majority of conflicts do not cross the 5,000 deaths/year threshold in their first or newly escalated year. Base rates for such sharp escalations are low, even in years with many conflicts."
                 },
                 {
-                    "factor": "No evidence of major new inter-state war or dramatic new escalation by a new state actor in 2025",
-                    "effect": "Decreases probability. Despite a record number of conflicts, no reporting confirms a new state-level war crossing the 5,000-death threshold in 2025 under Metaculus's rules."
+                    "factor": "Improved Information and Reporting",
+                    "effect": "Slightly increases probability. Better monitoring (UCDP, ACLED, CrisisWatch) means fewer qualifying escalations are likely to be missed, but also makes it clearer that most new conflicts are lower-fatality."
                 }
             ],
-            "no_scenario": "No new or substantially escalated conflict that had <1,000 deaths in 2023/2024 crosses the 5,000-death mark in 2025. Ongoing wars (Ukraine, Gaza, Sudan, Ethiopia) continue to be the main sources of mass casualties, but none meet the criteria for a new/escalated conflict per the question's rules. DRC, while deteriorating, fails to reach the 5,000-death threshold (or does so ambiguously/too late for confirmation). Other flashpoints (Cameroon, Mozambique, Georgia, Venezuela) have outbreaks but not at this scale.",
-            "yes_scenario": "A dramatic escalation in eastern DRC\u2014potentially driven by the M23 rebellion and regional dynamics\u2014involves mass killings, ethnic violence, and/or state-on-state clashes, with credible sources confirming >5,000 deaths in 2025, after having <1,000 in each of 2023 and 2024. Alternatively, a major new war or escalation (e.g., sudden full-scale violence in Cameroon\u2019s Anglophone regions, South Sudan, or a new front in Yemen) erupts and crosses the threshold, with reporting robust enough to satisfy Metaculus.",
-            "final_reasoning": "The base rate for new wars killing >5,000 in a year is low, but not negligible in the current global context: historically, only 1-2 such conflicts emerge per year, and usually fewer meet the 'new or escalated (from low baseline)' criteria. Most mass-fatality conflicts in 2025 (Ukraine, Gaza, Sudan) are continuations, not qualifying. However, the DRC's M23 conflict presents a significant risk: 2025 reporting shows a sharp increase in violence, displacement, and amputations, with UN and humanitarian sources noting severe escalation. If prior years\u2019 death tolls were below 1,000 (which matches the pattern for M23 before 2025), this could plausibly cross the 5,000 mark in 2025. Other regions flagged by CrisisWatch (Sudan, Cameroon, Mozambique, Georgia, Venezuela) have localized spikes but lack evidence of mass-death escalation so far. Given reporting lags, ambiguity is possible, but the DRC scenario is worryingly close to a 'Yes'\u2014though not yet confirmed. Weighing the base rate, current evidence, and the strong possibility of DRC escalation (plus smaller but real risks elsewhere), I assess the probability as moderately above baseline but not extreme.",
-            "final_probability": 38
+            "no_scenario": "All major ongoing wars (Gaza, Ukraine, Sudan, Yemen, Ethiopia, Myanmar) fail to meet the 'new or substantially escalated' criteria, as they already had >1,000 deaths in 2023/2024. Eastern DRC's violence, while severe, does not reach 5,000 deaths in 2025 or is found to have already exceeded the 1,000-death threshold in previous years, disqualifying it. Other flashpoints (Venezuela, Cameroon, Mozambique, etc.) see violence but remain below the threshold. No sudden regional war or coup results in mass deaths.",
+            "yes_scenario": "The DRC's M23 conflict, based on 2023/2024 data, is shown to have had <1,000 deaths in each of those years, with 2025 seeing a massive and well-documented escalation that clearly surpasses 5,000 deaths (e.g., via a major offensive, ethnic massacres, or state-backed operations). Alternatively, a new conflict or substantial interstate intervention in another theater (e.g., a sudden coup leading to civil war, or a new state joining an existing conflict on a new front) causes rapid, large-scale fatalities verified by credible sources.",
+            "final_reasoning": "The world is in a period of historically high conflict incidence, but the vast majority of mass-fatality violence remains in wars that do not meet the 'new/substantially escalated' criteria. The strict threshold\u2014both temporal (<1,000 deaths in 2023, 2024) and quantitative (5,000+ deaths in 2025)\u2014significantly reduces the base rate to perhaps one event every several years, even in recent turbulent times. The only plausible current candidate is the DRC's M23 conflict, but open-source UCDP and ACLED data suggest deaths in eastern DRC likely exceeded 1,000 in at least one of 2023 or 2024, which would disqualify it. Other flashpoints have not shown evidence of such a sharp, qualifying escalation in 2025 so far. Given these factors, and the lack of clear evidence for a qualifying conflict as of mid-October, the probability is somewhat higher than the historical long-term average (perhaps 5-10%), but well below even odds. I assign a probability of 13%.",
+            "final_probability": 13
         },
         "International Relations (Realism)": {
-            "time_to_resolution": "Approximately 2 months and 3 weeks until the end of 2025, plus potential delay until January 31, 2026 for final resolution.",
-            "perspective_relevance": "As an expert in International Relations (Realism), my analysis emphasizes the role of state interests, power dynamics, and security dilemmas in driving large-scale violent conflict. Realism is particularly relevant in forecasting war outbreak and escalation because it focuses on the enduring structural factors\u2014such as anarchy, power transitions, and security competition\u2014that shape the likelihood of new wars or substantial escalations, especially those involving state actors or significant state-backed armed groups.",
-            "status_quo": "As of early October 2025, no new war or substantial escalation that began in 2025 has been widely reported to have surpassed 5,000 deaths within the year, according to the UCDP and major conflict trackers. Ongoing high-casualty conflicts in Gaza, Ukraine, Sudan, and Ethiopia do not qualify under the question's criteria, as they each had more than 1,000 deaths in previous years.",
+            "time_to_resolution": "Approximately 2.5 months (question resolves at the end of 2025, currently mid-October 2025).",
+            "perspective_relevance": "A Realist perspective in International Relations emphasizes state-centric drivers of war, security dilemmas, power transitions, and the anarchic international system. This approach is particularly relevant for forecasting major escalations or new wars, as it draws attention to shifts in state power, regional balances, and the incentives or constraints faced by state actors. Realism also values base rates and the durability of the status quo, except where structural shifts or acute crises create strong incentives for escalation.",
+            "status_quo": "No new war or substantial escalation has killed at least 5,000 people in 2025 (where the conflict had fewer than 1,000 deaths in 2023 and 2024), as of mid-October 2025. Several existing wars (Ukraine, Gaza, Sudan, etc.) continue to have high fatalities, but these are not 'new' or 'substantially escalated' according to the question's criteria.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Base Rate of New High-Intensity Conflicts",
-                    "effect": "Decreases probability. Historically, the emergence of entirely new conflicts or escalations surpassing 5,000 deaths within a single year is rare compared to the persistence of ongoing wars. Most annual war deaths are concentrated in a handful of long-running conflicts."
+                    "factor": "Base Rate of New High-Fatality Conflicts",
+                    "effect": "Decreases probability. Historically, the emergence of a new conflict or escalation surpassing 5,000 deaths within a single year, after being relatively quiet (under 1,000 deaths for two years), is rare. Most high-fatality conflicts in 2025 are continuations of wars that were already intense in 2023-2024."
                 },
                 {
-                    "factor": "Elevated Global Conflict Levels",
-                    "effect": "Slightly increases probability. The UCDP, PRIO, and CrisisWatch all report record numbers of state conflicts and wars in 2024, suggesting a higher baseline risk of new escalations than in the past decade."
+                    "factor": "Current Conflict Landscape and Escalation Potential",
+                    "effect": "Slightly increases probability. The global data shows a record number of state conflicts in 2024 (61, with 11 at the war threshold), and multiple situations (DRC, Sudan, Yemen, Venezuela, etc.) with potential for new escalations due to regional instability, failed diplomacy, or external interventions."
                 },
                 {
-                    "factor": "Current Conflict Hotspots (e.g., Eastern Congo)",
-                    "effect": "Increases probability. The DRC's M23 escalation since January 2025 is a plausible candidate for a qualifying surge, given reports of intensified violence, displacement, and civilian casualties. However, confirming a death toll above 5,000 for 2025 alone remains uncertain at this time."
+                    "factor": "Time Remaining in 2025",
+                    "effect": "Decreases probability. With only 2.5 months left, the window for a new conflict (or a previously low-level one) to escalate and produce 5,000 deaths within the calendar year is extremely limited, given the time required for violence to reach such a scale."
                 },
                 {
-                    "factor": "Barriers to Major New Interstate Wars",
-                    "effect": "Decreases probability. Realist logic and recent history show that great powers and regional actors are generally risk-averse due to the high costs and unpredictability of major new wars, especially given the current international attention on existing conflicts."
+                    "factor": "International and Regional Restraints",
+                    "effect": "Decreases probability. Despite record conflict numbers, there is significant international attention and mediation (e.g., US ceasefire proposals in Gaza, peace talks in DRC), which acts as a brake on sudden major escalations."
                 },
                 {
-                    "factor": "Potential for Substantial Escalation of 'Dormant' Conflicts",
-                    "effect": "Increases probability. Some conflicts\u2014such as those in Cameroon, Venezuela, or Georgia\u2014are experiencing signs of rising violence or instability, but have not yet reached the 5,000-death threshold. Sudden escalations are possible, especially if external support, state collapse, or security dilemmas intensify."
-                },
-                {
-                    "factor": "Reporting and Verification Lags",
-                    "effect": "Decreases probability. The fine print requires credible sourcing and clear attribution of at least 5,000 deaths in 2025. In many conflicts, especially in Africa, under-reporting and delays in death toll aggregation may prevent a clear Yes resolution within the timeframe."
+                    "factor": "Potential for Reporting Delays or Surprises",
+                    "effect": "Very slightly increases probability. Some conflicts (e.g., DRC, Cameroon, Venezuela) involve areas with poor reporting; it is possible a major escalation is currently underway but not yet fully recognized in international data."
                 }
             ],
-            "no_scenario": "Despite intensifying violence in hotspots like eastern DRC, Cameroon, or Venezuela, none of these conflicts surpass 5,000 documented deaths in 2025, either due to insufficient escalation, successful mediation, or incomplete reporting. Existing major wars (Gaza, Ukraine, Sudan) remain the main sources of mass casualties but are ineligible under the question's death threshold for 2023/2024. No new interstate or major civil war emerges to meet the criterion.",
-            "yes_scenario": "A major escalation in eastern Congo (M23 vs. FARDC) or another flashpoint (e.g., Cameroon\u2019s Anglophone crisis, sudden state collapse in Sudan's neighbors, or a Venezuela-U.S. confrontation) results in concentrated violence and at least 5,000 deaths in 2025. Sufficient international monitoring and reporting confirm the toll. Alternatively, a previously low-intensity insurgency or coup spirals into mass violence, exceeding the threshold within the calendar year.",
-            "final_reasoning": "The historical base rate for new or substantially escalated wars surpassing 5,000 deaths in a single year is low, even during years of elevated overall conflict. Most mass-fatality events occur in persistent, high-casualty wars, which are ineligible under this question\u2019s criteria. However, 2024 and 2025 have seen record numbers of state conflicts and several regions (most notably eastern Congo) show signs of intensification. The news highlights a dramatic rise in casualties and displacement in eastern DRC, with credible reports of hundreds of amputees already, suggesting a surge in violence but not yet confirming a 5,000-death toll for 2025. Other potential hotspots\u2014Cameroon, Venezuela, Sudan\u2019s periphery, Georgia\u2014show increased risks but not yet clear evidence of mass fatalities. Realist logic suggests that while the international system is unstable, states remain cautious about direct escalation into major new wars due to the risks and costs involved. Verification barriers\u2014especially in Africa\u2014make it less likely a qualifying conflict will be both real and credibly documented within the year. As of early October, no new or escalating conflict is widely known to have surpassed the threshold, but with three months remaining, a late-year surge is not impossible. Balancing base rates, current news, and the status quo bias, the probability leans toward No, but with significant tail risk.",
-            "final_probability": 23
+            "no_scenario": "Despite continued violence in many regions, no new conflict or escalation that had fewer than 1,000 deaths in both 2023 and 2024 crosses the 5,000-fatality mark in 2025. Ongoing wars (Gaza, Ukraine, Sudan) continue at high levels but do not qualify as 'new' or 'substantially escalated' per the resolution criteria. Potential flashpoints (e.g., DRC's M23 conflict, Venezuela maritime tensions, Cameroon separatists) see unrest but fatalities remain below the threshold or are too dispersed and slow-moving to reach 5,000 by year-end.",
+            "yes_scenario": "A conflict that was previously relatively quiet (fewer than 1,000 deaths in 2023 and 2024) rapidly escalates due to sudden state intervention, a coup, or a failed peace process, resulting in at least 5,000 deaths between January and December 2025. For example, the DRC's M23 conflict\u2014if it was under the fatality threshold in the prior years\u2014could escalate further, possibly due to overt Rwandan involvement or a state collapse, causing mass civilian and combatant casualties. Alternatively, a sudden, under-reported escalation in a place like Cameroon or Venezuela could push fatalities over the threshold, but this would need to be confirmed by credible sources.",
+            "final_reasoning": "A review of the news and conflict datasets strongly indicates that while 2025 has seen extremely high levels of violence globally, the overwhelming majority of mass-fatality conflicts are continuations of wars that were already at or above the threshold in 2023 and 2024 (e.g., Ukraine, Gaza, Sudan). The UCDP and PRIO data show 61 conflicts in 2024, but the number of new conflicts with mass fatalities is much lower. The DRC's M23 escalation is notable, but it is unclear if fatalities in 2023-2024 were below 1,000, and whether 2025 has crossed 5,000. Most reports point to protracted, not sudden, escalations. Other potential flashpoints (Cameroon, Venezuela, etc.) have seen violence but not at the scale or pace required. With less than three months remaining, and the logistical difficulty for a new/low-level conflict to reach 5,000 deaths so quickly, the base rate plus time constraint makes a Yes outcome unlikely. However, some uncertainty remains due to incomplete data from conflict zones (especially DRC), so a small but non-negligible probability is warranted.",
+            "final_probability": 7
         },
         "International Relations (Democratic Peace Theory)": {
-            "time_to_resolution": "Less than 3 months (resolves January 1, 2026; today is October 8, 2025)",
-            "perspective_relevance": "As an expert in International Relations and Democratic Peace Theory, I focus on the structural conditions under which wars break out or escalate, especially the role of regime types (democracies vs. autocracies), patterns of escalation, and the likelihood of conflict diffusion or restraint. This lens is crucial because most large-scale wars and escalations occur where state structures are weak, democracy is absent, and international constraints are ineffective\u2014providing a relevant filter to assess where substantial new violence is most likely.",
-            "status_quo": "No new war or substantial escalation involving 5,000+ deaths in a single year, given the high base rates in recent years but with most mass-fatality wars being continuations (Ukraine, Gaza, Sudan) rather than new or sharply escalated conflicts.",
+            "time_to_resolution": "Approximately 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in International Relations specializing in Democratic Peace Theory, my analysis emphasizes the role of regime type, patterns of conflict onset, and the historical base rates of large-scale conflict escalation in both inter- and intra-state contexts. I place extra weight on the empirical finding that conflicts causing mass casualties are rare events, often associated with failed state capacity, regional rivalry, or the breakdown of deterrence, and that democracies are less likely to fight each other but not immune to civil or proxy war. This perspective helps to critically assess both the statistical likelihood and specific pathways through which a new or escalated conflict could surpass 5,000 deaths within a year.",
+            "status_quo": "No new armed conflict or substantial escalation of a previous conflict (with fewer than 1,000 annual deaths in 2023/2024) has reached 5,000 deaths within a single calendar year since the question opened; most mass-lethal conflicts are continuations of existing wars (e.g., Ukraine, Israel-Gaza) that already exceeded the threshold in previous years and thus do not qualify under the question's criteria.",
             "perspective_derived_factors": [
                 {
-                    "factor": "High base rate of armed conflict and escalation globally",
-                    "effect": "Increases probability. 2024 saw a record 61 state conflicts, 11 wars, and over 160,000 deaths. With so many conflicts simmering, the probability of at least one new or substantially escalated conflict crossing the 5,000-death threshold in 2025 is materially elevated."
+                    "factor": "Base Rate of New/Resurging Large-Scale Wars",
+                    "effect": "Decreases probability; historically, only 0\u20132 new or resurging wars cross the 5,000 deaths/year threshold worldwide in any given year, even in periods of elevated global violence. Most years see no such new escalations."
                 },
                 {
-                    "factor": "Resolution criteria exclude ongoing high-fatality wars (e.g., Gaza, Ukraine, Sudan)",
-                    "effect": "Decreases probability. The deadliest current conflicts are ineligible unless a new front or state joins in a qualifying way, or unless a previously low-fatality conflict escalates sharply."
+                    "factor": "Recent Trends in Armed Conflicts (UCDP, PRIO, ACLED Data)",
+                    "effect": "Slightly increases probability; 2024 saw a record number of state-involved conflicts (61), with a rising trend in both intra-state and inter-state violence, although the bulk of mass-lethal events are continuations, not new escalations."
                 },
                 {
-                    "factor": "Conflict in Eastern Congo (DRC) with M23 and regional actors",
-                    "effect": "Increases probability. The DRC conflict appears to have intensified in 2025, with clear evidence of mass casualties, displacement, and amputations. The DRC\u2019s prior years (2023, 2024) had under 1,000 deaths per year due to this conflict according to UCDP, but 2025 may have seen a sharp escalation."
+                    "factor": "Status of Ongoing Conflicts in 2025 (e.g., Eastern DRC, Sudan, Gaza)",
+                    "effect": "Mixed. The DRC and Sudan show signs of severe escalation in 2025, with major increases in displacement, casualties, and the involvement of new actors (e.g., Rwanda in DRC). If these conflicts had low death tolls in 2023/2024 but surged in 2025, they could qualify, thus increasing the probability. However, most coverage suggests these are continuations or escalations of already deadly wars."
                 },
                 {
-                    "factor": "Democratic Peace Theory and regime type",
-                    "effect": "Decreases probability. Major new wars or escalations more often break out in autocracies or failed states, less commonly between or within consolidated democracies. However, with many fragile states involved, this only weakly decreases the probability."
+                    "factor": "International/Regional Spillover and Proxy Dynamics",
+                    "effect": "Slightly increases probability; high levels of foreign involvement and proxy activity (e.g., Rwanda in DRC, regional tensions in Sudan, Yemen, Lebanon) create potential for sudden, substantial escalations, especially if new frontlines or actors emerge."
                 },
                 {
-                    "factor": "Regional spillover and internationalization of conflicts",
-                    "effect": "Increases probability. Regional actors (e.g., Rwanda in Congo, possible U.S. involvement in Venezuela or Yemen, Israeli cross-border strikes) create opportunities for new fronts or escalations that could meet criteria if new state actors are overtly involved."
+                    "factor": "Democratic Peace Theory Considerations",
+                    "effect": "Neutral to slightly decreases probability; although democracies are less likely to initiate new wars with each other, most current high-risk zones are non-democratic or hybrid regimes, so this effect is muted. However, the general tendency toward caution in new interstate war onset modestly lowers risk of a new qualifying conflict."
                 },
                 {
-                    "factor": "Recent global trend toward more frequent, but not always more deadly, conflicts",
-                    "effect": "Neutral to slightly decreases probability. While the number of conflicts is up, the per-conflict fatality rate is often lower than during previous peaks, except in a few outliers."
+                    "factor": "Reporting and Verification Challenges",
+                    "effect": "Slightly decreases probability; for a conflict to qualify, deaths must be credibly reported and attributed to a new or substantially escalated conflict front, which is difficult in chaotic or information-sparse settings."
                 }
             ],
-            "no_scenario": "Despite ongoing violence, all high-fatality conflicts in 2025 are continuations of major wars from 2023-2024 (e.g., Gaza, Ukraine, Sudan, Ethiopia, Myanmar, etc.), and no new conflict, nor substantial escalation of an old low-fatality conflict, reaches the 5,000 deaths threshold. The DRC conflict, while severe, does not reach the qualifying death toll within 2025, or deaths are underreported/ambiguous. Regional tensions (e.g., in Venezuela, Yemen, Cameroon) remain below the 5,000-death mark or unfold too late in the year.",
-            "yes_scenario": "The M23 conflict in DRC, having intensified in early 2025, causes over 5,000 deaths between January and December 2025, as evidenced by mass displacement, increased treatment of war injuries, and confirmed by credible sources. Alternatively, a previously low-fatality civil war (e.g., in Venezuela, Cameroon, or an unexpected state-on-state escalation) explodes into major violence with at least 5,000 deaths in 2025, or a new front in an existing conflict (e.g., a new state enters the Yemen or Gaza wars on a new frontline) meets the criteria.",
-            "final_reasoning": "The probability of a YES outcome is materially higher than in a typical year, given the record number of active conflicts and the documented trend toward more frequent escalations. The sharp escalation in DRC, with qualitative and quantitative indicators (mass amputations, displacement, prosthetics produced, direct reports of massacres), is the strongest single candidate for a qualifying event. The news points to a substantial intensification since January 2025, with at least hundreds killed in reported massacres and massive displacement\u2014suggesting plausibility of 5,000+ deaths, especially considering underreporting in DRC. However, the resolution criteria are strict: the conflict must have had under 1,000 deaths in both 2023 and 2024 (which UCDP data supports for DRC), and must reach 5,000+ in 2025, as confirmed by credible sources. Other candidates (Venezuela, Cameroon, Yemen) show some risk but less direct evidence of approaching 5,000 deaths in 2025. The base rate for new or substantially escalated wars that cross 5,000 deaths in a single year is low, but not negligible in this high-conflict era (historically, 1\u20132 per year in the last decade, but higher in 2022\u20132023). Given the ongoing DRC escalation and historical patterns, I estimate the probability at 62%\u2014high but not extreme, reflecting strong evidence but also the real risk of undercounting, ambiguous reporting, or late-year developments that fall short of the clear threshold. Status quo bias would normally argue for a lower number, but the specific DRC evidence and overall global context justify a moderately bold forecast.",
-            "final_probability": 62
+            "no_scenario": "The conflicts in DRC, Sudan, Cameroon, Venezuela, and other hotspots remain intensely violent but do not surpass the 5,000 death threshold within 2025, or they are continuations of pre-existing wars that already exceeded 1,000 deaths in previous years. International mediation, deterrence, or logistical limitations prevent a surge to mass-lethal levels in any new or re-escalated conflict that meets the question's strict criteria. Deaths are either too dispersed, too poorly reported, or too incremental to satisfy the resolution requirement.",
+            "yes_scenario": "A major escalation occurs in eastern DRC or Sudan, with a new frontline or the overt entry of a new state actor (e.g., Rwanda, Uganda, or the formalization of militia alliances), resulting in a sudden and well-documented surge in battle and civilian deaths above 5,000 within 2025. Alternatively, a previously contained conflict (e.g., Cameroon separatist crisis, a new front in Yemen, or an unexpected border war elsewhere) erupts due to regime collapse, foreign intervention, or failed peace processes, with casualties quickly surpassing the threshold and credible attribution to a new or substantially escalated conflict.",
+            "final_reasoning": "The risk environment in 2025 is elevated compared to the pre-2020s baseline, with a record number of active state conflicts and several severe humanitarian crises (notably DRC, Sudan, Cameroon, Yemen). However, the bar for this question is high: the conflict must be 'new' or a 'substantial escalation' (with <1,000 annual deaths in 2023/2024), and must credibly surpass 5,000 deaths within 2025. Most of the world's mass-lethal conflicts (Ukraine, Gaza, Ethiopia, Yemen) are continuations, not qualifying new events. The most plausible candidates are in DRC and Sudan, both of which have seen significant escalation and the potential for new frontlines or overt foreign involvement. News evidence suggests that in DRC, displacement and injury rates are surging, and there are credible reports of large-scale violence and new actors, but there is not yet clear evidence that a new or substantially escalated conflict (by the resolution definition) has already reached 5,000 deaths this year. Given the historic base rate (roughly 10\u201320% chance per year of a qualifying event globally), the current elevated but not unprecedented risk, and the lack of definitive public evidence of a qualifying death toll as of October 2025, I assess the probability of a Yes resolution at 27%. This is above the long-term average, reflecting the dangerous situation in DRC and Sudan, but still recognizes that the strict resolution criteria are rarely met.",
+            "final_probability": 27
         },
         "International Relations (Conflict Escalation Theory)": {
-            "time_to_resolution": "Approximately 3 months (until December 31, 2025).",
-            "perspective_relevance": "As an expert in conflict escalation theory, I focus on the structural and proximate causes of large-scale violence, the thresholds at which latent conflicts escalate to mass fatalities, and the role of state and non-state actors in driving or restraining conflict. This perspective allows me to critically assess risk indicators, historical base rates, and current triggers that may push a conflict over the 5,000-death threshold in a calendar year, particularly focusing on outlier events and feedback loops that produce sudden escalations.",
-            "status_quo": "The status quo is that no new war or substantially escalated previous war (with <1,000 deaths in both 2023 and 2024) has killed at least 5,000 people in 2025 so far. Most high-fatality conflicts in 2025 (Gaza, Ukraine, Sudan, etc.) are continuations of already high-casualty wars and thus do not qualify under the resolution criteria.",
+            "time_to_resolution": "Approximately 2.5 months (forecast made on 2025-10-14, resolves at the end of 2025, possibly by January 31, 2026 if reporting is delayed)",
+            "perspective_relevance": "As an expert in International Relations with a focus on Conflict Escalation Theory, I can systematically assess the likelihood of new or substantially escalated wars breaking out and reaching high fatality thresholds. This includes analyzing base rates, structural pressures, conflict drivers, and the impact of ongoing geopolitical trends, and distinguishing between chronic violence and acute, threshold-crossing escalations. My expertise is especially relevant for evaluating both the statistical likelihood (base rates) and the contextual plausibility (case-by-case triggers) of high-casualty conflicts emerging in a given year.",
+            "status_quo": "Most years, there is not a new war (or escalation of an old one) that reaches 5,000 deaths within a single calendar year among conflicts where the previous two years saw fewer than 1,000 deaths. Historically, most high-fatality wars are continuations or expansions of already active conflicts.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Base Rate of New/Resurging High-Fatality Conflicts",
-                    "effect": "Decreases probability. Historically, the annual chance of a new or substantially escalated conflict (meeting the <1,000 deaths in prior years and >=5,000 deaths in the current year) is low, typically 0-3 such events per decade. Most conflicts escalate more gradually or remain below this death threshold."
+                    "factor": "Base rate of new or substantially escalated wars crossing 5,000 deaths",
+                    "effect": "Decreases probability \u2014 Even in years with many conflicts, most do not escalate so rapidly or lethally from a low baseline. UCDP and PRIO data confirm this is a rare event, usually 0-2 such new conflicts per year globally."
                 },
                 {
-                    "factor": "Elevated Global Conflict Levels and Structural Risk",
-                    "effect": "Increases probability. 2024 saw a record 61 state-involved conflicts, with 11 wars (UCDP), and rising inter-state tension and targeted civilian violence. This systemic instability increases the likelihood of a new or previously low-level conflict escalating rapidly, especially in regions with underlying grievances (e.g., DRC, West Africa, Myanmar)."
+                    "factor": "Recent trend: Record number of armed conflicts and high violence in 2023-2025",
+                    "effect": "Slightly increases probability \u2014 The world is in a period of heightened instability (record 61 state conflicts in 2024, per UCDP), which modestly raises the risk of lower-level conflicts escalating into mass violence."
                 },
                 {
-                    "factor": "Recent Escalation in DRC (Congo) \u2013 M23 and Rwanda Involvement",
-                    "effect": "Increases probability. News reports indicate a marked intensification of violence in eastern Congo since Jan 2025, with significant displacement and a surge in casualties. If cumulative deaths in 2025 surpass 5,000 and the conflict meets the prior-year death thresholds, it could qualify."
+                    "factor": "Current wars and major escalations (Gaza, Ukraine, Sudan, DRC, Yemen, etc.)",
+                    "effect": "Neutral or decreases probability \u2014 The deadliest conflicts in 2025 (Gaza, Ukraine) are already above the 1,000 deaths/year threshold in 2023 and 2024, so would NOT qualify under the question's criteria as 'new' or 'substantially escalated' in 2025."
                 },
                 {
-                    "factor": "Absence of Other Major Candidates",
-                    "effect": "Decreases probability. Other ongoing conflicts (Gaza, Sudan, Ukraine, Yemen) either already exceeded the 1,000-death threshold in prior years or are extensions of prior wars, thus failing to meet the 'new or substantial escalation' requirement."
+                    "factor": "Rising violence in the Democratic Republic of Congo (DRC), especially M23 conflict",
+                    "effect": "Increases probability \u2014 Recent news indicates major escalation in 2025 (e.g., surge in casualties, prosthetics for amputees, displacement, explicit references to mass killings). If the DRC conflict had <1,000 deaths in 2023 and 2024, this could qualify as a substantial escalation."
                 },
                 {
-                    "factor": "Late-Year Escalation Possibility",
-                    "effect": "Slightly increases probability. The remaining three months always hold the risk of a sudden, unexpected escalation in a currently low-level conflict (e.g., coup, genocide, or external intervention), though this is rare."
+                    "factor": "Lack of evidence for other qualifying new conflicts in 2025",
+                    "effect": "Decreases probability \u2014 Despite high overall violence, major new wars (with >5,000 deaths in 2025 and <1,000 in each of 2023/2024) are not clearly documented in the news summaries. Most conflict deaths are in ongoing wars."
                 },
                 {
-                    "factor": "International Attention and Mediation Efforts",
-                    "effect": "Decreases probability. Heightened international scrutiny and peace processes (e.g., US mediation in DRC, regional ceasefire efforts) can sometimes suppress escalation, even in structurally risky environments."
+                    "factor": "Potential for sudden-onset state-based conflicts (e.g., coups, interstate wars, failed states)",
+                    "effect": "Slightly increases probability \u2014 Sudden escalations are possible but rare. 2025 news does not report any such conflict already on pace to exceed 5,000 deaths with a low prior baseline."
                 }
             ],
-            "no_scenario": "The DRC conflict, while intense, does not surpass the 5,000 death threshold in 2025, or credible reporting fails to confirm the numbers. No other qualifying conflict emerges, due to effective peacekeeping, international mediation, or the absence of a sudden, violent escalation in other low-level conflicts. The year ends with all high-fatality conflicts being continuations of previous wars or sub-threshold in scale.",
-            "yes_scenario": "The DRC conflict, fueled by the involvement of Rwanda-backed M23 and a breakdown of regional diplomacy, results in at least 5,000 deaths in 2025, verified by credible sources and meeting the eligibility criteria (<1,000 deaths in 2023 and 2024). Alternatively, a currently low-level conflict elsewhere (e.g., in West Africa, Myanmar, or a sudden coup/genocide scenario) escalates sharply and passes the fatality threshold within the last months of 2025.",
-            "final_reasoning": "The base rate for new or substantially escalated wars meeting the 5,000-death threshold in a single year is low. However, the current international system is highly unstable, with a record number of state-involved conflicts, rising civilian targeting, and at least one strong candidate (DRC) showing signs of acute escalation in 2025. News reports detail major displacement, mass casualties, and increased prosthetic demand in eastern Congo, suggesting a significant spike in violence. Verification of 5,000+ deaths will depend on reporting by UCDP, ACLED, or similar data, but the humanitarian indicators (e.g., over 800 amputees in early 2025, massive displacement) suggest a plausible pathway. No other conflicts clearly meet the criteria, and international mediation may suppress further escalations elsewhere. Given these considerations, I assess the probability as higher than the historical base rate, but not overwhelming, since (a) the DRC numbers are not yet confirmed at 5,000+ deaths and (b) late-year surprises, while possible, remain rare.",
-            "final_probability": 35
-        },
-        "Security Studies (Security Dilemma)": {
-            "time_to_resolution": "Approximately 3 months until 2025 ends, with final resolution possibly delayed until January 31, 2026 for reporting lag.",
-            "perspective_relevance": "As a Security Studies expert with a focus on the Security Dilemma, I analyze the structural conditions that lead to rapid escalations or de-escalations of conflict. This perspective is crucial for identifying latent risks of new wars or escalations that could surpass the 5,000-death threshold, especially in multipolar, fragmented, or proxy war environments. The security dilemma highlights how state perceptions of threat and actions for self-defense can unintentionally spiral into large-scale violence.",
-            "status_quo": "In recent years, the world has seen a record high number of armed conflicts (61 in 2024), with several ongoing wars (Ukraine, Gaza, Sudan, DRC, etc.) as well as numerous low-level or simmering conflicts. However, most years, new wars or major escalations surpassing 5,000 deaths are rare events. The status quo is that almost all high-casualty conflicts in 2025 are continuations from previous years (e.g., Gaza, Ukraine), not new or substantially escalated ones per the criteria.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Base Rate of New Deadly Wars",
-                    "effect": "Decreases probability. Historically, most years do NOT see a new or newly-escalated (from below 1,000 deaths to over 5,000) conflict. High ongoing violence can crowd out new escalations."
-                },
-                {
-                    "factor": "Conflict Saturation and Security Dilemma Dynamics",
-                    "effect": "Decreases probability. Many states are already engaged in significant conflicts, limiting spare capacity or willingness for new escalations, and heightened global awareness can deter new entrants. However, unstable multipolarity (e.g., in Africa, Middle East) can raise risk in specific theatres."
-                },
-                {
-                    "factor": "Current Escalations in DRC and Other Hotspots",
-                    "effect": "Increases probability. News from eastern DRC indicates dramatic escalation, with M23 and Rwanda's involvement. If 2023/2024 deaths were below 1,000, and 2025 deaths surpass 5,000 due to this surge, this could trigger resolution as Yes."
-                },
-                {
-                    "factor": "Potential for Out-of-Region Escalation (e.g., Venezuela, Yemen, Sudan)",
-                    "effect": "Increases probability. U.S. strikes on Venezuelan assets and Houthi attacks on U.S. oil interests, Sudan's crisis, and unrest in other African countries could escalate rapidly given the right triggers."
-                },
-                {
-                    "factor": "Reporting Lags and Ambiguity",
-                    "effect": "Decreases probability. Many conflicts with rapid death tolls remain under-reported or disputed, lowering the chance of a clear Yes resolution unless the evidence is overwhelming."
-                },
-                {
-                    "factor": "International Attention and Deterrence",
-                    "effect": "Decreases probability. Heightened international monitoring and peace efforts (Doha talks for DRC, U.S.-led peace initiatives in Sudan and Gaza) can help prevent escalations from breaching the threshold, or at least delay them."
-                }
-            ],
-            "no_scenario": "Despite ongoing violence in DRC, Sudan, and other hotspots, no new or substantially escalated conflict crosses the 5,000 death threshold in 2025 (with previous years' deaths below 1,000). All major wars (Gaza, Ukraine, Sudan) are continuations. DRC's death toll, while high, fails to surpass 5,000 in 2025, or previous years' tolls disqualify it. Other flashpoints (Venezuela, Yemen, Cameroon) see unrest but do not escalate sufficiently.",
-            "yes_scenario": "The DRC conflict, with M23 and Rwanda's overt escalation in 2025, results in over 5,000 deaths, and previous years' data confirm under-1,000 deaths in both 2023 and 2024, qualifying as a new or substantially escalated war. Alternatively, a rapid escalation in Venezuela following U.S. strikes or a major new conflict in Cameroon or Sudan (with previous years' deaths below 1,000) crosses the threshold, or a limited flareup elsewhere (e.g., Mozambique) unexpectedly surges past 5,000 deaths.",
-            "final_reasoning": "The base rate for a new or substantially escalated war killing over 5,000 in a given year is low, even in turbulent periods; most high-casualty conflicts are continuations, not new escalations. However, the DRC presents a plausible candidate: reporting suggests a dramatic surge in violence and displacement in 2025, with over 7 million displaced and hundreds of casualties in a short period, although it's unclear if deaths will exceed 5,000 and whether 2023/2024 death counts were low enough to qualify. Other regions (Venezuela, Yemen, Sudan, Cameroon) show signs of instability but lack concrete evidence of a qualifying escalation. The security dilemma lens suggests that while more conflicts are possible, the threshold for such a deadly new escalation remains high amid international attention and peace efforts. Ambiguity and reporting lags further reduce the chance of a decisive Yes. Therefore, while the risk is elevated above the historical average due to DRC and global instability, it is not high enough to merit a bolder probability.",
-            "final_probability": 28
-        },
-        "Security Studies (Offense Defense Balance)": {
-            "time_to_resolution": "About 3 months (resolves at the end of 2025, currently October 8, 2025)",
-            "perspective_relevance": "As an expert in Security Studies focusing on the offense-defense balance, my perspective is particularly relevant for assessing the probability of new wars or substantial escalations, as I can systematically analyze the structural and technological factors that make rapid, high-casualty escalations more or less likely, especially in a global context where offense has recently been dominant. Understanding the interplay between military capabilities, political constraints, and the organizational/structural incentives for both state and non-state actors is key to judging the plausibility of a major new conflict or sharp escalation.",
-            "status_quo": "No new war or substantial escalation (involving fewer than 1,000 annual prior deaths) has killed 5,000 or more people in a single year since 2021. Most high-fatality conflicts (Ukraine, Gaza, Sudan, Ethiopia) are continuations of prior wars, and most new or escalating conflicts do not reach 5,000 deaths in their first year.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Base rate of new high-fatality conflicts per year",
-                    "effect": "Decreases probability. Historically, the number of entirely new or sharply escalated wars (by the UCDP/Metaculus criteria) that reach 5,000 deaths in their first calendar year is low, averaging well below 1 per year in the 21st century."
-                },
-                {
-                    "factor": "Offense-defense balance and diffusion of military technology",
-                    "effect": "Slightly increases probability. The recent proliferation of drone warfare, loitering munitions, and cheap, scalable offensive capabilities has made it easier for relatively weak actors to inflict mass casualties quickly, especially in fragile states. This lowers the threshold for rapid escalations."
-                },
-                {
-                    "factor": "Global conflict trends and instability",
-                    "effect": "Increases probability. 2024 saw a record number of armed state conflicts (61), with elevated rates of civilian targeting and deaths. The general trend is toward more conflicts and greater volatility, raising the risk of outlier events."
-                },
-                {
-                    "factor": "Current flashpoints (DRC, Sudan, Yemen, Venezuela, Caucasus, etc.)",
-                    "effect": "Slightly increases probability. Several conflicts (notably DRC, Sudan) have seen large escalations in 2025, with reports of new offensives, mass displacement, and significant casualties. If these have not already crossed the 1,000-death threshold in previous years, a substantial escalation could push them above 5,000 in 2025."
-                },
-                {
-                    "factor": "Constraints on escalation (international attention, peace processes, logistical limits)",
-                    "effect": "Decreases probability. High-profile conflicts are under international scrutiny, and many potential escalations are blunted by logistical difficulties, mediation efforts, or lack of resources for sustained large-scale violence."
-                },
-                {
-                    "factor": "Ambiguity and reporting lag",
-                    "effect": "Slightly increases probability. In wars with poor data (e.g., eastern DRC), true death tolls may only become apparent after the fact, leading to retrospective recognition of escalations that reach the threshold."
-                }
-            ],
-            "no_scenario": "Despite ongoing violence in places like eastern DRC and Sudan, no new conflict or escalation with previously <1,000 annual deaths crosses the 5,000-death threshold in 2025. Existing wars (Ukraine, Gaza) continue to be the main sources of high fatality counts, but all new or sharply escalated conflicts remain below the threshold due to either intervention, exhaustion of forces, or lack of capacity for mass violence. For example, the DRC conflict intensifies but is judged (using credible sources) to have caused 3,000-4,000 deaths in 2025, not 5,000+.",
-            "yes_scenario": "A substantial escalation in eastern DRC\u2014perhaps involving Rwanda's deeper intervention or a major offensive by M23/rebels\u2014results in at least 5,000 deaths in 2025, after having fewer than 1,000 in each of 2023 and 2024. Alternatively, a sharp new crisis in a fragile state (e.g., a coup and ensuing civil war in a country like Venezuela or an unexpected regional escalation in the Sahel, Caucasus, or elsewhere) rapidly kills 5,000 or more people in its first year. The escalation is sufficiently documented, and credible sources agree on the death toll.",
-            "final_reasoning": "While the global environment is unusually volatile, the base rate for new or sharply escalated conflicts reaching 5,000 deaths in their first calendar year remains low. The most dangerous current candidate is eastern DRC, where displacement, increased prosthetics demand, and mention of mass casualties suggest a significant escalation. However, the news does not yet confirm >5,000 deaths in 2025, and it is unclear if deaths in DRC in 2023/2024 were below 1,000. Other candidates (e.g., Sudan, Venezuela) have not yet produced evidence of such high fatality events or meet the threshold for a 'new' or 'substantially escalated' conflict per the question's criteria. Most high-fatality wars ongoing in 2025 (Gaza, Ukraine, Sudan) are continuations, not new or escalated by these definitions. Considering the offense-defense balance, diffusion of lethal technology, and the global surge in conflicts, the probability is higher than the historical average, but still below 50%. I estimate approximately a 1-in-3 chance that either DRC or another conflict will be judged by credible sources to have crossed the 5,000-death threshold as a new or escalated war in 2025.",
-            "final_probability": 33
-        },
-        "Political Science (Civil War Onset Models)": {
-            "time_to_resolution": "Approximately 3 months (question resolves at end of 2025, today is October 8, 2025)",
-            "perspective_relevance": "As an expert in civil war onset models, I bring a base-rate, structural, and process-oriented understanding of the likelihood of new large-scale lethal conflicts or substantial escalations. My perspective is informed by the empirical regularities of conflict onset, escalation, and lethality, and the structural risk factors identified in the political science literature (e.g., state weakness, ethnic fractionalization, external intervention, and contagion effects). I am also attentive to the status quo bias observed in conflict data, where most years see a continuation of existing conflicts rather than new major wars.",
-            "status_quo": "In an average year since 1946, roughly 1-2 new wars killing 5,000+ people break out globally, but most lethal violence is concentrated in persistent conflicts. In recent years, the world has seen an elevated number of conflicts (61 in 2024, per UCDP), but the majority of deaths come from ongoing wars (Ukraine, Gaza, Sudan, etc.). The base rate for a qualifying 'new' or 'escalated' conflict passing the 5,000-deaths threshold in a given year is low but non-negligible (roughly 15-25% per year, based on UCDP historical data).",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Ongoing high baseline of global conflict",
-                    "effect": "Increases probability somewhat, as the world is currently experiencing historically high numbers of state conflicts, raising the pool of candidates for escalation."
-                },
-                {
-                    "factor": "Fine print: Deaths threshold and definition of 'new/escalated' conflict",
-                    "effect": "Decreases probability, because the question excludes conflicts already above 1,000 deaths in 2023 and 2024, and requires 5,000 deaths in 2025 alone, meaning only new or sharply escalating conflicts count."
-                },
-                {
-                    "factor": "Recent intensification in DRC (Congo) and M23 conflict",
-                    "effect": "Increases probability, as news suggests a sharp surge in violence, displacement, and casualties in eastern DRC in 2025, with some indicators (amputee numbers, ICRC reports) hinting at mass violence. If 2023 and 2024 were below 1,000 deaths, this escalation could qualify."
-                },
-                {
-                    "factor": "Gaza and Middle East: No qualifying 'new/escalated' conflicts",
-                    "effect": "Decreases probability, as the Gaza war, despite extreme lethality, already massively exceeded the 1,000 deaths threshold in previous years; thus, it does not qualify under the question's criteria."
-                },
-                {
-                    "factor": "Sudan, Yemen, and other potential hot spots",
-                    "effect": "Mixed effect; most of these conflicts were already well above the 1,000 deaths threshold in previous years, so only a substantial new front or actor (e.g., new state intervention, new organized group) causing 5,000 deaths in 2025 would qualify."
-                },
-                {
-                    "factor": "Base rate of major new wars",
-                    "effect": "Decreases probability, as the historic base rate for a totally new qualifying war reaching 5,000 deaths in a single year is relatively low (often 0-1 per year)."
-                },
-                {
-                    "factor": "International attention and peace efforts",
-                    "effect": "Slightly decreases probability, as the high level of global attention, peace initiatives (e.g., for DRC, Sudan, Yemen), and potential for external mediation may lower the chance of unchecked escalation in the coming months."
-                }
-            ],
-            "no_scenario": "Despite rumblings and escalations in Congo or elsewhere, no new or previously low-level conflict exceeds 5,000 deaths in 2025. The main sources of mass violence remain ongoing wars (Ukraine, Gaza, Sudan, Myanmar), none of which qualify under the question's criteria. The M23 violence in eastern DRC is contained below the threshold, or the prior years' death tolls disqualify it as a 'substantial escalation.' Global attention and diplomatic efforts prevent other hot spots (e.g., Cameroon, Venezuela, Mozambique) from escalating to mass-lethal levels.",
-            "yes_scenario": "A previously low-level conflict, most plausibly the M23-linked violence in eastern DRC, experiences such a dramatic escalation that over 5,000 are killed in 2025, with 2023 and 2024 both below the 1,000-death qualifying threshold. Alternatively, a new conflict arises elsewhere (e.g., a new internal war in a fragile state, or a new internationalized front with substantial casualties), passing the 5,000-death mark within the year.",
-            "final_reasoning": "The world is experiencing a historically high number of armed conflicts, but the question requires a new or substantially escalated war (with <1,000 deaths in each of 2023 and 2024) to kill at least 5,000 people in 2025. Most mass-lethal conflicts (Ukraine, Gaza, Sudan, Myanmar, Yemen) do not qualify due to high prior-year deaths. The most plausible qualifying case is the eastern DRC/M23 conflict, where news reports suggest a sharp recent escalation, mass displacement, and high rates of severe injury\u2014but it remains unclear whether the 2023\u201324 deaths were under 1,000, or whether the 2025 toll is likely to exceed 5,000 by year-end. There are no clear signals of other new wars on track to reach this threshold. The base rate for such an event is low (perhaps 15-25% per year), and while the DRC case is concerning, there is no direct confirmation that this conflict will both qualify and pass the threshold. Therefore, I assign a probability below the base rate but above 'very unlikely,' reflecting the real but limited risk of a qualifying escalation in DRC or an unexpected new war elsewhere.",
+            "no_scenario": "The most probable scenario: All major wars in 2025 (Gaza, Ukraine, Sudan, etc.) are continuations of prior high-intensity conflicts, thus ineligible. The DRC and other hotspots either do not surpass 5,000 new deaths in 2025 or had >1,000 deaths in 2023 or 2024, disqualifying them. No sudden, new interstate or civil war appears, and all other escalations remain below the threshold.",
+            "yes_scenario": "A less likely but plausible scenario: The DRC's M23 conflict, which may have been below 1,000 deaths in both 2023 and 2024, experiences a dramatic escalation (as suggested by recent news: mass displacement, increase in amputees, reports of massacres). Fighting in 2025 alone results in at least 5,000 deaths, meeting the criteria. Alternatively, a smaller state conflict elsewhere suddenly erupts into mass violence, but there is currently no clear evidence of this.",
+            "final_reasoning": "The base rate for a new (or substantially escalated) state-based conflict going from <1,000 annual deaths to >5,000 in a single year is low\u2014typically 0-2 per year, and often 0. Most of the world's deadliest fighting in 2025 is in ongoing wars that do not qualify under the question's rules. The exception is the DRC, where recent reporting suggests a notable escalation, but without clear, confirmed fatality numbers or clarity on whether the 2023\u20132024 baseline was below 1,000 deaths. The news highlights massive displacement, increased amputations, and references to massacres, but does not definitively state that 5,000 have been killed in 2025 alone, nor does it confirm the prior years' baseline. No other region is described as experiencing a qualifying new conflict with >5,000 deaths. While the global trend of conflict is elevated, the question's strict eligibility criteria narrow the field considerably. Weighing the low base rate, the ambiguous DRC situation (the only likely candidate), and the lack of other evident qualifying wars, the probability is higher than in a typical peaceful year but remains modest.",
             "final_probability": 18
         },
-        "Political Science (Ethnic Fractionalization Theory)": {
-            "time_to_resolution": "Approximately 3 months until the end of 2025, with possible delayed resolution until January 31, 2026.",
-            "perspective_relevance": "As an expert in Ethnic Fractionalization Theory, I bring a specialized understanding of how ethnic, linguistic, and religious divisions increase the likelihood of both civil and inter-state war and escalatory violence. High ethnic fractionalization is closely linked to both the onset and deadliness of conflicts, especially when paired with weak state capacity, regional interventions, and exclusionary governance\u2014relevant factors for assessing the probability of new or escalated wars reaching high fatality thresholds.",
-            "status_quo": "The status quo is that while the world is experiencing a historically high number of armed conflicts (61 in 2024, per UCDP), most wars remain below the 5,000 annual deaths threshold, and only a small minority of conflicts escalate rapidly to mass casualty levels. In recent years, most high-fatality conflicts were continuations (e.g., Ukraine, Gaza), not new or substantially escalated wars per the question's criteria.",
+        "Security Studies (Security Dilemma)": {
+            "time_to_resolution": "Approximately 2.5 months, until December 31, 2025 (with possible wait for ambiguous cases until January 31, 2026).",
+            "perspective_relevance": "As an expert in Security Studies specializing in the Security Dilemma, my perspective is crucial for this forecast because I focus on how mutual mistrust, arms races, inadvertent escalation, and misperceptions between states or between states and non-state actors can drive rapid and unexpected escalations in conflict. This lens is vital for assessing the likelihood of new wars or substantial escalations, especially in a period marked by record numbers of armed conflicts and high levels of international tension. Security Dilemma dynamics help identify not only where violence might erupt, but also why previously low-level or dormant conflicts might suddenly cross high-fatality thresholds.",
+            "status_quo": "No new war or substantial escalation (from conflicts with <1,000 deaths in 2023 and 2024) has killed at least 5,000 people in 2025 so far, according to the most recent public data.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Base Rate of New/Escalated Wars Causing >5,000 Deaths per Year",
-                    "effect": "Decreases probability. Historically, only a small number of new or sharply escalated conflicts cross this threshold in any given year. The base rate is likely 1-2 per year globally, but fewer when excluding established wars."
+                    "factor": "Base Rate of Large Escalations in Recent Years",
+                    "effect": "Increases probability. The early 2020s have seen a sharp rise in both the number and lethality of armed conflicts. 2024 saw a record 61 state conflicts and 11 wars, per UCDP, but total deaths were slightly down from 2022. However, large new escalations remain rare events."
                 },
                 {
-                    "factor": "High Ethnic Fractionalization and State Fragility",
-                    "effect": "Increases probability. Countries with high ethnic fractionalization and weak state capacity (e.g., DRC, Sudan, Myanmar) are more prone to rapid escalations, especially with external meddling."
+                    "factor": "Security Dilemma Dynamics in Hot Zones (e.g., Congo, Cameroon, Sudan, Venezuela, Mozambique, etc.)",
+                    "effect": "Increases probability. Evidence of mutual fear, arms buildups, and breakdowns in communication in several regions (notably DRC, Cameroon, Sudan) raises the risk of rapid escalations, especially with external state involvement or regional rivalries."
                 },
                 {
-                    "factor": "Recent Surges in Civilian Targeting and Regional Spillover",
-                    "effect": "Increases probability. UCDP and PRIO data show rising civilian targeting and more interstate involvement, raising the odds of escalatory events, particularly in Africa and the Middle East."
+                    "factor": "Resolution Criteria Stringency (New or Substantial Escalation Only)",
+                    "effect": "Decreases probability. The question excludes ongoing wars (e.g., Gaza, Ukraine, Sudan) unless there is a new substantial escalation or a new war entirely, both of which are historically less frequent than continued violence in existing wars."
                 },
                 {
-                    "factor": "Specific 2025 Conflict Activity (DRC, Cameroon, Sudan, Venezuela, etc.)",
-                    "effect": "Neutral to slightly increases probability. Congo's North Kivu conflict has intensified with evidence of mass displacement and increased casualties, but it's unclear if 2025 fatalities from new escalation exceed 5,000 by the cutoff; other potential flashpoints (Sudan, Yemen, Venezuela) show risk but lack clear evidence so far."
+                    "factor": "Recent Signs of Escalation or New Conflicts (2025 Developments)",
+                    "effect": "Increases probability. In Eastern Congo, since January 2025, there has been a dramatic intensification with over 7 million displaced, and reports of hundreds of amputees and mass civilian casualties. If fatalities prior to 2025 were below 1,000, this could qualify as a substantial escalation."
                 },
                 {
-                    "factor": "Recent Decrease in Overall Conflict Deaths Despite Rising War Count",
-                    "effect": "Decreases probability. UCDP data for 2024 showed a drop in total deaths (despite more conflicts), suggesting that most wars are relatively small-scale."
+                    "factor": "International Involvement and Proxy Dynamics",
+                    "effect": "Increases probability. The proliferation of external support to armed groups (noted by UCDP and PRIO) and instances of direct state-on-state violence create preconditions for conflicts to quickly escalate in scale if red lines are crossed or misperceived."
                 },
                 {
-                    "factor": "Media, Institutional, and Monitoring Lag",
-                    "effect": "Decreases probability. Deaths in new conflicts, especially in Africa, may be undercounted or slow to be verified by 'credible sources' as required for resolution."
+                    "factor": "Time Remaining in 2025 and Reporting Lags",
+                    "effect": "Slightly increases probability. With 2.5 months left and conflicts already intensifying, there is still time for events to tip over the 5,000-death threshold, especially if reporting or verification lags lead to a later recognition of high fatality counts."
+                },
+                {
+                    "factor": "Historical Base Rate of New High-Lethality Conflicts (5,000+ deaths in a year from new/escalated conflicts)",
+                    "effect": "Decreases probability. Historically, the number of new or escalated (from low prior fatalities) conflicts reaching 5,000+ deaths in a single year is low compared to ongoing high-casualty wars."
                 }
             ],
-            "no_scenario": "Despite ongoing violence in several unstable regions (e.g., DRC, Sudan, Cameroon), no new war or substantial escalation meets both the 'new/substantially escalated' and '5,000 deaths in 2025' criteria by year-end. Existing large-scale conflicts (Ukraine, Gaza, Yemen) are continuations and thus excluded. The Congo conflict, while deadly and escalating, either does not surpass the 5,000 threshold in 2025, or credible sources do not confirm it as a new escalation separate from prior years.",
-            "yes_scenario": "A civil war or sharp escalation erupts in a high-fractionalization, weak-state region (most plausibly eastern DRC), with violence intensifying after a period of relative quiescence (under 1,000 deaths in 2023/2024), and credible reporting confirms at least 5,000 deaths in 2025. Alternatively, another region (e.g., Cameroon, Sudan, Venezuela) sees a sudden, large-scale escalation with state forces involved and fatalities rapidly crossing the threshold with credible documentation.",
-            "final_reasoning": "Applying Ethnic Fractionalization Theory, the world\u2019s high level of ethnic and state fragmentation\u2014especially in Africa\u2014raises the baseline risk of new or sharply escalated deadly conflict. However, the base rate for such events (new/escalated wars with >5,000 deaths in a single year, not including long-running wars) is low: typically only one or two per year, and many years see none. Current news shows intense violence and humanitarian crisis in eastern DRC, with a substantial surge in casualties and displacement in 2025. However, while the qualitative indicators (amputees, prosthetic demand, mass civilian displacement, M23 military expansion) point to a major escalation, hard fatality numbers crossing the 5,000 threshold and clearly attributed as a 'new' or 'substantially escalated' conflict (per UCDP/Metaculus standards) are not yet confirmed. Other possible flashpoints (Sudan, Cameroon, Venezuela) are mentioned as risk zones but lack evidence of mass fatalities or clear escalation in 2025. Historically, most years do not see a qualifying new/escalated war killing 5,000+, and while current trends are worrying, the evidence falls short of a confident 'Yes'\u2014especially as we approach the final quarter of the year. Given the evidence, base rates, and reporting lags, I estimate the probability of this question resolving 'Yes' at 35%.",
-            "final_probability": 35
+            "no_scenario": "Despite severe violence and displacement in regions like Eastern DRC, Cameroon, Sudan, Venezuela, and Mozambique, none of the conflicts that had <1,000 deaths in 2023 and 2024 escalate to the point of exceeding 5,000 deaths in 2025. All major conflicts with high death tolls continue from previous years and are thus excluded by the resolution criteria. Reporting from UCDP, ACLED, and major news sources confirms no qualifying new or escalated conflict crosses the 5,000-death threshold by year-end.",
+            "yes_scenario": "A conflict that was previously low-level (with <1,000 deaths in both 2023 and 2024) undergoes a dramatic escalation in 2025, resulting in at least 5,000 deaths within the year. For example, the M23 crisis in Eastern Congo could explode into mass violence, with mass killings and large-scale confrontations between state forces and rebels, pushing the death toll over 5,000. Alternatively, a surprise interstate clash or state-separatist escalation (e.g., in Cameroon, Sudan, Venezuela) could rapidly spiral out of control due to security dilemma dynamics and external involvement, causing mass fatalities.",
+            "final_reasoning": "The global context in 2025 is one of unprecedented numbers of armed conflicts, but the vast majority of mass-fatality events (>5,000 deaths) are continuations of wars that already exceeded the 1,000-death mark in previous years and are thus excluded. The most likely candidates for a qualifying event are the intensifying conflicts in Eastern Congo, where there is strong evidence of severe escalation, and possibly Cameroon or Sudan, though current reports do not confirm death tolls above 5,000 yet. Security dilemma mechanisms (mutual fear, arms buildup, external intervention) are driving up the risk in these regions, but the historical base rate for a new or escalated conflict reaching 5,000 deaths in a single year remains quite low. However, the ongoing intensification in DRC and the short time remaining suggest that if such a threshold is crossed, it will likely be due to Congo\u2019s situation. The probability is increased from historic base rates due to the current surge in conflict frequency and intensification, but not so high as to be near-certain. I assess the probability at 38%, reflecting a meaningful but not dominant risk.",
+            "final_probability": 38
+        },
+        "Security Studies (Offense Defense Balance)": {
+            "time_to_resolution": "Approximately 2.75 months remain (until December 31, 2025), with possible delayed resolution until January 31, 2026 if ambiguity persists.",
+            "perspective_relevance": "As an expert in Security Studies with a focus on the offense-defense balance, my perspective is uniquely relevant to this question. I can analyze the likelihood of new or escalated conflicts reaching a high-casualty threshold by considering structural incentives for offense, the distribution of military capabilities, the role of external intervention, and trends in escalation dynamics. I place special emphasis on base rates of conflict emergence and escalation, as well as how shifts in the offense-defense balance\u2014due to technology, alliances, or political change\u2014can suddenly alter otherwise stable situations. This helps ground my forecast in both historical patterns (status quo bias) and contemporary risk factors.",
+            "status_quo": "Historically, most years do NOT see a new war or a previous conflict escalation\u2014meeting the specified criteria\u2014kill 5,000+ people in a single year. Most conflicts remain below this threshold, and large new wars are rare, despite the high number of ongoing smaller conflicts. In 2024, the base rate for a qualifying event is low, but not negligible, given recent global trends.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "High baseline of global violence and record number of state conflicts (per UCDP and PRIO data for 2024)",
+                    "effect": "INCREASES probability. Record numbers of armed conflicts (61 in 2024) and a significant number of these escalating to wars (11 in 2024) suggest a heightened risk environment for both new conflicts and substantial escalations."
+                },
+                {
+                    "factor": "Offense-Defense Balance Shifting Toward Offense in Key Regions (e.g., DRC, Sahel, possibly Caucasus)",
+                    "effect": "INCREASES probability. Where the offense has the advantage, as in eastern DRC (with M23's new capabilities and external support), rapid escalations and mass killings are more likely, especially if state control collapses or external support for rebels grows."
+                },
+                {
+                    "factor": "Recent Evidence of Major Escalations in DRC (M23 and Rwanda involvement) and Reports of Rising Civilian Casualties",
+                    "effect": "INCREASES probability. News reports and humanitarian data indicate a dramatic uptick in violence and displacement in the DRC in 2025, with explicit mention of a surge in amputees and mass displacement since January. If deaths cross the 5,000 threshold (and the conflict wasn't killing >1,000/year in 2023 or 2024), this could qualify."
+                },
+                {
+                    "factor": "Base Rate of New Wars with 5,000+ Deaths per Year",
+                    "effect": "DECREASES probability. Despite a high number of conflicts, the number that escalate to high-casualty wars remains low each year. According to UCDP, only a handful of conflicts escalate to this level annually, and most are continuations of existing wars."
+                },
+                {
+                    "factor": "Strict Resolution Criteria (e.g., <1,000 deaths in 2023 and 2024, 5,000+ in 2025)",
+                    "effect": "DECREASES probability. Many of the world's deadliest conflicts (Ukraine, Gaza, Sudan) are continuations of high-casualty wars and thus do NOT qualify. The requirement that the conflict be 'new' or a 'substantial escalation' with a big jump in annual deaths narrows the field considerably."
+                },
+                {
+                    "factor": "International Attention and Intervention Capabilities",
+                    "effect": "DECREASES probability. Although intervention is often late, the presence of UN, regional, or great power involvement can sometimes cap escalation before mass death thresholds are crossed, especially in high-profile areas."
+                },
+                {
+                    "factor": "Potential for Sudden State Collapse or Coup (e.g., in DRC, Cameroon, Venezuela, Georgia, South Sudan)",
+                    "effect": "INCREASES probability. Fragile states with ongoing low-intensity violence are always at risk of tipping into mass-casualty conflict, especially if elites perceive windows of opportunity for offensive action."
+                }
+            ],
+            "no_scenario": "Despite elevated violence and several active flashpoints (e.g., DRC, Cameroon, Venezuela, Georgia), none of the conflicts that had under 1,000 deaths in 2023/2024 escalate sharply enough in 2025 to breach the 5,000-death threshold. Even in the DRC, mass displacement and violence remain below this threshold, or the conflict fails to meet the 'new war' or 'substantial escalation' criteria. International or regional intervention, or internal stalemate, prevents a runaway escalation. The world's deadliest ongoing wars (Ukraine, Gaza, Sudan) don't count due to high prior death tolls.",
+            "yes_scenario": "The M23 conflict in eastern DRC, fueled by external Rwandan support and state weakness, escalates rapidly in 2025, with civilian massacres, battles, and state collapse pushing annual deaths above 5,000\u2014well past previous years' levels. The UCDP or similar sources confirm this sudden spike. Alternatively, another fragile state (Cameroon, Georgia, Venezuela) tips into open civil war or faces a coup, with mass violence quickly exceeding 5,000 deaths before year-end, from a low baseline in prior years.",
+            "final_reasoning": "The base rate for a new or sharply escalated war reaching 5,000+ deaths in a single year is low, given the specific criteria (<1,000 deaths in each of the prior two years). However, 2024 saw record-high numbers of conflicts and an upward trend in localized violence, especially in fragile states. The news indicates that in the eastern DRC, there is a remarkable surge in violence and displacement since January 2025, with suggestive evidence (hundreds of new amputees, massive displacement, direct attacks on civilians) that deaths may be much higher than in previous years. If DRC's prior years were below the 1,000-death threshold (which seems plausible given the news focus and UCDP data), this could fit the criteria for a 'Yes.' There is no clear evidence yet from the news that the confirmed death toll is over 5,000, but the qualitative indicators point toward a real risk. Other potential flashpoints (Cameroon, Venezuela, Georgia, South Sudan) show unrest but not yet clear signs of mass-casualty escalation. Most other high-death conflicts (Gaza, Ukraine, Sudan) do NOT qualify due to high previous death tolls. Hence, while the base rate is low, the DRC situation merits a meaningful bump upward.",
+            "final_probability": 38
+        },
+        "Political Science (Civil War Onset Models)": {
+            "time_to_resolution": "About 2.5 months (question resolves at the end of 2025, current date is 2025-10-14)",
+            "perspective_relevance": "As an expert in Political Science focusing on civil war onset models, my perspective is particularly relevant because the question asks about the emergence or substantial escalation of deadly armed conflict (civil or interstate) under conditions that can be compared systematically to historical outbreaks. Civil war onset and escalation models emphasize factors such as state weakness, group grievances, mobilization capacity, external involvement, and conflict diffusion, all of which are critical for assessing the likelihood of a new or sharply intensified war causing at least 5,000 deaths within a single calendar year.",
+            "status_quo": "Most years, no new armed conflict or substantial escalation kills 5,000+ people in a single calendar year, especially considering the fine print that excludes ongoing wars with high casualties in previous years (Ukraine, Gaza, etc.). The base rate for new or resurgent conflicts surpassing 5,000 deaths in a year is low, perhaps 0\u20132 cases globally per year in the post\u2013Cold War period.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Global conflict trend and record-high number of state conflicts",
+                    "effect": "Increases probability. The UCDP/PRIO data shows 2024 had the highest number of state-based conflicts since WWII, with a marked rise in interstate and civil conflicts. This raises the base rate for new wars or escalations."
+                },
+                {
+                    "factor": "Ongoing conflict in Eastern DRC (M23 escalation)",
+                    "effect": "Increases probability. News and humanitarian sources report a sharp intensification in 2025, with displacement, severe violence, and growing regional involvement (notably Rwanda). If 2023/24 deaths stayed below 1,000/year, a 2025 escalation could plausibly cross 5,000 deaths."
+                },
+                {
+                    "factor": "Sudan and potential for new escalations",
+                    "effect": "Modestly increases probability. While Sudan's war is ongoing, new escalations with different actors or fronts could technically count, but evidence for a wholly new qualifying conflict is weak."
+                },
+                {
+                    "factor": "Gaza/Israel \u2013 Not eligible under the fine print",
+                    "effect": "No effect. The Gaza war and related regional escalations (Lebanon, Yemen) already exceeded 1,000 deaths in 2023/2024, so do NOT count as 'new' or 'substantially escalated' under the criteria."
+                },
+                {
+                    "factor": "Nigeria and other high-risk states",
+                    "effect": "Modestly increases probability. Nigeria, Ethiopia, and Myanmar are perennial risks, but no evidence in the news suggests a wholly new eligible conflict with such high fatalities in 2025."
+                },
+                {
+                    "factor": "Diffusion and external interventions",
+                    "effect": "Slightly increases probability. The record level of state support for foreign armed groups and the warning of a 'dangerous dynamic' for escalation may increase the risk of a new conflict rapidly growing deadly."
+                },
+                {
+                    "factor": "Base rate of new wars with 5,000+ deaths in a year",
+                    "effect": "Decreases probability. Even in years with many conflicts, the number of new or substantially escalated conflicts causing 5,000+ deaths is low."
+                },
+                {
+                    "factor": "Reporting/verification lag",
+                    "effect": "Slightly decreases probability. For a conflict to count, deaths must be credibly reported and clearly surpass the threshold, which is often difficult for new or fast-escalating conflicts within a single year."
+                }
+            ],
+            "no_scenario": "Despite numerous conflicts and some escalations, all wars surpassing 5,000 deaths in 2025 are either ongoing since before 2023/24 with high prior casualties (Gaza, Ukraine, Sudan) or do not reach the 5,000 threshold due to either insufficient intensity, rapid suppression, or lack of eligible new fronts. The DRC conflict, while severe, results in under 5,000 deaths in 2025, or reliable reporting does not support the threshold being crossed.",
+            "yes_scenario": "The M23 conflict in eastern DRC, which remained below 1,000 deaths in 2023 and 2024, escalates dramatically in 2025 due to mass violence, regional involvement, and state breakdown, with credible sources reporting over 5,000 deaths. Alternatively, a new interstate or civil conflict unexpectedly erupts elsewhere (e.g., in Nigeria, Ethiopia, or a previously lower-risk state), rapidly causing 5,000+ deaths in 2025 alone.",
+            "final_reasoning": "The news shows a world with a record number of conflicts, a high risk of new escalations, and worrying trends in state fragility and regionalized violence. Yet, the fine print excludes all ongoing high-fatality wars (Ukraine, Gaza, Sudan) because they already exceeded 1,000 deaths in 2023/24. The only plausible candidate, based on reporting, is the DRC's M23 escalation. Reports indicate a major surge in violence, displacement, and casualties in 2025, with potential for death tolls to cross 5,000, but as of October there is no definitive confirmation that this threshold has been reached. Other conflicts mentioned in the news (Nigeria, Yemen, etc.) either do not show evidence of new escalation or do not meet the eligibility criteria. The historical base rate for new or newly-escalated wars crossing 5,000 deaths in a single year is low, but the confluence of risk factors in 2025 pushes my estimate somewhat higher than the long-term average. I assign a probability at the upper end of plausibility, reflecting the seriousness of the DRC situation, the high global conflict tempo, and a nonzero chance of a new, fast-escalating conflict elsewhere, but still below 50% due to the stringent eligibility and reporting requirements.",
+            "final_probability": 38
+        },
+        "Political Science (Ethnic Fractionalization Theory)": {
+            "time_to_resolution": "About 2.5 months (until December 31, 2025); possibly longer if Metaculus waits until January 31, 2026 for full data.",
+            "perspective_relevance": "As an expert in Political Science focusing on Ethnic Fractionalization Theory, I analyze how ethnic, religious, and other cleavages increase the risk of violent conflict and escalation, especially in weak or failing states. This perspective is crucial for identifying where new or re-escalated wars could erupt and reach high fatality thresholds, particularly in regions with complex, multi-ethnic compositions and histories of state fragility.",
+            "status_quo": "No new war or substantial escalation to a previous war has killed at least 5,000 people in 2025, per the strict Metaculus criteria (new conflict/escalation with <1,000 deaths in both 2023 and 2024, and at least 5,000 deaths in 2025). Most major 2024\u20132025 war deaths are continuations of ongoing conflicts (Gaza, Ukraine, Sudan, etc.) that do not meet the 'new or substantially escalated' threshold for this question.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "High Ethnic Fractionalization and State Fragility in DRC, Cameroon, Sudan, and similar states",
+                    "effect": "Increases probability slightly. These environments are fertile grounds for sudden escalations, especially if local disputes draw in outside actors or spiral rapidly."
+                },
+                {
+                    "factor": "Base Rate of New High-Fatality Conflicts",
+                    "effect": "Decreases probability. Historically, the base rate for new conflicts passing the 5,000 deaths threshold within a single year is low\u2014typically only 0\u20131 per year globally, with most high-casualty events in recent years being escalations of existing wars."
+                },
+                {
+                    "factor": "Recent Surge in Number of Conflicts but Not in New High-Fatality Wars",
+                    "effect": "Neutral/slightly decreases probability. While 2024 saw a record number of armed conflicts, most did not escalate to very high fatality levels quickly, reinforcing the rarity of sudden, massive escalations."
+                },
+                {
+                    "factor": "Congo (DRC) Escalation and Proxy Dynamics",
+                    "effect": "Increases probability. The M23 rebellion (with Rwandan backing) has sharply intensified in early/mid-2025, with reports of mass displacement and possible mass casualties. If this is a substantial escalation (with <1,000 deaths in 2023 and 2024), it could meet the threshold."
+                },
+                {
+                    "factor": "Conflict Data Lag and Underreporting",
+                    "effect": "Decreases probability. Fatalities in Africa, especially DRC and Nigeria, are often undercounted and slow to be confirmed, making it less likely that a new conflict's death toll will be clearly above 5,000 and meet Metaculus's criteria by the end of 2025."
+                },
+                {
+                    "factor": "Recent Political Shocks or Failed State Events",
+                    "effect": "Increases probability. Events like the death sentence for Kabila, peace process breakdowns, and coups can rapidly destabilize situations, especially in ethnically divided societies."
+                },
+                {
+                    "factor": "Ongoing Major Conflicts (Gaza, Ukraine, Sudan) Are Ineligible",
+                    "effect": "Decreases probability. These are the largest sources of fatalities, but they do not qualify as 'new or substantially escalated' under the question's rules."
+                }
+            ],
+            "no_scenario": "Despite heightened violence and new flare-ups in places like eastern DRC, Cameroon, or Mozambique, no single new or substantially escalated conflict (by Metaculus's definition) produces 5,000+ deaths in 2025. The majority of large-scale deaths remain in continuing wars (Gaza, Ukraine, Sudan), and new escalations are either suppressed, contained, or remain below the fatality threshold. Data gaps or definitional ambiguity prevent any borderline case from being counted as a clear 'Yes.'",
+            "yes_scenario": "A new or previously low-intensity conflict (e.g., DRC's M23 rebellion, Cameroon separatist violence, Mozambique insurgency, or a surprise state-on-state clash in the Sahel or Caucasus) escalates rapidly in 2025, resulting in at least 5,000 deaths within the year. This escalation is clearly documented in credible sources, with sufficient evidence that it meets all Metaculus criteria (e.g., DRC: M23/Rwanda vs. FARDC/government, with <1,000 deaths in 2023/2024 and a sharp spike in 2025 due to mass killings of civilians or major battles).",
+            "final_reasoning": "The status quo and base rates strongly favor 'No.' Since 2010, there have been very few years in which a new or substantially escalated conflict has crossed the 5,000 fatalities mark in a single year. Most major wars (Ukraine, Gaza, Sudan, Yemen, Ethiopia, Myanmar) are continuations with high death tolls but do not qualify under the question's fine print. However, the DRC stands out as a plausible exception: news reports indicate a dramatic upsurge in violence, mass displacement, and hundreds of amputees in the first half of 2025. If 2023\u20132024 deaths remained below 1,000, and if the escalation is recognized as new/substantial, this could be the rare case that meets the criteria. Still, reporting ambiguities, slow data aggregation, and definitional issues reduce the odds. Other potential flashpoints (Cameroon, Mozambique, Sahel, or a state-on-state clash) remain below the historical base rate for new high-fatality conflicts. Given the base rate, but factoring in the volatile DRC situation and the growing number of conflicts globally, the probability is higher than average but still well below 50%. The most likely outcome is 'No,' but this is not a safe bet: the DRC situation warrants serious attention and could tip the balance if clear evidence emerges.",
+            "final_probability": 27
         },
         "Area Studies Middle East (Sectarian Conflict Paradigm)": {
-            "time_to_resolution": "About 3 months until end of 2025; possible resolution delayed until Jan 31, 2026 if ambiguity remains.",
-            "perspective_relevance": "As an Area Studies Middle East (Sectarian Conflict Paradigm) expert, I am attuned to how identity-based cleavages (sectarian, ethnic, and political) contribute to conflict escalation. This expertise is vital for assessing the likelihood of new or escalated wars\u2014especially in the Middle East and adjacent regions\u2014crossing the 5,000 death threshold, considering both underlying drivers and recent trends in armed violence.",
-            "status_quo": "In recent years, global armed conflict deaths have been historically high, but most wars surpassing 5,000 yearly deaths are continuations of existing conflicts (e.g., Ukraine, Gaza, Ethiopia). The Gaza war and Ukraine war each had well over 5,000 deaths annually in 2023/2024, but would not qualify as 'new' or 'substantially escalated' under this question\u2019s criteria unless a new front or state overtly entered, or a new conflict ignited.",
+            "time_to_resolution": "Approximately 2.5 months (until December 31, 2025; today is October 14, 2025)",
+            "perspective_relevance": "As an expert in Area Studies Middle East with a focus on the Sectarian Conflict Paradigm, I bring a deep understanding of how sectarian identity, state weakness, proxy dynamics, and regional power competition shape the onset and escalation of wars. This expertise is especially relevant in forecasting the possibility of new or escalated conflicts reaching high fatality thresholds in volatile regions, particularly the Middle East and Africa where sectarian and identity-based fault lines often underpin major escalations.",
+            "status_quo": "The status quo is that while the world is experiencing a historically high number of armed conflicts (61 state conflicts in 2024, per UCDP), the deadliest ongoing wars (Ukraine, Gaza) are continuations of earlier escalations and so do not count as 'new' or 'substantially escalated' conflicts under the resolution criteria. Most new or reignited conflicts in 2025 have not yet\u2014based on available reporting\u2014surpassed the 5,000 deaths threshold within the calendar year.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Base Rate of New or Escalated Wars Causing 5,000+ Deaths",
-                    "effect": "Global data from the UCDP/PRIO and historical trends suggest a baseline of 1-2 new wars per year crossing the 5,000 death threshold, but most high-fatality conflicts are protracted, not new. This decreases the probability, as the base rate is low."
+                    "factor": "Current conflict intensity in DRC (Congo) and potential for substantial escalation",
+                    "effect": "Increases probability. The M23 conflict in eastern DRC has dramatically intensified since January 2025, with reports of mass displacement (7 million people), hundreds of amputees in the first half of 2025, and evidence of massacres. If fatalities since January remain below 1,000 in 2023 and 2024 but have surged in 2025, this could reach the 5,000 threshold by year-end."
                 },
                 {
-                    "factor": "Current High-Intensity Conflict Hotspots (e.g., DRC, Sudan, Cameroon)",
-                    "effect": "Recent news points to major escalations in DRC (M23, Rwanda involvement, large-scale displacement, and increased prosthetic production), Sudan (El Fasher), and Cameroon (separatists). The DRC in particular shows signs of sharp escalation in 2025; if pre-2025 death tolls were below 1,000, recent intensification could push 2025 deaths over 5,000. This increases the probability."
+                    "factor": "Base rates of new wars/escalations causing 5,000+ deaths within a year",
+                    "effect": "Decreases probability. Historically, the majority of new or reignited conflicts do not reach 5,000 deaths in a single calendar year. Most high-fatality conflicts build up over time or are continuations of previous high-intensity wars. The UCDP and PRIO data show more conflicts, but not a proportional increase in new high-fatality wars."
                 },
                 {
-                    "factor": "Middle East Spillover/Regionalization Risk",
-                    "effect": "Despite the extreme violence in Gaza (well over 5,000 deaths in 2023/24), that war is not 'new' in 2025. However, there is ongoing risk of new fronts or new state involvement (e.g., Lebanon, Syria, Yemen). No news points to a major new front or state overtly entering in 2025 (so far), so this is neutral to mildly increasing."
+                    "factor": "Middle East regional flashpoints (Yemen, Israel-Lebanon, Syria, Iraq) and sectarian/proxy escalation potential",
+                    "effect": "Slightly increases probability. While major escalations have so far not occurred in 2025, the risk remains elevated due to ongoing tensions, proxy entanglements, and regional power struggles. However, most conflicts here are either continuations or did not drop below 1,000 deaths in 2023/2024 (so likely do not qualify)."
                 },
                 {
-                    "factor": "Sectarian/Ethnic Mobilization Dynamics",
-                    "effect": "Sectarian narratives and identity-based mobilization (Sunni/Shia, Hutu/Tutsi, etc.) can rapidly escalate violence, especially where state weakness prevails (DRC, Sudan, Nigeria). The DRC\u2019s M23 conflict is partly ethnicized and Rwanda\u2019s involvement could internationalize it. This increases probability moderately."
+                    "factor": "Sudan and other African conflicts",
+                    "effect": "Neutral to slightly increases probability. Sudan\u2019s conflict remains brutal but is a continuation of previous years\u2019 fighting above the 1,000-death threshold; other African conflicts (Mozambique, Nigeria, Cameroon) show localized escalations but are unlikely to hit 5,000 deaths as a 'new' or 'substantially escalated' war in 2025."
                 },
                 {
-                    "factor": "International Intervention and Containment",
-                    "effect": "International actors are focused on containment in some hotspots (U.S. in Sudan, peace talks in DRC, international scrutiny in Gaza), which can dampen escalation, though not always successfully. This decreases probability slightly."
+                    "factor": "Absence of reporting on any new war with major (>5,000) 2025 fatalities as of October",
+                    "effect": "Decreases probability. By mid-October, such a dramatic new escalation would likely be widely reported and evident in humanitarian/NGO/UN data. The DRC is the only plausible candidate, but even there, reporting currently focuses more on displacement and injuries than confirmed fatalities exceeding 5,000."
                 },
                 {
-                    "factor": "Reporting and Attribution Ambiguities",
-                    "effect": "Ambiguities in death toll reporting (as in DRC, Sudan) can delay or complicate resolution. If deaths are undercounted or data is ambiguous, the question could resolve as Ambiguous, but not as Yes. This decreases the effective probability of a clear Yes."
+                    "factor": "Potential for sudden, late-year escalation (e.g., coup, regional intervention) in high-risk states",
+                    "effect": "Slightly increases probability. There remains some tail risk of a late-year dramatic escalation in a fragile state or through regional intervention, but the historical frequency of such events is low."
                 }
             ],
-            "no_scenario": "No new conflicts or escalations reach 5,000 deaths in 2025 where the prior two years were below 1,000/year. Ongoing wars (Ukraine, Gaza, Ethiopia) remain highly lethal but do not qualify as 'new or escalated' under the criteria. Major escalations in DRC, Sudan, Cameroon, etc., either do not cross the 5,000 threshold, or reporting remains too ambiguous for a Yes resolution.",
-            "yes_scenario": "A conflict such as the M23-led DRC war, which has seen sharp escalation in 2025, crosses the 5,000 death mark. If credible sources confirm that deaths in DRC (or in another newly escalated conflict zone) exceed 5,000 for the calendar year 2025, and the prior two years were below 1,000/year, the criteria are met. Alternatively, a new interstate war or a major new front (e.g., Rwanda overtly intervening in DRC, or escalation between Sudanese factions) results in 5,000+ deaths.",
-            "final_reasoning": "Recent news strongly points to a sharp escalation in eastern DRC, with evidence of mass displacement, large-scale casualties (e.g., hundreds of amputees in a few months), and regionalization (Rwanda involvement). Historical base rates for new or escalated conflicts killing over 5,000 in a year are low, but not negligible\u2014especially in Africa\u2019s Great Lakes region. The Middle East, while extremely violent, has not seen a qualifying new front in 2025 so far. Other hotspots (Sudan, Cameroon) bear watching, but DRC is the standout candidate. Given the news of intensified violence and the humanitarian crisis, it is plausible that deaths in DRC have crossed or will cross 5,000 in 2025, assuming prior years' death tolls were under 1,000 (this needs external confirmation but is suggested by the UCDP data and news reporting). Factoring in the base rate, the status quo, and the specific evidence of escalation, I assess the probability as moderately high but not extreme, since attribution and reporting could still fall short or remain ambiguous.",
-            "final_probability": 60
+            "no_scenario": "Despite ongoing violence in places like eastern DRC, Sudan, and the Sahel, no single new conflict or substantial escalation in 2025 results in 5,000 or more deaths within the calendar year. Most conflicts remain below the threshold, and the most intense fighting continues to be in wars already well above 1,000 deaths in 2023/2024 (e.g., Gaza, Ukraine, Sudan), so they do not qualify under the question's criteria. Monitoring organizations (UCDP, ACLED) and major news sources do not report any qualifying conflict reaching the 5,000 fatality mark by December 31, 2025.",
+            "yes_scenario": "The M23 conflict in eastern DRC, which sharply intensified in early 2025, results in a major surge of violence, with at least 5,000 deaths documented by credible sources (e.g., UCDP, ICRC, UN, major media) within the calendar year. Alternatively, a sudden, catastrophic escalation in a previously 'cold' or low-intensity conflict (perhaps in Cameroon, Mozambique, or a new Middle Eastern flashpoint) causes a rapid climb in fatalities to surpass the 5,000 threshold before year's end.",
+            "final_reasoning": "Despite an unprecedented number of armed conflicts worldwide, the historical base rate for a new or substantially escalated conflict reaching 5,000 deaths in a single year remains low. The deadliest theaters in 2025 (Ukraine, Gaza, Sudan) are continuations of prior high-intensity wars and thus do not meet the question\u2019s criteria. The only plausible current candidate is the DRC, where the M23 rebellion has escalated, but most reporting to date stresses displacement, injuries, and infrastructure destruction rather than confirmed fatalities well above 5,000. No English or international news source, nor the UCDP, has yet reported a 2025 death toll from a qualifying new/escalated war meeting the 5,000 mark. With less than three months left in the year, the window for such a dramatic new escalation is closing, though not entirely shut. The historical pattern is that, absent clear evidence of a massive new death toll by October, it's unlikely for a new war to meet the threshold by year-end. However, the risk is higher than in most years due to the unprecedented number of conflicts and volatility, so a moderate probability remains. Given all these factors, my forecast is:",
+            "final_probability": 17
         }
     },
     "deliberation_probability": [
-        22,
-        35,
+        23,
         12,
-        23,
-        38,
-        23,
-        62,
-        35,
-        28,
-        33,
+        13,
+        65,
+        13,
+        7,
+        27,
         18,
-        35,
-        60
+        38,
+        38,
+        38,
+        27,
+        17
     ],
-    "deliberation_mean_probability": 32.61538461538461,
-    "deliberation_sd": 14.767861848952393,
-    "deliberation_probability_result": 33
+    "deliberation_mean_probability": 25.846153846153847,
+    "deliberation_sd": 15.821115393918735,
+    "deliberation_probability_result": 26
 }

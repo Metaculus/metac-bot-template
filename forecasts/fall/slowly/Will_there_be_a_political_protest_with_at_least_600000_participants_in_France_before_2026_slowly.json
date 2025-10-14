@@ -1,309 +1,317 @@
 {
     "deliberation_results": {
         "Security Intelligence Analysis (OSINT Protest Monitoring Standards)": {
-            "time_to_resolution": "Approximately 2.5 months (question closes January 1, 2026; today is October 12, 2025)",
-            "perspective_relevance": "As an OSINT protest monitoring expert, I am skilled at interpreting protest size estimates, distinguishing between government and union numbers, and understanding the dynamics that drive mass mobilization in France. My expertise allows for nuanced analysis of protest trajectories, union intentions, political triggers, and the reliability of official participant counts, which is critical given the Metaculus resolution criteria relying on French Ministry of the Interior figures.",
-            "status_quo": "France has seen very large protests against austerity, with government estimates reaching 500,000 (Sep 18) but not 600,000, and the latest major protest (Oct 2) officially at 195,000 (despite higher union claims). There is no recent precedent in 2023\u20132025 for government-estimated protest crowds exceeding 600,000 in a single day.",
+            "time_to_resolution": "Approximately 2.5 months (question resolves January 1, 2026)",
+            "perspective_relevance": "As an expert in Security Intelligence Analysis (OSINT Protest Monitoring Standards), I bring specialized knowledge of how protester turnout is measured, the reliability and biases of official and union figures, historical trends in French protest mobilization, and the social triggers that drive mass mobilizations. I am also attuned to signals from unions, civil society, and government responses that indicate the potential for large-scale mobilizations, as well as base rates for such protests in France.",
+            "status_quo": "Large national protests occurred in September (500,000+ according to the Interior Ministry), but the most recent day of action on October 2 saw a significant decline (195,000 official, 600,000 claimed by unions), with no new protest dates announced. Historically, 600,000+ official turnout is rare and typically only occurs during peak moments of national outrage or historic strikes.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Recent Mobilization Trajectory",
-                    "effect": "Decreases probability. Despite a massive protest on September 18 (500,000 official), the following nationwide mobilization on October 2 was much lower (195,000 official), indicating clear loss of momentum."
+                    "factor": "Political Instability and Austerity Policy",
+                    "effect": "Increases probability. The ongoing political crisis, frequent PM changes, and highly unpopular austerity measures increase the baseline risk of another major mobilization if the government aggressively pushes through further cuts or bypasses parliament."
                 },
                 {
-                    "factor": "Union and Opposition Intent",
-                    "effect": "Slightly increases probability. Unions are angry and have not ruled out further large protests, especially if talks continue to fail or if the government pushes austerity through by decree, which could spark a new wave of mobilization."
+                    "factor": "Union Mobilization Capacity and Coordination",
+                    "effect": "Increases probability, but with caveats. French unions have a strong history of organizing large protests and have demonstrated the ability to mobilize hundreds of thousands quickly. However, declining turnout over successive actions and leader statements about the lack of concrete government concessions suggest some fatigue and tactical reassessment."
                 },
                 {
-                    "factor": "Political Crisis and Triggers",
-                    "effect": "Increases probability. Deep political instability\u2014multiple PM resignations, no stable governing coalition, and real risk of parliamentary dissolution\u2014creates the potential for a 'rupture' event, which historically can catalyze huge, even unprecedented, mobilizations."
+                    "factor": "Protest Fatigue and Momentum Decay",
+                    "effect": "Decreases probability. After a sharp surge in September, the October 2 protest turnout was less than half the previous official count. Media and union leaders acknowledge 'declining momentum,' and no immediate follow-up protest is scheduled. This suggests the initial anger is being diffused or at least temporarily channeled into political negotiations, reducing the likelihood of another sudden surge."
                 },
                 {
-                    "factor": "Base Rate of 600,000+ Ministry-Counted Protests",
-                    "effect": "Decreases probability. In recent French history, official government protest counts rarely exceed 600,000 (even during the 2023 pension reform crisis, official numbers just reached or slightly exceeded this threshold only once or twice). Authorities consistently report lower numbers than unions."
+                    "factor": "Official Reporting Bias and Baseline",
+                    "effect": "Decreases probability. The resolution criteria require 600,000+ as reported by the Ministry of the Interior, which is consistently far below union estimates. Even at last month's high, the official count was 500,000. Historically, official numbers above 600,000 are extremely rare and only happen during extraordinary national events (e.g., anti-terror marches, peak Yellow Vest days)."
+                },
+                {
+                    "factor": "Potential New Triggers (Budget Passage, Article 49.3, Elections)",
+                    "effect": "Increases probability, but only if the government takes a particularly provocative step (e.g., passing the budget via Article 49.3, major social cuts, or calling snap elections). Such triggers could reignite mass outrage and union coordination for a final year-end push."
+                }
+            ],
+            "no_scenario": "The unions, having failed to extract major concessions, shift focus to political negotiations and localized actions, but do not call another mass national strike before year-end. The government avoids using the most inflammatory measures (e.g., avoids Article 49.3 or the most drastic cuts), or opposition remains fragmented. Even if protests occur, the official turnout does not surpass 600,000, as public fatigue and the holiday season limit mass mobilization.",
+            "yes_scenario": "The government, in a bid to push through the budget (possibly using Article 49.3 or harsh austerity), provokes a fresh wave of outrage. Unions and leftist parties unite for a 'last stand' protest before year-end, coordinating with civil society and student groups. Large-scale strikes disrupt transport, education, and public services. The Ministry of the Interior, facing undeniable turnout, reports over 600,000 participants nationwide.",
+            "final_reasoning": "Base rates for official French protests exceeding 600,000 are low\u2014only reached during exceptional crises. While current political instability and social anger are elevated, the October 2 protest (last official: 195,000) shows clear momentum decay. Unions acknowledge declining participation and have not announced new protest dates. However, the situation remains volatile: a government misstep (e.g., 49.3, drastic cuts, or snap elections) could spark one more massive mobilization. Still, the window for organizing such a protest is narrowing, and with winter and the holiday season approaching, the logistical and motivational barriers to another surge are rising. My OSINT expertise tells me that unless a major political trigger occurs, the status quo scenario (no official 600,000+ protest) is more likely. I assign a 25% chance to a Yes outcome, reflecting the real but limited probability of a new mass mobilization exceeding the official threshold before the year ends.",
+            "final_probability": 25
+        },
+        "Crisis Management (Crowd Risk Assessment Models)": {
+            "time_to_resolution": "About 2.5 months (question resolves January 1, 2026; today is October 14, 2025)",
+            "perspective_relevance": "As an expert in Crisis Management and Crowd Risk Assessment Models, I focus on the dynamics of mass mobilization, risk factors for crowd escalation, protest organization logistics, and the historical patterns linking political instability and protest size. I can evaluate the likelihood of extreme turnout based on recent events, government-union relations, protest fatigue, and the structural capacity for large-scale mobilizations.",
+            "status_quo": "France has experienced large but sub-600,000 protests (per Interior Ministry counts) in recent weeks, with high political instability, but recent mobilizations show a declining trend in turnout. The status quo is continued protest activity without a single event exceeding 600,000 participants by official count.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Escalating Political Instability and Public Discontent",
+                    "effect": "Increases probability. The extraordinary churn in government, extremely low approval ratings, and open calls for Macron's resignation create a volatile environment ripe for large-scale mobilization."
+                },
+                {
+                    "factor": "Protest Fatigue and Declining Momentum",
+                    "effect": "Decreases probability. The September 18 protest reached just over 500,000 (official), but the subsequent October 2 event dropped to under 200,000, suggesting diminishing returns and organizational fatigue."
+                },
+                {
+                    "factor": "Union Mobilization Capacity and Coordination",
+                    "effect": "Increases probability. The intersyndical coalition has proven it can coordinate nationwide actions, and unions remain highly motivated with unresolved grievances. If triggered by a new austerity push or a political flashpoint, they could mobilize again at scale."
+                },
+                {
+                    "factor": "Government Concessions or Tactical Delays",
+                    "effect": "Decreases probability. If Lecornu\u2019s government offers minor concessions or strategically delays the most inflammatory measures, it may sap urgency from mass mobilizations."
+                },
+                {
+                    "factor": "Base Rate of Large Protests in France",
+                    "effect": "Decreases probability. Historically, protests exceeding 600,000 by Interior Ministry count are rare (e.g., 1995, 2010, 2023 pension reform peak). Multiple 500,000+ events in one season are unusual, and the official numbers are consistently lower than union estimates."
+                },
+                {
+                    "factor": "Potential Political Triggers (e.g., dissolution of parliament, new austerity package)",
+                    "effect": "Increases probability. A sudden escalation\u2014such as parliamentary dissolution, snap elections, or a new, harsher budget\u2014could reignite and amplify protest turnout."
+                }
+            ],
+            "no_scenario": "Despite continued unrest and smaller-scale protests, the unions fail to reignite mass momentum. Government offers limited but visible concessions and times controversial measures to avoid flashpoints. Interior Ministry counts remain below 600,000 for all events, even if union estimates are higher. The crisis drags on but without a single protest exceeding the threshold.",
+            "yes_scenario": "The government attempts to force through a new austerity package or triggers fresh outrage (e.g., dissolving parliament, using Article 49.3 to bypass debate again). Unions and opposition parties coordinate a 'one big day' of action, mobilizing workers, students, and the disaffected middle class. The protest coincides with a symbolic date or is catalyzed by a new political scandal, pushing official turnout over 600,000 according to the Interior Ministry.",
+            "final_reasoning": "While France is in the midst of extraordinary political instability and mass mobilization potential remains high, official turnout at recent protests has not reached the 600,000 threshold. There is clear protest fatigue, and the government may attempt to defuse or delay the most controversial measures. Still, the risk of a new flashpoint\u2014such as failed budget negotiations, a snap election, harsh new austerity, or a dramatic government action\u2014remains elevated. Historically, France has occasionally seen official protest numbers over 600,000, particularly during moments of acute crisis. Given the high volatility, but also the clear signs of declining protest momentum and the rarity of such large official counts, I estimate a modestly elevated probability relative to the base rate but do not go to extremes. The most likely scenario is continued unrest with sub-threshold protests; the main risk factor for a Yes outcome is a fresh, highly provocative government move before year-end.",
+            "final_probability": 30
+        },
+        "Political Science (Contentious Politics Theory)": {
+            "time_to_resolution": "Approximately 11 weeks (until January 1, 2026).",
+            "perspective_relevance": "As an expert in Contentious Politics Theory, I focus on how grievances, resource mobilization, political opportunities, and state responses shape the emergence and scale of protest movements. This perspective is uniquely relevant to France's current context, given the ongoing political crisis, austerity measures, union mobilization, and volatile elite alliances. Contentious politics theory helps assess the likelihood that structural and immediate triggers will translate into mass protest on a scale exceeding 600,000 participants.",
+            "status_quo": "Recent protests have mobilized mass turnout (500,000\u20131,000,000 per union estimates, 500,000 per Interior Ministry) but have not reached the 600,000 threshold according to official government counts. Momentum appears to be declining, with the latest Interior Ministry figure (October 2) at 195,000. No single protest in recent years (even during high-mobilization moments such as pension reform or Yellow Vests) has reached 600,000 per official count.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Escalating Political Crisis and Elite Fragmentation",
+                    "effect": "Increases probability. The government crisis, repeated PM resignations, no-confidence threats, and a lack of parliamentary majority create a high-political-opportunity structure for protest escalation. The lack of a stable government also reduces capacity for effective repression or cooptation."
+                },
+                {
+                    "factor": "Depth and Breadth of Grievances",
+                    "effect": "Increases probability. Deep austerity cuts (\u20ac44B), pension reform fatigue, and perceived elite intransigence have generated cross-sectoral grievances, uniting unions, left parties, and segments of the public."
+                },
+                {
+                    "factor": "Resource Mobilization by Unions",
+                    "effect": "Mixed: Slightly decreases probability relative to the peak. Unions have demonstrated organizational capacity, but the decline in turnout from September (500,000+) to October (195,000) suggests diminishing mobilization potential unless a major new trigger emerges."
+                },
+                {
+                    "factor": "State Repression and Policing",
+                    "effect": "Decreases probability. Very high levels of policing (80,000+ officers per protest) and crackdowns may deter casual or moderate participants, capping protest size."
+                },
+                {
+                    "factor": "Protest Fatigue and Momentum Decay",
+                    "effect": "Decreases probability. Three mass mobilizations within a month, with each successive event drawing fewer people, suggest fatigue and declining willingness to participate absent a new, galvanizing event."
+                },
+                {
+                    "factor": "Historical Base Rate",
+                    "effect": "Decreases probability. In the past decade, official counts for national protests in France rarely exceed 600,000. Mass movements (Yellow Vests, pension reforms) often peaked below this threshold per Interior Ministry figures."
+                },
+                {
+                    "factor": "Potential for New Catalytic Event (Budget, Elections, or Scandal)",
+                    "effect": "Increases probability. If the government collapses again, parliament is dissolved, or a new round of austerity is adopted without compromise, a one-off surge could cross the threshold."
+                }
+            ],
+            "no_scenario": "Despite continued union mobilization and public anger, protests in late 2025 fail to break through the 600,000-participant threshold (as counted by the Interior Ministry). The government offers minor concessions, unions are unable to sustain or escalate turnout, and protest fatigue sets in. Major disruptions are avoided, and the political crisis remains contained to parliamentary maneuvers and elite infighting.",
+            "yes_scenario": "A new triggering event occurs\u2014such as the passage of an especially draconian budget, a government shutdown, snap elections, or a particularly provocative use of Article 49.3 to bypass parliament. This catalyzes unified action by all major unions and opposition parties, resulting in a mass general strike or demonstration that the Interior Ministry counts as exceeding 600,000. The protest builds on accumulated grievances and previous mobilizations, drawing in new sectors (students, public workers, retirees) and exceeding previous turnout despite police deterrence.",
+            "final_reasoning": "The probability that a protest with at least 600,000 participants (per the Interior Ministry) will occur before 2026 is higher than in most years due to France's severe political crisis, repeated government collapses, deep and widely shared grievances, and the demonstrated capacity for large mobilizations. However, several factors temper this: the official count is consistently lower than union estimates; recent protests show declining momentum; and the historical base rate for official counts exceeding 600,000 is low, even during intense contentious cycles. While the context is volatile and a new trigger could produce an exceptional surge, absent a major new shock, the trend suggests a plateau or decline. Given these trade-offs\u2014and the short time window remaining\u2014I estimate a probability moderately above the base rate but still below even odds.",
+            "final_probability": 32
+        },
+        "Political Science (Resource Mobilization Theory)": {
+            "time_to_resolution": "Approximately 2.5 months (question closes Jan 1, 2026; today is Oct 14, 2025)",
+            "perspective_relevance": "As an expert in Resource Mobilization Theory, I focus on the conditions enabling or constraining large-scale collective action. I analyze the capacity of French unions and social movements to mobilize hundreds of thousands, the availability of organizational, material, and political resources, elite alliances, and the broader political opportunity structure. This lens helps assess whether protest mobilization is likely to escalate or lose momentum given the current crisis.",
+            "status_quo": "Large protests against austerity reached over 500,000 on September 18, 2025, but subsequent mobilizations (October 2) saw participation fall to 195,000 (Interior Ministry count). Historically, protests of 600,000+ (by official count) are rare and tend to occur during acute political crises or major, highly unifying reforms.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Organizational Capacity and Unity of Unions",
+                    "effect": "Increases probability. French labor unions have recently demonstrated a high degree of coordination and ability to mobilize\u2014three major protests in under a month, with the September 18 event nearing the threshold. However, recent reports note declining turnout and momentum, indicating possible resource exhaustion or protest fatigue."
+                },
+                {
+                    "factor": "Political Opportunity Structure\u2014Government Instability",
+                    "effect": "Increases probability. The government is extremely unstable: five PMs in two years, budget impasse, deeply unpopular president (17% approval), and no parliamentary majority. Such instability can embolden opposition actors, lower protest risks, and create windows for escalated mobilization."
+                },
+                {
+                    "factor": "Elite Alliances and Political Fragmentation",
+                    "effect": "Mixed effect. While unions and left parties are cooperating, the right (National Rally, Les R\u00e9publicains) are largely absent from mobilizations. The political system is fragmented, and some opposition elites are calling for elections or Macron\u2019s resignation, but have not directly joined street action, limiting cross-class, cross-cleavage mobilization potential."
                 },
                 {
                     "factor": "Government Response and Concessions",
-                    "effect": "Decreases probability. The government, aware of the risk of escalation, has shown some willingness to negotiate or make symbolic concessions (e.g., dropping holiday cuts), which might help prevent a new peak mobilization."
+                    "effect": "Decreases probability. The new PM Lecornu, while not signaling major policy reversals, has made some small concessions and is meeting with unions. Even minor concessions can demobilize moderate protestors or split union fronts, as seen in waning turnout."
                 },
                 {
-                    "factor": "Resolution Criteria Strictness",
-                    "effect": "Decreases probability. The question requires the official Ministry of the Interior estimate to hit 600,000 or more. Union claims do not count, and ambiguous cases will not resolve as Yes. This is a high bar."
+                    "factor": "Resource Exhaustion and Protest Fatigue",
+                    "effect": "Decreases probability. Sustaining peak mobilization is costly; the recent October 2 protest was much lower in turnout. Resource Mobilization Theory predicts that repeated, large-scale actions quickly drain organizational resources unless a new catalyst emerges."
+                },
+                {
+                    "factor": "Trigger Events and Escalation Potential",
+                    "effect": "Could increase probability if such an event occurs. A new, dramatic government action (e.g., invoking Article 49.3 to force budget passage, or a new unpopular reform) could reignite and escalate mobilization."
+                },
+                {
+                    "factor": "Measurement and Official Count",
+                    "effect": "Decreases probability. The resolution depends on Interior Ministry numbers, which are typically much lower than union or media counts. The September 18 protest, officially reported at 500,000, was probably the ceiling for the current wave barring a major escalation."
                 }
             ],
-            "no_scenario": "Despite ongoing strikes, protests, and political instability, no single protest day before January 1, 2026, achieves an official Ministry of the Interior count of 600,000 or more. Mobilizations plateau or decline as fatigue sets in or as the government offers minor concessions, and the opposition focuses on political maneuvers (no-confidence, calls for elections) rather than coordinated street action of unprecedented scale.",
-            "yes_scenario": "A political trigger\u2014such as the government ramming through a deeply unpopular austerity budget by decree (Article 49.3), the announcement of snap elections, or a shocking police crackdown\u2014galvanizes unions and opposition parties to call for a single-day national mobilization. Public anger, already high, is stoked by the sense of a constitutional or democratic crisis. Unions manage to coordinate and escalate action, leading to a protest that, even by official counts, reaches or exceeds 600,000 nationwide before January 1, 2026.",
-            "final_reasoning": "While the political situation in France is uniquely unstable and public anger is high, the recent protest trajectory shows declining official turnout, and the bar set by the Ministry of the Interior's count is historically very difficult to clear. The unions' ability to mobilize is strong, but the step from 500,000 to 600,000 official is significant, especially when momentum is waning. However, the combination of deep government instability, the risk of forced austerity measures, and the potential for a major triggering event means that a resurgence to record-breaking protest numbers is not inconceivable. I weight the status quo and base rate heavily, but the volatility of the situation and the short remaining time window (including the volatile budget passage period) mean a spike is still plausible. I judge the probability to be somewhat higher than pure base rate, but not above 1-in-3.",
-            "final_probability": 32
-        },
-        "Crisis Management (Crowd Risk Assessment Models)": {
-            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As a crisis management and crowd risk assessment expert, my perspective is crucial because I analyze protest dynamics, escalation risks, and the factors that influence protest turnout and mobilization. I can interpret not just raw political context, but also logistical, historical, and organizational elements that determine whether a protest of this scale can materialize on short notice.",
-            "status_quo": "The largest recent protest reached 500,000 participants nationwide (Interior Ministry count) on September 18, 2025. Subsequent protests have seen declining turnout: 195,000 (October 2) by official count, despite union claims of higher numbers. Protest momentum appears to be waning, but discontent is persistent.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Protest Mobilization Infrastructure",
-                    "effect": "Increases probability. France has strong, well-organized unions (CGT, CFDT, etc.) and recent experience with rapid mobilization, allowing for scaling up protests quickly if the political catalyst is sufficient."
-                },
-                {
-                    "factor": "Political Instability and Unresolved Grievances",
-                    "effect": "Increases probability. The government crisis is ongoing, with unresolved austerity measures, deep parliamentary fragmentation, and widespread anger. This creates a fertile ground for large-scale protests if a triggering event occurs."
-                },
-                {
-                    "factor": "Recent Protest Trends and Momentum Decay",
-                    "effect": "Decreases probability. Despite large mobilizations in September, the most recent protest saw a sharp decline in turnout, suggesting protest fatigue or waning momentum absent new escalation or a catalyzing event."
-                },
-                {
-                    "factor": "Upcoming Political Deadlines and Government Actions",
-                    "effect": "Increases probability. The looming budget submission (October 13) and the possibility of parliamentary dissolution or snap elections could serve as flashpoints for renewed, massive mobilization."
-                },
-                {
-                    "factor": "Seasonality and Protest Logistics",
-                    "effect": "Decreases probability. With only a few months left in the year, colder weather and holiday periods can dampen turnout, especially for very large outdoor gatherings."
-                },
-                {
-                    "factor": "Government and Police Response",
-                    "effect": "Ambiguous effect. Heavy policing can either deter turnout through repression or inflame anger and boost mobilization if perceived as excessive."
-                }
-            ],
-            "no_scenario": "Despite ongoing discontent, unions are unable to re-mobilize to previous highs due to protest fatigue, lack of a singular new grievance, or effective (though possibly superficial) government concessions. Protests continue but stay below the 600,000 participant threshold (as counted by the Ministry of the Interior), possibly fragmenting into smaller, localized actions rather than a single massive mobilization.",
-            "yes_scenario": "A major political development (e.g., government pushes through new, highly unpopular austerity measures, or dissolves parliament, or a no-confidence vote succeeds) acts as a trigger. Unions call for a general strike and mass mobilization, which\u2014using their established networks and high public anger\u2014leads to a protest that exceeds 600,000 participants nationwide (official Interior Ministry count) before the end of 2025.",
-            "final_reasoning": "The base rate for protests exceeding 600,000 (by Interior Ministry count) in France is low but not unprecedented, typically requiring a major, acute trigger. The September 18 protest came close (500,000), showing that the current climate is unusually volatile and the mobilization infrastructure is robust. However, the sharp drop to 195,000 on October 2 suggests momentum decay, common in protest cycles unless a new escalation occurs. The window for another spike is narrowing due to seasonality and a lack of scheduled national actions. Still, the unresolved budget crisis, ongoing government instability, and the threat of parliamentary dissolution or further austerity could provide the necessary trigger. Given the mix of high baseline discontent and recent trend toward lower turnout, I estimate the probability as moderately above the historical base rate, but not extreme. There is a real (but not overwhelming) chance of renewed, massive mobilization if a new flashpoint arises before year-end.",
-            "final_probability": 32
-        },
-        "Political Science (Contentious Politics Theory)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in contentious politics theory, I analyze the interplay of political opportunity structures, mobilizing structures (e.g., unions), framing processes, and state capacity and responses. France has a rich tradition of mass protest, but large-scale mobilizations of 600,000+ are rare and depend on a convergence of political crisis, elite divisions, organizational capacity, and perceived threats to core social rights.",
-            "status_quo": "The status quo is that large protests (500,000+ participants) have occurred recently, but none reached the 600,000 threshold per the Ministry of the Interior. After a peak in September, turnout has declined in subsequent actions, and no nationwide protest is currently scheduled.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Political Opportunity Structure (POS)",
-                    "effect": "Increases probability. The French government is highly unstable, with five PM resignations in two years, record-low presidential approval, and a fragmented parliament. Such instability creates a permissive environment for protest escalation, especially if government repression or unpopular budgetary decisions occur."
-                },
-                {
-                    "factor": "Mobilizing Structures (Unions and Networks)",
-                    "effect": "Increases probability, but with limits. French unions have demonstrated the capacity to mobilize hundreds of thousands quickly. However, recent actions saw declining turnout and some union fatigue, especially absent new, galvanizing policy shocks."
-                },
-                {
-                    "factor": "Issue Salience and Framing",
-                    "effect": "Mixed. The budget cuts and austerity are highly salient and widely opposed, but there is some protest fatigue and a lack of a new, unifying trigger. Absent a new, dramatic government move, it is difficult to maintain or escalate turnout."
-                },
-                {
-                    "factor": "Elite Division and Political Polarization",
-                    "effect": "Increases probability. Multiple major parties (left and right) are calling for new elections and Macron's resignation, creating elite cues that legitimize mass protest."
-                },
-                {
-                    "factor": "State Response and Repression",
-                    "effect": "Ambiguous. Heavy police deployment has not deterred protest, but authorities have so far avoided the kind of violence that would escalate mobilization. A repressive incident could spike turnout, but continued 'peaceful policing' may suppress escalation."
-                },
-                {
-                    "factor": "Protest Cycle Dynamics",
-                    "effect": "Decreases probability. The September-October protest wave appears to have passed its peak, with the October 2 action drawing less than half the September 18 turnout (per official figures). Without a new, dramatic event, cycles of protest tend to decline."
-                },
-                {
-                    "factor": "Historical Base Rate",
-                    "effect": "Decreases probability. Ministry of the Interior counts of 600,000+ are rare, occurring perhaps once or twice per decade (e.g., 2010 pension reform, 2016 labor law, 2023 anti-pension reform). France\u2019s protest 'hardware' is robust, but this high threshold is infrequent."
-                },
-                {
-                    "factor": "Time Constraint",
-                    "effect": "Decreases probability. Only 2.5 months remain, and unions have not announced new national actions. Organizing such a massive mobilization typically requires lead time unless a sudden crisis (snap election, draconian budget) arises."
-                }
-            ],
-            "no_scenario": "No new government move sufficiently galvanizes the unions or public to call a fresh nationwide protest. The political crisis limps along, but disillusionment and protest fatigue set in. The unions focus on negotiations or wait for the next electoral opportunity. Any further protests fall short of the 600,000 threshold (per Interior Ministry), with turnout plateauing or declining as the cycle abates.",
-            "yes_scenario": "The government pushes through a highly unpopular measure (e.g., using Article 49.3 to pass extreme austerity, pension cuts, or new tax increases) or moves to dissolve parliament, triggering a snap election. Major unions call a new national day of action, with elite left and/or right parties joining. The protest taps into accumulated anger, bringing turnout (per Interior Ministry) to or above 600,000, possibly boosted by a high-profile incident (repression, scandal, etc.).",
-            "final_reasoning": "The situation is extremely volatile, with clear potential for further escalation. France\u2019s protest infrastructure and current elite fragmentation are highly conducive to mass action. However, the most recent evidence shows declining protest momentum: the September 18 action just missed the threshold (500,000 per Interior Ministry), and October 2 fell sharply (195,000), despite union claims of higher numbers. There is notable protest fatigue and no imminent trigger on the calendar. While a sudden government misstep could reignite mobilization, organizing a 600,000+ protest on short notice is rare, especially with only 2.5 months left. The historical base rate for such large actions per the Interior Ministry is low, with only a handful per decade. Thus, while the risk remains elevated due to the severity of the crisis, the status quo and declining protest cycle suggest the most probable outcome is No. I assign a moderately high, but sub-even, probability to Yes, reflecting high volatility but a low base rate and recent data.",
-            "final_probability": 35
-        },
-        "Political Science (Resource Mobilization Theory)": {
-            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As a Political Science expert specializing in Resource Mobilization Theory (RMT), my focus is on the capacity of social movements and collective actors (such as unions) to mobilize resources\u2014leadership, organization, communication, funding, and solidarity\u2014needed for large-scale collective action. RMT provides insight into the likelihood of sustained or escalated protest activity, especially in contexts of political opportunity, organizational strength, and government response.",
-            "status_quo": "France has seen repeated, large-scale protests against austerity, with a recent protest (September 18, 2025) reaching over 500,000 participants according to the Interior Ministry (and higher according to unions), but the most recent (October 2, 2025) saw a significant drop to 195,000. The status quo is that protests are frequent and sometimes large, but the 600,000 threshold (as counted by the Ministry) has rarely been reached in the past decade.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Political Opportunity Structure",
-                    "effect": "Increases probability. The acute government crisis, multiple PM resignations, budget deadlocks, and historically low trust in Macron create a fertile environment for mobilization. Political elites (left and right) are calling for new elections or the president\u2019s resignation, which can legitimize and amplify protest calls."
-                },
-                {
-                    "factor": "Organizational Capacity & Unity of Unions",
-                    "effect": "Increases probability, but marginally. French unions (CGT, CFDT, Solidaires, etc.) have repeatedly demonstrated their capacity to organize nationwide actions and coordinate messaging, but recent signs of declining participation and possible protest fatigue may undermine their ability to continuously escalate."
-                },
-                {
-                    "factor": "Resource Availability and Protest Fatigue",
-                    "effect": "Decreases probability. The recent decline in turnout (from 500,000+ to under 200,000 in official Ministry counts) suggests resource exhaustion and protest fatigue among both organizers and participants. Frequent mobilizations can stretch organizational resources and reduce turnout over time."
-                },
-                {
-                    "factor": "Governmental & Elite Response",
-                    "effect": "Mixed. Some concessions (e.g., dropping holiday cuts) have been made, but the government\u2019s persistence with austerity maintains protest grievances. However, ongoing talks and minor concessions may demobilize moderate participants, reducing protest size."
-                },
-                {
-                    "factor": "Historical Base Rate",
-                    "effect": "Decreases probability. In the past decade, Ministry of Interior counts above 600,000 are rare, even during disruptive reforms (pension, labor law). Unions\u2019 higher figures are almost always discounted in official reporting. The September 18, 2025 protest (500,000) was among the largest since the 2010s, but still fell short."
-                },
-                {
-                    "factor": "Imminent Political Deadlines (Budget, Possible Elections)",
-                    "effect": "Slightly increases probability. The approach of the October 13 budget deadline and potential parliamentary dissolution could create flashpoints for exceptional mobilization if a triggering event occurs (e.g., adoption of budget by decree, further use of Article 49.3, or new elections)."
-                }
-            ],
-            "no_scenario": "Protest fatigue persists, with turnout continuing to decline as seen on October 2, 2025. Unions and opposition parties fail to coordinate a single, unifying day of action. The government makes modest concessions, or the parliamentary crisis drags on with no clear trigger event, resulting in only medium-sized protests (200,000\u2013400,000 as per Ministry counts), never reaching the 600,000 threshold before year-end.",
-            "yes_scenario": "A political trigger\u2014such as the use of Article 49.3 to force through an austerity budget, or the dissolution of parliament and call for snap elections\u2014sparks outrage. Unions and opposition parties coordinate a single, massive day of action, possibly aligned with a general strike, that brings together a broad coalition (labor, students, public sector, left, and center opposition), pushing official Ministry counts above 600,000 nationwide.",
-            "final_reasoning": "The resource mobilization perspective highlights the exceptional organizational capacity of French unions and the favorable political opportunity structure amid government crisis, but also warns of real constraints: protest fatigue, recent declining turnout, and the rarity of official counts above 600,000 in the past decade. The September 18 protest (500,000 official) was likely at or near the current movement's ceiling, barring an extraordinary triggering event. The government's limited concessions are unlikely to resolve underlying grievances, but may demobilize some moderates. Unless an acute political crisis (budget passage by decree, parliamentary dissolution, or new election) occurs and is seized upon by unions and opposition as a rallying point, it is more likely that protests will remain large but fall short of the 600,000 threshold in official counts. The base rate for such large protests is low, and the recent downward trend in turnout after the peak further reduces the likelihood. Nevertheless, the proximity to the threshold and ongoing political volatility mean the risk is not negligible.",
-            "final_probability": 23
+            "no_scenario": "The protest wave continues but plateaus or declines as union resources are stretched, government offers minor concessions, and opposition parties focus on parliamentary tactics. No new highly salient trigger event occurs. Subsequent protests in October-November draw 100,000-400,000 per Interior Ministry, but not 600,000. The government muddles through the budget process, possibly with Article 49.3, but without a mass unifying outrage or a broadening of the coalition beyond left/union actors.",
+            "yes_scenario": "A major escalation occurs\u2014a constitutional crisis, use of Article 49.3 in a provocative way, or an especially harsh or symbolic austerity measure (e.g., cuts to pensions or education) reignites anger. Unions coordinate a 'one big day' with broad participation, possibly joined by students and some non-traditional groups, pushing official numbers above 600,000. Alternatively, an early election is called, and mass mobilization peaks around the campaign or in response to far-right advances.",
+            "final_reasoning": "Base rates for >600,000 official protest turnout in France are low, even in major crises (e.g., 2010 pension protests, 2016 labor law, 2019 gilets jaunes). The September 18, 2025 protest (500,000 official) was already unusually large and reflected peak mobilization amid acute government crisis. Since then, turnout has sharply declined, and unions themselves acknowledge lost momentum. Resource Mobilization Theory suggests sustaining or exceeding such mobilization is rare without new grievances or major trigger events. The government\u2019s instability does raise the risk of further escalation, but unless a new, catalyzing event occurs, the trend is toward declining protest size. The Interior Ministry uses conservative counts, making the 600,000 threshold a very high bar. I estimate a moderate but sub-50% chance that such an event occurs, weighting the status quo and recent trends more heavily than the possibility of renewed escalation.",
+            "final_probability": 30
         },
         "Political Science (Political Opportunity Structure)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in Political Science focusing on Political Opportunity Structure (POS), I bring a framework that evaluates how political context, elite divisions, state responses, and alliance structures create or close 'opportunities' for mass mobilization. This approach allows for a nuanced, comparative analysis of the likelihood of large-scale protest events, especially in the context of deep political crises and contentious policy changes.",
-            "status_quo": "France has experienced repeated large-scale protests in response to austerity measures and political instability, with peak participation just under the 600,000 threshold (per Interior Ministry figures) in September 2025. The most recent mobilization has shown declining turnout, and no new national protest date is set.",
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Political Opportunity Structure (POS), my perspective focuses on how the political context\u2014specifically elite divisions, state capacity, and signaling\u2014shapes opportunities for collective action. France's ongoing political crisis, elite fragmentation, and recent protest waves are classic enabling conditions for large-scale mobilization. My analysis weighs not just short-term grievances, but the institutional context, elite strategies, and historical protest cycles in France, which is a high baseline country for mass protest.",
+            "status_quo": "France has seen large anti-austerity protests, with over 500,000 participants in September 2025 (per Interior Ministry), but the most recent protest (October 2) saw a drop to 195,000. No single protest has reached 600,000 by official count in 2025. Union momentum appears to be waning, with no new major protest date yet set.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Political Instability and Elite Division",
-                    "effect": "Increases probability. Severe political crisis (multiple PM resignations, no parliamentary majority, government by stopgap, calls for dissolution) historically correlates with higher protest potential, as elite fragmentation lowers the capacity for repression or co-optation and signals political opportunity to challengers."
+                    "factor": "Political Crisis and Elite Fragmentation",
+                    "effect": "Increases probability. The ongoing government instability, repeated PM resignations, and lack of parliamentary majority create a classic 'opening' for protest as the state appears divided and less able to repress or co-opt dissent."
                 },
                 {
-                    "factor": "Government Policy and Austerity Measures",
-                    "effect": "Increases probability. Deep and unpopular austerity policies, especially when combined with failed negotiations, are classic triggers for large-scale mobilization in France. The \u20ac44 billion cuts, pension reform, and lack of meaningful concessions fuel anger."
+                    "factor": "State Response and Protest Policing",
+                    "effect": "Mixed. Large police deployments could deter violence (and thus escalation), but also signal state nervousness, which sometimes emboldens protest mobilization in France."
                 },
                 {
-                    "factor": "Union and Civil Society Mobilization Capacity",
-                    "effect": "Mixed effect, but currently decreasing probability. French unions have a robust mobilizing structure and have recently shown capacity for rapid, large-scale action. However, after three major protests in less than a month, the October 2 turnout dropped sharply to ~195,000 (Interior Ministry). Union leaders themselves note declining momentum and have not (yet) announced a new national action date."
+                    "factor": "Union Capacity and Protest Fatigue",
+                    "effect": "Decreases probability. Although unions have high mobilization potential, recent protests have had declining turnout and union leaders themselves note a loss of momentum. No future protest date is announced yet."
                 },
                 {
-                    "factor": "State Response and Repression",
-                    "effect": "Mixed effect. Heavy policing (80,000+ officers deployed) has not deterred mass protest, but authorities have so far avoided extreme repression. If state repression escalates or a protest turns violent, numbers could either surge (if backlash occurs) or decline (if fear increases)."
-                },
-                {
-                    "factor": "Political Opportunity Perception and Protest Fatigue",
-                    "effect": "Decreases probability. Repeated, large-scale protests that fail to achieve immediate results often lead to demobilization or protest fatigue, especially if unions perceive diminishing returns and if the government signals minor concessions. The lack of a new announced date and recent lower turnout suggest fatigue is setting in."
+                    "factor": "Protest Grievances and Public Support",
+                    "effect": "Increases probability. Austerity, pension reform, and widespread dissatisfaction with Macron (very low approval) provide strong grievances and broad support for protest, as evidenced by large turnouts in September."
                 },
                 {
                     "factor": "Historical Base Rate",
-                    "effect": "Decreases probability. Protests over 600,000 (by Interior Ministry count) are rare, even in turbulent French politics\u2014only a handful (notably pension reform 2023, 2010, and the Yellow Vests at their peak) have approached or exceeded this threshold. Base rate cautions against assuming another surge without a new catalytic event."
+                    "effect": "Decreases probability. French protests rarely surpass 600,000 by official Ministry of Interior counts. Even very large union days (e.g., 2010, 2023 pension protests) typically max out at 500,000\u2013800,000 by union counts, but government figures are usually lower."
+                },
+                {
+                    "factor": "Timing and Coordination",
+                    "effect": "Decreases probability. There is limited time (~2.5 months). No major protest is currently scheduled, and union coordination is required to reach extraordinary numbers; this takes time and a triggering event. The political calendar (budget debates, possible no-confidence votes) could be a trigger, but the window is short."
                 }
             ],
-            "no_scenario": "Despite persistent anger and continued political instability, no further single-day protest crosses the 600,000 threshold (as counted by the Interior Ministry) before January 1, 2026. Unions may stage smaller or more localized actions, the government offers partial concessions, or demobilization/fatigue sets in, leading to a plateau or decline in protest numbers. No new major mobilizing event (e.g., a drastic escalation in austerity, a repressive crackdown, or a shocking political development) occurs to reignite mass turnout.",
-            "yes_scenario": "A new government policy (e.g., passage of the 2026 budget with deeper or more visible cuts, or a provocative use of Article 49.3), a failed negotiation, or a symbolic political moment (e.g., parliamentary dissolution, high-profile police violence, or an incendiary speech by Macron or Lecornu) re-triggers coordination among unions and opposition parties. Mobilization is reframed as a defense of democracy or social rights, leading to a new national day of action that surpasses 600,000 participants (Interior Ministry count), possibly near a key budget or confidence vote deadline.",
-            "final_reasoning": "The political opportunity structure in France remains highly open due to elite fragmentation, ongoing crisis, and unresolved austerity. However, the most recent interior ministry numbers (195,000 on October 2) indicate waning protest momentum after a sharp peak on September 18. Union statements, while emphasizing continued anger, admit to declining turnout and have not announced another national action date. French protest cycles often peak quickly and then dissipate unless a new 'threat' or opportunity emerges. While a new catalyst (budget vote, repression, government collapse) could rekindle mass protest, the window is short (less than 3 months), the base rate is low, and the status quo points to demobilization. Therefore, while a shock event could still trigger a >600,000 protest, the probability is moderate but below even odds.",
-            "final_probability": 38
+            "no_scenario": "Unions, citing fatigue and lack of concrete government concessions, decide not to call another nationwide protest in 2025. The government manages to pass the budget\u2014perhaps with minor concessions\u2014defusing immediate outrage. Public attention shifts, and while smaller protests or strikes continue, none approach the 600,000 threshold by the Ministry of Interior's count.",
+            "yes_scenario": "The government either pushes through especially harsh austerity measures (or attempts to bypass parliament again with 49.3 or similar), sparking outrage. Unions, sensing an opportunity, coordinate a massive one-day general strike and protest, merging multiple grievance streams (public workers, students, pensioners, left opposition), and the Ministry of Interior reports over 600,000 participants nationwide\u2014likely during a 'day of action' in late November or December. A major incident (e.g., a police crackdown, a provocative government statement, or a budget deadline crisis) acts as a catalyst.",
+            "final_reasoning": "France is in a uniquely volatile moment: deep elite fragmentation, unpopular austerity, and historically strong unions create significant protest potential. However, the base rate for protests officially surpassing 600,000 (by government count) is low, even in France. Recent events show declining turnout, protest fatigue, and no new date for mass mobilization announced. The political opportunity is open, but the mobilizing structures are not currently signaling an imminent escalation. If a major trigger occurs (budget passage by decree, a major scandal, or police violence), unions could rapidly call a new mass protest. The next two months include likely flashpoints (budget debates, possible no-confidence or dissolution), but organizing and surpassing the official threshold is hard. The probability is above baseline due to the context but not high, given observed loss of momentum and institutional inertia. I estimate a 30% chance that a protest of 600,000+ (by Ministry count) occurs before January 1, 2026.",
+            "final_probability": 30
         },
         "Sociology (Collective Action Theory)": {
-            "time_to_resolution": "Approximately 2.5 months (resolves January 1, 2026; today is October 12, 2025)",
-            "perspective_relevance": "As an expert in Collective Action Theory within Sociology, I focus on the dynamics that enable or constrain large-scale mobilizations. The likelihood of a protest with at least 600,000 participants depends not only on grievances and political opportunities but on the capacity for coordination, sustained mobilization, solidarity, and the interplay between protest organizations (unions, parties), state responses, and broader macro-political context. Historic benchmarks of French mobilization, union strategies, protest fatigue, and legitimacy crises are central to this analysis.",
-            "status_quo": "France has seen large, recurring protests (500,000+ per the Ministry of the Interior; up to 1 million per unions) over austerity and pension reform in September 2025, but the most recent nationwide protest on October 2 dropped to 195,000 (Interior Ministry), signaling declining momentum. No protest in 2025 has (officially) reached 600,000 according to the Ministry's figures, though unions claim higher numbers.",
+            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Collective Action Theory, I focus on the social dynamics, network effects, organizational capacity, and political opportunity structures that enable or constrain large-scale mobilizations. I analyze how grievances, resource mobilization, leadership, framing, and political context interact to drive or suppress protests surpassing high thresholds, such as a turnout of 600,000 participants.",
+            "status_quo": "France has seen large-scale protests against austerity policies and government instability, with recent mobilizations peaking at around 500,000-1,000,000 by union estimates but 500,000 by Interior Ministry count. The most recent protest (October 2) saw 195,000 (official) participants, with momentum reportedly declining since September. The status quo is continued high tension and periodic large protests, but not surpassing the 600,000 threshold per official count.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Protest Infrastructure and Mobilization Capacity",
-                    "effect": "Increases probability. France has strong, centralized unions and a tradition of mass protest. Recent mobilizations indicate high organizational capacity, but there are signs of protest fatigue."
+                    "factor": "Mobilizing Structures (Unions\u2019 Capacity and Coordination)",
+                    "effect": "Increases probability. French unions have demonstrated sustained capacity for nationwide mobilization, with three major protests in one month. They have achieved high turnout before, especially when acting in coalition. However, repeated mobilization can also lead to fatigue."
                 },
                 {
-                    "factor": "Political Crisis and Governmental Fragility",
-                    "effect": "Increases probability. Government instability, repeated PM resignations, and legislative gridlock create a permissive environment for large-scale protest by lowering legitimacy and increasing perceived efficacy of collective action."
+                    "factor": "Political Opportunity Structure (Government Instability and Polarization)",
+                    "effect": "Increases probability. The government\u2019s instability, frequent changes in PM, and lack of a coherent majority create a sense of openness and urgency that often facilitates large-scale collective action. The continued threat of austerity is a potent grievance."
                 },
                 {
-                    "factor": "Protest Fatigue and Diminishing Returns",
-                    "effect": "Decreases probability. Successive mobilizations in a short period (three national protests in a month) usually lead to diminishing turnout, especially if immediate concessions are not won, and if state repression or protest costs (lost wages, police violence) mount."
+                    "factor": "Protest Fatigue and Demobilization Dynamics",
+                    "effect": "Decreases probability. Recent protests show declining turnout (from 500,000+ in September to 195,000 on October 2 per Interior Ministry), and union leaders acknowledge waning momentum. Repeated calls may blunt urgency, and the absence of new concessions could demoralize participation."
                 },
                 {
-                    "factor": "Union Strategies and Incentives",
-                    "effect": "Mixed effect. Unions may escalate if talks stall or austerity deepens, but may also shift to negotiation or symbolic actions if turnout falls and the risk of demobilization grows."
+                    "factor": "Upcoming Political Deadlines (Budget Passage, Possible Snap Elections)",
+                    "effect": "Increases probability. The looming budget deadline (mid-October) and possibility of snap elections or further government collapse could serve as focal points for renewed, larger mobilizations, especially if contentious policies are pushed or negotiations collapse."
                 },
                 {
-                    "factor": "Upcoming Political Deadlines (Budget Passage, Possible Elections)",
-                    "effect": "Increases probability. Key fiscal deadlines (budget due mid-October) and the threat of parliamentary dissolution provide focal points for protest escalation."
+                    "factor": "Repression/Policing and Official Participation Counts",
+                    "effect": "Decreases probability. Heavy police deployment, controlled protest routes, and a history of the Ministry of the Interior undercounting turnout mean that even very large mobilizations may be officially reported as below the threshold. This matters given the resolution criteria."
                 },
                 {
-                    "factor": "State Response and Repression",
-                    "effect": "Slightly decreases probability. Heavy police deployment may deter some turnout, but unless repression is excessive, it usually does not prevent large initial mobilizations in France; rather, it becomes more relevant for sustained or repeated actions."
+                    "factor": "Framing and Perceived Stakes",
+                    "effect": "Increases probability. If unions and opposition can frame a new government move as an existential threat to core social rights (e.g., pensions, public holidays), they could reignite mass mobilization and reach higher numbers."
+                },
+                {
+                    "factor": "Winter Weather and Holiday Season",
+                    "effect": "Decreases probability. The approach of winter and year-end holidays historically dampen protest activity, both logistically and due to shifting priorities."
+                }
+            ],
+            "no_scenario": "Despite continued grievances, unions fail to reignite mass mobilization above prior levels. Protest fatigue sets in, and participation continues to decline, with official turnouts plateauing or dropping. No single protest before the end of 2025 is reported by the Ministry of the Interior as exceeding 600,000, even if union estimates are higher. The government may make minor concessions or delay controversial measures, further sapping urgency.",
+            "yes_scenario": "A triggering event\u2014such as the passage of deeply unpopular austerity measures, a snap election announcement, or a major government scandal\u2014provides a new focal point for mass mobilization. Unions and opposition parties coordinate a general strike and 'day of action,' successfully mobilizing over 600,000 people nationwide (by official count), possibly surpassing even prior September 2023 or 2023 pension reform protest levels.",
+            "final_reasoning": "The French context is highly conducive to large-scale protests, especially around economic and social rights. However, the Ministry of the Interior\u2019s official counts are consistently lower than union claims, and the most recent official turnout (195,000) is well below the 600,000 threshold, despite ongoing unrest. The trend shows declining momentum, but political instability, an unresolved budget crisis, and the possibility of new austerity measures or elections create a non-trivial chance of renewed mobilization. Collective action theory suggests that protest waves can spike again if a new, clear threat or opportunity emerges, but absent a sharp exogenous shock, the status quo bias and demobilization after repeated actions tend to prevail. Considering the short time frame left, institutional resistance to reporting high numbers, protest fatigue, and seasonal effects, I assess the probability as moderately low but not negligible. The base rate for 600,000+ official turnout protests in France is low in recent years (even the 2023 pension protests barely hit this threshold by official counts). Therefore, I set the probability at 23%.",
+            "final_probability": 23
+        },
+        "Sociology (Social Movement Theory)": {
+            "time_to_resolution": "2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Sociology (Social Movement Theory), I analyze the mechanisms underlying mass protest mobilization, including political opportunity structures, resource mobilization, framing processes, and protest cycles. This perspective is crucial for understanding both the likelihood of very large-scale mobilizations and the factors that enable or constrain them, especially amidst ongoing political and economic crises.",
+            "status_quo": "France is experiencing sustained, large-scale protest activity against austerity, with recent mobilizations reaching up to 500,000 participants (per official counts) and claims of up to a million (per unions), but none have reached the 600,000 threshold per the official Ministry of the Interior figures required for a Yes resolution.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Protest Cycle Momentum",
+                    "effect": "Increases probability. France is in the midst of a protest wave, with three major mobilizations in a month and persistent union organization, indicating a high baseline for large-scale participation."
+                },
+                {
+                    "factor": "Political Opportunity Structure",
+                    "effect": "Increases probability. The government's instability (multiple PM resignations, unpopular austerity, parliamentary gridlock) creates an environment favorable to disruptive collective action, as elites are divided and state capacity to repress is limited."
+                },
+                {
+                    "factor": "Resource Mobilization and Union Capacity",
+                    "effect": "Increases probability. French unions have a long history and robust infrastructure capable of mobilizing hundreds of thousands, as seen in 2023 and 2025. They have demonstrated ability to coordinate national 'days of action' and general strikes."
+                },
+                {
+                    "factor": "Protest Fatigue and Declining Momentum",
+                    "effect": "Decreases probability. Recent protests show declining turnout\u2014from over 500,000 to under 200,000\u2014suggesting possible protest fatigue or diminishing returns unless a new trigger escalates the crisis."
+                },
+                {
+                    "factor": "Government Concessions or Co-optation",
+                    "effect": "Decreases probability. If the new government offers even symbolic concessions or splits union coalitions, this could demobilize or fragment the protest movement."
+                },
+                {
+                    "factor": "Upcoming Political Events and Triggers",
+                    "effect": "Increases probability. Key budget deadlines and possible parliamentary dissolution or snap elections could catalyze a new surge in mobilization, especially if austerity is deepened."
                 },
                 {
                     "factor": "Historical Base Rate",
-                    "effect": "Slightly decreases probability. Ministry of the Interior figures above 600,000 are rare; unions often claim such numbers, but official counts are lower and are what matter for resolution."
+                    "effect": "Moderately increases probability. France has a strong tradition of mass protest; events of this size (600,000+) are rare but not unprecedented, especially under major austerity or pension reforms."
+                },
+                {
+                    "factor": "Media and Official Count Discrepancies",
+                    "effect": "Decreases probability. Even if unions claim over 600,000, the official Ministry count is required, and the Ministry has historically undercounted compared to union estimates."
                 }
             ],
-            "no_scenario": "After the October 2 protest, union leaders decide not to call another major nationwide protest in 2025, shifting to negotiation or local actions due to protest fatigue, limited concessions, and fear of diminishing returns. Even if more actions are called, turnout does not exceed 600,000 in official Interior Ministry figures, as public attention wanes and political uncertainty continues without dramatic escalation.",
-            "yes_scenario": "Talks between unions and government fully collapse, and the government proceeds with harsh austerity (e.g., deeper spending cuts, pension changes, or public sector layoffs). Unions unite for a 'last stand' mass mobilization, timed with a budget vote or dissolution of Parliament, successfully framing the protest as a defense of democracy and welfare. Widespread sectoral strikes and public anger push turnout above 600,000 according to the Ministry of the Interior, as happened during the 1995 and 2010 pension protests.",
-            "final_reasoning": "The collective action environment in France is highly mobilized but shows clear signs of protest fatigue after three major actions in a month. The core conditions for large-scale protest\u2014grievances, organizational capacity, and political opportunity\u2014are present due to deep government crisis and unpopular austerity. However, the official Ministry of the Interior figures have not crossed 600,000 in recent years, even during major mobilizations; unions' higher counts do not resolve this question. Diminishing returns and lack of immediate wins may further demobilize the base unless a dramatic triggering event (e.g., severe budget cuts, violent repression, or snap elections) occurs before year's end. The most likely scenario is continued unrest at a lower plateau, with unions preserving their capacity for future escalation. Thus, while a spike is possible, the base rate and recent turnout suggest it is more likely that no single protest will officially reach 600,000 before January. I will assign a probability slightly higher than the historic base rate, reflecting the exceptional political crisis, but below 50% due to protest fatigue and official reporting conventions.",
-            "final_probability": 35
-        },
-        "Sociology (Social Movement Theory)": {
-            "time_to_resolution": "About 2 months and 20 days, until December 31, 2025",
-            "perspective_relevance": "As an expert in Sociology (Social Movement Theory), I can analyze protest wave dynamics, mobilization structures, framing processes, resource mobilization, political opportunity structures, and the role of social networks and unions in sustaining or escalating mass protest. This perspective is highly relevant because it allows assessment of whether the conditions in France are likely to produce a protest with at least 600,000 participants, based on both base rates and current movement trajectories.",
-            "status_quo": "France experiences frequent mass protests, but protests exceeding 600,000 participants (by official Ministry of the Interior count) are rare, usually during extremely contentious periods (e.g., pension reforms, yellow vests). The most recent protests have peaked at around 500,000 participants (official count), with a recent decline in turnout.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Political Opportunity Structure and Instability",
-                    "effect": "Increases probability. The ongoing government crisis, frequent PM changes, and lack of parliamentary majority create a 'window of opportunity' in which protest is more likely to escalate, as state actors are fragmented and perceived as vulnerable."
-                },
-                {
-                    "factor": "Union and Movement Organization",
-                    "effect": "Increases probability. French unions are highly organized and have demonstrated the ability to coordinate large-scale mobilizations on short notice, especially when multiple confederations cooperate. Recent mobilizations have been large and sustained."
-                },
-                {
-                    "factor": "Protest Fatigue and Demobilization",
-                    "effect": "Decreases probability. There is evidence of declining turnout: after a peak of over 500,000 on September 18, the October 2 protest fell to 195,000 (Interior Ministry count), and even union estimates note a drop. Sustained, high-frequency mobilizations can exhaust participants and reduce turnout unless a major new grievance or trigger emerges."
-                },
-                {
-                    "factor": "Framing and Issue Salience",
-                    "effect": "Neutral to mildly increasing. The austerity measures, pension reform, and perception of elite detachment remain potent frames, but there is no new, galvanizing event since September. Unless the government provokes with a new, highly unpopular measure, the framing may not escalate turnout much further."
-                },
-                {
-                    "factor": "Historical Base Rates",
-                    "effect": "Decreases probability. Even in highly mobilized France, protests exceeding 600,000 (official count) are infrequent. The last such events were during the 2010 pension reform and early yellow vest movement; most large protests, even with significant union involvement, struggle to cross this threshold according to official tallies."
-                },
-                {
-                    "factor": "Potential for Political Escalation (e.g., snap elections, new austerity push, or police repression)",
-                    "effect": "Increases probability. If the government attempts to ram through major cuts or triggers a new round of confrontation (e.g., invoking Article 49.3, dissolution of parliament, or police violence), this could reignite mass outrage and push turnout over 600,000."
-                }
-            ],
-            "no_scenario": "Despite ongoing discontent and union calls for action, no single protest reaches the 600,000 (official) threshold before year-end. Turnout continues to stagnate or decline due to protest fatigue, lack of a new 'spark', union-government negotiations (even if unproductive), and the political system muddling through without a dramatic escalation. Protests remain large by historical standards but do not surpass the critical mass needed for a Yes.",
-            "yes_scenario": "A new trigger event occurs: the government either adopts a particularly unpopular austerity measure, uses constitutional tricks to bypass parliament, or police repression at a protest leads to widespread outrage. Unions rapidly coordinate a 'day of action' with maximal mobilization, possibly joined by students and other sectors, resulting in a national protest that crosses the 600,000 (Ministry of Interior) threshold\u2014especially if the political crisis deepens (snap elections, budget default, or new PM collapse).",
-            "final_reasoning": "The social movement literature indicates that protest surges require both mobilizing structures (unions, networks), political opportunities (crises, elite division), and a catalyzing event. All three were present in September, resulting in a protest near the 500,000 threshold. Since then, turnout has declined and unions are struggling to maintain momentum, with the last official count at 195,000. Organizational capacity remains high, and the political context is still unstable, but without a new major provocation, it is unlikely turnout will suddenly increase enough to breach 600,000 by official count. Base rates suggest such large protests are rare even in France, and the Ministry of the Interior's official numbers tend to be more conservative than union counts. However, the risk of sudden escalation remains: any new, highly unpopular government action or violent repression could reignite mass mobilization. Overall, while the risk is above baseline due to instability and experienced organizers, the most likely scenario is continued large but sub-threshold mobilizations. Therefore, my probability is 25%.",
-            "final_probability": 25
+            "no_scenario": "Despite continued unrest, protest turnout continues to decline, with no single mobilization reaching 600,000 per the Ministry of the Interior by year's end. The government makes minor concessions, the unions fail to maintain unity, or protest fatigue sets in. Even if further actions are called, the official numbers stay below the threshold, as seen in October 2025.",
+            "yes_scenario": "A major trigger occurs\u2014such as the passage of especially harsh austerity measures, a dramatic government collapse, or a perceived attack on core social rights\u2014that galvanizes unions and the broader public, leading to a new 'day of action' that surpasses 600,000 according to the official count. This could be coordinated around a budget deadline, no-confidence vote, or call for new elections.",
+            "final_reasoning": "The current situation in France is highly volatile, with a unique confluence of political paralysis, unpopular austerity, and a highly mobilized civil society. The September 18 protest nearly reached the threshold (500,000 official, over a million per unions), showing that surpassing 600,000 is possible if the right precipitating event occurs. However, the October 2 protest saw a sharp decline (officially 195,000), indicating possible protest fatigue or demobilization in the absence of new triggers. French social movement history suggests that such high turnouts are rare and usually require either a new, highly salient government action or a broad coalition among unions and civil society. The upcoming budget deadline, threat of parliamentary dissolution, or further austerity could provide such a trigger. Given the ongoing crisis, union capacity, and historically contentious French politics\u2014but also the recent trend toward lower turnout\u2014I assess the probability of a 600,000+ protest (per official count) before 2026 as notable but still below even odds.",
+            "final_probability": 38
         },
         "French Studies (French Protest Culture Scholarship)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026).",
-            "perspective_relevance": "As an expert in French Studies focused on protest culture, my perspective is especially relevant for analyzing the likelihood of a mass protest surpassing 600,000 participants. I bring a nuanced understanding of the historical dynamics of French mobilization, the role of unions, protest escalation patterns, and the impact of political crisis on collective action. My expertise allows for reading between the lines of both protestor and government strategies, as well as understanding the cultural and symbolic thresholds that trigger major mobilizations in France.",
-            "status_quo": "If nothing changes, France will experience frequent, large-scale protests in response to austerity, but these will likely remain below the 600,000-participant threshold as officially counted by the Ministry of the Interior (which tends to report lower numbers than unions). The last two major protests peaked at 500,000 (Interior Ministry) and 195,000 respectively, with union estimates higher.",
+            "time_to_resolution": "About 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in French Studies, specifically French protest culture, I bring a nuanced understanding of the historical rhythms, organizational dynamics, and socio-political triggers of mass mobilization in France. I am attuned to the interplay between labor unions, political crises, and government policies, as well as how French protest movements can surge or fade in response to both symbolic and material grievances.",
+            "status_quo": "In the last month, France has seen multiple large-scale protests, with the most recent (October 2, 2025) drawing 195,000 participants according to the Ministry of the Interior, and the previous (September 18, 2025) reaching over 500,000. No protest in 2025 has yet crossed the 600,000 bar per official figures. The trend since mid-September is of high mobilization, but the most recent protest was notably smaller, suggesting a loss of momentum.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Union Mobilization Capacity and Fatigue",
-                    "effect": "Decreases probability. While unions have shown significant mobilizing power recently, there are signs of declining turnout between September and October. Sustaining or increasing numbers to cross the 600,000 threshold is historically difficult, especially after repeated mobilizations. The fact that three national actions in less than a month did not break 600,000 (Interior Ministry data) suggests a ceiling may have been reached absent a new trigger."
+                    "factor": "Historical protest base rates",
+                    "effect": "Increases: France has a long history of erupting mass protests, especially around budget cuts, labor reforms, and political crises. Protests exceeding 600,000 (official) are rare but do occur, notably during major pension reforms or moments of acute political crisis (e.g., 2023 pension protests, 2010 anti-retirement reform strikes)."
                 },
                 {
-                    "factor": "Political Crisis and Government Instability",
-                    "effect": "Increases probability. France is experiencing an acute, prolonged political crisis with recurrent government collapses and deep public distrust. Historically, such instability can catalyze massive mobilizations, especially if the government tries to push through unpopular measures via decree or is seen as ignoring the street."
+                    "factor": "Current political crisis and instability",
+                    "effect": "Increases: The extraordinary government instability\u2014five PM resignations in two years, lack of parliamentary majority, and deep public distrust\u2014creates fertile ground for mass mobilization, especially as no clear path out is visible and both the left and right opposition are calling for new elections."
                 },
                 {
-                    "factor": "Imminence of Critical Budget Decisions",
-                    "effect": "Increases probability. The budget deadline (October 13) and possible use of Article 49.3 to force passage could act as flashpoints, especially if unions coordinate a response with opposition parties. If the government appears to sideline parliamentary or popular will, a surge in protest is plausible."
+                    "factor": "Union mobilization capacity and unity",
+                    "effect": "Neutral/Slightly Increases: The CGT and other unions have shown strong, rapid mobilization but turnout is already sagging (from 500,000+ to 195,000 official). However, repeated, closely spaced mobilizations can lead to protest fatigue, though unions may escalate tactics if dialogue remains unproductive or if austerity deepens."
                 },
                 {
-                    "factor": "Protest Culture and Precedent",
-                    "effect": "Moderately increases probability. France has a long tradition of mass mobilization, and recent protests have come close to the threshold. However, since 2010, only a few movements (e.g., 2019 pension protests, 2010 anti-pension reform, 2023 anti-pension reform) have exceeded 600,000 as counted by the government, and these required either a major, unifying trigger or sustained escalation."
+                    "factor": "Protest fatigue and diminishing returns",
+                    "effect": "Decreases: The drop from over 500,000 to 195,000 in less than two weeks signals that unless a new, galvanizing event (e.g., a draconian policy, a police overreaction, or a snap election call) occurs, the movement may have peaked for now. Base rates show that after an initial spike, large protests often lose steam unless there is a new catalyst."
                 },
                 {
-                    "factor": "Union Fragmentation and Political Divisions",
-                    "effect": "Decreases probability. The political opposition is divided (far left, far right, Socialists) and the government is attempting to negotiate with some actors. Unless there is a new unifying outrage, divisions may continue to suppress peak turnout."
+                    "factor": "Government concessions or crackdown",
+                    "effect": "Ambiguous: If the government concedes on key issues (reversing austerity cuts, delaying reforms), protests may dissipate. A crackdown or provocative move (e.g., using Article 49.3 again, or an unpopular emergency decree) could reignite mass mobilization to or above the 600,000 threshold."
                 },
                 {
-                    "factor": "Government/Media Framing and Police Presence",
-                    "effect": "Decreases probability. The Ministry of the Interior consistently reports lower numbers than unions, and heavy police presence can dampen participation and/or minimize reported crowd size. Official numbers, not union estimates, resolve the question."
+                    "factor": "Upcoming political calendar (budget deadline, possible dissolution)",
+                    "effect": "Increases: The deadline for the 2026 budget (October 13), risk of government collapse, or a snap election could serve as focal points for protest escalation, especially if opposition parties and unions coordinate a 'march of all' or general strike."
+                },
+                {
+                    "factor": "Media and union reporting discrepancies",
+                    "effect": "Neutral: While unions consistently claim higher turnout, the resolution depends on Ministry of the Interior figures, which are typically lower. This lowers the chance that a protest widely perceived as massive actually meets the 600,000 official bar."
                 }
             ],
-            "no_scenario": "Protest fatigue sets in after three national actions in a month. While unions continue to organize, turnout stagnates or declines, with the largest demonstration before year-end not exceeding 500,000 according to the Interior Ministry. The government either makes minor concessions or pushes the budget through without sparking a new, massive outrage, and the fragmented opposition fails to coordinate a general strike or mass protest at the necessary scale.",
-            "yes_scenario": "A political flashpoint emerges (e.g., use of Article 49.3, passage of a highly regressive budget, or a major scandal), reigniting public outrage. Unions, left-wing parties, and perhaps even some centrists or students coordinate a massive, one-day general strike and demonstration. The protest draws on the symbolic memory of May 1968, 1995, 2010, and 2023, with widespread participation from across sectors. The Ministry of the Interior, under pressure to acknowledge the scale, reports 600,000+ participants nationwide.",
-            "final_reasoning": "Base rates suggest that government-reported protests over 600,000 are rare but not unprecedented under conditions of acute political crisis. Recent protests have come close (500,000 on September 18), but the latest (October 2) saw a notable drop to 195,000. While the political crisis is severe, and the potential for a new trigger exists (especially around the budget or a perceived democratic affront), sustained union mobilization appears to be waning, and the Ministry of the Interior is likely to continue conservative counting. Unless a new, unifying event occurs in the next two months, it is less likely\u2014but not impossible\u2014that the 600,000 threshold will be reached. Given the high protest culture, ongoing instability, and the proximity of recent protests to the threshold, I estimate the probability at 30%. This reflects a meaningful risk of escalation but also respects the constraints imposed by protest fatigue, official counting practices, and the historical base rate.",
-            "final_probability": 30
+            "no_scenario": "No major new government provocation occurs, or partial concessions are made (e.g., softening austerity cuts, opening dialogue). Unions call further actions, but turnout continues to decline due to fatigue, lack of a dramatic focal point, or disillusionment. The largest protests in autumn 2025 stay in the 200,000\u2013500,000 range (official), with no single mobilization crossing the 600,000 threshold before year's end.",
+            "yes_scenario": "A new government budget, or use of emergency constitutional measures (e.g., Article 49.3) to force through austerity, provokes outrage. Unions (with support from left parties and possibly youth/students) coordinate a 'national day of action' or general strike in late October or November, coinciding with the budget vote or political dissolution. The scale and symbolism, plus media focus, bring out over 600,000 participants nationwide, as measured by the Ministry of the Interior.",
+            "final_reasoning": "The status quo trend is downward: after a peak protest of over 500,000 (official) on September 18, the October 2 protest dropped to 195,000. Base rates suggest protests of 600,000+ (official) are rare, even in periods of crisis; the last official count at or above this level was during the 2023 pension reform movement, which had unique, broad cross-sectoral appeal and months of buildup. However, the current political and fiscal crisis is severe, with government instability and deep public anger over austerity and democratic legitimacy. If the government pushes through further unpopular measures, or if a new crisis (snap election, dissolution, police violence) erupts, the unions have demonstrated capacity for rapid, large-scale mobilization. The window is short (2.5 months), and protest fatigue is real, but historical precedent shows that a major trigger could still lead to a 'wave' protest exceeding 600,000 (official), especially if unions unite and opposition parties lend support. Given the high volatility and the fact that September's protest nearly reached the bar, I estimate the odds at 32%\u2014higher than in stable times, but below even odds due to recent turnout decline, protest fatigue, and the requirement for an official Ministry count.",
+            "final_probability": 32
         }
     },
     "deliberation_probability": [
+        25,
+        30,
         32,
-        32,
-        35,
+        30,
+        30,
         23,
         38,
-        35,
-        25,
-        30
+        32
     ],
-    "deliberation_mean_probability": 31.25,
-    "deliberation_sd": 5.11998883927355,
-    "deliberation_probability_result": 31
+    "deliberation_mean_probability": 30.0,
+    "deliberation_sd": 4.566962103755937,
+    "deliberation_probability_result": 30
 }
