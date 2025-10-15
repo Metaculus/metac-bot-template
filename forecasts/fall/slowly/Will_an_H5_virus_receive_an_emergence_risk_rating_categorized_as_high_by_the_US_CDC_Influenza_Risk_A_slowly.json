@@ -1,349 +1,337 @@
 {
     "deliberation_results": {
         "Influenza Surveillance (CDC Influenza Risk Assessment Tool)": {
-            "time_to_resolution": "Approximately 2.5 months (question resolves on January 1, 2026; today is October 14, 2025)",
-            "perspective_relevance": "As an expert in Influenza Surveillance with direct experience in interpreting and applying the CDC's Influenza Risk Assessment Tool (IRAT), my perspective is uniquely relevant: the IRAT emergence risk rating is a function of virological, epidemiological, and molecular factors, and is only raised to 'high' (8.0+) when there is compelling evidence of sustained mammalian adaptation and credible risk of efficient human-to-human transmission. I am skilled in weighing historic base rates, current surveillance signals, and risk element shifts that would influence CDC decision-making.",
-            "status_quo": "No H5 virus has ever received an 'emergence' risk rating of 'high' (8.0+) on IRAT. The most recent H5N1 score was 5.79 (moderate) as of June 2024. Typically, risk ratings change slowly unless there is a major virological or epidemiological event.",
+            "time_to_resolution": "Approximately 2.5 months (forecast date: 2025-10-15; resolution: 2026-01-01)",
+            "perspective_relevance": "As an expert in influenza surveillance and the CDC's Influenza Risk Assessment Tool (IRAT), I understand the detailed criteria that drive the IRAT's 'emergence' risk categorization, the weighting of risk elements, and the historical thresholds for escalation to 'high' risk. My expertise allows me to rigorously assess the significance of recent virological, epidemiological, and surveillance developments, and distinguish between real-world emergence risk and public/media alarm. I can leverage both base rates of IRAT score movement and the technical underpinnings of risk scoring.",
+            "status_quo": "No H5 virus has ever received a 'high' (>=8.0) emergence risk rating from the IRAT. The most recent H5N1 IRAT emergence risk score (as of August 9, 2024) is 5.79, which is solidly in the 'moderate' range (4.0\u20137.9). Historically, IRAT scores for H5 viruses have remained in the moderate range despite periodic animal outbreaks and zoonotic spillovers.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Virological adaptation (mammalian-adaptive mutations and sustained cattle/mammal outbreaks)",
-                    "effect": "Increases probability, as recent studies (e.g. PB2-478I and NP-450N mutations) show increased virulence and some adaptation, but not yet airborne mammal-to-mammal transmission; transmission in ferrets remains contact-dependent, not airborne, and this is a central IRAT threshold for 'high' emergence risk."
-                },
-                {
-                    "factor": "Epidemiological evidence (human cases, clusters, transmission chains)",
-                    "effect": "Slightly increases probability, but not enough for 'high': US and global human H5N1 cases remain rare (70 US, mostly mild, one death), with no confirmed sustained human-to-human transmission. Some cases have unclear exposure, but no clusters or secondary cases detected. This keeps IRAT emergence risk in moderate range unless this pattern changes."
-                },
-                {
-                    "factor": "Genomic surveillance and reassortment risk",
-                    "effect": "Marginally increases probability: Extensive H5N1 circulation in North American cattle and poultry, with evidence of mammalian adaptation, raises theoretical pandemic risk; however, no detection of a reassortant virus with both high human affinity and transmissibility. IRAT relies heavily on genomic evidence of such a shift."
-                },
-                {
-                    "factor": "CDC risk communication and international assessments",
-                    "effect": "Decreases probability: CDC, WHO, FAO, and OIE continue to assess public risk as low. CDC has not signaled an imminent IRAT score change. Historically, CDC only assigns 'high' emergence risk when there is clear evidence of efficient mammalian (especially human) transmission."
-                },
-                {
-                    "factor": "Base rates of IRAT score changes",
-                    "effect": "Strongly decreases probability: No H5 virus has ever reached the 'high' emergence risk threshold. Most IRAT scores, even after notable animal outbreaks, remain stable or shift slowly without a dramatic epidemiological event."
-                }
-            ],
-            "no_scenario": "Despite continued H5N1 outbreaks in cattle, poultry, and wildlife, no evidence of efficient human-to-human transmission emerges. CDC reviews data quarterly and maintains the IRAT emergence risk in the 'moderate' range (e.g., 6-7) due to lack of sustained mammalian spread. Human cases remain sporadic, mostly with animal exposure, and no clusters or onward chains are documented. CDC, WHO, and partners continue close monitoring, but the IRAT rating does not reach 'high' before January 2026.",
-            "yes_scenario": "In late 2025, a cluster of human H5N1 cases is detected with strong epidemiological and/or genomic evidence of sustained human-to-human transmission (e.g., in a household, healthcare, or community setting) or a virus is found with a combination of mutations conferring airborne transmissibility in ferrets, leading to a rapid CDC review. The IRAT is updated, and the emergence risk score for H5 exceeds 8.0, prompting a public health warning and pre-pandemic preparedness measures.",
-            "final_reasoning": "While the current H5N1 situation is concerning\u2014due to mammalian adaptation, large-scale animal outbreaks, and incremental increases in risk\u2014there is no evidence of the key IRAT threshold for 'high' emergence risk: sustained, efficient, human-to-human (or at least mammal-to-mammal, airborne) transmission. Human cases remain rare, mostly mild, and directly linked to animal exposure. Genomic surveillance detects adaptation but not the full set of changes (including airborne transmission in ferrets or clear epidemiological clusters) needed to trigger a CDC upgrade. The IRAT moves slowly, and no H5 has ever reached 'high' in over a decade of use. With ~2.5 months left, the probability of a qualifying event and CDC response is low, though not negligible given the dynamic situation. The base rate, combined with current evidence and institutional conservatism, points to a strong status quo bias. I therefore assign a probability well below 10%, reserving some probability for a late-breaking, high-impact event.",
-            "final_probability": 6
-        },
-        "Veterinary Medicine (Zoonotic Spillover Assessment)": {
-            "time_to_resolution": "Approximately 2.5 months (forecast date: 2025-10-14; resolution: 2026-01-01).",
-            "perspective_relevance": "As an expert in veterinary medicine specializing in zoonotic spillover, I am well positioned to assess the risk factors for avian influenza H5 viruses adapting to humans and triggering a high 'emergence' rating by CDC's IRAT. My expertise provides insights into cross-species transmission, host adaptation, surveillance bias, and the practical likelihood of 'high' risk ratings based on both molecular and epidemiological trends.",
-            "status_quo": "Historically, H5N1 and related H5 viruses have not received a 'high' emergence risk rating (>=8.0) from CDC IRAT. The most recent H5N1 emergence risk score (as of August 2024) was 5.79 (moderate risk). No H5 virus has ever reached the high threshold, despite ongoing outbreaks in birds, sporadic mammalian infections, and limited human cases.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Current molecular adaptation in H5N1 (mutations PB2-478I and NP-450N)",
-                    "effect": "Increases probability, as these mutations promote replication in mammals and have led to unprecedented cattle and limited human infections, suggesting increased zoonotic potential."
-                },
-                {
-                    "factor": "Human-to-human transmission evidence",
-                    "effect": "Decreases probability, as there are still no confirmed cases of efficient or sustained human-to-human transmission, which is a key IRAT criterion for 'high' emergence risk."
-                },
-                {
-                    "factor": "Recent and ongoing surveillance data",
-                    "effect": "Decreases probability, as enhanced surveillance is detecting more cases (including some without clear source), but none show onward chains, and CDC/WHO/FDA rate public risk as low."
-                },
-                {
-                    "factor": "Genetic reassortment and mammalian adaptation risk",
-                    "effect": "Increases probability, as the virus is now endemic in mammals (notably cattle), raising theoretical risk of reassortment with swine/human flu strains\u2014however, there is no evidence this has occurred yet."
-                },
-                {
-                    "factor": "IRAT scoring inertia and institutional conservatism",
-                    "effect": "Decreases probability, as the IRAT has not historically scored viruses as 'high' absent very clear epidemiological or genetic red flags; the CDC is sensitive to overreacting and typically acts cautiously."
-                },
-                {
-                    "factor": "Recent mildness of human cases and lack of severity escalation",
-                    "effect": "Decreases probability, as most U.S. human cases are mild (conjunctivitis), with one death in a high-risk individual, and no indication of a new clinical pattern or severe cluster."
-                },
-                {
-                    "factor": "Potential for sudden change (e.g., cluster or lab incident)",
-                    "effect": "Increases probability slightly, as ongoing gain-of-function research and accidental release are low-probability, high-impact events\u2014but no such event has occurred in the timeframe."
-                }
-            ],
-            "no_scenario": "The current situation persists: H5N1 continues to circulate in birds and mammals, with sporadic human spillover (mostly mild), but no confirmed human-to-human transmission or alarming new mutations. CDC reviews new data but keeps the IRAT emergence score in the moderate range (<8.0), consistent with historical precedent and real-world risk. Enhanced surveillance detects more cases but does not reveal a fundamental shift in epidemiology.",
-            "yes_scenario": "A significant event occurs before Jan 1, 2026\u2014e.g., a cluster of unexplained H5N1 cases with evidence of limited human-to-human transmission, or discovery of a new mutation/reassortant with clear markers of mammalian adaptation and/or respiratory droplet spread, leading CDC to update the IRAT emergence score to 8.0 or higher. Alternatively, a well-publicized lab incident or large-scale outbreak in mammals with secondary human cases could prompt a precautionary 'high' rating.",
-            "final_reasoning": "Despite recent molecular findings (notably PB2-478I and NP-450N mutations) and the unique expansion of H5N1 into cattle and occasional spillover into humans, the status quo remains: no human-to-human transmission, most human cases mild, and CDC/WHO maintaining a low to moderate public risk assessment. The IRAT's threshold for 'high' emergence risk is historically conservative, requiring clear evidence of sustained human-to-human spread, which is absent. While the possibility of a sudden, dramatic change (e.g., cluster, new mutation, or lab incident) can't be ruled out, the base rate for IRAT 'high' ratings in this context is extremely low. Thus, the most likely scenario is that no H5 virus receives a high emergence risk rating before Jan 1, 2026.",
-            "final_probability": 7
-        },
-        "Global Health Security (International Health Regulations)": {
-            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in Global Health Security and International Health Regulations (IHR), I bring a nuanced understanding of how zoonotic influenza threats are evaluated in terms of pandemic potential, the CDC's risk assessment processes, and the significance of international surveillance, reporting, and preparedness measures. My perspective incorporates the technical details of virus adaptation, surveillance biases, and bureaucratic/precautionary thresholds for escalating risk assessments to 'high' within the U.S. CDC IRAT system.",
-            "status_quo": "Historically, no H5 virus has received a 'high' (score \u22658.0) emergence risk rating by the CDC IRAT. The last published H5 IRAT emergence risk score (August 2024) was 5.79 (moderate), and the highest-ever IRAT emergence risk for any virus is 7.5 (upper moderate). The status quo is that H5N1 remains at moderate risk with sporadic zoonotic spillover, limited human cases, and no sustained human-to-human transmission.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Base rate of IRAT high ratings",
-                    "effect": "Strongly decreases probability. In over a decade of IRAT usage, no virus (including H5) has reached 'high' emergence risk. This reflects both the rarity of viruses achieving sustained human-to-human transmission and CDC's conservatism in risk scoring."
-                },
-                {
-                    "factor": "Recent H5N1 zoonotic and mammalian outbreaks",
-                    "effect": "Slightly increases probability. There have been unprecedented H5N1 outbreaks in North American cattle and mammals, including rare human cases, and identification of mutations (PB2-478I, NP-450N) associated with increased mammalian pathogenicity. These developments heighten concern, but so far no evidence of efficient human-to-human transmission."
-                },
-                {
-                    "factor": "CDC/WHO public posture and communications",
-                    "effect": "Decreases probability. As of October 2025, both CDC and WHO maintain that risk to the general public is low, with only occupationally-exposed persons at elevated risk. No change in public health guidance or alert level suggests the CDC does not perceive imminent pandemic risk."
-                },
-                {
-                    "factor": "IRAT criteria: lack of sustained human transmission",
-                    "effect": "Strongly decreases probability. The IRAT's emergence risk is weighted heavily toward demonstrated or potential sustained human-to-human transmission. All available evidence (case investigations, genetic sequencing, animal models) indicates that, while H5N1 is adapting to mammals, it has not yet acquired efficient human-to-human transmissibility."
-                },
-                {
-                    "factor": "Surveillance and reporting lag",
-                    "effect": "Slightly decreases probability. Even if a major event occurred in late 2025, bureaucratic lags and conservative risk assessment processes make it unlikely that the IRAT would be updated and published with a 'high' emergence risk before the deadline."
-                },
-                {
-                    "factor": "Potential for abrupt events (mutation, reassortment, lab leak)",
-                    "effect": "Slightly increases probability. There is nonzero risk for a sudden jump in transmissibility (e.g., via reassortment with human-adapted flu or a lab accident), but these are historically rare and would need to be recognized and assessed extremely rapidly for IRAT escalation before Jan 1, 2026."
-                }
-            ],
-            "no_scenario": "H5N1 continues to circulate widely in birds and mammals, with occasional spillover to humans (mostly occupational exposure, rare severe/fatal cases), but there is no clear evidence of efficient human-to-human transmission. CDC maintains a 'moderate' or lower IRAT score, citing lack of sustained transmission and insufficient new risk data. The IRAT is not updated to 'high' emergence risk before January 1, 2026.",
-            "yes_scenario": "A cluster of H5N1 human cases emerges with probable or demonstrable sustained human-to-human transmission (e.g., a superspreading event, clear secondary/tertiary transmission chains, or compelling evidence from genetic/epidemiological analyses). CDC rapidly reassesses the IRAT score in light of this new data, and the weighted emergence risk surpasses the 8.0 threshold, with publication before the deadline.",
-            "final_reasoning": "While the situation is dynamic and H5N1 has expanded its mammalian host range (especially in North America), the fundamental barrier to a 'high' IRAT emergence risk rating remains: lack of evidence for efficient human-to-human transmission. The CDC IRAT process is conservative and historically has never rated any virus as 'high' emergence risk. Recent genetic findings (e.g., PB2-478I, NP-450N) and the bovine and human spillovers increase concern, but all available surveillance, and recent public health communications from CDC, WHO, and others, state the risk to the general public remains low. The probability of a major breakthrough (sustained human transmission) being both detected and formally raising the IRAT to 'high' before January 1, 2026, is low. I estimate the likelihood almost entirely on the base rate (status quo), with a slight upward adjustment for the unusual events of the past year, but not enough to overcome the strong historical inertia and risk assessment conservatism.",
-            "final_probability": 8
-        },
-        "Epidemiology (Infectious Disease Emergence Theory)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in infectious disease emergence theory, I focus on the molecular, ecological, and epidemiologic factors that drive zoonotic spillover and pandemic risk. My expertise is directly relevant to the CDC IRAT's emergence risk score, which weighs laboratory, genomic, surveillance, and transmission data. I am able to critically evaluate whether the current H5 situation is likely to trigger a risk score of 8.0+ (high) within the time frame.",
-            "status_quo": "No H5 virus has ever received a 'high' (>=8.0) emergence risk rating from the CDC IRAT. As of August 2024, the most recent H5N1 emergence risk score was 5.79 (moderate). The pandemic risk is widely regarded as elevated but not imminent, and most H5N1 human cases remain sporadic, with no sustained human-to-human transmission documented.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Recent mammalian adaptation of H5N1 (cattle outbreaks, key mutations PB2-478I/NP-450N)",
-                    "effect": "Increases probability. These mutations increase virulence in mammals, raise concerns about adaptation, and are a key IRAT risk element, but so far have not caused efficient human-to-human spread."
-                },
-                {
-                    "factor": "Human case data (number, severity, evidence of sustained transmission)",
-                    "effect": "Slightly increases, but mostly neutral. While US cases have occurred (70, one death), they are mostly mild and lack sustained transmission\u2014still limiting the IRAT score."
-                },
-                {
-                    "factor": "Animal model transmission studies and receptor binding data",
-                    "effect": "Neutral to mildly increasing. Ferret studies show contact, but not airborne, transmission; receptor binding remains avian-like. This keeps the emergence risk below 'high.'"
-                },
-                {
-                    "factor": "Genomic surveillance and potential for reassortment",
-                    "effect": "Increases risk, but remains speculative. No major reassortment event or clear human-adapted genotype has been detected. The risk would spike if such a change is found."
-                },
-                {
-                    "factor": "CDC/WHO/FAO/OIE public assessments and risk communications",
-                    "effect": "Decreases. All major agencies continue to rate public health risk as low, with only occupationally exposed groups at 'low to moderate' risk. The IRAT is conservative and changes slowly."
-                },
-                {
-                    "factor": "Base rate of IRAT emergence risk rating changes",
-                    "effect": "Strongly decreases. Historically, IRAT risk scores move slowly and rarely jump to 'high' unless there is clear evidence of efficient human-to-human transmission or dramatic viral change."
-                },
-                {
-                    "factor": "Recent news on laboratory gain-of-function research or lab leaks",
-                    "effect": "Marginally increases, but is speculative. While some research raises ethical concerns, there is no evidence of a lab-derived H5N1 strain leaking or causing new outbreaks."
-                }
-            ],
-            "no_scenario": "H5N1 continues to circulate widely in birds and mammals, with occasional human spillover but no sustained human-to-human transmission, no major reassortment, and no new mutations that dramatically increase mammalian transmissibility. The IRAT maintains moderate risk, as in past years. CDC and global agencies continue to advise vigilance but do not escalate the emergence risk rating to 'high.'",
-            "yes_scenario": "A sudden cluster of human H5N1 cases appears with strong epidemiological and genetic evidence of limited sustained human-to-human transmission (e.g., household or nosocomial clusters with matching viral genomes and no animal exposure), or a major reassortment event is detected yielding an H5N1 strain with human-like receptor binding and airborne transmission in ferrets. The CDC updates its IRAT and, based on these new data, rates emergence risk as 'high' (>=8.0).",
-            "final_reasoning": "The base rate for any H5 virus receiving a 'high' IRAT emergence score is extremely low\u2014no such score has ever occurred, and the last published H5N1 score was 5.79 (upper-moderate) in mid-2024. The CDC IRAT is designed to be conservative, and historic moves from 'moderate' to 'high' are rare and only occur with compelling evidence of efficient human transmission, which is currently absent. Key risk elements\u2014mammalian adaptation, recent mutations, and animal infections\u2014do increase theoretical risk, but the lack of (1) sustained human-to-human transmission, (2) major new reassortant viruses, and (3) dramatic changes in receptor binding or animal model data, all argue against a 'high' risk rating before January 2026. Recent news, while alarming, does not document the threshold events (efficient transmission, large clusters, or game-changing mutations) that would justify a sudden IRAT upgrade. Agencies continue to communicate low risk to the public. With only 2.5 months left and no sign of imminent escalation, the probability of the IRAT emergence risk reaching 'high' for any H5 virus before January 1, 2026, appears quite low.",
-            "final_probability": 8
-        },
-        "Epidemiology (One Health Approach)": {
-            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an epidemiologist specializing in the One Health approach, I am attuned to the intersections of animal, human, and environmental health, including zoonotic spillover risks and viral adaptation mechanisms. My expertise allows for the integration of animal outbreak data, genomic surveillance, viral evolution, and cross-sectoral public health risk assessments\u2014especially relevant to the IRAT\u2019s weighted emergence risk criteria.",
-            "status_quo": "The status quo is that H5 viruses have not received a 'high' (\u22658.0) IRAT emergence risk score to date. The most recent H5N1 IRAT emergence risk score is 5.79 (moderate), per the CDC\u2019s August 2024 report. Historical precedent is that IRAT scores for H5 strains, despite some alarming animal outbreaks, have remained moderate due to limited evidence of sustained mammalian adaptation and absence of efficient human-to-human transmission.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Recent H5N1 mammalian adaptation and mutation findings",
-                    "effect": "Increases probability. The identification of PB2-478I and NP-450N mutations (Science Advances, Sep 2025) in North American H5N1 strains\u2014linked to higher virulence and replication in mammals\u2014suggests evolutionary movement toward zoonotic risk, a key IRAT criterion. However, airborne transmission between mammals and efficient human-to-human spread remains unconfirmed."
+                    "factor": "Recent zoonotic cases and mammalian adaptation",
+                    "effect": "Increases probability modestly. Multiple human H5N1 cases have occurred in the US (70 as of late 2025, mostly mild, one fatality) and the virus has infected cattle, cats, and other mammals. Studies have identified mutations (PB2-478I, NP-450N) that increase mammalian virulence. However, evidence for sustained human-to-human transmission is lacking, and most cases are occupational exposures."
                 },
                 {
                     "factor": "IRAT scoring inertia and historical base rate",
-                    "effect": "Decreases probability. The IRAT has been conservative: despite significant animal outbreaks and zoonotic spillovers, the threshold for 'high' emergence risk (8.0+) has not been met for H5. CDC and global agencies (WHO, FAO, OIE) continue to assess overall public risk as low, with only incremental IRAT score increases observed after major events."
+                    "effect": "Decreases probability. IRAT scores move slowly and conservatively. Despite significant animal and sporadic human H5N1 outbreaks in recent years, scores have not approached 'high.' The IRAT panel is cautious and typically requires clear evidence of increased human-to-human transmission (e.g., clusters, efficient airborne transmission in ferrets, or major changes in receptor binding) to move into the high-risk range."
                 },
                 {
-                    "factor": "Evidence of sustained human-to-human transmission",
-                    "effect": "Decreases probability. Despite 70 U.S. human cases (2022\u20132025), all but a few have clear animal exposures, with no confirmed onward human transmission. The rare unexplained case (San Francisco child, Sep 2025) did not result in secondary cases or suggest efficient transmission."
+                    "factor": "Virological findings: mutations and transmission studies",
+                    "effect": "Increases probability slightly. Recent research has identified mutations that increase virulence and mammalian adaptation, but airborne transmission between ferrets (a critical IRAT risk element) has not been demonstrated. The virus retains avian-like properties, and receptor-binding assays still show a preference for avian (not human) receptors. This keeps the overall emergence risk moderate."
                 },
                 {
-                    "factor": "Ongoing widespread H5N1 circulation and reassortment potential",
-                    "effect": "Increases probability. The virus is now endemic in U.S. livestock, wild birds, and some mammalian species\u2014including cattle, cats, and detected in dairy products. This increases opportunities for reassortment and mutation, which could rapidly alter emergence risk if a human-adapted strain appears."
+                    "factor": "Risk element scoring: human infections, animal model transmission, genomic analysis",
+                    "effect": "Mostly neutral to slightly increasing. While there have been more zoonotic infections and some concerning mutations, none of the nine IRAT risk elements have individually moved the weighted score above the moderate range. The absence of efficient and sustained human-to-human spread, and only rare unexplained zoonoses (like the California child), keeps the emergence score anchored below 8.0."
                 },
                 {
-                    "factor": "IRAT process and bureaucratic lag",
-                    "effect": "Decreases probability. IRAT updates are periodic and respond to clear, published data. Unless a dramatic, well-documented shift occurs (e.g., confirmed efficient transmission in humans or new animal studies showing airborne spread in mammalian models), the CDC is unlikely to assign a 'high' emergence score within the next 2.5 months."
+                    "factor": "Global and CDC risk communication",
+                    "effect": "Decreases probability. Both the CDC and international agencies (WHO, FAO, OIE) continue to rate the public risk as low to moderate, and stress that no evidence of efficient human-to-human transmission exists. The IRAT process is tightly coupled to these agencies' surveillance and interpretation."
                 },
                 {
-                    "factor": "One Health surveillance and international pressure",
-                    "effect": "Modestly increases probability. The increasing adoption of One Health surveillance, better genomic sharing, and more rapid detection of key mutations can accelerate risk scoring if a clear threat emerges."
+                    "factor": "Window to resolution (time constraint)",
+                    "effect": "Decreases probability. With less than three months to go, there would need to be a dramatic virological or epidemiological development (e.g., demonstrated human-to-human transmission, a large unexplained cluster, or major reassortment event) for the IRAT to update to 'high' risk. Such events are rare and tend to be reported rapidly if they occur."
                 }
             ],
-            "no_scenario": "The CDC maintains its current assessment, with IRAT scores for H5N1 or other H5 viruses remaining in the moderate range (below 8.0) through end of 2025. No new evidence of efficient mammal-to-mammal or human-to-human transmission appears, and while outbreaks in animals continue, no genetic, epidemiological, or experimental data prompts a scoring revision. The situation remains concerning but not escalated to a 'high' emergence risk.",
-            "yes_scenario": "A major event occurs before January 1, 2026: either (a) a cluster of human H5N1 cases with confirmed sustained person-to-person transmission is detected, or (b) new laboratory evidence (e.g., airborne transmission between ferrets using current North American strains) is published and rapidly disseminated, leading the CDC to update its IRAT assessment. Alternatively, a significant reassortment event is detected, producing an H5 virus with markers of human adaptation, and this is reflected in a rapid CDC IRAT update that assigns an 8.0+ emergence risk score.",
-            "final_reasoning": "Despite alarming signals\u2014widespread H5N1 in U.S. livestock, new mammalian-adaptive mutations, and ongoing zoonotic spillover\u2014the IRAT has a high bar for assigning 'high' emergence risk (\u22658.0). The CDC and international agencies maintain that, as of now, the risk of sustained human-to-human transmission is low. While viral evolution is ongoing, and the One Health context means rapid shifts are possible, no current evidence justifies a sharp upward revision in the next 2.5 months unless an extraordinary event occurs. Given the historical base rate (no H5 virus has reached 8.0), status quo bias, and moderate incremental increases after even major outbreaks, the likelihood of the IRAT assigning a 'high' emergence risk to any H5 virus before January 1, 2026, remains low but non-negligible. My best estimate, incorporating the slight upward pressure from recent mutation data and ongoing U.S. outbreaks, is 12%.",
-            "final_probability": 12
+            "no_scenario": "H5N1 continues to circulate in animals and causes sporadic zoonotic cases (mostly mild, mostly linked to direct animal contact), but there is no evidence of efficient human-to-human transmission or major viral reassortment. The IRAT panel updates the score but keeps it in the moderate range (<8.0), citing lack of key criteria (especially transmission studies and epidemiology). The question resolves 'No.'",
+            "yes_scenario": "A major, well-documented outbreak of H5N1 occurs with evidence of sustained human-to-human transmission (e.g., a large cluster without animal exposure; confirmed airborne transmission in ferrets in updated peer-reviewed studies; or a new viral genotype with clear mammalian receptor binding and transmission), prompting the IRAT panel to rapidly convene and update the emergence risk score to 8.0 or higher before January 1, 2026. The question resolves 'Yes.'",
+            "final_reasoning": "Despite notable developments in H5N1 epidemiology\u2014mammalian infections, some zoonotic spillover, and identification of mammalian-adaptive mutations\u2014the IRAT's 'high' emergence risk threshold is unlikely to be crossed imminently. The risk score has shown strong inertia, and no public evidence exists of efficient, sustained human-to-human transmission or a major viral breakthrough. The CDC and international agencies continue to message 'low to moderate' risk, and the IRAT panel is conservative in score escalation. With under three months left and in the absence of an unprecedented event, a jump to 8.0+ is unlikely. I therefore assign a probability close to the historical base rate, with a modest upward adjustment for the increased frequency of zoonoses and mammalian adaptation, but still heavily weighted toward 'No.'",
+            "final_probability": 6
+        },
+        "Veterinary Medicine (Zoonotic Spillover Assessment)": {
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As a veterinary medicine expert specializing in zoonotic spillover, I focus on how animal pathogens, especially influenza A viruses like H5N1, adapt and threaten human populations. I bring an understanding of host range shifts, viral evolution, animal surveillance, cross-species transmission, and historical pandemic emergence, which are central to IRAT's 'emergence' risk calculation.",
+            "status_quo": "The IRAT has never issued a 'high' (>=8.0) emergence risk rating for any H5 virus. The latest H5N1 emergence score is 5.79 (moderate), and all recent IRAT updates, as of August 2024, indicate moderate risk. H5N1 continues to cause concern due to mammalian adaptation, but no sustained human-to-human transmission has occurred.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Host range expansion to mammals, especially dairy cattle",
+                    "effect": "Increases probability, as unprecedented infections in cattle suggest enhanced mammalian adaptation and more opportunities for reassortment or further adaptation."
+                },
+                {
+                    "factor": "Genetic mutations associated with mammalian adaptation (PB2\u2011478I, NP\u2011450N)",
+                    "effect": "Increases probability, as these mutations enhance replication in mammals and are directly linked to increased virulence in ferrets, a key IRAT animal model."
+                },
+                {
+                    "factor": "Current epidemiological data: human cases and transmission",
+                    "effect": "Decreases probability, as nearly all documented US human H5N1 cases (70 cases, 1 death) are mild, sporadic, and lack evidence of human-to-human transmission\u2014the key threshold for 'high' emergence risk."
+                },
+                {
+                    "factor": "IRAT methodology and historical conservatism",
+                    "effect": "Decreases probability. The IRAT is slow to upgrade risk unless there is clear evidence of efficient and sustained human-to-human spread or a major genetic leap; even with significant animal outbreaks and mutations, the CDC has not previously rated H5 above moderate."
+                },
+                {
+                    "factor": "International and US public health response and surveillance",
+                    "effect": "Decreases probability. Enhanced surveillance, rapid containment, and existing vaccine/antiviral stockpiles reduce the likelihood that CDC will perceive an imminent risk of emergence warranting a 'high' rating."
+                },
+                {
+                    "factor": "Potential for laboratory escape or gain-of-function research",
+                    "effect": "Slightly increases probability, as new reports of synthetic or chimeric influenza viruses and ongoing gain-of-function research increase theoretical risk of a sudden leap in emergence potential, but there is no evidence of such an event to date."
+                },
+                {
+                    "factor": "Base rates and status quo inertia",
+                    "effect": "Strongly decreases probability. No H5 virus has reached 'high' emergence risk in IRAT history, and viral adaptation to humans is typically incremental, requiring both critical mutations and epidemiological evidence."
+                }
+            ],
+            "no_scenario": "Despite ongoing outbreaks in birds, cattle, and occasional mammalian spillovers, H5N1 remains mostly an avian and sporadic zoonotic pathogen. Human cases continue to be rare and non-sustained. The CDC monitors, but IRAT scores for H5 viruses remain in the moderate range (<8.0), as no clear evidence of efficient human-to-human transmission or major genetic shift emerges before January 1, 2026.",
+            "yes_scenario": "A sudden cluster of human H5N1 cases appears, possibly among people with minimal animal contact, and onward human-to-human transmission is confirmed, perhaps supported by a new, high-risk mutation detected in the virus. Animal models show airborne transmission, and/or a lab escape event occurs, causing the CDC to urgently update the IRAT 'emergence' score for an H5 virus to 8.0 or above.",
+            "final_reasoning": "While H5N1 has taken concerning steps toward mammalian adaptation, with notable mutations and bovine outbreaks, the CDC IRAT's scoring history and methodology are conservative and heavily weigh real-world human transmission. Despite theoretical risks from recent genetic changes and gain-of-function research, there is no current evidence of efficient human-to-human spread. Only 70 mild US human H5N1 cases have been detected, most with clear animal exposure, and no sustained chains of transmission. The IRAT has never rated H5 emergence risk as high in its history, and the most recent (Aug 2024) score is 5.79, with little time left for a major change barring a dramatic epidemiological or virological event. Base rates and status quo bias both suggest a low probability of a 'high' score being issued before January 1, 2026.",
+            "final_probability": 7
+        },
+        "Global Health Security (International Health Regulations)": {
+            "time_to_resolution": "Approximately 2.5 months (question resolves January 1, 2026; today is October 15, 2025).",
+            "perspective_relevance": "As a Global Health Security expert specializing in International Health Regulations (IHR), I closely monitor not just virological and epidemiological data, but also the surveillance, risk assessment, and regulatory decision-making processes at CDC and their interplay with international agencies like WHO and OIE. The IRAT's 'emergence' risk rating is a function of both biological data and institutional caution, making it critical to understand both the scientific trajectory of H5 viruses and the organizational thresholds for declaring high emergence risk. My expertise allows me to contextualize current H5N1 events within the broader landscape of historical zoonotic threats and the CDC's risk communication norms.",
+            "status_quo": "As of August 9, 2024, the highest documented IRAT emergence risk score for any H5 virus is 5.79 (moderate), well below the 'high' threshold (\u22658.0). No H5 virus has ever received a 'high' emergence risk rating by CDC IRAT. Historically, CDC has been conservative in moving viruses into the 'high' category unless clear, sustained human-to-human transmission or major adaptive changes are observed.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent mammalian adaptation and human spillover events",
+                    "effect": "Increases probability modestly. The detection of North American H5N1 with mammalian-adaptive mutations (PB2-478I and NP-450N), its unprecedented spread in cattle, and 70 confirmed U.S. human cases (mostly mild) demonstrate increased zoonotic potential and cross-species transmission, which are central to IRAT's emergence risk calculation."
+                },
+                {
+                    "factor": "Absence of sustained human-to-human transmission",
+                    "effect": "Decreases probability. Despite increased mammalian infections, there are no confirmed cases of efficient or sustained human-to-human transmission, as emphasized by CDC, WHO, and international agencies. This is a critical threshold for CDC to rate emergence risk as 'high'."
+                },
+                {
+                    "factor": "Short time frame to resolution (2.5 months)",
+                    "effect": "Decreases probability. There is limited time for a dramatic shift in risk profile, such as a major adaptive event or cluster of sustained human transmission, to occur, be detected, and have the CDC convene an IRAT assessment and publish an updated score."
+                },
+                {
+                    "factor": "Institutional caution and communication norms",
+                    "effect": "Decreases probability. The CDC has a high bar for rating pandemic emergence risk as 'high' given the ramifications for public health preparedness, funding, and public messaging. Even with concerning developments, CDC tends to move incrementally unless there is overwhelming evidence."
+                },
+                {
+                    "factor": "Global and U.S. surveillance and response capacity",
+                    "effect": "Decreases probability. The U.S. and global partners are actively surveilling, sequencing, and responding to H5 events. While there is concern about gaps, the overall system is robust, making it less likely that a major emergence event would go unnoticed or unassessed for long, but also less likely that the CDC would preemptively escalate the risk rating absent clear evidence."
+                },
+                {
+                    "factor": "Potential for sudden viral evolution or reassortment",
+                    "effect": "Increases probability slightly. While rare, influenza viruses can evolve rapidly, especially with extensive circulation in multiple mammalian hosts. A reassortment event (e.g., with swine flu) could theoretically trigger a rapid risk escalation if detected."
+                }
+            ],
+            "no_scenario": "Despite ongoing H5N1 outbreaks in birds, cattle, and occasional spillover to humans (mostly mild, no onward transmission), the virus does not acquire mutations enabling efficient human-to-human transmission. The CDC monitors closely, but IRAT scores remain in the moderate range, reflecting increasing concern but not crossing the 'high' threshold. No new IRAT assessment is published with a score of \u22658.0 for H5 viruses by January 1, 2026.",
+            "yes_scenario": "Within the next 2.5 months, there is a major epidemiological event\u2014such as a cluster of human H5N1 cases with evidence of sustained human-to-human transmission, or clear virological evidence of critical adaptive mutations (e.g., switch in receptor binding preference with associated epidemiological evidence)\u2014prompting the CDC to rapidly reassess and publish an IRAT emergence risk score in the 'high' range (\u22658.0), for at least one H5 virus.",
+            "final_reasoning": "The CDC IRAT has never rated an H5 virus as 'high' (emergence risk \u22658.0). While the North American H5N1 clade 2.3.4.4b has acquired mutations increasing virulence in mammals and has led to an unprecedented number of mammalian (bovine, feline, and occasional human) infections, there is no evidence to date of efficient human-to-human transmission, which is the critical driver for escalation to 'high' emergence risk. All recent CDC and WHO risk assessments continue to characterize the public risk as 'low', and the most recent IRAT score for H5N1 (5.79) remains solidly in the moderate category. Although the virus's adaptation to mammals is concerning and ongoing surveillance is warranted, the short time frame makes it unlikely that both a major biological shift and an updated CDC IRAT assessment (with a public announcement of \u22658.0) will occur before January 1, 2026. The base rate for H5 viruses moving to 'high' is effectively zero, and recent developments, while worrisome, do not meet the historical or institutional threshold for a rapid leap to 'high' emergence risk. The most likely outcome is continued moderate concern, with perhaps increased CDC messaging and preparedness, but no official 'high' IRAT rating.",
+            "final_probability": 7
+        },
+        "Epidemiology (Infectious Disease Emergence Theory)": {
+            "time_to_resolution": "About 2.5 months (from October 15, 2025 to December 31, 2025)",
+            "perspective_relevance": "As an expert in infectious disease emergence theory, I bring a deep understanding of the ecological, evolutionary, and epidemiological drivers that enable animal influenza viruses to adapt for human-to-human transmission. My expertise allows for nuanced evaluation of viral genetic changes, surveillance data, cross-species transmission dynamics, and the real-world thresholds that would prompt an upgrade to 'high' emergence risk in the CDC IRAT.",
+            "status_quo": "As of August 9, 2024, the highest IRAT emergence risk score for any H5 virus was 5.79, firmly within the 'moderate' risk range. No H5 virus has ever scored 'high' (8.0+) for emergence risk. The IRAT has not rapidly upgraded H5 emergence risk during previous waves of concern, favoring a conservative, evidence-based approach.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent mammalian adaptation and increased host range (H5N1 clade 2.3.4.4b in cattle, cats, humans)",
+                    "effect": "Increases probability. The virus's demonstrated capacity to infect new mammalian hosts\u2014including dairy cattle, cats, and rare human cases\u2014shows evolutionary steps toward broader host adaptation, a key precondition for emergence risk escalation."
+                },
+                {
+                    "factor": "Genetic findings: identification of PB2\u2011478I and NP\u2011450N mutations increasing mammalian pathogenicity",
+                    "effect": "Increases probability. These mutations, proven to increase replication and virulence in mammals, are significant red flags for emergence potential, especially if found in lineages detected in humans."
+                },
+                {
+                    "factor": "Transmission dynamics: lack of sustained human-to-human transmission",
+                    "effect": "Decreases probability. Despite increased animal cases and rare human spillovers (70 US cases, mostly mild, with one death), there is still no evidence of efficient, sustained human-to-human transmission, which is a critical IRAT criterion for 'high' emergence risk."
+                },
+                {
+                    "factor": "CDC/WHO risk assessments and response inertia",
+                    "effect": "Decreases probability. Both the CDC and global agencies (WHO, FAO, OIE) currently consider the public risk to be low, and the IRAT has historically updated risk ratings slowly, requiring clear, sustained signals before assigning 'high' emergence risk."
+                },
+                {
+                    "factor": "Global surveillance and detection capacity",
+                    "effect": "Neutral or slight increase. Surveillance has improved, so a rapid, clear signal of adaptation could be detected and prompt IRAT re-evaluation. However, no such jump has occurred yet."
+                },
+                {
+                    "factor": "Time remaining to resolution (2.5 months)",
+                    "effect": "Decreases probability. With such a short window, the likelihood of a major shift in IRAT scoring\u2014given the CDC's methodical process and the current slow trend\u2014is reduced."
+                }
+            ],
+            "no_scenario": "Despite ongoing H5N1 outbreaks in animals and occasional human spillover, there is no evidence of efficient human-to-human transmission, no sudden accumulation of key mammalian-adaptive mutations in strains infecting people, and the CDC continues to rate emergence risk as 'moderate' or lower for all H5 viruses through December 2025. IRAT updates, if any, remain cautious and reflect the slow, incremental pace seen in past years.",
+            "yes_scenario": "A sudden cluster of human H5N1 cases with evidence of sustained human-to-human transmission emerges in a high-surveillance setting (e.g., the US, Europe, or East Asia), and genomic sequencing identifies the presence of PB2\u2011478I, NP\u2011450N, or other hallmark mammalian-adaptive mutations in these strains. The CDC, responding to this unprecedented risk, rapidly re-evaluates the IRAT score and, based on multiple risk elements (human infections, animal model transmission, receptor binding, etc.), assigns an 'emergence' score of 8.0 or higher to an H5 virus before the end of 2025.",
+            "final_reasoning": "The status quo for IRAT H5 emergence risk is moderate, trending slowly upward but not near the 'high' threshold. While notable developments have occurred\u2014mammalian spillover, key mutations, and rare unexplained human cases\u2014there is still no clear signal of human-to-human transmission or explosive adaptation, which are crucial for IRAT to score 'high' on emergence risk. The CDC and international agencies remain publicly cautious, with no indication of imminent IRAT escalation. With only 2.5 months left and the IRAT's history of slow, conservative updates, the probability that an H5 virus will receive a 'high' emergence risk rating before January 1, 2026 is low but not negligible, due to the non-zero chance of a sudden, dramatic epidemiological shift. My estimate is therefore 8%, reflecting a base rate near zero but modestly increased by recent mammalian adaptation and genetic findings.",
+            "final_probability": 8
+        },
+        "Epidemiology (One Health Approach)": {
+            "time_to_resolution": "Approximately 2.5 months (forecast date: 2025-10-15; resolution by 2026-01-01)",
+            "perspective_relevance": "As an epidemiologist specializing in the One Health approach, I integrate human, animal, and environmental data for emerging zoonoses. My expertise is particularly relevant for H5N1 risk: the virus is currently spreading across species (birds, cattle, mammals), and the IRAT's 'emergence' rating depends heavily on cross-species adaptation, genomic changes, and sustained mammalian/human transmission\u2014areas where the One Health perspective uniquely informs base rates, surveillance gaps, and risk signals.",
+            "status_quo": "No H5 virus has ever received an IRAT 'high' (>=8.0) emergence risk rating. The latest (August 2024) H5N1 IRAT emergence risk score is 5.79 (upper-moderate), with no recent evidence of efficient human-to-human transmission.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent cross-species spillover and mammalian adaptation",
+                    "effect": "Increases probability. H5N1 has infected cattle, cats, and isolated human cases; recent studies identified two mutations (PB2-478I and NP-450N) that increase replication and virulence in mammals. The One Health approach highlights the significance of bovine outbreaks and mammalian spillover as potential precursors to further adaptation."
+                },
+                {
+                    "factor": "Absence of sustained human-to-human transmission",
+                    "effect": "Decreases probability. Despite spillover events, there is no confirmed onward human-to-human transmission in the US or globally, and most human cases have been mild or linked to direct animal contact. The IRAT emergence score heavily weights this criterion."
+                },
+                {
+                    "factor": "Recent increases in surveillance, biosecurity, and One Health response",
+                    "effect": "Decreases probability. Heightened surveillance in cattle and poultry, along with improved biosecurity, reduces the risk of undetected adaptation or large-scale reassortment events, at least in the short term."
+                },
+                {
+                    "factor": "Genomic and epidemiological constraints",
+                    "effect": "Decreases probability. The IRAT has not rated any H5 virus as 'high emergence risk' in over a decade, despite continual animal outbreaks and some adaptive mutations. The threshold for 'high' is very conservative, and the CDC would require clear evidence of increased human transmission potential."
+                },
+                {
+                    "factor": "Time left to resolution",
+                    "effect": "Decreases probability. With only 2.5 months left, significant biological and epidemiological changes (e.g., truly efficient human transmissibility) are unlikely to be detected, scored, and published by the CDC before January 1, 2026."
+                },
+                {
+                    "factor": "Potential for reassortment and unpredictability",
+                    "effect": "Slightly increases probability. The H5N1 situation is evolving, with ongoing risk of reassortment with swine or human influenza viruses, which could rapidly change the risk calculus. However, such events are rare and would have to be both detected and scored within the narrow time window."
+                }
+            ],
+            "no_scenario": "Despite continued H5N1 activity in wild birds, cattle, and sporadic human cases, there is no evidence of efficient or sustained human-to-human transmission. The CDC reviews new data but finds that the overall emergence risk remains 'moderate' (score <8.0) due to lack of key epidemiological or genomic breakthroughs. The IRAT is not updated to 'high' for any H5 virus before January 2026.",
+            "yes_scenario": "A sudden cluster of human H5N1 cases with evidence of limited human-to-human transmission is detected (e.g., in a farm or healthcare setting), or a new H5N1 variant emerges with mutations associated with efficient mammalian transmission (e.g., airborne spread in ferrets). The CDC rapidly updates the IRAT, and the emergence risk score for at least one H5 virus is revised to 8.0 or higher before January 2026.",
+            "final_reasoning": "The base rate for an H5 virus receiving a 'high' IRAT emergence rating is zero\u2014no precedent exists. Despite recent worrisome developments (cattle outbreaks, mammalian adaptation, two key mutations), the most recent CDC IRAT score remains in the mid-moderate range (5.79), and there is no evidence of efficient human-to-human transmission. The CDC and global agencies (WHO, FAO, OIE) continue to rate the public health risk as low, with only occupationally exposed individuals at moderate risk. Although the One Health perspective highlights the risk of sudden jumps in emergence risk due to cross-species transmission and potential reassortment, the time left to resolution (2.5 months) is very short\u2014meaning a dramatic biological change, its detection, CDC review, and IRAT update would all have to occur before January 1, 2026. Surveillance and biosecurity are heightened, and while the situation is dynamic, the status quo (no H5 virus reaching 'high' emergence risk) is strongly favored. Therefore, while the tail risk is non-zero, the probability remains low but not negligible given the current context.",
+            "final_probability": 7
         },
         "Virology (Influenza Virus Evolution Models)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in influenza virus evolution models, I bring detailed knowledge of the genetic, epidemiological, and host adaptation factors that influence the emergence potential of H5 viruses, and an understanding of the IRAT's scoring methodology and its scientific underpinnings. My familiarity with the evolutionary constraints and mechanisms by which H5N1 could adapt to efficient human transmission allows for a nuanced assessment of the likelihood of a significant risk rating change in the near term.",
-            "status_quo": "As of August 2024, the highest IRAT 'emergence' score for any H5 virus was 5.79 (moderate), and no H5 virus has ever received a 'high' (>=8.0) emergence rating. The CDC and global authorities currently assess the risk of H5N1 emergence in humans as low to moderate, with no sustained human-to-human transmission documented.",
+            "time_to_resolution": "2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in influenza virus evolution models, I closely track molecular determinants of host adaptation, surveillance trends, and the thresholds required for risk reclassification. My perspective is especially relevant because the IRAT 'emergence' score is a synthetic measure, heavily influenced by virological, epidemiological, and evolutionary signals from both lab and field data. Understanding which mutations, transmission patterns, and model outputs would trigger a risk upgrade is central to assessing the likelihood of a high emergence score for H5 viruses.",
+            "status_quo": "Historically, the IRAT emergence risk score for H5 viruses has remained in the moderate range (latest: 5.79 as of August 2024 for H5N1), with no H5 virus ever being rated 'high' (\u22658.0). The CDC and global health agencies currently rate the public risk as low, despite ongoing animal outbreaks.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Recent mammalian adaptation and host jumps (notably H5N1 in cattle in the US)",
-                    "effect": "Slightly increases probability. The virus now infects mammals (cattle, cats), showing signs of cross-species adaptation and raising theoretical risk, but so far, transmission chains are limited and human cases remain rare and mild."
+                    "factor": "Recent adaptive mutations in North American H5N1 (PB2-478I, NP-450N)",
+                    "effect": "Increases probability. These mutations are shown to enhance mammalian virulence and replication, raising theoretical emergence potential, but so far have not resulted in sustained human transmission."
                 },
                 {
-                    "factor": "Genetic markers for mammalian adaptation (PB2-478I, NP-450N)",
-                    "effect": "Increases probability slightly, as these mutations increase replication in mammals and virulence in animal models, but no evidence yet of mutations conferring efficient human-to-human transmission."
+                    "factor": "Human case epidemiology (number, transmission, severity)",
+                    "effect": "Decreases probability. Despite ~70 human cases in the US, most are mild and none have shown clear human-to-human transmission; CDC and WHO continue to rate public risk as low."
                 },
                 {
-                    "factor": "Human cases and epidemiology",
-                    "effect": "Neutral/slightly increases probability. There have been 70 US human H5N1 cases since 2022, mostly mild and without onward transmission; three cases had no clear animal exposure. No clusters or sustained transmission has been detected, so risk assessment remains moderate."
+                    "factor": "IRAT scoring inertia and base rate",
+                    "effect": "Strongly decreases probability. In the IRAT's decade-plus history, no animal-origin virus has been rated 'high' for emergence risk, reflecting institutional conservatism and high thresholds for reclassification."
                 },
                 {
-                    "factor": "CDC/IRAT scoring history and methodology",
-                    "effect": "Decreases probability. IRAT is conservative and weights multiple factors (including population immunity, animal transmission, transmission in ferrets, receptor binding, etc.). A jump from 5.79 to 8.0+ would require a dramatic shift: efficient human-to-human transmission, major genetic change, or a significant outbreak cluster, none of which have occurred."
+                    "factor": "Recent lab evidence and surveillance (ferret studies, bovine outbreaks, environmental sampling)",
+                    "effect": "Slightly increases probability. Laboratory studies show increased virulence and contact transmission in mammals, and cattle outbreaks highlight cross-species jump, but airborne transmission (key for pandemic risk) remains unconfirmed."
                 },
                 {
-                    "factor": "Current global and US surveillance and outbreak data",
-                    "effect": "Decreases probability. Despite widespread animal infection, WHO, FAO, and CDC all rate the public health risk as low. There is no evidence of increasing severity, transmissibility, or clusters in humans."
+                    "factor": "Pressure from One Health, CDC, WHO, and heightened surveillance",
+                    "effect": "Minor increase. Heightened cross-sectoral attention and new data (e.g., environmental, untraceable human cases) could prompt a risk reassessment if evidence of adaptation emerges."
                 },
                 {
-                    "factor": "Timeframe (only 2.5 months remaining)",
-                    "effect": "Decreases probability. While viral evolution can be unpredictable, evolutionary and epidemiological constraints make it unlikely that such a dramatic shift in risk will occur and be recognized, scored, and published by CDC before January 2026."
-                },
-                {
-                    "factor": "Media, research, and gain-of-function concerns",
-                    "effect": "Neutral. While controversial research and hypothetical risks are discussed, there is no evidence of a lab escape or engineered H5 variant causing increased real-world risk in the IRAT window."
+                    "factor": "Reassortment potential with swine/seasonal influenza",
+                    "effect": "Minimal short-term effect. While theoretically increasing risk, there is no evidence of such events driving emergence within the next 2.5 months."
                 }
             ],
-            "no_scenario": "H5N1 continues to circulate widely in wild birds, poultry, and US cattle, with sporadic mammalian infections and rare, mild human cases (mostly with direct animal exposure). No clusters or sustained human-to-human transmission are documented, and genetic analyses show no major new adaptation. CDC maintains the emergence risk score in the moderate range, and no H5 virus receives an IRAT emergence rating of 8.0 or higher by January 1, 2026.",
-            "yes_scenario": "A significant genetic change occurs in H5N1 (e.g., acquisition of multiple key mammalian adaptation mutations, HA/NA changes, or reassortment with human-adapted influenza), leading to a documented cluster of human-to-human transmission (e.g., household or healthcare cluster). This triggers an urgent CDC review and a new IRAT assessment, with the emergence risk score upgraded to high (>=8.0) before the deadline.",
-            "final_reasoning": "The base rate for H5 viruses receiving a 'high' IRAT emergence risk is essentially zero. While the virus has expanded its host range (notably to cattle) and acquired some mammalian-adaptive mutations, the critical barrier\u2014efficient and sustained human-to-human transmission\u2014has not been breached. No clusters, superspreading events, or major genetic leaps have been documented. The CDC and other global agencies continue to rate the risk as low to moderate, and the IRAT's own methodology is conservative and multi-factorial. With only 2.5 months left in 2025, the window for both a biological event (major adaptation and transmission) and an administrative event (rapid IRAT reassessment and publication) is extremely narrow. While continued vigilance is warranted and risk is not zero, the probability that any H5 virus will receive a 'high' emergence rating from IRAT before January 1, 2026 remains very low given current evidence.",
-            "final_probability": 3
+            "no_scenario": "The IRAT maintains its current scoring, with the H5N1 emergence risk remaining in the moderate range. There are no confirmed clusters of sustained human-to-human transmission, and new surveillance data\u2014while concerning for animal health\u2014do not provide sufficient evidence of imminent adaptation or increased human risk to prompt a reclassification to 'high'. CDC and WHO continue to describe the risk as low to moderate, and the IRAT report for 2025 closes with H5 viruses below the 8.0 threshold.",
+            "yes_scenario": "A marked change in epidemiology occurs\u2014e.g., a cluster of human cases with evidence for limited human-to-human transmission, or a new surveillance report demonstrates clear molecular adaptation in H5N1 (such as additional mammalian-adaptive mutations or reassortment with a human virus), prompting the CDC IRAT panel to urgently reassess and upgrade the emergence risk score to 8.0 or above before the end of 2025.",
+            "final_reasoning": "The IRAT's historical conservatism and the absence of sustained human transmission or major new adaptation events in H5 viruses strongly favor the status quo. While recent mutations (PB2-478I, NP-450N) and expanded mammalian outbreaks are worrisome and slightly raise the probability of future reassessment, these have not yet resulted in the epidemiological or experimental evidence needed to push the emergence risk score into 'high' territory. The CDC, WHO, and EFSA all currently signal low to moderate risk, citing the lack of efficient human-to-human transmission. As an influenza evolution modeler, I see the theoretical risk growing, but not at a pace or with the concrete evidence required for a rapid IRAT score jump within the next 2.5 months. The base rate of IRAT 'high' ratings for H5 is zero, and only a major, clear, and unprecedented event would likely overcome the tool's scoring inertia on such a short timeline.",
+            "final_probability": 8
         },
         "Virology (Host Adaptation Mechanisms)": {
-            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026).",
-            "perspective_relevance": "As an expert in virology with a focus on host adaptation mechanisms, I am particularly attuned to the genetic and phenotypic changes required for avian influenza viruses like H5N1 to cross species barriers, adapt to mammalian (including human) hosts, and achieve sustained human-to-human transmission. The CDC IRAT 'emergence' risk category is fundamentally about these adaptation steps: molecular markers for mammalian adaptation, evidence from animal models, surveillance of human cases, and the virus's ability to overcome population immunity. My perspective is thus relevant for assessing the plausibility and timing of a substantial rise in the IRAT emergence risk score for H5 viruses.",
-            "status_quo": "The status quo is that H5 viruses, including the currently relevant North American clade 2.3.4.4b genotype B3.13, have an IRAT emergence risk score in the moderate range (~5.8), well below the 'high' (>=8.0) threshold. Historically, despite ongoing adaptation and sporadic mammalian cases, no H5 virus has reached a 'high' emergence risk on the IRAT.",
+            "time_to_resolution": "2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in virology, specifically host adaptation mechanisms, my perspective is directly relevant to the IRAT's focus on emergence risk. The IRAT heavily weights factors such as human infections, transmission in animal models, receptor binding, population immunity, and genomic evidence of adaptation\u2014areas where understanding of viral adaptation to new hosts is critical. My expertise allows me to assess how likely H5 viruses are to acquire or have already acquired key mutations conferring efficient human-to-human transmission and sustained emergence potential.",
+            "status_quo": "As of August 2024, the highest IRAT emergence risk for any H5N1 virus was 5.79 (moderate). No H5 virus has ever received a 'high' (>=8.0) emergence risk score. Historically, IRAT scores for H5N1 have remained moderate despite significant animal outbreaks and occasional zoonotic cases.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Recent host adaptation mutations (PB2-478I and NP-450N)",
-                    "effect": "Increases probability. These mutations, newly characterized in North American H5N1, increase pathogenicity in mammals (ferrets), enable systemic infection, and indicate ongoing adaptation. However, no evidence yet of sustained human-to-human transmission or efficient airborne spread."
+                    "factor": "Recent Host Adaptation Mutations (PB2-478I and NP-450N)",
+                    "effect": "Increases probability: These mutations in the North American H5N1 clade 2.3.4.4b have been shown to increase replication and pathogenicity in mammals, suggesting ongoing adaptation. However, evidence for efficient human-to-human transmission is still lacking."
                 },
                 {
-                    "factor": "Demonstrated mammalian infections (cattle, cats, rare humans)",
-                    "effect": "Slightly increases probability. The virus is now enzootic in U.S. cattle and has spilled over into other mammals, showing some adaptation to mammalian hosts, but most human cases are mild and linked to direct animal exposure, not onward transmission."
+                    "factor": "Zoonotic Infections and Transmission Pathways",
+                    "effect": "Slightly increases probability: There have been 70 U.S. human cases (mostly mild, some unexplained), and the virus has now infected cattle, cats, and other mammals. However, no confirmed human-to-human clusters, and most cases remain occupational."
                 },
                 {
-                    "factor": "Transmission in animal models (ferrets)",
-                    "effect": "Neutral to slightly increases probability. The latest studies show contact transmission in ferrets but no airborne spread\u2014a key IRAT criterion for high emergence risk is efficient airborne transmission in mammals."
+                    "factor": "IRAT Scoring Conservatism and Precedent",
+                    "effect": "Decreases probability: The CDC has historically been cautious, requiring strong evidence of pandemic potential for a 'high' score. Even with notable adaptation events, IRAT scores for H5 have not breached the high threshold."
                 },
                 {
-                    "factor": "Genomic analysis and surveillance",
-                    "effect": "Neutral. While ongoing surveillance has detected adaptive mutations, these have not yet combined to produce a virus with both high replication in mammals and efficient respiratory droplet spread between humans."
+                    "factor": "Animal Model Transmission Data",
+                    "effect": "Neutral/slightly decreases probability: While ferret studies show contact transmission and high virulence, airborne transmission (a key for human emergence) has not been demonstrated with current U.S. H5N1 genotypes."
                 },
                 {
-                    "factor": "Human infection data and epidemiology",
-                    "effect": "Neutral to slightly increases probability. 70 U.S. human cases (mostly mild, one death) but no evidence of clusters or sustained person-to-person spread. Three cases lacked a clear animal exposure but still no secondary cases\u2014this is concerning but not definitive."
+                    "factor": "Surveillance and Reporting Lag",
+                    "effect": "Decreases probability: Even if a virus acquires high-risk features, the IRAT process, publication, and CDC risk communication often lag real-time events, making a formal 'high' rating before Jan 1, 2026 less likely unless a dramatic event occurs."
                 },
                 {
-                    "factor": "IRAT scoring inertia and risk aversion",
-                    "effect": "Decreases probability. IRAT scores are consensus-driven and conservative, requiring multiple lines of convergent evidence before moving a virus to high risk. Historically, even dramatic events (e.g., H7N9 emergence) have not rapidly pushed the score to 8+."
-                },
-                {
-                    "factor": "Potential for reassortment or further adaptation before 2026",
-                    "effect": "Slightly increases probability. Continuous circulation in cattle and possible co-infection with human or swine influenza viruses increases the theoretical risk of a key adaptation or reassortment event in the next few months, but this would need to be detected and confirmed."
-                },
-                {
-                    "factor": "CDC and global risk communications (WHO, OIE)",
-                    "effect": "Decreases probability. All recent public health statements stress that the current risk to the general public remains low, and no credible expert or agency has signaled a step-change in emergence risk for H5."
+                    "factor": "Base Rate of IRAT 'High' Ratings",
+                    "effect": "Strongly decreases probability: No animal-origin influenza A virus has ever received a 'high' emergence risk score before; the base rate is essentially zero."
                 }
             ],
-            "no_scenario": "H5N1 continues to circulate and cause sporadic spillovers into mammals (including rare human cases) with occasional detection of new adaptive mutations, but there is no confirmed efficient human-to-human transmission and no major change in virus phenotype in animal models. IRAT emergence risk scores remain in the moderate range, reflecting incremental but insufficient progress toward sustained human adaptation, and the CDC does not issue a high risk rating before January 1, 2026.",
-            "yes_scenario": "A sudden event\u2014such as a confirmed cluster of human H5N1 cases with evidence of limited onward transmission, or a major laboratory finding demonstrating airborne transmissibility in ferrets\u2014forces a rapid re-evaluation. The CDC convenes an expert panel, reviews new molecular and epidemiological data, and updates the IRAT, raising the emergence risk of a specific H5 virus to 8.0 or above before the end of 2025.",
-            "final_reasoning": "The base rate for an H5 virus receiving a high IRAT emergence risk within such a short time frame (less than three months) is extremely low. While recent molecular findings (PB2-478I, NP-450N) and increased mammalian infections slightly raise concern, these are not yet sufficient to achieve the IRAT's strict 'high' risk threshold. Key criteria remain unmet: efficient airborne transmission in mammals, evidence of sustained human-to-human spread, and a clear shift in virus phenotype. IRAT scoring is deliberately conservative, requiring strong, multidimensional evidence. No agency (CDC, WHO, OIE) has signaled an imminent reclassification or raised public pandemic alarms. The possibility of a dramatic reassortment or adaptation event cannot be entirely excluded, but given the current evidence and status quo bias, a high risk rating before January 2026 is unlikely.",
+            "no_scenario": "Despite ongoing outbreaks in animals and sporadic human infections, H5N1 remains poorly adapted for human-to-human transmission. The CDC continues to monitor the situation, but IRAT scores remain in the moderate range due to lack of evidence for efficient human transmission, no major new adaptation events, and cautious CDC risk communication.",
+            "yes_scenario": "A major event occurs: either a cluster of confirmed human-to-human H5N1 transmission is detected (e.g., in a family or community setting), or clear evidence emerges of airborne transmission in ferrets or other relevant models, accompanied by genomic changes known to confer human adaptation. In response, the CDC rapidly updates its IRAT assessment, pushing the score to 8.0 or higher before Jan 1, 2026.",
+            "final_reasoning": "While the host adaptation situation is evolving\u2014with concerning mutations (PB2-478I, NP-450N), mammalian spillover (notably cattle and cats), and rare unexplained human cases\u2014there remains no confirmed efficient human-to-human spread, no airborne transmission in animal models, and no IRAT precedent for a 'high' score. The IRAT system is conservative and has never rated an H5 virus as 'high' emergence risk, even during major global outbreaks. Furthermore, the time window is tight (2.5 months), and CDC updates typically lag behind both scientific discovery and outbreak events. Given the history, current evidence, and CDC's cautious approach, the base rate strongly favors a 'No' outcome. I do not discount the possibility of a major event, but the probability remains low unless there is a sudden, dramatic shift in the epidemiology or virological data.",
             "final_probability": 8
         },
         "Public Health Policy (Pandemic Risk Assessment Methods)": {
-            "time_to_resolution": "Approximately 2.5 months (forecast made October 14, 2025; resolves January 1, 2026)",
-            "perspective_relevance": "As an expert in Public Health Policy and Pandemic Risk Assessment Methods, I am skilled at evaluating emerging zoonotic threats, interpreting risk assessment tools (like the CDC IRAT), and understanding the interplay between viral genetics, surveillance, and policy response. My expertise allows me to critically assess both the technical criteria for a 'high' emergence risk rating and the likelihood of CDC making such a determination based on current and projected epidemiological, virological, and public health evidence.",
-            "status_quo": "Historically, no H5 virus has received a 'high' (\u22658.0) potential emergence risk rating on the CDC IRAT. The latest published H5N1 emergence risk score is 5.79 (moderate), and the highest IRAT emergence risk score for any virus was 7.5 for an H1N1 variant. H5N1 is causing significant concern in animals and sporadic human cases, but sustained human-to-human transmission has not occurred.",
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in public health policy and pandemic risk assessment, I bring deep knowledge of the CDC's IRAT methodology, zoonotic influenza evolution, and the multi-factorial triggers that drive risk scoring changes. My expertise enables me to weigh genetic, epidemiological, and policy factors that influence the probability of an H5 virus being rated 'high' emergence risk in the near term.",
+            "status_quo": "No H5 virus has ever received a 'high' (>=8.0) emergence risk rating by the CDC IRAT. As of August 2024, the latest H5 IRAT emergence score was 5.79 (moderate). Historically, the IRAT scores change slowly, and high-risk designations are rare.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Recent virological findings: mammalian-adaptive mutations in H5N1",
-                    "effect": "Increases probability. The detection of PB2-478I and NP-450N mutations in North American H5N1 increases mammalian tropism and cross-species infection risk, which are key IRAT elements. However, airborne transmission between mammals and sustained human-to-human spread are still unproven."
+                    "factor": "Recent Mammalian Adaptation and Outbreaks",
+                    "effect": "Increases probability moderately. The detection of H5N1 in dairy cattle, with over 1,000 herds affected and at least 70 US human cases (mostly mild), and identification of mammalian-adaptive mutations (PB2-478I, NP-450N) increase concern. However, current evidence suggests limited to no efficient human-to-human transmission."
                 },
                 {
-                    "factor": "Epidemiology: Human H5N1 cases and lack of sustained human-to-human transmission",
-                    "effect": "Decreases probability. Despite increased animal-to-human spillover (70 US cases, mainly mild), there is no evidence of efficient human-to-human transmission, which is required for a 'high' emergence score on IRAT."
+                    "factor": "IRAT Scoring Criteria and Historical Conservatism",
+                    "effect": "Decreases probability. The IRAT tool scores are based on multiple elements (transmission, immunity, severity, etc.) and have historically been conservative, requiring strong, direct evidence of sustained human adaptation or transmission to cross the high-risk threshold. No H5 virus has yet reached 8.0, even after significant zoonotic events."
                 },
                 {
-                    "factor": "CDC/WHO/FAO risk communication and IRAT scoring conservatism",
-                    "effect": "Decreases probability. The CDC and international agencies continue to rate public risk as low and have not shown urgency in updating IRAT scores rapidly, even during notable animal outbreaks. The threshold for 'high' is conservatively applied."
+                    "factor": "Human Case Epidemiology",
+                    "effect": "Neutral to slightly increasing. While the number of human H5N1 infections in the US has risen, cases are rare, mostly mild, and with little evidence of human-to-human transmission. One case in California had no clear animal exposure, but no onward transmission was detected. This raises concern but does not yet trigger IRAT high-risk change."
                 },
                 {
-                    "factor": "Timeframe: short period until Jan 1, 2026",
-                    "effect": "Decreases probability. With less than 3 months left, the probability of a major epidemiological event or IRAT reassessment crossing the 8.0 threshold is low, barring a surprise event."
+                    "factor": "Virological Evidence of Human Adaptation",
+                    "effect": "Decreases probability. Despite mutations increasing mammalian virulence, studies show the bovine H5N1 retains avian-like receptor binding and does not transmit via airborne route in ferrets\u2014critical criteria for IRAT high emergence risk."
                 },
                 {
-                    "factor": "Potential for viral reassortment or sudden epidemiological shift",
-                    "effect": "Increases probability. The risk is nonzero; if H5N1 reassorts with a human-adapted influenza (e.g. H1N1 or H3N2), or a cluster of human-to-human transmission occurs, the IRAT could be urgently updated to 'high'. However, such events are rare and would likely be quickly reported."
+                    "factor": "Pandemic Surveillance and Policy Pressure",
+                    "effect": "Slightly increases probability. The salience of H5N1 in public, political, and One Health contexts may create incentive for more aggressive risk communication or upward revision, especially with mounting One Health pressures. Yet, the CDC has historically resisted such shifts absent clear evidence."
                 },
                 {
-                    "factor": "Recent CDC/IRAT update cadence and transparency",
-                    "effect": "Decreases probability. The last IRAT update (August 2024) reflects a cautious, deliberate approach. The CDC has not published frequent or abrupt IRAT score changes, even with substantial animal outbreaks."
+                    "factor": "Base Rate of IRAT High Ratings",
+                    "effect": "Strongly decreases probability. No H5 virus has ever reached the 8.0 threshold, and even the highest non-H1N1 IRAT emergence scores have plateaued below 7, suggesting high inertia."
+                },
+                {
+                    "factor": "Time Remaining Until Resolution",
+                    "effect": "Slightly decreases probability. With less than 3 months to go, a sudden re-evaluation would likely require a triggering event (e.g., cluster of efficient human-to-human transmission) that has not yet occurred."
                 }
             ],
-            "no_scenario": "Through the end of 2025, H5N1 continues to circulate in birds, dairy cattle, and occasionally infects humans with direct animal contact, but there is no sustained human-to-human transmission or large epidemiological shift. The CDC maintains its current IRAT emergence risk rating for H5 at 'moderate' (below 8.0), citing ongoing monitoring and lack of key risk element changes.",
-            "yes_scenario": "A significant event occurs before January 1, 2026: either a cluster of confirmed human-to-human H5N1 transmission emerges (e.g., nosocomial or household spread), or a new H5N1 reassortant with clear mammalian-adaptive mutations and enhanced transmission is identified. The CDC convenes an emergency IRAT reassessment and, in response to mounting evidence and/or external pressure, assigns a 'high' (\u22658.0) emergence risk rating for one or more H5N1 viruses.",
-            "final_reasoning": "The base rate for an IRAT emergence risk score reaching 'high' for any influenza virus is extremely low\u2014no H5 virus has reached this threshold historically, and the highest ever score (for H1N1) was 7.5. Despite the concerning detection of mammalian-adaptive mutations and increased spillover into cattle and humans, the virus has not demonstrated the efficient human-to-human transmission or genetic/antigenic shift that would typically trigger an 'emergence' score of 8.0+. The CDC and partners remain conservative in their public risk assessments and have not updated the IRAT score upward despite notable recent developments. The short timeframe (less than 3 months) further reduces the chance of both a major epidemiological event and a CDC scoring revision. While a black swan event (reassortment, super-spreader event) is possible, such a scenario would likely require more time to be recognized, assessed, and reflected in a CDC IRAT update. Therefore, while the risk is not zero and should not be ignored, the best estimate is that the IRAT emergence risk score for H5 will remain in the 'moderate' range through the end of 2025.",
-            "final_probability": 7
+            "no_scenario": "Through December 2025, H5N1 continues to cause sporadic outbreaks in animals and rare, mostly mild, human spillover cases. Surveillance detects a few unexplained human cases, but there is no sustained transmission, no large clusters, and no major change in the virus\u2019s receptor binding or airborne transmissibility. The CDC updates IRAT scores, but the overall emergence risk for H5N1 remains moderate (<8.0), with risk communication emphasizing vigilance but not imminent pandemic threat.",
+            "yes_scenario": "Before January 1, 2026, a significant shift occurs: either a cluster of H5N1 human cases with confirmed efficient human-to-human transmission emerges, or robust virological evidence is published showing the virus has acquired key molecular adaptations for airborne transmission between mammals (e.g., new receptor binding, airborne ferret transmission, or repeated unexplained non-occupational human cases). The CDC, in response to these developments and increased international concern, revises the IRAT emergence risk score for an H5 virus to 8.0 or higher.",
+            "final_reasoning": "The base rate for an H5 virus receiving a high IRAT emergence score is extremely low\u2014no precedent in 10+ years of IRAT history. The most recent IRAT emergence risk for H5N1 is 5.79 (moderate), and no public evidence since June 2024 suggests a step change in human transmissibility. Despite growing concern about mammalian adaptation (notably in cattle) and a few unexplained human cases, there is no evidence of efficient or sustained human-to-human transmission, nor of a major shift in viral phenotype that would meet IRAT\u2019s high-risk criteria. The CDC is methodologically conservative, and the time window for a major scoring change is short. While one can envision a sudden event triggering a high-risk rating, the probability remains low absent such a development. I estimate the likelihood at 6%, reflecting a small risk of a last-minute virological or epidemiological breakthrough, but giving strong weight to the status quo and historical IRAT scoring inertia.",
+            "final_probability": 6
         },
         "Public Health Policy (PREVENT Pandemic Preparedness)": {
-            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
-            "perspective_relevance": "As an expert in Public Health Policy and PREVENT Pandemic Preparedness, my perspective is directly relevant to the CDC's IRAT process, which is designed to guide preparedness investments and response priorities. My background provides insight into the factors that drive risk scoring\u2014virological, epidemiological, and surveillance-based\u2014along with the institutional risk aversion and communication strategies of U.S. public health agencies, especially in the context of emerging zoonotic influenza threats.",
-            "status_quo": "The status quo is that no H5 virus currently has an IRAT emergence score rated as 'high' (>=8.0); the most recent (August 2024) score for H5N1 was 5.79 (moderate), and there is no historical precedent for an H5 virus being rated 'high' for emergence risk by CDC before question closure.",
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As a public health policy expert focused on PREVENT pandemic preparedness, I am attuned to both epidemiological indicators and the institutional/operational triggers that lead to changes in official risk ratings. This includes understanding the IRAT\u2019s criteria, the threshold for a 'high' emergence risk (\u22658.0), and the CDC\u2019s cautious, evidence-driven approach. My expertise allows me to critically assess not just virological trends but also policy and bureaucratic inertia, surveillance capacity, and the interplay between scientific findings and risk communication.",
+            "status_quo": "Historically, no H5 virus has received an IRAT 'high' emergence risk rating (\u22658.0). The latest published H5 IRAT emergence risk score is 5.79 (moderate risk), and the highest for any virus in recent years is 7.5 (H1N1, 2020). CDC and global agencies currently consider the public threat from H5N1 to be low to moderate, with no sustained human-to-human transmission documented.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Current epidemiology of H5N1 in mammals and humans",
-                    "effect": "Increases probability, as the virus has crossed into new mammalian hosts (notably cattle) and there have been rare, mostly mild, zoonotic infections\u2014but crucially, no sustained human-to-human transmission or significant increase in severe human cases."
+                    "factor": "Recent H5N1 Mammalian Adaptation and Outbreaks",
+                    "effect": "Increases probability. The appearance of mammalian-adaptive mutations (PB2\u2011478I and NP\u2011450N), outbreaks in cattle, and occasional spillover to humans suggest increased zoonotic potential and surveillance focus. However, no evidence of efficient human-to-human transmission yet."
                 },
                 {
-                    "factor": "Genetic adaptation and virological findings",
-                    "effect": "Slightly increases probability, as recent studies identify specific mutations (PB2-478I and NP-450N) that raise mammalian virulence and replication, but so far, airborne transmission in ferret models\u2014which is a key threshold for IRAT scoring\u2014has not been observed."
+                    "factor": "IRAT Scoring Criteria and CDC Caution",
+                    "effect": "Decreases probability. The IRAT requires not just evidence of mammalian adaptation but also clear demonstration of human-to-human transmissibility, which is lacking. The CDC historically moves slowly and conservatively with rating upgrades, especially for 'high' emergence risk."
                 },
                 {
-                    "factor": "CDC/IRAT scoring history and institutional conservatism",
-                    "effect": "Strongly decreases probability, as IRAT has never rated an H5 virus 'high' for emergence even during periods of increased mammalian spillover, and the CDC tends to move cautiously barring clear evidence of efficient human-to-human transmission or other game-changing events."
+                    "factor": "Human Case Data and Transmission Evidence",
+                    "effect": "Decreases probability. U.S. human cases remain rare (\u224870), mostly mild, and almost all linked to direct animal exposure, with no onward transmission confirmed. The CDC and WHO continue to rate general public risk as low."
                 },
                 {
-                    "factor": "Global and U.S. public health risk assessments",
-                    "effect": "Decreases probability, given recent assessments by CDC, WHO, FAO, and OIE all rate risk to the general public as low, and only low-moderate for at-risk occupational groups; no major shift in guidance, surveillance posture, or pandemic alert level has occurred."
+                    "factor": "Surveillance, Awareness, and Scientific Uncertainty",
+                    "effect": "Slightly increases probability. Enhanced surveillance, unexplained sporadic urban cases (e.g., San Francisco child), and growing scientific concern about environmental transmission may prompt CDC to reevaluate risk, especially if more unexplained or severe cases emerge."
                 },
                 {
-                    "factor": "Time remaining for a major event to drive a score change",
-                    "effect": "Decreases probability; with less than three months to resolve and no sign of an explosive event or epidemiological inflection point, the window for sufficient new evidence to trigger a 'high' emergence risk rating is very narrow."
-                },
-                {
-                    "factor": "Potential for surprise (lab escape, undetected transmission, policy shift)",
-                    "effect": "Slightly increases probability, as ongoing gain-of-function research, environmental contamination, or missed clusters could theoretically push the score higher if detected and confirmed, but there is no public evidence of such an event as of now."
+                    "factor": "Pandemic Policy Incentives and External Pressure",
+                    "effect": "Marginally increases probability. Heightened global attention, funding for countermeasures, and policy/institutional incentives could increase pressure to update risk ratings if new evidence emerges, but CDC is likely to resist unless criteria are clearly met."
                 }
             ],
-            "no_scenario": "H5 viruses continue to spill over sporadically to mammals (including humans), but there is no documented efficient human-to-human transmission, no major uptick in severe or unexplained human cases, and no new virological evidence emerges to prompt a radical reappraisal by the CDC. The IRAT score for H5N1 remains in the moderate range through the end of 2025, with CDC and global agencies maintaining their current risk posture.",
-            "yes_scenario": "A sudden cluster of unexplained severe human cases of H5 infection emerges, with clear evidence of limited or efficient human-to-human transmission, or new genomic/animal model data is published showing airborne transmission capability in mammals. Alternatively, a significant policy or risk perception shift within CDC (possibly triggered by high-level international concern or a lab-associated event) leads to an urgent IRAT reassessment and a score of 8.0 or higher for emergence risk.",
-            "final_reasoning": "The base rate for H5 viruses receiving a 'high' IRAT emergence risk rating is effectively zero: since the IRAT's inception, no H5 virus has reached this threshold. While the current H5N1 situation in North America is concerning from a One Health and pandemic preparedness standpoint\u2014given increased mammalian infections, identified virulence mutations, and sporadic human cases\u2014there is a persistent lack of evidence for efficient human-to-human transmission, which is the key trigger for an 'emergence high' rating. CDC and other authorities continue to signal 'low' public risk, and the IRAT process is inherently conservative, requiring major, sustained new evidence to drive a rapid score increase. With only 2.5 months left and no sign of a game-changing event, the likelihood of the IRAT emergence risk for H5 reaching 'high' before January 1, 2026, is low. However, the risk is not zero; the unprecedented expansion in cattle and the possibility of surprise events (e.g., lab incident, evidence of undetected transmission) mean a small chance remains.",
-            "final_probability": 7
+            "no_scenario": "Despite ongoing H5N1 outbreaks in animals (including mammals), and occasional human spillover, the virus does not acquire the necessary mutations for efficient, sustained human-to-human transmission. Human cases remain rare, mild, and linked to direct animal exposure. No cluster of unexplained or severe human cases emerges, and the CDC maintains the IRAT emergence risk rating for H5 below 8.0 (moderate or lower), citing insufficient evidence for a 'high' risk categorization.",
+            "yes_scenario": "A sudden shift occurs: a cluster of unexplained or severe human H5N1 infections is detected, possibly with evidence of limited human-to-human transmission (e.g., household, nosocomial, or community spread). Genomic analysis identifies additional mammalian-adaptive mutations, and/or animal model data show efficient airborne transmission. The CDC IRAT panel, responding to new data and global pressure, upgrades the emergence risk rating for at least one H5 virus to 'high' (\u22658.0) before January 1, 2026.",
+            "final_reasoning": "The baseline for an H5 virus being rated 'high' emergence risk by IRAT is extremely low: no precedent, and moderate risk (5.79) is the current status. While the North American H5N1 clade has accumulated mutations that increase mammalian pathogenicity, and there have been worrying signals (dairy cattle outbreaks, rare unexplained human cases), there is still no firm evidence of sustained human-to-human transmission\u2014a core IRAT criterion. The CDC and global partners continue to rate general public risk as low, and the IRAT panel is institutionally conservative. The recent scientific findings and sporadic unexplained cases nudge probability upward, but not enough to surmount the high bar for a 'high' rating. Only a dramatic virological or epidemiological development in the next 2.5 months\u2014such as confirmed clusters of human transmission or major new mutations\u2014would likely trigger reclassification. Given the short time window and the CDC's slow-moving process, the probability remains low, though not zero, and is slightly above strict base rate due to the current heightened alert and ongoing evolution of the virus.",
+            "final_probability": 8
         }
     },
     "deliberation_probability": [
         6,
         7,
-        8,
-        8,
-        12,
-        3,
+        7,
         8,
         7,
-        7
+        8,
+        8,
+        6,
+        8
     ],
-    "deliberation_mean_probability": 7.333333333333333,
-    "deliberation_sd": 2.345207879911715,
+    "deliberation_mean_probability": 7.222222222222222,
+    "deliberation_sd": 0.8333333333333334,
     "deliberation_probability_result": 7
 }
