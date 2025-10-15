@@ -41,9 +41,8 @@ def should_skip_file(input_file_path: str) -> bool:
     base_filename = strip_title_to_filename(title)
     slowly_path = f"forecasts/fall/slowly/{base_filename}_slowly.json"
     dispassion_path = f"forecasts/fall/dispassion/{base_filename}_dispassion.json"
-    recreated_path = f"forecasts/fall/recreation/{base_filename}recreated.json"
 
-    both_exist = os.path.exists(slowly_path) and os.path.exists(dispassion_path) and os.path.exists(recreated_path)
+    both_exist = os.path.exists(slowly_path) and os.path.exists(dispassion_path)
 
     if both_exist:
         logging.info("Skipping %s - both forecasts already exist", os.path.basename(input_file_path))
