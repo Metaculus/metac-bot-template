@@ -1,477 +1,481 @@
 {
     "deliberation_results": {
         "EnergyEconomics (OilPriceForecasting)": {
-            "time_to_resolution": "Approximately 3 months (question resolves when December 2025 data is released; it is now mid-October 2025)",
-            "perspective_relevance": "As an expert in Energy Economics and Oil Price Forecasting, my analysis integrates oil market fundamentals (supply/demand, OPEC behavior, US production), macroeconomic factors (inflation, tariffs, consumer sentiment), and policy signals specific to the US retail gasoline market. This allows me to move beyond headlines and understand both upstream (crude) and downstream (refining, retail) determinants of inflation-adjusted gasoline prices.",
-            "status_quo": "Historically, real (inflation-adjusted) US gasoline prices are relatively stable year-over-year unless disrupted by supply shocks, geopolitical crises, or significant policy changes. In the absence of new shocks, the base rate is that inflation-adjusted gas prices are flat or slightly down from the prior year, given the high elasticity of US production and OPEC\u2019s tendency to stabilize prices.",
+            "time_to_resolution": "About 3 months (resolves when December 2025 EIA and CPI data available, likely January/February 2026)",
+            "perspective_relevance": "As an expert in Energy Economics and Oil Price Forecasting, I can integrate macroeconomic, sectoral, and supply-demand fundamentals to assess the likely direction of real (inflation-adjusted) gasoline prices. I bring specialized knowledge of how global crude oil supply/demand, refining economics, US policy, and inflation dynamics interact to set pump prices, and how these typically evolve in response to macro shocks, OPEC decisions, and US domestic conditions.",
+            "status_quo": "Historically, US real gasoline prices tend to be flat or slightly down year-over-year, except during supply shocks, recessions, or major oil disruptions. Since the shale revolution, the US has seen generally stable or gently declining inflation-adjusted gas prices, barring major geopolitical or pandemic events.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Crude Oil Price Trajectory",
-                    "effect": "Decreases probability. Multiple sources and forecasts (Goldman Sachs, EIA) predict WTI and Brent crude prices declining into late 2025, as OPEC+ increases output and global demand is soft amid economic slowdown. Lower crude prices are the main driver of lower gasoline prices unless offset downstream."
+                    "factor": "Global Oil Prices & OPEC Supply Increases",
+                    "effect": "Decreases probability. Multiple news sources cite OPEC+ returning millions of barrels per day to the market by mid-2026, a projected 2 million bpd global surplus in Q4 2025, and analyst forecasts (Goldman Sachs, EIA) for Brent and WTI prices below $60/bbl in 2025-26. This would put downward pressure on US gasoline prices."
                 },
                 {
-                    "factor": "US Domestic Production & Shale Sector Weakness",
-                    "effect": "Neutral to slightly increases probability. US shale is struggling (costs up, investment frozen, platforms shutting), which in other contexts could support higher gas prices. But the global oil glut and OPEC+ output outweigh the US decline."
+                    "factor": "Slowing US Oil Production & Domestic Industry Weakness",
+                    "effect": "Neutral to slightly increases probability. US production is forecast to decline slightly as shale drilling becomes less viable at low prices, but the domestic supply loss is minor compared to the global glut. This could put slight upward pressure, but is overwhelmed by global surplus."
                 },
                 {
-                    "factor": "Refining Margins and Downstream Constraints",
-                    "effect": "Slightly increases probability. Diesel crack spreads are at historic highs and some US refineries are strained, but there is no strong evidence of a refining bottleneck that would sharply raise gasoline prices in December."
+                    "factor": "Trump Tariffs & Dollar Weakness",
+                    "effect": "Mixed. Tariffs and a weaker dollar theoretically support higher inflation and could raise import costs, but most crude/petroleum imports are exempt. The primary effect is increased economic uncertainty, some inflationary pressure, but also a drag on growth and fuel demand. Net effect is slightly negative for real gas price increases."
                 },
                 {
-                    "factor": "Tariffs and US Dollar Weakness",
-                    "effect": "Mixed. Tariffs are driving up inflation and adding to cost pressures, while a weaker dollar could make imported oil more expensive. However, crude imports are largely exempt and the global oil glut keeps cost pass-through muted."
+                    "factor": "US Demand, Macro Slowdown, and Consumer Weakness",
+                    "effect": "Decreases probability. Economic indicators show softening growth, lower consumer sentiment, and weak job/income growth, all likely to hold down gasoline demand, especially as the US enters a slower economic period post-tariffs."
                 },
                 {
-                    "factor": "Macroeconomic Factors (US Inflation, Consumer Demand, Election Year Effects)",
-                    "effect": "Neutral to slightly increases probability. Overall US inflation is running above target (2.7-2.9%), supporting nominal price increases, but real (inflation-adjusted) gas prices are what matter for this question. Gasoline demand is up slightly, but not enough to outpace falling crude prices."
+                    "factor": "General Inflation and CPI Movements",
+                    "effect": "Neutral to slightly increases probability. US CPI is running 2.7-2.9%. If gas prices nominally rise less than CPI, real prices fall. However, current inflation is partly driven by food and energy. If energy inflation slows or reverses, it drags down headline CPI, making real prices more likely to fall."
                 },
                 {
-                    "factor": "OPEC+ Production Policy",
-                    "effect": "Decreases probability. OPEC+ is increasing supply, causing a projected surplus, and has stated willingness to keep prices low. This is a strong downward force on global and US gasoline prices."
+                    "factor": "Seasonal and Election-Year Effects",
+                    "effect": "Neutral. There is some incentive for policy intervention to hold prices down in an election year, but with global fundamentals so bearish, the effect is minimal."
                 }
             ],
-            "no_scenario": "Crude oil prices continue to slide into late 2025 as OPEC+ maintains its production increase and global demand remains soft. US gasoline demand does not surge dramatically in Q4. The strong downward pressure from lower crude is only partially offset by refinery margins and inflation; as a result, the December 2025 inflation-adjusted average gas price is flat or below December 2024\u2019s level.",
-            "yes_scenario": "Unexpected shocks occur in Q4 2025: a major refinery outage, a spike in geopolitical risk (e.g., Iran conflict), or a cold snap boosts demand and strains supply. The weaker dollar and persistent core inflation push nominal gas prices up more than overall CPI, so that even after adjusting for inflation, December 2025 gas prices edge above December 2024.",
-            "final_reasoning": "The weight of evidence points toward falling or flat inflation-adjusted gasoline prices in the US for December 2025. Crude oil prices are under heavy downward pressure due to OPEC+ supply increases, and US shale is unable to act as the swing producer it once was. While tariffs and a weaker dollar add cost pressures, most crude imports are exempt, and consumer demand is not surging. Refining margins and downstream constraints are notable but not acute enough to offset the global crude glut. Inflation is running higher than the Fed target, but not at a level likely to offset the nominal decline in gasoline prices. Historical base rates and current forecasts (from EIA, Goldman Sachs) support a downward or flat trend in real gas prices. The only plausible 'yes' scenario would involve an unanticipated supply shock in Q4, but no such drivers are currently visible. Therefore, the probability of a year-on-year increase in inflation-adjusted US gas prices in December 2025 is low but not zero.",
-            "final_probability": 20
+            "no_scenario": "OPEC\u2019s production increases lead to a global crude surplus, pushing WTI and Brent below $60/bbl. US gasoline demand softens as the economy slows and consumer sentiment weakens, while inflation remains above 2%. US refiners face no major disruptions. As a result, nominal gas prices are stable or fall, while general CPI rises, causing December 2025 inflation-adjusted gas prices to be the same or lower than December 2024. This scenario is consistent with EIA/G-Sachs price forecasts and recent trends.",
+            "yes_scenario": "A geopolitical shock (e.g., Iran conflict, Middle East escalation, hurricane in the US Gulf) or a supply chain disruption causes a sharp, unexpected spike in crude prices late in 2025, just as US gasoline demand rebounds seasonally. Inflation remains high, but nominal gas prices rise even more, so inflation-adjusted prices for December 2025 are above those of December 2024. This would require a reversal of current fundamentals or an exogenous shock.",
+            "final_reasoning": "The base rate for year-on-year increases in real US gasoline prices is modest (<40%) outside of crisis periods. Newsflow shows a global oil glut forming due to OPEC+ supply increases and weak demand, with consensus forecasts for oil prices well below 2024 levels. US oil production is declining, but not enough to offset the global surplus. While Trump\u2019s tariffs and a weaker dollar add inflationary pressure, most crude/gasoline imports are exempt. US macroeconomic weakness is holding back demand. Inflation is running above target, but unless nominal gasoline prices rise disproportionately, real prices are likely to be flat or down. The only major risk to this view is a geopolitical or supply shock, but there is no firm evidence of one materializing imminently. Therefore, the balance of risks points clearly to December 2025 real gas prices being flat or down versus December 2024. A bold, evidence-weighted probability is justified.",
+            "final_probability": 18
         },
         "EnergyEconomics (IEAWEOOutlooks)": {
-            "time_to_resolution": "Approximately 3 months (until December 2025 EIA/BLS data is published, likely in January 2026)",
-            "perspective_relevance": "My expertise in EnergyEconomics (IEA/WEO Outlooks) provides deep familiarity with the drivers of oil and refined product prices, including the interplay between global supply/demand, US-specific energy policy, macroeconomic variables, and historical price behavior under analogous conditions. I can tie historical base rates with the current news context and integrate how the inflation-adjustment dynamics have played out in similar periods.",
-            "status_quo": "In the absence of major shocks, US real (inflation-adjusted) gasoline prices tend to be relatively stable year-on-year, with a slight downward drift due to improving fuel efficiency and modest demand growth. In most years, real gas prices are flat or slightly down, with about a 40% historical frequency of year-on-year real price increases.",
+            "time_to_resolution": "Approximately 3 months until December 2025 data is released and accessible (likely January 2026).",
+            "perspective_relevance": "As an expert in Energy Economics with a focus on IEA World Energy Outlooks, I integrate global oil market fundamentals, US supply/demand, policy impacts, and historical base rates to assess future gas price movements. My expertise contextualizes the interplay between OPEC+ actions, US shale supply constraints, global demand, macroeconomic factors (inflation, tariffs), and the lagged effect of policy changes on consumer prices. This is vital for distinguishing between nominal and real (inflation-adjusted) price trends and understanding the sticky, slow-moving nature of fossil fuel markets.",
+            "status_quo": "Historically, real (inflation-adjusted) US gasoline prices are relatively stable year-over-year barring major shocks. In most years, absent a global supply disruption or demand spike, prices move up or down by only a few percentage points. The base rate for a year-on-year real price increase is slightly below 50%.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Global Oil Price Weakness (OPEC+ supply, US shale contraction)",
-                    "effect": "Decreases probability. Multiple sources forecast global oil gluts due to OPEC+ output increases and US shale contraction, with WTI/Brent forecasts both below recent averages. Lower crude prices are the primary driver of lower gasoline prices at the pump."
+                    "factor": "Crude Oil Price Outlook (OPEC+ Supply Increases)",
+                    "effect": "Decreases probability. OPEC+ is bringing significant supply back online (2.2 million bpd/month, 3.66 million bpd by mid-2026), Goldman Sachs and EIA both forecast Brent/WTI prices in the $51\u2013$58/bbl range for 2025\u20132026, which is weak by recent standards. This puts downward pressure on gasoline prices."
                 },
                 {
-                    "factor": "US Dollar Weakness",
-                    "effect": "Increases probability. A weaker US dollar makes oil more expensive for US buyers, partially offsetting global price weakness. Several articles note a dollar decline since early 2025."
+                    "factor": "US Shale Oil Sector Contraction",
+                    "effect": "Neutral to slightly increases probability. Slower US production growth or outright declines (EIA and industry surveys expect US output to fall 2025\u20132026) could tighten local supply in the medium term, but global oversupply likely dominates."
                 },
                 {
-                    "factor": "US-Specific Tariff and Political Uncertainty",
-                    "effect": "Mixed, but slightly increases probability. Tariffs can boost input costs and inflation, but are not directly applied to imported crude/gasoline. However, trade tensions and uncertainty have negatively impacted growth and may depress demand, which could lower prices."
+                    "factor": "US Dollar Weakness & Tariffs",
+                    "effect": "Slightly increases probability. A weaker dollar tends to support higher oil prices globally (oil is priced in dollars). However, tariffs are causing economic drag, and their inflationary impulse is more pronounced in consumer goods than energy (since energy imports are largely exempt), so the effect is modest."
                 },
                 {
-                    "factor": "US Demand and Economic Growth",
-                    "effect": "Decreases probability. Economic indicators show slowing growth, weak consumer sentiment, and cautious holiday retail outlooks. Weak macroeconomic conditions typically lower gasoline demand, putting downward pressure on prices."
+                    "factor": "US Demand & Economic Activity",
+                    "effect": "Decreases probability. Economic indicators show slowing US growth, reduced consumer sentiment, weak job creation, and downward revisions to payrolls. Lower GDP growth and consumer stress tend to reduce gasoline demand, putting downward pressure on prices."
                 },
                 {
-                    "factor": "Inflation and CPI Trends",
-                    "effect": "Decreases probability. Inflation is running above the Fed target (2.7%\u20132.9%), but gasoline is not the main driver. If CPI inflation outpaces nominal gas price growth, real (inflation-adjusted) gas prices fall."
+                    "factor": "Seasonality and Short-Term Volatility",
+                    "effect": "Neutral. While seasonal spikes (summer driving, hurricanes) can cause short-term volatility, the resolution compares December-to-December prices, minimizing seasonal distortion."
                 },
                 {
-                    "factor": "Seasonality and Historical Volatility",
-                    "effect": "Neutral to slightly increases probability. There is always noise in monthly data, and short-term volatility (weather, refinery outages, geopolitics) can cause price spikes, but the net effect is modest unless a major disruption occurs."
+                    "factor": "Headline and Core Inflation",
+                    "effect": "Neutral to decreases probability. While inflation is slightly above the Fed\u2019s target (2.6\u20132.9%), it is expected to moderate, and the question is about real (inflation-adjusted) prices. If inflation stays high, nominal gas prices would need to rise even faster to result in a real increase."
+                },
+                {
+                    "factor": "Political & Policy Uncertainty",
+                    "effect": "Increases probability. Political interference (e.g., Trump\u2019s intervention in BLS, tariff whiplash, uncertainty on OPEC+ relations) adds a layer of unpredictability, but absent a major shock, this tends to add volatility more than trend shifts."
                 }
             ],
-            "no_scenario": "Crude oil prices remain soft or decline further due to OPEC+ overproduction and weak global demand. US economic growth continues to slow, reducing gasoline demand. The US dollar, while weaker, does not fall enough to offset these factors. Inflation continues at 2\u20133%, but nominal gasoline prices are flat or down, so real prices fall. December 2025 EIA data shows inflation-adjusted gas prices below December 2024.",
-            "yes_scenario": "Unexpected supply disruptions (e.g., geopolitical crisis, major hurricane, Middle East conflict) cause a spike in crude oil prices in late 2025. Alternatively, a sharp further weakening of the US dollar or a sudden rebound in US demand (perhaps due to a strong Q4 economic surprise) pushes up nominal gas prices faster than inflation, resulting in higher real prices in December 2025 versus 2024.",
-            "final_reasoning": "Base rates over the past 20 years suggest a roughly 40% chance of year-on-year real gas price increases, with most years showing flat or declining real prices unless there is a major supply shock. The current newsflow points to global oil oversupply, US shale contraction, and weak US macroeconomic conditions\u2014all of which are bearish for both nominal and real gas prices. While the weaker dollar and persistent US inflation are modest counterweights, they are unlikely to override the effects of cheap crude and soft US demand. There is some tail risk of a late-year supply shock, but absent new evidence, the most likely scenario is that inflation-adjusted US gas prices will be flat or down year-on-year in December 2025. Therefore, the probability of real gas prices rising is somewhat below the historical base rate.",
+            "no_scenario": "Global oil oversupply from OPEC+, weak demand due to slow US and global economic growth, and stable or declining US gasoline consumption lead to flat or falling nominal gas prices. Combined with moderate CPI inflation (2\u20133%), real (inflation-adjusted) gas prices for December 2025 are equal to or lower than December 2024.",
+            "yes_scenario": "Despite global oversupply, some combination of a weaker dollar, a supply disruption (e.g., Middle East tensions escalating), or a sharper-than-expected US shale contraction causes a spike in crude prices late in the year. Alternatively, inflation moderates sharply, but nominal gas prices remain sticky, resulting in a real increase. However, current data and outlooks do not strongly support this scenario.",
+            "final_reasoning": "The base rate for real (inflation-adjusted) US gasoline price increases is close to 50%, but current fundamentals point to downside risk. OPEC+ is aggressively increasing supply, and the US shale sector is struggling, but not enough to offset the global glut. Most forecasts from reputable sources (Goldman Sachs, EIA, industry surveys) expect oil prices to stagnate or fall in 2025. US economic growth is slowing, and consumer demand is under pressure, further reducing upward pressure on gas prices. Inflation is running above target but not accelerating, and much of the CPI increase is not energy-driven. While a weaker dollar and political unpredictability could provide upward risks, they are not sufficient to outweigh the strong downward pressure from global supply/demand fundamentals. The most likely scenario is that real gas prices in December 2025 will be flat or lower compared to December 2024. However, the probability is not extremely low\u2014there remains significant uncertainty from potential geopolitical shocks, dollar movements, or unexpected supply disruptions. Thus, the probability of a real year-on-year increase is moderately below 50%, but not by a large margin.",
             "final_probability": 35
         },
         "USMacroeconomics (FederalReserveInflationAnalysis)": {
-            "time_to_resolution": "Approximately 3 months (until December 2025 EIA and CPI data are published, likely in Jan-Feb 2026)",
-            "perspective_relevance": "As a US macroeconomist specializing in Federal Reserve and inflation analysis, I am positioned to interpret the interplay between oil/gas price fundamentals, macro policy (including tariffs and monetary policy), and inflationary pass-throughs. My expertise allows me to weigh global oil market trends, US-specific supply/demand, and policy-induced macro volatility with a focus on the mechanisms that translate nominal energy price shocks into real, inflation-adjusted consumer prices.",
-            "status_quo": "Over the past decade, real (inflation-adjusted) US gas prices have generally trended sideways to slightly lower, reflecting the US shale boom and OPEC\u2019s efforts to manage price, with volatility driven by geopolitical events and global economic cycles. Historically, year-over-year changes in inflation-adjusted gas prices are negative more often than positive, but with significant swings in both directions.",
+            "time_to_resolution": "Approx. 3 months (until EIA and BLS release December 2025 data, likely by mid-January 2026)",
+            "perspective_relevance": "As a US macroeconomics expert specializing in Federal Reserve and inflation analysis, I am uniquely equipped to assess the multifactor drivers of real (inflation-adjusted) gasoline prices. My expertise allows me to integrate energy sector dynamics (oil prices, OPEC policy, US shale), US macroeconomic data, and the feedback between monetary policy and consumer prices, as well as the political influences on inflation and the energy sector.",
+            "status_quo": "Historically, real US gasoline prices are relatively stable year-to-year, with modest fluctuations driven by global oil prices, US supply/demand, seasonality, and broader macroeconomic conditions. The base rate for any given year is a ~50% chance of an increase, but in normal macro conditions, inertia prevails and large swings are rare.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Global crude oil supply/demand imbalance (OPEC+ production increases, US shale contraction)",
-                    "effect": "Decreases probability. OPEC+ is ramping up production, US shale is in crisis, and crude prices are forecasted to be flat to down (Goldman: $58/bbl in 2025, $51 in 2026), suggesting downward pressure on nominal gas prices."
+                    "factor": "Global Oil Prices (OPEC+ Surplus & US Shale Crisis)",
+                    "effect": "Decreases probability. Multiple articles note a glut of global oil supply: OPEC+ is ramping up production, US shale is in crisis, Goldman Sachs is forecasting WTI at $58 in 2025 and $51 in 2026, and there is potential for a 2 million bpd surplus by late 2025. This supply glut is likely to keep crude prices (and thus gasoline prices) suppressed."
                 },
                 {
-                    "factor": "Tariff/trade policy and dollar weakness",
-                    "effect": "Increases probability. Tariffs and a weakening dollar can raise input costs and import prices, providing some upward pressure on domestic inflation\u2014including gasoline, especially if supply chains are disrupted."
+                    "factor": "US Dollar Weakness",
+                    "effect": "Increases probability. The US dollar has weakened since Trump took office, and a weaker dollar typically raises dollar-denominated commodity prices (including oil/gasoline) for US consumers, partially offsetting global oil price declines."
                 },
                 {
-                    "factor": "US macroeconomic conditions (slowing growth, weak demand, consumer stress)",
-                    "effect": "Decreases probability. Economic slowdown reduces demand for gasoline, which in turn weighs on prices."
+                    "factor": "US Tariffs, Trade Policy & Inflationary Pressure",
+                    "effect": "Mixed/slightly increases probability. Trump's tariffs are widely reported to fuel broad inflation and supply chain uncertainty, with some pass-through to energy prices via costs, though refined petroleum imports are mostly exempt. The uncertainty may push up prices, but global oil dynamics likely outweigh this."
                 },
                 {
-                    "factor": "Federal Reserve policy and CPI trajectory",
-                    "effect": "Mixed. The Fed is cautious about rate cuts due to persistent inflation, but the core inflation rate is only modestly above target (2.7-2.9%). If CPI rises faster than nominal gas prices, real (inflation-adjusted) gas prices could fall."
+                    "factor": "US Gasoline Demand & Seasonal Trends",
+                    "effect": "Neutral/slightly decreases probability. Gasoline demand has recently increased but is offset by weak macro indicators and high economic uncertainty, which typically constrain demand. The US is not in a clear cyclical upswing for gasoline use."
                 },
                 {
-                    "factor": "Seasonal and geopolitical volatility (weather, Iran tension, hurricane season)",
-                    "effect": "Increases probability slightly. While not dominant, supply disruptions or geopolitical shocks could cause a price spike, though the base rate for such events is low."
+                    "factor": "Monetary Policy & US Inflation Outlook",
+                    "effect": "Decreases probability. The Fed is cautious about rate cuts due to persistent inflation, but current CPI is running in the high 2-3% range. If core inflation stabilizes or declines, real gasoline prices are less likely to rise."
+                },
+                {
+                    "factor": "Political/Regulatory Environment (Trump Alignment with OPEC, Drilling Policy)",
+                    "effect": "Decreases probability. Despite campaign rhetoric, administration actions and OPEC+ cooperation have arguably led to less US oil output, more global supply, and lower prices. Regulatory uncertainty is suppressing US investment and output."
                 }
             ],
-            "no_scenario": "OPEC+ overproduces, US demand remains tepid due to weak macro conditions, and US shale activity contracts further. Nominal gas prices drift or decline. CPI rises 2.5-3% YoY, outpacing nominal gas price changes. Result: December 2025 inflation-adjusted gas prices are at or below December 2024 levels.",
-            "yes_scenario": "A combination of dollar weakness, sticky inflation (CPI >3% YoY), and a late-2025 supply disruption (hurricane, Iran, or other geopolitical event) triggers a nominal gas price spike. Even if the spike is brief, December 2025 EIA average gas price exceeds December 2024 in real terms after CPI adjustment.",
-            "final_reasoning": "The dominant signals suggest downward pressure on nominal gas prices: OPEC+ is increasing production, US shale is shrinking, and oil futures forecasts are soft. The US macro outlook is weak, with consumer demand and industrial activity both subdued. While tariffs and a weakening dollar could provide some upward price pressure, gasoline is not directly targeted by tariffs and the effect is secondary. CPI inflation remains above the Fed's 2% target but not alarmingly high, and if CPI rises modestly, it further lowers the inflation-adjusted gas price unless there is a nominal gas price surge. Geopolitical and weather risks remain, but are not the base case. The base rate for a year-over-year rise in real gas prices is below 50%, given these factors. I estimate the probability at 33%, mainly reflecting the possibility of late-year shocks or inflation surprises, but the modal outcome is a modest decline or flat real gas prices.",
-            "final_probability": 33
+            "no_scenario": "Global oil prices continue to slump as OPEC+ oversupplies the market and US shale production contracts. US gasoline demand is tepid due to slow economic growth and high uncertainty. Tariff-driven inflation is present but not enough to offset cheaper oil. The result: December 2025 real (CPI-adjusted) gasoline prices are flat or lower versus December 2024.",
+            "yes_scenario": "Despite the oil glut, a sharp US dollar depreciation, unexpected OPEC+ cuts, or a geopolitical shock (e.g., Iran conflict) drives up crude. Simultaneously, tariffs and inflation push up refinery and distribution costs, and/or a cold winter or other demand shock boosts gasoline consumption. These factors combine to make December 2025 real gas prices higher than a year prior.",
+            "final_reasoning": "The dominant factor is a global oversupply of oil, with forecasts and real-time market behavior (WTI ~$60, OPEC+ adding barrels, US shale retrenchment) all pointing to downward pressure on gasoline prices. Although a weaker dollar and tariff-driven inflation could partially offset this, the scale of the oil glut and weak US gasoline demand are stronger forces. Macro indicators show sluggish growth and rising uncertainty, which typically limit demand-side price spikes. The base rate for a real increase is near 50%, but the confluence of bearish oil factors and soft US demand tilt the odds notably below that. Only a sharp and unexpected shock (major geopolitical event, sudden OPEC+ reversal, or USD collapse) would plausibly flip this outcome. Given my expertise and synthesis of the current evidence, I assign a 25% probability to real US gas prices rising in 2025.",
+            "final_probability": 25
         },
         "USMacroeconomics (BEAEnergyStatistics)": {
-            "time_to_resolution": "Approximately 3 months (question resolves using December 2025 data, likely released by EIA and BLS in mid/late January 2026).",
-            "perspective_relevance": "My expertise in US Macroeconomics and BEA/EIA Energy Statistics is directly relevant: I understand the connections between global oil market dynamics, US gasoline retail pricing structure, inflation adjustment methods, and the statistical nuances of EIA and BLS data series. I can integrate production, demand, OPEC actions, policy shocks (tariffs, regulation), and macroeconomic cycles into a probabilistic forecast for real (inflation-adjusted) gasoline prices.",
-            "status_quo": "Historically, real (CPI-adjusted) US gasoline prices are about as likely to fall as to rise year-on-year\u2014over the last 20 years, the base rate for a year-on-year real price increase is about 40%. The status quo outcome, given current trends (late 2024-early 2025), would be flat or slightly declining real gas prices, as 2024 saw a price spike followed by recent declines.",
+            "time_to_resolution": "About 3 months (question resolves when December 2025 CPI and EIA gas price data are available, typically January or early February 2026)",
+            "perspective_relevance": "As an expert in US macroeconomics with a specialty in BEA and EIA energy statistics, I bring a deep understanding of how global oil market conditions, domestic production, policy shifts, tariffs, inflation, and consumer demand interact to determine real (inflation-adjusted) gasoline prices. My expertise allows me to interpret EIA data trends, anticipate the impact of macroeconomic shocks, and place current developments in the appropriate historical context.",
+            "status_quo": "Inflation-adjusted US gasoline prices in December 2025 will be roughly flat or slightly lower than December 2024, continuing the post-pandemic trend of stabilization or modest real declines due to global oversupply, sluggish demand growth, and persistent competition in the downstream sector.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Oil Price Forecasts and OPEC+ Production",
-                    "effect": "Decreases probability. Nearly all major forecasts (Goldman Sachs, EIA, S&P) expect Brent/WTI crude to average $55-60 in 2025, down from 2024, due to OPEC+ raising output and a global supply glut (OPEC's planned increase of 2.2 million bpd). Lower input costs usually mean lower gasoline prices."
+                    "factor": "Global Oil Supply Glut (OPEC+ Production Increases)",
+                    "effect": "Decreases probability. OPEC+ is ramping up production, with a projected 2 million barrels/day surplus in Q4 2025. This will likely keep global crude prices suppressed, leading to lower nominal and real gas prices in the US."
                 },
                 {
-                    "factor": "US Domestic Oil/Gas Production and Shale Slowdown",
-                    "effect": "Decreases probability. US production is expected to contract (EIA projects a decline from 13.4mbpd to 13.3mbpd), but the main driver is weak prices and investment freeze, not supply constraint. Thus, no major upward pressure on prices\u2014if anything, the sector's struggles signal oversupply."
+                    "factor": "US Oil Sector Weakness (Falling Domestic Production, Shale Crisis)",
+                    "effect": "Increases probability. US production is projected to decline modestly, with rising costs and a drilling slowdown. If the domestic supply contracts more than expected, it could put upward pressure on prices, although the effect is muted when global supplies are ample."
+                },
+                {
+                    "factor": "Trump Administration Tariff and Trade Policy",
+                    "effect": "Mixed effect. Tariffs (especially on Chinese goods) and the threat of new import duties stoke general inflation, but crude oil and refined petroleum products remain largely exempt. However, tariffs have added to economic uncertainty and possibly contributed to the weakening of the US dollar, which can increase dollar-denominated oil prices, but the net effect is likely small or negative for real gas prices given demand drag."
                 },
                 {
                     "factor": "US Dollar Weakness",
-                    "effect": "Slightly increases probability. A weaker dollar (as seen since Trump\u2019s return) can make dollar-denominated oil more expensive globally, providing minor upward price pressure, but this is typically a second-order effect when crude is in surplus."
-                },
-                {
-                    "factor": "Trump Administration Tariffs, Trade Policy, and Political Interference",
-                    "effect": "Ambiguous, but overall decreases probability. While tariffs can be inflationary, crude oil and refined fuel imports are mostly exempt, and trade/tariff uncertainty has actually depressed oil prices and demand. Political interference (e.g., with BLS data) raises uncertainty but does not mechanically raise real gas prices."
-                },
-                {
-                    "factor": "US Demand, Consumer Sentiment, and Economic Weakness",
-                    "effect": "Decreases probability. Flat-to-weakening economic growth, high interest rates, and poor consumer sentiment curb gasoline demand. The EIA and private forecasters expect only modest increases in gasoline demand, insufficient to offset global oversupply."
-                },
-                {
-                    "factor": "Inflation and CPI Adjustments",
-                    "effect": "Neutral/slightly decreases probability. General inflation is running slightly above the Fed\u2019s 2% target (2.7%-2.9%), but gasoline has not outpaced overall CPI in recent months; in real terms, this means flat or falling gas prices unless a new oil shock emerges."
-                },
-                {
-                    "factor": "Geopolitical/Energy Supply Shocks",
-                    "effect": "Slightly increases probability. The main risk factor for a sharp gas price rise is a Middle East disruption or sudden OPEC+ reversal. However, the current forecast consensus and OPEC plans point to a glut, not a shock, and there is no imminent Iran/Ukraine escalation."
-                }
-            ],
-            "no_scenario": "Crude oil prices follow the EIA/Goldman Sachs baseline (Brent/WTI at $55-60), OPEC+ continues raising output, US demand stays soft, and CPI inflation remains moderate. December 2025 nominal gas prices are flat or down year-on-year, and after adjusting for 2.5-3% inflation, real prices fall. EIA/BLS data confirm a real decline.",
-            "yes_scenario": "Unexpected geopolitical tensions (e.g., Iran, Russia, or a supply disruption) or a sudden OPEC+ output cut in Q4 2025 cause oil prices to spike above forecast levels (> $70/barrel), feeding through to US retail gasoline by December. CPI inflation is moderate, so real gas prices are up year-on-year.",
-            "final_reasoning": "The base rate for real gas price increases year-on-year is around 40%. Most major factors (oil price forecasts, OPEC+ policy, US production, macroeconomic demand, and inflation trends) point toward stable or lower real gas prices in 2025. Several news articles highlight sectoral distress, a glut in crude, and forecasts for declining oil prices, all of which feed into retail gasoline. While a weaker dollar and global risk could provide an upside, these are not currently dominant. The main risk to this forecast is a geopolitical supply shock, but no such event is in evidence as of October 2025. Given all of this, the probability that real (inflation-adjusted) US gas prices will be higher in December 2025 than December 2024 is below the historical base rate, though not close to zero due to inherent volatility and uncertainty in global energy markets.",
-            "final_probability": 30
-        },
-        "USPublicPolicy (USDOEPolicyAssessment)": {
-            "time_to_resolution": "Approximately 3 months, as the question resolves when December 2025 EIA gas price and BLS CPI data are released, likely in early January 2026.",
-            "perspective_relevance": "As an expert in US public policy with a focus on US Department of Energy policy assessment, I bring a nuanced understanding of how federal policy, international energy markets, and regulatory shifts interact to affect US retail gasoline prices. My analysis integrates the effects of tariffs, OPEC+ actions, domestic production trends, and macroeconomic indicators, with an emphasis on how USDOE policy implementation and political uncertainty can affect energy markets.",
-            "status_quo": "Historically, US inflation-adjusted gas prices have been stable or slightly declining year-over-year due to increasing US production, efficiency gains, and periods of global oil supply growth. The base rate for a year-over-year rise in real (inflation-adjusted) gas prices is roughly 40% over the past 20 years, with declines more common in periods of ample supply or weak demand.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "OPEC+ Production Increases",
-                    "effect": "Decreases probability. The news indicates a significant OPEC+ production hike, creating a likely global oil surplus in Q4 2025, which puts downward pressure on crude prices and, by extension, US gas prices. Major banks forecast sub-$60/bbl oil in 2025."
-                },
-                {
-                    "factor": "US Domestic Oil Production and Fracking Slowdown",
-                    "effect": "Slightly increases probability. US production is expected to contract for the first time in years, as drilling becomes less profitable at current prices and investment is frozen. This could marginally support prices if demand surprises to the upside, but globally, oversupply dominates."
-                },
-                {
-                    "factor": "Trump Administration Tariffs and Trade Policy",
-                    "effect": "Mixed, but net decrease. Tariffs add to inflation and uncertainty, but most oil and gas imports are exempt. Tariffs have slowed economic growth and consumer demand, which tends to reduce gasoline demand and price pressure. The potential for higher inflation is more salient in other sectors."
-                },
-                {
-                    "factor": "US Dollar Weakness",
-                    "effect": "Slightly increases probability. A weaker dollar makes oil more expensive in dollar terms, but this effect is muted by global oversupply and weak demand."
+                    "effect": "Increases probability. A weaker dollar makes oil more expensive in domestic terms, but recent global oversupply has outweighed this effect, keeping prices subdued."
                 },
                 {
                     "factor": "Consumer Demand and Economic Growth",
-                    "effect": "Decreases probability. The US economy is slowing, with weak GDP growth, reduced private investment, and declining consumer sentiment. All indicators suggest weak demand for gasoline, further limiting upward price pressure."
+                    "effect": "Decreases probability. US economic growth is softening, private investment is slowing, and consumer sentiment is weak. Gasoline demand is unlikely to surge, limiting potential price increases."
                 },
                 {
-                    "factor": "Weather and Geopolitical Risks",
-                    "effect": "Slightly increases probability. Potential supply shocks\u2014such as conflict in the Middle East or hurricanes\u2014could cause short-term price spikes, but no imminent threat is reported in the supplied news."
+                    "factor": "Inflation and CPI Trajectory",
+                    "effect": "Decreases probability. While headline CPI inflation has ticked up, energy (notably gas) is not the main driver\u2014food and housing are bigger contributors. If anything, broader inflation may outpace gas price increases, reducing real gas prices."
                 },
                 {
-                    "factor": "Inflation and BLS CPI Index",
-                    "effect": "Neutral to slightly decreases probability. While inflation is above the Fed\u2019s target, core inflation has not been driven by energy, and the inflation adjustment may slightly deflate nominal price increases."
+                    "factor": "Political and Regulatory Uncertainty",
+                    "effect": "Increases probability. Unpredictable interventions (e.g., threats to fire BLS officials, sudden regulatory changes) could create price volatility, but base rates suggest government actions rarely cause sustained surges in real gas prices absent supply shocks."
+                },
+                {
+                    "factor": "Weather and Geopolitical Events",
+                    "effect": "Neutral to slightly increasing. No major hurricanes, wars, or embargoes are currently threatening North American supply chains, but this remains a wildcard for late-year price spikes."
                 }
             ],
-            "no_scenario": "OPEC+ follows through on production hikes, global oil markets are oversupplied, US domestic output contracts but not enough to offset the glut, the US economy slows, and consumer gasoline demand remains tepid or declines. Inflation remains modest. December 2025 CPI-adjusted gas prices are flat or down versus December 2024.",
-            "yes_scenario": "Unforeseen supply disruptions (e.g., major hurricane, Middle East conflict) cause a crude price spike late in 2025, coinciding with seasonal or policy-driven demand increases. Alternatively, US production falls sharply and OPEC+ fails to deliver on promised increases, or global demand surprises to the upside, resulting in a brief rally that lifts December 2025 prices above 2024, even after inflation adjustment.",
-            "final_reasoning": "The weight of evidence, especially from recent news, points strongly toward a global oil oversupply in late 2025, with OPEC+ ramping up production and US output stalling or modestly declining. Major investment banks and the EIA forecast below-$60/bbl oil, with the US oil sector reporting crisis conditions and a glut. Tariffs and economic uncertainty are depressing US demand. Gasoline demand growth is limited by weak consumer sentiment and modest GDP growth. While there are inflationary pressures in the broader economy (especially food, electricity), these are not being driven by gasoline. The base rate for a year-over-year increase is under 50%, and current news tilts the odds further toward a decrease. Supply shocks are always possible but currently not forecasted. Therefore, it is more likely than not that December 2025 inflation-adjusted gas prices will be flat or down relative to December 2024.",
-            "final_probability": 30
+            "no_scenario": "OPEC+ continues to increase production as planned, resulting in a supply glut that suppresses global crude prices below $60/bbl through Q4 2025. US gasoline demand remains soft as economic growth disappoints, and CPI inflation continues to run above 2.5%, outpacing modest or stagnant nominal gas prices. December 2025's inflation-adjusted gas price is flat or slightly below December 2024.",
+            "yes_scenario": "A sudden supply disruption (e.g., Middle East conflict, major hurricane, or unexpected OPEC+ reversal), combined with sharper-than-expected US dollar weakness and/or a late-year rebound in US demand, pushes nominal gas prices up faster than CPI inflation. December 2025's inflation-adjusted gas price is above December 2024.",
+            "final_reasoning": "The base rate for year-over-year real gas price increases in the US is modest; historically, real gas prices fluctuate, but sustained year-over-year increases are uncommon outside of major supply shocks or demand surges. Current news points to a global crude oil surplus, softening US economic growth, and a decelerating upstream sector. While there are upside risks from dollar weakness and supply shocks, these are counterbalanced by OPEC+ production increases and weak domestic demand. Most macroeconomic and energy indicators suggest the balance of risks is toward flat or declining real gas prices. News articles consistently cite oversupply, weak demand, and energy sector malaise as dominant themes, with only isolated mention of possible upward price pressure. Therefore, while a 'Yes' outcome is plausible if an exogenous shock occurs, the most likely scenario is flat or slightly lower real gas prices at year-end 2025.",
+            "final_probability": 27
+        },
+        "USPublicPolicy (USDOEPolicyAssessment)": {
+            "time_to_resolution": "About 3 months (question resolves with December 2025 data; today is October 1, 2025)",
+            "perspective_relevance": "As an expert in US public policy with a focus on DOE policy assessment, I bring insight into the interplay between federal policy, macroeconomic indicators, and energy markets. This perspective allows me to situate short-term price trends in the context of regulatory, trade, and geopolitical drivers, as well as to evaluate the likelihood of exceptional events shifting the historical base rate for gas price movements.",
+            "status_quo": "In an average year, inflation-adjusted gas prices in the US are as likely to move slightly up as down; the historical base rate for a year-over-year increase is roughly 50%. However, outside of periods of major shocks (wars, embargoes, financial crises), large swings are uncommon, and the tendency is toward mean reversion.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Global oil price trajectory (OPEC+ supply increases, weak demand)",
+                    "effect": "Decreases probability \u2013 OPEC+ is increasing production, global inventories are rising, and forecasts for WTI/Brent are for lower prices in 2025 and 2026. US shale production is stalling, but global supply is more than keeping up with demand."
+                },
+                {
+                    "factor": "US domestic oil sector contraction",
+                    "effect": "Slightly increases probability \u2013 US drilling activity is expected to decline, possibly tightening US supply in some regions, but this is outweighed by global surplus."
+                },
+                {
+                    "factor": "Trump administration trade and tariff policy",
+                    "effect": "Mixed/slightly decreases probability \u2013 While tariffs increase inflation on many goods, crude oil and refined petroleum imports are exempt. However, economic uncertainty from tariffs is slowing growth and putting downward pressure on global oil prices."
+                },
+                {
+                    "factor": "Macroeconomic and consumer sentiment",
+                    "effect": "Decreases probability \u2013 Economic growth is slowing, consumer sentiment is low, and private investment is cooling. Lower demand reduces upward pressure on gas prices."
+                },
+                {
+                    "factor": "Seasonal and cyclical factors",
+                    "effect": "Neutral \u2013 Absent major weather or supply shocks, seasonal variation in gas prices is typically offset in year-over-year inflation-adjusted comparisons."
+                },
+                {
+                    "factor": "Dollar weakness",
+                    "effect": "Slightly increases probability \u2013 A weaker dollar can push up dollar-denominated oil/gas prices, but this effect is currently modest and offset by other factors."
+                },
+                {
+                    "factor": "Geopolitical risk (Iran, Ukraine, etc.)",
+                    "effect": "Increases probability \u2013 There is always the risk of a geopolitical event (e.g., Iran, Russia) disrupting global oil supply, but there is no current acute crisis."
+                }
+            ],
+            "no_scenario": "OPEC+ continues ramping up supply, US shale output stagnates but does not collapse, and global demand is tepid due to slow economic growth. Crude oil prices remain in the $55\u2013$65/bbl range, and retail gas prices in the US, after adjusting for inflation, are flat or slightly down compared to December 2024. Any dollar weakness is offset by global oversupply. No major hurricanes or refinery disruptions occur.",
+            "yes_scenario": "A sudden geopolitical event (e.g., escalation in the Middle East or Russia/Ukraine conflict) disrupts global oil flows, causing a rapid spike in crude prices. Alternatively, US refining capacity is constrained by hurricanes or accidents, or the dollar weakens further, pushing up import costs. Consumer demand proves more resilient than expected, or OPEC+ unexpectedly cuts supply late in the year. As a result, December 2025 gas prices exceed December 2024 after inflation adjustment.",
+            "final_reasoning": "The dominant signals in the news and forecasts are bearish for oil and, by extension, gasoline prices: OPEC+ is increasing supply, oil companies are warning of a glut, and global economic growth is cooling. While US domestic oil production is set to fall modestly, this is more than offset by global oversupply. Trade/tariff policy is disruptive but does not directly impact oil/gas prices, as imports are exempt, and the broader effect is to dampen demand and economic activity. The risk of a geopolitical supply shock, while ever-present, is not currently acute. The US dollar has weakened but not enough to override the fundamentals. Consumer sentiment is weak, and private investment is slowing, further reducing upward price pressure. While there are always uncertainties, the weight of evidence supports the status quo or slightly lower inflation-adjusted gas prices. Therefore, the probability that inflation-adjusted gas prices in December 2025 are higher than December 2024 is below the historical base rate.",
+            "final_probability": 32
         },
         "Economics (SupplyDemandTheory)": {
-            "time_to_resolution": "About 3 months until December 2025 data is available and published (likely January 2026).",
-            "perspective_relevance": "As an economist specializing in Supply and Demand Theory, my perspective is crucial for forecasting gas prices because gasoline markets are highly responsive to shifts in both supply (domestic production, OPEC+ output, geopolitics) and demand (U.S. economic activity, consumer behavior, seasonality). Understanding how tariffs, oil market dynamics, inflation, and macroeconomic conditions interact enables a rigorous assessment of likely price movements.",
-            "status_quo": "In the absence of significant shocks, U.S. inflation-adjusted gas prices tend to slowly revert to their long-term mean, with minor year-to-year variation. Historically, real gas prices are more likely to be stable or slightly decrease unless facing a substantial supply shock or demand surge.",
+            "time_to_resolution": "Approximately 3 months (until the release of December 2025 EIA and CPI data, likely in January/February 2026)",
+            "perspective_relevance": "As an expert in Economics (SupplyDemandTheory), my perspective is crucial for assessing the equilibrium between gasoline supply and demand, the transmission of global oil and policy shocks to US retail gas prices, and how macroeconomic and political factors affect both sides of the market. Understanding producer cost structures, OPEC+ actions, US shale dynamics, tariff effects, and consumer demand elasticity allows for a nuanced forecast of real (inflation-adjusted) gasoline price movements.",
+            "status_quo": "Inflation-adjusted US gasoline prices have been relatively stable or declining year-on-year, especially given ample global supply, weak demand growth, and falling crude prices in 2024 and 2025. The historical base rate for a year-on-year rise in real US gas prices is below 50% over the past decade.",
             "perspective_derived_factors": [
                 {
-                    "factor": "Global Oil Supply Expansion (OPEC+)",
-                    "effect": "Decreases probability. OPEC+ is increasing output, with forecasts of a 2 million barrel/day surplus by Q4 2025, which should suppress global oil prices and thus U.S. gas prices."
+                    "factor": "Global oil supply glut and OPEC+ production increases",
+                    "effect": "Decreases probability. Ample global supply, OPEC+ raising output, and forecasts of oil surpluses all point toward lower crude prices, the main input for gasoline."
                 },
                 {
-                    "factor": "U.S. Domestic Production Decline",
-                    "effect": "Increases probability slightly. U.S. shale/fracking output is shrinking due to low prices and rising costs, reducing domestic supply and providing mild upward pressure on prices, especially if global supply contracts unexpectedly."
+                    "factor": "US shale contraction, rising costs, and falling investment",
+                    "effect": "Increases probability slightly. US production is shrinking due to low prices and high costs, but this effect is muted by global oversupply."
                 },
                 {
-                    "factor": "Tariff-Driven Inflation & Policy Uncertainty",
-                    "effect": "Mixed, but net decreases probability. Tariffs create broad economic uncertainty and some cost-push inflation, but for oil/gas, most imports are exempt. Tariffs are instead dampening economic growth and thus gasoline demand."
+                    "factor": "Trump's tariff regime and resulting inflation/trade uncertainty",
+                    "effect": "Mixed/Neutral. While tariffs can raise general price levels (including refinery equipment and infrastructure), crude imports are mostly exempt, and the effect is outweighed by demand dampening from broader economic weakness."
                 },
                 {
-                    "factor": "U.S. Economic Slowdown",
-                    "effect": "Decreases probability. Multiple indicators show slowing growth, weak consumer sentiment, and downward revisions to payrolls, which all reduce gasoline demand and thus lower potential for price increases."
+                    "factor": "US economic slowdown and weak consumer demand",
+                    "effect": "Decreases probability. Slow GDP growth, declining consumer sentiment, and high unemployment reduce gasoline demand, putting downward pressure on prices."
                 },
                 {
-                    "factor": "Recent Oil Price Trends & Forecasts",
-                    "effect": "Decreases probability. WTI crude has dropped ~10% to ~$60/brl, Goldman Sachs forecasts $58 in 2025 and $51 in 2026, all pointing to continued low oil input costs for refiners."
+                    "factor": "Dollar weakness",
+                    "effect": "Increases probability slightly. A weaker dollar can raise dollar-denominated oil prices, but the effect is moderate compared to supply-side forces."
                 },
                 {
-                    "factor": "Federal Reserve and Inflation Expectations",
-                    "effect": "Increases probability slightly. The Fed is holding off on rate cuts due to lingering inflation, and inflation expectations are elevated, which could filter through to nominal gas prices. However, this effect is likely to be offset by the dominant supply/demand factors."
+                    "factor": "Seasonal and weather effects",
+                    "effect": "Neutral. December typically features lower demand for gasoline, and no major weather shocks are currently forecast."
                 },
                 {
-                    "factor": "Seasonality",
-                    "effect": "Neutral. December is typically a low-demand month, and there are no indications of expected severe winter weather/fuel shortages."
+                    "factor": "Sticky inflation and price pass-through",
+                    "effect": "Increases probability slightly. Persistent inflation can lead to some nominal pass-through to gas prices, but real (inflation-adjusted) prices may not rise unless crude spikes."
                 }
             ],
-            "no_scenario": "OPEC+ follows through with its production increase, keeping oil prices at or below $60/barrel. U.S. economic activity continues to soften, further reducing gasoline demand. Domestic production declines are modest and offset by imports. Inflation remains contained, so any nominal gas price increases are neutralized by CPI adjustment. December 2025 inflation-adjusted gas prices are flat or below December 2024.",
-            "yes_scenario": "A geopolitical shock (e.g., Middle East conflict, major U.S. refinery outage, or unexpected OPEC+ reversal) tightens global supply just as U.S. production falls more sharply than anticipated. Simultaneously, inflation remains sticky, nominal gas prices rise, and CPI lags, leading to a real (inflation-adjusted) increase in December 2025 gas prices over 2024.",
-            "final_reasoning": "The base rate for year-on-year increases in real (inflation-adjusted) U.S. gas prices is below 50%, especially in the absence of significant supply shocks. Supply/Demand Theory, applied to the current context, suggests that expanding OPEC+ output and sluggish U.S. demand (due to economic deceleration and weak consumer sentiment) will put downward pressure on gas prices. While U.S. domestic output is declining, this is not enough to offset global oversupply. Furthermore, inflation expectations are moderately elevated, but so are nominal prices for many goods, and CPI adjustment should mitigate most of the effect. The risk of a sharp supply shock (war, embargo, refinery disaster) cannot be ruled out, but is not strongly indicated by current news. Recent oil and gas price forecasts from investment banks and the EIA are bearish. Therefore, the probability that inflation-adjusted gas prices will be higher in December 2025 than December 2024 is below even odds, but not dramatically so, as small shocks or inflation surprises could push the outcome over the line.",
-            "final_probability": 33
+            "no_scenario": "OPEC+ continues ramping up production, creating a global oil glut. US shale output stays flat or declines. US economic growth stalls or contracts, consumer demand for gasoline remains tepid, and inflation moderates or remains contained. Dollar remains weak but does not offset crude price drop. As a result, nominal gas prices are flat or down, and inflation-adjusted prices for December 2025 are lower than December 2024.",
+            "yes_scenario": "Despite global oversupply, a geopolitical shock (e.g., Iran conflict, major refinery outage) or unexpected OPEC+ discipline causes a crude oil price spike late in 2025. At the same time, US inflation moderates, so the real (inflation-adjusted) price of gasoline rises in December 2025 compared to December 2024. Alternatively, a sharp dollar depreciation or new taxes/tariffs specifically on fuel could push real gas prices higher.",
+            "final_reasoning": "The overwhelming weight of evidence from oil price forecasts, OPEC+ actions, US shale contraction, and weak macroeconomic demand point toward flat or falling real gasoline prices in the US for 2025. Crude oil prices (WTI and Brent) are forecast below 2024 averages, US production is falling but global supply is rising, and economic indicators show weak demand. Tariffs and inflation add some upside risk, but these are largely offset by falling input costs and demand-side weakness. The transmission from crude prices to pump prices is strong, and refinery margins are not expected to expand significantly. While the dollar's weakness and sticky inflation provide some risk of upside, the base rate and current market fundamentals argue for a sub-50% probability of a real (inflation-adjusted) gas price increase in December 2025. Therefore, my probability is moderately below even odds, reflecting a significant but not overwhelming chance of a decrease.",
+            "final_probability": 35
         },
         "Economics (InflationExpectationsTheory)": {
-            "time_to_resolution": "Approximately 2.5-3 months (until December 2025 data is released and published by EIA/BLS, likely January-February 2026).",
-            "perspective_relevance": "As an expert in Economics (InflationExpectationsTheory), my analysis focuses on how anticipatory behaviors (by consumers, producers, and market participants) and policy credibility shape both nominal and real gas prices. Inflation expectations are a powerful driver of actual pricing behavior. Additionally, I can assess how macroeconomic and supply/demand shocks interact with those expectations, especially in the context of energy markets where forward guidance, global coordination, and political risk are material.",
-            "status_quo": "Historically, US inflation-adjusted (real) gas prices are volatile but tend to mean-revert. In a typical year, base rates suggest about a 50:50 chance of real gas prices rising or falling year-over-year, with mild upward drift possible during global supply shocks or demand surges. The current context entering Q4 2025 is one of softening oil prices, weakening US dollar, rising inflation, and political volatility.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Global Oil Supply Glut (OPEC+ Increases)",
-                    "effect": "Decreases probability. OPEC+ is ramping up production, creating a projected surplus and putting downward pressure on crude prices. This is supported by both news and analyst forecasts (Goldman Sachs, EIA). Lower input costs typically translate to lower retail gas prices, ceteris paribus."
-                },
-                {
-                    "factor": "US Shale/Fracking Contraction",
-                    "effect": "Neutral or slightly increases probability. Reduced US drilling could tighten domestic supply, but the magnitude is small relative to global markets, and the main driver is weak prices, not a structural shock."
-                },
-                {
-                    "factor": "Trump Tariff Regime and Economic Policy Uncertainty",
-                    "effect": "Increases probability. Tariffs and unpredictable policy have raised inflation expectations, weakened the dollar (making imports like oil more expensive), and increased economic uncertainty. These factors can feed through to higher inflation-adjusted prices even if nominal gas prices are steady or falling."
-                },
-                {
-                    "factor": "Domestic US Inflation Trends",
-                    "effect": "Increases probability. CPI inflation has accelerated to 2.9% (August), with food and energy contributing. If general inflation continues to rise, even flat or slightly falling nominal gas prices may still yield higher real (inflation-adjusted) prices."
-                },
-                {
-                    "factor": "Demand Side Factors (Consumer Sentiment, Economic Growth, Holiday Travel)",
-                    "effect": "Neutral or slightly decreases probability. Economic growth is slowing, consumer sentiment is weak, and projections for holiday retail demand are conservative. Weak demand can temper upward price pressure even in an inflationary context."
-                },
-                {
-                    "factor": "Exchange Rate Effects",
-                    "effect": "Increases probability. The weakening dollar makes oil imports more expensive, which can translate into higher nominal and thus potentially higher real gas prices."
-                },
-                {
-                    "factor": "Base Rate / Mean Reversion",
-                    "effect": "Decreases probability. Historically, real gas prices fluctuate but do not trend strongly upward absent major supply shocks. With oil prices currently falling, the base case is flat to slightly lower real prices."
-                }
-            ],
-            "no_scenario": "OPEC+ overshoots, flooding the market and driving global crude prices below $60/barrel, offsetting any inflationary or exchange rate pressures. US gas stations pass through these savings to consumers. Even if US CPI continues rising, the drop in nominal gas prices outpaces CPI inflation, resulting in December 2025 real gas prices that are flat or lower than December 2024.",
-            "yes_scenario": "Despite ample global crude supply, US-centric inflation (from tariffs, rising wages, and energy grid costs) pushes CPI higher. The weaker US dollar increases the cost of imported oil. Nominal gas prices are steady or only slightly down, but inflation jumps enough that December 2025 real gas prices end up above December 2024, even in the absence of a major supply shock.",
-            "final_reasoning": "The base rate for year-over-year real gas price increases is close to 50%, but the present context is unusual: global oil supply is expanding, and nominal crude prices are weak (with futures forecasts for lower prices in 2025\u201326). However, the US is experiencing persistent, broad-based inflation and a weakening currency, both of which can raise nominal prices and erode purchasing power. Tariffs and policy uncertainty amplify upside risks to inflation. Still, the direct input cost for gasoline (crude oil) is falling, which should exert downward pressure. While political and exchange-rate factors lean toward higher real gas prices, the magnitude of the oil price drop looks decisive. Overall, I judge the probability of a year-over-year increase in inflation-adjusted US gas prices for December 2025 at 38%. This reflects the strong downward pressure from global oil supply and prices, partially offset by domestic inflation and currency effects. My forecast is below 50%, giving extra weight to the status quo outcome of flat/lower real gas prices in the face of global supply expansion.",
-            "final_probability": 38
-        },
-        "Economics (EnergyMarketEquilibrium)": {
-            "time_to_resolution": "Approximately 3 months, until December 2025 data is released and available (likely January-February 2026, but question resolves on December 2025 data).",
-            "perspective_relevance": "As an expert in Economics (EnergyMarketEquilibrium), I focus on the interplay between supply and demand in energy markets, the transmission of global oil price shocks to domestic gasoline prices, the impact of geopolitical events and policy (tariffs, OPEC+ decisions, US production), and the adjustment for inflation via the CPI index. This expertise allows me to parse which factors are likely to dominate short-term gas price movements and to differentiate between nominal and real (inflation-adjusted) effects.",
-            "status_quo": "In most years, inflation-adjusted US gas prices are relatively stable or show small changes. The base rate for a year-on-year rise in real gas prices is roughly 40-45% over the past several decades, with large increases usually tied to supply shocks (e.g., Middle East crises, hurricanes, OPEC+ cuts), or strong demand surges. In 2024, real gas prices were relatively moderate after post-pandemic volatility.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Global Oil Prices and OPEC+ Supply Decisions",
-                    "effect": "Decreases probability. OPEC+ is reportedly increasing production sharply, leading to a projected global supply glut by late 2025, with forecasts for Brent and WTI in the low $50-60s (well below recent years). This should place strong downward pressure on US gasoline prices."
-                },
-                {
-                    "factor": "US Shale and Domestic Supply Trends",
-                    "effect": "Slightly increases probability. US shale producers are curtailing investment and output in response to low prices and policy uncertainty, but the net effect is small compared to the global glut."
-                },
-                {
-                    "factor": "Demand-Side Pressures (US Driving, Economic Growth)",
-                    "effect": "Neutral to slightly increases probability. US gasoline demand is not projected to surge\u2014economic growth is sluggish, and consumer sentiment is weak, but there is no sign of a collapse either."
-                },
-                {
-                    "factor": "Tariff and Trade Policy",
-                    "effect": "Neutral to slightly increases probability. Trump\u2019s tariffs are inflationary and could raise input costs, but oil/gas imports are largely exempt. Tariffs may indirectly boost inflation (raising the denominator in real terms), which would tend to lower real gas prices unless nominal prices also surge."
-                },
-                {
-                    "factor": "US Dollar Exchange Rate",
-                    "effect": "Increases probability. The US dollar has weakened, making imported oil more expensive in dollar terms and putting slight upward pressure on nominal gas prices."
-                },
-                {
-                    "factor": "CPI Inflation Index Movements",
-                    "effect": "Decreases probability. CPI is running above 2%, but not spiking. If overall inflation is higher than nominal gas price changes, real gas prices could fall even if nominal prices are flat or rising slowly."
-                },
-                {
-                    "factor": "Political/Election Uncertainty",
-                    "effect": "Slightly increases probability. Political risk can inject volatility, but so far, concrete supply/demand effects are modest; government shutdowns may disrupt data but not physical supply."
-                },
-                {
-                    "factor": "Recent Trends and Short-Term Volatility",
-                    "effect": "Decreases probability. Summer 2025 saw declining oil and gas prices due to OPEC+ supply increases, with no evidence of a reversal as of October."
-                }
-            ],
-            "no_scenario": "OPEC+ continues to increase output, keeping a global oil glut through Q4 2025. US shale activity remains subdued, but not enough to offset global supply. The US dollar remains weak, but not enough to outweigh falling crude benchmarks. Domestic gasoline demand is flat or slightly down due to weak economic growth and high consumer prices. CPI inflation is positive, so even if nominal gas prices are flat or decline slightly, real (inflation-adjusted) prices fall. December 2025 real gas prices are lower than December 2024.",
-            "yes_scenario": "A geopolitical disruption (e.g., Iran conflict, supply chain breakdown, major hurricane) unexpectedly tightens the global oil market late in 2025, reversing the glut and causing a spike in crude and gasoline prices. Alternatively, a sharp dollar depreciation, stronger-than-expected US driving demand, or a surprise policy (e.g., gasoline taxes, refinery shutdowns) lifts nominal gas prices more than CPI inflation. Real gas prices in December 2025 end up above December 2024.",
-            "final_reasoning": "Base rates for annual increases in real US gas prices are below 50%. The current outlook is for a global oil glut due to OPEC+ supply increases, with both Goldman Sachs and EIA predicting low crude prices for 2025-26. US production is falling, but this is secondary to the global supply picture. CPI inflation is running above 2%, while both nominal oil and gas prices fell through Q3 2025. Tariffs, a weaker dollar, and modest demand could provide some upward pressure, but they seem insufficient to offset the dominant downward force of global oversupply. The only plausible path to higher real gas prices is a major late-year supply disruption, which, while possible, is not probable given current fundamentals. Thus, the probability that inflation-adjusted gas prices rise in December 2025 versus December 2024 is below the base rate, and current energy market equilibrium arguments suggest a clear tilt toward NO.",
-            "final_probability": 25
-        },
-        "PoliticalScience (PublicPolicyAnalysis)": {
-            "time_to_resolution": "About 3 months (until December 2025 data are available and published, likely January 2026)",
-            "perspective_relevance": "As an expert in public policy analysis and political science, I bring a nuanced understanding of how policy changes (tariffs, regulatory shifts), macroeconomic factors, and global supply/demand dynamics interact. My expertise allows for integrating political risk, economic data, and historical trends, with a focus on how government intervention and global events influence energy markets and pass through to consumer prices.",
-            "status_quo": "Historically, US inflation-adjusted gas prices are volatile but tend to remain flat or decline year-over-year absent major geopolitical disruptions or policy shocks. Over the past decade, real gas prices have slightly trended downward, with 2024 levels already somewhat elevated compared to the post-2015 average.",
+            "time_to_resolution": "Approximately 3 months (until December 2025 data is available, likely in January 2026)",
+            "perspective_relevance": "As an expert in Economics focusing on Inflation Expectations Theory, my perspective emphasizes the feedback between consumer/market inflation expectations, policy credibility, and actual price-setting. Gas prices are a salient and highly visible price, feeding quickly into consumer inflation expectations and political dynamics. My analysis considers supply-demand fundamentals, global oil market structure, policy shocks (notably tariffs), and the role of expectations in price stickiness, especially during periods of economic and political volatility.",
+            "status_quo": "Historically, inflation-adjusted (real) US gas prices are volatile but tend to revert toward a mean unless there is a major, sustained supply or demand shock. In most years, real gas prices are flat or drift slightly lower due to technological improvement and competitive market pressures. The base rate for real YOY increases is below 50%.",
             "perspective_derived_factors": [
                 {
                     "factor": "Global Oil Supply and OPEC+ Policy",
-                    "effect": "Decreases probability of rising real prices. OPEC+ is increasing output, creating a supply glut that is expected to persist into 2026, potentially pushing oil prices lower."
+                    "effect": "Decreases probability. OPEC+ is increasing production, and there is a projected surplus of 2 million barrels/day in late 2025, with WTI and Brent prices at or below $60/barrel, below US fracker break-even points. Forecasts call for further price softness in 2026."
                 },
                 {
-                    "factor": "US Domestic Oil Production and Industry Health",
-                    "effect": "Decreases probability. US shale/fracking production is contracting due to low prices and rising costs, but the effect is muted by overwhelming global supply. Domestic investment is frozen, but US is a price taker in the global market."
+                    "factor": "US Domestic Oil/Gas Production",
+                    "effect": "Decreases probability. US production is expected to contract slightly, but the main reason is low prices (not supply constraints), so this does not create enough scarcity to outweigh global glut."
                 },
                 {
-                    "factor": "Trump Administration Tariffs/Trade Policy",
-                    "effect": "Mixed, but modestly increases probability. While tariffs generally raise costs, oil and refined fuel imports are mostly exempt. However, tariffs may indirectly contribute to inflationary pressure and dollar weakness, modestly raising imported input costs."
-                },
-                {
-                    "factor": "US Dollar Weakness",
-                    "effect": "Increases probability. A weaker dollar makes crude oil (priced globally in dollars) more expensive for US consumers, but in 2025 the effect is relatively minor compared to the supply glut."
-                },
-                {
-                    "factor": "US Macroeconomic Conditions (Growth, Consumer Demand, Sentiment)",
-                    "effect": "Decreases probability. The economy is slowing, consumer demand is softening, and consumer sentiment is negative. Lower demand typically puts downward pressure on real prices."
-                },
-                {
-                    "factor": "Inflation/BLS CPI Trends",
-                    "effect": "Decreases probability. CPI is running slightly above target but not at levels that would outpace nominal gas price changes, especially with flat/falling oil prices."
-                },
-                {
-                    "factor": "Seasonality and Weather",
-                    "effect": "Neutral to slightly increases probability. Unusually severe weather could cause regional or temporary price spikes, but absent a major event, this is not a dominant factor."
-                }
-            ],
-            "no_scenario": "OPEC+ continues to ramp up production, maintaining a global oil surplus. US gasoline demand remains flat or declines as economic uncertainty and weak consumer sentiment persist. US gas prices in nominal terms drift sideways or decline. CPI inflation continues near 3%, and when adjusting for inflation, December 2025 gas prices are at or below December 2024 levels.",
-            "yes_scenario": "A geopolitical disruption (e.g., Middle East conflict, major hurricane) causes a short-term spike in oil prices in Q4 2025, or the US dollar depreciates rapidly, raising import costs. Simultaneously, inflation moderates, so the nominal increase in gas prices outpaces CPI, resulting in a real increase year-over-year.",
-            "final_reasoning": "The base rate for year-over-year increases in real US gas prices is low, absent supply shocks, and all major current indicators (OPEC+ supply, falling WTI, US production decline, slow demand) point toward a flat or declining real price scenario. While tariffs and dollar weakness are potential inflationary forces, oil and gasoline themselves are largely shielded from direct tariffs. The main upward risks are exogenous shocks, which are not currently visible. Both the EIA and Goldman Sachs forecast flat-to-lower oil prices into 2026. With inflation running slightly above target, even a small nominal drop or flatness in prices is likely sufficient for real prices to be flat or down. Thus, the evidence strongly favors a No outcome, but not at 0%: there is always some risk of a late-year shock.",
-            "final_probability": 17
-        },
-        "PoliticalScience (RegulatoryImpactTheory)": {
-            "time_to_resolution": "Approximately 3 months (resolves when December 2025 EIA gas price and CPI data are published, likely January/February 2026)",
-            "perspective_relevance": "As an expert in Political Science (Regulatory Impact Theory), I analyze how government policy, regulatory interventions, and political uncertainty affect energy markets and pass through to consumer prices. This includes interpreting not just direct regulatory moves, but the broader interaction of policy, market structure, and external shocks, which is vital when considering the volatile landscape of 2025 US energy policy and global oil markets.",
-            "status_quo": "Historically, US inflation-adjusted gasoline prices are more likely to remain flat or decline year-on-year, as global supply (notably from OPEC) and US production trends generally keep real prices in check, barring large supply disruptions or geopolitical shocks. The 10-year base rate for year-on-year inflation-adjusted US gas price increases is just below 50%.",
-            "perspective_derived_factors": [
-                {
-                    "factor": "OPEC+ Production Increases and Global Oil Glut",
-                    "effect": "Strongly decreases probability. Multiple sources indicate OPEC+ is ramping up supply, with a projected 2 million bpd surplus by Q4 2025, pressuring global crude and thus US gasoline prices downward in real terms."
-                },
-                {
-                    "factor": "US Shale Sector Contraction",
-                    "effect": "Mildly increases probability. US production is forecast to decline, but given the global surplus, the price-insulating effect is limited unless a larger supply shock occurs."
-                },
-                {
-                    "factor": "Trump Administration Tariffs and Policy Volatility",
-                    "effect": "Increases probability. While tariffs on energy inputs are limited, broad-based tariffs can raise costs across the supply chain (infrastructure, refining, retail), and policy-driven uncertainty can keep inflation expectations elevated. The risk is more to general inflation than specific gasoline price inflation, but some pass-through is likely."
-                },
-                {
-                    "factor": "Demand Trends and Consumer Sentiment",
-                    "effect": "Neutral or slightly negative. Economic slowdown and low consumer confidence reduce demand for gasoline, limiting upward price pressure."
+                    "factor": "Trump Tariffs and Policy Uncertainty",
+                    "effect": "Mixed. Tariffs could theoretically push up costs via inflation, but most oil/gas imports are exempt, and the main effect has been economic uncertainty and downward pressure on growth, which reduces demand for gasoline."
                 },
                 {
                     "factor": "US Dollar Weakness",
-                    "effect": "Increases probability. Weaker dollar makes imported oil more expensive, which can modestly raise USD-denominated gasoline prices, even amid a global surplus."
+                    "effect": "Increases probability, slightly. A weaker USD can support oil prices, but the effect is muted in a global surplus environment."
                 },
                 {
-                    "factor": "Regulatory and Political Risk (e.g., potential government shutdown, BLS/EIA data disruptions)",
-                    "effect": "Minor. While these factors increase volatility and may delay data, they are unlikely to drive sustained price increases in real terms."
+                    "factor": "US Economic Growth and Demand",
+                    "effect": "Decreases probability. Economic indicators point to slowing growth, high uncertainty, and weak consumer sentiment, which will likely curb gasoline demand."
                 },
                 {
-                    "factor": "Inflation and Energy Cost Pass-through",
-                    "effect": "Increases probability. CPI is running above Fed targets, and persistent energy inflation (notably in electricity and natural gas) could bleed into gasoline pricing, especially if refinery or logistics costs rise."
+                    "factor": "Inflation and Fed Policy",
+                    "effect": "Mixed. CPI is running above target (2.6-2.9%), but much is driven by non-energy components. Gasoline prices have not been a persistent driver, and the Fed is cautious on cuts, further limiting demand-side inflation."
+                },
+                {
+                    "factor": "Seasonal/Idiosyncratic Shocks (weather, geopolitics)",
+                    "effect": "Slightly increases probability. Always possible, but no current evidence of a major supply disruption or policy shock on the horizon."
                 }
             ],
-            "no_scenario": "OPEC+ keeps ramping up production as forecast, creating a global crude surplus. US demand remains subdued due to weak consumer sentiment and economic headwinds. Despite some cost pass-through from tariffs, the overall supply glut and soft demand outweigh inflationary pressures. Gasoline prices fall or are flat in real terms versus December 2024.",
-            "yes_scenario": "Trump's tariffs and a weaker US dollar combine to elevate import costs across the board. Energy sector inflation (notably in electricity and natural gas) seeps into gasoline production and retail. OPEC+ unexpectedly cuts or slows its supply ramp, or geopolitical instability disrupts supply chains. The net result: December 2025 sees higher inflation-adjusted gasoline prices than a year prior.",
-            "final_reasoning": "The dominant structural factor is the projected global oil surplus due to OPEC+ output increases, which historically puts strong downward pressure on real gasoline prices. Recent news and forecasts point to declining US production, but this is offset by global supply. Tariff-driven cost increases and a weaker dollar are genuine inflationary risks, as is broad-based inflation, with energy inflation outpacing the general CPI in recent months. However, US gasoline demand is soft, and retail competition typically limits full cost pass-through to consumers in the short run. Regulatory Impact Theory suggests that while political volatility and tariffs can disrupt pricing, their pass-through is rarely total and is often offset by market structure and global trends. The risk balance is close, but the base rate and current evidence slightly favor a No outcome\u2014real prices will likely be flat or down year-on-year barring a supply shock. Therefore, I assign a probability below 50% but not extremely low due to the credible risk factors pushing upward.",
-            "final_probability": 39
-        },
-        "InternationalRelations (GeopoliticalRiskTheory)": {
-            "time_to_resolution": "Approximately 2.5-3 months (until EIA and BLS publish December 2025 data, likely by late January or early February 2026).",
-            "perspective_relevance": "My expertise in InternationalRelations and GeopoliticalRiskTheory is highly relevant because US gas prices are influenced not only by domestic supply/demand but also by global oil markets, OPEC+ behavior, US foreign and trade policy (notably tariffs), and macroeconomic/inflationary trends. This perspective allows me to synthesize political, economic, and market signals, including the impact of political risk, trade wars, and energy geopolitics on US gas prices.",
-            "status_quo": "Inflation-adjusted US gas prices are roughly flat or slightly down year-on-year, with a historical tendency for moderate fluctuation unless driven by major shocks (e.g., wars, embargoes, recessions, OPEC interventions). The base rate for an annual real price increase in the US is modest, with increases less common than decreases in the last decade, especially when real (CPI-adjusted).",
-            "perspective_derived_factors": [
-                {
-                    "factor": "Global Oil Prices & OPEC+ Policy",
-                    "effect": "Decreases probability. OPEC+ is increasing supply (2.2 million bpd added, projected global surplus), and major forecasters (Goldman Sachs, EIA) expect Brent/WTI crude prices to remain flat or decline through 2025. US shale is facing profitability pressure at current prices, making a supply shock or price spike unlikely."
-                },
-                {
-                    "factor": "US Domestic Oil Production",
-                    "effect": "Decreases probability. US oil output is expected to contract or stagnate due to low prices and high costs, but this is outweighed by global oversupply. Even with some US supply reduction, the global glut and OPEC+ output should prevent upward price pressure."
-                },
-                {
-                    "factor": "US Trade Policy and Tariffs",
-                    "effect": "Mixed, but net decreases probability. While tariffs can fuel inflation, they also suppress demand and raise economic uncertainty, which puts downward pressure on oil prices. Oil/gas imports are largely exempt, and industry analysis suggests tariffs are currently having a net depressive effect on US demand and oil prices."
-                },
-                {
-                    "factor": "US Dollar Exchange Rate",
-                    "effect": "Increases probability slightly. The weakening dollar supports higher commodity prices, including oil/gas, for US consumers, but this effect is muted by global oversupply."
-                },
-                {
-                    "factor": "US Macroeconomic and Inflation Trends",
-                    "effect": "Mixed, but with a slight upward tilt. US inflation is running somewhat above target; the CPI rose to 2.9% in August, and food/energy costs are up. However, core inflation and economic growth are slowing, with weak consumer sentiment, limiting demand-driven price surges."
-                },
-                {
-                    "factor": "Political/Election Year Risk",
-                    "effect": "Neutral to slight downward. Political pressure is high to keep gas prices low, especially for the Trump administration, but market fundamentals outweigh direct political manipulation in the short term."
-                },
-                {
-                    "factor": "Historical Base Rate",
-                    "effect": "Decreases probability. Over the past decade, real (CPI-adjusted) US gas prices have increased year-on-year in roughly 3-4 out of 10 years. With current global and domestic headwinds, the base scenario is flat or declining real prices."
-                }
-            ],
-            "no_scenario": "OPEC+ ramps up supply as planned, global oil remains cheap ($58/bbl or less), US shale output stagnates but is offset by surging imports or domestic stockpiles, and tariffs plus economic uncertainty dampen US demand. Inflation remains above target, but nominal gas prices rise only in line with or below CPI, resulting in flat or lower inflation-adjusted prices for December 2025 vs December 2024.",
-            "yes_scenario": "Unexpected global supply disruptions (e.g., Middle East conflict, major hurricane season, or Russian escalation) cause a sharp crude oil spike, or US inflation drops sharply while nominal gas prices remain steady or rise, resulting in higher real prices. Alternatively, a weakening dollar or a surprise demand surge pushes up prices late in the year.",
-            "final_reasoning": "The status quo and most leading indicators point to flat or declining real US gas prices in 2025. OPEC+ is increasing supply, US shale is struggling, and major forecasters expect oil prices to remain below 2024 levels. US tariffs and economic policy create uncertainty and depress demand, while the dollar\u2019s weakness offers only a mild offset. US inflation is slightly above target, but not enough to overwhelm the downward pressure on nominal gas prices. The base rate for real gas price increases is low, and there are no clear catalysts for a significant upward move absent a geopolitical shock, which currently appears unlikely. Therefore, while I reserve some probability for tail risks (e.g., geopolitical crisis, inflation plunge, or demand shock), the most likely outcome is that inflation-adjusted gas prices will not rise in the US in 2025.",
+            "no_scenario": "Global oil supply (OPEC+ and non-OPEC) remains robust, Trump tariffs hit non-energy sectors more than energy, and US economic growth remains sluggish or weak. Gasoline demand is soft, possibly even falling YOY. Real gas prices decline or are flat, as nominal prices are stable or slightly down, and inflation continues at a modest pace (2-3%). No major external supply shock occurs.",
+            "yes_scenario": "A surprise supply shock occurs (e.g., Middle East conflict, major hurricane hitting US refineries), OPEC+ unexpectedly cuts production, or US shale production falls faster than expected due to bankruptcies. The US dollar weakens more than anticipated, and/or inflation accelerates, pushing nominal gas prices up more than the CPI. Consumer demand rebounds unexpectedly, or policy changes (e.g., taxes) raise pump prices in real terms.",
+            "final_reasoning": "The base rate for inflation-adjusted YOY gas price increases in the US is below 50%. The news flow points to a global oil glut, OPEC+ policy increasing supply, and US production contracting slightly due to unprofitably low prices\u2014not scarcity. Trump\u2019s tariff policies introduce uncertainty, but oil/gas imports are largely exempt and the main macroeconomic effect is to slow growth, not stoke energy price inflation. Consumer/gasoline demand and economic sentiment are weak, and the Fed is unlikely to stimulate aggressively given above-target but not runaway inflation. The only plausible upside scenarios for real gas prices are exogenous supply shocks or a surprise demand spike; both are low-probability as of October 2025. Given all factors, I judge the probability that US inflation-adjusted gas prices will be higher in December 2025 than December 2024 to be meaningfully below 50%, but not near zero due to innate volatility in energy markets. My best estimate is 28%.",
             "final_probability": 28
         },
-        "InternationalRelations (OPECDecisionAnalysis)": {
-            "time_to_resolution": "Approximately 3 months until December 2025 data is released and available (likely by January/February 2026).",
-            "perspective_relevance": "As an expert in International Relations with a focus on OPECDecisionAnalysis, I am well-positioned to interpret the interplay between global oil supply/demand dynamics, OPEC+ strategy, US domestic energy policy, and their downstream effects on US gasoline prices. My expertise allows me to assess how OPEC+ moves, US policy, and global economic shifts combine to impact US pump prices, especially in real (inflation-adjusted) terms.",
-            "status_quo": "Historically, US inflation-adjusted gasoline prices are roughly stable year-on-year, with modest increases or decreases depending on global oil prices, OPEC+ actions, US production, and macroeconomic trends. Absent shocks, the base rate is for little net change.",
+        "Economics (EnergyMarketEquilibrium)": {
+            "time_to_resolution": "About 3 months (resolves when December 2025 CPI and EIA gas price data are published, likely January 2026)",
+            "perspective_relevance": "As an expert in Economics (EnergyMarketEquilibrium), I analyze U.S. gasoline price dynamics through interactions of crude oil supply/demand, domestic refining capacity, regulatory/political shocks, and the pass-through of global energy prices to U.S. retail gas, especially in real (inflation-adjusted) terms. My background enables me to integrate base rates, structural oil market trends (including OPEC+ policy, U.S. shale economics, and refining margins), and the latest macro policy developments.",
+            "status_quo": "Historically, U.S. real (inflation-adjusted) gas prices are mean-reverting, with year-over-year changes typically small unless there are major oil shocks or supply disruptions. Over the past decade, most years have seen relatively stable or slightly falling real gas prices unless crude oil surges, refining margins spike, or demand outstrips supply.",
             "perspective_derived_factors": [
                 {
-                    "factor": "OPEC+ Production Increases and Oil Glut",
-                    "effect": "Decreases probability. OPEC+ is rapidly increasing production, with 2.2 million barrels/month added and a projected large surplus by late 2025. This is already driving oil prices lower, with WTI near $60/barrel and further downside expected. Cheaper crude usually translates to lower or stable US gas prices, especially if the glut persists."
+                    "factor": "Crude oil price outlook (global supply/demand, OPEC+ production increases, U.S. shale)",
+                    "effect": "Decreases probability: OPEC+ is increasing production, global inventories are rising, oil prices (WTI) are in the $58-60/bbl range and forecast to decline in 2026. U.S. shale is under pressure, but weak prices are forcing U.S. output down, not up. Net effect: Downward pressure on crude prices, reducing gas price risk."
                 },
                 {
-                    "factor": "US Shale Crisis and Production Stagnation",
-                    "effect": "Small increase to probability. US shale is in crisis, with drilling activity falling and investment frozen. While this could eventually tighten domestic supply, for 2025 the effect is likely muted compared to the impact of global oversupply."
+                    "factor": "U.S. refinery margins and domestic capacity",
+                    "effect": "Neutral to slightly decreasing: No evidence of major refinery outages or bottlenecks; with weak demand growth and high inventories, margins shouldn't spike. However, any surprise outages or policy shocks could reverse this."
                 },
                 {
-                    "factor": "Trump Administration Tariffs/Trade Policy",
-                    "effect": "Mixed, but slightly increases probability. Tariffs (even if refined fuel is often exempt) have contributed to general inflation and supply chain costs, which could feed into higher gasoline prices, but also put downward pressure on global oil demand and prices."
+                    "factor": "U.S. demand and macroeconomic conditions",
+                    "effect": "Decreases probability: Economic growth is softening, private consumption is slowing, consumer sentiment is low, and high interest rates are curbing spending. Demand for gasoline is not surging; in fact, modest or even negative demand growth is likely, capping price increases."
+                },
+                {
+                    "factor": "Tariffs, trade policy, and inflation pass-through",
+                    "effect": "Mixed: While tariffs can increase broad inflation, direct tariffs on gasoline/oil are not in place. However, broader inflation could support nominal prices, but with CPI rising 2.6-2.9%, the bar for real price increases is higher. Tariffs may also dampen economic activity, further capping demand."
+                },
+                {
+                    "factor": "Dollar strength/weakness",
+                    "effect": "Increases probability slightly: A weaker dollar can raise oil prices in dollar terms, but the dollar's effect is moderate and global oil is oversupplied, limiting the impact."
+                },
+                {
+                    "factor": "Seasonal/weather factors",
+                    "effect": "Neutral: No data suggests an anomalous hurricane season or other short-term supply disruptions. Weather may cause volatility, but not a structural increase."
+                },
+                {
+                    "factor": "Political risk and regulatory shocks",
+                    "effect": "Neutral to slightly increasing: Some risk that political intervention or regulatory change could cause a price spike (e.g., new sanctions, supply disruptions, price controls leading to shortages), but current evidence does not indicate imminent policy shocks directly affecting gasoline supply."
+                }
+            ],
+            "no_scenario": "OPEC+ ramps up production as planned, global crude prices remain soft or fall, U.S. production plateaus or declines, gasoline demand is muted due to economic malaise, and CPI inflation continues near 2.7-3%. U.S. gas prices drift slightly down in nominal terms or rise less than CPI, with no major supply disruptions. December 2025 real (CPI-adjusted) gas prices are equal to or lower than December 2024.",
+            "yes_scenario": "Unexpected supply shock (geopolitical crisis, refinery outage, severe weather) causes a sudden crude oil or gasoline shortage, or the dollar weakens much more than expected, pushing up oil prices. Alternatively, if CPI inflation suddenly drops in late 2025 and nominal gas prices hold steady, the real price would increase. Or, policy intervention (tariffs, sanctions, etc.) directly or indirectly raises gasoline prices.",
+            "final_reasoning": "Base rates favor stability or slight decline in real gas prices absent a major shock. The oil market is oversupplied: OPEC+ is adding barrels, U.S. shale is pulling back due to low prices, and inventories are rising. Economic growth is tepid, consumer sentiment is weak, and gasoline demand is flat or declining. CPI inflation is running ~2.7-2.9%, so nominal gas prices must rise faster than that to produce a 'Yes.' Most risks (tariffs, dollar weakness, regulatory shocks) are either indirect or not acute for gasoline markets in the coming months. While an exogenous shock is always possible, the status quo and most leading indicators point toward stable or slightly falling real gas prices for December 2025 compared to December 2024. Therefore, a 'No' outcome is more likely, with a moderate (not extreme) probability to allow for tail risk.",
+            "final_probability": 30
+        },
+        "PoliticalScience (PublicPolicyAnalysis)": {
+            "time_to_resolution": "Approximately 3 months (question resolves when December 2025 EIA gas price and CPI data are published, typically in early-to-mid January 2026).",
+            "perspective_relevance": "My expertise in Public Policy Analysis allows me to assess how government policy (tariffs, energy regulation, fiscal/monetary policy) and macroeconomic factors interact to affect consumer energy prices. This perspective helps weigh the impact of political promises, regulatory shifts, and structural industry trends, beyond short-term market volatility or partisan narratives.",
+            "status_quo": "In most recent years, real (inflation-adjusted) US gas prices have shown moderate year-over-year stability, with small increases or decreases, barring global shocks or domestic policy disruptions. If trends of late 2024 persist, real gas prices would likely be flat or slightly down, absent major disruptions.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Global Oil Supply Dynamics (OPEC+ Production Increases)",
+                    "effect": "Strongly decreases probability. OPEC+ is set to ramp up production, with projections of a large supply surplus in late 2025. This generally exerts downward pressure on global crude prices, which are the fundamental input for US gasoline prices."
+                },
+                {
+                    "factor": "US Domestic Drilling and Production Trends",
+                    "effect": "Decreases probability. US shale drilling is in crisis due to low prices and rising costs, leading to frozen investment and a likely contraction in output. However, the impact is muted by global oversupply and weak demand."
+                },
+                {
+                    "factor": "Trump Administration Energy and Trade Policies (Tariffs, Alignment with OPEC, Regulatory Uncertainty)",
+                    "effect": "Net neutral to slightly increases probability. While tariffs on non-energy goods add to inflation, oil/gas imports are largely exempt. Trump\u2019s alignment with OPEC and erratic policy could increase volatility, but the dominant effect is still global oversupply."
+                },
+                {
+                    "factor": "Macroeconomic Environment: Inflation, Dollar Weakness, and Consumer Demand",
+                    "effect": "Slightly increases probability. The weakening dollar could make oil more expensive in USD terms, partially offset by low global oil prices. Inflation expectations are up, but core energy price inflation is dominated by commodity fundamentals."
+                },
+                {
+                    "factor": "Seasonal and Structural Demand Factors",
+                    "effect": "Neutral to slightly decreases probability. EIA data indicate gasoline demand is not surging, and recessionary/slow-growth signals mean demand is unlikely to spike enough to offset supply increases."
+                },
+                {
+                    "factor": "Political/Electoral Pressures",
+                    "effect": "Neutral. While gas prices are politically salient, recent policy has not directly manipulated pump prices, and structural market forces dominate."
+                }
+            ],
+            "no_scenario": "OPEC+ follows through on its announced production increases, sustaining or expanding a global oil glut by late 2025. US domestic supply contracts, but global crude prices fall or remain depressed (in the $50s per barrel). The dollar is weak, but not enough to offset lower input costs. US gasoline demand remains tepid due to slow economic growth. Inflation-adjusted December 2025 gas prices are flat or slightly down compared to December 2024.",
+            "yes_scenario": "Unexpected geopolitical shocks (e.g., war in the Middle East), severe hurricanes, or OPEC unexpectedly reverses course and cuts production sharply. The US dollar falls more than expected, amplifying global price increases. US gasoline demand is higher than forecast, and/or supply chain disruptions hit domestic refineries. Trump administration policies (e.g., new tariffs on oil or key refinery inputs) directly increase gasoline costs. Result: December 2025 real gas prices rise above December 2024.",
+            "final_reasoning": "Base rates and fundamentals suggest that, with OPEC+ increasing supply and US demand muted by slow growth, real gas prices are statistically more likely to fall or remain flat rather than rise. Most recent EIA and industry forecasts (Goldman Sachs, EIA, S&P) project crude prices in the $50s in 2025, down from 2024. The US shale sector is in crisis, but global oversupply swamps the effect of domestic contraction. Tariffs and dollar weakness add some upside risk, but energy inflation is still primarily driven by global commodity prices. Barring a major exogenous shock, the public policy environment and market structure point to stable or slightly lower real gas prices at year-end. Given all factors, a non-trivial probability remains for a year-over-year increase (unexpected shocks, dollar crash), but this is less likely than stability or a decrease.",
+            "final_probability": 30
+        },
+        "PoliticalScience (RegulatoryImpactTheory)": {
+            "time_to_resolution": "Approximately 3 months (resolves when December 2025 EIA gas price and CPI are available, likely January/February 2026).",
+            "perspective_relevance": "As a political scientist specializing in Regulatory Impact Theory, my analysis centers on how regulatory, fiscal, and macroeconomic policy\u2014especially in the context of political transition and trade shocks\u2014affects the oil and gas sector, energy prices, and their adjustment dynamics. I emphasize the inertia in regulatory impacts and the tendency for base rates and the status quo to persist, unless clear catalysts for change emerge.",
+            "status_quo": "Inflation-adjusted (real) US gasoline prices have generally been flat to slightly declining over the past several years, with nominal swings often offset by inflation. Historically, year-over-year increases in real gas prices are less common than decreases or stasis, especially outside of global supply shocks. The base rate for a real (CPI-adjusted) rise in US gas prices year-over-year is about 30-40%.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Global Oil Supply and OPEC+ Production",
+                    "effect": "Decreases probability. OPEC+ has signaled major production increases into 2026, creating a projected global oil surplus and putting downward pressure on crude prices. Lower input costs typically translate to lower or flat gasoline prices, unless offset by other factors."
+                },
+                {
+                    "factor": "US Domestic Oil Production and Fracking Slowdown",
+                    "effect": "Slightly increases probability. Falling US production (due to high costs, low prices, and regulatory uncertainty) could tighten domestic supply, but this is likely outweighed by global oversupply. Still, reduced domestic production may marginally support higher prices regionally."
+                },
+                {
+                    "factor": "Tariff and Trade Policy Uncertainty",
+                    "effect": "Mixed/slight decrease. While tariffs can be inflationary, current policy mostly exempts crude and refined petroleum. Broader inflationary effects exist, but trade war-induced economic uncertainty and weaker demand may suppress oil prices more than tariffs would push them up."
                 },
                 {
                     "factor": "US Dollar Weakness",
-                    "effect": "Increases probability. A weaker dollar makes oil more expensive in dollar terms, which could push up gas prices if the effect is strong enough to offset the crude price decline."
+                    "effect": "Increases probability. A weaker dollar tends to raise dollar-denominated commodity prices, including oil and gas, on world markets, though this effect is muted when global oversupply dominates."
                 },
                 {
-                    "factor": "Consumer Demand and Economic Activity",
-                    "effect": "Decreases probability. US economic growth is slowing, with consumer sentiment low and spending weakening. Weaker demand for gasoline tends to moderate price increases."
+                    "factor": "US Consumer Demand",
+                    "effect": "Decreases probability. Economic indicators point to slowing growth, weaker consumer sentiment, and stagnating or declining vehicle miles traveled, all of which reduce gasoline demand and price pressure."
                 },
                 {
-                    "factor": "Inflation Trends and Policy Response",
-                    "effect": "Small increase to probability. Headline inflation is running above target (2.6\u20132.9%), but the Fed is cautious about rate cuts. Broader inflation can push up nominal gas prices, but since the question is about inflation-adjusted prices, only relative moves matter."
+                    "factor": "Inflation and CPI Trends",
+                    "effect": "Decreases probability. While nominal inflation has ticked up, the CPI is rising faster than nominal gas prices, meaning real (inflation-adjusted) prices are likely to be stable or lower unless a crude oil rally occurs."
                 },
                 {
-                    "factor": "Political/Election-Year Interventions",
-                    "effect": "Minor decrease to probability. With a high-stakes election and gas prices highly salient, there is incentive for the administration to try to suppress prices via SPR releases, diplomatic pressure, etc., which could cap increases."
+                    "factor": "Election-Year Politics and Regulatory Intervention",
+                    "effect": "Neutral. Political incentives might exist to suppress gas prices, but no evidence of extraordinary intervention is seen; regulatory inertia prevails. Any potential moves are likely offset by global market forces."
                 }
             ],
-            "no_scenario": "OPEC+ continues to ramp up production into a softening global economy, leading to a persistent oil glut. WTI crude falls into the $50s or even high $40s. US gasoline demand remains tepid due to weak economic growth and high consumer prices elsewhere. Inflation remains moderate, so any nominal decrease in gas prices is not offset by rising CPI. As a result, real (inflation-adjusted) gasoline prices in December 2025 are flat or lower compared to December 2024.",
-            "yes_scenario": "Despite OPEC+ production increases, unforeseen supply disruptions (e.g., Middle East conflict, extreme weather, or infrastructure failures) create a temporary oil price spike in late 2025. Simultaneously, the US dollar weakens sharply, and headline inflation remains elevated, but nominal gas prices rise even faster due to higher crude costs and pass-through from supply chain inflation. US domestic supply stagnation or refinery outages exacerbate the issue. Real gas prices end up higher in December 2025 than in December 2024.",
-            "final_reasoning": "The base rate for year-on-year real US gas price increases is around 50%. However, the current news flow and fundamentals are heavily skewed toward oversupply: OPEC+ is substantially increasing production, and global oil markets are heading for surplus. US shale is faltering, but the effect in 2025 is likely outweighed by the sheer size of the OPEC+ supply ramp. Crude prices are forecast by multiple banks and agencies (Goldman Sachs, EIA) to fall or remain low in 2025, with WTI in the $50\u201360 range\u2014a level that typically leads to lower US gas prices. Tariffs and a weaker dollar do provide some upward pressure, but not enough to offset the supply-driven decline in crude. US demand is soft, and political incentives are aligned toward keeping gas prices from rising in an election year. Upside risks (geopolitical shocks, refinery outages) cannot be ruled out, but are not the central scenario. Thus, the probability that inflation-adjusted gas prices will rise in 2025 is below the base rate, though not negligible.",
-            "final_probability": 33
+            "no_scenario": "OPEC+ follows through with large production increases, keeping global crude prices suppressed. US domestic production continues to decline, but not enough to offset the global glut. Weak US demand and a strong CPI keep inflation-adjusted gas prices flat or declining year-over-year. By December 2025, the EIA-reported nominal gas price is equal to or lower than December 2024, or rises less than the CPI, resulting in a No resolution.",
+            "yes_scenario": "Unexpected OPEC+ discipline or a reversal on production increases, a major geopolitical supply disruption (e.g., Iran or Russia), or a sharp rebound in US demand combine with a weaker dollar to drive up crude prices. Simultaneously, the CPI rises more slowly than nominal gasoline prices. By December 2025, the real (inflation-adjusted) gas price is higher than December 2024, resulting in a Yes.",
+            "final_reasoning": "The base rate for real year-over-year gas price increases is modest. News flow and structural factors point toward suppressed or declining nominal oil prices due to global oversupply (OPEC+), weak demand, and domestic production constraints. While inflation and dollar weakness offer some upside to nominal energy prices, the CPI is rising rapidly, and consumer demand is slackening. Regulatory and tariff uncertainty create volatility, but not a clear upward driver for prices. The only strong upside risk is a major supply shock, which is always possible but not currently indicated. Therefore, the probability that inflation-adjusted US gas prices rise in 2025 is below 50%, but not near zero due to ever-present geopolitical risk and some supportive factors.",
+            "final_probability": 35
+        },
+        "InternationalRelations (GeopoliticalRiskTheory)": {
+            "time_to_resolution": "Approximately 3 months (until December 2025 data is released and published, likely by mid-January 2026)",
+            "perspective_relevance": "As an expert in International Relations and Geopolitical Risk Theory, I focus heavily on the nexus of global commodity flows, the impact of macroeconomic policy shocks (such as tariffs and government interventions), strategic behavior by OPEC and other oil-producing actors, and the inertia of market structures. This lens is especially useful here: the question is about US gas prices\u2014a highly politicized and globally-contingent commodity\u2014amidst significant US political change, international oil supply maneuvers, and trade disruptions.",
+            "status_quo": "In most years, inflation-adjusted US gas prices are relatively stable, with modest year-to-year fluctuations. Historically, the base rate for a year-over-year real gas price increase is slightly below 50%; over the past decade, there have been more down years than up years, especially given US shale growth and OPEC\u2019s loose discipline. The status quo, given no major shocks, would be 'No' (no real increase).",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Global Crude Oil Supply Dynamics (OPEC+ Production Increases)",
+                    "effect": "Decreases probability. News flow and forecasts point to a global oil glut in 2025 due to OPEC+ returning millions of barrels to the market, with WTI and Brent forecasts in the $50-$60/bbl range. This puts downward pressure on US gasoline input costs."
+                },
+                {
+                    "factor": "US Shale Sector Distress and Production Trends",
+                    "effect": "Marginally increases probability. US shale is retrenching as prices approach/below breakeven, with rig counts expected to fall and some supply risks if the contraction deepens, but the effect is likely muted in the short term given high inventories and global surplus."
+                },
+                {
+                    "factor": "Trump Administration Tariff Policy and Dollar Weakness",
+                    "effect": "Mixed, but net decrease. Tariffs and a weakening dollar are inflationary generally, but for gasoline, direct effects are limited since crude/gasoline imports are largely exempt. However, indirect effects via broader inflation may nudge up prices, while trade tensions could suppress global growth and oil demand, tempering gas price increases."
+                },
+                {
+                    "factor": "US Economic Growth and Consumer Demand",
+                    "effect": "Decreases probability. Economic indicators show weak growth (1.3% GDP), softening consumer sentiment, and increased economic uncertainty. This should constrain gasoline demand, further weighing on prices."
+                },
+                {
+                    "factor": "Seasonal and Weather-Related Demand Shocks",
+                    "effect": "Slightly increases probability. Weather events (hurricanes, heatwaves) can temporarily disrupt supply or spike demand, but no current signals of major upcoming disruptions that would affect December 2025."
+                },
+                {
+                    "factor": "Inflation and CPI Adjustment Effects",
+                    "effect": "Decreases probability. Gasoline is a volatile CPI component, but with core inflation running at 2.6-2.9% and real wage growth soft, the broader inflation context suggests limited real price increases."
+                },
+                {
+                    "factor": "Political/Electoral Pressures and Potential Policy Shocks",
+                    "effect": "Slightly increases probability. Trump has promised lower gas prices, but the government\u2019s ability to intervene is limited. Policy missteps or geopolitical events (e.g., Iran tensions) could spike prices, but the base case is muted given the oil glut."
+                }
+            ],
+            "no_scenario": "OPEC+ follows through with its large production increase, flooding the market and keeping Brent/WTI below $60/bbl. US shale output contracts modestly, but inventories remain high. Economic growth is weak, demand is soft, and the dollar remains under pressure, but the direct impact on gas prices is limited. Seasonal volatility is mild, and inflation-adjusted December 2025 gas prices are flat or down versus December 2024.",
+            "yes_scenario": "OPEC+ unexpectedly reverses course or faces a major supply disruption (e.g., Middle East conflict, hurricane season damages US refineries). US shale contraction is sharper than projected, leading to a surprising drop in supply. Meanwhile, inflation accelerates, the dollar weakens further, and a policy shock (e.g., tariff expansion, refinery regulation) adds upward pressure, pushing real December 2025 gas prices above December 2024 levels.",
+            "final_reasoning": "The base rate is modestly below 50% for real year-over-year gas price increases. Multiple news sources forecast a global oil glut in 2025, with OPEC+ bringing significant new supply to market, Goldman and EIA forecasting $51-58 oil (well below levels that would drive higher US gas prices). US shale is retrenching, but this is offset by weak demand and high global inventories. Tariffs and a weak dollar are inflationary, but gasoline is mostly exempt, and broader economic drag from tariffs may actually dampen demand. While political and weather risks could spike prices, current signals do not suggest a major upside shock is likely. The cumulative weight of evidence\u2014especially the oil glut, soft demand, and historically muted real price changes\u2014pushes the forecast toward a 'No' outcome, but not dramatically so, given ongoing volatility. I judge the probability of a real (inflation-adjusted) rise in US gas prices in December 2025 vs. December 2024 at 35%.",
+            "final_probability": 35
+        },
+        "InternationalRelations (OPECDecisionAnalysis)": {
+            "time_to_resolution": "About 3 months (until December 2025 data is available, likely by mid-January 2026)",
+            "perspective_relevance": "As an expert in International Relations with OPEC Decision Analysis expertise, I can contextualize global supply/demand shifts, OPEC+ production strategy, US energy policy, and the impact of trade/tariff policy on oil markets. This is essential for translating upstream crude/oil dynamics into US retail gasoline price forecasts, especially inflation-adjusted, and for evaluating whether current global oil surpluses will outweigh potential inflationary or structural US shocks in 2025.",
+            "status_quo": "Inflation-adjusted US gas prices tend to be flat or slightly down year-over-year, barring major external shocks. Gasoline prices have historically been more volatile than the overall CPI, but the US has seen real gas prices modestly decline or stagnate in non-crisis years since the 2014 oil price crash.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "OPEC+ Production Increases and Global Oil Surplus",
+                    "effect": "Decreases probability. OPEC+ is ramping up production faster than demand is growing, potentially creating a large crude surplus by late 2025. This is likely to put downward pressure on global oil prices, which are the main input cost for US gasoline."
+                },
+                {
+                    "factor": "US Domestic Oil Production Contraction",
+                    "effect": "Increases probability slightly. US shale and drilling activity is declining due to unprofitability at lower prices and policy uncertainty, which could reduce US supply flexibility and marginally tighten the US market, but is unlikely to outweigh the global glut."
+                },
+                {
+                    "factor": "Trump Tariffs and Trade Policy",
+                    "effect": "Ambiguous/slightly increases probability. While tariffs have injected general inflation and cost uncertainty into the US economy, they have not been directly imposed on crude oil or refined products. Tariffs may weaken the US dollar (raising dollar-denominated oil prices domestically) and add to inflation, but also risk depressing demand and oil prices via slower growth. On net, modest upside risk to inflation-adjusted prices."
+                },
+                {
+                    "factor": "Economic Growth and Demand",
+                    "effect": "Decreases probability. US economic growth is slowing, with consumer sentiment, private spending, and investment weakening. This generally reduces gasoline demand growth, which is mildly bearish for real prices."
+                },
+                {
+                    "factor": "US Dollar Weakness",
+                    "effect": "Increases probability. The dollar has weakened under Trump, which could modestly raise the dollar price of oil/gasoline. However, the effect is likely to be minor compared to the global supply glut."
+                },
+                {
+                    "factor": "US Inflation and CPI Trajectory",
+                    "effect": "Neutral to slightly increases probability. US headline inflation is running above target (2.6-2.9%), but not surging. Gasoline is a volatile CPI component, but the overall inflationary environment is not high enough to drive a significant real price jump absent an oil shock."
+                },
+                {
+                    "factor": "OPEC+ Policy Risk (Reversal/Cuts)",
+                    "effect": "Increases probability. If OPEC+ unexpectedly cuts production later in 2025, the surplus could evaporate and crude prices would rise. However, this is not the base case given current OPEC+ signaling and public statements."
+                }
+            ],
+            "no_scenario": "OPEC+ follows through with its planned production increases, creating a significant global oil surplus and keeping crude prices low or falling. US shale production continues to contract, but not enough to offset global supply. The US economy continues to slow, limiting gasoline demand growth. Inflation runs slightly above target, but not enough to offset the real price drop from lower oil. The dollar stays weak, but not dramatically so. By December 2025, inflation-adjusted national average gas prices are flat or lower compared to December 2024.",
+            "yes_scenario": "OPEC+ reverses course and announces surprise production cuts in Q4 2025, or a major geopolitical shock (e.g., Middle East conflict) sends oil prices sharply higher late in the year. Alternatively, US inflation spikes unexpectedly in Q4, or the dollar collapses, causing US gas prices to rise in real terms. Or, US gasoline demand unexpectedly surges (e.g., economic re-acceleration) while supply contracts faster than expected.",
+            "final_reasoning": "The preponderance of evidence from current OPEC+ policy, EIA forecasts, industry commentary, and oil futures suggests that 2025 will see a significant global oil surplus, keeping crude prices capped or falling. US domestic production contraction will reduce supply flexibility, but not enough to offset the OPEC+ glut. Tariffs and a weaker dollar add some inflationary risk, but are unlikely to overcome the downward pressure from oversupply. US demand is softening as economic growth slows, and while inflation remains elevated, it is not enough to drive a real price surge. The risk to a Yes outcome comes primarily from potential OPEC+ reversal or a major geopolitical shock\u2014both real, but not the base case given present signals. The base rate for real gasoline price increases in non-crisis years is modestly below 50%. Given the current setup, I judge the probability that real US gas prices will rise in 2025 at 30%.",
+            "final_probability": 30
         }
     },
     "deliberation_probability": [
-        20,
+        18,
         35,
-        33,
-        30,
-        30,
-        33,
-        38,
         25,
-        17,
-        39,
+        27,
+        32,
+        35,
         28,
-        33
+        30,
+        30,
+        35,
+        35,
+        30
     ],
-    "deliberation_mean_probability": 30.083333333333332,
-    "deliberation_sd": 6.707639245101382,
+    "deliberation_mean_probability": 30.0,
+    "deliberation_sd": 5.0990195135927845,
     "deliberation_probability_result": 30
 }
