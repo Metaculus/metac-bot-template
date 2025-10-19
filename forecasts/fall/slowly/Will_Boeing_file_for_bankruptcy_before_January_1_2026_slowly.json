@@ -1,0 +1,597 @@
+{
+    "deliberation_results": {
+        "Accounting (GAAPGoingConcern)": {
+            "time_to_resolution": "Approximately 2.5 months (from October 19, 2025 to January 1, 2026)",
+            "perspective_relevance": "As an expert in Accounting (GAAPGoingConcern), my perspective is highly relevant because bankruptcy predictions hinge on the assessment of an entity\u2019s ability to continue as a going concern, as defined by U.S. GAAP (ASC 205-40). This involves analyzing liquidity, debt, access to capital, cash flow trends, covenant compliance, management plans, and audit signals\u2014key indicators that auditors and financial professionals use to judge bankruptcy risk. My expertise enables me to interpret financial distress signals, assess the adequacy of management\u2019s mitigation plans, and weigh the likelihood of a formal bankruptcy filing versus less drastic measures.",
+            "status_quo": "Boeing faces significant headwinds: mounting debt ($53 billion), ongoing losses (seven consecutive years), delayed certification of key aircraft, supply chain disruptions, and regulatory scrutiny. However, it retains a massive order backlog (~$600B), FAA has just allowed a production increase, liquidity is gradually improving, and analysts still expect a return to profitability in 2026. Historically, major U.S. industrials with similar profiles and government ties have rarely filed for bankruptcy absent a catastrophic, sudden liquidity event.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Debt Load and Liquidity",
+                    "effect": "Increases probability moderately. Boeing\u2019s $53B debt and negative operating margins put pressure on liquidity. However, recent FCF improvement, large order backlog, and access to capital markets mitigate short-term insolvency risk."
+                },
+                {
+                    "factor": "FAA Production Cap Lifted, Operational Recovery",
+                    "effect": "Decreases probability. FAA approval to ramp 737 MAX production signals regulatory confidence and unlocks revenue, improving cash flow outlook and reducing going concern risk in the short term."
+                },
+                {
+                    "factor": "Backlog and Market Position",
+                    "effect": "Decreases probability. Boeing\u2019s ~$600B backlog and duopoly position in global aviation provide a multi-year revenue buffer and strategic value, making bankruptcy less attractive to stakeholders."
+                },
+                {
+                    "factor": "Ongoing Losses, Delayed Aircraft (777X, MAX 7/10)",
+                    "effect": "Increases probability modestly. Continued negative EPS and costly program delays strain finances and threaten covenant compliance, but are not yet acute enough for forced bankruptcy."
+                },
+                {
+                    "factor": "Government/Defense Ties and Too-Big-to-Fail Dynamics",
+                    "effect": "Strongly decreases probability. U.S. government dependence on Boeing for defense and aerospace, and the systemic risk of its collapse, make a pre-2026 bankruptcy extremely unlikely absent a sudden, catastrophic event."
+                },
+                {
+                    "factor": "Covenant Breaches/Imminent Liquidity Crisis",
+                    "effect": "Neutral to slightly increases probability. No evidence of imminent covenant breaches or inability to meet obligations through January 1, 2026, but this is a channel to monitor."
+                },
+                {
+                    "factor": "Market Sentiment and Shareholder/Institutional Support",
+                    "effect": "Decreases probability. Stock has rebounded >70% from 2025 lows, institutional ownership is high, and analysts maintain cautious optimism, indicating continued access to capital."
+                }
+            ],
+            "no_scenario": "Boeing continues to execute its recovery plan. Ramp-up in 737 MAX production boosts revenue and cash flow, offsetting ongoing losses and program delays. The large backlog and government contracts ensure liquidity through late 2025. Management avoids covenant breaches, and creditors, recognizing Boeing\u2019s strategic importance, agree to refinance or defer maturities if needed. No catastrophic quality, legal, or liquidity event occurs, so bankruptcy is unnecessary.",
+            "yes_scenario": "A severe, unanticipated event\u2014such as a major cash recall, new catastrophic safety incident, or loss of government support\u2014triggers a sudden liquidity crisis. Boeing is unable to refinance debt, breaches covenants, and fails to raise emergency capital. A formal bankruptcy filing (Chapter 11) is required to restructure debt and operations before January 1, 2026.",
+            "final_reasoning": "The news flow as of October 2025 is cautiously positive for Boeing\u2019s short-term solvency. FAA approval for higher 737 MAX output, improved free cash flow trends, a massive backlog, and government/defense ties all strongly reduce the probability of a bankruptcy filing before January 1, 2026. While Boeing\u2019s financial profile (high debt, persistent losses, Altman Z-score in distress) is concerning, these are long-standing issues that are not, at present, accelerating toward an acute crisis. The company\u2019s strategic value, political importance, and ongoing operational improvements make a near-term bankruptcy filing extremely unlikely. The most likely scenario is that Boeing limps through its turnaround, leaning on its order book and government links, and seeks to refinance or restructure outside of court if needed. Only a black swan event could trigger bankruptcy in this window.",
+            "final_probability": 3
+        },
+        "Accounting (FinancialStatementAnalysis)": {
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Accounting (Financial Statement Analysis), I can rigorously interpret Boeing's recent and historical financial statements, assess bankruptcy risk using quantitative metrics such as the Altman Z-Score, Piotroski F-Score, liquidity and solvency ratios, and evaluate the company's operational cash flows, debt burden, and restructuring capacity. My perspective is particularly relevant because bankruptcy filings are most often precipitated by a combination of acute liquidity crises, chronic unprofitability, and exhausted refinancing/leverage options\u2014all of which are directly visible in and forecastable from the financial statements and related disclosures.",
+            "status_quo": "Boeing remains a going concern despite a prolonged period of losses, elevated debt, operational setbacks, and reputational damage. Historically, large industrial firms with substantial government contracts and critical market positions rarely file for bankruptcy on short notice, especially with improving operational trends and regulatory support.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Altman Z-Score and Financial Distress Signals",
+                    "effect": "Increases probability, as Boeing's Z-Score (~1.2) is below the distress threshold (<1.8), indicating elevated bankruptcy risk in the next two years. However, this is a statistical flag rather than a deterministic predictor for a company of Boeing's scale and government importance."
+                },
+                {
+                    "factor": "Liquidity and Debt Structure",
+                    "effect": "Neutral to slightly increasing probability. $53B in debt is very high, but Boeing has maintained access to capital markets and has a large, liquid order book. No imminent maturities or clear evidence of a cash crunch before 2026 are apparent in recent reporting."
+                },
+                {
+                    "factor": "Operational Recovery and Regulatory Tailwinds",
+                    "effect": "Decreases probability. FAA approval to increase 737 MAX production to 42/month and signs of improving deliveries suggest revenue and cash flow are trending up. Analyst consensus now expects profitability in 2026, and Q2/Q3 2025 losses are narrowing. A large order backlog ($600B+) provides a buffer."
+                },
+                {
+                    "factor": "Delayed Programs and Ongoing Risks",
+                    "effect": "Slightly increases probability. 777X and MAX-7/10 certification delays mean continued cash burn, while supply chain and labor risks could disrupt the recovery. However, these are chronic, not acute, risks."
+                },
+                {
+                    "factor": "Government and Strategic Importance",
+                    "effect": "Strongly decreases probability. Boeing is a critical national defense and commercial supplier; the US government has historically provided explicit or implicit support to prevent collapse. The 'too big to fail' dynamic is significant."
+                },
+                {
+                    "factor": "Market Sentiment and Institutional Ownership",
+                    "effect": "Decreases probability. Stock has rallied over 70% from 2025 lows; institutional ownership is high (~87%). While not determinative, this reflects broad market confidence in survival through at least the short-term."
+                }
+            ],
+            "no_scenario": "Boeing continues to face losses through Q4 2025, but operational improvements (higher MAX output, growing deliveries, inventory reduction) gradually stabilize cash flow. The company manages debt repayments through asset sales, refinancings, and/or government-backed facilities. No sudden legal or regulatory shock occurs, and no severe new accident or scandal triggers a liquidity run. Boeing enters 2026 as a going concern, still facing headwinds but not forced into bankruptcy.",
+            "yes_scenario": "A severe and sudden event\u2014such as a catastrophic new accident, a criminal regulatory finding that suspends all deliveries, a failed debt rollover, or a major government contract cancellation\u2014triggers a liquidity crisis. Boeing's cash burn accelerates, access to capital is cut off, and the company files for Chapter 11 to restructure under court protection before January 1, 2026.",
+            "final_reasoning": "Boeing's financial indicators (Z-Score, negative margins, high debt) point to elevated distress, but not to an imminent bankruptcy. The latest news\u2014FAA approval to increase production, improving delivery rates, and narrowing losses\u2014signals the company is moving out of its nadir. The analyst consensus and market action both support a base case of gradual recovery, not collapse. Critically, Boeing's strategic importance to US defense and commercial aviation, its massive backlog, and its access to capital markets provide buffers not available to ordinary firms. While risk remains (especially if a black-swan event occurs), the base rate of mega-cap US industrials filing for bankruptcy within a 3-month window, especially amid operational improvement, is extremely low. I estimate the probability of Boeing filing for bankruptcy before January 1, 2026 at 2%.",
+            "final_probability": 2
+        },
+        "AerospaceIndustryAnalysis (AirframeOEMMarketDynamics)": {
+            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in AerospaceIndustryAnalysis (AirframeOEMMarketDynamics), I bring in-depth knowledge of the operational, financial, and competitive dynamics affecting major aircraft manufacturers like Boeing. This includes understanding the implications of regulatory actions, supply chain disruptions, order book strength, aircraft delivery cycles, and historical base rates for bankruptcy in the large airframe OEM sector. This expertise is particularly relevant given recent events affecting Boeing (production caps, safety crises, and strikes), the company\u2019s substantial debt load, and the critical role of backlog and delivery ramp-up in OEM financial health.",
+            "status_quo": "Boeing, despite significant headwinds (safety crises, production delays, supply chain challenges, high debt, and labor disputes), continues to avoid bankruptcy and maintains operations as a going concern. Historically, major airframe OEMs rarely file for bankruptcy without a full collapse of orders or systemic financial crisis.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "FAA Approval for 737 MAX Production Ramp-up",
+                    "effect": "Decreases probability. Regulatory approval to increase production from 38 to 42/month signals restored confidence and enables higher cash flow and deliveries, which is vital for financial recovery."
+                },
+                {
+                    "factor": "Massive Order Backlog and Inventory",
+                    "effect": "Decreases probability. Boeing maintains a backlog of over 6,500 aircraft (worth >$600B), which provides multi-year revenue visibility, and has built up inventory and raw materials ($11B), helping buffer against supply shocks."
+                },
+                {
+                    "factor": "Elevated Debt Load ($53B)",
+                    "effect": "Increases probability. The company\u2019s debt is historically high, with negative operating margins and ongoing net losses. Altman Z-Score is in the distress zone, and financial metrics (e.g., negative EPS, F-score) are weak, raising risk in a liquidity crunch."
+                },
+                {
+                    "factor": "Ongoing Supply Chain and Program Delays (e.g., 777X to 2027)",
+                    "effect": "Slightly increases probability. These delays defer revenue and may trigger further charges ($2.5\u2013$4B), adding to financial pressure, though the timeline for major impact is more likely post-2026."
+                },
+                {
+                    "factor": "Resuming Deliveries, Improving Free Cash Flow",
+                    "effect": "Decreases probability. Aircraft deliveries and free cash flow losses are narrowing, and the outlook for 2026/2027 is positive, with analysts expecting a return to profitability in 2026."
+                },
+                {
+                    "factor": "Defense and Services Revenue Streams",
+                    "effect": "Decreases probability. Boeing\u2019s defense and services units provide steadier revenue, partially offsetting volatility in commercial aviation."
+                },
+                {
+                    "factor": "Industry Base Rates for Bankruptcy",
+                    "effect": "Strongly decreases probability. Major Western airframe OEMs (e.g., Boeing, Airbus) almost never file for bankruptcy unless facing existential crises; government, creditor, and customer support is typical due to strategic importance."
+                },
+                {
+                    "factor": "Recent Labor Strikes and Fines",
+                    "effect": "Slightly increases probability. Strikes have cost billions and fines persist, but both are now largely past events with contracts being renegotiated and production ramping up."
+                }
+            ],
+            "no_scenario": "Boeing leverages its restored production rates and massive order backlog to increase deliveries in Q4 2025, narrowing losses (possibly breaking even or posting a small loss for the year), while managing debt service through short-term financing, asset sales, or government/institutional support if needed. No catastrophic new safety or production event occurs. Management continues to communicate a credible recovery plan, and defense/services provide a revenue floor.",
+            "yes_scenario": "A new, catastrophic safety incident or regulatory crisis (e.g., another fatal crash or major structural failure), a sudden collapse in orders (e.g., due to a global recession or mass cancellations), or a liquidity crisis triggered by credit market tightening or an inability to refinance debt forces Boeing to file for Chapter 11. Alternatively, a massive legal judgment or regulatory fine (unlikely within this short window) tips the balance.",
+            "final_reasoning": "Base rates for bankruptcy among major airframe OEMs like Boeing are extremely low, even during severe crises (e.g., post-9/11, 737 MAX grounding, COVID-19). Boeing\u2019s financial metrics are weak, and the company is in the Altman Z-Score distress zone, but several mitigating factors are decisive: (1) FAA approval for production ramp-up, (2) a record order backlog (>6,500 aircraft/$600B), (3) narrowing losses and improving cash flow, and (4) strategic importance that would likely prompt government or creditor intervention before bankruptcy. The risk is higher than in normal years due to the debt overhang, supply chain risk, and ongoing program delays (e.g., 777X), but there are no indications of imminent default, and most analysts expect Boeing to return to profitability in 2026. For bankruptcy to occur before Jan 1, 2026, a sudden, catastrophic event would be required in the next 2.5 months\u2014a scenario for which there is no current evidence. I thus estimate a very low probability, slightly above the absolute minimum due to the financial indicators, but still close to the historical base rate (<<5%).",
+            "final_probability": 2
+        },
+        "AerospaceIndustryAnalysis (RegulatoryComplianceReview)": {
+            "time_to_resolution": "Approximately 2.5 months (resolves January 1, 2026; today is October 19, 2025).",
+            "perspective_relevance": "My expertise in Aerospace Industry Analysis, particularly Regulatory Compliance Review, is directly relevant to assessing Boeing's financial and operational health in the context of regulatory oversight, industry base rates, bankruptcy risk indicators, compliance failures, and recovery prospects. Regulatory actions, compliance lapses, and production approvals are critical leading indicators for both sudden and gradual changes in company solvency, especially in this industry where FAA and global regulatory trust is paramount.",
+            "status_quo": "Boeing, despite a series of safety, quality, and financial crises, has historically avoided bankruptcy. The company remains a linchpin of the U.S. defense-industrial base, with immense government, investor, and creditor support. As of now, Boeing has not filed for bankruptcy and is engaged in a recovery trajectory, though it remains unprofitable.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Regulatory Recovery and FAA Approval",
+                    "effect": "Decreases probability. The FAA has just authorized an increase in 737 MAX production rates and partially restored Boeing\u2019s self-certification privileges, indicating improved regulatory trust and operational stability. This is a strong signal that Boeing is not viewed as being on the brink of collapse by its primary regulatory authority."
+                },
+                {
+                    "factor": "Debt Load and Financial Distress Metrics",
+                    "effect": "Increases probability. Boeing\u2019s debt is at a historic high ($53 billion), Altman Z-Score is in the distress zone (1.24), and it is not expected to be profitable before 2026. However, liquidity is being stabilized via inventory reductions and improved working capital."
+                },
+                {
+                    "factor": "Order Backlog and Demand",
+                    "effect": "Decreases probability. Boeing has a massive commercial aircraft backlog (~6,500 units, $600B+), which offers a multi-year revenue buffer. Global air travel demand is recovering and there is a substantial backlog for both Boeing and Airbus, mitigating existential revenue risk."
+                },
+                {
+                    "factor": "Supply Chain and Production Disruptions",
+                    "effect": "Slightly increases probability. Persistent supply chain issues, labor market rigidity, and the recent strike (costing ~$5B) introduce ongoing risks, but Boeing has built up raw materials inventory and is seeing a recovery in deliveries."
+                },
+                {
+                    "factor": "Government and Strategic Importance",
+                    "effect": "Decreases probability. Boeing is considered too strategically important to fail due to its dual role in U.S. commercial aviation and defense. Any bankruptcy would have massive economic and national security ramifications, making a pre-2026 bankruptcy politically and economically unlikely."
+                },
+                {
+                    "factor": "Delayed Profitability and Ongoing Losses",
+                    "effect": "Slightly increases probability. Boeing is expected to post losses in 2025 and only return to profitability in 2026. Extended losses increase risk, but the timing is such that bankruptcy would only be likely in an extreme shock scenario before January 2026."
+                },
+                {
+                    "factor": "Recent Leadership and Cultural Changes",
+                    "effect": "Decreases probability. The appointment of Kelly Ortberg and a renewed engineering/safety culture has stabilized operations and improved regulatory relations, reducing the likelihood of a catastrophic compliance or quality event that might precipitate a bankruptcy."
+                }
+            ],
+            "no_scenario": "Boeing continues to ramp up production as allowed by the FAA, stabilizes cash flow through increased deliveries and working capital management, and leverages its backlog and government support to avoid bankruptcy. Losses continue into late 2025 but are covered by existing liquidity, debt rollovers, and possibly new financing. No catastrophic compliance, legal, or operational event occurs. By early 2026, Boeing returns to profitability as forecast.",
+            "yes_scenario": "An unexpected catastrophic event occurs\u2014such as a major fatal crash tied to systemic production flaws, a new regulatory grounding halting deliveries, or a sudden and severe liquidity crisis triggered by supply chain collapse, credit market freeze, or massive legal liabilities. Government or creditors refuse further support, and Boeing files for Chapter 11 or similar bankruptcy protection before January 1, 2026.",
+            "final_reasoning": "The base rate for a major U.S. aerospace/defense company of Boeing\u2019s scale filing for bankruptcy in peacetime, within a short time frame and during a recovery phase, is extremely low. Despite distressed financial metrics and ongoing risks, multiple indicators point to stabilization and recovery: FAA\u2019s production approval, a massive backlog, improved cash flow, and the company\u2019s unique strategic importance. While financial distress and operational risks remain, the window before January 1, 2026 is very short. Only an extreme, low-probability shock would push Boeing into bankruptcy within this period. Therefore, the probability of Boeing filing for bankruptcy before January 1, 2026 is very low, though not strictly zero due to the persistent, if diminished, risk factors.",
+            "final_probability": 3
+        },
+        "USCorporateLaw (BankruptcyCodeChapter11)": {
+            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in US Corporate Law, specifically Chapter 11 bankruptcy, I can assess the legal, financial, and operational triggers for large corporate bankruptcies, the typical warning signs preceding filings, and the unique constraints and incentives facing a company of Boeing\u2019s size and national importance. I also have insight into historical precedents for major industrial bankruptcies, the role of government and creditors in systemic risk situations, and the practical realities of the Chapter 11 process for large, systemically significant corporations.",
+            "status_quo": "Boeing has not filed for bankruptcy. Despite years of losses, high debt, and operational crises, the company remains solvent, operational, and has the backing of investors and, implicitly, the US government.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Systemic Importance and Political Backstop",
+                    "effect": "Decreases probability. As a key defense, aerospace, and export company, Boeing is likely to receive support or forbearance from creditors and the government before a bankruptcy filing becomes necessary. The US government has historically intervened to prevent the bankruptcy of systemically important firms."
+                },
+                {
+                    "factor": "Liquidity and Debt Management",
+                    "effect": "Decreases probability. Despite $53B in debt and ongoing losses, Boeing has a massive order backlog, improving production rates, and access to capital markets. Its cash flow is improving, and analysts project profitability in 2026, suggesting it can muddle through without a filing."
+                },
+                {
+                    "factor": "Operational Recovery and Regulatory Relief",
+                    "effect": "Decreases probability. The recent FAA approval to increase 737 MAX production and partial restoration of self-certification authority are strong signals of regulatory confidence, which is critical for restoring cash flow and credibility."
+                },
+                {
+                    "factor": "Market Confidence and Access to Capital",
+                    "effect": "Decreases probability. Boeing stock has rebounded, analyst targets remain bullish, and institutional ownership is high. These are not typical of a company on the brink of bankruptcy."
+                },
+                {
+                    "factor": "Ongoing Risks (Quality, Litigation, Supply Chain, Delays)",
+                    "effect": "Increases probability. Persistent production delays, certification slippages (notably 777X), new safety incidents, and DOJ investigations continue to pose downside risk. Each could translate into sudden liquidity shocks or catastrophic liability."
+                },
+                {
+                    "factor": "Recent Strike and Labor Relations",
+                    "effect": "Increases probability. The 2024 strike cost Boeing nearly $5B, highlighting vulnerability to operational disruptions. However, negotiations are ongoing and not existential."
+                },
+                {
+                    "factor": "Financial Health Metrics (Altman Z-Score, Leverage, Negative EPS)",
+                    "effect": "Increases probability. Boeing\u2019s Altman Z-Score (1.24) is in the distress zone, and its debt/equity is highly negative. These are warning signs but must be interpreted in light of Boeing\u2019s unique industry position and access to capital."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate through ongoing but improving losses, benefiting from FAA production increases and a stabilizing supply chain. Debt is rolled over or refinanced; government and creditors show patience, given Boeing\u2019s systemic importance. Operational improvements and a large backlog allow management to avoid a bankruptcy filing, and the company returns to profitability by 2026, as most analysts expect.",
+            "yes_scenario": "A new and severe operational or legal setback occurs before January 1, 2026\u2014such as a catastrophic safety incident, major regulatory action (e.g., grounding or criminal indictment), a sudden cash crunch, or a mass acceleration of debt. Liquidity dries up, Boeing is unable to refinance maturing obligations, and management files for Chapter 11 as a prelude to restructuring, possibly with government involvement.",
+            "final_reasoning": "Base rates for bankruptcy among large, systemically important US manufacturers are extremely low, especially with robust order books, political support, and market access. None of the current news signals imminent collapse; if anything, FAA production increases and analyst expectations for 2026 profitability suggest stabilization. While financial metrics (debt, Z-score, negative earnings) and ongoing operational/legal risks should not be ignored, Boeing\u2019s unique status makes a pre-2026 bankruptcy highly unlikely absent a sudden, exogenous shock. The recent pattern of government and creditor forbearance, plus improving operational indicators, reinforce this view. A bolder but justified probability is warranted given the improving news and the very short time horizon remaining.",
+            "final_probability": 2
+        },
+        "USCorporateLaw (SecuritiesDisclosureRegulation)": {
+            "time_to_resolution": "Approximately 2.5 months (from October 19, 2025, to January 1, 2026)",
+            "perspective_relevance": "As an expert in US Corporate Law, specifically Securities Disclosure Regulation, my perspective is highly relevant. Bankruptcy filers must make material disclosures under US securities law, and the legal, financial, and regulatory signals leading up to a large corporate bankruptcy are often apparent in SEC filings, liquidity disclosures, auditor statements, and market signaling. Understanding these disclosure norms, debt covenant triggers, and the actual legal process for Chapter 11/7 is crucial for assessing bankruptcy risk.",
+            "status_quo": "Boeing, despite facing continued financial losses, high debt, and operational setbacks, has not filed for bankruptcy at any point in its history and remains a going concern, with improved production rates, regulatory approval for increased output, and analyst expectations of a return to profitability in 2026.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Liquidity and Debt Maturity Profile",
+                    "effect": "Decreases probability. Boeing has large debt ($53B), but has so far managed liquidity through inventory drawdown, asset sales, and robust order backlog. No imminent debt wall or covenant breach is being reported."
+                },
+                {
+                    "factor": "Regulatory and Operational Recovery",
+                    "effect": "Decreases probability. FAA approval to increase 737 MAX production signals regulatory confidence and enables higher cash flow, which is critical for Boeing\u2019s financial stabilization."
+                },
+                {
+                    "factor": "Ongoing Losses and Negative Financial Ratios",
+                    "effect": "Increases probability. Altman Z-Score (1.24) places Boeing in the 'distress' zone, with continued negative free cash flow and net losses projected through 2025."
+                },
+                {
+                    "factor": "Order Backlog and Market Duopoly",
+                    "effect": "Decreases probability. Boeing has a $600B+ backlog and commercial duopoly with Airbus, making its long-term demand relatively secure despite setbacks."
+                },
+                {
+                    "factor": "Delayed Programs and Supply Chain Risk",
+                    "effect": "Slightly increases probability. 777X and MAX7/10 delays add billions in charges and reputational risk, but not enough to trigger bankruptcy within 2.5 months unless a catastrophic event occurs."
+                },
+                {
+                    "factor": "Labor Relations and Strikes",
+                    "effect": "Neutral to slightly increases probability. The 2024 strike cost $5B, but appears resolved; new contract talks are ongoing but not at crisis level."
+                },
+                {
+                    "factor": "Legal/Regulatory Litigation Risk",
+                    "effect": "Slightly increases probability. Ongoing DOJ criminal investigations and FAA fines are negative, but there are no existential lawsuits or settlements pending that would force bankruptcy imminently."
+                },
+                {
+                    "factor": "Institutional Support and Systemic Risk",
+                    "effect": "Decreases probability. Boeing is systemically important to US defense and aerospace, and would likely receive government or private support ahead of bankruptcy."
+                },
+                {
+                    "factor": "Market and Analyst Sentiment",
+                    "effect": "Decreases probability. Despite bearish indicators, institutional ownership is high, share price has rebounded, and analysts expect a return to profitability."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate as a going concern, utilizing cash from increased production and deliveries to meet debt obligations. It manages liquidity through asset sales, working capital improvements, and selective cost-cutting. Regulatory and customer confidence holds, no new catastrophic incident emerges, and no debt covenant breach or liquidity crisis materializes before January 1, 2026. Negative events (delays, fines) are managed without triggering a bankruptcy filing.",
+            "yes_scenario": "A severe, unexpected liquidity shock emerges: e.g., a catastrophic new production defect or crash, a major customer or supplier default, a sudden withdrawal of credit facilities, or a failed debt rollover. This triggers a breach of debt covenants or insolvency, forcing Boeing to file for Chapter 11 protection before January 1, 2026. Alternatively, a major legal judgment or government action precipitates a liquidity crisis. However, such a scenario would likely be preceded by clear warning signals in SEC filings and market disclosures.",
+            "final_reasoning": "Base rates for bankruptcy among Fortune 100 industrial firms, especially those with systemic importance and large government contracts, are extremely low over short time frames. Boeing\u2019s financial distress is real, but the news flow shows stabilizing operational trends, regulatory approval for increased production, and analyst/market expectations of a 2026 turnaround. There are no imminent signals of covenant default, missed debt payments, or material adverse disclosures in the news. The risk factors (Altman Z-Score, negative FCF, program delays) are offset by backlog strength, government ties, and improving operational metrics. The remaining 2.5 months is a short window for a bankruptcy event of this magnitude, absent a black swan. Therefore, the probability of Boeing filing for bankruptcy before January 1, 2026, is very low\u2014though not zero, given financial distress indicators.",
+            "final_probability": 3
+        },
+        "Finance (AltmanZScore)": {
+            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Finance with a focus on the Altman Z-Score, I bring a unique ability to quantitatively assess bankruptcy risk using financial statement metrics, market indicators, and operational performance. The Altman Z-Score specifically provides an empirically validated statistical measure of near-term bankruptcy risk, which is highly relevant for evaluating Boeing's solvency in the context of recent operational, financial, and regulatory developments.",
+            "status_quo": "Boeing has managed to avoid bankruptcy despite years of negative earnings, high debt, and operational setbacks, largely due to its strategic importance, large order backlog, access to capital markets, and partial recovery in deliveries. The status quo is Boeing continuing to operate, reporting losses but not filing for bankruptcy.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Altman Z-Score in Distress Zone (~1.24)",
+                    "effect": "Increases probability. A Z-Score below 1.8 indicates financial distress and a non-trivial risk of bankruptcy within 2 years. However, this is a probabilistic indicator, not a deterministic one."
+                },
+                {
+                    "factor": "Massive Debt Load ($53B, up from $12B in 2018)",
+                    "effect": "Increases probability. High leverage, especially with negative cash flow, raises bankruptcy risk, particularly if refinancing or liquidity dries up."
+                },
+                {
+                    "factor": "Operational Recovery (FAA lifts production cap; deliveries rebounding)",
+                    "effect": "Decreases probability. Increased production, restored trust, and higher deliveries support revenue and cash-flow stabilization, reducing short-term bankruptcy risk."
+                },
+                {
+                    "factor": "Large Order Backlog (~$619B, 6,500 aircraft)",
+                    "effect": "Decreases probability. Provides multi-year revenue visibility and acts as a buffer against short-term shocks, making bankruptcy less likely in the immediate term."
+                },
+                {
+                    "factor": "Delayed 777X and Certification Setbacks",
+                    "effect": "Slightly increases probability. Delays in delivering new models exacerbate cash-flow pressures and could trigger penalties, but these are not existential in the short run."
+                },
+                {
+                    "factor": "Improving Free Cash Flow and Reduced Losses in 2025",
+                    "effect": "Decreases probability. Indicators of operational stabilization and path toward profitability in 2026."
+                },
+                {
+                    "factor": "Recent Strike and Ongoing Supply Chain Disruptions",
+                    "effect": "Increases probability. Labor and supply chain issues can impact cash flow and delivery schedules, but recent news suggests partial resolution and resumption of production."
+                },
+                {
+                    "factor": "Strategic Importance and Government/Investor Support",
+                    "effect": "Decreases probability. As a strategic defense, aerospace, and jobs provider, Boeing is likely to receive implicit or explicit support if truly threatened with collapse."
+                },
+                {
+                    "factor": "Market and Analyst Sentiment (Stock rebound, institutional ownership high)",
+                    "effect": "Decreases probability. Market confidence has improved, with the stock up >70% from lows and analyst price targets indicating expectations for recovery."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate while reporting losses but stabilizes operations thanks to increased 737 MAX and 787 production, benefits from its large backlog, manages debt through refinancing or asset sales, and returns to profitability or at least positive cash flow by late 2026. No significant new operational shock or regulatory action prompts a liquidity crisis before January 1, 2026.",
+            "yes_scenario": "A major new operational setback occurs (e.g., another fatal crash, major regulatory ban, or catastrophic supply chain breakdown), or a financial market shock (e.g., credit markets freeze, downgrade to junk, or spike in interest rates) triggers a liquidity crisis that prevents Boeing from rolling over its debt or covering obligations, leading to a Chapter 11 filing before January 1, 2026.",
+            "final_reasoning": "Base rates for bankruptcy among large, strategic US industrials in distress (e.g., airlines, automakers) are low over short windows when there is ongoing operational recovery and implicit government support. Boeing's Altman Z-Score is in the distress zone, and its leverage is unusually high, but the company is showing tangible signs of stabilization: FAA has lifted key production restrictions, deliveries are rising, losses are narrowing, and the backlog remains massive. Analyst consensus expects losses in 2025 but a return to profitability in 2026, and market sentiment has rebounded. While bankruptcy risk is real, particularly if a new shock occurs, the most likely outcome is that Boeing survives the next 2.5 months without a bankruptcy filing, given improved operational trends, large order book, and strategic importance. The probability is not zero due to financial distress signals, but the window is short and no acute trigger is currently evident.",
+            "final_probability": 5
+        },
+        "Finance (CreditRiskAnalysis)": {
+            "time_to_resolution": "About 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Finance (CreditRiskAnalysis), my perspective is critical for evaluating the likelihood of bankruptcy filings. I am trained to interpret financial distress signals, analyze debt sustainability, liquidity trends, operational cash flows, and assess the impact of industry and macroeconomic shocks on a firm's solvency. My approach emphasizes base rates, quantitative distress metrics (e.g., Altman Z-Score, Piotroski F-Score), and the nuances of large, strategically important firms like Boeing, which may enjoy implicit government support.",
+            "status_quo": "Boeing has not filed for bankruptcy in its entire modern history, even during severe prior crises (post-9/11, 737 MAX groundings, COVID-19 collapse). The base rate for large, systemically important US industrials (especially defense contractors) filing for bankruptcy in a short forward window is exceedingly low.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Debt Load and Financial Metrics",
+                    "effect": "Increases risk, but not to the level of imminent bankruptcy. Boeing has $53B in debt (vs $12B in 2018), negative operating and net margins, and an Altman Z-Score in the 'distress' zone (1.24). However, it is still able to service debt, has significant working capital, and access to capital markets."
+                },
+                {
+                    "factor": "Operational Recovery and Backlog",
+                    "effect": "Decreases risk. FAA has just approved an increase in 737 MAX production to 42/month, deliveries are rising, and backlog (~$619B) provides multi-year revenue visibility. Wall Street expects a return to profitability by 2026."
+                },
+                {
+                    "factor": "Government and Strategic Importance",
+                    "effect": "Decreases risk. As a major US defense contractor and critical exporter, Boeing is extremely likely to receive government support in a liquidity crisis (as seen in 2020). Implicit government support is a strong buffer against bankruptcy."
+                },
+                {
+                    "factor": "Supply Chain and Certification Delays",
+                    "effect": "Marginally increases risk. Supply chain disruptions, certification delays (777X, MAX 7/10), and ongoing regulatory scrutiny could hinder cash flows, but these are chronic, not acute, risks over the next 2.5 months."
+                },
+                {
+                    "factor": "Recent Labor Strikes and One-off Charges",
+                    "effect": "Marginally increases risk. The 2024 strike cost $5B, and further labor unrest or charges (e.g., 777X delays, potential $4B hit) could stress liquidity, but available lines of credit and ongoing recovery reduce the probability of a liquidity crisis."
+                },
+                {
+                    "factor": "Market Access and Sentiment",
+                    "effect": "Decreases risk. Boeing stock has rebounded >70% from 2025 lows, institutional ownership remains high (87%), and analysts have bullish price targets. Equity and debt markets remain open to Boeing."
+                },
+                {
+                    "factor": "Base Rate of Bankruptcy for Similar Firms",
+                    "effect": "Strongly decreases risk. The historical base rate of bankruptcy filings for US defense-industrial giants over a 2-3 month window is vanishingly low, especially in the absence of a sudden catastrophic event."
+                }
+            ],
+            "no_scenario": "Boeing continues to ramp up production and deliveries through Q4 2025, maintains access to capital markets, does not face a sudden catastrophic event (e.g., another fatal crash, major criminal indictment, or abrupt cutoff of government contracts). Liquidity remains tight but manageable, and the company avoids a cash crunch through asset sales, further credit lines, or government assistance if required. No bankruptcy filing occurs.",
+            "yes_scenario": "A black swan event occurs: e.g., a new fatal crash or major criminal conviction leads to a global grounding, government contract suspensions, or massive customer cancellations, triggering an immediate liquidity crisis. Alternatively, a multi-billion-dollar fraud, regulatory, or legal penalty emerges, rendering Boeing unable to meet its obligations and forcing a Chapter 11 filing before year-end. These would be extreme, low-probability events.",
+            "final_reasoning": "The overwhelming weight of evidence, from base rates to recent operational/financial news, points to Boeing being at risk but not at imminent risk of bankruptcy before January 1, 2026. While key financial metrics (debt load, negative margins, distress-zone Z-Score) raise concern, the company is actively recovering: production is ramping, delivery volumes and customer confidence are rebounding, and Boeing retains massive backlog and strategic importance. Recent financial results show narrowing losses and improving cash flows; analysts expect a return to profitability in 2026. Boeing\u2019s role as a critical defense contractor and exporter gives it strong political backing and likely access to emergency support. The only plausible bankruptcy scenarios involve an acute, unforeseen crisis (e.g., new crash, major fraud, sudden loss of government support) within the next 2.5 months\u2014extraordinarily improbable given current trends and institutional resilience. Thus, the probability of a bankruptcy filing before January 1, 2026, is extremely low, though not strictly zero.",
+            "final_probability": 2
+        },
+        "Finance (CorporateRestructuringTheory)": {
+            "time_to_resolution": "Approximately 2.5 months (resolves January 1, 2026; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in Corporate Restructuring Theory, I am equipped to assess not just the explicit financial indicators but also the dynamics of creditor negotiations, access to liquidity, industry base rates for bankruptcy, and the incentives of management and stakeholders when facing distress. I can analyze how large, systemically important firms like Boeing typically restructure their obligations outside formal bankruptcy, and how implicit government and creditor support affects the likelihood of a Chapter 11 filing.",
+            "status_quo": "Boeing does NOT file for bankruptcy. Historically, large US industrials\u2014even under severe stress\u2014rarely file for Chapter 11 unless liquidity is fully exhausted and no out-of-court solutions exist. Boeing has thus far avoided bankruptcy despite years of losses, high leverage, and major crises.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Liquidity Position and Debt Maturity Profile",
+                    "effect": "Decreases probability. Boeing has substantial liquidity via cash reserves, inventory that can be monetized, and access to capital markets. No imminent maturity wall appears in news coverage."
+                },
+                {
+                    "factor": "Creditor and Government Support",
+                    "effect": "Strongly decreases probability. Boeing is a systemically important company with national security implications; historical precedent (e.g., 2020 COVID-19 crisis) shows extraordinary support is likely before bankruptcy occurs."
+                },
+                {
+                    "factor": "Operating Performance and Cash Flow Trajectory",
+                    "effect": "Slightly decreases probability. While Boeing continues to post losses, production and deliveries are rising, with analysts expecting a return to profitability in 2026. Free cash flow has improved and is expected to turn positive in 2026."
+                },
+                {
+                    "factor": "Backlog and Order Book",
+                    "effect": "Decreases probability. Boeing has a ~$600B backlog with thousands of undelivered aircraft, providing multi-year revenue visibility and collateral for financing."
+                },
+                {
+                    "factor": "Short-term Market and Regulatory Confidence",
+                    "effect": "Decreases probability. FAA approval to increase 737 MAX production and recent stock price gains signal returning confidence from both regulators and investors."
+                },
+                {
+                    "factor": "Financial Distress Indicators (Altman Z-score, Debt ratios)",
+                    "effect": "Increases probability. Boeing\u2019s Altman Z-score is in the distress zone, debt is high (~$53B), and profitability remains elusive. However, these indicators often overstate bankruptcy risk for systemically important firms."
+                },
+                {
+                    "factor": "Delayed 777X Program and Future Risks",
+                    "effect": "Slightly increases probability. The 777X delay imposes additional multi-billion dollar charges, and further program setbacks could stress cash flows, but the timeline for these to cause bankruptcy is longer than two months."
+                },
+                {
+                    "factor": "Base Rate for Bankruptcy among Large Industrials",
+                    "effect": "Strongly decreases probability. The historical base rate for pre-bankruptcy filings among US aerospace/large industrials of Boeing\u2019s stature is extremely low, especially over short timeframes."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate with losses but leverages its backlog to arrange bridge financing, extends maturities with creditors, and receives tacit or explicit government support if needed. Production increases boost cash flow in late 2025, and restructuring (if any) occurs out-of-court. Chapter 11 or liquidation are avoided in 2025.",
+            "yes_scenario": "A severe, unexpected liquidity shock occurs\u2014such as a catastrophic safety incident, a massive regulatory fine/settlement, or a sudden cutoff of credit access coinciding with a sharp drop in deliveries. Management, unable to secure emergency funding or government intervention, files for Chapter 11 to halt creditor actions and restructure debts before January 1, 2026.",
+            "final_reasoning": "While Boeing\u2019s financial metrics are concerning\u2014negative operating margins, a distress-level Altman Z-score, high debt, and ongoing program setbacks\u2014none of the news points to an imminent liquidity crisis or creditor revolt. The latest developments are positive: FAA production caps are lifted, deliveries are rising, and cash flow is projected to turn positive in 2026. Boeing\u2019s backlog, systemic importance, and access to both public and private support mechanisms provide a strong buffer against bankruptcy within the next 2.5 months. The base rate for bankruptcy filings among comparably large, strategic US manufacturers over such a short window is extremely low. Unless a black swan event occurs, Boeing will not file for bankruptcy before January 1, 2026.",
+            "final_probability": 2
+        },
+        "BusinessStrategy (PorterFiveForces)": {
+            "time_to_resolution": "About 2.5 months (question resolves January 1, 2026; today is October 19, 2025)",
+            "perspective_relevance": "As a BusinessStrategy (PorterFiveForces) expert, my focus is on the competitive environment, industry structure, and Boeing\u2019s supplier/buyer relationships, barriers to entry, threat from substitutes, and internal rivalry. This provides an analytical lens for assessing Boeing\u2019s bankruptcy risk beyond the headline financials, by integrating structural market dynamics, long-term order books, and the power of stakeholders (customers, suppliers, regulators).",
+            "status_quo": "Boeing has not filed for bankruptcy. It has endured years of crisis but remains operational, with a massive backlog, ongoing losses, and high debt, but recent regulatory and production improvements signal stabilization.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Boeing-Airbus Duopoly (Low Threat of New Entrants and Substitutes)",
+                    "effect": "Decreases bankruptcy probability. The market structure is highly consolidated; major airlines cannot easily substitute away from Boeing at scale, and there are high switching costs and technical/regulatory barriers to entry for new competitors. Boeing\u2019s role as one half of a global duopoly provides strong bargaining power and a stable, if battered, long-term revenue base."
+                },
+                {
+                    "factor": "Massive Backlog and Customer Commitments",
+                    "effect": "Decreases probability. Boeing\u2019s $600B+ backlog and multi-year order commitments give it significant future revenue visibility and a financial buffer, even if margins are currently negative."
+                },
+                {
+                    "factor": "Supplier Power and Supply Chain Disruptions",
+                    "effect": "Increases probability. Boeing is dependent on a complex, global supply chain that has been fragile post-COVID and subject to strikes, bottlenecks, and tariffs. Persistent disruptions could inhibit cash flow recovery and production ramp-up."
+                },
+                {
+                    "factor": "Financial Leverage and Negative Cash Flow",
+                    "effect": "Increases probability. Boeing\u2019s $53B debt load (up from $12B in 2018), negative earnings, and a distressed Altman Z-score raise red flags. It is skating close to the edge, with equity market confidence but little margin for major shocks."
+                },
+                {
+                    "factor": "Government and Regulatory Position",
+                    "effect": "Decreases probability. Boeing\u2019s strategic importance to US defense and the economy means implicit government and regulatory support (e.g., FAA\u2019s recent approval, previous pandemic-era loans), reducing the likelihood of an uncontrolled bankruptcy."
+                },
+                {
+                    "factor": "Reputation and Quality Control Risks",
+                    "effect": "Increases probability. Repeated quality/safety failures and delays (e.g., 777X) erode airline and investor trust, raising risk of cancellations, penalties, and further financial strain if not contained."
+                },
+                {
+                    "factor": "Resumption of MAX Production and Regulatory Trust",
+                    "effect": "Decreases probability. FAA\u2019s approval to ramp 737 MAX production is a key inflection, signaling operational stabilization, improved trust, and higher revenue potential."
+                },
+                {
+                    "factor": "Base Rate\u2014Major US Industrial/Defense Contractor Chapter 11s",
+                    "effect": "Decreases probability. Historically, large US aerospace/defense primes rarely file for bankruptcy within short windows due to their strategic importance, government contracts, and access to capital markets."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate at a loss through 2025, but the FAA production increase enables better cash flow and delivery rates. Liquidity is managed via asset sales, refinancing, or government/market support. The defense business and backlog buffer further losses. No catastrophic new incident occurs, and creditors remain patient in anticipation of 2026 profitability.",
+            "yes_scenario": "A new, major safety or quality incident triggers mass cancellations, regulatory grounding, or criminal liability. Cash burn accelerates, and liquidity dries up faster than asset sales or refinancing can offset. Labor unrest, supply chain collapse, or a global aviation demand shock (e.g., geopolitical crisis) tips Boeing into an emergency Chapter 11 to restructure debts.",
+            "final_reasoning": "The base rate for a US aerospace/defense giant like Boeing filing for bankruptcy in a 2.5-month window is extremely low. The company\u2019s structural position (duopoly, government ties, huge backlog) offers substantial protection. The recent FAA production approval is a strong signal that the worst of the operational crisis is passing, and Wall Street expects profitability in 2026. However, Boeing\u2019s financial health is fragile, with high leverage, ongoing losses, and operational risks (e.g., further certification delays, supply chain shocks, or labor unrest). The current news flow is almost uniformly positive on the operational front; there is no sign of a liquidity crisis, mass order cancellations, or imminent covenant breaches. While the risk is nonzero due to financial and reputational overhangs, the probability of bankruptcy before January 1, 2026, is very low\u2014likely under 2\u20133%.",
+            "final_probability": 2
+        },
+        "BusinessStrategy (ResourceBasedView)": {
+            "time_to_resolution": "Approximately 2.5 months (resolves on January 1, 2026; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in Business Strategy (Resource-Based View), I focus on Boeing's unique resources and capabilities\u2014such as its entrenched relationships (supplier, government, defense), intellectual property, production scale, and brand reputation\u2014to assess its ability to weather crises and avoid bankruptcy. RBV highlights how Boeing's rare, valuable, and hard-to-imitate assets provide a buffer against external shocks and financial distress, even amidst operational and reputational setbacks.",
+            "status_quo": "Boeing remains solvent, has not filed for bankruptcy, and is executing a gradual recovery. Despite consecutive losses, high debt, and operational disruptions, it has maintained sufficient liquidity through a large order backlog, government contracts, and access to capital markets.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Large Aircraft Order Backlog and Revenue Visibility",
+                    "effect": "Decreases probability. With over $600 billion in backlog and thousands of aircraft on order, Boeing has multi-year revenue visibility, even with production delays. This provides financial breathing room and collateral for raising liquidity."
+                },
+                {
+                    "factor": "Strategic Government/Defense Contracts and Political Importance",
+                    "effect": "Decreases probability. Boeing is a national security asset and a key DoD contractor. US government has a strong incentive to prevent Boeing's collapse, making emergency support or forbearance likely in extremis."
+                },
+                {
+                    "factor": "Extraordinary Debt Load and Negative Cash Flow",
+                    "effect": "Increases probability. Boeing\u2019s $53B debt and persistent negative earnings increase bankruptcy risk, especially if capital markets tighten, or if operational cash flow does not turn positive as forecasted."
+                },
+                {
+                    "factor": "Recent FAA Production Approval and Operational Turnaround",
+                    "effect": "Decreases probability. FAA approval to raise 737 MAX output signals regulatory confidence, enabling revenue acceleration and improved cash flow, critical for avoiding covenant breaches."
+                },
+                {
+                    "factor": "Supply Chain Disruptions and Certification Delays",
+                    "effect": "Increases probability. Ongoing delays (e.g., 777X, 737 MAX 7/10) and supply chain constraints complicate financial recovery, potentially triggering further charges and disappointing cash flow."
+                },
+                {
+                    "factor": "Market Perception and Access to Capital",
+                    "effect": "Decreases probability. Recent stock rebounds, high institutional ownership, and positive analyst targets suggest continued access to capital markets, making a liquidity crisis less likely in the short term."
+                },
+                {
+                    "factor": "Cultural and Reputational Damage",
+                    "effect": "Increases probability. Repeated quality issues and negative publicity erode customer and regulator trust, risking further penalties, lost orders, or unexpected shocks."
+                }
+            ],
+            "no_scenario": "Boeing avoids bankruptcy by leveraging its order backlog, restoring production rates, and gradually returning to profitability. Operational improvements, renewed trust from regulators and customers, and ongoing defense contracts ensure sufficient cash flow and refinancing options. Even if earnings remain negative in 2025, the company manages liquidity through asset sales, debt rollovers, and potential government support if needed.",
+            "yes_scenario": "A catastrophic event\u2014such as a new fatal crash, major legal or regulatory penalty, or a sudden liquidity freeze\u2014triggers an immediate cash crisis. If Boeing is unable to refinance maturing debt, or if a critical operational setback (e.g., mass order cancellations, severe supply chain breakdown, or massive new fines) occurs, the company could be forced to file for Chapter 11 to restructure its obligations.",
+            "final_reasoning": "Base rates for bankruptcy among top US industrials with similar strategic profiles (duopoly, government importance, vast order backlog) are extremely low, especially over short windows like 2.5 months. Recent news shows operational momentum: FAA lifting production caps, stock appreciation, analyst confidence, and signs of improving free cash flow. While debt remains very high and certification delays persist, Boeing\u2019s resource base (backlog, government ties, defense contracts) offers exceptional resilience. Even with a negative Altman Z-Score and persistent losses, the likelihood of a formal bankruptcy filing before Jan 1, 2026, is very low unless an exogenous shock occurs. The most likely path is continued slow recovery, with possible asset sales or government backstops if acute stress appears. The RBV lens emphasizes Boeing\u2019s unique, hard-to-replicate assets and relationships as buffers against short-term insolvency.",
+            "final_probability": 2
+        },
+        "BusinessStrategy (CrisisManagementTheory)": {
+            "time_to_resolution": "Approximately 2.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Business Strategy and Crisis Management Theory, my analysis emphasizes the interplay between operational recovery, reputational risk, financial solvency, and stakeholder dynamics. This is critical in assessing bankruptcy risk for a strategic, systemically important company like Boeing, where crisis management, government relationships, and market structure significantly mediate outcomes.",
+            "status_quo": "Boeing is facing significant financial challenges, including continued losses and high debt, but has just received regulatory approval to increase production. It has a massive order backlog, improved operational metrics, and significant investor and institutional support. Historically, large, strategically vital US aerospace firms almost never file for bankruptcy absent catastrophic, acute shocks.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "FAA Approval and Production Ramp",
+                    "effect": "Decreases bankruptcy risk: The FAA\u2019s approval to increase 737 MAX production signals regulatory confidence and enables higher revenue generation, which is critical for liquidity and financial recovery."
+                },
+                {
+                    "factor": "Debt Load and Financial Metrics",
+                    "effect": "Increases bankruptcy risk: Boeing\u2019s $53B debt, persistent losses, negative Altman Z-score (~1.24, distress zone), and poor Piotroski F-score (3) all highlight significant financial fragility."
+                },
+                {
+                    "factor": "Order Backlog and Market Demand",
+                    "effect": "Decreases bankruptcy risk: Boeing\u2019s $600B+ backlog and record-high global demand for aircraft provide a multi-year revenue cushion, even amid delays."
+                },
+                {
+                    "factor": "Supply Chain and Certification Delays",
+                    "effect": "Increases bankruptcy risk: Continued delays, especially the 777X (now 2027), add billions in costs, erode trust, and create working capital strain. Supply chain disruptions increase input costs and risk further setbacks."
+                },
+                {
+                    "factor": "Labor Relations and Strike Costs",
+                    "effect": "Modestly increases bankruptcy risk: The 2024 strike cost ~$5B, and labor instability remains a risk, but recent news suggests production and negotiations are resuming."
+                },
+                {
+                    "factor": "Government and Institutional Stakeholder Support",
+                    "effect": "Strongly decreases bankruptcy risk: As a US aerospace and defense linchpin, Boeing is likely to receive extraordinary support (direct or indirect) if existentially threatened\u2014historically, US policy avoids letting such firms fail."
+                },
+                {
+                    "factor": "Reputational Recovery and Investor Sentiment",
+                    "effect": "Decreases bankruptcy risk: Stock has rebounded >70% from 2025 lows, and institutional ownership is high (87%); this reflects renewed confidence in management\u2019s turnaround and the company\u2019s systemic relevance."
+                },
+                {
+                    "factor": "Crisis Management and Leadership Change",
+                    "effect": "Decreases bankruptcy risk: New CEO Kelly Ortberg has improved operational focus and stakeholder management, stabilizing production and resetting strategic priorities."
+                }
+            ],
+            "no_scenario": "Boeing continues ramping up 737 MAX and 787 production, leverages its backlog to generate cash, manages working capital prudently, and avoids major new operational or regulatory crises. Delayed programs (777X, MAX 7/10) incur costs, but are managed via credit markets or government support. The company enters 2026 with improved FCF, further regulatory clearance, and a credible path to profitability, thus avoiding bankruptcy.",
+            "yes_scenario": "A new, acute crisis emerges\u2014either a major safety incident, regulatory action (e.g., a global grounding), or a catastrophic supply chain/labor disruption\u2014causing cash burn to accelerate and confidence to collapse. Credit markets close, liquidity runs out, and Boeing files for Chapter 11 to restructure under creditor pressure before January 1, 2026.",
+            "final_reasoning": "Base rates for bankruptcy among major US aerospace/defense contractors are exceedingly low due to their strategic importance, political support, and government contracts. Boeing\u2019s financial metrics are weak (high debt, negative Z-score), but the recent FAA approval to ramp up 737 MAX production, a massive order backlog, and signs of operational stabilization are strong positive signals. The market is pricing in recovery, and analysts expect profitability in 2026. While Boeing is in the statistical 'distress zone,' the timeframe is very short (2.5 months), and there is no evidence of imminent cash crisis, covenant breach, or acute external shock. A bankruptcy filing before Jan 1, 2026 would require a sudden, severe negative event, which is unlikely given the current trajectory and stakeholder incentives. Crisis management theory highlights the 'too strategic to fail' nature of Boeing, further lowering the short-term risk.",
+            "final_probability": 3
+        },
+        "Economics (IndustrialOrganization)": {
+            "time_to_resolution": "Approximately 2.5 months (resolves on January 1, 2026; today is October 19, 2025).",
+            "perspective_relevance": "As an economist specializing in Industrial Organization, I bring a deep understanding of how large, strategically important firms behave under financial distress, the role of market structure (Boeing-Airbus duopoly), the impact of regulatory and supply chain shocks, and the mechanisms of bankruptcy avoidance in capital-intensive, politically sensitive industries. I can assess how industry structure, government relations, creditor incentives, and signaling effects influence the probability of bankruptcy filings.",
+            "status_quo": "Boeing has not filed for bankruptcy. Despite enduring severe operational, financial, and reputational challenges over the last several years, it has managed to avoid formal bankruptcy proceedings.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Financial distress indicators (debt, cash flow, Altman Z-Score)",
+                    "effect": "Increases probability. Boeing\u2019s Altman Z-Score (1.24) is in the distress zone, and its debt has ballooned to $53 billion with six years of losses. However, the Z-Score is a statistical predictor and not determinative for large, systemically important firms."
+                },
+                {
+                    "factor": "Regulatory relief and operational recovery (FAA production cap lifted)",
+                    "effect": "Decreases probability. The FAA\u2019s approval to increase 737 MAX production to 42/month signals restored regulatory confidence and supports a path toward revenue and cash flow recovery in late 2025 and into 2026."
+                },
+                {
+                    "factor": "Order backlog and market structure (large book, Boeing-Airbus duopoly)",
+                    "effect": "Decreases probability. Boeing\u2019s ~$600B backlog with 6,500+ planes provides a multi-year revenue buffer. The market\u2019s duopoly status and customer lock-in make short-term collapse less likely."
+                },
+                {
+                    "factor": "Government and political support (Too Big To Fail logic)",
+                    "effect": "Strongly decreases probability. Boeing is a major defense contractor and exporter, making its failure a national security and industrial base risk. The U.S. government has a history of supporting strategically critical firms (cf. GM, AIG, airlines during COVID)."
+                },
+                {
+                    "factor": "Reputational and operational risk (delays, strikes, certification setbacks)",
+                    "effect": "Slightly increases probability. Delays in 777X and MAX 7/10 certification, the 2024 strike, and ongoing quality issues create operational drag and unexpected financial shocks."
+                },
+                {
+                    "factor": "Recent financial trends (shrinking losses, improving FCF, analyst expectations)",
+                    "effect": "Decreases probability. Losses are shrinking, cash flow is improving, and analysts expect a return to profitability in 2026. Share price has recovered >70% from lows, indicating market confidence in Boeing\u2019s survival."
+                },
+                {
+                    "factor": "Imminence of the time window",
+                    "effect": "Strongly decreases probability. With only 2.5 months left, the probability of a bankruptcy filing drops sharply absent a sudden catastrophic event."
+                }
+            ],
+            "no_scenario": "Boeing continues to operate under financial strain but leverages its backlog, new FAA production approvals, and improving cash flow to avoid bankruptcy. It manages creditor relationships, perhaps renegotiates debt, and receives implicit or explicit government support if needed. Ongoing operational challenges are contained, and no new catastrophic event triggers a liquidity crisis before January 1, 2026.",
+            "yes_scenario": "An unforeseen, severe liquidity or operational crisis erupts\u2014such as a major new safety incident, a loss of access to credit markets, or a regulatory prohibition on deliveries\u2014triggering a cash crunch that cannot be bridged by asset sales or government support. Creditors force a Chapter 11 filing to restructure debts, or a rapid drop in orders and confidence makes bankruptcy unavoidable within the short window.",
+            "final_reasoning": "Base rates for bankruptcy among firms of Boeing\u2019s size, strategic status, and government ties are extremely low, especially over short windows. Boeing\u2019s financial metrics are weak (Z-Score, negative FCF), but operational recovery is underway: the FAA has just lifted the production cap, deliveries are rising, and analysts expect a return to profitability in 2026. Boeing\u2019s large backlog and duopoly status provide a buffer. Most importantly, the U.S. government has shown a consistent willingness to support critical industrial champions\u2014especially in an election year and with defense implications. The time to resolution is now very short, and no imminent existential crisis is visible in the newsflow. While the risk of bankruptcy is clearly higher than for a healthy industrial firm, the probability of a filing in the next 2.5 months is extremely low barring a black swan. A tail risk remains from possible undisclosed shocks, but the most likely outcome is continued muddling through.",
+            "final_probability": 2
+        },
+        "Economics (MacroeconomicShockAnalysis)": {
+            "time_to_resolution": "Approximately 2 months and 12 days (question resolves January 1, 2026; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in MacroeconomicShockAnalysis, my perspective is crucial for analyzing Boeing's bankruptcy risk because it requires integrating firm-level distress signals with industry-wide shocks, credit market conditions, regulatory shifts, and systemic risks. Understanding the interaction between microeconomic (Boeing's finances) and macroeconomic (aviation sector, credit markets, supply chain) factors provides a robust, base-rate-informed assessment of bankruptcy likelihood.",
+            "status_quo": "Boeing has not filed for bankruptcy and is showing signs of operational and financial recovery, albeit with ongoing losses, high debt, and persistent risks. If nothing changes, the company will not file for bankruptcy before January 1, 2026.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "FAA Production Cap Lift and Regulatory Trust Restoration",
+                    "effect": "Decreases probability. FAA approval to increase 737 MAX production to 42/month, with some return to self-certification, signals renewed regulatory trust and operational stability, a key step for cash flow and margin recovery."
+                },
+                {
+                    "factor": "Ongoing Financial Distress (Debt, Negative Z-Score)",
+                    "effect": "Increases probability. Boeing's debt is $53B, Altman Z-Score is in the distress zone (1.24), and it has posted 6+ years of losses. These are strong statistical warning signs for bankruptcy, though mitigated by large backlog and government/market support."
+                },
+                {
+                    "factor": "Market Backlog and Demand Recovery",
+                    "effect": "Decreases probability. Boeing has a $600B+ order backlog and is benefiting from a global commercial aerospace market with record demand and constrained supply, providing revenue visibility and some buffer against insolvency."
+                },
+                {
+                    "factor": "Macroeconomic and Supply Chain Environment",
+                    "effect": "Mixed. Supply chain disruptions and cost inflation are headwinds, but also affect competitors like Airbus; strong air travel demand and rising backlog suggest sectoral resilience. No immediate macro shock is evident that would push Boeing to bankruptcy within 2 months."
+                },
+                {
+                    "factor": "Delayed 777X/Certification Setbacks",
+                    "effect": "Marginally increases probability. Further delays cost billions and tie up capital, but these are not new shocks; investors and creditors have already priced these risks, and the delay is not existential within the short time horizon."
+                },
+                {
+                    "factor": "Government and Defense Ties",
+                    "effect": "Decreases probability. Boeing's defense business remains strong, with rising global defense spending, and the US government has a strategic interest in Boeing's survival."
+                },
+                {
+                    "factor": "Recent Union Strike and Labor Costs",
+                    "effect": "Marginally increases probability. The 2024 strike cost ~$5B, adding to cash burn and uncertainty, but the impact is tailing off as production resumes."
+                }
+            ],
+            "no_scenario": "Boeing continues ramping 737 MAX and 787 production, achieves or approaches breakeven on cash flow, leverages its massive backlog, and secures enough liquidity from improved operations, asset sales, or government/investor confidence. Losses persist in 2025, but no acute liquidity crisis emerges before January 1, 2026, as financial markets, government stakeholders, and customers remain patient and supportive.",
+            "yes_scenario": "A major negative shock occurs within the next 2.5 months: a catastrophic new safety incident, regulatory grounding, legal judgment, or credit market freeze triggers a sudden liquidity crisis. Boeing is unable to roll over debt or meet payroll, prompting a Chapter 11 (restructuring) or Chapter 7 (liquidation) filing before January 1, 2026.",
+            "final_reasoning": "The base rate for a large, government-linked firm like Boeing filing for bankruptcy on a 2.5-month horizon is extremely low. While Boeing's financials remain highly stressed\u2014Z-score in the distress zone, negative margins, and high debt\u2014the company has stabilized operations with increased deliveries, recovered regulatory trust, and a path to profitability projected for 2026. Its $600B+ backlog, duopoly market position, and strategic government importance further reduce acute bankruptcy risk. The most recent news (FAA production hike, improved deliveries, narrowing losses) all points to stabilization. The only plausible bankruptcy path before January 1, 2026, would be a sudden, severe, and unexpected shock\u2014none is currently visible in the news or macro environment. I weight the status quo heavily, with a small allowance for tail risk given the financial distress indicators, but the probability of bankruptcy before January 1, 2026, remains very low.",
+            "final_probability": 2
+        }
+    },
+    "deliberation_probability": [
+        3,
+        2,
+        2,
+        3,
+        2,
+        3,
+        5,
+        2,
+        2,
+        2,
+        2,
+        3,
+        2,
+        2
+    ],
+    "deliberation_mean_probability": 2.5,
+    "deliberation_sd": 0.8548504142651103,
+    "deliberation_probability_result": 2
+}

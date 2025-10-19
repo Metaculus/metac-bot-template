@@ -1,0 +1,437 @@
+{
+    "deliberation_results": {
+        "Cybersecurity Policy (Critical Infrastructure Protection)": {
+            "time_to_resolution": "About 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in Cybersecurity Policy with a focus on Critical Infrastructure Protection, I bring an understanding of how U.S. cybersecurity and data sovereignty policies evolve in response to emergent threats, the regulatory precedent for digital exports (including technology controls), and the operational realities of enforcing access restrictions on critical technologies. My perspective is also influenced by the intersection of generative AI as an emergent critical technology and the growing concerns regarding national security, privacy, and misuse.",
+            "status_quo": "As of now, there is no U.S. law restricting API access to generative AI (like GPT-4, DALL-E, etc.) based on user location or identity. Access is generally global, with only voluntary or company-imposed restrictions (e.g., OpenAI\u2019s own blocks for sanctioned countries or specific state actors).",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Rising Political Pressure for AI Regulation",
+                    "effect": "Increases probability. The rapid introduction of state-level and federal bills targeting AI safety and content (especially post-high-profile incidents involving minors) suggests growing bipartisan willingness to regulate AI access, including potential for API restrictions as an enforcement tool."
+                },
+                {
+                    "factor": "Precedent of Export Controls on Sensitive Technologies",
+                    "effect": "Increases probability. The U.S. has imposed export controls on advanced semiconductors and dual-use technologies; generative AI with capabilities for deepfakes, malware generation, or strategic influence could plausibly be seen as a dual-use technology, warranting similar regulatory action, especially in light of documented foreign misuse (e.g., Chinese state actors using ChatGPT for information operations)."
+                },
+                {
+                    "factor": "Implementation Complexity and Effectiveness",
+                    "effect": "Decreases probability, but only slightly. Enforcing geofenced API restrictions is technically feasible (using IP, KYC, etc.), but easy circumvention via VPNs and proxy services is well-known. U.S. regulators may hesitate to implement measures that are easily bypassed, unless the goal is to set a legal standard rather than absolute technical control."
+                },
+                {
+                    "factor": "Industry Pushback and Economic Interests",
+                    "effect": "Decreases probability. Major AI providers (OpenAI, Google, Anthropic, etc.) have strong commercial incentives to maintain global reach. Restricting access could hurt competitiveness and slow innovation, a concern repeatedly cited by U.S. policymakers wary of ceding AI leadership to China."
+                },
+                {
+                    "factor": "International Precedent and Regulatory Convergence",
+                    "effect": "Slightly increases probability. The EU is moving toward high-risk AI regulation; China is heavily restricting generative AI exports. If U.S. allies or adversaries take restrictive stances, the U.S. may follow to maintain regulatory alignment or strategic advantage."
+                },
+                {
+                    "factor": "Recent Major Incidents of Foreign Abuse",
+                    "effect": "Modestly increases probability. Recent documentation of Chinese government misuse of ChatGPT for surveillance and influence operations highlights real national security risks, increasing the political salience of restricting access\u2014at least for certain regions or actors."
+                }
+            ],
+            "no_scenario": "Despite rising pressure, U.S. lawmakers prioritize less restrictive measures\u2014such as age/identity verification for minors and enhanced content moderation\u2014over sweeping API geofencing. Industry lobbying and concerns about the futility of VPN circumvention, coupled with the short time frame (less than 3 months), lead to deferral of legislative action. API access remains globally available, with only company-driven or foreign government-imposed restrictions.",
+            "yes_scenario": "A rapid policy response emerges due to a catalyzing event\u2014such as a foreign adversary's critical misuse of generative AI for cyber or influence attacks, or a major incident involving underage or vulnerable users abroad. Congress or an executive agency (e.g., Department of Commerce, Treasury, or CISA) invokes emergency powers or updates export control lists to require U.S.-licensed AI providers to restrict API access to U.S.-verified users, at least for 'powerful' models. This could take the form of a broad regulation or targeted restrictions on specific high-risk countries or use cases.",
+            "final_reasoning": "Base rates for the U.S. imposing broad digital export restrictions on cloud-delivered services are low, but not negligible\u2014especially when national security or critical infrastructure is in play. The current legislative focus is on youth protection, content moderation, and age verification, not on nationality-based or location-based API blocks. However, the ongoing documentation of foreign state abuse, the rapid evolution of AI regulation globally, and the analogy to export controls on chips tilt risk upward. The short time frame (2.5 months) is a significant limiting factor; even fast-track legislative or executive action would need a clear, urgent trigger, which has not yet materialized. Industry resistance and the ease of technical circumvention further reduce the likelihood of imminent, broad, legally mandated U.S.-only API access. The most likely outcome before 2026 is the tightening of access controls for minors, new content restrictions, and possibly targeted blocks against specific sanctioned countries or known threat actors\u2014but not a blanket requirement that all 'powerful generative AI' APIs restrict access to the U.S. only. Thus, while risk is elevated, the status quo is likely to persist through the end of 2025.",
+            "final_probability": 17
+        },
+        "Cybersecurity Policy (National Security Controls)": {
+            "time_to_resolution": "About 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in cybersecurity policy and national security controls, I focus on how governments, especially the US, respond to emerging technological risks (e.g., from generative AI) through regulatory and technical restrictions. My expertise is directly relevant because restricting API access to AI systems can be motivated by national security, data privacy, or social harm concerns\u2014areas at the intersection of policy, law, and practical enforcement.",
+            "status_quo": "As of October 2025, there is no US law that restricts API access to powerful generative AI systems based on user location (i.e., no requirement to limit access to users within the US or verified Americans). Most controls focus on age verification, safety features, and content moderation, not geofencing or nationality-based restrictions.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "National Security Threat Perception",
+                    "effect": "Increases probability if credible evidence emerges that foreign adversaries are using US-based generative AI APIs for malicious purposes (e.g., deepfakes, social engineering, or weapons development). The latest OpenAI report confirmed Chinese and North Korean actors misusing AI, but the US response has so far focused on policy statements and account bans, not national legal restrictions on API access."
+                },
+                {
+                    "factor": "Legislative and Regulatory Trend",
+                    "effect": "Slightly increases probability as states (not the federal government) have rapidly implemented age verification and safety controls for minors (e.g., California's SB 243), and the FTC is actively investigating AI harms. However, these laws target age and child safety, not nationality or geolocation. No major federal moves toward API geofencing or nationality restrictions have been announced."
+                },
+                {
+                    "factor": "Precedent of Other Content Restrictions",
+                    "effect": "Neutral or slightly increases probability. DRM for media and age verification for adult content are widely used, but these focus on content type and user age, not country of access, except for copyright restrictions (mainly for commercial media). There is precedent for geofencing, but not for API-level restriction by US law for tech products."
+                },
+                {
+                    "factor": "Industry Pushback and Practicality",
+                    "effect": "Decreases probability. Tech companies (OpenAI, Google, Anthropic) are rolling out age and behavioral verification, not geofencing. VPN circumvention is easy and widely used (as seen in France/Italy for adult sites), making such restrictions less effective and potentially harmful to US competitiveness. US policymakers have been reluctant to impose restrictions that could stifle innovation or harm the AI industry's global reach, especially given competition with China."
+                },
+                {
+                    "factor": "Recent Policy Developments and Timing",
+                    "effect": "Decreases probability. With only two and a half months left before the deadline, there is no reported movement in Congress or federal agencies toward mandatory API geofencing for generative AI. Legal and regulatory focus remains on age, mental health, safety, and privacy."
+                }
+            ],
+            "no_scenario": "Despite mounting concerns about misuse of generative AI (deepfakes, foreign manipulation, harm to minors), US policy remains focused on age verification, content moderation, and safety controls. No federal law or regulation is enacted by December 31, 2025, requiring API providers to restrict access based on user location (within the US) or nationality. Companies continue to implement their own safety tools and age verification, but US-based APIs remain globally accessible.",
+            "yes_scenario": "A sudden, high-profile incident (e.g., a major national security breach or a foreign adversary using US-based AI APIs for a catastrophic event) motivates rapid congressional and executive action. Emergency measures or legislation are rushed through, requiring API providers of 'powerful generative AI' to restrict access to US-based users only, and to implement IP-based or identity-based geofencing. This would be an extraordinary, reactive policy move, not currently foreshadowed in the news.",
+            "final_reasoning": "Base rates for US-imposed API geofencing on widely used tech platforms are extremely low\u2014such measures are rare, especially for commercial, non-military APIs. The current regulatory trend is toward age and safety controls, not location-based API blocks. Although there is growing concern about national security misuse, the US government\u2019s typical response is targeted (e.g., sanctions, account bans, export controls on model weights, or specific access denials to sanctioned actors), not blanket legal restrictions affecting all non-US users. The news shows that the main focus remains on age verification, content moderation, and privacy\u2014not on geofencing. With only a short time window remaining and no sign of imminent legislation or regulation, the probability of a US law mandating API geofencing before 2026 is very low. The only significant tail risk would be an unforeseen crisis, but nothing in the current news cycle suggests such an outcome is brewing.",
+            "final_probability": 5
+        },
+        "Technology Regulation (Cloud Service Compliance)": {
+            "time_to_resolution": "About 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in Technology Regulation and Cloud Service Compliance, my perspective is highly relevant because the question concerns US legal requirements for restricting access to generative AI APIs by geography\u2014an issue deeply tied to regulatory trends, compliance pressures, and technical enforcement feasibility in the cloud and SaaS sector. My experience includes tracking how governments implement restrictions (export controls, compliance gating, KYC), the practicalities of API geo-fencing, and the base rates for regulatory action of this nature.",
+            "status_quo": "As of now, there is no US federal law requiring API-level geographic restrictions on generative AI (e.g., LLMs like GPT-4, DALL-E, etc.), although API providers may impose some restrictions voluntarily or for compliance with non-US laws.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent US regulatory action is focused on age verification and child protection, not geographic API restriction",
+                    "effect": "Decreases probability. Despite state-level and California laws (e.g., SB 243) requiring age verification and safety for minors, these focus on user age, not restricting access based on location. The FTC and state Attorneys General have prioritized youth protection over national security or export-control style restrictions."
+                },
+                {
+                    "factor": "No evidence of imminent national security-driven API geo-blocking for generative AI",
+                    "effect": "Decreases probability. Although China, Russia, and other adversarial actors misuse generative AI, current US responses focus on account bans, not broad API geo-restriction. Export controls to China have targeted chip sales and model weights, not API access for global users."
+                },
+                {
+                    "factor": "Base rate of US government imposing API geo-restriction requirements for consumer SaaS is extremely low",
+                    "effect": "Decreases probability. Historical US practice favors targeted controls (e.g., sanctioned entity lists, specific export restrictions) rather than blanket location-based API restrictions. DRM-style regional blocks for streaming exist, but not for general API access\u2014especially for US companies seeking global market share."
+                },
+                {
+                    "factor": "International precedent: EU/Italy/France regulation focuses on age and content access, not geography",
+                    "effect": "Decreases probability. European actions (Italy\u2019s and France\u2019s bans, UK\u2019s Online Safety Act) have sometimes restricted access, but these are about age/content, and US companies have responded by implementing age verification, not country-based API blocks."
+                },
+                {
+                    "factor": "Political climate in the US is not currently conducive to new, sweeping tech restrictions",
+                    "effect": "Decreases probability. The 2024-2025 period featured divided government, and tech regulation (especially of AI) is politically contentious, with Republicans and some Democrats wary of harming US competitiveness versus China. Most federal action so far has been sectoral or state-driven."
+                },
+                {
+                    "factor": "Recent high-profile incidents (teen suicides, FTC investigations) are prompting age/content controls, not geographic API controls",
+                    "effect": "Decreases probability. The legal and regulatory response has been to add safety features, verification, and content moderation, not to restrict API access by geography."
+                },
+                {
+                    "factor": "Technical feasibility and circumvention (VPNs, proxies) reduce the likely effectiveness and thus the appeal of geographic API restrictions",
+                    "effect": "Decreases probability. As seen with France/Italy\u2019s efforts against Pornhub, users easily circumvent via VPN, making such measures less effective and less likely to be adopted for AI APIs."
+                },
+                {
+                    "factor": "Possible but unlikely scenario: sudden national security crisis or high-profile AI misuse event",
+                    "effect": "Slightly increases probability. If a major, headline-grabbing incident were directly traced to foreign access of US AI APIs (e.g., a terrorist plot, catastrophic deepfake targeting US interests), there could be emergency regulatory action. However, no such event is currently evident."
+                }
+            ],
+            "no_scenario": "US regulators continue to focus on age and content verification for minors and vulnerable populations, as well as targeted bans on specific bad actors (e.g., Chinese or Russian government entities). OpenAI, Google, and others implement stricter KYC/age verification, but API access remains global, with no US law requiring generative AI APIs to restrict by geography. Legislative gridlock or lack of consensus prevents new sweeping laws before 2026.",
+            "yes_scenario": "A major national security incident or credible threat emerges linking foreign actors\u2019 use of US-based generative AI APIs to serious harm (e.g., terrorism, bioweapon design, election interference). The US Congress or an executive agency issues emergency rules or legislation mandating that API providers restrict access to users verifiably located in the US, at least for their most powerful generative models, before the end of 2025.",
+            "final_reasoning": "The overwhelming weight of evidence from recent US and international regulatory trends, as well as the technical, political, and economic realities, points to a very low likelihood that the US will mandate geographic API access restrictions for generative AI before 2026. The status quo is robust: policy energy is focused on age/content controls and targeted enforcement, not broad geographic restrictions. There is no sign of a national security-driven regulatory shift, and the base rate for such action is close to zero. Even the most likely triggers (major incidents) have not yet materialized, and the regulatory pipeline is slow. Therefore, the probability that the US will restrict access outside the US to some generative AI APIs before 2026 is extremely low.",
+            "final_probability": 3
+        },
+        "Technology Regulation (AI Regulatory Policy)": {
+            "time_to_resolution": "About 2.5 months (question resolves on December 31, 2025; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in AI regulatory policy, my perspective is crucial in assessing the likelihood of rapid legal action at the federal level in the US targeting generative AI APIs, especially given the current focus on age verification, content moderation, and deepfake risks. I am attuned to the difference between industry self-regulation, state-level actions, and hard federal mandates that would meet the Metaculus resolution criteria.",
+            "status_quo": "As of now, there are no US federal laws requiring generative AI API access to be restricted to US-based users. Companies like OpenAI use age verification and content moderation, but API access is not restricted by geography per federal mandate.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent regulatory momentum is focused on child safety, age verification, and content moderation\u2014not geographic API restrictions",
+                    "effect": "Decreases probability: Most US legislative and regulatory energy is aimed at protecting minors and addressing harmful content, not at restricting foreign access to generative AI APIs."
+                },
+                {
+                    "factor": "No major legislative or executive action targeting API geo-fencing at the federal level",
+                    "effect": "Decreases probability: There has been substantial public debate and state-level action on AI safety, but no sign of imminent federal legislation requiring generative AI API geo-restriction."
+                },
+                {
+                    "factor": "Industry self-regulation and technical controls (age/ID verification) are ramping up in response to state and FTC scrutiny",
+                    "effect": "Decreases probability: The industry is preemptively implementing age and content controls to avoid more burdensome regulation, which may satisfy most policymakers."
+                },
+                {
+                    "factor": "State-level laws (e.g., California SB 243) require age verification for AI chatbots but do not mandate geo-restriction of API access",
+                    "effect": "Decreases probability: These laws increase compliance costs but stop short of restricting API access to US users only."
+                },
+                {
+                    "factor": "Federal-level regulatory response tends to follow high-profile, catastrophic incidents, not just ethical or privacy concerns",
+                    "effect": "Neutral to slight increase: While there have been tragic incidents involving minors and AI chatbots, these have prompted age/content controls rather than geo-blocking. Only a catastrophic national security incident involving API misuse by foreigners could trigger rapid geo-restriction."
+                },
+                {
+                    "factor": "Precedent: Export controls on advanced chips and AI models to China",
+                    "effect": "Slight increase: The US has used export controls against China for physical AI chips and some software, but not generally for API access, except in rare, targeted cases."
+                },
+                {
+                    "factor": "Short time window before resolution",
+                    "effect": "Decreases probability: With only about 2.5 months left and no major bills or executive actions in the pipeline, the likelihood of new federal law mandating geo-restriction is very low."
+                }
+            ],
+            "no_scenario": "The US continues to focus on age verification, parental controls, and content moderation for generative AI APIs. State laws proliferate (e.g., California, Louisiana), and the FTC or Congress holds hearings or launches investigations, but no federal law is passed or enacted by Dec 31, 2025, that requires API access to be limited to US users. API providers may voluntarily implement more robust safety/verification features, but these do not amount to a legal US-only restriction.",
+            "yes_scenario": "A sudden, high-profile national security incident\u2014such as confirmed use of a US-based generative AI API by foreign actors to generate deepfake content for election interference or weaponization\u2014sparks emergency federal action. Congress passes (and the president signs) a fast-tracked law, or a federal executive order is issued, requiring at least some powerful generative AI APIs to restrict access to US-based users or users with verifiable US identity. Alternatively, the Commerce Department uses existing export control authorities to mandate API geo-restriction for certain models, and this is interpreted as a legal requirement.",
+            "final_reasoning": "Despite heightened scrutiny of generative AI and rapid regulatory action at the state level (especially around age verification and content moderation), there is no concrete movement afoot at the federal level to legally require US-only API access for generative AI. Most real-world regulatory responses have focused on child safety, mental health, and deepfake/abuse liability. While the US has used export controls for AI chips and occasionally for software, there is no precedent for mandating API geo-restriction at the federal level for broad classes of AI models, and certainly not with the current time frame. The news articles show industry and state-level movement, but no sign of imminent federal action that would satisfy the Metaculus resolution criteria. With only about two and a half months left, the base rate for such rapid, sweeping federal regulatory action\u2014absent a catalyzing crisis\u2014is extremely low.",
+            "final_probability": 3
+        },
+        "US China Tech Policy (US China AI Competition Dynamics)": {
+            "time_to_resolution": "About 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As a US-China Tech Policy and US-China AI Competition Dynamics expert, I bring an understanding of how US policymakers weigh AI export controls, national security, regulatory responses to abuse (deepfakes, misuse by adversaries), and the influence of state-level actions on federal regulation. I am attuned to how US-China rivalry, regulatory responses abroad, and domestic political and legal constraints shape federal policy on AI access.",
+            "status_quo": "As of October 2025, there are no US federal laws restricting API access to generative AI based on user location (i.e., no US-only restriction). API access is globally available, with companies like OpenAI, Anthropic, and Google offering APIs to non-US users, though some voluntary or corporate restrictions may exist for sanctioned countries.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Heightened scrutiny over AI misuse (deepfakes, suicide, political manipulation)",
+                    "effect": "Increases probability. Recent news highlights regulatory and societal concern about AI-enabled harm (suicide, deepfakes, state actors' misuse). Policymaker awareness and willingness to regulate have increased, especially following high-profile incidents and regulatory moves in Europe and US states."
+                },
+                {
+                    "factor": "Precedent of state-level and foreign regulation (California SB 243, EU AI Act, age verification laws)",
+                    "effect": "Slightly increases probability. State legislation and foreign moves (France, Italy, UK) create regulatory pressure and normalize access restrictions. However, these focus on age/content, not geolocation, and have not yet led to US federal geolocation-based restrictions."
+                },
+                {
+                    "factor": "US-China tech rivalry and national security framing",
+                    "effect": "Moderately increases probability. The US has used export controls and blacklists against China for advanced chips and AI tools, and there is growing concern about foreign adversaries using US AI APIs for malign purposes (e.g., China\u2019s misuse documented by OpenAI). However, so far, responses have focused on entity-level bans, not blanket geo-IP restrictions."
+                },
+                {
+                    "factor": "Industry resistance and economic incentives",
+                    "effect": "Decreases probability. US AI firms have strong incentives for global market access and, thus far, have self-regulated (age/content verification, not geo-IP). Industry lobbying would resist broad geographic restrictions absent a clear and present national security threat."
+                },
+                {
+                    "factor": "Short timeframe to federal action (less than 3 months)",
+                    "effect": "Decreases probability. Major US federal regulatory changes\u2014especially those restricting a globally used technology\u2014typically require months of debate, comment, and implementation. No clear legislative or executive action is currently in motion to impose such a restriction by year-end 2025."
+                },
+                {
+                    "factor": "Base rate of similar US tech export controls",
+                    "effect": "Slightly increases probability. The US has imposed export controls on sensitive tech (chips, advanced software), but these usually target China or named entities, not all non-US users."
+                },
+                {
+                    "factor": "Recent moves by Anthropic to restrict API access for Chinese-controlled entities",
+                    "effect": "Neutral/slightly increases probability. Anthropic\u2019s restriction is company-level and focused on Chinese entities, not a US government-mandated restriction targeting all non-US users."
+                }
+            ],
+            "no_scenario": "Despite ongoing regulatory scrutiny and pressure, the US federal government does not enact a law or regulation before Dec 31, 2025, requiring generative AI API providers to restrict access to only US-based users. Companies may enhance age/content verification, and restrict specific countries/entities (e.g., China, sanctioned states), but do not implement broad geo-IP restrictions for API usage. State-level or voluntary corporate measures may occur, but none meet the resolution criteria for a federal, US-only API restriction.",
+            "yes_scenario": "A late-breaking federal action (e.g., executive order, emergency regulation, or fast-tracked legislation) is enacted and comes into effect before Dec 31, 2025, requiring at least some 'powerful' generative AI providers to restrict API access to only users in the US. This might be triggered by a severe AI-enabled incident (e.g., national security threat, catastrophic misuse traced to foreign API use), or mounting evidence of abuse by foreign adversaries, prompting a rapid federal response.",
+            "final_reasoning": "While there are mounting concerns over AI misuse (especially for minors, deepfakes, and foreign adversaries), and increased regulatory action at the state and international level, there is no current evidence of a federal US legislative or regulatory process that would result in a US-only API access restriction for generative AI by the end of 2025. The most plausible triggers\u2014massive national security incident or overwhelming bipartisan consensus\u2014have not materialized. Recent US responses to AI risks have focused on age/content, not geography. Industry resistance and the short timeframe also make rapid federal action highly unlikely. The base rate for such export-style restrictions is low except for adversarial countries or entities, not for all non-US users. I therefore assess that the status quo is likely to persist through 2025.",
+            "final_probability": 8
+        },
+        "International Relations (Technology Nationalism)": {
+            "time_to_resolution": "Approximately 2.5 months (until Dec 31, 2025)",
+            "perspective_relevance": "As an expert in International Relations with a focus on Technology Nationalism, my perspective is critical for understanding how the US government balances AI innovation, global competitiveness, national security, and social risk in regulating generative AI APIs. I can evaluate how domestic political pressures, international competition (especially with China and the EU), and recent regulatory trends influence the probability of the US imposing API access restrictions.",
+            "status_quo": "As of October 2025, there is no US federal law restricting API access to generative AI systems based on user location. Companies use age verification and some state-level safety/compliance measures, but APIs are globally accessible unless individual providers choose otherwise.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent US regulatory momentum on youth protection and AI content moderation",
+                    "effect": "Increases probability: Multiple states and California have passed laws requiring age verification and safety features for minors in AI and digital services, showing a growing willingness to regulate AI access at a legislative level."
+                },
+                {
+                    "factor": "Absence of explicit federal legislation targeting API geo-restriction",
+                    "effect": "Decreases probability: Despite intense scrutiny on AI, there is still no clear movement in Congress toward restricting API access by geography, and most measures focus on age/content, not national origin."
+                },
+                {
+                    "factor": "Industry self-regulation and technical circumvention (VPNs, proxies)",
+                    "effect": "Decreases probability: Even where restrictions exist (e.g., for copyright, porn, or in Europe), users routinely circumvent them via VPNs, and US lawmakers are aware of this; such technical realities often discourage heavy-handed geographic restrictions."
+                },
+                {
+                    "factor": "International competition and technology nationalism",
+                    "effect": "Decreases probability: The US is keenly aware of competition with China/EU in AI and is wary of restricting global access to US AI APIs, which could drive foreign users to non-US platforms, undermining US global AI influence and market share."
+                },
+                {
+                    "factor": "Content risks (deepfakes, weaponization, foreign exploitation)",
+                    "effect": "Increases probability: Concerns about misuse of generative AI (e.g., for deepfakes, weapon instructions, or foreign surveillance) could prompt emergency or targeted restrictions if there is a high-profile incident, especially involving an adversary."
+                },
+                {
+                    "factor": "Recent expansion of adult content in generative AI",
+                    "effect": "Slightly increases probability: The December 2025 rollout of adult content in ChatGPT for verified adults, combined with recent tragedies and regulatory backlash, could prompt hurried, broad restrictions if a scandal emerges\u2014though current measures are focused on age, not geography."
+                },
+                {
+                    "factor": "US legal and constitutional context",
+                    "effect": "Decreases probability: The US legal framework, especially First Amendment protections and industry lobbying, makes sweeping access restrictions less likely unless national security is directly threatened."
+                }
+            ],
+            "no_scenario": "Despite growing regulation of AI content and safety (especially for minors), the US does not pass or enforce any federal law mandating that generative AI APIs restrict access to users outside the US. Companies might enhance age verification, parental controls, and behavioral monitoring, but API access remains global (with self-governed bans or restrictions by providers, not by law). Security incidents or misuse are managed by targeted bans, account suspensions, or content filters, not by geographic restriction.",
+            "yes_scenario": "A major incident\u2014such as a foreign adversary using a US-based generative AI API for a high-profile cyberattack, disinformation campaign, or to generate weaponizable content\u2014triggers a national security outcry. In response, Congress or the executive branch passes emergency legislation requiring that certain powerful generative AI APIs restrict access to non-US users, enforceable via IP geofencing or citizenship verification. Alternatively, a sweeping law is rushed through as part of omnibus tech regulation in response to mounting moral panic over AI-generated deepfakes, abuse, or copyright violations by foreign actors.",
+            "final_reasoning": "The US regulatory environment has shifted toward more active AI oversight, especially for child safety and content moderation (e.g., California SB 243, FTC inquiries, age verification mandates). However, nearly all measures to date focus on age, harm prevention, and explicit content\u2014not on restricting API access by geography or nationality. Industry self-regulation is evolving, but US policymakers remain sensitive to issues of global AI leadership and market share. There is strong precedent for allowing circumvention (as in DRM/VPN cases), and US laws rarely take the maximalist, China-style approach to digital borders due to First Amendment and commerce concerns. While there are rising risks (deepfakes, copyright, foreign misuse), there is no evidence of imminent federal action to restrict API access by geography, nor is there a major triggering event with only 2.5 months left. The most likely outcome is the status quo: stricter age/content controls, but no US law restricting API access to generative AI based on user location before 2026.",
+            "final_probability": 10
+        },
+        "International Relations (Export Control Theory)": {
+            "time_to_resolution": "Approximately 2.5 months (until Dec 31, 2025)",
+            "perspective_relevance": "As an expert in International Relations (Export Control Theory), my perspective is especially relevant because export controls are a primary lever governments use to restrict cross-border access to sensitive technologies, including dual-use AI systems. I consider historical base rates of export controls on advanced tech, the intersection of AI capabilities and national security, and the policy precedents for restricting access to digital services and APIs. I can assess whether the evolving risk/benefit calculus for U.S. policymakers is likely to tip toward legal restrictions on API access for generative AI outside the U.S. by the end of 2025.",
+            "status_quo": "Currently, there are no U.S. laws restricting API access to powerful generative AI systems based on user location; API access to models like ChatGPT (GPT-4/4o), Google Gemini, and similar platforms is global (excepting certain sanctioned or embargoed jurisdictions, e.g., North Korea, Iran, etc.). Platform-level safeguards (e.g., content filters, age verification) exist, but not location-based legal restrictions.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of API Export Controls on Digital Services",
+                    "effect": "Decreases probability. The U.S. has historically regulated the export of physical goods and software, but location-based API access controls on cloud services are rare and usually reserved for clear military or dual-use technologies. DRM-like geofencing is more common for IP/copyright, not broad tech export controls."
+                },
+                {
+                    "factor": "Recent U.S. Policy and Legislative Activity",
+                    "effect": "Slightly increases probability. There is mounting legislative and regulatory scrutiny of AI harms (e.g., deepfakes, mental health, exploitation of minors), with new state laws mandating age verification, but there is little momentum for national restrictions on cross-border API access specifically. The focus is on age/content, not nationality/geography."
+                },
+                {
+                    "factor": "International Precedent and U.S. Response to Foreign Regulation",
+                    "effect": "Increases probability. The EU and China have imposed much stricter regulatory regimes (e.g., China's outright ban of AI erotica, EU's AI Act for high-risk systems). U.S. companies have responded with geofencing in those jurisdictions. However, the U.S. rarely mirrors such restrictions domestically unless driven by national security."
+                },
+                {
+                    "factor": "National Security and Export Control Concerns",
+                    "effect": "Neutral to slightly increases probability. While there is growing concern about misuse of AI by hostile states (see OpenAI's report on Chinese government misuse), U.S. controls have focused on physical hardware (chips, compute) and model weights, not API access. Direct API bans would be a major escalation and have not been signaled in current U.S. national security policy."
+                },
+                {
+                    "factor": "Domestic Political Incentives and Tech Industry Pushback",
+                    "effect": "Decreases probability. The U.S. tech sector has strong incentives to maintain global market access. API geofencing for generative AI would be highly disruptive, face industry resistance, and raise concerns about competitiveness with China, especially if China/others do not reciprocate."
+                },
+                {
+                    "factor": "Recent News on Adult Content and Age Verification",
+                    "effect": "Neutral. The recent moves by OpenAI and others to allow adult content for verified users are driving stronger age verification and parental controls, but these are content and user-age focused, not location/geography based. New state and California law (SB 243) focus on youth protection, not cross-border API restrictions."
+                },
+                {
+                    "factor": "Technical Feasibility and Circumvention Risk",
+                    "effect": "Decreases probability. VPN circumvention is easy, and enforcement of location-based API controls is difficult except for sanctioned countries. U.S. policymakers know these controls are porous and may not bother imposing them except in extreme cases."
+                }
+            ],
+            "no_scenario": "The U.S. continues to tighten age verification, content moderation, and mental health safeguards for API access to generative AI, especially for minors and vulnerable adults. States may pass more laws like SB 243, and companies implement stricter age gating and parental controls, but there is no federal law or regulation requiring API providers to restrict access based on user location (outside the U.S.), except for already-sanctioned countries. U.S. focuses on responsible AI use and international cooperation rather than broad geofencing.",
+            "yes_scenario": "A high-profile incident (such as a catastrophic misuse of generative AI by a foreign actor leading to major harm, or a geopolitical crisis involving AI-generated deepfakes/bioweapon design outside the U.S.) prompts emergency federal action. Congress or the executive branch invokes the International Emergency Economic Powers Act (IEEPA), or passes new law, mandating API providers to limit access to U.S.-based users for some 'powerful' generative AI systems. Alternatively, new export controls are issued under the Commerce Department, restricting API availability for certain models to U.S. territory only.",
+            "final_reasoning": "The base rate for the U.S. imposing broad location-based API controls on digital services is extremely low outside of sanctioned countries. Despite heightened scrutiny of AI harms, the current regulatory trajectory is toward age/content moderation, not cross-border geofencing. The primary drivers for export controls\u2014military/dual-use threats\u2014are being addressed via compute and model weight restrictions, not API geofencing. There is no clear evidence from recent news or legislative trends that a federal law requiring U.S.-only API access for generative AI is imminent. Technical, economic, and political barriers make such a move unlikely absent an extraordinary national security incident. Given the short window to 2026, the inertia of the status quo, and lack of concrete policy signals, the probability remains low, though not impossible in case of a shock event.",
+            "final_probability": 7
+        },
+        "Law (US Export Administration Regulations)": {
+            "time_to_resolution": "About 2.5 months (resolves December 31, 2025; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in US Export Administration Regulations (EAR), I have an in-depth understanding of how the US government leverages regulatory authorities to control cross-border technology flows, including software and cloud-based services. The EAR and related frameworks have been used to restrict access to advanced technologies (e.g., semiconductors, encryption, AI chips) and have established precedents for extraterritorial controls on sensitive tech. This perspective is critical for assessing whether US law will specifically mandate geofencing or US-person-only access to powerful generative AI APIs.",
+            "status_quo": "As of now, US law does not require powerful generative AI systems (such as GPT-4, DALLE-2, or equivalents) to restrict their APIs to US-based users. Access is managed by providers through terms of service, content moderation, and voluntary geographic restrictions, but not by US legal mandate.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Precedent and Mechanisms for Extraterritorial Controls (EAR and AI chip export controls)",
+                    "effect": "Increases probability. The US government has a track record of using EAR to restrict exports of advanced technology, including to entities with foreign ties. The mechanisms for enforcing geofencing or US-person-only access to cloud-based AI already exist for sensitive technologies."
+                },
+                {
+                    "factor": "Political and Regulatory Momentum (Congress/White House/FTC focus on AI risks and China)",
+                    "effect": "Slightly increases probability. There is bipartisan concern about AI risks (misuse, deepfakes, national security) and technological competition with China, which heightens the possibility of regulatory action."
+                },
+                {
+                    "factor": "Recent Legislative and Regulatory Activity (e.g., SB 243 in California, FTC investigations, Supreme Court upholding age verification)",
+                    "effect": "Modestly increases probability. US states and federal agencies are passing laws and launching investigations focused on generative AI harms, especially around youth, privacy, and deepfakes, showing willingness to regulate access more tightly."
+                },
+                {
+                    "factor": "Lack of Imminent Catalyzing Event (no public catastrophic misuse tied to foreign users)",
+                    "effect": "Decreases probability. Despite concern, there has not yet been a high-profile or catastrophic incident directly and unambiguously associated with foreign API access to US AI models, which often triggers emergency federal action."
+                },
+                {
+                    "factor": "Industry Self-Regulation and Technical Controls (voluntary age verification, content moderation, API restrictions by providers)",
+                    "effect": "Decreases probability. The leading US AI companies have implemented or are rolling out increasingly robust voluntary access restrictions, which may satisfy policymakers and reduce immediate pressure for a federal legal mandate."
+                },
+                {
+                    "factor": "International Regulatory Landscape (EU/China moving faster than US on some AI controls)",
+                    "effect": "Decreases probability. The US has historically lagged the EU and China on consumer-facing regulatory mandates for digital services, especially where First Amendment or commercial interests are implicated."
+                },
+                {
+                    "factor": "Time Remaining Until Deadline (2.5 months)",
+                    "effect": "Significantly decreases probability. Enacting and implementing a US federal legal requirement to restrict API access to US-based or US-verified users before the end of 2025 is logistically and politically challenging in the short window remaining."
+                }
+            ],
+            "no_scenario": "Despite ongoing debate, no new US law is enacted or comes into effect by December 31, 2025 that requires US-based generative AI APIs to restrict access to US users only. Providers continue to use voluntary technical and policy measures (age verification, content filtering, parental controls), and regulatory focus remains on youth protection, transparency, and moderation rather than geographically-based API restrictions. Federal legislative gridlock, industry lobbying, and lack of a catalyzing crisis delay any such law until 2026 or later.",
+            "yes_scenario": "A major incident (e.g., a widely publicized case of a foreign user using a US-hosted AI API for national security threats, terrorism, or major election interference) triggers emergency action, leading Congress or the executive branch to invoke or amend relevant laws (e.g., under the International Emergency Economic Powers Act, EAR, or a new statute) to require US-based generative AI APIs to restrict access to only US-based or verified US users. Alternatively, an aggressive regulatory interpretation by the Department of Commerce or another agency imposes such a requirement on at least some powerful generative AI systems before the end of 2025.",
+            "final_reasoning": "The base rate for the US imposing such geographically-based digital access controls by law, especially so rapidly, is low. The US has shown willingness to restrict cross-border tech flows for national security (semiconductors, AI chips), but has not moved as quickly or forcefully on consumer-facing digital services, especially where commercial, First Amendment, and industry-influence factors are strong. The recent surge in regulatory activity is focused on youth safety and content moderation, not geofencing or US-person-only API access. While the US has the legal tools and precedent to act, the absence of a catalyzing crisis, ongoing industry self-regulation, and the very short time frame make it unlikely that a US law requiring API geofencing will be enacted and come into force by December 31, 2025. Most state and federal laws taking effect focus on age verification and transparency, not geographic restriction. Given the status quo, legal process inertia, and lack of new evidence in the news pointing to imminent action, the probability remains low.",
+            "final_probability": 10
+        },
+        "Law (International Trade Law)": {
+            "time_to_resolution": "Approximately 2.5 months (question resolves December 31, 2025; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in International Trade Law, I am particularly attuned to how export controls, cross-border data flows, and extraterritorial application of US law intersect with rapidly evolving technologies like generative AI. US restrictions on API access to powerful AI models may resemble prior moves in dual-use technology export controls, sanctions regimes, and data localization requirements, all of which are shaped by trade law, privacy law, and national security imperatives. My perspective allows me to evaluate both the legal feasibility and historical precedent for such restrictions, as well as the likelihood of their implementation within the stated timeframe.",
+            "status_quo": "As of now, the US does NOT require API access to powerful generative AI to be restricted to US persons or US soil; OpenAI and other providers offer their APIs globally, subject to company-level terms of service but not to US legal restrictions limiting access by geography or nationality.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Regulatory and Legislative Momentum in the US",
+                    "effect": "Increases probability. There is growing bipartisan concern around deepfakes, AI-generated child sexual abuse material, and misuse by foreign adversaries. California's new SB 243 law (in effect January 2026) shows a trend toward age verification and user restrictions, but is focused on youth and harmful content, not geographic limitation. However, Congressional appetite to take action on AI risks\u2014especially involving China or explicit material\u2014remains high."
+                },
+                {
+                    "factor": "International Precedent and Pressure",
+                    "effect": "Slightly increases probability. EU and China are moving toward stricter AI controls, and the EU's AI Act may push US companies to segment access. However, their focus is on risk classification, not US-only access, and US law rarely mimics the extraterritoriality of, say, GDPR, unless national security is implicated."
+                },
+                {
+                    "factor": "Export Control and National Security Considerations",
+                    "effect": "Moderately increases probability. The US has already imposed export controls on AI chips (to China), and the Commerce Department is reviewing controls on AI model weights and training code. If a national security threat\u2014such as reported state actor misuse\u2014were to escalate, the US could plausibly require US AI companies to restrict API access to non-US persons. The recent OpenAI report on Chinese state actors using ChatGPT could trigger further scrutiny."
+                },
+                {
+                    "factor": "Industry Pushback and Economic Incentives",
+                    "effect": "Decreases probability. US tech companies have a strong interest in maintaining global markets and are likely to lobby against overly restrictive measures. The economic impact of cutting off non-US users from API access would be substantial. Historically, even when export controls are imposed, there are exceptions and workarounds (e.g., licensing, 'deemed exports', etc.)."
+                },
+                {
+                    "factor": "Legal and Trade Agreement Constraints",
+                    "effect": "Decreases probability. WTO rules and US FTA commitments generally discourage digital localization and discrimination against foreign users. Any US law imposing US-only API access could be challenged as a barrier to digital trade unless justified by public morals or national security, which sets a high bar."
+                },
+                {
+                    "factor": "Recent Regulatory Focus: Age Verification, Not Geography",
+                    "effect": "Significantly decreases probability. News and new laws, including SB 243 and FTC investigations, focus on age verification, parental controls, and content moderation\u2014especially for minors. There is little evidence that Congress or regulators are on the verge of imposing geographic restrictions on generative AI APIs for the general public."
+                },
+                {
+                    "factor": "Base Rate/Historical Precedent",
+                    "effect": "Strongly decreases probability. The US has rarely, if ever, imposed blanket geographic restrictions on software APIs outside of sanctions/embargo situations (e.g., Iran, North Korea), and not on a global basis. Most restrictions apply to specific sanctioned countries or entities, not the entire world outside the US."
+                }
+            ],
+            "no_scenario": "Congress considers, but does not pass, a law requiring US-only API access to generative AI; regulatory focus remains on age verification, content moderation, and targeted export controls (e.g., banning access in embargoed countries or to specific threat actors). OpenAI and peers continue to offer APIs globally, with only company-level restrictions and compliance with existing export control regulations (which do NOT require US-only access).",
+            "yes_scenario": "A major national security incident occurs (such as a foreign government using generative AI for a high-profile cyberattack or disinformation campaign), creating strong bipartisan pressure for emergency legislation. Congress or relevant agencies (e.g., Commerce, Treasury) issue a rule requiring US AI companies to restrict API access to US persons or IP addresses, at least for certain classes of powerful generative AI models, before the end of 2025. Alternatively, a sweeping law aimed at AI abuse (e.g., related to deepfake CSAM or weapon design) includes a provision that restricts API access to US-verified users.",
+            "final_reasoning": "While there is mounting regulatory concern regarding generative AI\u2014especially as it relates to minors, explicit content, and national security\u2014the overwhelming focus of current and recently passed US laws is age verification and content moderation, not geographic restriction. There is no evidence of active Congressional or regulatory movement toward requiring US-only API access for generative AI, except in the context of existing sanctions/embargoed countries. The base rate for such extraterritorial, across-the-board restrictions is extremely low; even in sensitive sectors, the US typically targets specific countries/entities, not the entire world outside the US. Although the OpenAI report on Chinese state actors and the trend toward age verification could provide a trigger, the status quo is likely to persist absent a major, catalyst event. Given the short window until resolution (about 2.5 months) and the slow pace of US legislative change, the probability that the US will actually require by law that some generative AI APIs restrict access exclusively to US persons or users before the end of 2025 is quite low.",
+            "final_probability": 7
+        },
+        "Science and Technology Studies (Technological Governance)": {
+            "time_to_resolution": "Approximately 2.5 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on technological governance, I bring a nuanced understanding of how regulatory regimes, social risk perceptions, technological affordances, and institutional inertia shape the speed and form of policy interventions around emerging technologies like generative AI. I can contextualize the US's regulatory trajectory against comparative international developments, base rates for technology controls, and the interaction between public outcry, industry lobbying, and legislative process.",
+            "status_quo": "As of October 2025, there is no US federal law requiring generative AI API access to be restricted to US users only. Access to generative AI APIs (e.g., OpenAI, Google, Anthropic) is globally available, with only standard terms-of-service, content moderation, and some age verification or KYC requirements, primarily aimed at minors or sensitive content, but not at restricting non-US access.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Regulatory Precedent and Base Rate",
+                    "effect": "Decreases probability. The US has historically been slow to enact outright geographic restrictions on digital technologies except in cases of national security (e.g., sanctions) or export controls on dual-use technologies. Restrictions on pornography, gambling, or data privacy are often state-based and rarely involve federal-level blanket API restrictions."
+                },
+                {
+                    "factor": "Recent State and Federal Activity on AI Content and Child Safety",
+                    "effect": "Slightly increases probability. California (SB 243) and other states have enacted or are considering laws mandating age verification, parental controls, and liability for harmful content, especially after high-profile youth suicides linked to AI chatbots. However, these measures focus on age/content, not geographic exclusion."
+                },
+                {
+                    "factor": "International Norm Diffusion and Pressure",
+                    "effect": "Slightly increases probability. The EU and some Asian countries are implementing strict controls on AI (e.g., the EU AI Act, Chinese bans), and there is growing global debate about 'digital sovereignty.' In rare cases, the US has mirrored international moves, but usually only for clear national security or trade reasons."
+                },
+                {
+                    "factor": "National Security Concerns (e.g., China, Russia, Deepfakes)",
+                    "effect": "Marginally increases probability. There is some evidence (OpenAI's report, government statements) of concern about foreign misuse of US AI APIs (e.g., Chinese surveillance, Russian hacking). However, so far, the policy response has centered on account-level bans and narrow export controls, not broad API geo-blocking."
+                },
+                {
+                    "factor": "Industry Resistance and Economic Incentives",
+                    "effect": "Decreases probability. AI leaders (OpenAI, Google, Meta) have strong commercial incentives to maintain global API access, and US digital firms have historically lobbied hard against restrictions that would reduce their total addressable market or drive users to foreign competitors."
+                },
+                {
+                    "factor": "Practicality and Efficacy of API Geo-Restrictions",
+                    "effect": "Decreases probability. DRM-style geo-blocking is easily circumvented by VPNs (as seen in France/Italy with Pornhub). US policymakers are aware of this and have generally avoided such measures for digital APIs, focusing instead on identity, age, or payment-based restrictions."
+                },
+                {
+                    "factor": "Imminent Policy Windows and Legislative Timetables",
+                    "effect": "Decreases probability. The question resolves by December 31, 2025. Although there is regulatory momentum on AI safety and child protection, most major US AI laws are still in formulation or will only take effect after January 2026 (e.g., California's SB 243). New federal legislation would need to be drafted, passed, and implemented within a very short time frame."
+                }
+            ],
+            "no_scenario": "Despite mounting concerns about AI-generated harm (deepfakes, youth suicide, foreign misuse), the US continues to focus on age verification, content moderation, and platform liability without enacting a law that restricts API access to only US users. Companies roll out stricter KYC for sensitive features, but API clients outside the US continue to have access, perhaps with enhanced monitoring or data localization, but not outright exclusion.",
+            "yes_scenario": "A major incident (e.g., a high-profile foreign abuse of a US AI API resulting in diplomatic crisis or national security threat) or political shift (e.g., a bipartisan consensus on the need to contain AI proliferation abroad) prompts Congress to fast-track emergency legislation or for the executive branch to invoke export control authorities, mandating US-based verification for API access to some powerful generative AI models. The law requires API providers to check user location or citizenship, perhaps justified as a national security or child protection measure.",
+            "final_reasoning": "The base rate for the US imposing blanket geographic restrictions on digital APIs outside of explicit national security or sanctions contexts is extremely low. While there is clear and growing concern over AI risks\u2014especially content harmful to minors, deepfakes, and foreign (notably Chinese) misuse\u2014current and imminent US regulatory activity focuses on age verification, content moderation, and liability, not geographic access controls. Most recent legislative movement (e.g., California's SB 243, FTC investigations) is about user age and safety, not location. Internationally, the momentum is toward age/content-based restrictions rather than geo-blocking, and US industry has strong incentives to avoid restrictions that would cede ground to non-US competitors. Geo-restrictions are also widely understood to be trivially circumvented by VPNs, reducing their appeal and likely efficacy. Given the short window to resolution (by Dec 31, 2025), and absent a major, unpredictable triggering event, it is highly unlikely that a US law requiring API geo-restriction will be enacted and implemented in time. The status quo strongly favors a 'No' outcome. I weight the base rate and institutional/temporal inertia most heavily, but acknowledge small upward pressure from increased scrutiny on AI misuse.",
+            "final_probability": 8
+        },
+        "Science and Technology Studies (Responsible Innovation)": {
+            "time_to_resolution": "Approximately 2.5 months (resolves on December 31, 2025; today is October 19, 2025)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on Responsible Innovation, I examine the interplay of technology, societal values, regulatory dynamics, and the co-production of policy and technical affordances. This perspective foregrounds not only the technical feasibility and market incentives but also the evolving moral panics, regulatory learning, and the transnational flow of policy models\u2014factors highly relevant to the US considering API-level restrictions on generative AI in response to risks like deepfakes, harmful content, and youth safety.",
+            "status_quo": "As of October 2025, US law does not require API-level geoblocking or identity verification restricting generative AI APIs to US persons only. Providers like OpenAI, Google, and Anthropic may restrict API access for commercial or risk-management reasons, but there is no US legal requirement to restrict API access to generative AI by geography or citizenship.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent string of high-profile regulatory actions in US states (e.g., California SB 243) and federal investigations into AI harms to minors",
+                    "effect": "Increases probability moderately, as state-level momentum and federal scrutiny may catalyze new national legislation targeting AI access, especially for models with adult-content or deepfake risks."
+                },
+                {
+                    "factor": "Precedent of rapid regulatory diffusion in age verification and content control for online services (paralleling EU and state-level US laws for pornographic content)",
+                    "effect": "Slightly increases probability, as legislators may borrow from these models under public pressure; the technical means (IP restriction, KYC) are already normalized in other online domains."
+                },
+                {
+                    "factor": "US political climate: divided Congress and historic reluctance to impose strong digital-access controls for competitiveness and free speech reasons",
+                    "effect": "Decreases probability significantly; federal gridlock and lobbying from tech, civil liberties, and business sectors impede sweeping access restrictions, especially on APIs critical for innovation."
+                },
+                {
+                    "factor": "Industry self-regulation and technical measures (age gating, behavioral detection, content moderation) becoming more robust",
+                    "effect": "Decreases probability moderately, as policymakers may see these as sufficient and less disruptive alternatives to outright API-level geographic restrictions."
+                },
+                {
+                    "factor": "Rising evidence of misuse by foreign actors (e.g., Chinese state-linked operations, political manipulation, surveillance)",
+                    "effect": "Slightly increases probability; may provoke targeted restrictions, but such measures typically focus on specific adversarial nations/entities rather than global API geofencing."
+                },
+                {
+                    "factor": "Short time horizon (2.5 months until resolution)",
+                    "effect": "Decreases probability sharply; even if the political will emerged now, it is unlikely that national legislation imposing API geoblocking could be drafted, passed, and implemented before year-end."
+                }
+            ],
+            "no_scenario": "Despite mounting pressure over AI harms and new state laws, Congress remains gridlocked and no federal law is passed by December 31, 2025, requiring providers to restrict generative AI API access to US persons. Companies continue to implement enhanced age and content controls, but these do not equate to statutory geographic API restrictions.",
+            "yes_scenario": "A surprise national security event or a coordinated legislative push (perhaps catalyzed by a high-profile incident of AI misuse originating abroad) leads Congress to fast-track a law mandating API-level access restrictions to prevent misuse of powerful generative AI by non-US persons, with compliance required by end of 2025.",
+            "final_reasoning": "While there is clear momentum for regulating generative AI, particularly around content, privacy, and youth protection, the overwhelming evidence from the news and broader US policy context is that actual legal requirements to restrict API access by geography or citizenship remain unlikely within the next 2.5 months. Most recent US action (e.g., California SB 243) focuses on age verification, transparency, and content controls, not on geoblocking APIs. The federal government is still investigating and consulting, and Congress is divided\u2014making passage and implementation of a national API access restriction before 2026 highly improbable. Furthermore, the US has traditionally favored technical and market-driven solutions (age gating, content moderation) over blunt geofencing, except in rare cases (e.g., specific sanctions lists). Responsible innovation trends point toward layered, risk-based moderation rather than sweeping technical exclusion. Thus, while not impossible, a Yes outcome would require an extraordinary, fast-moving event that there is no sign of in the current reporting.",
+            "final_probability": 7
+        }
+    },
+    "deliberation_probability": [
+        17,
+        5,
+        3,
+        3,
+        8,
+        10,
+        7,
+        10,
+        7,
+        8,
+        7
+    ],
+    "deliberation_mean_probability": 7.7272727272727275,
+    "deliberation_sd": 3.8753298979805346,
+    "deliberation_probability_result": 8
+}
