@@ -1,0 +1,441 @@
+{
+    "deliberation_results": {
+        "Public Health Administration (PublicHealthEmergencyDeclarationUS)": {
+            "time_to_resolution": "About 14 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Public Health Administration, I have direct experience with the criteria, bureaucratic incentives, and political context underpinning HHS declarations of public health emergencies (PHEs). I understand how outbreak metrics, zoonotic spillover, risk perception, political leadership, and interagency coordination influence the decision calculus for HHS declarations, especially in the wake of COVID-19 and recent emerging infectious diseases.",
+            "status_quo": "HHS has not declared a public health emergency for H5 avian influenza. Despite a large animal outbreak (birds, cattle), there is a steady but limited number of human cases (around 70 in the US), mostly with mild illness and occupational exposure, and no documented sustained human-to-human transmission. CDC and HHS currently rate the public health risk as low.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of PHE Declarations for Zoonotic Influenza",
+                    "effect": "Decreases probability. Since 2005, HHS has declared PHEs for H1N1 (2009), Zika (2016), COVID-19 (2020), and Mpox (2022), all in the context of clear evidence of rapid human-to-human transmission and/or significant morbidity/mortality risk. For zoonotic influenzas with sporadic spillover and no sustained human transmission, PHEs have not been declared."
+                },
+                {
+                    "factor": "Current Human Health Impact and CDC Risk Assessment",
+                    "effect": "Decreases probability. Human cases in the US remain rare, mostly mild, and overwhelmingly linked to direct animal exposure. CDC continues to assess the public risk as low, and there is no evidence of significant community transmission."
+                },
+                {
+                    "factor": "Political and Bureaucratic Incentives Post-COVID",
+                    "effect": "Mixed effect. There is heightened caution and surveillance, but also political resistance to emergency declarations absent compelling evidence (due to 'emergency fatigue,' economic/political consequences, and criticism of past overreach). HHS will be reluctant to declare a PHE unless there is clear human-to-human transmission or a sharp rise in severe cases."
+                },
+                {
+                    "factor": "Viral Evolution and Potential for Mutation",
+                    "effect": "Slightly increases probability. The possibility of the virus acquiring mutations (e.g., Q226L) that allow efficient human-to-human transmission is concerning and would rapidly shift risk assessments and policy. However, as of now, no such adaptation has occurred."
+                },
+                {
+                    "factor": "International and Economic Pressures",
+                    "effect": "Mixed effect. Severe economic impact (food prices, culling, supply chain) and international alerts can increase pressure for a declaration, but HHS declarations are primarily tied to human health risk, not economic factors."
+                },
+                {
+                    "factor": "Presence of Untraceable Human Cases",
+                    "effect": "Increases probability slightly. A few cases in the US have not had clear animal exposure, raising concern about environmental reservoirs or undetected transmission, but so far these have not led to clusters or sustained spread."
+                },
+                {
+                    "factor": "Existing Surveillance and Control Measures",
+                    "effect": "Decreases probability. Robust surveillance, animal culling, and biosecurity are in place to minimize risk. Pasteurization eliminates risk from milk, and public health messaging remains strong."
+                }
+            ],
+            "no_scenario": "HHS does not declare a PHE for H5 avian influenza before Jan 1, 2026. The situation remains similar: sporadic animal outbreaks continue, occasional human cases occur (mostly in those with direct animal contact), but with no evidence of efficient or sustained human-to-human transmission, and no significant increase in severe or fatal cases. CDC and HHS maintain their current assessment of low public health risk, relying on surveillance, targeted occupational precautions, and animal health interventions.",
+            "yes_scenario": "HHS declares a PHE for H5 avian influenza before Jan 1, 2026. This could arise if there is a cluster of human cases with evidence of human-to-human transmission (even limited), a significant uptick in severe/fatal human cases, or a high-profile event (e.g., multiple unexplained pediatric deaths, detection of a critical mutation in US isolates, or credible modeling indicating an imminent pandemic threat). Political or international pressure could also play a role if there is mounting public concern or if WHO raises the pandemic alert level.",
+            "final_reasoning": "The base rate for HHS PHE declarations for zoonotic flu with current characteristics is very low. All recent PHEs have been in the context of either a pandemic or a severe, rapidly escalating threat to human health. Despite widespread animal outbreaks and scattered human cases (some without clear animal exposure), there is still no evidence of efficient human-to-human transmission in the US or globally. CDC and HHS continue to rate public risk as low, and the bureaucratic and political context post-COVID raises the threshold for emergency declarations. However, the virus is showing worrying signs\u2014cross-species jumps (birds to mammals, including cattle), rare unexplained human infections, and potential for mutation. These factors slightly raise the risk above the historical base rate, but do not yet make a declaration likely in the absence of new developments. I judge the probability of an HHS PHE declaration for H5 avian influenza before Jan 1, 2026, to be low but not negligible\u2014there is a nonzero tail risk if the virus adapts or there is a high-profile cluster, but the status quo favors no declaration.",
+            "final_probability": 13
+        },
+        "Public Health Administration (IncidentCommandSystem)": {
+            "time_to_resolution": "Approximately 2 months until January 1, 2026.",
+            "perspective_relevance": "As an expert in Public Health Administration with deep knowledge of the Incident Command System (ICS), I bring a nuanced understanding of the operational, legal, and situational thresholds required for the US Department of Health and Human Services (HHS) to declare a Public Health Emergency (PHE). I am adept at evaluating not only epidemiological and virological developments but also the bureaucratic and political processes that inform PHE declarations, and I understand the triggers\u2014such as cross-species transmission, evidence of inefficient containment, or the crossing of specific case/death thresholds\u2014that prompt federal mobilization under the National Response Framework.",
+            "status_quo": "No PHE has been declared by HHS for H5 avian influenza in the US as of late October 2025. Previous outbreaks (H1N1 2009, COVID-19, Mpox) saw PHE declarations only after clear evidence of rapid human-to-human transmission or overwhelming public health impact. Currently, CDC maintains that the risk of human-to-human transmission is low, and human cases are rare and linked to direct animal contact.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Current Epidemiology\u2014Low Human-to-Human Transmission",
+                    "effect": "Decreases probability. The CDC and WHO repeatedly stress that risk to the general US population is low, and there is no evidence of sustained human-to-human transmission, which is the most compelling trigger for a PHE."
+                },
+                {
+                    "factor": "Economic and Agricultural Impact",
+                    "effect": "Slightly increases probability. The scale of avian and cattle infections, mass culling, and rising food prices have caused significant economic disruption, which could prompt a PHE even absent a major human health threat, especially if pressure mounts from industry or state governments."
+                },
+                {
+                    "factor": "Cross-Species and Unexplained Human Cases",
+                    "effect": "Slightly increases probability. The virus has now infected a range of mammals, including cattle and seals, with rare US human cases unlinked to direct animal exposure. This raises concern about environmental reservoirs and the potential for unrecognized transmission pathways."
+                },
+                {
+                    "factor": "Mutation and Reassortment Risk",
+                    "effect": "Neutral to slightly increases probability. There is scientific concern about the virus acquiring mutations (e.g., Q226L) or reassorting with seasonal flu, but as of now, genetic sequencing has not identified such changes in US strains."
+                },
+                {
+                    "factor": "Political and Administrative Will",
+                    "effect": "Decreases probability. HHS and CDC have shown reluctance to declare PHEs unless clear, immediate, and widespread human health impacts are present. There is also political pushback from some quarters against aggressive containment/culling, and no apparent federal consensus for escalation."
+                },
+                {
+                    "factor": "Historical Base Rate for PHEs Absent Large Human Outbreak",
+                    "effect": "Strongly decreases probability. Since 2005, PHEs for infectious diseases have only been declared in the US when there is clear evidence of rapid spread among humans, or overwhelming resource strain on the health system."
+                },
+                {
+                    "factor": "Incident Command System (ICS) Triggers",
+                    "effect": "Decreases probability. From an ICS perspective, most triggers for federal PHE activation (e.g., overwhelmed state/local resources, rapid escalation, or systemic failure) have not been met. Current response is managed at the state/local level with federal technical support."
+                }
+            ],
+            "no_scenario": "Despite continued outbreaks in birds and cattle and sporadic human infections, the virus does not acquire significant human-to-human transmissibility. Human cases remain rare and linked to direct contact with infected animals or contaminated environments. Economic impacts persist, but the situation does not meet the threshold for a PHE. HHS continues to monitor, but does not escalate to a declaration before January 1, 2026.",
+            "yes_scenario": "In the next two months, there is a sudden uptick in unexplained human cases, evidence of limited human-to-human transmission, or a major cluster in a new population (e.g., a school or urban center). Alternatively, a significant mutation is detected in the US that raises the risk of a pandemic-level event, or the economic and social disruption\u2014especially to the food supply\u2014becomes so severe that political pressure compels HHS to declare a PHE as a precautionary or resource-mobilizing measure, even without widespread human illness.",
+            "final_reasoning": "The base rate for HHS PHE declarations in the absence of clear, sustained human-to-human transmission is extremely low. Although the animal outbreak is severe, the threshold for federal PHE\u2014especially after the political and procedural lessons of COVID-19\u2014remains high. Current evidence shows no rapid escalation in human threat, and the CDC/HHS have not signaled imminent concern. While there are concerning signs (cross-species spillover, rare unexplained human cases, massive economic impact), these have not yet reached the level that has historically triggered a PHE declaration. The timeframe to resolution is short, and large-scale shifts in the epidemiological situation would need to happen rapidly to change the federal response. Therefore, the probability of a PHE declaration for H5 avian influenza by HHS before Jan 1, 2026 is low, though not negligible given the possibility of a sudden shift.",
+            "final_probability": 8
+        },
+        "Health Policy (PolicyProcessKingdon)": {
+            "time_to_resolution": "Approximately 14 months (from October 28, 2025, to January 1, 2026)",
+            "perspective_relevance": "As an expert in Health Policy and the Kingdon Policy Streams Model, I bring insight into how public health emergencies are declared in the US, including the interplay between problem recognition, policy alternatives, and political will. I can also evaluate the likelihood of major policy shifts by considering the institutional inertia, the triggers needed for emergency declarations, and the comparative base rates for similar outbreaks. This expertise enables a nuanced assessment of whether current epidemiological and political developments will be sufficient to open a 'policy window' for an HHS emergency declaration.",
+            "status_quo": "No public health emergency for H5 avian influenza has been declared by HHS. The CDC continues to rate the current risk to the general public as low, despite ongoing animal outbreaks and sporadic zoonotic cases.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base rate of PHE declarations for zoonotic disease",
+                    "effect": "Decreases probability. In the past 20 years, HHS has declared just four infectious disease-related PHEs (H1N1, Zika, COVID-19, Mpox). All corresponded to clear evidence of rapid spread, unusual severity, or human-to-human transmission, which is currently lacking for H5 in the US."
+                },
+                {
+                    "factor": "Current epidemiology: Human-to-human transmission and severity",
+                    "effect": "Decreases probability. There is no evidence of sustained human-to-human transmission, and most US human cases have been mild and linked to direct animal exposure. The CDC and WHO continue to rate public risk as low."
+                },
+                {
+                    "factor": "Political climate and leadership stance",
+                    "effect": "Decreases probability. HHS Secretary Robert F. Kennedy Jr. has opposed aggressive containment (e.g., culling), signaling skepticism of drastic federal interventions. Political appetite for emergency declarations may be muted unless the situation worsens dramatically."
+                },
+                {
+                    "factor": "Economic impact and stakeholder pressure",
+                    "effect": "Increases probability modestly. The outbreak has caused hundreds of millions of bird deaths and record egg prices, which may prompt economic stakeholders (agriculture, food producers) to advocate for heightened federal response if impacts worsen."
+                },
+                {
+                    "factor": "Potential for viral evolution or sudden epidemiological shift",
+                    "effect": "Increases probability slightly. Theoretically, a mutation enabling efficient human-to-human transmission or a cluster of severe human cases could rapidly change risk perception and catalyze a PHE declaration, but such a development remains hypothetical."
+                },
+                {
+                    "factor": "Institutional inertia and risk aversion",
+                    "effect": "Decreases probability. After COVID-19, there may be reluctance within HHS to declare a new PHE absent clear necessity, due to political, economic, and public fatigue with emergency declarations."
+                }
+            ],
+            "no_scenario": "The virus continues to circulate among poultry and dairy cattle, with sporadic human infections linked to animal exposure, but no evidence emerges of efficient human-to-human transmission or a sharp increase in severity. Economic impacts persist but do not escalate to the point of overwhelming the food system. The CDC maintains a low public risk assessment. HHS monitors the situation but does not declare a public health emergency, relying instead on targeted state and local responses and existing federal resources.",
+            "yes_scenario": "A significant epidemiological shift occurs: either a cluster of unexplained severe human cases arises, genetic evidence of increased human adaptation is reported, or there is credible evidence of sustained human-to-human transmission in the US. This triggers media attention, political pressure, and strong advocacy from scientific, agricultural, or public health communities, leading HHS to declare a public health emergency to unlock federal support, coordinate response, and reassure the public.",
+            "final_reasoning": "Base rates strongly favor non-declaration: since 2005, HHS has only declared PHEs in response to clear, emergent, and high-severity threats, usually involving sustained person-to-person transmission or major public health system strain. H5 avian influenza, despite its impact on agriculture and rare zoonotic spillover, has not yet met these criteria in the US. The CDC, WHO, and other authorities continue to rate risk as low, and political signals from HHS leadership suggest reluctance to escalate federal response absent a dramatic change. While economic impacts and the small but real possibility of viral evolution are non-trivial, they are insufficient on their own to overcome institutional inertia and the current risk assessment. A 'yes' outcome is plausible only if a major epidemiological shift occurs\u2014an event with low but nonzero probability within the next 14 months. Considering all factors, the status quo is likely to persist, but the risk is higher than for typical years given the ongoing spread to mammals and economic disruption. Therefore, a probability in the low teens is justified.",
+            "final_probability": 13
+        },
+        "Health Policy (HealthCrisisCommunication)": {
+            "time_to_resolution": "Approximately 14 months (until January 1, 2026, from October 28, 2025)",
+            "perspective_relevance": "As an expert in Health Policy and Health Crisis Communication, I bring insight into the legal, political, and risk-communication dynamics that inform HHS emergency declarations, not just the virological or epidemiological triggers. My background allows for nuanced interpretation of how 'public health emergency' (PHE) declarations are used in the US to mobilize resources, manage risk perception, and signal severity to the public and stakeholders.",
+            "status_quo": "No PHE has been declared for H5 avian influenza as of October 2025, despite widespread animal outbreaks, sporadic mild human cases, and some associated economic disruption. The CDC and HHS continue to rate the public health risk as low; previous PHE declarations (e.g., H1N1, Zika, Mpox) have only occurred with clear evidence of heightened human risk or substantial threat of spread.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Current epidemiological risk to humans (transmissibility and severity)",
+                    "effect": "Decreases probability. Human-to-human transmission remains undetected, cases are mild, and the CDC/HHS assess overall risk as low. Historically, a PHE is rarely declared without a significant direct threat to human health."
+                },
+                {
+                    "factor": "Political and economic pressures (egg prices, agricultural impacts, media attention)",
+                    "effect": "Increases probability slightly. Economic disruption and industry lobbying could prompt a PHE for resource mobilization, but such declarations are rare without a clearer human health emergency."
+                },
+                {
+                    "factor": "Viral evolution risk (potential for mutation/reassortment)",
+                    "effect": "Increases probability modestly. Recognition of possible future risk may push HHS to act preemptively, especially if a mutation or reassortment event is suspected, but so far this remains speculative."
+                },
+                {
+                    "factor": "Precedent and legal/administrative thresholds for PHE",
+                    "effect": "Decreases probability. Past PHEs have required either clear domestic human-to-human transmission or an urgent, visible threat to human health. The bar for declaration is high."
+                },
+                {
+                    "factor": "Health crisis communication strategies",
+                    "effect": "Decreases probability. Declaring a PHE can cause public alarm, so authorities may prefer to avoid a declaration unless new evidence emerges, especially when messaging is that risk remains low."
+                },
+                {
+                    "factor": "Emergence of unexplained or severe human cases",
+                    "effect": "Increases probability, but only if new clusters or a more severe clinical pattern emerges. To date, most cases are mild and linked to direct animal exposure."
+                },
+                {
+                    "factor": "International developments (spread to other continents, international pressure)",
+                    "effect": "Neutral. While outbreaks elsewhere may increase vigilance, HHS declarations are typically grounded in domestic conditions."
+                }
+            ],
+            "no_scenario": "Through 2025 and most of 2026, H5N1 continues to cause large-scale poultry and livestock outbreaks, with sporadic human cases mostly among people with direct animal contact. No sustained human-to-human transmission occurs, and all human cases are mild or moderate. CDC and HHS maintain a 'low risk' assessment and manage the crisis with existing powers and interagency coordination, stopping short of a PHE declaration.",
+            "yes_scenario": "In late 2025 or early 2026, a cluster of severe or unexplained human H5N1 cases is identified in the US, with evidence suggesting either limited human-to-human transmission or a worrisome viral genetic mutation. Media and political pressure mount, and industry/labor shortages or supply chain disruptions worsen. HHS declares a PHE to unlock additional resources, coordinate response, and preempt further escalation.",
+            "final_reasoning": "Base rates for HHS PHE declarations for zoonotic respiratory viruses are low unless there is clear evidence of either human-to-human transmission or severe disease in humans. Despite the scale and cost of the current H5N1 animal epidemic, human cases in the US have been rare, typically mild, and mostly associated with direct animal exposure. The CDC and HHS continue to emphasize low risk to the general public. While there is some political and economic pressure and a few cases with unknown exposure sources, there is so far no evidence of a tipping point toward broader human transmission or a significant shift in severity. The risk of viral evolution remains a concern but has not yet materialized into actionable threat. Health crisis communication strategies and legal precedent both suggest reluctance to declare a PHE without more definitive signals. Taking all factors into account, the probability of a PHE declaration before January 1, 2026, remains low but not negligible, given the possibility of unforeseen events or sudden escalation.",
+            "final_probability": 18
+        },
+        "American Government (USFederalEmergencyManagement)": {
+            "time_to_resolution": "Approximately 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in American Government and US Federal Emergency Management, I have deep knowledge of the statutory and bureaucratic processes for public health emergency (PHE) declarations under Section 319 of the Public Health Service Act, familiarity with HHS risk assessment frameworks, and an understanding of the government\u2019s risk tolerance and political incentives in infectious disease crises. I also appreciate the base rates and historical conditions under which PHEs have been declared, and the interplay between public health, agricultural, and economic pressures.",
+            "status_quo": "No federal public health emergency for H5 avian influenza has been declared as of October 28, 2025. The CDC assesses the risk to the general public as low, and while there are multiple animal outbreaks and some human cases, there is no evidence of sustained human-to-human transmission.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Historical Base Rate of PHE Declarations",
+                    "effect": "Decreases probability. PHEs have only been declared for zoonotic infectious diseases in the US when there is credible risk of wider community transmission, significant mortality, or when a disease has pandemic potential and/or disrupts health system functioning. H5N1, despite ongoing outbreaks, is not meeting these criteria to the same extent as H1N1 (2009), COVID-19, or even Mpox."
+                },
+                {
+                    "factor": "Current Epidemiological Assessment",
+                    "effect": "Decreases probability. CDC and other agencies continue to rate risk to the general population as low, with almost all human cases linked to direct animal contact and only one death. There is no evidence of efficient human-to-human transmission or a major increase in severe cases."
+                },
+                {
+                    "factor": "Political and Economic Pressure",
+                    "effect": "Slightly increases probability. The economic impact (e.g., soaring egg prices, culling, dairy industry disruptions) and some political actors\u2019 calls for more aggressive response could push HHS toward a declaration, especially if public anxiety rises or stakeholders lobby for additional federal support."
+                },
+                {
+                    "factor": "Potential for Viral Mutation or Sudden Epidemiological Change",
+                    "effect": "Increases probability, but only marginally. While there is always a risk of viral adaptation (e.g., Q226L mutation, reassortment with seasonal flu), there is no current evidence of this occurring. However, the potential for unexpected developments cannot be ruled out before the deadline."
+                },
+                {
+                    "factor": "Bureaucratic and Legal Thresholds for PHE Declaration",
+                    "effect": "Decreases probability. HHS generally requires a clear trigger\u2014such as evidence of sustained person-to-person transmission, a surge in severe human cases, or a breakdown in state/local response capacity\u2014to declare a PHE. The current situation, while concerning, does not yet meet these criteria."
+                },
+                {
+                    "factor": "Recent Precedents and Interagency Recommendations",
+                    "effect": "Decreases probability. The CDC, FDA, and USDA have issued risk mitigation recommendations but have not called for a PHE. Agency consensus is a key precursor to HHS action."
+                }
+            ],
+            "no_scenario": "Despite ongoing animal outbreaks, sporadic human cases continue to be linked to direct animal contact, with no evidence of efficient human-to-human transmission. Economic impact persists, but is managed through USDA and state-level measures, with HHS continuing to monitor the risk as 'low.' No major epidemiological shift triggers a change in risk assessment. No PHE is declared by January 1, 2026.",
+            "yes_scenario": "A significant epidemiological event occurs before the end of 2025: either a cluster of unexplained human cases with evidence of person-to-person transmission, a sudden surge in severe/fatal human infections, or overwhelming pressure from the agricultural sector due to further economic fallout. Alternatively, a highly-publicized mutation or international event (e.g., H5N1 pandemic elsewhere) prompts HHS to pre-emptively declare a PHE as a precautionary measure.",
+            "final_reasoning": "The base rate for federal PHE declarations for zoonotic influenza is low\u2014reserved for situations with clear evidence of pandemic risk or major health system impact. While H5N1 is spreading rapidly among animals and has caused economic disruption, the epidemiological pattern among humans is static: cases remain rare, mostly mild, and linked to direct animal contact, with only one U.S. death and no evidence of human-to-human spread. Agency risk assessments remain conservative, and bureaucratic thresholds for declaration have not been met. Political and economic incentives could shift quickly if the situation deteriorates, but absent a major epidemiological change, the status quo will likely persist through the end of 2025. While bolder predictions are rewarded, the evidence at this time strongly favors a No outcome, though I allow for a small chance of a late-breaking development.",
+            "final_probability": 10
+        },
+        "Public Health (EpidemiologicTriad)": {
+            "time_to_resolution": "Approximately 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Public Health, particularly in the Epidemiologic Triad (agent, host, environment), I can systematically assess the interplay between the H5N1 virus (agent), human and animal populations (host), and factors such as agricultural practices, biosecurity, and policy (environment) that determine outbreak trajectory and emergency response. My perspective brings a nuanced understanding of risk assessment, outbreak thresholds, and how public health emergencies are declared in the US.",
+            "status_quo": "No public health emergency (PHE) has been declared by HHS for H5 avian influenza as of late October 2025. CDC and HHS continue to assess the public risk as low. Despite ongoing zoonotic spillover, only one confirmed US death and ~70 human cases have occurred, mostly mild and with direct animal exposure. No confirmed sustained human-to-human transmission has been documented.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Current epidemiology: animal-to-human spillover with limited human cases",
+                    "effect": "Decreases probability\u2014The vast majority of human cases remain linked to direct animal exposure, with no confirmed sustained human-to-human transmission. This keeps the perceived public health threat low."
+                },
+                {
+                    "factor": "Policy and historical precedent for PHE declarations",
+                    "effect": "Decreases probability\u2014Historically, HHS has reserved PHE declarations for situations with clear evidence of significant, emergent public health threat (e.g., COVID-19, Mpox, H1N1). Current epidemiology does not meet this threshold, and the bar is high for such a declaration."
+                },
+                {
+                    "factor": "Virus evolution risk (mutation, reassortment potential)",
+                    "effect": "Slightly increases probability\u2014There is expert concern that ongoing circulation in mammals could lead to mutations or reassortment, especially if co-infection with seasonal flu occurs. However, no such event has yet been documented."
+                },
+                {
+                    "factor": "Economic/industrial impacts (agriculture, food supply, egg prices)",
+                    "effect": "Slightly increases probability\u2014Major disruptions in the poultry sector, high egg prices, and political pressure could motivate a PHE for resource mobilization, even absent widespread human illness."
+                },
+                {
+                    "factor": "Political considerations and advocacy stances",
+                    "effect": "Neutral to slightly decreases probability\u2014Current HHS leadership has signaled reluctance to cull and has not prioritized a PHE, favoring continuity and surveillance over drastic measures."
+                },
+                {
+                    "factor": "Base rate of US HHS PHE declarations for zoonotic influenza",
+                    "effect": "Decreases probability\u2014Only four disease outbreaks have resulted in a PHE since 2005, despite multiple zoonotic threats. Base rate is low absent clear human-to-human transmission or severe morbidity/mortality."
+                },
+                {
+                    "factor": "International outbreak dynamics and signals",
+                    "effect": "Neutral\u2014Outbreaks in Europe and Australia raise global concern but have not led to US PHE declarations in similar prior contexts."
+                }
+            ],
+            "no_scenario": "H5N1 continues to cause outbreaks in US poultry and dairy herds, with sporadic human cases linked primarily to occupational exposure. No sustained human-to-human transmission or large clusters occur. Economic impacts persist but are managed through existing agricultural and public health mechanisms. HHS maintains that the risk to the general public is low and does not declare a PHE.",
+            "yes_scenario": "A significant increase in human cases occurs, especially if a cluster suggests possible limited human-to-human transmission or if a mutation conferring increased human receptor binding is detected. Alternatively, a major political or economic crisis\u2014such as severe nationwide food shortages, or pressure from affected states\u2014forces HHS to declare a PHE for resource mobilization, even without confirmed sustained transmission.",
+            "final_reasoning": "Despite the severe agricultural and economic impacts and ongoing zoonotic spillover, the epidemiologic criteria for a PHE\u2014particularly the threshold of significant risk to the general public\u2014have not been met. The base rate for HHS PHE declarations for zoonotic influenzas is low, and current CDC/HHS risk assessments remain unchanged. Virologic surveillance is robust, and while the potential for viral adaptation exists, it remains theoretical rather than imminent. Political and economic factors could sway a decision, but so far, leadership has not signaled intent to declare a PHE. Given all these factors, the probability of a PHE declaration for H5 avian influenza before January 1, 2026, remains low, but not negligible, especially as winter approaches and with the possibility of unforeseen developments.",
+            "final_probability": 12
+        },
+        "Public Health (OutbreakDetectionSurveillance)": {
+            "time_to_resolution": "Approximately 14 months (forecast date: 2025-10-28; resolution: 2026-01-01)",
+            "perspective_relevance": "As an expert in Public Health Outbreak Detection and Surveillance, I bring specialized knowledge of historical patterns of public health emergency (PHE) declarations, zoonotic transmission risk assessment, and U.S. outbreak policy triggers. My expertise allows me to assess both the epidemiological and bureaucratic/procedural thresholds likely to drive HHS to declare a PHE, with an emphasis on early warning signals, base rates, and surveillance data.",
+            "status_quo": "Despite widespread H5N1 outbreaks in birds and mammals and a moderate number of zoonotic spillover cases in the U.S. (mostly mild and with animal exposure), HHS has not declared a public health emergency for H5 avian influenza. CDC continues to rate the risk to the general public as low, with no sustained human-to-human transmission detected.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base rate of HHS PHE declarations for zoonotic influenza",
+                    "effect": "Decreases probability. Since 2005, HHS has declared PHEs for only four outbreaks (H1N1, Zika, COVID-19, and Mpox), each involving higher or more uncertain risk of sustained human transmission or major health system disruption. H5N1 has never triggered a U.S. PHE despite decades of sporadic avian and mammalian outbreaks."
+                },
+                {
+                    "factor": "Current epidemiological characteristics (spillover but no sustained human transmission)",
+                    "effect": "Decreases probability. Although there have been 70+ U.S. human cases, most are mild, with only one death, and almost all with direct animal exposure. No human-to-human transmission has been documented. The PHE threshold is usually not met without evidence of escalating human risk."
+                },
+                {
+                    "factor": "Government and expert assessments (CDC, FDA, USDA, HHS)",
+                    "effect": "Decreases probability. All current statements (as of late October 2025) indicate continued low risk to the general public, with existing mitigation (biosecurity, surveillance, pasteurization) deemed sufficient. There is no sign of panic or policy shift at the federal level."
+                },
+                {
+                    "factor": "Potential for viral evolution or reassortment",
+                    "effect": "Increases probability, slightly. H5N1\u2019s expansion into mammalian hosts and rare human spillover events raise the risk of mutation, especially with continued circulation in cattle and birds. However, this is a background risk, not an active trigger, unless a major change occurs."
+                },
+                {
+                    "factor": "Political and economic pressure (rising egg prices, pressure from industry, public concern)",
+                    "effect": "Increases probability, slightly. Economic disruption could pressure officials to act, but such declarations are rarely made solely for economic reasons unless accompanied by a direct health threat."
+                },
+                {
+                    "factor": "Public and expert advocacy for/against culling and containment",
+                    "effect": "Neutral to slightly decreasing. Divisions among policymakers and scientific advisors (e.g., opposition to culling by HHS Secretary RFK Jr.) may delay decisive emergency action unless human health risk escalates."
+                }
+            ],
+            "no_scenario": "HHS does not declare a public health emergency because, despite ongoing avian and mammalian outbreaks, human cases remain rare, mild, and associated with direct animal exposure. There is no evidence of sustained human-to-human transmission, and the CDC continues to rate the risk as low. Existing biosecurity and surveillance measures are maintained, and the situation is managed through standard animal/agricultural outbreak controls.",
+            "yes_scenario": "A significant change occurs: (1) there is credible evidence of sustained human-to-human transmission or a cluster of severe human cases without animal exposure, (2) a major mutation/reassortment is detected that increases pandemic risk, or (3) there is a substantial escalation in U.S. human cases or deaths, leading to mounting political and public pressure. This pushes HHS to declare a PHE to mobilize resources, regulatory flexibility, and emergency interventions.",
+            "final_reasoning": "While avian influenza H5N1 is spreading rapidly among birds and some mammals, and the U.S. has documented dozens of mild human cases (mainly with animal exposure), the base rate for HHS declaring a PHE for zoonotic influenzas without ongoing human-to-human transmission is very low. All government and expert assessments currently frame the risk to the public as low, with no sign of immediate escalation. The main triggers for a PHE\u2014sustained human transmission, severe or unexplained human clusters, or a major viral shift\u2014have not occurred. Although the situation could change rapidly if the virus mutates, current surveillance and response posture remains status quo. The precedent from H1N1 (2009), COVID-19 (2020), Zika (2016), and Mpox (2022) shows that a PHE is declared only when there is clear evidence of escalating direct public health risk. Given the current trajectory, it is unlikely (but not impossible) that HHS will declare a PHE for H5 avian influenza before January 1, 2026, unless a major epidemiological shift occurs.",
+            "final_probability": 18
+        },
+        "Epidemiology (PandemicPhasesWHO)": {
+            "time_to_resolution": "Approximately 2 months until January 1, 2026.",
+            "perspective_relevance": "As an epidemiologist specializing in pandemic phases and WHO frameworks, my expertise allows me to analyze zoonotic spillover, viral adaptation, surveillance, and the legal/operational triggers for public health emergency (PHE) declarations. I can weigh base rates of similar outbreaks (H1N1, Zika, COVID-19, Mpox), track emerging risks, and interpret both biological and bureaucratic signals that might prompt an HHS emergency declaration.",
+            "status_quo": "No public health emergency has been declared by HHS for H5 avian influenza as of now, despite extensive animal and limited human cases. The CDC currently assesses public risk as 'low' and human-to-human transmission has not occurred.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Current Zoonotic Transmission Patterns",
+                    "effect": "Decreases probability. H5N1 has shown limited zoonotic spillover to humans, with most cases linked to direct animal exposure and no evidence of sustained human-to-human transmission. This reduces the urgency for a PHE declaration."
+                },
+                {
+                    "factor": "CDC and WHO Risk Assessment",
+                    "effect": "Decreases probability. Both agencies consistently rate the risk to the general population as low, and existing protocols have not escalated to emergency measures."
+                },
+                {
+                    "factor": "Precedent/Base Rate of PHE Declarations",
+                    "effect": "Decreases probability. HHS PHE declarations for infectious diseases (H1N1, Zika, COVID-19, Mpox) have typically been triggered by clear evidence of rapid human transmission or significant risk to public health. The current H5 situation does not meet these criteria."
+                },
+                {
+                    "factor": "Viral Evolution Potential (Mutation/Reassortment Risk)",
+                    "effect": "Slightly increases probability. There is ongoing concern (noted in news and by experts) about the possibility of H5N1 mutating (e.g., Q226L mutation) or reassorting with human influenza viruses. While this risk is nonzero, there is no indication such evolution has yet occurred."
+                },
+                {
+                    "factor": "Political and Economic Pressure",
+                    "effect": "Slightly increases probability. The economic impact on agriculture (e.g., egg price spikes, culling, dairy contamination) is significant. Political advocacy (e.g., calls for less culling) and public anxiety could exert pressure, but emergency declarations have not historically been made solely on economic grounds."
+                },
+                {
+                    "factor": "Human Cases Without Animal Exposure",
+                    "effect": "Increases probability. The recent handful of US cases without clear animal exposure (e.g., California child) slightly raise the probability, as they suggest gaps in understanding transmission. However, these remain isolated and have not shown onward spread."
+                },
+                {
+                    "factor": "Surveillance and Response Infrastructure",
+                    "effect": "Decreases probability. Strong federal and state surveillance, rapid culling, and biosecurity responses have so far contained outbreaks without the need for a PHE."
+                }
+            ],
+            "no_scenario": "Despite continued outbreaks in poultry, cattle, and sporadic human cases (mostly mild and occupationally linked), there is no significant increase in human-to-human transmission, no sharp spike in unexplained human cases, and the virus does not acquire mutations enabling efficient human infection. The CDC and HHS continue to assess risk as low, and existing biosecurity and surveillance measures suffice. Economic and political pressures do not tip the balance. No PHE is declared before January 1, 2026.",
+            "yes_scenario": "A cluster of unexplained human H5 cases emerges, with preliminary evidence of limited person-to-person transmission or a sharp uptick in unexplained, severe cases. Alternatively, a significant viral mutation or reassortment event is detected, raising the perceived risk of pandemic potential. Mounting public and political pressure, combined with these biological signals, prompts HHS to declare a PHE for H5 avian influenza before January 1, 2026.",
+            "final_reasoning": "The status quo strongly favors 'No.' HHS has historically reserved PHE declarations for situations with clear, imminent, and broad public health risk\u2014usually marked by efficient human-to-human transmission or rapid, severe community spread. Despite the unprecedented scale of animal outbreaks, the current epidemiological situation mirrors previous years, with limited zoonotic spillover and no sustained human transmission. The base rate for PHE declarations in purely zoonotic avian influenza outbreaks is essentially zero. The presence of a few unexplained human cases is concerning but remains within the expected range for environmental exposure in a large, ongoing epizootic. While economic and agricultural impacts are severe, they have not previously prompted a PHE for avian influenza. The risk of mutation or reassortment is real, but there is no evidence of such a shift as of late October 2025. The CDC and WHO continue to rate public risk as low. Surveillance and response infrastructure in the US is robust, and the window for a dramatic shift in the epidemiological landscape before January 1, 2026, is narrowing. While vigilance is warranted, the probability of an HHS PHE declaration for H5 before the deadline is low, but not zero\u2014allowing for the possibility of an abrupt change in the virus\u2019s behavior or political calculus.",
+            "final_probability": 12
+        },
+        "Epidemiology (RiskAssessmentCDC)": {
+            "time_to_resolution": "About 2 months until January 1, 2026.",
+            "perspective_relevance": "As an expert in epidemiology with CDC-aligned risk assessment expertise, I am well-versed in the triggers and historical context for US public health emergency (PHE) declarations, the criteria used by HHS, and the real-world impact of avian influenza on public health and policy. My focus is on disease surveillance, zoonotic spillover risk, historical PHE precedents, and the likelihood of viral adaptation or mutation that would prompt government action.",
+            "status_quo": "No PHE has been declared for H5 avian influenza in the US. Despite significant animal outbreaks and limited human spillover, public health authorities (CDC, HHS) continue to rate the risk to the general US public as low, and no human-to-human transmission has been observed.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Current Public Health Risk Assessment",
+                    "effect": "Decreases probability. The CDC and HHS continue to assess the public risk as low, and PHEs are typically declared when there is substantial direct human health risk or rapid escalation."
+                },
+                {
+                    "factor": "Lack of Sustained Human-to-Human Transmission",
+                    "effect": "Decreases probability. There are no confirmed cases of efficient human-to-human transmission, which has historically been a key trigger for PHE declarations for zoonoses."
+                },
+                {
+                    "factor": "Precedent and Base Rate for PHE Declarations",
+                    "effect": "Decreases probability. PHEs for infectious diseases (H1N1, Zika, COVID-19, Mpox) have required marked and urgent public health threats with significant domestic impact. H5N1, while concerning, has not yet reached these thresholds."
+                },
+                {
+                    "factor": "Rising Mammalian Infections and Unusual Human Cases",
+                    "effect": "Increases probability. The virus now infects more mammals (seals, cattle), and there are a small but rising number of US human cases with unknown exposure sources, signaling increased potential for future adaptation."
+                },
+                {
+                    "factor": "Political and Economic Pressures",
+                    "effect": "Slightly increases probability. The economic impact on agriculture (eggs, poultry), rising food prices, and the growing number of animal outbreaks may increase pressure on HHS to act, even absent large-scale human transmission."
+                },
+                {
+                    "factor": "Mutation Risk and Surveillance Gaps",
+                    "effect": "Slightly increases probability. There is growing expert concern about mutation or reassortment (e.g., Q226L), and some human cases have no clear zoonotic exposure, which could prompt a declaration as a preemptive measure if the situation worsens."
+                },
+                {
+                    "factor": "US Administration Approach and Recent Statements",
+                    "effect": "Neutral to slightly decreases probability. Current HHS Secretary's reluctance towards aggressive culling and lack of emergency posture suggests a more measured response is likely unless the situation escalates."
+                }
+            ],
+            "no_scenario": "H5 avian influenza continues to spread among birds and some mammals, with occasional spillover into humans (primarily among those with direct animal contact). Human cases remain sporadic, mild, and lack sustained human-to-human transmission. The CDC and HHS continue to monitor and issue guidance, but do not escalate to a formal PHE declaration before January 1, 2026.",
+            "yes_scenario": "There is a sudden uptick in human cases, particularly those with no known animal exposure or evidence emerges of limited human-to-human transmission. Alternatively, a major outbreak in a vulnerable population or a highly-publicized case/death leads to political or public pressure, prompting HHS to declare a PHE for H5 avian influenza as a precautionary or preparedness measure.",
+            "final_reasoning": "Base rates and historical precedent strongly favor the status quo: declarations of federal PHEs for zoonotic influenza in the US require clear and present public health threats, typically involving sustained human-to-human transmission, severe morbidity/mortality, or overwhelming evidence of imminent risk. At present, the CDC and HHS continue to rate risk to the general public as low, and the only US death remains an outlier. There are concerning trends: increased infections in mammals, sporadic human cases with unclear sources, and some expert warnings about mutation risks. However, as of late October 2025, there is no evidence of the kind of epidemiological shift (e.g., efficient person-to-person spread, severe clusters in humans, or major urban outbreaks) that would trigger a federal PHE. While economic and political pressures are mounting due to the large-scale agricultural impact, these alone are unlikely to override the scientific risk assessment for a PHE declaration. Therefore, while the risk is not negligible and bears close monitoring\u2014especially entering winter and flu season\u2014the probability remains modest unless a dramatic shift occurs. I assess the probability at 18%.",
+            "final_probability": 18
+        },
+        "Political Science (PunctuatedEquilibriumPolicyChange)": {
+            "time_to_resolution": "Approximately 14 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Political Science with a focus on Punctuated Equilibrium Theory in policy change, I am uniquely suited to assess whether the US HHS will declare a public health emergency (PHE) for H5 avian influenza. This perspective emphasizes the tendency for long periods of policy stability, punctuated by rare, dramatic policy shifts in response to focusing events, mounting pressures, or shifts in policy images and venues. This allows me to weigh the propensity of the US health policy system to react with emergency declarations only when thresholds of threat, attention, or political pressure are met.",
+            "status_quo": "No public health emergency has been declared for H5 avian influenza by HHS. The CDC and HHS continue to rate the risk to the general public as low, despite ongoing animal outbreaks and limited human cases.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of PHE Declarations for Zoonotic Outbreaks",
+                    "effect": "Decreases probability\u2014Historically, PHEs have been declared only for outbreaks with clear or imminent public health threat to humans and/or evidence of sustained human-to-human transmission (COVID-19, H1N1, Mpox, Zika). For H5, prior animal outbreaks have not triggered a PHE."
+                },
+                {
+                    "factor": "Current Human Health Risk Assessment",
+                    "effect": "Decreases probability\u2014CDC and FDA consistently state risk to the general public is low, with most human cases mild and directly linked to animal contact; no confirmed human-to-human transmission."
+                },
+                {
+                    "factor": "Animal-to-Human Spillover and Mutation Potential",
+                    "effect": "Slightly increases probability\u2014H5N1 has crossed into mammals (notably cattle) in the US, and rare human cases with unknown exposure pathways have occurred. This elevates surveillance and concern and could rapidly change the risk calculus if more severe or unexplained human cases emerge."
+                },
+                {
+                    "factor": "Media and Political Attention",
+                    "effect": "Neutral to slightly increases probability\u2014While there is heightened media coverage and concern among scientists, there is not (yet) a major focusing event or public panic that would pressure HHS to act, but the groundwork for policy punctuation is present should the situation escalate."
+                },
+                {
+                    "factor": "Economic and Agricultural Impacts",
+                    "effect": "Neutral\u2014Egg prices and economic losses are significant, but PHE declarations are historically triggered more by direct human health threats than by economic impacts alone."
+                },
+                {
+                    "factor": "Policy Image and Venue Competition",
+                    "effect": "Slightly increases probability\u2014Advocacy debates (e.g., over culling vs. letting H5 run its course) can reframe the issue, potentially shifting the policy image toward a broader public health threat if the virus adapts or if political leaders perceive benefit in acting decisively."
+                },
+                {
+                    "factor": "Recent Precedent and Institutional Caution",
+                    "effect": "Decreases probability\u2014The pain of COVID-19 PHE fatigue and institutional desire to avoid 'crying wolf' mean HHS will be cautious absent clear evidence of increased human risk."
+                }
+            ],
+            "no_scenario": "The virus continues to circulate widely among birds and some mammals, with sporadic human cases (almost all mild and traceable to animal contact) but no evidence of sustained human-to-human transmission or severe disease. CDC and HHS maintain a low risk assessment, and heightened surveillance and biosecurity remain the main policy responses. No PHE is declared, even as agricultural and economic disruptions persist.",
+            "yes_scenario": "A sudden cluster of severe or unexplained human H5N1 cases emerges in the US, particularly if there is evidence of limited human-to-human transmission, a focusing event (e.g., a death in a school-aged child in an urban area), or a significant shift in the virus's genetic profile that raises public concern and political pressure. Media coverage and advocacy groups drive a shift in policy venue, prompting HHS to declare a PHE to enable emergency measures, funding, and heightened national response.",
+            "final_reasoning": "The base rate for HHS declaring a PHE in response to zoonotic diseases with only sporadic, mild, or direct-contact human cases is low. Despite the ongoing animal outbreaks and economic impacts, the current risk to human health remains assessed as low, and there is no evidence of sustained human-to-human transmission\u2014a typical trigger for national PHE declarations. While the spread into mammals and rare unexplained human cases increase the risk, these factors are not yet sufficient to punctuate the policy equilibrium. Given the recency bias post-COVID and institutional reluctance to overreact, the probability of a PHE for H5 avian influenza before January 1, 2026, is low unless there is a dramatic change in the pattern of human infection or a major focusing event. I will weight the likelihood at 15%, reflecting a small but non-negligible chance for rapid escalation due to mutation or a cluster of severe human cases, but with status quo bias dominating.",
+            "final_probability": 15
+        },
+        "Political Science (MultipleStreamsFramework)": {
+            "time_to_resolution": "Approximately 14 months (question resolves January 1, 2026; today is October 28, 2025)",
+            "perspective_relevance": "My expertise in the Multiple Streams Framework (MSF) is highly relevant for forecasting HHS declarations, as MSF emphasizes the convergence of problem, policy, and politics streams in agenda-setting and decision-making. HHS PHE declarations historically occur when problem indicators (case numbers, severity, transmission), policy solutions (available tools, preparedness), and political will (public pressure, economic impact, advocacy) align. Understanding how these streams are currently interacting for H5N1 in the US helps assess the likelihood of a PHE declaration.",
+            "status_quo": "Despite significant avian and mammalian outbreaks and some human cases, the HHS has not declared an H5 PHE. The CDC continues to rate the public risk as low, and HHS has not signaled imminent action.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Human-to-human transmission",
+                    "effect": "Decreases probability: No evidence of sustained human-to-human transmission has emerged, keeping risk assessments and political urgency low."
+                },
+                {
+                    "factor": "Severity and frequency of US human cases",
+                    "effect": "Decreases probability: Human cases remain rare, typically mild, and almost always linked to direct animal contact, not community spread."
+                },
+                {
+                    "factor": "Economic and agricultural disruption",
+                    "effect": "Increases probability: Large-scale culling, massive bird deaths, rising egg prices, and dairy impacts increase pressure for federal response, but these have not yet crossed a threshold for PHE."
+                },
+                {
+                    "factor": "Policy alternatives and preparedness",
+                    "effect": "Neutral/slightly increases probability: HHS has tools ready (vaccines, surveillance), but unless the problem stream worsens, the policy stream alone does not force a PHE."
+                },
+                {
+                    "factor": "Political stream: public and elite attention",
+                    "effect": "Decreases probability: Despite expert concern and some elite advocacy for more aggressive measures, the issue has not broken into sustained top-level political discourse or generated significant public fear."
+                },
+                {
+                    "factor": "Precedent/base rate for HHS PHEs",
+                    "effect": "Decreases probability: In the past 20 years, HHS has declared PHEs for outbreaks only after significant sustained risk to human health (H1N1, Zika, COVID-19, Mpox)\u2014all involved either rapid human-to-human transmission, significant morbidity/mortality, or strong elite consensus on risk."
+                },
+                {
+                    "factor": "Potential for viral mutation/reassortment",
+                    "effect": "Slightly increases probability: The risk of a mutation that enables efficient human transmission is a wildcard. If this occurs, probability would spike, but currently remains theoretical."
+                },
+                {
+                    "factor": "International context and WHO recommendations",
+                    "effect": "Neutral: No international body has recommended emergency action for H5N1 in the US context, nor has the WHO declared a PHEIC."
+                }
+            ],
+            "no_scenario": "Throughout 2025 and into 2026, H5N1 continues to circulate widely among birds and some mammals, with sporadic human cases (mostly mild and linked to animal contact) but no evidence of sustained human-to-human transmission. Economic and supply chain disruptions persist but are managed via standard USDA and CDC responses. HHS, following CDC advice and international norms, does not declare a PHE as the situation, while concerning, does not meet the threshold for an emergency declaration under Section 319 of the PHS Act.",
+            "yes_scenario": "One of several triggers rapidly escalates the situation: (a) a cluster of human cases with evidence of efficient human-to-human transmission is detected, (b) a significant mutation is identified in US H5N1 strains conferring higher transmissibility or severity in humans, (c) a large, severe outbreak among humans (multiple deaths, severe cases, or healthcare worker infections), or (d) overwhelming economic disruption and bipartisan political pressure force HHS to act preemptively. In these scenarios, the problem, policy, and politics streams couple, creating a policy window for a PHE declaration.",
+            "final_reasoning": "The base rate for HHS public health emergency declarations due to zoonotic or animal-origin viral threats is low and typically requires clear evidence of human-to-human transmission, significant morbidity/mortality, or overwhelming political pressure. Despite the unprecedented scale of the H5N1 outbreak in birds and mammals, current CDC and HHS assessments rate the public health risk as low, and human cases remain rare and mild. The Multiple Streams Framework suggests the streams have not coupled: the problem stream (no sustained human transmission), the policy stream (tools exist but are not urgently needed), and the politics stream (no major public or political outcry) have not aligned. Unless a dramatic and well-documented shift occurs (mutation to efficient human transmission, mass severe human cases, or major political mobilization), the likelihood of a PHE declaration remains low, albeit not negligible given the theoretical risk of viral evolution. I estimate a probability of 13%, reflecting slightly elevated risk due to ongoing mammalian spillover and the potential for mutation, but heavily weighting the status quo.",
+            "final_probability": 13
+        }
+    },
+    "deliberation_probability": [
+        13,
+        8,
+        13,
+        18,
+        10,
+        12,
+        18,
+        12,
+        18,
+        15,
+        13
+    ],
+    "deliberation_mean_probability": 13.636363636363637,
+    "deliberation_sd": 3.324837658374534,
+    "deliberation_probability_result": 14
+}
