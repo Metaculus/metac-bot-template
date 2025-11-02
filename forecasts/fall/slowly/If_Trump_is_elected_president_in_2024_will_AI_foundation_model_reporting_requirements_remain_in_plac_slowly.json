@@ -1,0 +1,454 @@
+{
+    "deliberation_results": {
+        "US Administrative Law (Administrative Procedure Act)": {
+            "time_to_resolution": "Just under 2 months (question resolves December 31, 2025)",
+            "perspective_relevance": "As an expert in US Administrative Law, particularly the Administrative Procedure Act (APA), I bring insight into the mechanisms, inertia, and legal requirements for altering or repealing executive orders and related federal regulations. Understanding how executive actions interact with statutory authorities, agency rulemaking, and the procedural hurdles to rapid regulatory change is crucial for accurately forecasting policy continuity or reversal under a new administration.",
+            "status_quo": "If nothing changes, the Biden-era AI foundation model reporting requirements remain in place, as established by Executive Order 14110 and any subsequent agency regulations\u2014pending any actions by the Trump administration to repeal or replace them.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump Administration's Commitment to Deregulation and Repeal of EO 14110",
+                    "effect": "Strongly decreases the probability that the reporting requirements will remain. There is explicit evidence\u2014including direct statements from Trump and multiple news sources\u2014that revoking the Biden executive order was an immediate priority and already executed."
+                },
+                {
+                    "factor": "Administrative Inertia and the APA",
+                    "effect": "Moderately increases the probability that some reporting requirements could persist, at least for a transitional period, due to the time-consuming nature of formal rulemaking under the APA. However, since the requirements are grounded in executive order rather than formal notice-and-comment rulemaking, this inertia is likely less protective than if they were codified in regulations or statute."
+                },
+                {
+                    "factor": "National Security and Biosecurity Pressures",
+                    "effect": "Slightly increases the probability that some form of reporting or oversight could be reintroduced or maintained, especially if there is a bipartisan recognition of existential risks from AI (e.g., CBRN threats). However, all current evidence suggests the Trump administration is prioritizing acceleration and deregulation over new guardrails."
+                },
+                {
+                    "factor": "Replacement by Alternative Regulatory Regime",
+                    "effect": "Slightly increases the probability that a Trump administration could create new reporting requirements, but these would likely be focused on tracking hardware, export controls, or foreign access\u2014not on model safety, red-teaming, or compute threshold reporting as per EO 14110."
+                },
+                {
+                    "factor": "Industry and Agency Pushback",
+                    "effect": "Marginal. While some agencies or industry actors may favor continued guardrails, the administration's priorities, supported by strong industry lobbying for deregulation, outweigh this effect barring a major crisis."
+                }
+            ],
+            "no_scenario": "Trump enters office in January 2025 and, as reported, immediately revokes EO 14110, instructs the Department of Commerce and other agencies to halt or rescind all related reporting requirements, and pivots to a deregulatory, innovation-focused AI policy. By December 31, 2025, no federal regulation or executive policy requires companies to report on dual-use foundation model activities, security of model weights, or red-teaming results tied to compute thresholds as specified in the resolution criteria.",
+            "yes_scenario": "Despite the revocation of EO 14110, persistent national security or bipartisan Congressional pressure leads the Trump administration to issue a replacement order or regulation that, intentionally or not, reinstates substantially similar reporting requirements for dual-use foundation models meeting the compute threshold. Alternatively, agency inertia or legal ambiguity leaves the original reporting regime in place through December 2025, or Congress enacts statutory language mandating such reporting (no evidence suggests this has happened).",
+            "final_reasoning": "Both direct news reports and the Trump administration's stated and enacted policies make clear that immediate revocation of Biden's AI guardrails, especially the reporting requirements for large dual-use models, was a day-one priority. Multiple news sources (including Buck Sexton's claims and mainstream coverage) state EO 14110 was revoked, and that the administration has replaced it with a deregulatory, innovation-accelerating framework. The new 'Manhattan II' and 'AI Action Plan' initiatives focus on infrastructure, export controls, and national security through technological supremacy\u2014not through model-level reporting or safety requirements. There is no evidence in the news corpus or public record that Trump, by late 2025, has reintroduced any binding reporting requirements that meet or exceed EO 14110's standard. In fact, the administration is repeatedly described as rolling back regulatory barriers and red tape. While there is always a slim chance that a catastrophic event (e.g., major AI misuse or a bipartisan Congressional intervention) could force a reversal, there is no sign of such a scenario as of November 2025. The base rate for sustained regulatory rollback under ideologically motivated administrations is high once key executive orders are revoked, and the lack of statutory or entrenched agency regulation further reduces the likelihood of persistence. Even accounting for APA inertia, the original requirements were not deeply embedded in final agency rules but were primarily executive in nature, making reversal swift and durable. I therefore assess the probability that the reporting requirements (as defined) remain in place at the end of 2025 as extremely low.",
+            "final_probability": 2
+        },
+        "US Administrative Law (Chevron Deference)": {
+            "time_to_resolution": "Approximately 14 months (until December 31, 2025)",
+            "perspective_relevance": "As a US Administrative Law expert, I can bring critical insight into the powers of the executive branch, the mechanics of regulatory repeal and replacement, the durability of executive orders, and the interaction between presidential directives, agency rulemaking, and statutory requirements. I am also attuned to the implications of Chevron deference (or its weakening), which affects how courts review agency interpretations of statutes, and the practical realities of regulatory inertia versus rapid deregulatory action.",
+            "status_quo": "The Biden-era EO 14110 is in place, requiring robust reporting from AI model developers. Under a Democratic administration, these requirements would likely persist or be strengthened.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump Administration's Explicit Opposition to EO 14110",
+                    "effect": "Strongly decreases probability. Trump explicitly pledged to repeal this EO, and credible reports confirm he did so on day one of his term."
+                },
+                {
+                    "factor": "Trump\u2019s Pro-Innovation, Deregulation Policy Orientation",
+                    "effect": "Decreases probability. The Trump administration has articulated a clear preference for deregulation and a 'light touch' on AI guardrails, favoring innovation and infrastructure over safety-centric regulation."
+                },
+                {
+                    "factor": "National Security/AI Arms Race Concerns",
+                    "effect": "Slightly increases probability. While the administration is focused on outpacing China in AI, there is some rhetorical and policy attention to dual-use and biosecurity risks, which could motivate minimal reporting requirements. However, these are likely to be weaker than Biden\u2019s and not to meet the original EO\u2019s thresholds."
+                },
+                {
+                    "factor": "Legal Pathways for Repeal/Replacement of Reporting Requirements",
+                    "effect": "Decreases probability. Because these requirements are not statutory but executive, and the Trump administration has both the legal authority and the will to rescind them quickly, there is little legal friction to their repeal."
+                },
+                {
+                    "factor": "Bureaucratic Inertia / Agency Resistance",
+                    "effect": "Slightly increases probability. Some agency officials or career staff may prefer to keep certain safety reporting, but with strong White House opposition, this is unlikely to matter in the short time frame."
+                },
+                {
+                    "factor": "Congressional Action / State Initiatives",
+                    "effect": "Neutral to slightly decreases probability. There has been no successful Congressional move to enshrine these requirements in law, and state-level efforts have been limited and not aligned with these federal thresholds."
+                },
+                {
+                    "factor": "Industry Resistance to Reporting Requirements",
+                    "effect": "Decreases probability. Major AI developers have lobbied for deregulation and are likely to support Trump\u2019s approach."
+                },
+                {
+                    "factor": "Potential for Rapid Crisis or Scandal",
+                    "effect": "Slightly increases probability. If a major AI-related disaster or scandal occurs before the end of 2025, emergency re-imposition of some reporting requirements is possible, but there is no evidence of this as of November 2025."
+                },
+                {
+                    "factor": "Chevron Deference Weakened",
+                    "effect": "Decreases probability. Courts are less likely to uphold aggressive agency interpretations absent clear statutory basis, further empowering the executive to roll back regulatory requirements."
+                }
+            ],
+            "no_scenario": "Trump rescinds EO 14110 upon taking office and replaces it with a new directive focusing on AI innovation, deregulation, and national security investments, but does not impose legally binding reporting requirements for dual-use foundation models at the original thresholds. Any remaining reporting is voluntary, narrowly targeted, or focused on export controls, not comprehensive model reporting as specified in the question.",
+            "yes_scenario": "Despite the rescission of Biden\u2019s EO, the Trump administration implements new regulations\u2014either via executive order or through the Commerce Department\u2014that, in response to a major security incident or under pressure from Congress, require foundation model developers to report activities, model weights, and red-team results to the government, at thresholds meeting or exceeding those set in EO 14110. Alternatively, Congress passes a law codifying such requirements before the end of 2025.",
+            "final_reasoning": "The evidence from news reports and the administration\u2019s articulated policies is overwhelmingly in favor of repealing or weakening AI foundation model reporting requirements. Trump rescinded EO 14110 on day one, and all subsequent policy moves (e.g., July 2024 America\u2019s AI Action Plan, Manhattan II) have prioritized deregulation, rapid infrastructure expansion, and national security investment over regulatory guardrails. While national security concerns could, in theory, motivate some reporting, the administration\u2019s approach is to avoid burdensome requirements and instead focus on industrial policy, export controls, and voluntary or narrow reporting. There is no sign of Congressional action to reimpose these requirements, and the legal pathway for Trump to repeal the EO is clear. The only real path to a 'Yes' outcome would be an unexpected and severe AI-related crisis prompting new, robust reporting rules at the specified threshold, but nothing in the news or current policy trajectory points to this. While some minimal reporting (e.g., for export controls or national security) may exist, it is highly unlikely to meet the scope and technical thresholds detailed in the resolution criteria. Given all this, and accounting for a very small tail risk of crisis-driven regulatory whiplash, I assign a very low probability.",
+            "final_probability": 3
+        },
+        "AI Policy Regulation (Risk Based AI Governance)": {
+            "time_to_resolution": "Approximately 14 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in AI Policy Regulation, particularly risk-based AI governance, my perspective is crucial for understanding both the technical and policy dimensions required for dual-use foundation model reporting requirements. I can directly analyze the likelihood that risk-based reporting\u2014focused on model capabilities with serious security or public safety implications\u2014will persist under a Trump administration, given the competing pressures of innovation, deregulation, and national security.",
+            "status_quo": "The status quo as of late 2023/early 2024 is that Executive Order 14110 imposes reporting requirements on developers of large, dual-use AI foundation models. These requirements are novel and were implemented by the Biden administration, but remain relatively new and have not yet been codified in law.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Stated Trump Administration Priorities: Deregulation and Innovation",
+                    "effect": "Strongly decreases probability. Trump has explicitly campaigned against EO 14110 and promised to cancel it, framing reporting as regulatory overreach. His July 2024 and October 2025 executive actions focus on deregulation and infrastructure, not risk-based reporting."
+                },
+                {
+                    "factor": "National Security Imperatives (Race with China, Biosecurity, CBRN Risks)",
+                    "effect": "Mildly increases probability. Despite deregulation, there is bipartisan concern about China's AI advances and dual-use risks (CBRN, cyber, biosecurity). National security could justify at least some minimal reporting or monitoring requirements, especially for extremely high-risk models or compute clusters."
+                },
+                {
+                    "factor": "Industry Influence and Lobbying",
+                    "effect": "Decreases probability. Major AI firms (OpenAI, Meta, Microsoft) have lobbied for lighter regulation to accelerate data center construction and reduce compliance burdens. The Trump administration's AI Action Plan incorporates these industry positions."
+                },
+                {
+                    "factor": "Federalism and State-Level Action",
+                    "effect": "Marginally decreases probability. With the federal government retreating from guardrails, states may act, but federal requirements are unlikely to persist unless Congress acts, which seems implausible given political gridlock."
+                },
+                {
+                    "factor": "Possibility of Replacing EO 14110 with Weaker or Different Requirements",
+                    "effect": "Slightly increases probability. Even if EO 14110 is revoked, it is possible that some minimal reporting or monitoring will persist, especially for models or clusters specifically relevant to national security (e.g., compute tracking for export controls, as seen in export restriction mechanisms)."
+                },
+                {
+                    "factor": "Legal and Institutional Inertia",
+                    "effect": "Slightly increases probability. Some reporting infrastructure may persist temporarily even after revocation, due to lag in agency implementation or ongoing NIST/Commerce Department guidance."
+                }
+            ],
+            "no_scenario": "Trump cancels EO 14110 on day one, as promised, and replaces it with a deregulatory framework that explicitly removes all federal reporting requirements for dual-use foundation models. No new law or regulation is enacted by Congress or agencies to restore such requirements. Instead, the federal focus shifts entirely to promoting innovation, infrastructure, and export controls, with any remaining monitoring limited to voluntary industry reporting or classified national security programs not meeting the question's explicit reporting threshold. By December 31, 2025, no federal regulation is in place requiring companies to notify the government about dual-use model development, weights, or red-teaming\u2014even for the largest models.",
+            "yes_scenario": "While EO 14110 is revoked, the Trump administration, under pressure from national security agencies (DoD, DHS, intelligence community) and in response to heightened CBRN/biosecurity threats or a major AI security incident, issues a new executive order or regulatory guidance that reimposes reporting requirements\u2014at least for the most powerful models or compute clusters, possibly under the Defense Production Act or export control authorities. Alternatively, Congress passes a targeted national security AI law, or Commerce/NIST maintains minimal reporting rules for dual-use models above certain compute thresholds. By December 31, 2025, these requirements satisfy the Metaculus resolution criteria for reporting on activities, model weights, and red-teaming.",
+            "final_reasoning": "The overwhelming weight of evidence, including explicit news reports, suggests that Trump did in fact revoke EO 14110 immediately upon taking office and publicly prioritized deregulation and acceleration of AI development. The 'Manhattan II' narrative, the AI Action Plan, and public statements all indicate a strategic focus on removing regulatory 'guardrails' to keep pace with China. Industry lobbying and the administration's alignment with major AI firms reinforce this direction. There is no evidence in the news corpus of a new federal regulation or executive order replacing EO 14110 with equivalent or stronger reporting requirements. While national security imperatives and institutional inertia could, in principle, result in targeted reporting (especially for CBRN risks or extreme compute clusters), all public-facing Trump actions are deregulatory. The most likely scenario is that, as of December 31, 2025, no federal regulation exists that meets the specific reporting requirements for dual-use foundation models as described. The only plausible path to a 'Yes' is a major security incident or congressional action, for which there is no supporting evidence. Therefore, the probability that these reporting requirements remain in place is extremely low, though not absolutely zero due to national security wildcards.",
+            "final_probability": 5
+        },
+        "AI Policy Regulation (NIST AI Risk Management)": {
+            "time_to_resolution": "Approximately 14 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in AI Policy Regulation with a focus on NIST AI Risk Management, I can closely evaluate how U.S. regulatory frameworks for AI foundation models are designed, implemented, and dismantled or replaced. My knowledge of the technical and procedural requirements for risk management, reporting, and red-teaming under NIST guidance informs my understanding of what constitutes a 'reporting requirement' and how such mandates may survive, evolve, or be eliminated under new executive and legislative priorities.",
+            "status_quo": "Reporting requirements for dual-use foundation models\u2014specifically, those outlined in Executive Order 14110\u2014were in place at the end of the Biden administration, mandating developers and owners of large AI models to notify the federal government, report on model weights, security, and red-teaming outcomes. Under Biden, these requirements were being operationalized, with NIST and the Department of Commerce leading implementation.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Direct Executive Action and Stated Policy",
+                    "effect": "Decreases probability. Trump explicitly vowed to cancel Biden's AI executive order and, per multiple sources, revoked EO 14110 immediately upon taking office. His administration has prioritized deregulation and innovation, contrasting sharply with the Biden-era focus on regulatory guardrails."
+                },
+                {
+                    "factor": "National Security Imperatives and Manhattan II Narrative",
+                    "effect": "Slightly increases probability, but only marginally. The severe rhetoric about the 'race' with China and existential AI threats could, in principle, prompt the imposition of some reporting or monitoring requirements for national security reasons. However, so far, all signs point toward the Trump administration preferring less regulatory friction and direct government-industry partnerships rather than broad mandates."
+                },
+                {
+                    "factor": "Industry Pressure and Deregulatory Focus",
+                    "effect": "Strongly decreases probability. The Trump administration has actively collaborated with Big Tech to eliminate regulatory barriers to AI data centers and model development, as indicated by its 'America's AI Action Plan.' This is consistent with industry lobbying against reporting mandates perceived as innovation-inhibiting."
+                },
+                {
+                    "factor": "Congressional and State-level Activity",
+                    "effect": "Neutral to slightly decreases probability. While all 50 states considered AI-related measures in 2025, there is no evidence of federal legislation replacing the revoked executive order with similar or stronger reporting requirements. Congressional gridlock and a deregulatory federal executive mean state-level action is unlikely to fill the federal gap."
+                },
+                {
+                    "factor": "Global and Biosecurity Pressures",
+                    "effect": "Weakly increases probability. Biosecurity and dual-use concerns remain salient, with both domestic and international actors highlighting risks. However, U.S. federal response under Trump appears to favor targeted export controls and bilateral monitoring agreements, not broad mandatory reporting as under EO 14110."
+                },
+                {
+                    "factor": "Precedent and Base Rate of Regulatory Rollback",
+                    "effect": "Strongly decreases probability. Historically, when a U.S. president acts quickly to repeal a predecessor's executive order and signals a strong philosophical break, the specific regulatory apparatus is rarely restored in similar form\u2014especially without congressional action."
+                }
+            ],
+            "no_scenario": "Trump rescinds EO 14110 as promised and replaces it with a deregulatory AI policy focused on infrastructure, innovation, and national security investment, but without mandatory government reporting requirements for dual-use foundation models. No new federal law or rule is enacted to restore those requirements. Industry is trusted to self-regulate, and any national security reporting is handled via classified channels or export controls, not broad regulatory mandates.",
+            "yes_scenario": "Despite initial repeal of EO 14110, a major national security incident or strong bipartisan pressure leads the Trump administration or Congress to reimpose reporting requirements for large dual-use foundation models, perhaps under a new executive order or emergency legislation. The requirements meet or exceed the specificity and coverage of the Biden-era rules, including notifications, security measures, and red-teaming reports.",
+            "final_reasoning": "The weight of evidence, both from news reporting and the base rate of U.S. regulatory reversals, strongly indicates that if Trump is elected, the specific Biden-era reporting requirements for dual-use AI foundation models will not remain in place by the end of 2025. Trump has made revocation of EO 14110 a signature action and shifted to a deregulatory approach, emphasizing rapid innovation and infrastructure development. While national security concerns could theoretically prompt new reporting requirements, all public signs point toward targeted, classified, or export-control-based measures rather than broad, public, government-mandated reporting. No news sources indicate legislative or regulatory movement to reinstate or surpass the revoked requirements. The only plausible 'yes' scenario is a dramatic external shock (e.g., AI-enabled terrorism) forcing a policy reversal, but there is currently no evidence for such an event. The base rate for rescinded executive orders being promptly restored is extremely low.",
+            "final_probability": 8
+        },
+        "US Federal Legislative Affairs (Congressional Oversight)": {
+            "time_to_resolution": "Approximately 14 months (question resolves on December 31, 2025; today is November 2, 2025).",
+            "perspective_relevance": "As an expert in US Federal Legislative Affairs, particularly Congressional oversight, I am well-positioned to evaluate the interplay between executive action, regulatory durability, and the likelihood that significant reporting requirements for AI foundation models will persist or be replaced. My expertise allows me to assess the institutional inertia, statutory versus executive foundation of regulations, and the incentives and constraints facing Congress, the White House, and the federal bureaucracy.",
+            "status_quo": "At the end of the Biden administration, AI foundation model reporting requirements were in place as a result of Executive Order 14110. These requirements compelled developers of large, dual-use AI foundation models to report key information to the federal government. Since Trump's inauguration, he has explicitly pledged\u2014and reportedly executed\u2014the immediate repeal of EO 14110, replacing it with a deregulatory, innovation-focused AI policy.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump's Express Commitment to Deregulation and Repeal of EO 14110",
+                    "effect": "Strongly decreases probability. Trump campaigned on, and reportedly executed, the repeal of Biden\u2019s AI executive order, framing it as stifling innovation. Multiple news sources and insider reports confirm this repeal as a day-one action."
+                },
+                {
+                    "factor": "Absence of Legislative Mandate for AI Reporting",
+                    "effect": "Decreases probability. With Congress having failed to pass any statutory requirement for AI foundation model reporting (as noted with the Markey bill's failure), there is no legal backstop to reinstate or maintain these requirements in the absence of executive support."
+                },
+                {
+                    "factor": "Trump Administration\u2019s Policy Focus on Innovation and National Security",
+                    "effect": "Decreases probability for general-purpose reporting requirements. The administration's 'AI Action Plan' and 'Manhattan II' prioritize rapid AI development and deregulation, viewing regulatory guardrails as competitive disadvantages. However, some targeted reporting for specific national security applications could persist or emerge, but not broad, model-agnostic requirements."
+                },
+                {
+                    "factor": "Congressional Oversight and Potential for Legislative Override",
+                    "effect": "Slightly increases probability, but minimally. Congress theoretically could pass new legislation reinstating or mandating reporting, but current Congressional inertia, divided government, and lack of legislative momentum on this issue make such action unlikely within the next 14 months."
+                },
+                {
+                    "factor": "Ongoing National Security Concerns (Biosecurity, CBRN, Cyber)",
+                    "effect": "Slightly increases probability, but primarily for sector-specific or classified reporting, not broad regulatory requirements. While both parties express concern about dual-use AI risks, the Trump administration\u2019s approach is to manage these through targeted measures and export controls rather than general model developer reporting."
+                },
+                {
+                    "factor": "Industry and Agency Resistance to Reimposition of Guardrails",
+                    "effect": "Decreases probability. Tech industry lobbying and the Trump administration\u2019s stated aim to remove 'red tape' reduce the likelihood of restoring broad reporting requirements. Agencies are being directed to identify and remove such requirements rather than create new ones."
+                }
+            ],
+            "no_scenario": "Trump repeals EO 14110 on day one. No new executive order or federal regulation is issued to replace the broad reporting requirements. Congress fails to act, and while some national security or export control reporting applies to specific AI applications or hardware, there is no general requirement for AI foundation model developers to report model training, security, or red-teaming results as specified in the original EO 14110. By December 31, 2025, these reporting requirements are not in place.",
+            "yes_scenario": "Despite the repeal of EO 14110, either Congress passes a new law mandating reporting for dual-use AI foundation models that meets or exceeds the original requirements, or the Trump administration, responding to an acute national security event or intense pressure from intelligence/military leaders, introduces a new executive or regulatory requirement that covers all the specified reporting elements for covered models. This would need to be codified and operational by December 31, 2025.",
+            "final_reasoning": "The overwhelming weight of evidence indicates that Trump not only campaigned on, but actually executed, the repeal of Biden's EO 14110, immediately ending the broad federal reporting requirements for dual-use AI foundation models. The administration\u2019s new policy regime is explicitly deregulatory, focused on accelerating innovation, and hostile to 'guardrails' seen as burdensome to U.S. AI firms. Congress has shown no ability or will to legislate such requirements, as demonstrated by the failure of proposed bills and the lack of bipartisan consensus. While national security risks are acknowledged, the Trump administration is addressing these via targeted export controls, infrastructure investment, and possibly classified/sector-specific reporting, not through the broad, public, model-agnostic requirements detailed in the resolution criteria. Given the lack of any legislative or regulatory foundation for such requirements, strong executive resistance, and industry opposition, the probability that the reporting requirements described in the question will be in place at the end of 2025 is extremely low. Only an extraordinary event (e.g., a catastrophic AI-enabled attack) would plausibly reverse this policy within 14 months, and there is no evidence of such an event or political momentum.",
+            "final_probability": 3
+        },
+        "Political Science (Partisan Realignment Theory)": {
+            "time_to_resolution": "Approximately 2 months (question resolves December 31, 2025; today is November 2, 2025)",
+            "perspective_relevance": "As an expert in Partisan Realignment Theory, I focus on the durable shifts in party coalitions, elite ideology, and institutional power that shape U.S. policy stability or change. This lens is especially relevant here because regulatory continuity/discontinuity around AI reporting requirements depends not just on executive action, but also on partisan alignments in Congress, the bureaucracy, industry coalitions, and the broader regulatory state. Partisan realignment theory helps assess whether a Trump administration policy shift represents a short-term reversal or a deeper, institutionalized change.",
+            "status_quo": "Under Biden, EO 14110 created robust federal AI foundation model reporting requirements. As of late 2024, these requirements were being implemented via the Department of Commerce and NIST, with broad support among national security officials, some Democrats, and segments of the AI safety community.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump Administration Priorities and Executive Action",
+                    "effect": "Strongly decreases the probability, as Trump explicitly campaigned on revoking EO 14110 and has already signed executive orders dismantling major elements of Biden's AI regulatory framework. News articles confirm he revoked EO 14110 on day one."
+                },
+                {
+                    "factor": "Partisan and Institutional Realignment",
+                    "effect": "Decreases probability, as the Trump-aligned GOP and industry actors favor deregulation, and there is little evidence of a unified bureaucratic or congressional counter-coalition capable of preserving Biden-style reporting requirements in the near term."
+                },
+                {
+                    "factor": "National Security Imperatives and Elite Consensus",
+                    "effect": "Slightly increases probability, as both parties and national security agencies recognize dual-use AI risks (especially with respect to China and CBRN threats). There is a non-zero chance of new reporting or monitoring being re-imposed under a different framework if a crisis or bipartisan consensus emerges, but this would likely be less stringent or delayed relative to Biden's approach."
+                },
+                {
+                    "factor": "Industry Pressure and Innovation Agenda",
+                    "effect": "Strongly decreases probability, as leading U.S. tech firms (OpenAI, Meta, Microsoft) lobbied for deregulation, and Trump's action plan centers on removing barriers, not imposing new ones. News confirms regulatory rollback and industry alignment."
+                },
+                {
+                    "factor": "Congressional Action or State Regulation",
+                    "effect": "Neutral to slightly decreasing, as Congress has shown little appetite for new federal AI regulation, and attempts at AI reporting bills have failed. State-level initiatives exist but are not likely to substitute for federal reporting requirements at the scale required by the question."
+                },
+                {
+                    "factor": "International Competition (China Threat)",
+                    "effect": "Decreases probability, as the administration is framing deregulation as essential for U.S. AI competitiveness vs. China. Reporting requirements are being portrayed as innovation-stifling."
+                }
+            ],
+            "no_scenario": "After taking office, Trump immediately revokes EO 14110 and replaces it with a deregulatory 'AI Action Plan.' Federal reporting requirements for dual-use foundation models above the specified compute threshold are removed or substantially weakened, with no equivalent or stronger federal regulation imposed by Congress or agencies by December 31, 2025. Industry self-regulation may exist, but does not meet the mandatory, government-reporting threshold of the question.",
+            "yes_scenario": "Despite Trump's revocation of EO 14110, a major national security crisis (e.g., credible intelligence of a CBRN threat enabled by AI) leads to urgent bipartisan congressional action, or a new executive order or emergency regulation, re-imposing mandatory reporting requirements for dual-use foundation models by December 31, 2025. These requirements meet or exceed the specificity and enforceability of those in the original EO. Alternatively, Trump\u2019s administration quietly maintains or re-enacts reporting under a new national security directive, but public and industry evidence so far does not support this.",
+            "final_reasoning": "The evidence from news sources is overwhelming: Trump revoked Biden\u2019s EO 14110 on day one, replacing it with a deregulatory, innovation- and competition-focused AI agenda ('America's AI Action Plan'). Multiple reputable sources, including direct statements from administration officials and reporting on the Manhattan II initiative, confirm the rollback of foundation model reporting requirements. There is no credible sign of a countervailing movement within the executive branch or Congress to reinstate these requirements at the federal level by end of 2025. National security concerns about AI-enabled CBRN threats are acknowledged, but the administration is pursuing alternative strategies (export controls, infrastructure investment, voluntary standards) rather than mandatory reporting. The only plausible path to a 'Yes' is a sudden and severe crisis forcing bipartisan congressional action in the next two months, but there is no evidence such a shift is underway. Given the short timeline to resolution, the strong deregulatory momentum, and the absence of institutional counterweights, the base rate for regulatory rollback under a unified executive is high. My forecast, therefore, is highly confident that mandatory AI foundation model reporting requirements as defined in the question will NOT be in place at the end of 2025.",
+            "final_probability": 5
+        },
+        "Political Science (Presidential Power Neustadt)": {
+            "time_to_resolution": "Approximately 14 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in Political Science with a focus on Richard Neustadt\u2019s theory of presidential power, I emphasize the importance of the president\u2019s formal tools (executive orders, appointments), informal influence (persuasion, bargaining), and the institutional context (bureaucracy, Congress, judiciary, and interest groups). Neustadt\u2019s perspective highlights that the president\u2019s ability to sustain or undo regulations depends not just on personal will or public statements, but on the interplay between executive intent, bureaucratic follow-through, and institutional constraints. In regulatory matters, especially those initiated by executive order, the durability of new or rescinded rules often hinges on bureaucratic inertia, the complexity of the regulatory apparatus, and the degree of elite and interest group support or resistance.",
+            "status_quo": "If nothing changed from Biden\u2019s 2023 Executive Order 14110, reporting requirements for dual-use foundation models would remain in force\u2014requiring developers of large AI models to notify the government and provide detailed security and red-teaming information. However, as of November 2025, news reports indicate that Trump revoked EO 14110 on his first day back in office and replaced it with a more deregulatory AI policy.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Presidential intent and public commitments",
+                    "effect": "Strongly decreases probability. Trump\u2019s campaign statements and immediate post-inauguration actions demonstrate clear intent to roll back Biden-era AI reporting requirements, replacing them with a deregulatory, innovation-first framework."
+                },
+                {
+                    "factor": "Bureaucratic inertia and regulatory substitution",
+                    "effect": "Slightly increases probability. Large bureaucracies can be slow to unwind complex reporting regimes, and regulatory substitution (e.g., replacing one order with a similar but rebranded requirement) sometimes occurs under pressure from national security or legislative actors. However, all available evidence suggests Trump replaced strict reporting with lighter-touch requirements."
+                },
+                {
+                    "factor": "National security imperatives and elite consensus",
+                    "effect": "Modestly increases probability. In times of perceived existential security competition (e.g., with China in AI), there is often bipartisan elite appetite to maintain some degree of oversight, especially for dual-use technologies. Yet, the Trump administration\u2019s approach appears premised on maximizing speed and minimizing regulatory friction, with more emphasis on export controls and infrastructure than on direct model reporting."
+                },
+                {
+                    "factor": "Congressional and judicial checks",
+                    "effect": "Negligible to slight decrease. There is no evidence of Congressional override or judicial intervention reinstating Biden\u2019s AI reporting requirements as of November 2025. State-level efforts are diffuse and mostly symbolic for this threshold."
+                },
+                {
+                    "factor": "Industry pressure and lobbying",
+                    "effect": "Strongly decreases probability. Leading AI firms have lobbied for reduced regulatory burden and are now shaping the Trump administration\u2019s AI policy. The administration is closely aligned with industry objectives for rapid infrastructure expansion and limited reporting."
+                }
+            ],
+            "no_scenario": "On December 31, 2025, there is no federal policy or regulation requiring all companies developing or training dual-use foundation models above the technical threshold to report activities, security measures, model weights, and red-team results to the US government. Instead, Trump\u2019s executive orders have dismantled these requirements in favor of a deregulatory, innovation-focused regime. Any reporting that does exist is either voluntary, limited to export controls, or focused on specific national security contracts, not broad industry coverage.",
+            "yes_scenario": "Despite Trump\u2019s initial repeal of EO 14110, a combination of high-profile AI-enabled security incidents, sustained pressure from national security agencies, and/or bipartisan Congressional intervention leads the administration to reimpose or maintain functionally equivalent reporting requirements\u2014possibly under a new name, but still meeting or exceeding the resolution threshold. This could happen if, for example, a major AI-driven biothreat or cyberattack occurs and elite consensus shifts toward re-regulation.",
+            "final_reasoning": "Applying Neustadt\u2019s framework, the president\u2019s intent is paramount, but institutional context and elite consensus matter. Trump\u2019s actions and public statements indicate a strong, clear break from Biden\u2019s AI guardrails, and multiple news sources confirm the immediate revocation of EO 14110 and the rollout of a deregulatory policy centered on innovation, infrastructure, and competition with China. Industry and security elite input has focused on export controls and infrastructure, not on rigorous model reporting. While there remains a theoretical possibility that security incidents or Congressional action could force a policy reversal, there is currently no evidence this has occurred or is imminent. Bureaucratic inertia is not sufficient to keep the prior requirements in place in the face of clear presidential action and industry alignment. Therefore, the probability that reporting requirements\u2014as defined in the resolution criteria\u2014remain in place at the end of 2025 is very low, but not zero due to the possibility of late-year shocks or crises.",
+            "final_probability": 5
+        },
+        "Political Science (Policy Feedback Theory)": {
+            "time_to_resolution": "Approximately 2 months (resolves December 31, 2025)",
+            "perspective_relevance": "As a political scientist specializing in Policy Feedback Theory, I examine how policies, once implemented, create institutional lock-in, vested interests, and path dependencies that influence subsequent policy decisions. This lens helps assess the resilience or vulnerability of AI foundation model reporting requirements to presidential and administrative change\u2014specifically, whether early-stage reporting mandates will survive, be repealed, or be replaced by equivalent or stronger safeguards under Trump, who has signaled deregulatory intent.",
+            "status_quo": "As of late 2025, the Trump administration has already revoked Biden\u2019s Executive Order 14110, which contained the AI foundation model reporting requirements. The administration is pursuing a deregulatory, innovation-focused AI policy, emphasizing acceleration and national security competitiveness with China.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Policy Reversal and Executive Power",
+                    "effect": "Strongly decreases probability. Trump made revoking EO 14110 a campaign promise and, according to multiple news reports, rescinded it on day one. Executive Orders are especially vulnerable to reversal by a new president, especially where there is little legislative entrenchment or bureaucratic resistance."
+                },
+                {
+                    "factor": "Policy Feedback\u2014Lack of Entrenchment",
+                    "effect": "Decreases probability. Reporting requirements had little time to generate organized beneficiary groups, bureaucratic routines, or industry adaptation. There is minimal evidence of path dependency or strong vested interests defending the requirements."
+                },
+                {
+                    "factor": "Replacement with Lighter or Different Regulation",
+                    "effect": "Slightly decreases probability. While some reporting or export controls may persist for national security, the Trump administration\u2019s stated and enacted approach is to minimize regulatory burdens on AI developers, replacing 'guardrails' with 'guidance' and focusing on international competitiveness."
+                },
+                {
+                    "factor": "National Security Rationale",
+                    "effect": "Slightly increases probability\u2014but only for select, targeted controls. There is a nonzero chance that, under the pressure of the AI arms race with China, some reporting or monitoring requirements are reintroduced, but these would likely be focused on export controls, supply chain security, or defense sector actors, rather than broad, sector-wide reporting as defined in EO 14110."
+                },
+                {
+                    "factor": "Industry Influence and Policy Feedback Loops",
+                    "effect": "Decreases probability. Major AI firms lobbied against onerous reporting requirements under Biden and now have a strong ally in the Trump administration, which has signaled alignment with industry calls for deregulation and infrastructure support."
+                },
+                {
+                    "factor": "State-level and Voluntary Standards",
+                    "effect": "Neutral to slightly decreases probability. State-level or voluntary initiatives (e.g., healthcare AI standards, voluntary biosecurity reporting) are not sufficient to meet the federal regulatory threshold specified by the question."
+                },
+                {
+                    "factor": "Fine Print\u2014Substitution Clause",
+                    "effect": "Neutral. The question allows for different requirements as long as they are functionally equivalent or stronger, but all evidence indicates a move toward deregulation, not substitution with equally stringent requirements."
+                }
+            ],
+            "no_scenario": "After Trump\u2019s inauguration, EO 14110 is revoked and not replaced with any federal regulation matching its reporting scope and detail. The administration shifts to a deregulatory, pro-accelerationist stance, perhaps maintaining or increasing export controls and national security measures, but does not require model-level safety, weight, and red-teaming reporting from all companies training large foundation models. Industry input and lobbying ensure that any new measures are lighter-touch, voluntary, or focused on federal procurement, not broad regulatory mandates.",
+            "yes_scenario": "Despite initial deregulatory moves, an unforeseen AI-related security crisis (e.g., a major AI-enabled biosecurity or cyberattack) prompts bipartisan congressional action or a new executive order reimposing model-level reporting, possibly rebranded as a national security imperative. Alternatively, intense international or allied pressure (e.g., via multilateral agreements) pushes the US to maintain or reinstate strong reporting requirements. However, such scenarios are not supported by current evidence or news sentiment.",
+            "final_reasoning": "The base rate for a new president (especially Trump) revoking a prior administration\u2019s executive order is very high. Policy Feedback Theory suggests that without significant bureaucratic or stakeholder entrenchment, such requirements are highly vulnerable to reversal. The news record is clear: EO 14110 was rescinded immediately, and all policy signals, including the 'Manhattan II' project and the America\u2019s AI Action Plan, reflect a deregulatory, accelerationist posture. While national security concerns could, in theory, prompt some targeted model reporting, there is no evidence of new regulation matching or exceeding the breadth of EO 14110\u2019s requirements. Industry and political incentives, as well as Trump\u2019s explicit rhetoric, align against maintaining such reporting. Barring a highly improbable, acute AI-related national security crisis before the end of 2025, the requirements will not be in place. The likelihood is not quite 0% because of the possibility of a dramatic, black-swan event, but it is extremely low.",
+            "final_probability": 2
+        },
+        "Public Policy (Advocacy Coalition Framework)": {},
+        "Public Policy (Punctuated Equilibrium)": {
+            "time_to_resolution": "Approximately 2 months (until December 31, 2025)",
+            "perspective_relevance": "As an expert in public policy, particularly the Punctuated Equilibrium model, I analyze policy evolution as mostly incremental with rare, rapid shifts due to exogenous shocks or political realignments. This lens is especially relevant for executive-driven regulation, where a change in presidential administration\u2014especially one with a sharply contrasting ideology and stated intentions\u2014can produce abrupt policy reversals. However, durable regulatory frameworks often require institutional buy-in, legislative codification, or strong stakeholder support, making reversals uneven and subject to friction.",
+            "status_quo": "Prior to Trump\u2019s inauguration in January 2025, the US had reporting requirements for dual-use foundation AI models driven by Executive Order 14110. Under Trump, that executive order was revoked immediately, and a new, deregulation-focused AI strategy was launched. As of November 2025, there is no evidence that Biden-style AI foundation model reporting requirements are in force at the federal level.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump administration's explicit repeal of EO 14110",
+                    "effect": "Strongly decreases probability. News reports\u2014including direct statements from Buck Sexton and international outlets\u2014confirm Trump revoked the Biden AI executive order on day one and replaced it with a deregulatory, innovation-focused policy."
+                },
+                {
+                    "factor": "Replacement with 'Manhattan II' and AI Action Plan",
+                    "effect": "Decreases probability. The new Trump AI Action Plan emphasizes deregulation, infrastructure, and national security competition with China, not safety-driven reporting requirements."
+                },
+                {
+                    "factor": "Absence of legislative action codifying reporting requirements",
+                    "effect": "Decreases probability. There is no report of Congress passing a law mandating foundation model reporting; attempts at AI regulation have stalled or died in Congress, and executive action dominates the regulatory landscape."
+                },
+                {
+                    "factor": "Possible agency inertia or state-level action",
+                    "effect": "Slightly increases probability, though marginally. Some agencies or states may maintain or introduce their own reporting requirements. However, the question requires federal-level regulation."
+                },
+                {
+                    "factor": "National security and biosecurity concerns",
+                    "effect": "Marginally increases probability. The Trump administration\u2019s rhetoric and some national security advisors recognize dual-use and CBRN risks, but the policy response has focused on export controls, infrastructure, and innovation, not reporting mandates. No evidence indicates these concerns have overridden the deregulatory thrust."
+                },
+                {
+                    "factor": "Industry lobbying and innovation discourse",
+                    "effect": "Decreases probability. Major AI companies and industry stakeholders have lobbied for less regulatory friction, and the Trump administration has aligned with this constituency."
+                },
+                {
+                    "factor": "Punctuated Equilibrium base rate for regulatory persistence post-party switch",
+                    "effect": "Strongly decreases probability. Historically, executive regulations not codified by Congress are vulnerable to rapid reversal with a party change, especially when the successor administration is ideologically opposed. There are few instances where such requirements persist absent legislative action or overwhelming bipartisan consensus."
+                }
+            ],
+            "no_scenario": "After Trump\u2019s inauguration, the Biden-era foundation model reporting requirements are revoked via executive order. The Trump administration\u2019s new AI policy focuses on deregulation, innovation, and global competition, with no new federal requirements for companies developing dual-use AI models to report details as specified in the original EO 14110. Congressional action to codify such rules does not materialize. By the end of 2025, there is no federal regulation in force matching or exceeding the original reporting requirements.",
+            "yes_scenario": "Despite the Trump administration\u2019s deregulatory stance, a major national security incident, bipartisan legislative action, or agency-level resistance leads to the reinstatement or retention of reporting requirements for dual-use AI models. Alternatively, the Trump administration, responding to mounting pressure over biosecurity or CBRN threats (e.g., following a credible AI-enabled attack or intelligence warning), issues new regulations that satisfy or exceed the reporting criteria, even if under a different policy name.",
+            "final_reasoning": "The overwhelming evidence from news reports, including clear statements that Trump revoked EO 14110 immediately and replaced it with a deregulatory, innovation-centric AI strategy, supports the conclusion that the specific reporting requirements for dual-use foundation models are not in place at the federal level. There is no evidence of legislative codification or agency resistance resulting in de facto retention of these requirements. While national security risks are noted, the administration\u2019s response has focused on innovation, infrastructure, and export controls rather than on regulatory guardrails or mandatory reporting. The Punctuated Equilibrium perspective reinforces the expectation of rapid regulatory reversal following a sharp partisan shift, especially for executive actions lacking deep institutional entrenchment. Given all these factors, the probability that such reporting requirements remain in place at the end of 2025 is extremely low.",
+            "final_probability": 3
+        },
+        "Public Policy (Policy Diffusion Theory)": {
+            "time_to_resolution": "Approximately 14 months (resolves December 31, 2025; today is November 2, 2025)",
+            "perspective_relevance": "As an expert in Policy Diffusion Theory, my analysis takes into account the political determinants of regulatory persistence, the influence of federal and subnational actors, and the mechanisms through which policy ideas spread, are reversed, or are retained even in the face of executive change. The status quo bias and inertia in administrative structures are particularly relevant, as is the potential for industry and international pressures to shape US AI policy.",
+            "status_quo": "As of late 2025, the reporting requirements for AI foundation models\u2014such as those initially established by Biden's EO 14110\u2014have been explicitly revoked by President Trump, who has prioritized deregulation and rapid innovation in AI. The regulatory framework now emphasizes infrastructure and innovation, with minimal federal guardrails on dual-use AI model reporting.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Executive Order Revocation and Deregulatory Preference",
+                    "effect": "Strongly decreases probability. News and official statements confirm Trump revoked EO 14110 and replaced its approach with deregulatory, innovation-focused policies, explicitly seeking to remove reporting burdens on industry."
+                },
+                {
+                    "factor": "Policy Inertia and Administrative Lag",
+                    "effect": "Slightly increases probability. Even with executive action, some regulatory remnants can persist due to bureaucratic inertia, existing agency regulations, or congressional mandates, though there is no evidence such inertia has preserved the reporting rules in this case."
+                },
+                {
+                    "factor": "State-Level and Sectoral Regulation",
+                    "effect": "Marginally increases probability. Diffusion theory suggests that states or sectors (e.g., healthcare) could independently maintain or introduce reporting requirements, but these would not constitute a federal requirement as specified in the resolution criteria."
+                },
+                {
+                    "factor": "National Security and Biosecurity Concerns",
+                    "effect": "Marginally increases probability. Trump\u2019s AI Action Plan references some evaluation of CBRN threats, and there is ongoing concern about AI misuse. However, the measures described are evaluation- and partnership-focused, not regulatory mandates for industry reporting."
+                },
+                {
+                    "factor": "International Competition (China Factor)",
+                    "effect": "Decreases probability. The geopolitical arms race with China is used to justify rapid deregulation, with U.S. policy focused on acceleration and competitive advantage, not regulatory oversight."
+                },
+                {
+                    "factor": "Industry Influence and Lobbying",
+                    "effect": "Decreases probability. Major AI developers (OpenAI, Meta, Microsoft) have successfully lobbied for deregulation and faster deployment, as evidenced by their input in Trump's AI Action Plan."
+                }
+            ],
+            "no_scenario": "After taking office, Trump immediately revokes Biden\u2019s EO 14110 and any related federal reporting requirements. Federal agencies are directed to remove regulatory burdens on AI firms. No new congressional legislation or agency rulemaking re-establishes binding reporting requirements by the end of 2025. Any safety-related evaluations are voluntary or internal to government or handled through informal public-private partnerships, not as binding regulation on companies.",
+            "yes_scenario": "Despite initial revocation, a major AI-related incident (e.g., catastrophic misuse, credible biothreat) in 2025 leads to emergency bipartisan legislation or new executive action that reinstates or exceeds the original reporting requirements for dual-use foundation models. Alternatively, a court order or agency rulemaking (e.g., under the Defense Production Act or other statutory authority) creates a de facto reporting mandate for companies developing large AI models by year-end 2025.",
+            "final_reasoning": "The status quo\u2014reflecting both public reporting and explicit statements from Trump and his advisors\u2014is that federal reporting requirements for dual-use foundation models have been revoked and replaced by a deregulatory, pro-innovation framework. Multiple independent news sources and press releases confirm the rescission of EO 14110 and the deliberate removal of such requirements. Policy Diffusion Theory would suggest that, absent strong exogenous shocks or congressional override, a dramatic policy reversal at the executive level is likely to persist for at least the first year of a new administration, especially when aligned with industry interests and justified on national security/innovation grounds. While there is always a nonzero chance of regulatory whiplash in response to unforeseen AI-related disasters, there is no evidence as of November 2025 that such a reversal is imminent, and no indication of agency or congressional action to restore these requirements. State or sectoral efforts (e.g., in healthcare or biosecurity) are emerging but do not satisfy the resolution criteria, which require a federal mandate for all companies developing qualifying models. Therefore, the probability that such binding federal reporting requirements remain in place at the end of 2025 is extremely low, though not absolutely zero.",
+            "final_probability": 2
+        },
+        "Science and Technology Studies (Technology Governance)": {
+            "time_to_resolution": "Approximately 14 months (resolves December 31, 2025; today is November 2, 2025)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on technology governance, I bring a deep understanding of how regulatory frameworks, political priorities, and institutional inertia shape the lifecycle of technology policy. STS emphasizes the co-production of technology and society, highlighting the importance of administrative legacies, lobbying, inter-agency dynamics, and the role of scientific/technical expertise in shaping governance structures. This allows me to read between the lines of both political rhetoric and institutional practice, identifying likely policy persistence or disruption beyond headlines.",
+            "status_quo": "The status quo, following Biden's Executive Order 14110, is that federal reporting requirements for dual-use foundation AI models are in place. However, since Trump's inauguration in January 2025, multiple credible news sources and administration statements confirm that these requirements were revoked or replaced with a deregulatory approach focused on rapid AI innovation.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump Administration Ideology and Public Commitments",
+                    "effect": "Decreases probability. Trump\u2019s campaign and actions in office have repeatedly prioritized deregulation, explicitly targeting the Biden EO 14110 as stifling innovation and promising repeal. News articles confirm EO 14110 was revoked on day one, with subsequent orders focused on infrastructure and innovation rather than safety guardrails."
+                },
+                {
+                    "factor": "Institutional Inertia and Bureaucratic Lag",
+                    "effect": "Slightly increases probability. Even after executive orders, some reporting requirements could persist de facto via agency inertia or legacy rulemaking, especially if embedded in contracts or ongoing NIST/Commerce Department work. However, the Trump administration appears highly proactive in scrubbing Biden-era AI regulation, reducing this effect."
+                },
+                {
+                    "factor": "National Security Concerns and International Competition",
+                    "effect": "Moderately increases probability. The framing of the U.S.-China tech race (see 'Manhattan II') could prompt selective retention or reintroduction of reporting requirements specifically for national security. However, current reporting indicates the administration prefers targeted export controls and infrastructure funding, not broad domestic oversight."
+                },
+                {
+                    "factor": "Industry Lobbying and Tech Sector Influence",
+                    "effect": "Decreases probability. Major tech companies have lobbied for lighter-touch regulation and are actively involved in shaping the new AI Action Plan, which centers on deregulation and innovation incentives, not mandatory reporting."
+                },
+                {
+                    "factor": "State-Level and Voluntary/Private Sector Initiatives",
+                    "effect": "Neutral to slightly increases probability. State-level and voluntary frameworks (e.g., Joint Commission in healthcare) may fill gaps, but these do not amount to comprehensive federal reporting requirements as specified in the resolution criteria."
+                },
+                {
+                    "factor": "Congressional Gridlock and Lack of New Legislation",
+                    "effect": "Decreases probability. There is no evidence of bipartisan Congressional action to codify AI reporting requirements, and the Trump administration is not pushing such measures."
+                }
+            ],
+            "no_scenario": "After Trump's inauguration in January 2025, EO 14110 is revoked and replaced by the 'America's AI Action Plan' and the 'Manhattan II' initiative, which focus on deregulation, infrastructure, and global competition. Federal reporting requirements for dual-use foundation models are eliminated. Any residual agency-level rules are explicitly rolled back or become unenforceable due to lack of executive support. No subsequent federal law or regulation restores similar reporting requirements by December 31, 2025.",
+            "yes_scenario": "Despite initial revocation of EO 14110, either a new national security crisis (e.g., credible AI-enabled biosecurity or cyber incident) or intense pressure from defense/intelligence agencies leads the Trump administration to reimpose, by executive order or emergency regulation, reporting obligations that meet or exceed the original criteria. Alternatively, Congress could pass a bipartisan law reinstating such requirements, but there is no evidence of this as of November 2025.",
+            "final_reasoning": "The preponderance of evidence from authoritative news sources, administration statements, and the structure of the new AI Action Plan all point toward the revocation and non-replacement of comprehensive federal AI foundation model reporting requirements as of late 2025. While there is a theoretical pathway for re-imposition (e.g., in response to an acute national security event), there is no current sign of such a move. The Trump administration's priorities are clearly deregulatory, focusing on accelerating AI innovation and infrastructure, not on imposing reporting burdens. Industry and agency alignment is toward minimal guardrails, and there is no Congressional action on this front. Institutional inertia and voluntary/sectoral initiatives do not rise to the level of mandatory federal reporting as specified in the question. Therefore, the most probable outcome is that these requirements will NOT be in place at the end of 2025, though a very small tail risk remains for an unexpected crisis-driven reversal.",
+            "final_probability": 5
+        },
+        "Science and Technology Studies (Responsible Innovation)": {
+            "time_to_resolution": "Approximately 2 months (question resolves December 31, 2025; today is November 2, 2025)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on Responsible Innovation, my perspective emphasizes not only the technical and legal aspects of AI regulation, but also the social, institutional, and political forces that shape technology governance. I consider how regulatory regimes persist or change, the influence of industry lobbying, the role of national security, and the 'regulatory pendulum'\u2014especially under sharply contrasting administrations. This approach means I look beyond formal rules to assess the likelihood of de facto and de jure reporting requirements (including through regulation, executive action, or informal mechanisms), and the incentives, obstacles, and path dependencies that shape their survival or demise under a Trump administration.",
+            "status_quo": "The status quo as of Biden's presidency was the existence of reporting requirements for large dual-use AI foundation models, established by Executive Order 14110. News indicates that Trump revoked EO 14110 and replaced it with a deregulatory, innovation-focused approach almost immediately upon entering office.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Trump administration's explicit revocation of Executive Order 14110",
+                    "effect": "Strongly decreases probability; public statements and news reports indicate Trump cancelled EO 14110 on day one."
+                },
+                {
+                    "factor": "Replacement regulatory regime (if any) under 'America's AI Action Plan' or 'Manhattan II'",
+                    "effect": "Moderately decreases probability; reports describe a focus on deregulation, infrastructure, and accelerating innovation, with little to no evidence of new reporting requirements matching or exceeding the Biden EO. The new regime appears to prioritize speed and competition with China over guardrails."
+                },
+                {
+                    "factor": "National security imperatives (e.g., biosecurity, cyber, CBRN risks)",
+                    "effect": "Marginally increases probability; there is some evidence (RAND report, biosecurity commentary) that national security agencies and the broader security state continue to advocate for some risk monitoring, but the mechanism appears weaker and less formal than the Biden EO. Trump\u2019s focus is on export controls and tracking, not model reporting."
+                },
+                {
+                    "factor": "Industry lobbying and institutional inertia",
+                    "effect": "Decreases probability; tech companies lobbied for lighter regulation and reporting, and the Trump administration appears to have been responsive. The only inertia present is in national security/defense, but no evidence this has sustained or re-established comprehensive reporting requirements."
+                },
+                {
+                    "factor": "State-level or sectoral regulation",
+                    "effect": "Negligible for this question; while states are active on AI, the resolution criteria require a federal requirement."
+                },
+                {
+                    "factor": "Public/elite concern about AI misuse",
+                    "effect": "Marginally increases probability, but is insufficient to overcome explicit deregulatory intent in the administration."
+                }
+            ],
+            "no_scenario": "After revoking Biden's Executive Order 14110, the Trump administration does not replace federal-level foundation model reporting requirements with new regulations that meet or exceed the criteria (reporting on training activities, model weights, and red-teaming for dual-use models above the specified compute threshold). The policy focus shifts to infrastructure, deregulation, and competition with China. Existing national security, biosecurity, or export control regimes do not fill the gap. By December 31, 2025, no such reporting requirements are in force at the federal level.",
+            "yes_scenario": "Despite revoking EO 14110, the Trump administration (possibly due to security incidents or pressure from defense/intelligence agencies) institutes new regulations, perhaps under the Defense Production Act or through emergency rulemaking, that require reporting from companies training dual-use models above the threshold, including the same or greater scope as the original EO. Alternatively, Congress passes bipartisan legislation mandating similar requirements, or agencies (e.g., Commerce, CISA, DoD) issue rules or guidance that amount to the same obligations, and these are in force at the end of 2025.",
+            "final_reasoning": "The overwhelming preponderance of evidence from both news and administrative actions indicates that the Trump administration revoked the Biden AI executive order on day one, as Trump had pledged, and replaced it with a deregulatory, innovation- and infrastructure-focused strategy (America's AI Action Plan, 'Manhattan II'). Multiple sources report the explicit removal of reporting requirements for AI foundation models, with the new approach emphasizing industry freedom, reduced federal oversight, and a race against China. While national security concerns persist, and there are sectoral moves (e.g., in healthcare) for voluntary guidance, there is no indication that any federal regulation currently in force on December 31, 2025, would require companies developing dual-use foundation models over the threshold to report on training activities, model weights, and red-teaming in the manner or scope mandated by EO 14110. Export controls and supply chain tracking remain, but these are not equivalent. Congressional gridlock and the administration's stated priorities make re-imposition of such requirements highly unlikely within the timeframe. Therefore, the probability that such requirements remain in place at the end of 2025 is extremely low.",
+            "final_probability": 2
+        }
+    },
+    "deliberation_probability": [
+        2,
+        3,
+        5,
+        8,
+        3,
+        5,
+        5,
+        2,
+        3,
+        2,
+        5,
+        2
+    ],
+    "deliberation_mean_probability": 3.75,
+    "deliberation_sd": 1.864744681524183,
+    "deliberation_probability_result": 4
+}
