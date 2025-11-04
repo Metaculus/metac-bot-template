@@ -1,0 +1,437 @@
+{
+    "deliberation_results": {
+        "Forensic Accounting (Fraud Examination Standards)": {
+            "time_to_resolution": "Less than 2 months (until January 1, 2026)",
+            "perspective_relevance": "As a forensic accountant specializing in fraud examination standards, I am uniquely qualified to evaluate whether senior executives at major public companies have been imprisoned for corporate crimes within the specified period. My expertise allows me to scrutinize the details of reported convictions, analyze patterns in executive accountability, assess the likelihood of successful prosecutions under various legal regimes, and interpret news reports in light of the forensic evidence and standards required for conviction and imprisonment.",
+            "status_quo": "In recent years, few senior executives of major public companies (especially those in S&P500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225) have been imprisoned for corporate crimes. High-profile cases more often result in settlements or fines for companies, with criminal liability falling on more junior employees or, less frequently, on former executives.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent News: Libor/UBS/Hayes Acquittal",
+                    "effect": "Strongly decreases probability. The high-profile reversal of Tom Hayes' conviction, along with commentary that the SFO will not retry the case, signals a judicial reluctance to pursue or sustain criminal convictions against senior financial executives, even in major scandals."
+                },
+                {
+                    "factor": "Base Rates: Historical Frequency of Senior Executive Imprisonment",
+                    "effect": "Decreases probability. Since Enron and the 2008 crisis, there have been very few (virtually none) instances of senior executives of major listed companies actually going to prison for corporate crimes within these indices."
+                },
+                {
+                    "factor": "Recent VW Diesel Scandal Convictions",
+                    "effect": "Slightly increases probability. Recent reports indicate that in May 2025, four former VW executives were convicted\u2014two received prison sentences, two suspended. However, it's unclear if those imprisoned fit the resolution criteria (prison term actually began, and if they are 'senior executives' as per index filings)."
+                },
+                {
+                    "factor": "Ongoing and New Trials (e.g., VW, NAFCO, South Korea Shipbuilder)",
+                    "effect": "Adds minimal upside risk. While new trials are starting or ongoing against former executives, there is limited time for trials to complete, appeals to resolve, and prison terms to actually begin before January 1, 2026."
+                },
+                {
+                    "factor": "Legal Environment and Judicial Reluctance",
+                    "effect": "Decreases probability. Recent legal decisions (e.g., the Supreme Court's reversal of LIBOR convictions) highlight increased judicial scrutiny and reluctance to criminalize what is often seen as 'industry practice' or ambiguous conduct, raising the bar for conviction and imprisonment."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness",
+                    "effect": "Decreases probability. The requirement that the executive be from a qualifying index-listed company (at any time since 2021), that the crime is in a corporate capacity, and that a prison sentence actually begins before January 1, 2026, excludes many public corruption or lower-level cases reported in the news."
+                }
+            ],
+            "no_scenario": "All ongoing or recently concluded cases against senior executives from major public companies either result in acquittals, suspended sentences, convictions overturned on appeal, or delayed sentencing, such that no qualifying executive actually starts a prison sentence before January 1, 2026. The recent reversals of banker convictions and judicial decisions reinforce this outcome. The VW case's imprisoned individuals are not, upon review, qualifying 'senior executives' or their sentences do not begin in the resolution window.",
+            "yes_scenario": "A senior executive (as defined in the resolution) from a major listed company, such as one of the convicted VW executives, actually begins serving a prison sentence for crimes committed in a corporate capacity before January 1, 2026, and the conviction withstands any immediate appeal or suspension. Alternatively, a late-breaking conviction and immediate imprisonment occurs in an ongoing case (e.g., in Germany or Italy) and is widely reported.",
+            "final_reasoning": "The overwhelming preponderance of evidence from both the news and base rates suggests that the status quo\u2014no senior executive from these major indices imprisoned for corporate crime\u2014continues. The reversal of the Tom Hayes conviction is particularly salient, as it signals that even when convictions occur, they may not withstand appeal, and the legal environment is more skeptical of criminalizing executive decisions. The only credible recent counterexample is the VW diesel scandal, where two former executives reportedly received prison sentences in May 2025. However, given the lack of explicit reporting on whether these individuals\u2019 sentences have begun (and if they are 'senior executives' per filing definitions), plus the likelihood of appeals and suspended sentences (a common outcome in German white-collar cases), the probability of positive resolution is low. Additional ongoing cases are unlikely to resolve fully (conviction, appeals, imprisonment) in the remaining weeks of 2025. Therefore, the probability of a 'Yes' outcome is low but not zero, reflecting a slight risk that a qualifying individual from VW or another case started a prison sentence in the eligible window. After weighing all factors, I estimate the probability at 8%.",
+            "final_probability": 8
+        },
+        "Forensic Accounting (Internal Control Assessment)": {
+            "time_to_resolution": "Approximately 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Forensic Accounting and Internal Control Assessment, I specialize in understanding how senior executive malfeasance is detected, investigated, and prosecuted in large organizations. My expertise allows me to assess the systemic and procedural barriers to holding senior executives criminally accountable, as well as the likelihood that weaknesses in internal controls will lead to criminal convictions and imprisonment.",
+            "status_quo": "The base rate for senior executives of major public companies (in S&P500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225) being imprisoned for corporate crimes is extremely low. Since the Enron scandal in 2006, there have been very few such imprisonments. Most recent cases have resulted in fines for corporations, settlements, or convictions of more junior staff.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Acquittals and Quashed Convictions",
+                    "effect": "Decreases probability. The UK Supreme Court overturned the convictions of Tom Hayes and Carlo Palombo, the two highest-profile recent cases, and the SFO has abandoned retrials. This reflects the high legal bar for criminal conviction of senior executives."
+                },
+                {
+                    "factor": "Ongoing and Recent Trials (e.g., VW Diesel Scandal)",
+                    "effect": "Slightly increases probability. Four former VW executives were convicted and two received prison sentences in May 2025, according to the news. However, it is not fully clear if these individuals were 'senior executives' as strictly defined (named in official filings), and whether any began serving sentences after January 1, 2021 and before January 1, 2026."
+                },
+                {
+                    "factor": "Legal and Institutional Barriers",
+                    "effect": "Decreases probability. Large corporations have robust legal defenses and internal controls, making it difficult to prove individual culpability beyond a reasonable doubt. The recent Tom Hayes case demonstrates how even well-publicized convictions can be overturned on appeal."
+                },
+                {
+                    "factor": "Recent Charges Filed (e.g., NAFCO, Shipbuilder, Daegwallyeong cases)",
+                    "effect": "Neutral to slightly negative. While there are high-profile cases and some executives facing charges, these are outside the indices specified (e.g., Ghana, South Korea, municipal/para-public organizations), or the individuals are not clearly senior executives of qualifying public companies."
+                },
+                {
+                    "factor": "Forensic Accounting/Control Weaknesses",
+                    "effect": "Neutral. While weaknesses in internal controls can lead to discovery and prosecution, most large listed companies have strong controls and compliance cultures post-Enron. The trend is for settlements and regulatory action, not criminal imprisonment."
+                },
+                {
+                    "factor": "Imminence of Resolution Date",
+                    "effect": "Decreases probability. With less than two months to go, and no news of any qualifying senior executive beginning a prison sentence, the likelihood of a new qualifying event is very low."
+                }
+            ],
+            "no_scenario": "No senior executives of qualifying public companies are imprisoned for corporate crimes between January 1, 2021 and January 1, 2026. Recent acquittals (e.g., Hayes, Palombo), the absence of new indictments or sentences for senior executives in the news, and the tendency for cases to result in settlements or overturned convictions all contribute to this outcome.",
+            "yes_scenario": "A senior executive of a major public company (as defined by inclusion in the listed indices) is convicted and begins serving a prison sentence for crimes committed in a corporate capacity between January 1, 2021 and January 1, 2026. This would require confirmation that at least one of the convicted VW executives (from the May 2025 verdict) or any other similar case involved a qualifying individual, and that the prison sentence actually began within the resolution window.",
+            "final_reasoning": "The base rate for imprisonment of senior executives from major public companies for corporate crimes is extremely low. Despite recent high-profile scandals and prosecutions (e.g., VW, LIBOR), the facts show a pattern of either settlements, convictions of more junior staff, or overturned convictions on appeal. The Tom Hayes acquittal and lack of new indictments or imprisonments reported in the news strongly reinforce the status quo. While the VW case in May 2025 resulted in prison sentences for some former executives, it is not clearly documented that these individuals meet the resolution criteria (senior executive, named in filings, sentence began after Jan 1, 2021 and before Jan 1, 2026). Given the strong status quo bias, high legal hurdles, and the short time remaining, the probability of a qualifying imprisonment occurring before January 1, 2026 is very low, though not strictly zero due to some ambiguity around the VW case. As a result, I assess the probability at 4%.",
+            "final_probability": 4
+        },
+        "Corporate Governance (OECD Corporate Governance Principles)": {
+            "time_to_resolution": "Just under 2 months (until Jan 1, 2026)",
+            "perspective_relevance": "As an expert in Corporate Governance (OECD Principles), I focus on the accountability of senior executives, board oversight, the effectiveness of legal and regulatory frameworks, and historical enforcement patterns for white-collar crime in major listed companies. The OECD Principles emphasize transparency, the responsibility of the board for ethical conduct, and the importance of a robust legal system to hold executives accountable for corporate crimes.",
+            "status_quo": "Very few senior executives of major public companies are imprisoned for corporate crimes. Most recent high-profile cases (e.g., LIBOR, Dieselgate) have resulted in fines for companies and only occasional convictions, usually of mid-level employees or traders rather than C-suite executives or board members.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent exoneration of high-profile convicted executives (e.g., Tom Hayes, Carlo Palombo)",
+                    "effect": "Decreases probability: Supreme Court decisions quashing convictions, and a lack of retrials, demonstrate continued judicial reluctance and high bar for convicting senior executives."
+                },
+                {
+                    "factor": "Recent convictions of former Volkswagen executives (Dieselgate)",
+                    "effect": "Increases probability: In Germany, four former VW executives were convicted, with two receiving prison sentences (in May 2025), but the news is unclear on whether these were senior executives as defined by the question. However, the trend shows some willingness to imprison high-level figures in egregious cases."
+                },
+                {
+                    "factor": "Active and ongoing legal proceedings against senior executives (e.g., NAFCO, GGV, Korean shipbuilders)",
+                    "effect": "Slightly increases probability: There are multiple ongoing cases, some with heavy charges and serious sentences possible, but as of now, no evidence that a senior executive from a qualifying major public company has begun a prison term within the window."
+                },
+                {
+                    "factor": "Corporate governance and legal frameworks in covered jurisdictions",
+                    "effect": "Decreases probability: OECD countries generally have strong legal protections for executives, and legal processes are slow. Even when charges are brought, appeals and procedural delays often extend beyond initial sentences, and actual imprisonment is rare before all appeals are exhausted."
+                },
+                {
+                    "factor": "Base rates and historical precedent (2006-2025)",
+                    "effect": "Decreases probability: Since Enron, there have been very few new cases of C-suite executives of major listed companies going to prison for corporate crimes, despite multiple scandals. The base rate is well below 1 per year for this population."
+                },
+                {
+                    "factor": "Recent public and regulatory pressure for accountability",
+                    "effect": "Slightly increases probability: While public anger and activism remain high (e.g., UK protests, ongoing scandals), this has not translated into a meaningful increase in executive imprisonments, indicating limited practical effect on judicial outcomes."
+                }
+            ],
+            "no_scenario": "Despite ongoing scandals and trials (e.g., VW, NAFCO, GGV), no senior executive of a qualifying major listed company is actually convicted and begins serving a prison sentence between January 2021 and January 1, 2026. This could be due to successful appeals, suspended sentences, health-related delays (as with Winterkorn), or the legal definition of 'senior executive' not being met by those actually imprisoned.",
+            "yes_scenario": "A senior executive (as defined by being named on official stock exchange filings) of a qualifying company is convicted of a corporate crime and begins serving a prison sentence before January 1, 2026. For example, if one of the former VW executives convicted in May 2025 is confirmed to meet the 'senior executive' criteria and actually began serving their sentence, or if a current ongoing case (e.g., NAFCO) results in a rapid, non-appealable conviction and imprisonment before the deadline.",
+            "final_reasoning": "The bulk of the recent news centers on overturned convictions (Hayes, Palombo) and ongoing or recently sentenced cases involving lower-level or non-listed company executives. The only potentially positive case is the May 2025 VW sentencing, but the available reports do not conclusively state that a senior executive (as defined for this question) has begun serving a sentence within the window. The legal and procedural barriers, historical rarity, and the continued pattern of scapegoating mid-level rather than top executives all decrease the probability. Given the high bar for both conviction and actual imprisonment prior to appeals, and the lack of clear evidence in the news of a qualifying executive having been imprisoned as of November 2025, the base rate prevails. However, the possibility is not zero due to ongoing cases and the recent VW outcomes. Therefore, the probability remains low, but not negligible.",
+            "final_probability": 7
+        },
+        "Corporate Governance (Sarbanes Oxley Act Compliance)": {
+            "time_to_resolution": "Just under 2 months (question closes January 1, 2026; today is November 4, 2025)",
+            "perspective_relevance": "As a corporate governance and Sarbanes-Oxley compliance expert, I focus on mechanisms that promote executive accountability, the practical effectiveness of internal controls, the realities of regulatory enforcement, and the historical base rates of senior executive imprisonment for corporate crimes in major listed companies. My perspective emphasizes both the structural barriers to executive convictions and the compliance culture within large corporations, especially those subject to SOX and similar regimes in Europe and Asia.",
+            "status_quo": "Senior executives of major public companies almost never go to prison for corporate crimes. While massive corporate scandals occur periodically, regulatory and prosecutorial focus frequently falls on mid-level or junior employees, settlements, fines, or deferred prosecution agreements, rather than imprisonment of top management.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent High Profile Acquittals and Overturns",
+                    "effect": "Decreases probability. The recent exoneration of Tom Hayes and Carlo Palombo, previously the only senior-ish executives to serve time for LIBOR/Euribor manipulation, signals legal and procedural barriers to sustaining convictions against top executives."
+                },
+                {
+                    "factor": "Ongoing Major Corporate Crime Trials (e.g., VW Dieselgate)",
+                    "effect": "Slightly increases probability. There is ongoing prosecution of former VW executives in Germany, some of whom have already received sentences (though often suspended), and a new trial is underway. However, many top executives\u2014most notably Martin Winterkorn\u2014have had their cases dropped due to health or procedural reasons."
+                },
+                {
+                    "factor": "Regulatory/Legal Environment and Enforcement Trends",
+                    "effect": "Decreases probability. Post-2008, the US, UK, and EU have shown a pattern of punishing institutions (with fines) and lower-level individuals more than senior executives. Compliance regimes (e.g., SOX) have improved controls, but have also made it harder to pin direct criminal liability on senior management, especially for 'control failures.'"
+                },
+                {
+                    "factor": "Current News Scan: No New Imprisonments of Eligible Executives",
+                    "effect": "Strongly decreases probability. The news coverage since July 2025 is dominated by the quashing of the main recent senior executive convictions (Hayes, Palombo), with no reporting of new or imminent prison sentences for senior executives of eligible companies."
+                },
+                {
+                    "factor": "Base Rate of Senior Executive Imprisonment in Major Indices",
+                    "effect": "Strongly decreases probability. Since the Enron era (Skilling, Lay), the number of senior executives from S&P 500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225 companies imprisoned for corporate crimes is extremely low\u2014typically zero or one per decade."
+                }
+            ],
+            "no_scenario": "No senior executive of a company listed on the covered indices is convicted and begins a prison sentence for corporate crimes between January 1, 2021 and January 1, 2026. Ongoing cases (e.g., VW, Wirecard) either result in acquittals, suspended sentences, or appeals that delay imprisonment until after the question closes. Any convictions are either of non-senior personnel, or sentences are not executed in time.",
+            "yes_scenario": "A senior executive (current or former) of a covered company is convicted and begins serving a custodial sentence for a corporate crime before January 1, 2026. This could occur via a swift verdict in an ongoing high-profile trial (e.g., VW), or an unexpected conviction in an overlooked jurisdiction. However, no such outcome is currently reported or imminent as of November 2025.",
+            "final_reasoning": "The base rate for senior executive imprisonment in major listed companies is close to zero in any given five-year period. The main recent cases (Hayes, Palombo) have been overturned, and there is no news of any new senior executive from the S&P500, FTSE100, DAX40, CAC40, FTSE MIB, or Nikkei 225 being imprisoned for corporate crimes since January 2021. VW trials continue, but so far, sentences for ex-executives are often suspended, and top leadership (Winterkorn) is out of scope due to severed or suspended proceedings. The news strongly reinforces the status quo: regulators, prosecutors, and courts remain reluctant or unable to actually jail top executives of major firms. With under two months to go, and no active reporting of imminent executive imprisonments, the probability is extremely low. My final probability, reflecting a slight tail risk that a verdict is delivered and executed in the remaining time (most likely in Germany, given the VW proceedings), is 2%.",
+            "final_probability": 2
+        },
+        "White Collar Criminal Defense (Federal Sentencing Guidelines)": {
+            "time_to_resolution": "Approximately 2 months (question resolves on Jan 1, 2026; today is Nov 4, 2025)",
+            "perspective_relevance": "As an expert in federal white collar criminal defense and the Federal Sentencing Guidelines, I bring a nuanced understanding of the processes and hurdles involved in investigating, charging, convicting, and imprisoning senior corporate executives for white collar crimes. I am attuned to the legal, procedural, and practical barriers to such outcomes, especially for high-ranking individuals at large, listed companies.",
+            "status_quo": "The status quo is that senior executives at major public companies are rarely imprisoned for corporate crimes. Most high-profile prosecutions either result in acquittals, settlements, or convictions of lower-level employees, not top executives. Since Jeffrey Skilling (Enron), there have been very few such imprisonments, and recent years have continued this pattern.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent Quashing of Libor Convictions",
+                    "effect": "Decreases probability. The UK Supreme Court's July 2025 decision to overturn Tom Hayes' and Palombo's convictions for rate manipulation (citing unfair trials and jury misdirection) underscores the legal and evidentiary difficulties in securing and maintaining convictions against senior finance executives."
+                },
+                {
+                    "factor": "No New High-Profile Executive Imprisonments in News",
+                    "effect": "Decreases probability. Recent news articles mainly discuss past cases, quashed convictions, or ongoing trials, but none report new senior executive imprisonments at eligible companies since 2021."
+                },
+                {
+                    "factor": "Ongoing VW Diesel Scandal Trials",
+                    "effect": "Slightly increases probability. Some former VW executives have received prison sentences in 2025 (per news), though it's not fully clear if sentences have begun and if all defendants meet the 'senior executive' and index inclusion criteria. However, at least two former VW executives received prison sentences (not suspended)."
+                },
+                {
+                    "factor": "Wirecard and Other European Scandals",
+                    "effect": "Neutral to slightly increases probability. While there are outstanding warrants and charges, there is no evidence from news that any senior executive has actually begun serving a prison sentence within the period."
+                },
+                {
+                    "factor": "Legal Thresholds and Appeals",
+                    "effect": "Decreases probability. Even when senior executives are convicted, long appeals processes and health or procedural delays (as with Martin Winterkorn, former VW CEO) often mean imprisonment is delayed past the resolution window."
+                },
+                {
+                    "factor": "Base Rate of Senior Executive Imprisonment",
+                    "effect": "Decreases probability. Historically, such imprisonments are exceedingly rare, especially in the US, UK, and Western Europe, and recent news supports ongoing inertia."
+                }
+            ],
+            "no_scenario": "Despite ongoing investigations, public outrage, and some convictions or charges, no senior executive from a qualifying company has actually begun serving a custodial sentence for corporate crimes between Jan 1, 2021 and Jan 1, 2026. Appeals, health issues, suspended sentences, or acquittals prevent imprisonment within the window.",
+            "yes_scenario": "At least one senior executive from a company listed on the specified indices (e.g., S&P500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225) begins serving a prison sentence for crimes related to their corporate capacity (e.g., fraud, conspiracy, bribery) within the specified period. The most likely candidate would be a former VW executive imprisoned in 2025 for the diesel emissions scandal.",
+            "final_reasoning": "Most news and base rates suggest that senior executive imprisonment is extremely rare. The quashing of the Tom Hayes conviction and similar outcomes reinforce how hard it is for prosecutors to secure and maintain such sentences. However, there is credible reporting that, after a multi-year trial, four former VW executives were found guilty in May 2025, with two receiving actual prison sentences (not suspended). VW was a DAX40 component in 2021, so it meets index criteria. If at least one of these executives (who must have been named on regulatory filings) began serving their prison sentence in 2025, the question resolves Yes. There is ambiguity in the news as to whether their sentences have begun (immediate imprisonment vs. appeal in liberty), but the language ('received prison sentences' vs. 'suspended sentences') and recent German practice suggest at least some were imprisoned without full suspension pending appeal. Thus, despite the strong status quo bias, the specific VW development pushes the probability just above 50%. I estimate a 60% chance that at least one senior executive from a qualifying company began serving a prison sentence for a corporate crime between Jan 1, 2021 and Jan 1, 2026.",
+            "final_probability": 60
+        },
+        "White Collar Criminal Defense (Deferred Prosecution Agreements)": {
+            "time_to_resolution": "Approximately 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in white collar criminal defense, especially in matters involving Deferred Prosecution Agreements (DPAs), I bring a detailed understanding of the incentives, processes, and legal hurdles that typically make the imprisonment of senior executives at major listed companies rare. My perspective highlights the interplay between individual criminal liability and the corporate strategies (such as DPAs, internal scapegoating, and regulatory settlements) that often shield senior leadership from prosecution, even in the presence of widespread wrongdoing.",
+            "status_quo": "No senior executive of a major public company listed on S&P500, FTSE100, DAX40, CAC40, FTSE MIB, or Nikkei 225 has been imprisoned for corporate crimes since January 1, 2021. Instead, enforcement actions have historically targeted lower-level employees or resulted in corporate fines and settlements (such as DPAs), with senior executives escaping jail time.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent legal developments in the LIBOR/interest rate manipulation scandal",
+                    "effect": "Significantly decreases probability. The UK Supreme Court has overturned the convictions of Tom Hayes and Carlo Palombo, two of the most high-profile bankers recently imprisoned for corporate crimes, and the SFO has declined to pursue retrials. These acquittals highlight both procedural and substantive barriers to convicting senior executives, and set a precedent that undermines the likelihood of further convictions before 2026."
+                },
+                {
+                    "factor": "Ongoing major trials against former Volkswagen executives for Dieselgate",
+                    "effect": "Moderate increase, but offset by timing. A landmark trial concluded in May 2025 with two former VW executives actually receiving prison sentences (two others had suspended sentences), and a new trial began in November 2025 with over 100 hearing days scheduled. However, available news does not provide names, and it is unclear if those convicted so far meet the 'senior executive' and 'index-listed company 2021' criteria, or if their prison sentences have actually commenced before Jan 1, 2026. The new trial's timeline (ending late 2026) makes it almost impossible for additional sentences to begin before resolution."
+                },
+                {
+                    "factor": "Prevalence of DPAs and regulatory settlements in white collar cases",
+                    "effect": "Decreases probability. DPAs and similar deals overwhelmingly result in corporate fines rather than individual culpability, particularly at the senior executive level. The repeated scapegoating of lower-level employees, as seen in the LIBOR cases, further reduces the likelihood of senior executive imprisonment."
+                },
+                {
+                    "factor": "Recent high-profile criminal prosecutions outside the relevant indices",
+                    "effect": "Neutral. Several news articles report convictions and prison sentences for public officials, lower-level corporate officers, or figures at non-index companies, but these do not meet the question criteria."
+                },
+                {
+                    "factor": "Status of ongoing cases (Wirecard, VW, NAFCO, etc.)",
+                    "effect": "Slight increase, but with significant reservations. While some ongoing prosecutions (VW, Wirecard, NAFCO) involve senior figures, there is no public evidence that any have had their prison sentences begin since 2021 and before January 1, 2026, per the question's strict criteria. The pace of white collar trials, appeals, and sentencing in these jurisdictions makes last-minute reversals or delays likely."
+                },
+                {
+                    "factor": "Base rate of senior executive imprisonment in major listed companies",
+                    "effect": "Strong decrease. Historically, the rate is extremely low\u2014since Enron, only a handful of senior executives from major index-listed companies have served time, and most recent high-profile cases have resulted in corporate settlements, acquittals, or convictions of non-senior employees."
+                }
+            ],
+            "no_scenario": "Despite several ongoing high-profile criminal prosecutions (e.g., VW Dieselgate, Wirecard), no senior executive from a relevant major public company is actually sentenced to prison and begins serving that sentence before January 1, 2026. Either the trials are not concluded in time, convictions are overturned or delayed on appeal, sentences are suspended, or the convicted individuals are not considered 'senior executives' as per the question's criteria.",
+            "yes_scenario": "At least one senior executive (e.g., a named VW director or C-suite executive) from a company listed in the specified indices has their criminal conviction finalized and begins serving a prison sentence for corporate crimes before January 1, 2026. This would likely arise from the May 2025 VW Dieselgate verdicts if any of those convicted were both senior enough and began their prison terms within the time window, or if a late-breaking conviction in a case like Wirecard or another major scandal results in immediate incarceration.",
+            "final_reasoning": "Recent news overwhelmingly points toward a continuation of the status quo: despite major scandals and public outcry, criminal liability for senior executives remains elusive. The dramatic reversal of Tom Hayes' conviction by the UK Supreme Court, the SFO's refusal to retry, and the focus on scapegoating non-executive employees further entrench the legal and cultural barriers to executive imprisonment. The only plausible positive scenario lies with the VW Dieselgate convictions, but available evidence does not confirm the necessary elements: a) that those sentenced were 'senior executives' as officially listed; and b) that they began serving prison time before January 1, 2026. Given the slow pace of white collar trials and the propensity for sentences to be suspended or delayed pending appeal, the likelihood of a qualifying case emerging in the next two months is extremely low. My expertise in DPAs and defense strategies reinforces the expectation that companies will continue to absorb penalties while shielding top leadership. Thus, while a tail risk remains via VW or a last-minute surprise, the base rate and recent exonerations push the probability very close to zero.",
+            "final_probability": 2
+        },
+        "Law (Corporate Criminal Liability Doctrine)": {
+            "time_to_resolution": "Less than 2 months (resolves January 1, 2026; today is November 4, 2025)",
+            "perspective_relevance": "As an expert in corporate criminal liability doctrine, I can rigorously interpret the status quo and recent legal developments regarding the imprisonment of senior executives for corporate crimes. My expertise allows me to distinguish between liability of individuals versus corporations, analyze the relevant threshold for executive culpability, and assess the likelihood of actual imprisonment (not just conviction or indictment) based on legal standards, historical precedent, and the recent news cycle.",
+            "status_quo": "Historically, it is extremely rare for senior executives of major public companies (as defined by indices in the criteria) to be imprisoned for corporate crimes. The status quo is that most corporate criminal prosecutions result in settlements, fines, or\u2014if individuals are prosecuted\u2014target lower-level employees or result in acquittals or overturned convictions on appeal.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent acquittals and overturned convictions",
+                    "effect": "Strongly decreases probability. The quashing of Tom Hayes's conviction and the Supreme Court's reasoning highlight the difficulties in securing and upholding convictions against senior executives for complex financial crimes. The Serious Fraud Office has also stated it will not pursue retrials, further reducing potential for new imprisonments."
+                },
+                {
+                    "factor": "Timing and proximity to resolution date",
+                    "effect": "Strongly decreases probability. With less than two months until resolution, any new conviction, sentencing, and commencement of imprisonment for a senior executive at a qualifying company is highly unlikely given the slow pace of white-collar criminal proceedings, especially for high-profile executives."
+                },
+                {
+                    "factor": "Current news on ongoing and recent cases",
+                    "effect": "Decreases probability. The major news items concern (a) the exoneration and lawsuits by previously convicted traders, (b) ongoing or recent indictments (e.g., VW, NAFCO), but with no evidence that any qualifying senior executive has started serving a prison sentence since January 2021. The VW convictions in May 2025 resulted in two prison sentences, but reporting does not clearly identify them as 'senior executives' per the index criteria, and no CEO-level or board-level executive has begun a sentence in the period."
+                },
+                {
+                    "factor": "Legal and procedural hurdles for senior executive liability",
+                    "effect": "Decreases probability. The doctrine of corporate criminal liability often requires explicit evidence of individual knowledge and intent, which is difficult to establish at the top executive level. There is also a tendency for plea deals, deferred prosecution agreements, or targeting lower-level personnel."
+                },
+                {
+                    "factor": "Base rates for executive imprisonment",
+                    "effect": "Decreases probability. Since Enron (Skilling, Lay) and a handful of insider trading cases, the base rate is extremely low for senior executives of S&P500/FTSE100-class companies to serve prison time for corporate crimes. Most recent high-profile cases have not resulted in imprisonment for those at the very top."
+                },
+                {
+                    "factor": "Potential for new, rapidly-resolving cases",
+                    "effect": "Negligible effect. No major, fast-moving cases appear in the news; most ongoing cases would not reach final sentence and imprisonment before Jan 2026."
+                }
+            ],
+            "no_scenario": "No senior executive (as defined by the indices and official exchange filings) of a qualifying public company is convicted and begins serving a prison sentence for corporate-related crimes between Jan 1, 2021 and Jan 1, 2026. Ongoing cases do not resolve in time, and recent acquittals further cement the status quo.",
+            "yes_scenario": "A senior executive (e.g., a member of the board or C-suite at a qualifying company) is convicted of a corporate crime and begins serving a prison sentence before Jan 1, 2026. This would require that the individual is both convicted and physically starts serving time within the period\u2014either through a new, rapidly-resolving case or a previously underreported conviction not yet widely covered in the news.",
+            "final_reasoning": "The base rates, recent legal developments, and structure of corporate criminal prosecutions all strongly indicate that the status quo\u2014no senior executive of a major public company serving prison time for corporate crimes\u2014will hold through the resolution date. The only plausible case that could have resulted in a 'Yes' (VW trial) does not clearly meet the criteria (unclear if convicted individuals were senior executives per the relevant filings), and the high-profile Libor/interest rate cases have now been overturned. Legal and procedural inertia, plus the short time remaining, make a new qualifying imprisonment virtually impossible. Therefore, the probability that the question resolves 'Yes' is vanishingly small.",
+            "final_probability": 1
+        },
+        "Law (White Collar Crime Jurisprudence)": {
+            "time_to_resolution": "Less than 2 months (resolves Jan 1, 2026; today is Nov 4, 2025)",
+            "perspective_relevance": "As an expert in White Collar Crime Jurisprudence, I bring direct knowledge of the legal processes, typical timelines for prosecution and appeals, the difference between conviction and actual imprisonment, and the high legal and evidentiary standards required to secure custodial sentences against senior executives of major public companies. I am also familiar with the historical patterns of such prosecutions, the influence of regulatory settlements, and the institutional reluctance to pursue criminal penalties against high-level corporate officials.",
+            "status_quo": "No senior executive of a major public company listed in the covered indices has been newly imprisoned for corporate crimes since January 2021. Some convictions have been overturned, and convictions are rare, especially for senior executives. The most recent high-profile cases have resulted in either acquittals, overturned convictions, or non-custodial sentences.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent high-profile acquittals/overturnings (Tom Hayes, Carlo Palombo)",
+                    "effect": "Strongly decreases probability. The Supreme Court's overturning of convictions for key traders in the LIBOR/EURIBOR cases underlines the legal and procedural barriers to successfully prosecuting and jailing senior executives, especially on novel or contested legal theories."
+                },
+                {
+                    "factor": "Base rates for senior executive imprisonment",
+                    "effect": "Strongly decreases probability. Since Enron (Skilling, Lay), there have been extremely few cases of actual imprisonment for senior executives of S&P500/FTSE100/DAX40 etc. companies. Most cases result in fines, settlements, or lower-level scapegoats being punished."
+                },
+                {
+                    "factor": "Ongoing trials and recent convictions (Volkswagen Diesel Scandal)",
+                    "effect": "Marginally increases probability. Four former executives were found guilty in May 2025, with two imprisoned. However, these seem to be non-CEO/C-suite, and Martin Winterkorn (ex-CEO) had his trial suspended due to health. New trial started Nov 2025, but verdict and imprisonment are extremely unlikely before Jan 1, 2026."
+                },
+                {
+                    "factor": "Recent indictments and charges (e.g., Ghana NAFCO, GGV Chile, South Korea shipbuilder, Daegwallyeong scandal)",
+                    "effect": "Neutral or decreases probability. While some senior officials in state-affiliated or public entities have been charged or even sentenced, these are either outside the covered indices (not listed in S&P500/FTSE100/DAX40/CAC40/FTSE MIB/Nikkei 225), or not 'senior executives' as defined by question's criteria for public companies. Imprisonments are mostly for public sector or minor company figures, not C-suite of major listed corporations."
+                },
+                {
+                    "factor": "Public and regulatory appetite for punishment vs. political/economic reluctance",
+                    "effect": "Decreases probability. Despite public anger (as seen in UK protests, populist rhetoric), governments and regulators continue to settle for fines and rarely pursue criminal cases against top executives, especially given fears of economic fallout."
+                },
+                {
+                    "factor": "Legal process duration (time to conviction and imprisonment)",
+                    "effect": "Strongly decreases probability. High-profile white collar criminal cases against senior executives typically take years from indictment to final imprisonment, with appeals and procedural delays. With less than two months to go, even newly filed charges are almost certain not to result in imprisonment by Jan 1, 2026."
+                }
+            ],
+            "no_scenario": "No senior executive (as defined: named executive/director of a company listed on a covered index in 2021 or later) is actually imprisoned for conduct in their corporate capacity before Jan 1, 2026. Ongoing or recent trials (such as Volkswagen) do not result in a custodial sentence before the deadline, or are still pending appeals. Charges in Ghana, Chile, S. Korea, etc. involve public officials or executives outside covered indices or with insufficient seniority.",
+            "yes_scenario": "A senior executive of a company listed on the covered indices (e.g., VW, a top S&P500 or FTSE100 firm) is convicted and begins serving a prison sentence for a corporate crime (e.g., fraud, market manipulation, embezzlement) before Jan 1, 2026. For example, a VW C-suite executive is sentenced to immediate imprisonment in the current diesel fraud trial, or a surprise expedited conviction and imprisonment occurs in another jurisdiction.",
+            "final_reasoning": "The combined weight of recent developments, historical base rates, and the timing make a 'Yes' resolution extremely unlikely. The only plausible path to a 'Yes' would be a verdict and immediate imprisonment of a senior executive in an ongoing trial, such as the new Volkswagen proceedings. However, the trial began only in November 2025, is scheduled for over 100 hearing days, and previous similar proceedings took years. Recent cases involving public or para-public entities (Ghana, Chile, S. Korea) do not meet the criteria for covered companies. The UK Supreme Court's reversal of key LIBOR/EURIBOR trader convictions further demonstrates the extreme legal hurdles to actually putting a senior executive of a major listed company in prison. There are no credible media reports of imminent new imprisonments that would meet the criteria before the deadline. The status quo of impunity for senior executives remains intact, and with less than two months left, the probability of a qualifying imprisonment is vanishingly small. The only slight risk is an unexpected verdict and imprisonment in a fast-tracked case, but this is highly implausible given procedural realities.",
+            "final_probability": 1
+        },
+        "Sociology (Elite Deviance Theory)": {
+            "time_to_resolution": "Just under 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Sociology, specifically in Elite Deviance Theory, my perspective emphasizes the recurring patterns by which individuals in positions of power\u2014particularly senior executives of major corporations\u2014evade criminal sanctions for corporate malfeasance, even when wrongdoing is exposed. Elite deviance theory highlights how social, legal, and institutional mechanisms enable elites to avoid imprisonment, and how public scapegoating, procedural failures, and regulatory settlements often substitute for direct penal accountability.",
+            "status_quo": "Senior executives of major public companies (S&P500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225) are rarely imprisoned for corporate crimes; junior employees are more likely to be prosecuted, and settlements or regulatory fines are the norm for corporations. The last high-profile case was Jeffrey Skilling (Enron, 2006), and the Libor and dieselgate scandals have produced few, if any, lasting jail terms for true senior executives.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent exonerations and quashed convictions",
+                    "effect": "Strongly decreases probability\u2014The Supreme Court has overturned the convictions of Tom Hayes and Carlo Palombo, and the SFO will not pursue retrials. This directly removes the most likely sources of a 'Yes' resolution prior to 2026."
+                },
+                {
+                    "factor": "Elite scapegoating and protection mechanisms",
+                    "effect": "Decreases probability\u2014Elite deviance theory predicts that institutions will shield senior executives, scapegoating lower-level employees or settling out of court, especially under public scrutiny (as seen in the Libor, VW Dieselgate, and banking scandals)."
+                },
+                {
+                    "factor": "Long legal timelines and procedural complexity",
+                    "effect": "Decreases probability\u2014Corporate crime prosecutions are slow, with appeals and procedural errors common. Even when convictions are secured, sentences may not begin before question close, or are quashed on technical grounds."
+                },
+                {
+                    "factor": "Recent criminal trials and sentences in Europe (e.g., VW Dieselgate)",
+                    "effect": "Slightly increases probability\u2014Recent articles report four former VW executives received prison sentences (two suspended) in 2025, with another major trial starting. However, it is unclear if these are 'senior executives' as per the strict resolution criteria, and prior reporting suggests most sentences are suspended or delayed."
+                },
+                {
+                    "factor": "Base rate of elite imprisonment post-2008",
+                    "effect": "Strongly decreases probability\u2014Since 2008, there have been almost no cases of senior executives of major listed companies serving prison time for corporate crimes, despite many high-profile scandals. Regulatory fines and settlements dominate."
+                },
+                {
+                    "factor": "Recent news focus on exoneration, not new convictions",
+                    "effect": "Decreases probability\u2014The overwhelming media focus is on overturned convictions, scapegoat narratives, and lawsuits against banks by exonerated traders, not on new successful prosecutions of true senior executives."
+                }
+            ],
+            "no_scenario": "No senior executive of a company listed on the specified indices is imprisoned for corporate crimes before January 1, 2026. High-profile cases (Libor, VW Dieselgate, etc.) result in suspended sentences, acquittals, or are overturned on appeal. Any convictions pertain to non-senior staff or to executives of companies outside the eligible indices/time period.",
+            "yes_scenario": "A named senior executive (as defined by official stock exchange filings) of a listed company begins a prison sentence for corporate crimes before January 1, 2026. This could occur if, for instance, a court in Germany or another jurisdiction orders an immediate custodial sentence (not suspended) for a top executive in the VW Diesel scandal, and the sentence is not overturned or stayed pending appeal before deadline.",
+            "final_reasoning": "While there are several ongoing high-profile corporate crime cases in Europe (notably VW Dieselgate), the overwhelming pattern since 2008 is that true senior executives rarely, if ever, serve custodial sentences. Recent news strongly emphasizes the overturning of convictions (Hayes, Palombo) and the exoneration of previously imprisoned individuals, reflecting elite deviance theory's prediction of systemic protection for elites. The only plausible path to a 'Yes' would be via the VW trials, but reporting suggests sentences are often suspended or delayed, and it remains ambiguous whether any of those imprisoned meet the precise 'senior executive' definition required by the question. With less than two months left before resolution, and no clear evidence of a qualifying executive actually starting a prison term, the base rate and recent developments strongly favor a 'No' outcome. I assign a probability close to the extreme, but not absolute, to reflect the small but nonzero chance of a last-minute qualifying sentence.",
+            "final_probability": 4
+        },
+        "Sociology (Differential Association Theory)": {
+            "time_to_resolution": "Just under 2 months (resolves Jan 1, 2026; today is Nov 4, 2025)",
+            "perspective_relevance": "Differential Association Theory posits that criminal behavior is learned through interaction in intimate groups and environments where criminal behavior is normalized. In corporate settings, this means that if senior executives are embedded in cultures where white-collar crime is tolerated, normalized, or rewarded, they are more likely to engage in such acts, but also more likely to collectively protect each other from external sanction. This theory helps assess the likelihood of senior executives being imprisoned, emphasizing not just individual wrongdoing but the transmission of criminal norms at the highest organizational levels and the mechanisms of collective shielding.",
+            "status_quo": "Very few senior executives of major public companies are imprisoned for corporate crimes; when prosecution occurs, it often targets lower-level employees or isolated individuals, while senior executives escape criminal sanction.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent High-Profile Acquittals and Overturns",
+                    "effect": "Decreases probability. The quashing of Tom Hayes\u2019 and Carlo Palombo\u2019s convictions, and the SFO\u2019s decision not to retry, signal a judicial and prosecutorial reluctance or inability to successfully convict and imprison senior financial executives, even in major scandals."
+                },
+                {
+                    "factor": "Ongoing Large Corporate Trials (e.g., VW Diesel Scandal)",
+                    "effect": "Slightly increases probability. Some recent verdicts (May 2025) saw former VW executives receive prison sentences. However, these seem exceptional and are not yet widely publicized as involving the very top C-suite leadership."
+                },
+                {
+                    "factor": "Public and Regulatory Appetite for Accountability",
+                    "effect": "Neutral or slightly increases probability. There is ongoing public anger (as seen in protests and political rhetoric), but this has historically not translated into actual executive imprisonment except in rare cases."
+                },
+                {
+                    "factor": "Legal and Institutional Structures (Corporate Shielding)",
+                    "effect": "Decreases probability. Corporate legal strategies, internal scapegoating (as alleged in the Hayes/UBS lawsuits), and the use of settlements and regulatory fines rather than criminal convictions, are well-documented mechanisms for shielding senior executives."
+                },
+                {
+                    "factor": "Base Rate of Executive Imprisonment (since Enron)",
+                    "effect": "Strongly decreases probability. The base rate of senior executive imprisonment in major public companies is extremely low, with only a handful of instances (e.g., Enron, rare exceptions in VW). Most convicted are junior or mid-level staff."
+                },
+                {
+                    "factor": "Recent News of New Trials, Charges, or Sentences",
+                    "effect": "Marginally increases probability. VW\u2019s new trial starting Nov 2025 involves some former executives, and there are some non-Western cases (e.g., South Korea, Ghana) where senior officials face jail, but often these are outside the indices in question or pertain to non-listed state entities."
+                }
+            ],
+            "no_scenario": "Despite ongoing investigations, public anger, and new lawsuits or charges, no additional senior executives (as defined\u2014listed company C-suites, not mid-level traders or non-listed entities) are convicted and begin prison sentences before Jan 1, 2026. Recent acquittals, legal appeals, and the slow pace of large trials mean that any ongoing or newly announced cases do not resolve in time, or result in suspended sentences, fines, or overturned convictions.",
+            "yes_scenario": "A senior executive from a major index-listed company (e.g., VW, another European or US-listed firm) is convicted for corporate crimes and actually begins serving a prison sentence between Jan 1, 2021 and Jan 1, 2026, as happened in the May 2025 VW verdicts or in a sudden, unheralded plea deal or expedited sentencing arising from an ongoing high-profile scandal.",
+            "final_reasoning": "The overwhelming pattern since Enron is that senior executives at major public companies rarely serve prison time for corporate crimes. The past year saw high-profile reversals (Hayes, Palombo), and ongoing attempts to scapegoat junior staff. While there have been some convictions in the VW Dieselgate saga (notably four former executives in May 2025, with two getting prison sentences), it is not absolutely clear from the news articles whether these individuals meet the strict definition of 'senior executive' as per regulatory filings, nor whether their sentences have begun within the resolution window. Given the news that at least two former VW executives did receive prison terms in May 2025 and the trial was high-profile and seems to meet the criteria, there is a plausible path to a YES resolution, but uncertainty remains about the exact status of those individuals (C-suite/board-level) and whether their sentences commenced within the window. The base rate, legal shielding, and recent acquittals weigh heavily toward NO, but the VW case keeps the door slightly open. The probability is higher than in prior years but still under 50%, reflecting both the rarity of such events and the ambiguous but potentially qualifying VW outcome.",
+            "final_probability": 35
+        },
+        "Political Science (Regulatory Capture Theory)": {
+            "time_to_resolution": "Approximately 2 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Regulatory Capture Theory, I focus on the systemic and institutional factors that influence the prosecution and imprisonment of senior executives in major public companies. Regulatory capture suggests that regulatory agencies are often dominated by the industries they are charged with overseeing, which can lead to leniency toward corporate leaders, especially in high-profile cases involving powerful firms. This perspective is crucial for assessing the likelihood that senior executives\u2014not just lower-level employees\u2014will face criminal consequences and actual imprisonment.",
+            "status_quo": "The status quo is that senior executives of major public companies are rarely imprisoned for corporate crimes. Prosecutions tend to target lower-level or mid-level employees, while top executives avoid prison through settlements, deferred prosecution agreements, or successful defenses.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Recent acquittals and quashed convictions",
+                    "effect": "Decreases probability. The high-profile reversal of Tom Hayes' and Carlo Palombo's convictions, along with the Serious Fraud Office's statement that retrials are not in the public interest, set a strong precedent against the imprisonment of senior executives in major financial scandals. The news cycle is dominated by lawsuits against banks for scapegoating, not by new imprisonments."
+                },
+                {
+                    "factor": "Ongoing trials and new prosecutions (e.g., VW diesel scandal)",
+                    "effect": "Slightly increases probability. There are ongoing trials against former VW executives, and a recent trial resulted in convictions with some prison sentences (though suspended for some). However, these sentences have not (yet) resulted in new, clearly documented imprisonments of senior executives within the resolution window."
+                },
+                {
+                    "factor": "Scope and definition of 'senior executive' and eligible companies",
+                    "effect": "Decreases probability. The question requires that the individual be a named executive or director of a company listed on a major index as of 2021 or later. Most recent convictions or sentences reported are either of junior/mid-level employees or officials from public or non-index companies."
+                },
+                {
+                    "factor": "Regulatory capture and legal inertia",
+                    "effect": "Decreases probability. Historical base rates show that even after massive scandals (e.g., Enron, 2008 financial crisis, LIBOR), senior executives are rarely imprisoned. Regulatory and legal systems tend to protect top corporate leaders, reflecting strong regulatory capture."
+                },
+                {
+                    "factor": "Pressures for accountability and high-profile public scrutiny",
+                    "effect": "Slightly increases probability. Public and political pressure, especially in jurisdictions with populist movements or anti-corruption drives (e.g., ongoing VW trial in Germany), can increase the risk of a senior executive going to prison, but these rarely translate to actual imprisonment before appeals and legal delays run out the clock."
+                },
+                {
+                    "factor": "Recent sentences for senior corporate officials outside the eligible pool",
+                    "effect": "Neutral. Some news covers imprisonment of senior officials (e.g., Korean shipbuilder safety officer, African and Latin American officials) but these do not fit the criteria of senior executives from the specified major indices."
+                }
+            ],
+            "no_scenario": "The most probable scenario is that, despite ongoing trials and some convictions, no senior executive of a qualifying company (S&P 500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 225) is imprisoned for corporate crimes before January 1, 2026. Legal appeals, quashed convictions, and the tendency to impose suspended sentences or non-custodial penalties for top executives will persist. Regulatory and legal systems will continue to protect senior leaders, consistent with regulatory capture theory.",
+            "yes_scenario": "A less likely scenario is that a senior executive from a qualifying company (e.g., one of the VW defendants) is convicted and actually begins serving a prison sentence before the deadline\u2014perhaps due to exceptional public pressure, a particularly egregious case, or a failed appeal. The only plausible candidate is from the VW diesel scandal, but the news does not confirm that any executive has actually begun serving a sentence within the window.",
+            "final_reasoning": "The dominant pattern since 2006 is that senior executives of major public companies evade imprisonment for corporate crimes, with rare exceptions (Enron, Rajat Gupta). The news overwhelmingly highlights reversals of prior convictions (e.g., Hayes, Palombo), lawsuits against companies for scapegoating, and trials where sentences are either suspended, under appeal, or given to non-qualifying individuals. The ongoing VW trial has resulted in some convictions, but there is no clear evidence that a senior executive has begun serving a prison sentence within the time window. Regulatory capture and legal inertia remain powerful barriers. With less than two months left and no confirmed qualifying imprisonments, the base rate and current evidence strongly favor a negative outcome.",
+            "final_probability": 2
+        },
+        "Political Science (Institutional Corruption Models)": {
+            "time_to_resolution": "Less than two months (resolves January 1, 2026; today is November 4, 2025)",
+            "perspective_relevance": "As an expert in institutional corruption models, I analyze the interplay between formal structures (regulatory, legal, and corporate governance systems) and informal practices (elite networks, scapegoating, regulatory capture) that typically allow senior executives to evade personal criminal liability. This perspective is crucial for assessing the likelihood of senior executives facing imprisonment in blue chip companies, which often possess resources and influence to shape outcomes in their favor.",
+            "status_quo": "No senior executive of a major public company (S&P500, FTSE100, DAX40, CAC40, FTSE MIB, Nikkei 22) has been imprisoned for corporate crimes since January 2021. Most high-profile cases (e.g., LIBOR, VW Dieselgate) have not resulted in jail terms for top executives, and when convictions did occur, they were often overturned or applied to lower-level personnel.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Elite Shielding and Scapegoating",
+                    "effect": "Decreases probability. The news strongly suggests senior executives continue to evade criminal liability, as seen in Tom Hayes' scapegoating and subsequent exoneration, with no indication that UBS or other bank executives are now facing jail time."
+                },
+                {
+                    "factor": "Legal Reversals and Appeals",
+                    "effect": "Decreases probability. The recent UK Supreme Court decisions overturning convictions of traders (e.g., Hayes, Palombo) demonstrate the success of appeals and the reluctance of courts to sustain convictions against individuals when ambiguity exists, especially if not clearly a senior executive."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness",
+                    "effect": "Decreases probability. The criteria require that a senior executive (as officially named in filings) both be convicted and actually begin serving a prison sentence before January 1, 2026\u2014leaving little time for appeals or new cases to progress to the imprisonment stage."
+                },
+                {
+                    "factor": "Recent VW Dieselgate Developments",
+                    "effect": "Slightly increases probability. There is mention of two former VW executives receiving prison sentences in May 2025, but the details are ambiguous regarding whether they are senior executives as defined, and whether they have begun serving sentences. However, the new trial began in November 2025, and the high-profile CEO Winterkorn's trial was suspended for health reasons, reducing the probability."
+                },
+                {
+                    "factor": "Jurisdictional Variation",
+                    "effect": "Neutral to slightly decreases probability. While some non-Western countries (e.g., South Korea, Ghana) show willingness to jail executives, the cases cited do not pertain to companies listed in the specified indices, or the individuals are not at the most senior level."
+                },
+                {
+                    "factor": "Base Rate of Senior Executive Imprisonment",
+                    "effect": "Strongly decreases probability. Historically, very few senior executives of large public companies are imprisoned, as evidenced by the lack of such cases in the news and background since Enron/Skilling (2006)."
+                }
+            ],
+            "no_scenario": "Despite ongoing trials and public outrage over corporate scandals (LIBOR, VW Dieselgate, etc.), no senior executive listed in official filings for a major index company is actually convicted and begins serving a prison sentence before January 1, 2026. Either cases are delayed, executives are acquitted, convictions are overturned on appeal, or sentences are suspended or commuted.",
+            "yes_scenario": "A senior executive (as defined by official filings) of a company listed in a major index is convicted of a corporate crime, exhausts all appeals, and actually starts serving a prison sentence between January 2021 and January 1, 2026. This could occur if a high-profile defendant in the VW Dieselgate trials is both legally classified as a senior executive and begins their sentence before the cutoff, or if a last-minute conviction and imprisonment occurs elsewhere.",
+            "final_reasoning": "The news overwhelmingly supports the status quo of impunity for senior executives at major public companies. The LIBOR scandal has ended with the exoneration of Tom Hayes and others, while no evidence suggests that actual senior executives at UBS or other banks are facing jail. In the VW Dieselgate case, while two former executives reportedly received prison sentences, it remains unclear if they fit the 'senior executive' criterion and whether sentences have started. The CEO, Winterkorn, evaded trial due to health. Other convictions globally (South Korea, Ghana, Chile) do not involve relevant index-listed companies or top executives as required by the question. Legal and institutional inertia, elite shielding, and the short time window left make it extremely unlikely that a qualifying senior executive will be imprisoned by the January 1, 2026 deadline.",
+            "final_probability": 2
+        }
+    },
+    "deliberation_probability": [
+        8,
+        4,
+        7,
+        2,
+        60,
+        2,
+        1,
+        1,
+        4,
+        35,
+        2,
+        2
+    ],
+    "deliberation_mean_probability": 10.666666666666666,
+    "deliberation_sd": 18.147543451754935,
+    "deliberation_probability_result": 11
+}
