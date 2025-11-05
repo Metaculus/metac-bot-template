@@ -299,7 +299,7 @@ def call_perplexity(question: str) -> str:
                 "content": """
                 You are an assistant to a superforecaster.
                 The superforecaster will give you a question they intend to forecast on.
-                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+                To be a great assistant, you generate a concise but detailed rundown of the most relevant news.
                 You do not produce forecasts yourself.
                 """,
             },
@@ -478,7 +478,7 @@ async def get_binary_gpt_prediction(
             rationale
         )
         comment = (
-            f"Extracted Probability: {probability}%\n\LLM's Answer: "
+            f"Extracted Probability: {probability}%\nLLM's Answer: "
             f"{rationale}\n\n\n"
         )
         return probability, comment
