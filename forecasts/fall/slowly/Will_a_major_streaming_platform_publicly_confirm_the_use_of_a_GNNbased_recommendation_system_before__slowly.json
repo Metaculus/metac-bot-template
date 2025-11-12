@@ -1,0 +1,301 @@
+{
+    "deliberation_results": {
+        "Data Science (Machine Learning in Industry)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months until end of 2025 (question resolves by 2026-01-01).",
+            "perspective_relevance": "As a data science and machine learning practitioner with experience in industrial recommender systems, I understand both the technical readiness of GNN-based recommenders and the business realities facing major streaming platforms. My view combines knowledge of algorithmic maturity, productionization challenges, and the incentives/disincentives for public confirmation by leading industry players.",
+            "status_quo": "No major streaming platform (with >50M subscribers) has yet publicly confirmed using a GNN-based recommendation system in live production, despite ongoing research and some experimental deployments.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "GNN Technical Maturity in Recommendation",
+                    "effect": "Increases probability. GNNs have reached technical maturity for some recommendation tasks, as evidenced by successful academic and industry pilots (e.g., Pinterest PinSage) and ongoing research in session-based recommendation and global context modeling."
+                },
+                {
+                    "factor": "Productionization and Scaling Challenges",
+                    "effect": "Decreases probability. Deploying GNNs at the scale of a Netflix or YouTube recommendation engine entails major engineering challenges: memory, latency, real-time updates, integration with legacy infrastructure, and robustness. While GNNs are making progress, most production recommenders at scale still rely on hybrid models (matrix factorization, MLPs, boosted trees, etc.)."
+                },
+                {
+                    "factor": "Business and Disclosure Incentives",
+                    "effect": "Decreases probability. Major platforms are often secretive about their recommendation architectures. Even if GNNs are being tested or used, platforms may not publicize the details due to competitive advantage, risk of being copied, or the incremental nature of the change (e.g., GNNs as a component rather than the core)."
+                },
+                {
+                    "factor": "Recent Research and Industry Signals",
+                    "effect": "Slightly increases probability. Recent articles and papers (e.g., the GCACL-Rec study, GNN-LRP for interpretability, and blending GNNs with RAG for recommendations) show rapid progress and growing industry interest. The technical literature is rich, but public confirmation in industry is lagging."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness",
+                    "effect": "Decreases probability. The criteria require public confirmation via an official announcement or interview, and only production deployments qualify\u2014not research, experimentation, or non-core use."
+                },
+                {
+                    "factor": "Time Remaining",
+                    "effect": "Slightly increases probability. With over a year left, there is some chance for an announcement, especially if a platform is seeking to signal technical leadership or if GNN-based recommenders demonstrate a clear business benefit (e.g., personalization uplift)."
+                }
+            ],
+            "no_scenario": "Major streaming platforms continue using their current hybrid recommendation approaches (deep learning, matrix factorization, graph features, etc.), perhaps with GNNs under experimentation or as minor components, but without a public announcement that their production recommender is GNN-based. Alternatively, a platform launches GNNs internally but does not publicize this fact or only references 'graph-based' methods without confirming GNNs specifically.",
+            "yes_scenario": "A major platform (e.g., Netflix, Amazon Prime Video, or YouTube) publishes an official engineering blog post or gives an executive interview stating that their main recommendation engine in production is now powered by a GNN (e.g., GraphSAGE, GAT, or a proprietary GNN variant), with specifics about architecture and impact. The confirmation is explicit, timely, and meets the resolution criteria.",
+            "final_reasoning": "The base rate for public confirmation of major architectural changes in recommendation systems by large streaming platforms is low: these companies are secretive, and most recent public disclosures describe hybrid architectures with incremental changes. GNNs have demonstrated technical promise, and recent research (as cited in the news) shows increasing feasibility and interest, but scaling GNNs to the demands of a global streaming platform is still a significant engineering hurdle. Furthermore, the strict requirement for public, official confirmation in the resolution criteria further reduces the likelihood. While there is mounting research and the timeline allows for a possible announcement, the status quo remains that no major platform has made such a disclosure, and the incentives to do so are not compelling unless GNNs deliver a step-change in business metrics or a platform wants to signal leadership. Therefore, while the probability is higher than in previous years, it remains well below even odds.",
+            "final_probability": 18
+        },
+        "Technology Journalism (Technology Disclosure Practices)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months (until December 31, 2025).",
+            "perspective_relevance": "As an expert in Technology Journalism (Technology Disclosure Practices), my perspective is particularly relevant because this question hinges entirely on public confirmation and official disclosure by a major streaming platform. My expertise allows me to accurately assess the likelihood of engineering blog posts, press releases, or executive interviews revealing specific technical adoption, especially concerning cutting-edge AI technologies like GNNs, which may be in research or production use but are not always openly discussed due to trade secrets, competitive advantage, or PR strategies.",
+            "status_quo": "No major streaming platform has publicly confirmed the use of a GNN-based recommendation system in their live, production environment as of now.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Industry Secrecy and Competition",
+                    "effect": "Decreases probability. Streaming giants (Netflix, Amazon Prime Video, Disney+, etc.) are highly secretive about the details of their recommendation engines, viewing them as a critical competitive moat. Publicly revealing a move to GNNs could tip off competitors or reveal perceived weaknesses in legacy systems."
+                },
+                {
+                    "factor": "Recent Advances in GNNs and Recommender Systems",
+                    "effect": "Slightly increases probability. Recent literature and blog posts suggest GNNs are maturing for use in large-scale recommender systems, with session-based recommendation (GCACL-Rec, PinSage at Pinterest) and innovations addressing scalability. GNNs\u2019 presence in research and niche production systems (e.g., Pinterest) hints at broader industry experimentation."
+                },
+                {
+                    "factor": "Engineering Blog and PR Disclosure Culture",
+                    "effect": "Decreases probability. Major platforms have historically been slow to publicly detail architectural overhauls unless there is a significant PR or recruitment advantage. Many technical breakthroughs are only disclosed at conferences or years after deployment."
+                },
+                {
+                    "factor": "Hype Cycle and Recruitment Incentives",
+                    "effect": "Slightly increases probability. GNNs are currently in the 'buzz' phase in the AI community, and some companies may see advantage in touting advanced AI usage for PR, investor relations, or recruitment. Netflix, for example, has previously blogged about their use of deep learning and reinforcement learning."
+                },
+                {
+                    "factor": "Resolution Criteria Stringency",
+                    "effect": "Decreases probability. The requirement is not just for internal use or research, but public confirmation that GNNs are in live, production recommendation use and that the disclosure is official (blog post, press release, or executive interview). This is a high bar."
+                },
+                {
+                    "factor": "Historical Base Rate of Similar Disclosures",
+                    "effect": "Decreases probability. Looking at the historic frequency with which major streaming platforms have disclosed the use of specific advanced algorithms in production (e.g., deep learning, RL, matrix factorization), such announcements are rare and often years behind internal adoption."
+                }
+            ],
+            "no_scenario": "Despite ongoing research and potential internal adoption of GNN-based recommenders, no major streaming platform publicly announces this use in a qualifying forum. Technical teams may present at academic conferences or file patents, but without an official blog post, press release, or executive/expert interview, the question resolves No.",
+            "yes_scenario": "A major streaming platform, such as Netflix or Amazon Prime Video, publishes an official engineering blog post or executive interview before the end of 2025, explicitly stating that GNN-based models are running in their live, production recommendation pipeline, possibly as part of a broader AI/ML showcase or in response to industry trends around explainability and advanced architectures.",
+            "final_reasoning": "The recent news demonstrates GNNs are receiving increasing attention for recommendation, and there is precedent for public disclosures (e.g., Pinterest\u2019s PinSage). However, major video streaming platforms have not historically been transparent about their recommender architectures, especially when adopting new, potentially differentiating technologies. The resolution criteria are strict\u2014requiring not just use but explicit, public confirmation and specificity about GNNs in live production. While GNN-based recommenders are becoming more practical, and there are incentives (hype, recruitment, PR) to disclose, the combination of industry secrecy, the high bar for qualifying disclosure, and the relatively slow pace of public admissions for such foundational system changes suggests a low base rate. My estimate is above zero because of the current AI hype, the possibility that a platform might disclose GNN use for PR or recruitment, and the proximity to the resolution deadline (some platforms increase transparency as technologies mature). However, the probability remains low given historical patterns.",
+            "final_probability": 12
+        },
+        "Streaming Media Industry (OTT Platform Technology Trends)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months (until December 31, 2025).",
+            "perspective_relevance": "As an expert in OTT platform technology trends, I have deep knowledge of the internal architectures, research adoption cycles, and public communication strategies of major streaming services. I actively track both academic and industrial progress in recommender systems, including which algorithms are deployed at scale and which remain experimental. My perspective also includes insight into the competitive motivations for publicizing technological advancements, especially when it comes to recommender system innovation.",
+            "status_quo": "To date, no major streaming platform with 50M+ paying subscribers has publicly confirmed the use of a GNN-based recommendation system in production. Most public disclosures reference more traditional approaches (matrix factorization, deep learning with DNN/CNN/RNN architectures, or hybrid approaches).",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Technical Maturity and Scalability of GNNs",
+                    "effect": "GNNs have matured significantly in the research community, with evidence of successful industrial-scale deployments (e.g., Pinterest's PinSage for image recommendations). However, these are still relatively rare compared to classic deep learning or collaborative filtering methods. In streaming, the challenge of real-time, large-scale inference and the complexity of user-item graphs present obstacles. This slightly lowers the probability of near-term production adoption."
+                },
+                {
+                    "factor": "Recommender System Innovation Cycle in Streaming",
+                    "effect": "Major platforms (Netflix, Amazon Prime Video, Disney+) have robust in-house ML research teams and are constantly experimenting with novel architectures. However, productionizing new models, especially those as complex as GNNs, takes time and is conservative due to risk aversion. Therefore, while GNNs are likely being piloted, full production rollout and public confirmation lag behind research. This suggests a modest probability of public confirmation within the next year."
+                },
+                {
+                    "factor": "Public Disclosure Incentives",
+                    "effect": "Streaming platforms selectively publicize technological innovations to attract engineering talent, signal technical leadership, or respond to public scrutiny (e.g., about fairness or transparency). However, they often delay or avoid disclosure to protect competitive advantage. If a platform believes GNNs confer a substantial edge, it may be reluctant to confirm use until competitors catch up, which lowers the chance of an official announcement in the short term."
+                },
+                {
+                    "factor": "Recent Trends and Signals in the Literature",
+                    "effect": "Recent publications and blog posts highlight increased interest in GNNs for recommendation and broader adoption of advanced architectures across industries. There is evidence of GNNs moving from research to practical use (e.g., in e-commerce and social media). Additionally, streaming platforms have cited graph-based methods in academic papers and patents, though not always in official production disclosures. This slightly increases the probability."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness",
+                    "effect": "The requirement for an explicit, public confirmation by a major platform (engineering blog, press release, or senior interview) is a higher bar than mere research publication or rumor. This strictness reduces the probability, as companies may use GNNs without ever meeting the public confirmation threshold by the deadline."
+                }
+            ],
+            "no_scenario": "Netflix, Amazon, and Disney continue to experiment with GNNs internally but find the production/maintenance overhead and scalability issues too great for full rollout in 2025. They stick with hybrid deep learning or sequence-based models in production. Any uses of GNNs remain research-only or are not publicly disclosed due to competitive reasons. By the end of 2025, no official blog post, press release, or senior-level interview confirms live production use of GNNs in their recommender systems.",
+            "yes_scenario": "A major platform (e.g., Netflix or Amazon Prime Video) successfully deploys a GNN-based recommendation component to a large portion of its user base and, seeking to highlight technical leadership or recruit ML talent, publishes a detailed engineering blog post or gives an interview explicitly stating that GNNs power part of their production recommendation pipeline. The disclosure is clear, official, and meets the resolution criteria before the end of 2025.",
+            "final_reasoning": "Base rates for major recommender system overhauls and public confirmations in the streaming industry are low, with many advances remaining proprietary for years. Although GNNs are gaining traction in recommendation research and have seen some production deployments (notably at Pinterest), streaming platforms operate at a scale and latency constraint that makes rapid rollout of new architectures risky. The strict requirement for explicit public confirmation further reduces the likelihood, as companies may use the technology without disclosing it. While there is evidence of increased GNN interest and a few non-streaming platforms (e.g., Pinterest, Alibaba) confirming GNN use, no major streaming platform has done so to date. Given the time remaining (just over one year), the increasing pace of AI innovation, and the possibility that a platform will want to signal technical leadership, I estimate the probability at 18%. This is above the historic base rate but below 25%, reflecting both the promise of GNNs and the barriers to\u2014and incentives against\u2014public confirmation.",
+            "final_probability": 18
+        },
+        "Computer Science (Recommender Systems Theory)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months (until Dec 31, 2025)",
+            "perspective_relevance": "As an expert in Computer Science specialized in Recommender Systems Theory, I have a deep understanding of both the technical requirements for deploying models like GNNs at scale in production environments and the incentives, challenges, and public communication strategies of major streaming platforms. My knowledge allows me to assess not just the technical feasibility, but also the business, engineering, and reputational factors affecting adoption and public disclosure of GNN-based recommenders.",
+            "status_quo": "No major streaming platform (with >50M subscribers) has publicly confirmed the use of a GNN-based recommendation system in production as of now. Production recommenders at Netflix, YouTube, Amazon Prime Video, etc., are believed to rely mainly on matrix factorization, deep learning (e.g., DNNs, CNNs), and hybrid approaches, with GNNs explored mostly in research or experimental settings.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Technical Maturity and Scalability of GNNs for Recommender Systems",
+                    "effect": "Slightly decreases probability. While GNNs have shown promise and some large-scale platforms (e.g., Pinterest with PinSage) have reported success, true production-scale GNN recommenders in streaming media (video) face unique challenges in data volume, serving latency, retraining, and system complexity. Most cutting-edge GNN research is not yet widely operationalized at the largest platforms."
+                },
+                {
+                    "factor": "Recent Research Activity and Industry Experimentation",
+                    "effect": "Slightly increases probability. Recent papers and blog posts (e.g., GCACL-Rec, PinSage, and blending GNNs with RAG) show active experimentation, and GNNs are now being used in adjacent domains (e.g., social platforms, chip design). This increases the likelihood of near-term production use."
+                },
+                {
+                    "factor": "Incentive to Publicly Announce",
+                    "effect": "Decreases probability. Streaming platforms are protective of their recommendation algorithms for competitive and strategic reasons. Even if they do use GNNs, they may choose not to announce or only disclose at a high level (e.g., 'deep learning', 'AI') without specifying GNNs."
+                },
+                {
+                    "factor": "Base Rate: Historical Frequency of Public Algorithm Announcements",
+                    "effect": "Decreases probability. Major platforms rarely make explicit, detailed, and timely disclosures about their production recommender architectures. For example, Netflix's detailed disclosures have been rare and lagging, and YouTube, Amazon, and Disney+ are even more secretive."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness (Public Confirmation Required)",
+                    "effect": "Decreases probability. The requirement for an explicit, official, and attributable public statement (e.g., blog post, interview from an executive/lead engineer) creates a high bar. Even if GNNs are deployed, the lack of such an announcement would result in a 'No'."
+                },
+                {
+                    "factor": "GNNs' Unique Advantages for Streaming Recommendations",
+                    "effect": "Slightly increases probability. GNNs are particularly well-suited for modeling complex relationships (e.g., user co-viewing, social graphs, content similarity graphs), so there is a strong technical motivation for their adoption, especially as traditional methods plateau."
+                },
+                {
+                    "factor": "Recent Media and Industry Signals",
+                    "effect": "Neutral/Minor. The news sources include multiple GNN explanations and use cases, including in recommendation engines and media, but do not include any evidence of public confirmation from a major streaming platform."
+                },
+                {
+                    "factor": "Window Until 2026 (Time for a Late Announcement)",
+                    "effect": "Slightly increases probability. There is still over a year left, giving platforms time to both deploy and announce such systems."
+                }
+            ],
+            "no_scenario": "A major streaming platform either does not use GNNs in its production recommender system, or it does so but chooses not to make an explicit, attributable public statement (as required by the resolution criteria) before the deadline. For example, Netflix might continue to improve its hybrid DNN-based recommenders without deploying GNNs at scale, or it might use GNNs internally but only refer to 'deep learning' or 'AI' in public communication, without mentioning GNNs specifically or in an appropriate forum.",
+            "yes_scenario": "A major streaming platform (e.g., Netflix, YouTube, Amazon Prime Video, Disney+) publishes an official engineering blog post, gives a public technical talk, or participates in a high-profile interview where a lead engineer or executive explicitly states that they use a GNN-based model for their production recommendation engine, and this is corroborated by the company\u2019s channels. This could happen if a new GNN-powered recommender demonstrates a significant leap in user engagement, and marketing or recruiting benefits outweigh secrecy concerns.",
+            "final_reasoning": "The base rate of major streaming platforms making public, explicit, and timely announcements about the specific architectures of their production recommenders is very low. GNNs are gaining significant traction in research and are being used in large-scale recommendation settings in adjacent industries (notably, Pinterest's PinSage is the most prominent example, but Pinterest is not a video streaming platform as per the criteria). There is clear technical motivation for streaming platforms to experiment with GNNs, and the window until 2026 leaves room for a late announcement. However, the strictness of the resolution criteria\u2014requiring an explicit, attributable public confirmation\u2014means that even if GNNs are deployed, the probability that a qualifying announcement is made remains modest. Platforms are typically cautious about sharing details of their recommenders for competitive reasons. While the probability is not negligible (given increasing research momentum and potential for a breakthrough or marketing-driven disclosure), the balance of factors favors No as the most likely outcome. I estimate the probability that a qualifying announcement is made by a major streaming platform before 2026 to be around 19%.",
+            "final_probability": 19
+        },
+        "Computer Science (Graph Neural Networks)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Computer Science with a specialty in Graph Neural Networks (GNNs), I am able to assess both the technical feasibility and real-world constraints of deploying GNN-based recommendation systems at industrial scale. I also have insight into the trends in industrial adoption, the technical and cultural barriers to disclosure, and the current state of GNN research and productionization, especially in the context of recommender systems.",
+            "status_quo": "No major streaming platform has publicly confirmed the use of a GNN-based recommendation system in their production environment as of November 2025.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Technical Maturity of GNNs for Recommendation Systems",
+                    "effect": "Slightly increases probability. GNNs have demonstrated strong performance in academic and some industrial research for recommendation tasks (e.g., PinSage at Pinterest), but have not yet become the dominant paradigm in production at scale due to issues with scalability, engineering complexity, and interpretability."
+                },
+                {
+                    "factor": "Recent Research and Industrial Interest",
+                    "effect": "Moderately increases probability. Multiple recent articles and studies (including those from PLOS and Medium.com) discuss GNN advances in recommendation engines, and major tech companies are experimenting with GNNs. However, these discussions mostly suggest ongoing R&D or pilot deployments, not wide production adoption."
+                },
+                {
+                    "factor": "Cultural and Strategic Reluctance to Public Disclosure",
+                    "effect": "Decreases probability. Streaming platforms are historically secretive about their recommendation algorithms due to competitive advantage concerns. Publicly confirming a switch to GNNs, especially in production, would require an internal decision to publicize, which is a high bar."
+                },
+                {
+                    "factor": "Implementation and Productionization Challenges",
+                    "effect": "Decreases probability. GNNs, while powerful, are complex and computationally intensive, especially for very large user-item graphs typical of streaming platforms (Netflix, Amazon, Disney+, etc.). The engineering lift and operational cost are barriers to rapid production adoption."
+                },
+                {
+                    "factor": "Base Rate of Past Public Confirmations",
+                    "effect": "Significantly decreases probability. There is very little precedent for platforms like Netflix or Amazon Prime Video making highly specific, public, timely announcements about the architecture of their production recommendation systems. Most such disclosures come years after the fact or remain at a high level of abstraction."
+                },
+                {
+                    "factor": "Recent GNN-related Announcements in Adjacent Domains",
+                    "effect": "Slightly increases probability. There are reports of GNN-based breakthroughs in other industrial settings (e.g., chip layout by Alibaba Cloud, pose estimation, digital twins for engineering, etc.), which may increase pressure or interest in publicizing similar advances in streaming, but this is indirect."
+                }
+            ],
+            "no_scenario": "Despite ongoing research and possible internal experimentation with GNNs, no major streaming platform (Netflix, Amazon Prime Video, Disney+, etc.) issues a public confirmation\u2014via engineering blog, press release, or interview with a senior engineer/executive\u2014of using GNNs in their production recommendation system by the end of 2025. They may continue using improved deep learning models (e.g., Transformers, hybrid RNN/CNN architectures) or make only vague statements about 'advanced AI' powering recommendations.",
+            "yes_scenario": "A major streaming platform\u2014perhaps motivated by technical marketing, recruitment, or industry leadership\u2014publishes an official engineering blog post or gives an interview where a senior engineer or executive explicitly states that their production recommendation system uses a Graph Neural Network (possibly providing details about the model architecture, such as GCN, GraphSAGE, Graph Transformer, etc.). This could be tied to a technical milestone, a new product launch, or a high-profile conference presentation.",
+            "final_reasoning": "While GNNs are gaining momentum in recommendation research and have seen some industrial adoption (e.g., Pinterest's PinSage), there is no public evidence that a major streaming platform has deployed and, crucially, publicly confirmed the use of GNNs in their live recommendation systems as of November 2025. The operational challenges of scaling GNNs for the massive graphs in streaming platforms, combined with the industry's reluctance to publicly reveal production recommender details, make such an announcement unlikely in the next 13 months. The base rate for explicit, timely public disclosures of architectural shifts in recommender systems by these companies is very low. While there are more technical blog posts and research papers on GNNs in recommendation, there is no clear sign of imminent, public production adoption by the largest streaming players. Therefore, the probability of a Yes outcome is well below even odds, but not zero\u2014there is an outside chance, especially if a company sees strategic benefit in disclosure or makes a breakthrough that they wish to publicize.",
+            "final_probability": 18
+        },
+        "Information Science (Technology Adoption Lifecycle)": {
+            "time_to_resolution": "Approximately 1 year and 2 months (until December 31, 2026).",
+            "perspective_relevance": "As an expert in Information Science with a focus on the Technology Adoption Lifecycle (TAL), I can evaluate not just the technical merits of GNNs for recommender systems, but also the organizational, competitive, and cultural factors that influence if and when a major streaming platform would publicly confirm the deployment of a GNN-based recommendation system. TAL provides frameworks to assess the diffusion of innovations, anticipate organizational risk tolerance, and judge the likelihood of public announcements based on market incentives and competitive positioning.",
+            "status_quo": "As of November 2025, no major streaming platform has publicly confirmed production use of a GNN-based recommendation system. Most publicized recommender systems in streaming rely on matrix factorization, collaborative filtering, or deep learning models such as CNNs, RNNs, or Transformers. GNNs are being actively researched for recommendation, but there is no clear evidence of deployment at scale in live, consumer-facing recommenders by the largest platforms.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Technology Maturity and Production Readiness",
+                    "effect": "GNNs have seen rapid progress in research, but their large-scale productionization for high-throughput, low-latency applications (like streaming recommenders) remains challenging. Tools are improving but GNNs are less mature than alternatives, reducing the short-term probability."
+                },
+                {
+                    "factor": "Organizational Risk Tolerance and Adoption Curve",
+                    "effect": "Major streaming platforms (e.g., Netflix, Amazon Prime Video, Disney+) are typically late early adopters or early majority in the TAL when it comes to core recommender tech\u2014balancing innovation with reliability and cost. They may experiment with GNNs, but are conservative about switching core infrastructure unless there is a demonstrable and sizable advantage."
+                },
+                {
+                    "factor": "Competitive Disclosure Incentives",
+                    "effect": "Public confirmation only occurs if the company sees reputational, recruiting, or investor benefit outweighing the risk of competitive leakage. If GNNs confer a true edge, a platform may delay or obscure disclosure; only clear marketing or recruiting advantage would prompt a public announcement."
+                },
+                {
+                    "factor": "Recent Technical and Industry Signals",
+                    "effect": "Recent articles and papers (from Nature, PLOS, Medium, etc.) show growing sophistication and practical application of GNNs, including for recommendation and session-based recommendations (see GCACL-Rec). However, these are still mostly in the research or pilot phase and not tied to public, large-scale, live production use by the largest platforms."
+                },
+                {
+                    "factor": "Resolution Criteria Strictness",
+                    "effect": "The requirement for an official, public confirmation (engineering blog, press release, or senior interview) and production (not just research/experimentation) use raises the bar substantially, lowering the probability compared to mere private adoption."
+                }
+            ],
+            "no_scenario": "By the end of 2026, major streaming platforms continue to experiment with GNNs internally, but stick to their existing hybrid models (matrix factorization, Transformers, DNN-based approaches) for production recommenders. Technical, scalability, or interpretability challenges, or only marginal gains over existing systems, keep GNNs from being moved into production. Even if some GNN-powered components are deployed, the company chooses not to make a public, official announcement, possibly due to competitive secrecy or because the change is incremental rather than a core shift.",
+            "yes_scenario": "A major streaming platform (e.g., Netflix, Amazon Prime Video, Disney+) successfully deploys a GNN-based recommender in production and achieves a clear improvement in engagement or efficiency. Recognizing the marketing and recruiting value, the platform issues a public blog post, press release, or has a senior engineer/executive confirm in an official interview that their main recommendation engine is now GNN-based. The confirmation satisfies the strict resolution criteria (public, official, and for production use). This could be motivated by a desire to reinforce technological leadership or counter similar announcements by competitors.",
+            "final_reasoning": "GNNs are increasingly compelling for recommender systems, especially for modeling complex user-item relationships and higher-order interactions. Recent literature and case studies show progress, and session-based recommendation models leveraging GNNs are being tested. However, based on the Technology Adoption Lifecycle, the largest streaming platforms tend to be pragmatic adopters, prioritizing scalability, reliability, and interpretability. The technical barriers to implementing GNNs at the scale and latency required for platforms with 50M+ subscribers remain nontrivial, and the competitive environment discourages premature disclosure of major technical shifts unless the marketing/recruiting upside is large. Given the strict resolution criteria (public, official, production use), and absent any strong signals of imminent announcements, the base rate for such disclosures by end-2026 is low. Past paradigm shifts in recommender systems (e.g., Netflix's adoption of deep learning or Transformers) have taken years from research to public confirmation. While there is a nonzero chance of a breakthrough and a public announcement, the status quo and barriers suggest a probability well below 50%, but not negligible given the field's momentum.",
+            "final_probability": 18
+        },
+        "Information Science (Diffusion of Innovations)": {
+            "time_to_resolution": "approximately 1 year and 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Information Science (Diffusion of Innovations), my perspective is focused on how new technologies move from research to adoption in large-scale, real-world systems. This includes understanding the incentives, barriers, and signaling mechanisms for technology adoption among major technology firms, especially in the context of recommender systems where innovations are often incremental and tightly coupled to business value and risk.",
+            "status_quo": "To date, there has been no public confirmation from a major streaming platform (with over 50 million paying subscribers) that their production recommendation system is based on Graph Neural Networks (GNNs). Major platforms typically use deep learning models such as matrix factorization, multi-tower DNNs, embeddings, and sometimes graph-based methods internally, but public announcements remain cautious and rare.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Production-readiness and scalability of GNNs",
+                    "effect": "Decreases probability. Despite academic progress, industrial-scale GNN deployment in high-throughput, latency-sensitive environments (like Netflix, YouTube, Disney+, Amazon) is still technically challenging, especially for graphs with billions of nodes and edges."
+                },
+                {
+                    "factor": "Incentives and risk aversion for public confirmation",
+                    "effect": "Decreases probability. Major platforms are conservative in publicly disclosing core algorithmic advances unless there is a clear marketing or reputational benefit, or unless the innovation is already widespread."
+                },
+                {
+                    "factor": "Recent research and industry trend signals",
+                    "effect": "Increases probability. There is growing research (as seen in news and academic articles) on GNNs for recommendation systems, including state-of-the-art benchmarks and successful applications in adjacent domains (e.g., Pinterest PinSage, Alibaba Cloud's GNN for chip design). Some platforms have signaled interest in GNNs for session-based recommendations."
+                },
+                {
+                    "factor": "Diffusion of Innovations base rate for similar ML breakthroughs",
+                    "effect": "Decreases probability. Historically, the lag between lab success and major streaming platforms officially announcing adoption of novel ML architectures is often 2-4 years. PinSage (Pinterest) is an exception but Pinterest is not a video streaming platform."
+                },
+                {
+                    "factor": "Competitive landscape and external pressure",
+                    "effect": "Increases probability. If one major player credibly announces GNN adoption, others may follow to signal technical leadership, but this domino effect has not yet been initiated."
+                },
+                {
+                    "factor": "Ambiguity in what counts as 'public confirmation'",
+                    "effect": "Decreases probability. Platforms may use GNNs in limited, non-production, or A/B test settings, but this will not resolve the question unless there is a clear, official, public statement about production use."
+                },
+                {
+                    "factor": "Recent academic/engineering blog signals",
+                    "effect": "Slightly increases probability. There is some evidence of blog posts and research from major platforms (e.g., Netflix, YouTube) discussing graph-based methods, but not specifically GNNs in production for recommendations."
+                }
+            ],
+            "no_scenario": "GNN-based recommenders continue to mature in academic and adjacent industry settings, but major streaming platforms stick with proven architectures (e.g., DNNs, hybrid models) due to scalability, interpretability, or legacy constraints. No official, clear statement is made by any qualifying platform about GNNs in their production recommendation system before 2026, either due to technical hurdles, inertia, or strategic secrecy.",
+            "yes_scenario": "A major streaming platform (e.g., Netflix, YouTube, Disney+, Amazon Prime Video) publishes an official engineering blog, press release, or senior technical interview explicitly confirming that their live, production recommendation system is based on GNNs or uses GNNs as a core component. This could be motivated by a successful deployment that significantly improves recommendations, or by a desire to signal technical leadership.",
+            "final_reasoning": "The evidence suggests GNNs are gaining traction in recommender research and some large-scale industry experiments, but there are significant hurdles to their adoption at the scale and latency required by major streaming platforms. The base rate for new, complex ML architectures being publicly adopted and announced by major streaming platforms within a year is low. While there are promising research signals\u2014including references to GNN-based recommenders and successful industrial deployments in other domains\u2014there is as yet no solid indication that a qualifying platform is ready to both deploy and publicly confirm a GNN-based recommendation system within the timeframe. The question's resolution criteria are strict: experimental, research, or non-production use does not count, nor do ambiguous statements. Given the technical challenges, inertia in large-scale production deployments, and lack of recent clear signals from the largest streaming companies, the probability remains low. However, the probability is not zero, as the accelerating pace of GNN research and competitive pressures could prompt a surprise announcement.",
+            "final_probability": 18
+        },
+        "Communication Studies (Corporate Communication Disclosure)": {
+            "time_to_resolution": "Approximately 1 year and 1.5 months (until December 31, 2025, per question criteria).",
+            "perspective_relevance": "As an expert in Communication Studies with a focus on corporate communication disclosure, my perspective emphasizes how and why major companies choose to publicly disclose technological innovations, particularly in contexts where competitive advantage, investor relations, and stakeholder trust are at stake. I can assess not only the technological likelihood of GNN adoption, but also the strategic and regulatory incentives or deterrents for a streaming platform to confirm such usage in a public, official manner.",
+            "status_quo": "No major streaming platform has yet publicly confirmed the use of a GNN-based recommendation system in production, though there is ongoing research and experimental application reported in the academic and tech media.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "GNN Maturity and Industrial Readiness",
+                    "effect": "Increases probability. Recent literature (including use cases in recommendation, synthetic data, and commercial-scale applications like Alibaba's chip layout) suggests GNNs are increasingly viable for large-scale, real-time tasks. However, their use in production recommender systems at the scale of Netflix, Amazon, or YouTube remains unconfirmed."
+                },
+                {
+                    "factor": "Corporate Disclosure Norms and Competitive Dynamics",
+                    "effect": "Decreases probability. Streaming platforms have a history of selective disclosure regarding proprietary algorithms, especially if the technology confers a competitive edge. Public confirmation often lags behind actual deployment, and platforms may prefer to keep details opaque to avoid reverse engineering or regulatory scrutiny."
+                },
+                {
+                    "factor": "Academic-Industry Collaboration and Engineering Blogs",
+                    "effect": "Increases probability. There is a trend of major tech companies publishing engineering blog posts and academic papers (see Netflix TechBlog, Google Research) to attract talent and shape public reputation. If GNNs are deployed, a blog post or interview could be used to tout innovation."
+                },
+                {
+                    "factor": "Stakeholder and Regulatory Pressures for Transparency",
+                    "effect": "Slightly increases probability. Growing regulatory attention to algorithmic transparency (e.g., EU AI Act, US regulatory movements) could create incentives for platforms to proactively disclose major changes in recommendation architecture, especially if GNNs are positioned as more interpretable or fair."
+                },
+                {
+                    "factor": "Productionization Challenges and Risk Aversion",
+                    "effect": "Decreases probability. GNNs, while promising, present complex scaling, maintenance, and interpretability challenges. Major platforms may hesitate to confirm use until the technology is robust, thoroughly tested, and unlikely to draw controversy."
+                },
+                {
+                    "factor": "Recent News/Signals",
+                    "effect": "Neutral to mildly positive. The recent articles confirm GNN use in recommendation research and related fields, and there is evidence of GNN-based session and conversational recommendation models in academic and open-source settings, but no direct evidence of production deployment or public confirmation by a major streaming platform."
+                }
+            ],
+            "no_scenario": "A major streaming platform (e.g., Netflix, Amazon Prime Video, Disney+, YouTube) continues to rely on traditional deep learning methods (e.g., matrix factorization, deep collaborative filtering, CNNs, RNNs, Transformers) in their recommender systems, or experiments with GNNs remain internal, experimental, or unpublished. Even if GNNs are used in production, the platform does not issue an official public confirmation (blog, interview, press release) before 2026, either due to competitive secrecy or insufficient perceived benefit to disclosure.",
+            "yes_scenario": "One or more major streaming platforms implement GNN-based recommendation systems in their core production stack for user recommendations and decide to publicly confirm this via an official engineering blog post, press release, or executive interview before the end of 2025. This could occur as part of a broader push to highlight AI innovation, attract AI talent, or respond to external pressure for transparency about recommendation algorithms.",
+            "final_reasoning": "The base rate for public confirmation of significant AI recommendation system changes by major platforms is low, as companies tend to be secretive about the specifics of their core algorithms. However, there is a growing trend for tech giants to publish advancements for recruitment and PR purposes. The technical literature and news indicate that GNNs are increasingly mature and have been successfully applied to recommendation tasks in research and smaller-scale production. There are also engineering blog ecosystems (e.g., Netflix TechBlog) which have previously disclosed algorithmic innovations. However, there is no direct evidence from recent news that a major streaming platform is imminently poised to publicly confirm GNN-based recommendation deployment. Given the short time window (just over a year), the history of reticence around public disclosure, and the productionization risks, but also the accelerating pace of AI innovation and transparency pressures, the probability is above the historical base rate but still below even odds.",
+            "final_probability": 32
+        }
+    },
+    "deliberation_probability": [
+        18,
+        12,
+        18,
+        19,
+        18,
+        18,
+        18,
+        32
+    ],
+    "deliberation_mean_probability": 19.125,
+    "deliberation_sd": 5.642631098546644,
+    "deliberation_probability_result": 19
+}
