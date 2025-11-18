@@ -1,0 +1,397 @@
+{
+    "deliberation_results": {
+        "AI Ethics (IEEE Ethically Aligned Design)": {
+            "time_to_resolution": "Approximately 1.5 months (question resolves January 1, 2026; today is November 18, 2025)",
+            "perspective_relevance": "As an expert in AI Ethics (IEEE Ethically Aligned Design), my perspective is highly relevant: the question concerns the adoption of independent, pre-release catastrophic risk evaluations for models developed by leading AI labs. Core principles of IEEE EAD\u2014such as transparency, accountability, and prioritizing human well-being\u2014directly inform both the importance and likelihood of such evaluations. I am attuned to the dynamics between ethical imperatives, industry incentives, regulatory trends, and the slow adoption of robust, externalized safety practices.",
+            "status_quo": "Historically, only OpenAI and Anthropic have had their models evaluated by METR (or similar independent organizations). Most other leading labs, including C3.ai, have not publicly reported pre-release catastrophic risk evaluations by independent bodies. Internal evaluations are sometimes conducted but do not count for this resolution. The status quo is thus: most leading AI labs do NOT have their models evaluated for catastrophic risks by METR before commercial release.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Industry Momentum and Competitive Pressure",
+                    "effect": "Decreases probability. The AI industry is in a rapid, competitive race favoring speed and release of new capabilities over safety. Many labs see independent safety evaluations as a delay and a commercial risk, especially since only a few (OpenAI, Anthropic) have established the practice as a norm."
+                },
+                {
+                    "factor": "External Pressure and Regulatory Trends",
+                    "effect": "Increases probability. Mounting public concern, lawsuits, and government scrutiny (e.g., US and UK safety initiatives, lawsuits over AI harms, PIRG reports) are increasing the pressure for independent pre-release safety testing, especially for catastrophic risks. However, these pressures have not yet translated into widespread mandatory adoption by all labs."
+                },
+                {
+                    "factor": "Emergence and Influence of METR and Similar Bodies",
+                    "effect": "Slightly increases probability. METR is the only independent evaluator recognized for catastrophic risk assessment. While their influence is growing and they have partnerships with OpenAI and Anthropic, there is no evidence they have evaluated C3.ai's models or that C3.ai is seeking such evaluation."
+                },
+                {
+                    "factor": "Public Incidents and Media Attention",
+                    "effect": "Increases probability modestly. High-profile incidents (AI toy safety, mental health harms, dangerous instructions) and media coverage are raising awareness and may nudge labs to seek evaluation for reputational reasons, but these effects are still lagging behind commercial incentives."
+                },
+                {
+                    "factor": "C3.ai's Public Stance and Track Record",
+                    "effect": "Decreases probability. As of the latest available news and reporting, there is no credible public report of C3.ai engaging METR or an equivalent for pre-release catastrophic risk evaluation. Their public emphasis has been more on enterprise AI and deployment than on publishing independent safety results."
+                },
+                {
+                    "factor": "IEEE EAD Principles Adoption Rate",
+                    "effect": "Decreases probability. While IEEE EAD and similar frameworks are frequently cited, actual, rigorous, externalized adoption (especially for catastrophic risk) lags behind voluntary codes and internal audits."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on rapid deployment and commercial partnerships, possibly conducting internal safety evaluations but not engaging METR or any equivalent independent evaluator for catastrophic risk prior to releasing new models. There is no credible public report of such an evaluation by METR by the end of 2025. Industry inertia, lack of regulatory mandate, and competitive pressure keep the status quo unchanged.",
+            "yes_scenario": "C3.ai, in response to mounting external pressure (lawsuits, government scrutiny, public concern about AI harms), seeks out and completes a pre-commercial release evaluation of one of its models by METR before January 1, 2026. This is publicly reported by a credible source, possibly as a reputational move aligned with emerging industry best practices or in anticipation of new regulatory requirements.",
+            "final_reasoning": "Base rates strongly favor a 'No' outcome: only a minority of leading AI labs (OpenAI, Anthropic) submit their models for independent, pre-release catastrophic risk evaluation by METR, and there is no evidence that C3.ai has done so or intends to imminently. Recent news demonstrates growing public and regulatory pressure for stronger safety measures, but these have not yet shifted industry-wide practice beyond a few leaders. C3.ai, in particular, has no publicly reported engagement with METR or similar organizations, and its business model remains focused on enterprise solutions rather than public transparency in catastrophic risk evaluation. Regulatory and reputational incentives are increasing, but the timeline is short and the status quo inertia is strong. Given the lack of precedent, the absence of any relevant reporting, and the slow-moving nature of such institutional change\u2014especially for labs not previously engaged in this practice\u2014the probability remains low. I assign a small, non-zero chance to a late-breaking move by C3.ai in response to an external shock, but overall, the most likely scenario is that they do NOT have a model evaluated by METR before 2026.",
+            "final_probability": 8
+        },
+        "AI Ethics (ACM Code of Ethics AI)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an AI Ethics expert grounded in the ACM Code of Ethics, I focus on the professional responsibilities of transparency, accountability, and public welfare in AI development. My perspective emphasizes the necessity for independent, empirical safety evaluations\u2014especially concerning catastrophic risks\u2014prior to deploying advanced AI models. I pay special attention to industry norms, regulatory pressures, and the incentives/disincentives for labs to submit their models to external, independent evaluators like METR.",
+            "status_quo": "At present, only OpenAI and Anthropic have had their models evaluated for catastrophic risks by METR prior to release. No other major labs\u2014including C3.ai\u2014have done so, and there is no credible public report of C3.ai participating in a METR evaluation.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Industry Norms and Precedent",
+                    "effect": "Decreases probability. Despite high-profile warnings about catastrophic AI risk, the dominant trend is rapid model deployment with limited independent oversight. Only two labs have participated in METR evaluations, and the norm has not spread to others."
+                },
+                {
+                    "factor": "Competitive and Commercial Incentives",
+                    "effect": "Decreases probability. Labs are in a race to deploy ever-larger and more capable models. Submitting to independent evaluation may delay release or expose vulnerabilities, which is a strong disincentive unless there is substantial external pressure."
+                },
+                {
+                    "factor": "Regulatory and Public Pressure",
+                    "effect": "Slightly increases probability. Recent news highlights mounting regulatory scrutiny, lawsuits, and calls for mandatory safety testing. However, there is no evidence that such regulation has yet compelled C3.ai or similar labs to submit to METR."
+                },
+                {
+                    "factor": "Reputational Risk Management",
+                    "effect": "Slightly increases probability. AI incidents (e.g., dangerous outputs from consumer products) and lawsuits are creating some reputational incentives for labs to demonstrate safety, but most are favoring internal solutions or PR efforts over independent evaluation."
+                },
+                {
+                    "factor": "Technical and Logistical Barriers",
+                    "effect": "Decreases probability. External evaluation by METR requires substantial cooperation, access to models, and willingness to expose internal practices. Many labs are not set up for this and may have concerns about IP leakage or negative findings."
+                },
+                {
+                    "factor": "Emergence of METR Equivalents",
+                    "effect": "No significant effect. No credible reports suggest another independent body besides METR has begun evaluating for catastrophic risk; if this changes, the question may be updated."
+                },
+                {
+                    "factor": "C3.ai\u2019s Track Record and Model Portfolio",
+                    "effect": "Decreases probability. There is little public evidence that C3.ai is developing 'frontier' models (i.e., models at the cutting edge of capability) at a scale comparable to OpenAI, Anthropic, or Google DeepMind, making them less likely to be targeted for METR evaluation."
+                }
+            ],
+            "no_scenario": "C3.ai continues to develop and deploy its AI models, but does not submit any model for independent, pre-release catastrophic risk evaluation by METR before the end of 2025. There are no credible reports of such an evaluation, and C3.ai relies instead on internal testing or less rigorous external audits.",
+            "yes_scenario": "In response to regulatory action, public pressure, or a major incident implicating C3.ai models, the company agrees to a pre-release evaluation by METR (or a comparable, recognized independent organization, if the question is updated). A credible report emerges before January 1, 2026, confirming this evaluation.",
+            "final_reasoning": "Base rates strongly suggest that only a small minority of labs are willing to submit their models to independent, catastrophic-risk-focused evaluation prior to release. The competitive dynamics of the industry, lack of regulatory compulsion, and C3.ai\u2019s relatively lower profile in the 'frontier model' race all point against such an evaluation happening imminently. While there is rising regulatory and reputational pressure, it appears insufficient to overcome the status quo before the resolution date. News coverage has not identified C3.ai as a leader or prominent participant in the current wave of independent model evaluations, nor is there evidence of imminent change in this area. Thus, the probability of C3.ai having a model evaluated by METR for dangerous behavior before 2026 is low, though not impossible if there is a sudden regulatory shock or incident.",
+            "final_probability": 7
+        },
+        "Software Engineering (ISO IEC 42001 AI Management Systems)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Software Engineering and ISO IEC 42001 AI Management Systems, my perspective is uniquely suited to analyze the formal processes, industry standards, and operational incentives that influence whether leading AI labs will subject their models to independent, pre-release safety evaluations for catastrophic risks. ISO 42001 focuses on AI management, risk assessment, and external auditing, which are directly relevant to the adoption of METR-like evaluations as part of responsible AI governance.",
+            "status_quo": "As of late 2025, only OpenAI and Anthropic have had models evaluated by METR for dangerous behaviors. No public evidence suggests that C3.ai has engaged METR or any equivalent independent evaluator for pre-release catastrophic risk assessment.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Industry-wide regulatory and reputational pressure",
+                    "effect": "Increases probability moderately. Recent regulatory actions (e.g., UK AI Safety Institute, US Executive Orders) and high-profile incidents (AI-powered toys, lawsuits, existential risk open letters) have intensified pressure on labs to demonstrate safety diligence, especially via independent evaluation."
+                },
+                {
+                    "factor": "Competitive dynamics and commercial incentives",
+                    "effect": "Decreases probability. The AI arms race and fear of losing first-mover advantage lead many labs to deprioritize or shortcut thorough, independent safety evaluations, as noted in several recent articles."
+                },
+                {
+                    "factor": "Maturity and adoption of AI management standards",
+                    "effect": "Slightly increases probability. The growing visibility of standards like ISO/IEC 42001 and industry calls for transparent, auditable safety protocols make independent evaluation more attractive to labs seeking to demonstrate compliance and risk mitigation."
+                },
+                {
+                    "factor": "Accessibility of independent evaluators (METR limitation)",
+                    "effect": "Decreases probability. METR remains the only recognized independent catastrophic risk evaluator, and their capacity is limited. There is no evidence they have evaluated C3.ai models or that C3.ai is seeking such evaluation."
+                },
+                {
+                    "factor": "Public reporting and credible leaks",
+                    "effect": "Neutral to slightly increases probability. The question requires a \"credible report\" of pre-release evaluation. If C3.ai does undergo such an evaluation, it is likely to be reported, but absence of leaks suggests inactivity so far."
+                },
+                {
+                    "factor": "Precedent and base rates for C3.ai",
+                    "effect": "Strongly decreases probability. There is no public precedent for C3.ai engaging in METR-style evaluations, and historically, only OpenAI and Anthropic have done so."
+                }
+            ],
+            "no_scenario": "C3.ai continues to prioritize rapid model development and commercial deployment, citing internal audits and compliance with general industry standards but does not engage METR (or any recognized independent catastrophic risk evaluator) before 2026. No credible report emerges of such an evaluation, and the status quo persists.",
+            "yes_scenario": "Facing mounting regulatory, investor, or customer pressure\u2014perhaps triggered by a high-profile incident or new regulation\u2014C3.ai seeks to differentiate itself by engaging METR for a pre-release, catastrophic risk-focused evaluation of a flagship model. A credible report of this collaboration is published before the end of 2025.",
+            "final_reasoning": "The overall base rate for independent catastrophic risk evaluation by METR is extremely low\u2014limited to OpenAI and Anthropic, with no public movement from C3.ai. Despite escalating regulatory and reputational pressures (which slightly increase the likelihood), the competitive landscape and lack of direct incentives for C3.ai to voluntarily submit to such scrutiny are strong counterweights. The fact that METR is the sole recognized evaluator and has limited capacity further lowers the odds, and the absence of credible leaks or public statements from C3.ai about such an evaluation reinforces this assessment. From a software engineering/ISO 42001 perspective, while there is a trend towards more formalized risk management and third-party audit, the adoption curve is slow, especially among labs not already leading on safety. Therefore, the status quo outcome is most probable: C3.ai will not have its models independently evaluated by METR for dangerous behavior before 2026.",
+            "final_probability": 8
+        },
+        "Software Engineering (NIST AI Risk Management)": {
+            "time_to_resolution": "Approximately 6 weeks (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Software Engineering with a focus on NIST AI Risk Management, I bring an understanding of how independent model evaluations for catastrophic risk are operationalized, the technical and organizational barriers to such external audits, and the incentives or disincentives for labs to submit their models. I also have insight into the industry\u2019s evolving best practices and regulatory trajectories, which inform whether a lab like C3.ai would be likely to participate in external, independent pre-release evaluations before the deadline.",
+            "status_quo": "To date, only OpenAI and Anthropic have had their models evaluated by METR (Model Evaluation and Threat Research), with no public evidence that C3.ai has participated in such evaluations. Internal evaluations or compliance with industry best practices are common, but independent, catastrophic-risk-focused audits remain rare.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "C3.ai's Model Development Focus and Publicity",
+                    "effect": "Decreases probability. C3.ai is less often cited among the 'frontier' labs (OpenAI, Anthropic, Google DeepMind, Meta, xAI) producing state-of-the-art, general-purpose models that attract METR's attention for catastrophic risk audits. Their focus is more on enterprise applications and vertical-specific AI, which are less likely to be the target of METR's catastrophic risk evaluations."
+                },
+                {
+                    "factor": "Incentives for External, Independent Evaluation",
+                    "effect": "Decreases probability. There is little evidence that C3.ai faces reputational, regulatory, or customer pressure to undergo METR evaluation. Unlike OpenAI/Anthropic, C3.ai does not position itself as a safety leader or face public scrutiny over AGI/ASI risks."
+                },
+                {
+                    "factor": "Regulatory and Industry Trends",
+                    "effect": "Marginally increases probability. There is a growing call for independent safety audits, as seen with government actions and public pressure (e.g., Biden\u2019s EO, UK AI Safety Institute, lawsuits, and consumer incidents). If C3.ai wished to bid on major public sector contracts or needed to demonstrate best practices to global clients, this could motivate a METR evaluation."
+                },
+                {
+                    "factor": "METR Capacity and Prioritization",
+                    "effect": "Decreases probability. METR appears capacity-constrained and prioritizes evaluating models with the highest catastrophic risk potential\u2014i.e., those with state-of-the-art capabilities or generating significant public concern. C3.ai\u2019s models are not typically at the center of such risk discussions."
+                },
+                {
+                    "factor": "Recent News and Public Disclosures",
+                    "effect": "Decreases probability. There is no news in the provided articles or elsewhere indicating that C3.ai has recently submitted a model to METR for evaluation, or that such an evaluation is planned or underway."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on enterprise and vertical AI applications, does not release a model that is widely considered to pose catastrophic risk, and thus does not seek or is not prioritized for a METR evaluation before Jan 1, 2026. No credible report emerges of a pre-release METR (or equivalent) evaluation for C3.ai models.",
+            "yes_scenario": "C3.ai develops or releases a general-purpose model with sufficiently advanced capabilities (or public concern) to draw METR\u2019s attention, or faces major regulatory/customer pressure to demonstrate best-practice AI risk management. It proactively submits a model for independent catastrophic risk evaluation by METR, and this is credibly reported before Jan 1, 2026.",
+            "final_reasoning": "The base rate for non-OpenAI/Anthropic labs having their models evaluated by METR remains extremely low as of late 2025. C3.ai is not positioned as a frontier lab in the sense of developing models that are likely to trigger catastrophic risk evaluations. There is no evidence of movement toward such an evaluation for C3.ai in the news or industry disclosures, and structural incentives do not strongly favor it. Regulatory momentum is growing, but not on a timeline likely to affect C3.ai before the resolution date. Given the lack of relevant news, the technical profile of C3.ai, and the slow pace of adoption for external catastrophic-risk evaluations outside the major labs, the likelihood that C3.ai will have a model evaluated by METR pre-release before 2026 is very low.",
+            "final_probability": 2
+        },
+        "Technology Policy (OECD AI Principles)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Technology Policy with a focus on the OECD AI Principles, my perspective emphasizes the importance of transparency, safety, accountability, and third-party evaluation in the deployment of advanced AI models. The OECD Principles advocate for robust risk management, independent oversight, and international coordination\u2014critical elements when evaluating whether leading AI labs will submit their models to independent, catastrophic-risk-focused evaluations (such as those by METR) before release.",
+            "status_quo": "As of late 2025, only a subset of leading AI labs\u2014primarily OpenAI and Anthropic\u2014have had their models evaluated pre-release for catastrophic risks by METR. Other major labs (e.g., Google DeepMind, xAI, Meta, C3.ai) have not publicly participated in such evaluations. Most safety evaluation is still conducted internally or via ad hoc collaborations, not through independent, third-party organizations with a focus on catastrophic risk.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Regulatory and societal pressure for independent safety evaluations",
+                    "effect": "Increases probability. There is significant and growing global concern about AI safety, with calls from policymakers, researchers, and civil society for mandatory third-party evaluations before model deployment. However, this pressure has not yet resulted in universal adoption, especially among less visible or more commercially-oriented labs."
+                },
+                {
+                    "factor": "Competitive dynamics and commercial incentives",
+                    "effect": "Decreases probability. The rapid pace of AI development creates strong disincentives for labs to slow down for external evaluation, which can introduce delays, cost, and potential negative publicity if failures are identified."
+                },
+                {
+                    "factor": "Precedent and base rate of independent evaluations",
+                    "effect": "Decreases probability. To date, only a few leading labs have consistently undergone METR-style evaluations, and there is no evidence that this has become the norm across the industry, especially for less prominent or more proprietary players like C3.ai."
+                },
+                {
+                    "factor": "Technical and operational barriers to independent evaluation",
+                    "effect": "Decreases probability. Some models may be too proprietary or integrated with sensitive data/systems for labs to be willing to expose them to independent, external audits, especially if such audits could reveal IP or security vulnerabilities."
+                },
+                {
+                    "factor": "Public incidents and negative press involving AI dangers",
+                    "effect": "Marginally increases probability. Recent high-profile incidents involving dangerous outputs, lawsuits, and government scrutiny could prompt some labs to seek independent evaluation as a reputational shield or to pre-empt regulation."
+                },
+                {
+                    "factor": "OECD Principle alignment and voluntary adoption of best practices",
+                    "effect": "Marginally increases probability. OECD Principles encourage independent oversight, but actual adoption depends on each lab's governance culture. Labs aiming for international partnerships or public sector contracts may be more motivated to seek third-party validation."
+                }
+            ],
+            "no_scenario": "C3.ai continues to rely on internal safety evaluations or ad hoc partnerships, but does not have any of its models evaluated by METR or an equivalent catastrophic-risk-focused independent organization before January 1, 2026. This may be due to commercial secrecy, lack of regulatory requirement, or a focus on more traditional enterprise AI applications perceived as lower-risk.",
+            "yes_scenario": "C3.ai, responding to increased regulatory pressure, public concern, or in pursuit of major government/enterprise contracts, voluntarily submits a new model for pre-release evaluation by METR or another approved third-party evaluator focused on catastrophic risks, and this is credibly reported before the deadline.",
+            "final_reasoning": "Given the base rate\u2014where only a small minority of leading labs have undergone METR-style independent evaluations focused on catastrophic risk\u2014and the continued commercial and competitive disincentives for doing so, the likelihood that C3.ai (a lab not previously noted for such transparency or for releasing cutting-edge general-purpose models) will break from industry inertia and submit a model to METR before January 1, 2026 is low. While regulatory and public pressures are mounting, and catastrophic-risk evaluation is increasingly discussed, the short time horizon and lack of any public signal from C3.ai make such a move unlikely absent a major external shock. My estimate weighs the strong status quo bias and base rate against only modestly increasing societal/regulatory pressure and the possibility of a late-breaking event.",
+            "final_probability": 10
+        },
+        "Computer Science (AI Safety Alignment)": {
+            "time_to_resolution": "Approximately 1.5 months (question resolves on January 1, 2026; today is November 18, 2025)",
+            "perspective_relevance": "As an expert in AI Safety Alignment, I understand both the technical and organizational challenges of implementing dangerous capability evaluations, the incentives and constraints of leading AI labs, and the standards and bottlenecks around independent evaluations (notably METR\u2019s role). My perspective allows me to assess not only C3.ai\u2019s technical trajectory but also the evolving ecosystem of safety norms and the likelihood of proactive risk evaluation by independent bodies.",
+            "status_quo": "C3.ai has not, as of November 2025, had any of its models evaluated by METR or another recognized independent organization for dangerous behavior pre-release. OpenAI and Anthropic remain the only major labs with such partnerships. C3.ai has not been publicly identified as a major frontier-model player, nor has it announced high-profile safety initiatives or collaborations with external evaluators.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "C3.ai\u2019s public AI safety posture and technical focus",
+                    "effect": "Decreases probability. C3.ai is primarily known for enterprise AI solutions\u2014especially vertical applications in energy, defense, and manufacturing\u2014rather than training frontier general-purpose models on the scale of OpenAI or Anthropic. They have not signaled a strong alignment focus or engagement with existential-risk-centric safety culture."
+                },
+                {
+                    "factor": "Visibility and incentives for model evaluations",
+                    "effect": "Decreases probability. There is little reputational or regulatory pressure on C3.ai to seek METR evaluations, since their models are not seen as posing AGI-level catastrophic risk. Most external and government pressure is focused on labs developing powerful, general, agentic models."
+                },
+                {
+                    "factor": "Independence and bottleneck at METR",
+                    "effect": "Decreases probability. METR\u2019s resources are limited and prioritized for labs with the largest, most influential models. C3.ai would need to proactively seek out and pay for such an evaluation, which seems unlikely given their standing and strategic priorities."
+                },
+                {
+                    "factor": "Industry trends toward external safety audits",
+                    "effect": "Small increase. There is a modest uptick in calls for industry-wide safety standards and external auditing, especially in the wake of high-profile incidents and regulatory scrutiny. If a regulatory requirement or a major reputational event affected C3.ai, there could be a last-minute move toward evaluation."
+                },
+                {
+                    "factor": "Short timeframe remaining",
+                    "effect": "Decreases probability. With only six weeks left in the year, the window for initiating and publicizing a METR evaluation is very narrow\u2014especially with no public groundwork evident."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on enterprise AI, deploying models in verticals like energy and defense, but does not develop or release a frontier LLM or agentic system that would attract METR\u2019s attention. No credible report emerges of a pre-release METR evaluation. C3.ai\u2019s safety posture remains internal or focused on compliance with sector-specific regulations rather than catastrophic risk.",
+            "yes_scenario": "C3.ai unexpectedly announces a next-generation general-purpose AI model, drawing regulatory or media attention. Facing pressure (e.g., from a customer, regulator, or reputational crisis), C3.ai commissions METR (or, if it emerges, a similarly recognized evaluator) to assess the model for dangerous behaviors pre-release. A credible report is published confirming the evaluation before the end of 2025.",
+            "final_reasoning": "Despite the surge in public concern over AI risks and some movement toward independent evaluations in the industry, there is no evidence that C3.ai is developing models at the frontier scale or with capabilities that would warrant METR\u2019s involvement. The company\u2019s history, technical orientation, and lack of public safety partnerships all point to a low likelihood of pre-release evaluation for catastrophic risks. The field\u2019s focus is on labs developing state-of-the-art LLMs with broad societal impact, not vertical enterprise solutions. With only weeks left and no public signals, the probability that C3.ai will have a model evaluated by METR before 2026 is very low, though not strictly zero in the event of a black-swan regulatory or reputational shock.",
+            "final_probability": 2
+        },
+        "Computer Science (Adversarial Machine Learning)": {
+            "time_to_resolution": "Approximately 1.5 months (question resolves January 1, 2026; today is November 18, 2025)",
+            "perspective_relevance": "As an expert in adversarial machine learning, I specialize in identifying and evaluating dangerous behaviors in AI models, including deceptive or manipulative actions that might evade standard safety checks. My perspective is highly relevant for this question, as the core of model evaluations for 'dangerous behavior' is the adversarial probing of models to surface catastrophic failure modes such as instrumental convergence, deception, self-preservation, and misuse facilitation. I am also acutely aware of the gap between technical evaluation capability and the practical, organization-level adoption of such protocols.",
+            "status_quo": "As of now, only OpenAI and Anthropic have publicly had their models evaluated for catastrophic risks by METR. Other leading labs are not known to have had such external, pre-release evaluations. C3.ai is not currently among the handful of labs with METR-evaluated models.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Base Rate of METR Evaluations at Leading Labs",
+                    "effect": "Strongly decreases probability. To date, only OpenAI and Anthropic have had METR evaluations. Despite widespread calls for more, the base rate for other labs is still near zero."
+                },
+                {
+                    "factor": "Competitive and Regulatory Pressure",
+                    "effect": "Moderate increase. As seen in recent news, public and regulatory scrutiny of AI safety is rising, with calls for mandatory testing and high-profile incidents (e.g., dangerous outputs, lawsuits). This may pressure labs to seek external validation."
+                },
+                {
+                    "factor": "Short Time Horizon",
+                    "effect": "Strongly decreases probability. With only about 1.5 months left, the window for conducting, reporting, and credibly documenting a METR evaluation is extremely narrow."
+                },
+                {
+                    "factor": "Technical Feasibility and Adversarial ML Community Readiness",
+                    "effect": "Slight increase. The technical tools and expertise for adversarial evaluation exist, and METR is capable of quickly running evaluations if both parties are motivated. However, this is only relevant if C3.ai seeks it out."
+                },
+                {
+                    "factor": "C3.ai's Model Profile and Publicity",
+                    "effect": "Moderate decrease. C3.ai is not commonly listed as a frontier lab pushing the envelope in general-purpose AI (unlike OpenAI, DeepMind, Anthropic, xAI, Meta, or leading Chinese labs). Its models are less likely to be seen as urgent candidates for catastrophic risk evaluation."
+                },
+                {
+                    "factor": "Industry Trends Toward Independent, Pre-Release Testing",
+                    "effect": "Slight increase. There is momentum for independent safety evaluations, but the process is slow and mostly limited to highest-profile actors and government pressure points."
+                }
+            ],
+            "no_scenario": "C3.ai continues to operate as an enterprise-focused AI provider, largely outside the public spotlight for catastrophic risk, and does not release a new model that would draw the attention of METR or prompt a request for an external evaluation. No credible report emerges before January 1, 2026, of a METR evaluation of any C3.ai model.",
+            "yes_scenario": "C3.ai, responding to increased regulatory pressure or seeking to bolster its reputation, releases a new large model or system and requests a METR evaluation. METR conducts the evaluation and a credible report is published before January 1, 2026, confirming the pre-release assessment.",
+            "final_reasoning": "Given my adversarial machine learning expertise, I heavily weight the base rate and time constraint: the only labs with METR evaluations are OpenAI and Anthropic, and no evidence in the news suggests C3.ai has initiated or publicized such a partnership. The main news stories focus on OpenAI, Anthropic, Meta, Google, DeepSeek, and xAI, with no mention of C3.ai in the context of catastrophic risk evaluation. The time frame is very short (1.5 months), and such evaluations generally require weeks to months to plan, execute, and report. While industry and regulatory pressure is rising, there is no indication C3.ai is seen as a top-tier risk or is moving rapidly to join METR's evaluation roster. My adversarial ML perspective underscores the technical feasibility if C3.ai wanted it, but the organizational and reputational incentives do not appear strong enough\u2014especially within the next six weeks. Therefore, the likelihood that C3.ai will have a model evaluated by METR before 2026 is very low, but not absolutely zero, as a last-minute initiative is technically possible.",
+            "final_probability": 2
+        },
+        "Science and Technology Studies (Responsible Innovation)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on Responsible Innovation, my perspective emphasizes the social, ethical, and governance dimensions of AI development. STS highlights how institutional incentives, regulatory landscapes, actor networks, and public pressures shape responsible conduct (or lack thereof) in technological innovation. This is crucial for assessing whether C3.ai, a US-based enterprise AI company, will subject its models to independent, pre-release catastrophic risk evaluations by METR or a similarly recognized external body, as required by the question's strict resolution criteria.",
+            "status_quo": "As of mid-November 2025, only OpenAI and Anthropic have had their models evaluated for catastrophic risks by METR pre-release. No public evidence or credible reporting suggests that C3.ai has engaged METR for such evaluations. C3.ai is primarily known for its enterprise-focused AI products (e.g., supply chain, energy, defense analytics) rather than for leading general-purpose foundation models that attract METR's attention.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Nature of C3.ai's Product Portfolio",
+                    "effect": "Decreases probability. C3.ai's focus is on vertical, enterprise-specific models (logistics, energy, defense) rather than frontier, general-purpose foundation models. METR's evaluations have so far targeted only highly capable, widely-deployed LLMs or multimodal models with broad potential for catastrophic misuse. There is no indication that C3.ai has or will soon develop a model considered sufficiently risky to warrant such evaluation."
+                },
+                {
+                    "factor": "Industry Trends and Social Pressure",
+                    "effect": "Modestly increases probability. The period since 2023 has seen mounting calls for independent safety evaluations, especially given high-profile incidents (e.g., AI in toys, ChatGPT-related suicides, existential risk warnings). Stakeholder and public pressure is rising, and some labs have moved toward transparency and external validation. However, this pressure is strongest on labs developing frontier models, not on enterprise vendors like C3.ai."
+                },
+                {
+                    "factor": "Regulatory and Competitive Incentives",
+                    "effect": "Neutral to slightly decreases probability. While the US and UK governments are developing frameworks for AI safety, there is little evidence of concrete regulation mandating external catastrophic risk evaluations for enterprise AI products. C3.ai's main competitors are not known to submit models to METR, so there is limited market or regulatory pressure for C3.ai to do so in the near term."
+                },
+                {
+                    "factor": "Technical Collaboration and METR Capacity",
+                    "effect": "Decreases probability. METR is still the only credible evaluator for catastrophic risks, and its limited resources have been focused on high-profile, high-risk models from major labs. There are no public signals that METR is expanding evaluations to include enterprise-focused companies like C3.ai, nor that C3.ai is seeking such evaluation."
+                },
+                {
+                    "factor": "Responsible Innovation and Reputation Management",
+                    "effect": "Slightly increases probability. Some firms may preemptively seek independent safety evaluations as part of responsible innovation and to bolster their reputation (especially if deploying potentially powerful models in sensitive sectors like defense or energy). However, this is still rare, and no evidence suggests C3.ai is pursuing this."
+                }
+            ],
+            "no_scenario": "C3.ai continues business as usual, focusing on enterprise AI applications (supply chain, energy analytics, defense) and does not develop or release a general-purpose foundation model. Even if C3.ai launches new models, they are not considered by METR (or similar bodies) as sufficiently risky to merit external catastrophic risk evaluation, and no credible report emerges of a METR evaluation before January 1, 2026.",
+            "yes_scenario": "C3.ai unexpectedly develops or licenses a highly capable, general-purpose foundation model (e.g., a GPT-4/5-level LLM or multimodal system) and, recognizing public and stakeholder pressure or in response to a regulatory/contractual requirement (e.g., for a major defense contract), requests a pre-release catastrophic risk evaluation from METR. A credible report is published before January 1, 2026, confirming the evaluation.",
+            "final_reasoning": "The base rate for enterprise-focused, non-household-name AI labs (like C3.ai) submitting their models to METR for catastrophic risk evaluation by late 2025 is effectively zero. All known METR evaluations have been for labs producing general-purpose, high-profile foundation models. While there is increasing social and regulatory pressure for safety evaluations, this is targeted at the largest and most visible labs (OpenAI, Anthropic, Google DeepMind, Meta, xAI). C3.ai has not publicly announced nor been credibly reported to be developing such models, nor is it a focal point in public AI risk discourse. METR's limited capacity, the lack of regulatory mandate, and the absence of competitive pressure further reduce the likelihood. Responsible Innovation theory would suggest that unless a reputational or regulatory shock occurs, C3.ai will not volunteer for such an evaluation. The scenario in which this resolves Yes requires both a significant strategic shift at C3.ai and a rapid, public evaluation by METR within six weeks\u2014an extremely low-probability event.",
+            "final_probability": 2
+        },
+        "Science and Technology Studies (Technology Assessment)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Science and Technology Studies (STS) with a focus on Technology Assessment, I bring a perspective that emphasizes not only the technical feasibility and capabilities of AI labs, but also the broader sociotechnical systems in which these labs operate: regulatory pressures, institutional incentives, public perception, inter-organizational dynamics, and the role of independent oversight in technology governance. This is especially relevant for questions about external safety evaluations, which are as much about institutional trust, liability management, and regulatory compliance as about actual technical risk.",
+            "status_quo": "As of now, only OpenAI and Anthropic are known to have had their models evaluated pre-release by METR for dangerous, catastrophic behavior. Other leading labs (such as Google DeepMind, Meta, xAI, C3.ai, etc.) have not publicly disclosed such partnerships or independent evaluations focused on catastrophic risks. Internal safety evaluations are more common, but these do not satisfy the question's resolution criteria.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Incentives for Competitive Secrecy and Speed",
+                    "effect": "Decreases probability. The news highlights an ongoing 'race to the top' dynamic among leading AI labs, with companies prioritizing rapid development and commercial deployment over safety. Labs may see independent, pre-release evaluations as a potential bottleneck, source of leaks, or risk to first-mover advantage."
+                },
+                {
+                    "factor": "Regulatory and Legal Pressures",
+                    "effect": "Mixed, but currently weakly increases probability. Growing societal and regulatory concern\u2014evidenced by lawsuits, consumer safety reports, and government discussions of new frameworks\u2014could push labs toward greater transparency and external evaluation. However, current enforcement is lagging, and most regulations are still in proposal or early implementation stages, especially in the US where most labs are based."
+                },
+                {
+                    "factor": "Public and Media Scrutiny",
+                    "effect": "Slightly increases probability. Negative press (e.g., about harmful content in AI-powered toys, lawsuits linked to AI-generated suicide instructions, high-profile warnings from experts) increases reputational risk for labs. This could nudge some toward independent evaluations for legitimacy, though so far most have responded with internal fixes and PR rather than by inviting external audits."
+                },
+                {
+                    "factor": "Technical Feasibility and Standardization",
+                    "effect": "Decreases probability. Independent evaluations for catastrophic risks are still novel, resource-intensive, and not yet standardized. METR is the only well-recognized body, and its resources are limited. The field lacks universally agreed-upon benchmarks for 'dangerous behavior,' making labs hesitant to subject themselves to potentially adversarial or inconclusive evaluation."
+                },
+                {
+                    "factor": "Precedent and Network Effects",
+                    "effect": "Slightly increases probability. If one additional major lab (e.g., Google DeepMind or Meta) were to submit to a METR evaluation, it could create pressure for others to follow. However, there is no public evidence of this happening as of November 2025."
+                },
+                {
+                    "factor": "C3.ai\u2019s Specific Position",
+                    "effect": "Decreases probability. C3.ai is less cited in coverage of 'frontier' model development compared to OpenAI, Anthropic, Google DeepMind, and Meta. Its business is more focused on enterprise AI solutions than publishing large, general-purpose foundation models that would attract the highest scrutiny or risk. It is therefore less likely to be a priority for either METR or for public safety evaluations."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on enterprise applications and releases new models (if any) without engaging METR or any recognized independent catastrophic-risk evaluator prior to commercial release. Any safety evaluations are conducted internally or through less rigorous third-party audits focused on standard enterprise security and privacy, not catastrophic or existential risk. No credible public report emerges of a pre-release METR (or equivalent) evaluation for a C3.ai model before January 1, 2026.",
+            "yes_scenario": "C3.ai, perhaps under external pressure (e.g., from a major customer, regulatory body, or the threat of reputational risk following a high-profile incident), seeks out and completes a pre-release evaluation of at least one of its models by METR (or another approved independent evaluator, should one arise and be accepted by Metaculus). This is credibly reported before January 1, 2026.",
+            "final_reasoning": "Base rates and recent history indicate that, outside OpenAI and Anthropic, no major AI lab has subjected its models to METR evaluation prior to commercial release. The news corpus shows mounting pressure for safety but also clear evidence that the leading labs are prioritizing speed, secrecy, and internal processes over transparency and independent oversight. The U.S. regulatory environment is fragmented and slow moving, and while public concern is high, the industry has thus far responded with incremental internal safeguards and PR, not structural change. C3.ai\u2014unlike OpenAI or Anthropic\u2014is not at the center of the frontier model safety debate and is more focused on enterprise verticals, further reducing the likelihood of them seeking out METR evaluation for catastrophic risk. Barring an unexpected regulatory intervention, high-profile incident, or industry-wide shift in the next 1.5 months, the probability that C3.ai will have a model evaluated pre-release by METR is very low. I estimate the probability at 2%.",
+            "final_probability": 2
+        },
+        "Law (AI Regulation)": {
+            "time_to_resolution": "Approximately 6 weeks (until January 1, 2026)",
+            "perspective_relevance": "As an expert in Law (AI Regulation), my analysis centers on the intersection of regulatory frameworks, industry standards, and the legal incentives or disincentives for AI labs to submit their models for independent, pre-release evaluation for catastrophic risks. I am attuned to the practical realities of compliance, legal liability, public pressure, and the evolving regulatory landscape\u2014especially as they pertain to third-party safety evaluations like those performed by METR.",
+            "status_quo": "The status quo is that only OpenAI and Anthropic have had their models evaluated by METR (the only major independent catastrophic risk evaluator), and there is no public record of C3.ai having submitted any of its models for such evaluations.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Legal and Regulatory Pressure",
+                    "effect": "Slightly increases probability. There is mounting pressure from governments (e.g., US, UK) and regulators to require independent AI safety testing, but most requirements are still in development and have not yet translated into mandatory actions for all leading labs."
+                },
+                {
+                    "factor": "Industry Norms and Competitive Incentives",
+                    "effect": "Decreases probability. The AI race has prioritized speed and commercial advantage over safety in many cases, as shown by the lack of publicized independent evaluations from most major labs outside OpenAI/Anthropic, and the competitive disadvantage perceived with slower, more careful rollouts."
+                },
+                {
+                    "factor": "Public and Media Scrutiny",
+                    "effect": "Increases probability modestly. High-profile incidents, lawsuits, and investigative journalism have increased reputational risks of unsafe releases, pushing some labs to consider external evaluations to bolster trust\u2014though this has not yet become standard practice."
+                },
+                {
+                    "factor": "Availability and Capacity of Independent Evaluators",
+                    "effect": "Decreases probability. METR remains the only widely recognized catastrophic risk evaluator, and its limited capacity and selectivity mean it typically works with the most prominent labs/models. No evidence suggests C3.ai has partnered with them."
+                },
+                {
+                    "factor": "C3.ai\u2019s Market Position and Strategic Focus",
+                    "effect": "Decreases probability. C3.ai is less visible in the foundation model race and is more enterprise-focused, with a reputation for deploying vertical-specific AI (e.g., for energy, defense, and industrial applications) rather than releasing general-purpose, frontier models comparable to OpenAI/Anthropic/Google/Meta. This makes it less likely to seek pre-release METR evaluation."
+                },
+                {
+                    "factor": "Recent Precedent and Historical Base Rate",
+                    "effect": "Strongly decreases probability. To date, public reporting and the historical record show only OpenAI and Anthropic have had their models evaluated by METR before release. No indication that C3.ai has done so for any model, and the base rate for other labs is near zero."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on enterprise AI solutions without releasing a new, high-profile general-purpose model before 2026, or if it does, it relies on internal safety assessments or low-profile external consulting, not METR. There is no credible public report of METR evaluating a C3.ai model pre-release, and so the question resolves No.",
+            "yes_scenario": "In response to regulatory, commercial, or reputational pressure, C3.ai develops a new model perceived as sufficiently capable or risky to warrant a METR evaluation. METR publicly announces or credible reporting confirms that they evaluated a C3.ai model for catastrophic risks before its public or commercial release, and this occurs before January 1, 2026.",
+            "final_reasoning": "Given the strong base rate\u2014no evidence of any lab outside OpenAI or Anthropic submitting to METR for pre-release catastrophic risk evaluation\u2014the status quo heavily favors a No outcome. C3.ai\u2019s strategic focus on enterprise AI, rather than on the most powerful general-purpose models, further reduces the likelihood that it would seek METR\u2019s services, which are limited and highly selective. The recent surge in regulatory attention and public scandals has not visibly changed the pattern of METR evaluations; they remain the exception, not the norm, and C3.ai does not figure in relevant reporting. Absent a late-breaking, high-profile C3.ai model or surprise regulatory requirement, the probability that C3.ai will have a model evaluated by METR before 2026 is very low. My estimate is slightly above zero only to account for the possibility of a last-minute, under-reported evaluation or a sudden shift in regulatory or industry practice, but there is no positive evidence for such an event.",
+            "final_probability": 2
+        },
+        "Law (Product Liability Doctrine)": {
+            "time_to_resolution": "Approximately 1.5 months (until January 1, 2026).",
+            "perspective_relevance": "As an expert in Law with a focus on Product Liability Doctrine, my perspective is highly relevant because independent pre-release safety evaluations (such as those by METR) are closely connected to legal risk management for AI labs. Product liability law incentivizes robust safety testing, especially for products with potential to cause catastrophic harm. Knowing the legal drivers, deterrents, and industry responses to liability exposure helps assess whether C3.ai is likely to submit models for independent dangerous behavior evaluation before commercial deployment.",
+            "status_quo": "The status quo is that only OpenAI and Anthropic have had models evaluated by METR for catastrophic risk. No credible public information suggests that C3.ai has submitted any models for such independent evaluation. Internal safety testing is common, but not sufficient for question resolution.",
+            "perspective_derived_factors": [
+                {
+                    "factor": "Regulatory and Legal Pressure",
+                    "effect": "Increases probability modestly. With mounting lawsuits (e.g., teen suicide cases), product liability exposure is rising for AI companies. If C3.ai faces growing regulatory scrutiny or legal threats, it may view independent evaluation as a prudent risk mitigation step to demonstrate due diligence."
+                },
+                {
+                    "factor": "Industry Norms and Competitive Pressures",
+                    "effect": "Slightly increases probability. As leading labs like OpenAI and Anthropic publicly undergo METR evaluations, there is some pressure for peers to follow, especially for reputational and business-partner reasons. However, the race for speed and market share means many labs still deprioritize rigorous independent evaluation."
+                },
+                {
+                    "factor": "C3.ai's Business Model and Product Focus",
+                    "effect": "Decreases probability. C3.ai is not primarily an LLM developer aiming for GPT-5/Claude-class models. Their main business is enterprise AI applications (e.g., predictive maintenance, energy grid optimization), which are less likely to be flagged for existential risk or catastrophic misuse compared to general-purpose LLMs. This reduces internal incentives for METR-style evaluation."
+                },
+                {
+                    "factor": "Availability and Accessibility of METR Evaluations",
+                    "effect": "Neutral to slightly negative. METR's limited capacity and focus on top frontier AI labs (OpenAI, Anthropic, DeepMind, Meta) means that smaller or sector-focused labs like C3.ai may not be prioritized for evaluation, unless they launch a truly frontier model."
+                },
+                {
+                    "factor": "Public Incidents or Scandals Involving C3.ai",
+                    "effect": "Would increase probability, but no evidence of such events as of November 2025. If C3.ai suffered a high-profile safety incident, it might seek independent evaluation to restore trust. Currently, no such scandal is reported."
+                },
+                {
+                    "factor": "Product Liability Best Practices",
+                    "effect": "Slightly increases probability. Product liability doctrine incentivizes pre-market safety testing, and independent evaluation can serve as a 'reasonable care' defense. However, the absence of regulatory mandate and the industry\u2019s slow movement toward external audits dampens this effect."
+                }
+            ],
+            "no_scenario": "C3.ai continues to focus on enterprise AI applications and does not release a general-purpose, large-scale LLM (or other high-risk model) that would trigger interest from METR. No credible news reports or disclosures indicate that C3.ai has had a model evaluated by METR before 2026. The company relies on internal testing, consistent with current industry norms for non-frontier labs.",
+            "yes_scenario": "C3.ai announces or leaks information about a new, potentially frontier-scale model, and\u2014either due to regulatory, contractual, or reputational pressures\u2014arranges for METR to conduct a pre-release dangerous behavior evaluation. A credible report confirms this evaluation occurs before January 1, 2026.",
+            "final_reasoning": "The base rate for non-frontier labs voluntarily submitting to METR evaluation is extremely low; even among frontier labs, external evaluation is not yet universal. The recent news does not suggest any shift in C3.ai\u2019s risk profile, business model, or external pressure that would make METR evaluation likely. Product liability incentives are present but not urgent, as C3.ai\u2019s products do not (yet) present the same catastrophic misuse risks as LLMs like GPT-5. There is no evidence of public scandal or regulatory action targeting C3.ai that would induce a change in practice. Given these factors\u2014and the clear requirement that only independent METR (or equivalent) evaluation counts for resolution\u2014the most likely outcome is that C3.ai will not have a model evaluated for dangerous behavior by METR before 2026.",
+            "final_probability": 4
+        }
+    },
+    "deliberation_probability": [
+        8,
+        7,
+        8,
+        2,
+        10,
+        2,
+        2,
+        2,
+        2,
+        2,
+        4
+    ],
+    "deliberation_mean_probability": 4.454545454545454,
+    "deliberation_sd": 3.142089634737888,
+    "deliberation_probability_result": 4
+}
