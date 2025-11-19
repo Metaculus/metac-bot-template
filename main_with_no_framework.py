@@ -44,7 +44,7 @@ with this file it may be worth double checking key components locally.
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
-NUM_RUNS_PER_QUESTION = 8  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
 
 # Environment variables
@@ -248,6 +248,19 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4.5", temp
         max_retries=5,
     )
 
+    if model == "o4-mini-deep-research":
+        async with llm_rate_limiter:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+            )
+            answer = response.choices[0].message.content
+            if answer is None:
+                raise ValueError("No answer returned from LLM")
+            return answer
+
+
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
             model=model,
@@ -274,7 +287,13 @@ def run_research(question_details: dict, today: str) -> str:
     if PERPLEXITY_API_KEY:
         query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}"
         print(f"Calling perplexity for {query}")
-        research += f"Research Report {report_number}:\n{call_perplexity(query)}"   
+        research += f"Research Report {report_number}:\n{call_perplexity(query)}\n"   
+        report_number += 1
+
+    if OPENROUTER_API_KEY:
+        query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}"
+        print(f"Calling o4-mini research for {query}")
+        research += f"Research Report {report_number}:\n{asyncio.run(call_llm(prompt=query, model='o4-mini-deep-research', temperature=0.7))}\n"   
         report_number += 1
     if not research:
         research = "No research done"
