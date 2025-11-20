@@ -8,10 +8,6 @@ from main import forecast_questions
 
 TEST_FORECAST_DIR = "forecasts/fall"
 
-
-
-
-
 @pytest.mark.asyncio
 async def test_e2e_binary():
     open_question_id_post_id = [(578, 578)]

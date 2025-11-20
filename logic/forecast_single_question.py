@@ -22,7 +22,7 @@ async def forecast_single_question(
         num_of_experts:str|None = None,
         news: str = None
 ) -> Tuple[Union[int, Dict[str, float]], str]:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 0.7, "gpt-4.1", 120)
 
     if not is_woc:
@@ -60,6 +60,7 @@ async def forecast_single_question(
     # Build final JSON
     final_json = {
         "question_details": question_details,
+        "cp_history": question_details.get("cp_history", []),
         "date": forecast_date, "news": news,
         "forecasters": expert_names,
         "results": results,

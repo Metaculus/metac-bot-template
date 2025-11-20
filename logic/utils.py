@@ -19,17 +19,18 @@ from utils.utils import normalize_and_average
 EXPERTS_PATH = "experts.json"
 
 
-def extract_question_details(question_details: dict) -> Tuple[str, str, str, str, str]:
+def extract_question_details(question_details: dict) -> Tuple[str, str, str, str, str, str]:
     title = question_details.get("title", "")
     description = question_details.get("description", "")
     fine_print = question_details.get("fine_print", "")
     resolution_criteria = question_details.get("resolution_criteria", "")
     forecast_date = datetime.datetime.now().isoformat()
-    return title, description, fine_print, resolution_criteria, forecast_date
+    aggregations = question_details.get("aggregations", "")
+    return title, description, fine_print, resolution_criteria, forecast_date, aggregations
 
 
 def create_prompt(question_details: Dict[str, str], news: str,system_message = FIRST_PHASE_INSTRUCTIONS) -> str:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     full_prompt = system_message + (
         f"##Forecast Date: {forecast_date}\n\n##Question:\n{title}\n\n##Description:\n{description}\n\n##Fine Print:\n"
         f"{fine_print}\n\n##Resolution Criteria:\n{resolution_criteria}\n\n##News Articles:\n{news}")

@@ -20,8 +20,7 @@ async def chat_group_single_question(
         use_hyde: bool = True,
         num_of_experts: str | None = None,
 ) -> Tuple[Union[int, Dict[str, float]], str]:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
-    
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     logging.info("=== Starting main pipeline for question: %s ===", title[:100] + "..." if len(title) > 100 else title)
     logging.info("Pipeline parameters: cache_seed=%s, is_multiple_choice=%s, options=%s, is_woc=%s, use_hyde=%s, num_of_experts=%s", 
                  cache_seed, is_multiple_choice, options, is_woc, use_hyde, num_of_experts)
@@ -96,7 +95,7 @@ async def chat_group_single_question(
     # Save JSON
     filename = strip_title_to_filename(title)
     logging.info("Saving results to file: %s", filename)
-    await build_and_write_json(filename, probabilities, is_woc)
+    await build_and_write_json(filename, probabilities, is_woc, aggregations)
     
     logging.info("=== Main pipeline completed successfully for question: %s ===", title[:100] + "..." if len(title) > 100 else title)
 

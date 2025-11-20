@@ -75,10 +75,10 @@ async def dispassion(
         options: List[str] | None = None,
         is_woc: bool = False,
 ) -> Tuple[Union[int, Dict[str, float]], str]:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
-    experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION) for name in expert_names]
+    experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION) for name in expert_namvges]
     group_chat = create_group(experts)
 
     results = await perform_forecasting_phase(experts, question_details, news=news,
@@ -127,7 +127,7 @@ async def slowly(
         options: List[str] | None = None,
         is_woc: bool = False,
 ) -> Tuple[Union[int, Dict[str, float]], str]:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
     experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE_SLOWLY) for name in expert_names]
@@ -159,7 +159,7 @@ async def main_pipeline(
         options: List[str] | None = None,
         is_woc: bool = False,
 ) -> Tuple[Union[int, Dict[str, float]], str]:
-    title, description, fine_print, resolution_criteria, forecast_date = extract_question_details(question_details)
+    title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
     experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE) for name in expert_names]
