@@ -78,7 +78,7 @@ async def dispassion(
     title, description, fine_print, resolution_criteria, forecast_date, aggregations = extract_question_details(question_details)
     config = get_gpt_config(cache_seed, 1, "gpt-4.1", 120)
 
-    experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION) for name in expert_namvges]
+    experts = [_create_offline_agent(name, SPECIFIC_META_MESSAGE_EXPERTISE_DISPASSION) for name in expert_names]
     group_chat = create_group(experts)
 
     results = await perform_forecasting_phase(experts, question_details, news=news,
