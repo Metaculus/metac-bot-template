@@ -182,8 +182,7 @@ def list_posts_from_tournament(
             ]
         ),
         "tournaments": [tournament_id],
-        "statuses": "closed",
-        # "statuses": "open",
+        "statuses": "open",
         "include_description": True,
         "with_cp": True,
         "include_cp_history": True
