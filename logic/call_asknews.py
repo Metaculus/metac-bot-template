@@ -93,7 +93,7 @@ def asknews_query_builder(question_details: Dict[str, str]) -> str:
     """
     Build a query for AskNews based on the question details.
     """
-    title, description, _, _, _ = extract_question_details(question_details)
+    title, description, _, _, _, _= extract_question_details(question_details)
     query = f"{title} {description}"
     return query
 
