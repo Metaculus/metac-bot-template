@@ -723,7 +723,21 @@ def generate_continuous_cdf(
         return y_values
 
     continuous_cdf = linear_interpolation(cdf_xaxis, value_percentiles)
-    return continuous_cdf
+    sanitized_cdf = [continuous_cdf[0]]
+    MAX_STEP = 0.59
+
+    for i in range(1, len(continuous_cdf)):
+        prev_val = sanitized_cdf[-1]
+        curr_val = continuous_cdf[i]
+        
+        # If the jump is too big, limit it to MAX_STEP
+        if curr_val - prev_val > MAX_STEP:
+            curr_val = prev_val + MAX_STEP
+            
+        sanitized_cdf.append(curr_val)
+
+    return sanitized_cdf
+    # return continuous_cdf
 
 
 async def get_numeric_gpt_prediction(
