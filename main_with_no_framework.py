@@ -16,6 +16,10 @@ from openai import AsyncOpenAI
 
 
 """
+Updates pending for Spring season:
+- Adding better handling for log scaled questions
+- Adding CDF standardization
+
 This file provides a simple forecasting bot built from the ground up.
 We provide this for people who want to dissect
 it to build their own bot without using forecasting-tools.
@@ -24,12 +28,12 @@ This template assumes you are using a OpenAI model and have an OpenAI API key
 You will also need a Metaculus API key, for posting questions to Metaculus
 and a Perplexity or AskNews API key for online research
 
-This is not a representative of the tempalte bots used by Metaculus, as there are some
+This is not a representative of the template bots used by Metaculus, as there are some
 differences in implementation. The actual template bot (e.g. like main.py) has the following differences:
 - An LLM now parses the final forecast output (rather than programmatic parsing)
 - Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
 - Upper/Lower bounds are mentioned as suggestions (not ignored) when the bounds are open
-- Group questions are supported
+- Group questions, conditional questions, and date questions are supported (these are extra and won't be launched in Spring AIB)
 - The research prompt mentions resolution criteria and fine print explicitly
 
 We realize the below code could probably be cleaned up a bit in a few places
