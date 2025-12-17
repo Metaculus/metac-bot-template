@@ -19,9 +19,6 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel, Field, model_validator
 
 """
-Updates pending for Spring season:
-- AskNews now uses ASKNEWS_API_KEY 
-
 This file provides a simple forecasting bot built from the ground up.
 We provide this for people who want to dissect
 it to build their own bot without using forecasting-tools.
@@ -43,6 +40,9 @@ Though we are assuming most people will dissect it enough to make this not matte
 
 Note that this is code is given as-is and though we have have done basic testing
 with this file it may be worth double checking key components locally.
+
+Updates pending for Spring season:
+- AskNews can now use ASKNEWS_API_KEY via client api_key parameter
 """
 
 
