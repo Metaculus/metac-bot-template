@@ -20,8 +20,6 @@ from pydantic import BaseModel, Field, model_validator
 
 """
 Updates pending for Spring season:
-- Adding better handling for log scaled questions
-- Adding CDF standardization
 - AskNews now uses ASKNEWS_API_KEY 
 
 This file provides a simple forecasting bot built from the ground up.
