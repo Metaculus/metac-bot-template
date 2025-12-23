@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 from datetime import datetime, timezone
+import dotenv
 from typing import Literal
 
 
@@ -30,6 +31,7 @@ from forecasting_tools import (
     structure_output,
 )
 
+dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
@@ -587,7 +589,7 @@ class SpringTemplateBot2026(ForecastBot):
                 previous_forecast.timestamp_end is None
                 or previous_forecast.timestamp_end > current_utc_time
             ):
-                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast) # type: ignore
+                pretty_value = DataOrganizer.get_readable_prediction(previous_forecast)  # type: ignore
                 prediction = ReasonedPrediction(
                     prediction_value=PredictionAffirmed(),
                     reasoning=f"Already existing forecast reaffirmed at {pretty_value}.",
