@@ -101,55 +101,19 @@ def run_news_eval(lr: LightningRod, max_questions: int) -> list[Sample]:
 
 
 def print_results(samples: list[Sample]) -> None:
-    """Print summary, per-model metrics, and consensus analysis."""
-
-    # --- Summary ---
+    """Print per-model metrics and consensus summary."""
     valid = sum(1 for s in samples if s.rollouts)
-    print(f"\n{'='*60}")
-    print(f"  Results: {len(samples)} samples, {valid} valid "
-          f"({valid / len(samples) * 100:.0f}%)")
-    print(f"{'='*60}\n")
+    print(f"\n{len(samples)} samples, {valid} valid ({valid / len(samples) * 100:.0f}%)\n")
 
-    # --- Per-model metrics ---
-    summary = compute_metrics_summary(samples)
-    print("Per-model metrics:")
-    print(f"  {'Model':<30} {'Mean Reward':>12} {'Parse Rate':>12}")
-    print(f"  {'-'*30} {'-'*12} {'-'*12}")
-    for model, metrics in summary.items():
-        short = model.split("/")[-1] if "/" in model else model
-        print(f"  {short:<30} {metrics['mean_reward']:>12.4f} {metrics['parse_rate']:>12.2%}")
-    print()
+    ranked = sorted(compute_metrics_summary(samples).items(), key=lambda x: x[1]["mean_reward"], reverse=True)
+    for rank, (model, m) in enumerate(ranked, 1):
+        name = model.split("/")[-1] if "/" in model else model
+        print(f"  #{rank}  {name:<25} reward={m['mean_reward']:.4f}  parse_rate={m['parse_rate']:.0%}")
 
-    # --- Consensus analysis ---
     consensus = compute_consensus(samples)
-    if not consensus:
-        print("No consensus data available.\n")
-        return
-
-    n_agree = sum(1 for c in consensus if c["all_agree"])
-    n_total = len(consensus)
-    mean_spread = sum(c["spread"] for c in consensus) / n_total
-
-    print("Consensus analysis:")
-    print(f"  Agreement: {n_agree}/{n_total} questions ({n_agree / n_total * 100:.0f}%)")
-    print(f"  Mean spread: {mean_spread:.3f}\n")
-
-    print(f"  {'Question':<50} {'Label':>5} {'Spread':>7} {'Agree':>6}")
-    print(f"  {'-'*50} {'-'*5} {'-'*7} {'-'*6}")
-    for c in consensus:
-        q = c["question_text"]
-        if len(q) > 48:
-            q = q[:48] + ".."
-        label = str(c["label"])
-        spread = f"{c['spread']:.3f}"
-        agree = "Yes" if c["all_agree"] else "No"
-        print(f"  {q:<50} {label:>5} {spread:>7} {agree:>6}")
-
-        for model, prob in c["predictions"].items():
-            short = model.split("/")[-1] if "/" in model else model
-            print(f"    {short}: {prob:.3f}")
-    print()
-
+    if consensus:
+        n_agree = sum(1 for c in consensus if c["all_agree"])
+        print(f"\nConsensus: {n_agree}/{len(consensus)} questions agree ({n_agree / len(consensus) * 100:.0f}%)")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LightningRod evaluation example")
