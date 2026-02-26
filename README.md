@@ -167,6 +167,16 @@ You will get tags in your response, including:
 These tags are likely useful for extracting the pieces that you need for your pipeline. For example, if you don't want to include all the thinking/searching, you could just extract <final_response> </final_response>
 
 
+## Integrations
+
+The **[integrations/](integrations/)** folder contains example scripts that integrate third-party tools with the bot template. Integration dependencies are optional and installed separately:
+
+```bash
+poetry install --with integrations
+```
+
+See the [integrations README](integrations/README.md) for available integrations and how to add your own.
+
 ## Ideas for bot improvements
 Below are some ideas for making a novel bot.
 - Finetuned LLM on Metaculus Data: Create an optimized prompt (using DSPY or a similar toolset) and/or a fine-tuned LLM using all past Metaculus data. The thought is that this will train the LLM to be well-calibrated on real-life questions. Consider knowledge cutoffs and data leakage from search providers.
