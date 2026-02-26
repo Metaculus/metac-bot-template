@@ -169,11 +169,7 @@ These tags are likely useful for extracting the pieces that you need for your pi
 
 ## Integrations
 
-The **[integrations/](integrations/)** folder contains example scripts that integrate third-party tools with the bot template. Integration dependencies are optional and installed separately:
-
-```bash
-poetry install --with integrations
-```
+The **[integrations/](integrations/)** folder contains example scripts that integrate third-party tools with the bot template. 
 
 See the [integrations README](integrations/README.md) for available integrations and how to add your own.
 

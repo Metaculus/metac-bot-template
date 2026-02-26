@@ -6,7 +6,7 @@ Demonstrates the full evaluation pipeline:
 
 Usage:
     poetry install --with integrations
-    poetry run python integrations/main_lightningrod_eval.py --max-questions 10
+    poetry run python integrations/main_lightningrod_eval.py
 
 Requires LIGHTNINGROD_API_KEY in your .env file.
 Sign up at https://dashboard.lightningrod.ai to get your API key and $50 of free credits.
@@ -27,50 +27,61 @@ from lightningrod import (
     RolloutGenerator,
     RolloutScorer,
     BinaryAnswerType,
+    Sample,
+    ModelConfig,
     open_router_model,
 )
 from lightningrod.utils import compute_consensus, compute_metrics_summary
 
 import os
 
-def run_news_eval(lr, max_questions):
+# This determines the type of news that will be used to generate questions. It can be a single query or a list of queries.
+SEARCH_QUERY = "breaking news"
+
+# Give the question generator specific instructions for the type of questions to generate from the retrieved articles. 
+# The question generator will also accept a list of good or bad examples or filter criteria. 
+INSTRUCTIONS = "Generate questions about the provided article. Questions should be clearly resolvable within 1-2 months."
+
+# The type of question you want to generate. This can be binary, multiple choice, continuous, or free response.
+ANSWER_TYPE = BinaryAnswerType()
+
+# The pipeline can generate rollouts from any model on openrouter and evaluate predictions against the labeled questions.
+# Models are given context about the question from a news search up to the date of the article the question is generated from. 
+MODELS_TO_EVALUATE = [
+    "openai/gpt-4.1-mini",
+    "anthropic/claude-sonnet-4",
+    "google/gemini-2.5-flash",
+]
+
+def run_news_eval(lr: LightningRod, max_questions: int) -> list[Sample]:
     """Configure and run the full news evaluation pipeline."""
 
-    # Date range: ~3 months ago to ~1 month ago so questions can be resolved
+    # Date range: ~4 months ago to ~2 months ago so questions can be resolved
     end_date = datetime.now() - timedelta(days=60)
     start_date = end_date - timedelta(days=120)
 
     seed_generator = NewsSeedGenerator(
         start_date=start_date,
         end_date=end_date,
-        search_query="breaking news",
+        search_query=SEARCH_QUERY,
     )
-
-    answer_type = BinaryAnswerType()
 
     question_generator = ForwardLookingQuestionGenerator(
-        instructions=(
-            "Generate questions about the provided article. "
-            "Questions should be clearly resolvable within 1-2 months."
-        ),
-        answer_type=answer_type,
+        instructions=INSTRUCTIONS,
+        answer_type=ANSWER_TYPE,
     )
 
-    labeler = WebSearchLabeler(answer_type=answer_type)
+    labeler = WebSearchLabeler(answer_type=ANSWER_TYPE)
 
     context_generator = NewsContextGenerator()
 
-    renderer = QuestionRenderer(answer_type=answer_type)
+    renderer = QuestionRenderer(answer_type=ANSWER_TYPE)
 
-    models = [
-        open_router_model("openai/gpt-4.1-mini"),
-        open_router_model("anthropic/claude-sonnet-4"),
-        open_router_model("google/gemini-2.5-flash"),
-    ]
+    models: list[ModelConfig] = [open_router_model(model) for model in MODELS_TO_EVALUATE]
 
     rollout_generator = RolloutGenerator(models=models)
 
-    scorer = RolloutScorer(answer_type=answer_type)
+    scorer = RolloutScorer(answer_type=ANSWER_TYPE)
 
     pipeline = QuestionPipeline(
         seed_generator=seed_generator,
@@ -89,7 +100,7 @@ def run_news_eval(lr, max_questions):
     return dataset.download()
 
 
-def print_results(samples: list[Sample]):
+def print_results(samples: list[Sample]) -> None:
     """Print summary, per-model metrics, and consensus analysis."""
 
     # --- Summary ---
