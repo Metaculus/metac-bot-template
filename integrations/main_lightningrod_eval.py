@@ -10,6 +10,7 @@ Usage:
 
 Requires LIGHTNINGROD_API_KEY in your .env file.
 Sign up at https://dashboard.lightningrod.ai to get your API key and $50 of free credits.
+More examples available at https://github.com/lightning-rod-labs/lightningrod-python-sdk/tree/main
 """
 
 import argparse

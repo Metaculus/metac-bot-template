@@ -12,19 +12,24 @@ poetry install --with integrations
 
 ## Available integrations
 
-### LightningRod Evaluation
+### LightningRod SDK
 
-**[main_lightningrod_eval.py](main_lightningrod_eval.py)** — Uses the [LightningRod SDK](https://github.com/LightningRodAI/lightningrod-python-sdk) to generate forecasting questions from news. 
+**[main_lightningrod_eval.py](main_lightningrod_eval.py)** - Uses the [LightningRod SDK](https://github.com/lightning-rod-labs/lightningrod-python-sdk) to generate forecasting questions from news. 
 
-Lightning Rod is a composable system for turning raw, timestamped information into model-ready forecasting datasets. Each step is a focused data transform (seed retrieval, question generation, rollouts, context, labeling, etc), these transforms can be chained into reproducible pipelines that operate over structured tables. In practice, this means you can start from sources like news, filings, or domain documents and reliably produce forward-looking questions with standardized outputs (prompt, parser/reward metadata, and resolved answers when available), without hand-labeling every example.
+The **Lightning Rod SDK** is a Python library for generating custom forecasting datasets. It transforms real-world data sources into labeled forecasting samples automatically, using built-in integrations like Google News, or your own documents.
 
-For AI forecasting, this is useful for scaling both evaluation and training data. You can generate large, domain-specific benchmark sets that mirror real forecasting workflows (questions asked at time t with only information available at time t), then score models or forecasters against eventual outcomes. The same pipeline can also produce training corpora for calibration or reasoning improvements, enabling faster iteration on question quality, horizon selection, and label confidence while keeping the process transparent, versioned, and repeatable.
+The output is an exportable dataset you can use to benchmark LLMs, or train on to improve calibration and sharpen reasoning. The SDK covers the full pipeline: ingesting sources, generating questions, labeling questions, and scoring against real outcomes. 
+
+Data generation pipelines are fully customizable: including date ranges, question format (e.g. binary, multiple choice), and custom instructions to shape the output. 
+
+The Metaculus community gets **$100 in free credits** with code `METACULUS100`. Create an account at [lightningrod.ai](https://lightningrod.ai/) and explore the [SDK examples](https://github.com/lightning-rod-labs/lightningrod-python-sdk/tree/main/notebooks) to get started.
 
 1. Get a `LIGHTNINGROD_API_KEY` at [dashboard.lightningrod.ai](https://dashboard.lightningrod.ai)
 2. Add it to your `.env` file
 3. Run:
+
 ```bash
-poetry run python integrations/main_lightningrod_eval.py --max-questions 10
+poetry run python integrations/main_lightningrod_eval.py
 ```
 
 ## Add your own
