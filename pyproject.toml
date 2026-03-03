@@ -17,6 +17,13 @@ python-dotenv = "^1.0.1"
 forecasting-tools = "^0.2.80"
 
 
+[tool.poetry.group.integrations]
+optional = true
+
+[tool.poetry.group.integrations.dependencies]
+lightningrod-ai = "^0.1.14"
+
+
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
 
