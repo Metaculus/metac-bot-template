@@ -213,17 +213,17 @@ class FallTemplateBot2025(ForecastBot):
         )
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
 
-    async def _run_forecast_on_multiple_choice(
+       async def _run_forecast_on_multiple_choice(
         self, question: MultipleChoiceQuestion, research: str
     ) -> ReasonedPrediction[PredictedOptionList]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
+            You are GPT-5.2 Pro acting as a forecasting assistant. Your objective is to produce a well-calibrated probability distribution over mutually exclusive categories that sum to 100%. Use web browsing to get the most up-to-date information if you have that tool.
 
-            Your interview question is:
+            Your FORECAST QUESTION (categorical / multiple-choice) is:
             {question.question_text}
 
-            The options are: {question.options}
+            The categorites are: {question.options}
 
 
             Background:
@@ -233,24 +233,62 @@ class FallTemplateBot2025(ForecastBot):
 
             {question.fine_print}
 
-
             Your research assistant says:
             {research}
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
 
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
-
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
+
+            FORECASTING RULES (follow in order):
+            1) Restate the question, resolution criteria, and the time left until the outcome to the question is known, as a checklist. Write the status quo outcome if nothing changed. If categories overlap or are not exhaustive, note assumptions and proceed without asking questions.
+            2) Outside view:
+            - Identify reference classes and historical frequencies for outcomes like this (if applicable).
+            3) Web research (if available):
+            - Search for the newest, most relevant info and credible base-rate stats.
+            - Cross-check; avoid single-source anchoring.
+            4) Inside view:
+            - Identify key drivers that push probability mass toward specific categories.
+            5) Allocate probabilities:
+            - Produce probabilities for each category (0–100) that sum exactly to 100.
+            - Avoid unnecessary round numbers.
+            6) Step-back calibration:
+            - Name the high-level principle/abstraction.
+            - Check for missing “default” outcomes and base-rate neglect; adjust if needed.
+            7) Finalize.
 
             The last thing you write is your final probabilities for the N options in this order {question.options} as:
             Option_A: Probability_A
             Option_B: Probability_B
             ...
             Option_N: Probability_N
+
+            OUTPUT FORMAT (strict):
+            Return TWO sections:
+
+            A) JSON (valid JSON only)
+            {
+            "question": "...",
+            "as_of_date": "YYYY-MM-DD",
+            "resolution_checklist": ["..."],
+            "assumptions_if_any": ["..."],
+            "category_probabilities_pct": {
+                "CATEGORY 1": P1,
+                "CATEGORY 2": P2,
+                "CATEGORY 3": P3
+            },
+            "sum_check_pct": 100,
+            "key_drivers_by_category": [
+                {"category": "CATEGORY 1", "drivers": ["..."]},
+                {"category": "CATEGORY 2", "drivers": ["..."]}
+            ],
+            "key_uncertainties": ["..."],
+            "sources": [
+                {"name": "...", "date": "YYYY-MM-DD or null", "what_it_supports": "..."}
+            ]
+            }
+
+            B) Brief rationale (max 10 bullets), plus “Most likely path to each top-2 categories” (2–3 bullets each).
             """
         )
         parsing_instructions = clean_indents(
