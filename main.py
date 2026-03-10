@@ -170,35 +170,68 @@ class FallTemplateBot2025(ForecastBot):
     ) -> ReasonedPrediction[float]:
         prompt = clean_indents(
             f"""
-            You are a professional forecaster interviewing for a job.
-
-            Your interview question is:
+            You are GPT-5.2 Pro acting as a forecasting assistant. Your objective is to produce a well-calibrated probability forecast for a binary question (minimize Brier score). Use web browsing to get the most up-to-date information if you have that tool.
+            
+            FORECAST QUESTION (binary):
             {question.question_text}
-
-            Question background:
-            {question.background_info}
-
-
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            
+            RESOLUTION CRITERIA (how it will be judged, key dates, data sources, edge cases):
             {question.resolution_criteria}
-
-            {question.fine_print}
-
-
-            Your research assistant says:
-            {research}
+            
+            OPTIONAL CONTEXT / ATTACHMENTS:
+            {question.background_info}
+            
+            FORECASTING RULES (follow in order):
+            1) Restate the question in your own words and restate the resolution criteria as a checklist. If anything is ambiguous, make explicit assumptions and proceed (do not ask questions unless absolutely required).
+            2) Establish the OUTSIDE VIEW:
+               - Identify 1–3 reasonable reference classes.
+               - Give an approximate base-rate range for the event over the relevant horizon (cite sources if you can find them; otherwise justify analogies).
+            3) Frequency reframing:
+               - Translate your current belief into: “Out of 100 similar cases, the event occurs in __ cases.”
+            4) Gather & validate evidence (use web search/browsing if available):
+               - Run several targeted searches.
+               - Prefer high-quality primary or well-established secondary sources.
+               - Cross-check key claims (avoid relying on a single article).
+               - Note dates and whether information is stale.
+            5) Inside view synthesis:
+               - List the 3–7 most decision-relevant factors and the direction they push (toward YES or NO).
+               - Briefly note major uncertainties / unknowns.
+            6) INITIAL forecast:
+               - Give an initial probability (0–100), not rounded to the nearest 5 or 10 unless justified.
+            7) Calibration / step-back pass:
+               - Identify the high-level principle or abstraction that best governs the situation (e.g., incentives, base-rate dominance, S-curves, institutional constraints).
+               - Check for common failure modes: single-source anchoring, recency bias, motivated reasoning, ignoring base rates.
+               - Decide if the initial probability is overconfident or underconfident; adjust if warranted.
+            8) FINAL forecast:
+               - Output a final probability from 0% to 100%.
+               - Avoid 0% or 100% unless logically forced by the criteria.
+            
+            OUTPUT FORMAT (strict):
+            Return TWO sections:
+            
+            A) JSON (valid JSON only)
+            {
+              "question": "...",
+              "as_of_date": "YYYY-MM-DD",
+              "resolution_checklist": ["..."],
+              "assumptions_if_any": ["..."],
+              "base_rate_reference_classes": [
+                {"reference_class": "...", "base_rate_range_pct": [low, high], "notes": "..."}
+              ],
+              "initial_forecast_pct": N,
+              "final_forecast_pct": N,
+              "key_drivers": [
+                {"factor": "...", "direction": "YES|NO", "weight_note": "..."}
+              ],
+              "key_uncertainties": ["..."],
+              "sources": [
+                {"name": "...", "date": "YYYY-MM-DD or null", "what_it_supports": "..."}
+              ]
+            }
+            
+            B) Brief rationale (max 8 bullets), and a short “What would change my mind?” list (max 5 bullets).
 
             Today is {datetime.now().strftime("%Y-%m-%d")}.
-
-            Before answering you write:
-            (a) The time left until the outcome to the question is known.
-            (b) The status quo outcome if nothing changed.
-            (c) A brief description of a scenario that results in a No outcome.
-            (d) A brief description of a scenario that results in a Yes outcome.
-
-            You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
-
-            The last thing you write is your final answer as: "Probability: ZZ%", 0-100
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
