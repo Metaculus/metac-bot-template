@@ -71,6 +71,8 @@ Q4_2024_AI_BENCHMARKING_ID = 32506
 Q1_2025_AI_BENCHMARKING_ID = 32627
 FALL_2025_AI_BENCHMARKING_ID = "fall-aib-2025"
 SPRING_2026_AI_BENCHMARKING_ID = "spring-aib-2026"
+SUMMER_2026_AI_BENCHMARKING_ID = 33022  # https://www.metaculus.com/tournament/summer-futureeval-2026/
+
 CURRENT_MINIBENCH_ID = "minibench"
 
 Q4_2024_QUARTERLY_CUP_ID = 3672
@@ -80,7 +82,7 @@ CURRENT_METACULUS_CUP_ID = None # TBD (Use the slug from the Metaculus Cup URL)
 AXC_2025_TOURNAMENT_ID = 32564
 AI_2027_TOURNAMENT_ID = "ai-2027"
 
-TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
+TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
