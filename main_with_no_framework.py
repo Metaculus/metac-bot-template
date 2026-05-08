@@ -49,7 +49,7 @@ Updates pending for Spring season:
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast on the bot-testing-area tournament instead of TOURNAMENT_ID
+USE_EXAMPLE_QUESTIONS = False  # set to True to forecast on the bot-testing-area tournament 
 NUM_RUNS_PER_QUESTION = (
     5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 )
