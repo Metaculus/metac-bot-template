@@ -49,7 +49,7 @@ Updates pending for Spring season:
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = False  # set to True to forecast on the bot-testing-area tournament instead of TOURNAMENT_ID
 NUM_RUNS_PER_QUESTION = (
     5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 )
@@ -82,27 +82,11 @@ CURRENT_METACULUS_CUP_ID = None # TBD (Use the slug from the Metaculus Cup URL)
 AXC_2025_TOURNAMENT_ID = 32564
 AI_2027_TOURNAMENT_ID = "ai-2027"
 
-TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
+# Bot Testing Area - contains all question types and is the recommended target for test runs.
+# https://www.metaculus.com/tournament/bot-testing-area/
+BOT_TESTING_AREA_ID = "bot-testing-area"
 
-# The example questions can be used for testing your bot. (note that question and post id are not always the same)
-EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (
-        578,
-        578,
-    ),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (
-        14333,
-        14333,
-    ),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (
-        22427,
-        22427,
-    ),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
-    (
-        38195,
-        38880,
-    ),  # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
-]
+TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
 
 
 ######################### HELPER FUNCTIONS #########################
@@ -215,8 +199,10 @@ def list_posts_from_tournament(
     return data
 
 
-def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
-    posts = list_posts_from_tournament()
+def get_open_question_ids_from_tournament(
+    tournament_id: int | str = TOURNAMENT_ID,
+) -> list[tuple[int, int]]:
+    posts = list_posts_from_tournament(tournament_id)
 
     post_dict = dict()
     for post in posts["results"]:
@@ -1534,10 +1520,8 @@ async def forecast_questions(
 
 ######################## FINAL RUN #########################
 if __name__ == "__main__":
-    if USE_EXAMPLE_QUESTIONS:
-        open_question_id_post_id = EXAMPLE_QUESTIONS
-    else:
-        open_question_id_post_id = get_open_question_ids_from_tournament()
+    active_tournament_id = BOT_TESTING_AREA_ID if USE_EXAMPLE_QUESTIONS else TOURNAMENT_ID
+    open_question_id_post_id = get_open_question_ids_from_tournament(active_tournament_id)
 
     asyncio.run(
         forecast_questions(
