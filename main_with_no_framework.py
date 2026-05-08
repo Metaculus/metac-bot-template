@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from collections import Counter
 import datetime
 import json
+import math
 import os
 import re
+from bisect import bisect_right
+from dataclasses import dataclass
+from typing import Sequence
 
 import dotenv
 
@@ -16,7 +19,6 @@ import numpy as np
 import requests
 from asknews_sdk import AskNewsSDK
 from openai import AsyncOpenAI
-from pydantic import BaseModel, Field, model_validator
 
 """
 This file provides a simple forecasting bot built from the ground up.
@@ -41,8 +43,7 @@ Though we are assuming most people will dissect it enough to make this not matte
 Note that this is code is given as-is and though we have have done basic testing
 with this file it may be worth double checking key components locally.
 
-Updates pending for Spring season:
-- AskNews can now use ASKNEWS_API_KEY via client api_key parameter
+
 """
 
 
@@ -51,9 +52,9 @@ Updates pending for Spring season:
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = (
-    5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+    3  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 )
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -521,6 +522,9 @@ async def get_binary_gpt_prediction(
 
 ####################### NUMERIC ###############
 # @title Numeric prompt & functions
+#
+# This section includes functionality for numeric questions.
+# The prompt emphasizes the importance of putting percentile values in the correct order, and the code includes functions for generating and standardizing CDFs based on LLM output.
 
 NUMERIC_PROMPT_TEMPLATE = """
 You are a professional forecaster interviewing for a job.
@@ -542,14 +546,9 @@ Your research assistant says:
 
 Today is {today}.
 
+The scale ranges from {lower_bound} to {upper_bound}{log_note}.
 {lower_bound_message}
 {upper_bound_message}
-
-
-Formatting Instructions:
-- Please notice the units requested (e.g. whether you represent a number as 1,000,000 or 1m).
-- Never use scientific notation.
-- Always start with a smaller number (more negative if negative) and then increase from there
 
 Before answering you write:
 (a) The time left until the outcome to the question is known.
@@ -559,572 +558,345 @@ Before answering you write:
 (e) A brief description of an unexpected scenario that results in a low outcome.
 (f) A brief description of an unexpected scenario that results in a high outcome.
 
-You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unkowns.
+You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns. Never use scientific notation.
 
-The last thing you write is your final answer as:
-"
-Percentile 10: XX
-Percentile 20: XX
-Percentile 40: XX
-Percentile 60: XX
-Percentile 80: XX
-Percentile 90: XX
-"
+The last thing you write is your forecast as a JSON code block. Use keys of the form "p<N>" where N is between 1 and 99 (e.g. "p5", "p25", "p50", "p75", "p95"). Provide at least 5 percentiles spanning a wide interval. Values must be strictly increasing. Example:
+```json
+{{
+  "p5": {ex_p5},
+  "p25": {ex_p25},
+  "p50": {ex_p50},
+  "p75": {ex_p75},
+  "p95": {ex_p95}
+}}
+```
 """
 
 
-def extract_percentiles_from_response(forecast_text: str) -> dict:
+@dataclass
+class Scaling:
 
-    # Helper function that returns a list of tuples with numbers for all lines with Percentile
-    def extract_percentile_numbers(text) -> dict:
-        pattern = r"^.*(?:P|p)ercentile.*$"
-        number_pattern = (
-            r"-\s*(?:[^\d\-]*\s*)?(\d+(?:,\d{3})*(?:\.\d+)?)|(\d+(?:,\d{3})*(?:\.\d+)?)"
-        )
-        results = []
+    range_min: float
+    range_max: float
+    zero_point: float | None
+    open_lower_bound: bool
+    open_upper_bound: bool
+    inbound_outcome_count: int | None = None
 
-        for line in text.split("\n"):
-            if re.match(pattern, line):
-                numbers = re.findall(number_pattern, line)
-                numbers_no_commas = [
-                    next(num for num in match if num).replace(",", "")
-                    for match in numbers
-                ]
-                numbers = [
-                    float(num) if "." in num else int(num) for num in numbers_no_commas
-                ]
-                if len(numbers) > 1:
-                    first_number = numbers[0]
-                    last_number = numbers[-1]
-                    # Check if the original line had a negative sign before the last number
-                    if "-" in line.split(":")[-1]:
-                        last_number = -abs(last_number)
-                    results.append((first_number, last_number))
 
-        # Convert results to dictionary
-        percentile_values = {}
-        for first_num, second_num in results:
-            key = first_num
-            percentile_values[key] = second_num
+def unscale_value(scaled: float, scaling: Scaling) -> float:
+    lo, hi, zp = scaling.range_min, scaling.range_max, scaling.zero_point
+    if zp is None:
+        return (scaled - lo) / (hi - lo)
+    deriv_ratio = (hi - zp) / (lo - zp)
+    return (
+        np.log((scaled - lo) * (deriv_ratio - 1) + (hi - lo)) - np.log(hi - lo)
+    ) / np.log(deriv_ratio)
 
-        return percentile_values
 
-    percentile_values = extract_percentile_numbers(forecast_text)
+class MonotoneCubicInterpolator:
+    """Monotone piecewise cubic Hermite interpolation (PCHIP / Fritsch-Carlson).
 
-    if len(percentile_values) > 0:
-        return percentile_values
+    Tangents are constrained so the interpolant cannot overshoot or oscillate
+    between knots — guarantees monotone output for monotone input. Ideal for
+    CDF interpolation.
+    """
+
+    def __init__(self, x: Sequence[float], y: Sequence[float]):
+        x = list(map(float, x))
+        y = list(map(float, y))
+        n = len(x)
+        if n < 2:
+            raise ValueError("Need at least two points.")
+        for i in range(n - 1):
+            if not (x[i + 1] > x[i]):
+                raise ValueError("x must be strictly increasing.")
+
+        h = [x[i + 1] - x[i] for i in range(n - 1)]
+        d = [(y[i + 1] - y[i]) / h[i] for i in range(n - 1)]
+
+        m = [0.0] * n
+        m[0] = d[0]
+        m[-1] = d[-1]
+        for i in range(1, n - 1):
+            if d[i - 1] * d[i] <= 0:
+                m[i] = 0.0
+            else:
+                w1 = 2 * h[i] + h[i - 1]
+                w2 = h[i] + 2 * h[i - 1]
+                m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+
+        # Fritsch-Carlson circle condition: prevent overshoot at endpoints.
+        for i in range(n - 1):
+            if abs(d[i]) < 1e-14:
+                m[i] = m[i + 1] = 0.0
+                continue
+            alpha = m[i] / d[i]
+            beta = m[i + 1] / d[i]
+            if alpha < 0:
+                m[i] = 0.0
+                alpha = 0.0
+            if beta < 0:
+                m[i + 1] = 0.0
+                beta = 0.0
+            r2 = alpha**2 + beta**2
+            if r2 > 9.0:
+                tau = 3.0 / math.sqrt(r2)
+                m[i] = tau * alpha * d[i]
+                m[i + 1] = tau * beta * d[i]
+
+        self.x = x
+        self.y = y
+        self.m = m
+        self.h = h
+
+    def __call__(self, xp: float) -> float:
+        x, y, m, h = self.x, self.y, self.m, self.h
+        if xp <= x[0]:
+            return y[0]
+        if xp >= x[-1]:
+            return y[-1]
+        i = min(bisect_right(x, xp) - 1, len(x) - 2)
+        t = (xp - x[i]) / h[i]
+        h00 = 2 * t**3 - 3 * t**2 + 1
+        h10 = t**3 - 2 * t**2 + t
+        h01 = -2 * t**3 + 3 * t**2
+        h11 = t**3 - t**2
+        return h00 * y[i] + h10 * h[i] * m[i] + h01 * y[i + 1] + h11 * h[i] * m[i + 1]
+
+
+def _cdf_at_boundary(
+    percentile_items: list[tuple[float, float]],
+    boundary: float,
+) -> float:
+    """Linear interpolation of the CDF at a boundary value."""
+    if boundary < percentile_items[0][1]:
+        return percentile_items[0][0] / 2.0
+    if boundary > percentile_items[-1][1]:
+        return (percentile_items[-1][0] + 1.0) / 2.0
+    for i, (frac, val) in enumerate(percentile_items):
+        if val == boundary:
+            return frac
+        if i + 1 < len(percentile_items):
+            frac_next, val_next = percentile_items[i + 1]
+            if val < boundary < val_next:
+                t = (boundary - val) / (val_next - val)
+                return frac + t * (frac_next - frac)
+    return percentile_items[-1][0]
+
+
+def _infer_below_above(
+    percentile_items: list[tuple[float, float]],
+    scaling: Scaling,
+) -> tuple[float, float]:
+    """Probability mass outside open bounds (0.0 for closed bounds)."""
+    if not scaling.open_lower_bound:
+        below: float = 0.0
+    elif percentile_items:
+        below = _cdf_at_boundary(percentile_items, float(scaling.range_min))
     else:
-        raise ValueError(f"Could not extract prediction from response: {forecast_text}")
+        below = 0.0
+
+    if not scaling.open_upper_bound:
+        above: float = 0.0
+    elif percentile_items:
+        above = 1.0 - _cdf_at_boundary(percentile_items, float(scaling.range_max))
+    else:
+        above = 0.0
+
+    return below, above
+
+
+def cdf_to_pmf(cdf: list[float]) -> list[float]:
+    pmf = [cdf[0]]
+    for i in range(1, len(cdf)):
+        pmf.append(max(0.0, cdf[i] - cdf[i - 1]))
+    pmf.append(max(0.0, 1.0 - cdf[-1]))
+    return pmf
+
+
+def pmf_to_cdf(pmf: list[float]) -> list[float]:
+    cdf = []
+    cumsum = 0.0
+    for v in pmf[:-1]:
+        cumsum += v
+        cdf.append(cumsum)
+    return cdf
 
 
 def generate_continuous_cdf(
-    percentile_values: dict,
-    question_type: str,
-    open_upper_bound: bool,
-    open_lower_bound: bool,
-    upper_bound: float,
-    lower_bound: float,
-    zero_point: float | None,
-    cdf_size: int,
+    percentiles: dict[float, float],
+    scaling: Scaling,
+    below_lower_bound: float | None = None,
+    above_upper_bound: float | None = None,
 ) -> list[float]:
+    """Generate a CDF for a continuous question from a set of percentiles.
+
+    Args:
+        percentiles: mapping of percentile (0–1) to value on the question's scale.
+        scaling: question scaling info.
+        below_lower_bound: probability mass below the lower bound.
+        above_upper_bound: probability mass above the upper bound.
+
+    Returns:
+        A list of `inbound_outcome_count + 1` CDF values.
     """
-    Returns: list[float]: A list of 201 float values representing the CDF.
+    points: list[tuple[float, float]] = []
+    if below_lower_bound is not None:
+        points.append((0.0, below_lower_bound))
+    if above_upper_bound is not None:
+        points.append((1.0, 1.0 - above_upper_bound))
+    for pct, scaled in percentiles.items():
+        points.append((unscale_value(scaled, scaling), pct))
+    points.sort()
+
+    # Average y values for any tied x values so the spline gets strictly
+    # increasing x coordinates.
+    deduped: list[tuple[float, float]] = []
+    i = 0
+    while i < len(points):
+        j = i + 1
+        while j < len(points) and points[j][0] == points[i][0]:
+            j += 1
+        x = points[i][0]
+        y = sum(p[1] for p in points[i:j]) / (j - i)
+        deduped.append((x, y))
+        i = j
+    points = deduped
+
+    first, last = points[0], points[-1]
+    if first[0] > 0.0 or last[0] < 1.0:
+        raise ValueError("Percentiles must encompass the full range of the question")
+
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    mono = MonotoneCubicInterpolator(xs, ys)
+
+    n = scaling.inbound_outcome_count or 200
+    cdf = [round(mono(i / n), 10) for i in range(n + 1)]
+    if any(not (0.0 <= F <= 1.0) for F in cdf):
+        raise ValueError(f"Interpolated CDF values must be in [0, 1]. Got: {cdf}")
+    if any(np.isnan(f) for f in cdf):
+        raise ValueError(f"Interpolated CDF contains NaN values: {cdf}")
+    return cdf
+
+
+def standardize_cdf(cdf: list[float], scaling: Scaling) -> list[float]:
+    """Standardize a CDF so it satisfies Metaculus API constraints:
+
+    - no mass outside closed bounds (rescaled accordingly)
+    - at least 0.1% mass outside open bounds
+    - minimum increase per step
+    - maximum step capped to avoid PMF spikes
     """
+    n = scaling.inbound_outcome_count or 200
+    default_n = 200
 
-    percentiles = []
-    for percentile, value in percentile_values.items():
-        percentiles.append(Percentile(percentile=percentile/100, value=value))
-    numeric_distribution = NumericDistribution(
-        declared_percentiles=percentiles,
-        open_upper_bound=open_upper_bound,
-        open_lower_bound=open_lower_bound,
-        upper_bound=upper_bound,
-        lower_bound=lower_bound,
-        zero_point=zero_point,
-        cdf_size=cdf_size,
-    )
-    cdf_as_objects = numeric_distribution.get_cdf()
-    cdf_as_floats = [percentile.percentile for percentile in cdf_as_objects]
+    arr = np.asarray(cdf, dtype=float)
+    if not arr.size:
+        return []
 
-    return cdf_as_floats
+    # PCHIP can mildly overshoot when an in-range high percentile is paired
+    # with a small above-bound anchor. Clip to monotone before standardizing
+    # so the minimum-step guarantee isn't overwhelmed by a downward jump.
+    arr = np.maximum.accumulate(arr)
+
+    scale_lower_to = 0.0 if scaling.open_lower_bound else arr[0]
+    scale_upper_to = 1.0 if scaling.open_upper_bound else arr[-1]
+    inbound_mass = scale_upper_to - scale_lower_to
+
+    def standardize(F: float, location: float) -> float:
+        rescaled = (F - scale_lower_to) / inbound_mass
+        if scaling.open_lower_bound and scaling.open_upper_bound:
+            return 0.988 * rescaled + 0.01 * location + 0.001
+        elif scaling.open_lower_bound:
+            return 0.989 * rescaled + 0.01 * location + 0.001
+        elif scaling.open_upper_bound:
+            return 0.989 * rescaled + 0.01 * location
+        return 0.99 * rescaled + 0.01 * location
+
+    for i, value in enumerate(arr):
+        arr[i] = standardize(value, i / (len(arr) - 1))
+
+    pmf = np.array(cdf_to_pmf(arr.tolist()))
+    cap = 0.2 * (default_n / n)
+
+    def cap_pmf(scale: float) -> np.ndarray:
+        return np.concatenate([pmf[:1], np.minimum(cap, scale * pmf[1:-1]), pmf[-1:]])
+
+    def capped_sum(scale: float) -> float:
+        return float(cap_pmf(scale).sum())
+
+    lo_s = hi_s = scale = 1.0
+    while capped_sum(hi_s) < 1.0:
+        hi_s *= 1.2
+    for _ in range(100):
+        scale = 0.5 * (lo_s + hi_s)
+        s = capped_sum(scale)
+        if s < 1.0:
+            lo_s = scale
+        else:
+            hi_s = scale
+        if s == 1.0 or (hi_s - lo_s) < 2e-5:
+            break
+
+    pmf = cap_pmf(scale)
+    pmf[1:-1] *= (arr[-1] - arr[0]) / pmf[1:-1].sum()
+    return np.round(pmf_to_cdf(pmf.tolist()), 10).tolist()
 
 
-class NumericDefaults:
-    DEFAULT_CDF_SIZE = (
-        201  # Discrete questions have fewer points, Numeric will have 201 points
-    )
-    DEFAULT_INBOUND_OUTCOME_COUNT = DEFAULT_CDF_SIZE - 1
-    MAX_NUMERIC_PMF_VALUE = 0.2
+def extract_percentiles_from_response(forecast_text: str) -> dict[float, float]:
+    """Parse a JSON {p<N>: value} block from the LLM output.
 
-    @classmethod
-    def get_max_pmf_value(
-        cls, cdf_size: int, include_wiggle_room: bool = True
-    ) -> float:
-        # cap depends on inboundOutcomeCount (0.2 if it is the default 200)
-        inbound_outcome_count = cdf_size - 1
-        normal_cap = cls.MAX_NUMERIC_PMF_VALUE * (
-            cls.DEFAULT_INBOUND_OUTCOME_COUNT / inbound_outcome_count
+    Returns a dict mapping percentile fraction (0–1) → value. Values are
+    sort-fallback-corrected: if the LLM emits non-monotone values, both
+    percentiles and values are sorted independently and re-paired so the
+    result is monotone in both dimensions. This trades fidelity to the LLM's
+    intent for robustness against off-by-one mistakes; a strict raise would
+    instead reject the whole run.
+    """
+    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", forecast_text, re.DOTALL)
+    if fenced:
+        raw = fenced.group(1)
+    else:
+        bare = re.search(r"\{.*\}", forecast_text, re.DOTALL)
+        if not bare:
+            raise ValueError(
+                f"No JSON object found in response: {forecast_text[:200]!r}"
+            )
+        raw = bare.group(0)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"JSON parse error: {exc}. Raw: {raw[:200]!r}") from exc
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Expected JSON object, got {type(data).__name__}")
+
+    items: list[tuple[float, float]] = []
+    for key, raw_value in data.items():
+        m = re.fullmatch(r"p([1-9][0-9]?)", str(key).strip())
+        if not m:
+            continue
+        n = int(m.group(1))
+        if not (1 <= n <= 99):
+            continue
+        try:
+            items.append((n / 100.0, float(raw_value)))
+        except (TypeError, ValueError):
+            continue
+
+    if not items:
+        raise ValueError(
+            f"No valid percentile keys (p1–p99) in response: {forecast_text[:200]!r}"
         )
 
-        if include_wiggle_room:
-            return normal_cap * 0.95
-        else:
-            return normal_cap
+    items.sort()
+    sorted_values = sorted(v for _, v in items)
+    items = [(p, v) for (p, _), v in zip(items, sorted_values)]
 
-
-class Percentile(BaseModel):
-    percentile: float = Field(
-        description="A number between 0 and 1 (e.g. '90% of people are age 60 or younger' translates to '0.9')",
-    )
-    value: float = Field(
-        description="The number matching the percentile (e.g. '90% of people are age 60 or younger' translates to '60')",
-    )
-
-    @model_validator(mode="after")
-    def validate_percentile(self: Percentile) -> Percentile:
-        if self.percentile < 0 or self.percentile > 1:
-            raise ValueError(
-                f"Percentile must be between 0 and 1, but was {self.percentile}"
-            )
-        if np.isnan(self.percentile):
-            raise ValueError(f"Percentile must be a number, but was {self.percentile}")
-        return self
-
-
-class NumericDistribution(BaseModel):
-    declared_percentiles: list[Percentile]
-    open_upper_bound: bool
-    open_lower_bound: bool
-    upper_bound: float
-    lower_bound: float
-    zero_point: float | None
-    cdf_size: int | None = (
-        None  # Normal numeric questions have 201 points, but discrete questions have fewer
-    )
-    standardize_cdf: bool = True
-    strict_validation: bool = True
-    is_date: bool = False
-
-    @model_validator(mode="after")
-    def validate_percentiles(self: NumericDistribution) -> NumericDistribution:
-        percentiles = self.declared_percentiles
-        self._check_percentiles_increasing()
-        self._check_log_scaled_fields()
-
-        if not self.strict_validation:
-            return self
-
-        self._check_percentile_spacing()
-
-        if self.standardize_cdf:
-            self._check_too_far_from_bounds(percentiles)
-        if self.standardize_cdf and len(percentiles) == self.cdf_size:
-            self._check_distribution_too_tall(percentiles)
-
-        self.declared_percentiles = self._check_and_update_repeating_values(percentiles)
-        return self
-
-    def _check_percentiles_increasing(self) -> None:
-        percentiles = self.declared_percentiles
-        for i in range(len(percentiles) - 1):
-            if percentiles[i].percentile >= percentiles[i + 1].percentile:
-                raise ValueError("Percentiles must be in strictly increasing order")
-            if percentiles[i].value > percentiles[i + 1].value:
-                raise ValueError("Values must be in strictly increasing order")
-        if len(percentiles) < 2:
-            raise ValueError("NumericDistribution must have at least 2 percentiles")
-
-    def _check_percentile_spacing(self) -> None:
-        percentiles = self.declared_percentiles
-        for i in range(len(percentiles) - 1):
-            if abs(percentiles[i + 1].percentile - percentiles[i].percentile) < 5e-05:
-                raise ValueError(
-                    f"Percentiles at indices {i} and {i+1} are too close. CDF must be increasing by at least 5e-05 at every step. "
-                    f"{percentiles[i].percentile} and {percentiles[i+1].percentile} "
-                    f"at values {percentiles[i].value} and {percentiles[i+1].value}. "
-                    "One possible reason is that your prediction is mostly or completely out of the upper/lower "
-                    "bound range thus assigning very little probability to any one x-axis value."
-                )
-
-    def _check_log_scaled_fields(self) -> None:
-        if self.zero_point is not None and self.lower_bound <= self.zero_point:
-            raise ValueError(
-                f"Lower bound {self.lower_bound} is less than or equal to the zero point {self.zero_point}. "
-                "Lower bound must be greater than the zero point."
-            )
-
-        for percentile in self.declared_percentiles:
-            if self.zero_point is not None and percentile.value < self.zero_point:
-                raise ValueError(
-                    f"Percentile value {percentile.value} is less than the zero point {self.zero_point}. "
-                    "Determining probability less than zero point is currently not supported."
-                )
-
-    def _check_and_update_repeating_values(
-        self, percentiles: list[Percentile]
-    ) -> list[Percentile]:
-        unique_value_count = Counter(percentile.value for percentile in percentiles)
-        final_percentiles = []
-        for percentile in percentiles:
-            value = percentile.value
-            count = unique_value_count[value]
-            repeated_value = count > 1
-            value_in_bounds = self.lower_bound < value < self.upper_bound
-            value_above_bound = value >= self.upper_bound
-            value_below_bound = value <= self.lower_bound
-            epsilon = 1e-10
-            if not repeated_value:
-                final_percentiles.append(percentile)
-            elif value_in_bounds:
-                greater_epsilon = 1e-6  # TODO: Figure out why normal epsilon doesn't work. Could cause brittle behavior.
-                modification = (1 - percentile.percentile) * greater_epsilon
-                final_percentiles.append(
-                    Percentile(
-                        value=value - modification,
-                        percentile=percentile.percentile,
-                    )
-                )
-            elif value_above_bound:
-                modification = epsilon * percentile.percentile
-                final_percentiles.append(
-                    Percentile(
-                        value=self.upper_bound + modification,
-                        percentile=percentile.percentile,
-                    )
-                )
-            elif value_below_bound:
-                modification = epsilon * (1 - percentile.percentile)
-                final_percentiles.append(
-                    Percentile(
-                        value=self.lower_bound - modification,
-                        percentile=percentile.percentile,
-                    )
-                )
-            else:
-                raise ValueError(
-                    f"Unexpected state: value {value} is repeated {count} times. Bound is {self.lower_bound} and {self.upper_bound}"
-                )
-        return final_percentiles
-
-    def _check_too_far_from_bounds(self, percentiles: list[Percentile]) -> None:
-        max_to_min_range = self.upper_bound - self.lower_bound
-
-        # TODO: Better handle log scaled questions (a fixed wiggle room percentage doesn't work well for them)
-        wiggle_percent = 0.25
-        wiggle_room = max_to_min_range * wiggle_percent
-        upper_bound_plus_wiggle_room = self.upper_bound + wiggle_room
-        lower_bound_minus_wiggle_room = self.lower_bound - wiggle_room
-        percentiles_within_bounds_plus_wiggle_room = [
-            percentile
-            for percentile in percentiles
-            if lower_bound_minus_wiggle_room
-            <= percentile.value
-            <= upper_bound_plus_wiggle_room
-        ]
-        if len(percentiles_within_bounds_plus_wiggle_room) == 0:
-            raise ValueError(
-                f"No declared percentiles are within the range of the question +/- {wiggle_percent * 100}%. "
-                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                f"Percentiles: {percentiles}"
-            )
-
-        max_to_min_range_buffer = max_to_min_range * 2
-        percentiles_far_exceeding_bounds = [
-            percentile
-            for percentile in percentiles
-            if percentile.value < self.lower_bound - max_to_min_range_buffer
-            or percentile.value > self.upper_bound + max_to_min_range_buffer
-        ]
-        if len(percentiles_far_exceeding_bounds) > 0:
-            raise ValueError(
-                "Some declared percentiles are far exceeding the bounds of the question. "
-                f"Lower bound: {self.lower_bound}, upper bound: {self.upper_bound}. "
-                f"Percentiles: {percentiles_far_exceeding_bounds}"
-            )
-
-    def _check_distribution_too_tall(self, cdf: list[Percentile]) -> None:
-        if len(cdf) != self.cdf_size:
-            raise ValueError(
-                f"CDF size is not the same as the declared percentiles. CDF size: {len(cdf)}, declared percentiles: {self.cdf_size}"
-            )
-        cap = NumericDefaults.get_max_pmf_value(len(cdf), include_wiggle_room=False)
-
-        for i in range(len(cdf) - 1):
-            pmf_value = cdf[i + 1].percentile - cdf[i].percentile
-            if pmf_value > cap:
-                raise ValueError(
-                    f"Distribution is too concentrated. The probability mass between "
-                    f"values {cdf[i].value} and {cdf[i + 1].value} is {pmf_value:.4f}, "
-                    f"which exceeds the maximum allowed of {cap:.4f}."
-                )
-
-    def get_cdf(self) -> list[Percentile]:
-        """
-        Turns a list of percentiles into a full distribution (201 points, if numeric, otherwise based on discrete values)
-        between upper and lower bound (taking into account probability assigned above and below the bounds)
-        that is compatible with Metaculus questions.
-
-        cdf stands for 'continuous distribution function'
-
-        At Metaculus CDFs are often represented with 201 points. Each point has:
-        - percentile ("X% of values are below this point". This is the y axis of the cdf graph)
-        - 'value' or 'nominal location' (The real world number that answers the question)
-        - cdf location (a number between 0 and 1 representing where the point is on the cdf x axis, where 0 is range min, and 1 is range max)
-        """
-
-        cdf_size = self.cdf_size or NumericDefaults.DEFAULT_CDF_SIZE
-        continuous_cdf = []
-        cdf_xaxis = []
-        cdf_eval_locations = [i / (cdf_size - 1) for i in range(cdf_size)]
-        for l in cdf_eval_locations:
-            continuous_cdf.append(self._get_cdf_at(l))
-            cdf_xaxis.append(self._cdf_location_to_nominal_location(l))
-
-        if self.standardize_cdf:
-            continuous_cdf = self._standardize_cdf(continuous_cdf)
-
-        percentiles = [
-            Percentile(value=value, percentile=percentile)
-            for value, percentile in zip(cdf_xaxis, continuous_cdf)
-        ]
-        assert len(percentiles) == cdf_size
-
-        validation_distribution = NumericDistribution(
-            declared_percentiles=percentiles,
-            open_upper_bound=self.open_upper_bound,
-            open_lower_bound=self.open_lower_bound,
-            upper_bound=self.upper_bound,
-            lower_bound=self.lower_bound,
-            zero_point=self.zero_point,
-            standardize_cdf=self.standardize_cdf,
-        )
-        NumericDistribution.model_validate(validation_distribution)
-        return percentiles
-
-    @classmethod
-    def _percentile_list_to_dict(
-        cls, percentiles: list[Percentile], multiply_by_100: bool
-    ) -> dict[float, float]:
-        return {
-            (
-                percentile.percentile * 100
-                if multiply_by_100
-                else percentile.percentile
-            ): percentile.value
-            for percentile in percentiles
-        }
-
-    @classmethod
-    def _dict_to_percentile_list(
-        cls, percentile_dict: dict[float, float], divide_by_100: bool
-    ) -> list[Percentile]:
-        return [
-            Percentile(
-                percentile=percentile / 100 if divide_by_100 else percentile,
-                value=value,
-            )
-            for percentile, value in percentile_dict.items()
-        ]
-
-    def _add_explicit_upper_lower_bound_percentiles(
-        self,
-        input_percentiles: list[Percentile],
-    ) -> list[Percentile]:
-        open_upper_bound = self.open_upper_bound
-        open_lower_bound = self.open_lower_bound
-        range_max = self.upper_bound
-        range_min = self.lower_bound
-
-        return_percentiles = self._percentile_list_to_dict(
-            input_percentiles, multiply_by_100=True
-        )
-        percentile_max = max(percentile for percentile in return_percentiles.keys())
-        percentile_min = min(percentile for percentile in return_percentiles.keys())
-        range_size = abs(range_max - range_min)
-        buffer = 1 if range_size > 100 else 0.01 * range_size
-
-        # Adjust any values that are exactly at the bounds
-        for percentile, value in list(return_percentiles.items()):
-            # TODO: Handle this more gracefully for log scaled questions
-            #  (where buffer could be quite a bit on the lower bound side)
-            if not open_lower_bound and value <= range_min + buffer:
-                return_percentiles[percentile] = range_min + buffer
-            if not open_upper_bound and value >= range_max - buffer:
-                return_percentiles[percentile] = range_max - buffer
-
-        # Set cdf values outside range
-        if open_upper_bound:
-            if range_max > return_percentiles[percentile_max]:
-                halfway_between_max_and_100th_percentile = 100 - (
-                    0.5 * (100 - percentile_max)
-                )
-                return_percentiles[halfway_between_max_and_100th_percentile] = range_max
-        else:
-            return_percentiles[100] = range_max
-
-        # Set cdf values outside range
-        if open_lower_bound:
-            if range_min < return_percentiles[percentile_min]:
-                halfway_between_min_and_0th_percentile = 0.5 * percentile_min
-                return_percentiles[halfway_between_min_and_0th_percentile] = range_min
-        else:
-            return_percentiles[0] = range_min
-
-        sorted_return_percentiles = dict(sorted(return_percentiles.items()))
-
-        return_list = self._dict_to_percentile_list(
-            sorted_return_percentiles, divide_by_100=True
-        )
-        return return_list
-
-    def _nominal_location_to_cdf_location(self, nominal_value: float) -> float:
-        """
-        Takes the real world value (like $17k - that would answer the forecasting question)
-        and converts it to a cdf location between 0 and 1 depending on
-        how far it is between the upper and lower bound
-        (it can go over 1 or below 0 if beyond the bounds)
-        """
-        range_max = self.upper_bound
-        range_min = self.lower_bound
-        zero_point = self.zero_point
-
-        if zero_point is not None:
-            # logarithmically scaled question
-            deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-            if nominal_value == zero_point:
-                # If nominal = zero point, then you would take the log of 0. Add a small epsilon to avoid this.
-                nominal_value += 1e-10
-            unscaled_location = (
-                np.log(
-                    (nominal_value - range_min) * (deriv_ratio - 1)
-                    + (range_max - range_min)
-                )
-                - np.log(range_max - range_min)
-            ) / np.log(deriv_ratio)
-        else:
-            # linearly scaled question
-            unscaled_location = (nominal_value - range_min) / (range_max - range_min)
-        return float(unscaled_location)
-
-    def _get_cdf_at(self, cdf_location: float) -> float:
-        """
-        Helper function that takes a cdf location and returns
-        the height (percentile) of the cdf at that location, linearly
-        interpolating between values
-        """
-        bounded_percentiles = self._add_explicit_upper_lower_bound_percentiles(
-            self.declared_percentiles
-        )
-        cdf_location_to_percentile_mapping: list[tuple[float, float]] = []
-        for percentile in bounded_percentiles:
-            height = percentile.percentile
-            location = self._nominal_location_to_cdf_location(percentile.value)
-            cdf_location_to_percentile_mapping.append((location, height))
-        previous = cdf_location_to_percentile_mapping[0]
-        for i in range(1, len(cdf_location_to_percentile_mapping)):
-            current = cdf_location_to_percentile_mapping[i]
-            epsilon = 1e-10
-            if previous[0] - epsilon <= cdf_location <= current[0] + epsilon:
-                result = previous[1] + (current[1] - previous[1]) * (
-                    cdf_location - previous[0]
-                ) / (current[0] - previous[0])
-                if np.isnan(result):
-                    raise ValueError(f"Result is NaN for cdf location {cdf_location}")
-                return result
-            previous = current
-        raise ValueError(f"CDF location Input {cdf_location} cannot be found")
-
-    def _standardize_cdf(self, cdf: list[float] | np.ndarray) -> list[float]:
-        """
-        See documentation: https://metaculus.com/api/#:~:text=CDF%20generation%20details in the
-            "CDF generation details and examples" section
-
-        Takes a cdf and returns a standardized version of it
-
-        - assigns no mass outside of closed bounds (scales accordingly)
-        - assigns at least a minimum amount of mass outside of open bounds
-        - increasing by at least the minimum amount (0.01 / 200 = 0.0005)
-        - caps the maximum growth to 0.2
-
-        Note, thresholds change with different `inbound_outcome_count`s
-        """
-
-        lower_open = self.open_lower_bound
-        upper_open = self.open_upper_bound
-
-        # apply lower bound & enforce boundary values
-        scale_lower_to = 0 if lower_open else cdf[0]
-        scale_upper_to = 1.0 if upper_open else cdf[-1]
-        rescaled_inbound_mass = scale_upper_to - scale_lower_to
-
-        def apply_minimum(F: float, location: float) -> float:
-            # `F` is the height of the cdf at `location` (in range [0, 1])
-            # rescale
-            rescaled_F = (F - scale_lower_to) / rescaled_inbound_mass
-            # offset
-            if lower_open and upper_open:
-                return 0.988 * rescaled_F + 0.01 * location + 0.001
-            elif lower_open:
-                return 0.989 * rescaled_F + 0.01 * location + 0.001
-            elif upper_open:
-                return 0.989 * rescaled_F + 0.01 * location
-            return 0.99 * rescaled_F + 0.01 * location
-
-        for i, value in enumerate(cdf):
-            cdf[i] = apply_minimum(value, i / (len(cdf) - 1))
-
-        # apply upper bound
-        # operate in PMF space
-        pmf = np.diff(cdf, prepend=0, append=1)
-        cap = NumericDefaults.get_max_pmf_value(len(cdf))
-
-        def cap_pmf(scale: float) -> np.ndarray:
-            return np.concatenate(
-                [pmf[:1], np.minimum(cap, scale * pmf[1:-1]), pmf[-1:]]
-            )
-
-        def capped_sum(scale: float) -> float:
-            return float(cap_pmf(scale).sum())
-
-        # find the appropriate scale search space
-        lo = hi = scale = 1.0
-        while capped_sum(hi) < 1.0:
-            hi *= 1.2
-        # hone in on scale value that makes capped sum 1
-        for _ in range(100):
-            scale = 0.5 * (lo + hi)
-            s = capped_sum(scale)
-            if s < 1.0:
-                lo = scale
-            else:
-                hi = scale
-            if s == 1.0 or (hi - lo) < 2e-5:
-                break
-        # apply scale and renormalize
-        pmf = cap_pmf(scale)
-        pmf[1:-1] *= (cdf[-1] - cdf[0]) / pmf[1:-1].sum()
-        # back to CDF space
-        cdf = np.cumsum(pmf)[:-1]
-
-        # round to minimize floating point errors
-        cdf = np.round(cdf, 10)
-        return cdf.tolist()
-
-    def _cdf_location_to_nominal_location(self, cdf_location: float) -> float:
-        range_max = self.upper_bound
-        range_min = self.lower_bound
-        zero_point = self.zero_point
-
-        if zero_point is None:
-            scaled_location = range_min + (range_max - range_min) * cdf_location
-        else:
-            deriv_ratio = (range_max - zero_point) / (range_min - zero_point)
-            scaled_location = range_min + (range_max - range_min) * (
-                deriv_ratio**cdf_location - 1
-            ) / (deriv_ratio - 1)
-        if np.isnan(scaled_location):
-            raise ValueError(f"Scaled location is NaN for cdf location {cdf_location}")
-        return scaled_location
+    return dict(items)
 
 
 async def get_numeric_gpt_prediction(
@@ -1137,7 +909,7 @@ async def get_numeric_gpt_prediction(
     background = question_details["description"]
     fine_print = question_details["fine_print"]
     question_type = question_details["type"]
-    scaling = question_details["scaling"]
+    raw_scaling = question_details["scaling"]
     open_upper_bound = question_details["open_upper_bound"]
     open_lower_bound = question_details["open_lower_bound"]
     unit_of_measure = (
@@ -1145,24 +917,41 @@ async def get_numeric_gpt_prediction(
         if question_details["unit"]
         else "Not stated (please infer this)"
     )
-    upper_bound = scaling["range_max"]
-    lower_bound = scaling["range_min"]
-    zero_point = scaling["zero_point"]
+    upper_bound = raw_scaling["range_max"]
+    lower_bound = raw_scaling["range_min"]
+    zero_point = raw_scaling["zero_point"]
     if question_type == "discrete":
-        outcome_count = question_details["scaling"]["inbound_outcome_count"]
-        cdf_size = outcome_count + 1
+        outcome_count = raw_scaling["inbound_outcome_count"]
     else:
-        cdf_size = 201
+        outcome_count = 200
 
-    # Create messages about the bounds that are passed in the LLM prompt
+    scaling = Scaling(
+        range_min=lower_bound,
+        range_max=upper_bound,
+        zero_point=zero_point,
+        open_lower_bound=open_lower_bound,
+        open_upper_bound=open_upper_bound,
+        inbound_outcome_count=outcome_count,
+    )
+
     if open_upper_bound:
-        upper_bound_message = ""
+        upper_bound_message = (
+            f"The question creator thinks the value is likely not higher than {upper_bound}."
+        )
     else:
-        upper_bound_message = f"The outcome can not be higher than {upper_bound}."
+        upper_bound_message = f"The outcome cannot be higher than {upper_bound}."
     if open_lower_bound:
-        lower_bound_message = ""
+        lower_bound_message = (
+            f"The question creator thinks the value is likely not lower than {lower_bound}."
+        )
     else:
-        lower_bound_message = f"The outcome can not be lower than {lower_bound}."
+        lower_bound_message = f"The outcome cannot be lower than {lower_bound}."
+
+    log_note = " (logarithmic scale)" if zero_point is not None else ""
+    span = upper_bound - lower_bound
+
+    def example_at(fraction: float) -> str:
+        return f"{lower_bound + fraction * span:g}"
 
     summary_report = run_research(title)
 
@@ -1176,28 +965,39 @@ async def get_numeric_gpt_prediction(
         lower_bound_message=lower_bound_message,
         upper_bound_message=upper_bound_message,
         units=unit_of_measure,
+        lower_bound=lower_bound,
+        upper_bound=upper_bound,
+        log_note=log_note,
+        ex_p5=example_at(0.05),
+        ex_p25=example_at(0.25),
+        ex_p50=example_at(0.5),
+        ex_p75=example_at(0.75),
+        ex_p95=example_at(0.95),
     )
 
     async def ask_llm_to_get_cdf(content: str) -> tuple[list[float], str]:
         rationale = await call_llm(content)
-        percentile_values = extract_percentiles_from_response(rationale)
+        percentiles = extract_percentiles_from_response(rationale)
 
-        comment = (
-            f"Extracted Percentile_values: {percentile_values}\n\nGPT's Answer: "
-            f"{rationale}\n\n\n"
-        )
+        sorted_items = sorted(percentiles.items())
+        below, above = _infer_below_above(sorted_items, scaling)
+        in_bounds = {
+            p: v for p, v in sorted_items if lower_bound <= v <= upper_bound
+        }
 
         cdf = generate_continuous_cdf(
-            percentile_values,
-            question_type,
-            open_upper_bound,
-            open_lower_bound,
-            upper_bound,
-            lower_bound,
-            zero_point,
-            cdf_size,
+            in_bounds,
+            scaling,
+            below_lower_bound=below,
+            above_upper_bound=above,
         )
+        cdf = standardize_cdf(cdf, scaling)
 
+        comment = (
+            f"Extracted percentiles: {percentiles}\n"
+            f"Inferred below/above mass: {below:.4f} / {above:.4f}\n\n"
+            f"GPT's Answer: {rationale}\n\n\n"
+        )
         return cdf, comment
 
     cdf_and_comment_pairs = await asyncio.gather(
