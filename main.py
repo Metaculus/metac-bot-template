@@ -35,9 +35,9 @@ dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class SpringTemplateBot2026(ForecastBot):
+class SummerTemplateBot2026(ForecastBot):
     """
-    This is the template bot for Spring 2026 Metaculus AI Tournament.
+    This is the template bot for Summer 2026 Metaculus AI Tournament.
     This is a copy of what is used by Metaculus to run the Metac Bots in our benchmark, provided as a template for new bot makers.
     This template is given as-is, and is use-at-your-own-risk.
     We have covered most test cases in forecasting-tools it may be worth double checking key components locally.
@@ -46,7 +46,7 @@ class SpringTemplateBot2026(ForecastBot):
     Main changes since Fall:
     - Additional prompting has been added to numeric questions to emphasize putting pecentile values in the correct order.
     - Support for conditional and date questions has been added
-    - Note: Spring AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
+    - Note: Summer AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
 
     The main entry point of this bot is `bot.forecast_on_tournament(tournament_id)` in the parent class.
     See the script at the bottom of the file for more details on how to run the bot.
@@ -665,7 +665,7 @@ if __name__ == "__main__":
         "test_questions",
     ], "Invalid run mode"
 
-    template_bot = SpringTemplateBot2026(
+    template_bot = SummerTemplateBot2026(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,

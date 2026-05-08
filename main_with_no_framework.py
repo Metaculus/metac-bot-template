@@ -126,6 +126,7 @@ def post_question_prediction(question_id: int, forecast_payload: dict) -> None:
         json=[
             {
                 "question": question_id,
+                "source": "api",
                 **forecast_payload,
             },
         ],
