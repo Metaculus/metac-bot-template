@@ -6,6 +6,7 @@ import datetime
 import json
 import os
 import re
+import sys
 
 import dotenv
 
@@ -32,7 +33,7 @@ differences in implementation. The actual template bot (e.g. like main.py) has t
 - An LLM now parses the final forecast output (rather than programmatic parsing)
 - Support for nominal bounds was added (i.e. when there are discrete questions and normal upper/lower bounds are not as intuitive)
 - Upper/Lower bounds are mentioned as suggestions (not ignored) when the bounds are open
-- Group questions, conditional questions, and date questions are supported (these types are optional and won't be launched in Spring AIB)
+- Group questions, conditional questions, and date questions are supported (these types are optional and won't be launched in Summer AIB)
 - The research prompt mentions resolution criteria and fine print explicitly
 
 We realize the below code could probably be cleaned up a bit in a few places
@@ -49,7 +50,7 @@ Updates pending for Spring season:
 ######################### CONSTANTS #########################
 # Constants
 SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+USE_EXAMPLE_QUESTIONS = False  # set to True to forecast on the bot-testing-area tournament
 NUM_RUNS_PER_QUESTION = (
     5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 )
@@ -82,27 +83,11 @@ CURRENT_METACULUS_CUP_ID = None # TBD (Use the slug from the Metaculus Cup URL)
 AXC_2025_TOURNAMENT_ID = 32564
 AI_2027_TOURNAMENT_ID = "ai-2027"
 
-TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
+# Bot Testing Area - contains all question types and is the recommended target for test runs.
+# https://www.metaculus.com/tournament/bot-testing-area/
+BOT_TESTING_AREA_ID = "bot-testing-area"
 
-# The example questions can be used for testing your bot. (note that question and post id are not always the same)
-EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (
-        578,
-        578,
-    ),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
-    (
-        14333,
-        14333,
-    ),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    (
-        22427,
-        22427,
-    ),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
-    (
-        38195,
-        38880,
-    ),  # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
-]
+TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
 
 
 ######################### HELPER FUNCTIONS #########################
@@ -142,6 +127,7 @@ def post_question_prediction(question_id: int, forecast_payload: dict) -> None:
         json=[
             {
                 "question": question_id,
+                "source": "api",
                 **forecast_payload,
             },
         ],
@@ -215,8 +201,10 @@ def list_posts_from_tournament(
     return data
 
 
-def get_open_question_ids_from_tournament() -> list[tuple[int, int]]:
-    posts = list_posts_from_tournament()
+def get_open_question_ids_from_tournament(
+    tournament_id: int | str = TOURNAMENT_ID,
+) -> list[tuple[int, int]]:
+    posts = list_posts_from_tournament(tournament_id)
 
     post_dict = dict()
     for post in posts["results"]:
@@ -1498,6 +1486,7 @@ async def forecast_questions(
     submit_prediction: bool,
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
+    tournament_url: str | None = None,
 ) -> None:
     forecast_tasks = [
         forecast_individual_question(
@@ -1513,31 +1502,140 @@ async def forecast_questions(
     print("\n", "#" * 100, "\nForecast Summaries\n", "#" * 100)
 
     errors = []
+    submitted_urls: list[str] = []
+    skipped_urls: list[str] = []
     for question_id_post_id, forecast_summary in zip(
         open_question_id_post_id, forecast_summaries
     ):
         question_id, post_id = question_id_post_id
+        question_url = f"https://www.metaculus.com/questions/{post_id}/"
         if isinstance(forecast_summary, Exception):
             print(
-                f"-----------------------------------------------\nPost {post_id} Question {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: https://www.metaculus.com/questions/{post_id}/\n"
+                f"-----------------------------------------------\nPost {post_id} Question {question_id}:\nError: {forecast_summary.__class__.__name__} {forecast_summary}\nURL: {question_url}\n"
             )
             errors.append(forecast_summary)
         else:
             print(forecast_summary)
+            if "Posted: Forecast was posted to Metaculus." in forecast_summary:
+                submitted_urls.append(question_url)
+            elif "Skipped: Forecast already made" in forecast_summary:
+                skipped_urls.append(question_url)
+
+    _print_no_framework_summary_banner(
+        submitted_urls=submitted_urls,
+        skipped_urls=skipped_urls,
+        errors=errors,
+        will_publish=submit_prediction,
+        tournament_url=tournament_url,
+    )
 
     if errors:
-        print("-----------------------------------------------\nErrors:\n")
-        error_message = f"Errors were encountered: {errors}"
-        print(error_message)
-        raise RuntimeError(error_message)
+        # Re-raise so CI surfaces the failure, but only after the banner has printed.
+        raise RuntimeError(f"Errors were encountered: {errors}")
+
+
+# Inline helpers kept here on purpose: this file is meant to be a single-file
+# reference implementation that can be dissected without chasing imports.
+_PLACEHOLDER_ENV_VALUES = {"1234567890", "REPLACE_ME", "your-token-here", "your-api-key-here"}
+
+
+def _is_real_env(name: str) -> bool:
+    val = os.getenv(name)
+    return bool(val and val.strip() and val.strip() not in _PLACEHOLDER_ENV_VALUES)
+
+
+def check_environment(strict: bool = True) -> None:
+    """Surface missing/placeholder keys before we crash inside requests/openai."""
+    problems: list[str] = []
+    if not _is_real_env("METACULUS_TOKEN"):
+        problems.append(
+            "METACULUS_TOKEN missing/placeholder. "
+            "Get one at https://www.metaculus.com/futureeval/participate/"
+        )
+    if not _is_real_env("OPENAI_API_KEY"):
+        problems.append(
+            "OPENAI_API_KEY missing/placeholder. This file calls the OpenAI API "
+            "directly; either set the key, or use main.py instead."
+        )
+
+    if not any(_is_real_env(k) for k in ("PERPLEXITY_API_KEY", "ASKNEWS_SECRET", "EXA_API_KEY")):
+        print(
+            "⚠️  No search-provider key (PERPLEXITY/ASKNEWS/EXA). Online "
+            "research will fail.\n"
+        )
+
+    if problems:
+        print("❌  Setup problems:")
+        for p in problems:
+            print(f"    • {p}")
+        if strict:
+            sys.exit(1)
+
+
+def _print_no_framework_summary_banner(
+    submitted_urls: list[str],
+    skipped_urls: list[str],
+    errors: list,
+    will_publish: bool,
+    tournament_url: str | None = None,
+) -> None:
+    banner = "=" * 80
+    submitted, skipped, failed = len(submitted_urls), len(skipped_urls), len(errors)
+
+    print()
+    print(banner)
+    if submitted + skipped + failed == 0:
+        print("ℹ️   No questions processed (no live tournament questions matched).")
+        print(banner)
+        print()
+        return
+
+    if submitted and not failed:
+        verb = "submitted" if will_publish else "produced (dry run)"
+        print(f"🎉  Bot {verb} {submitted} forecast(s).")
+    elif submitted and failed:
+        print(f"⚠️   Partial — {submitted} succeeded, {failed} failed.")
+    elif skipped and not submitted and not failed:
+        print(f"ℹ️   Nothing new — skipped {skipped} already-forecasted question(s).")
+    else:
+        print(f"❌  All {failed} attempt(s) failed.")
+
+    if submitted:
+        print()
+        for url in submitted_urls:
+            print(f"  ✅ {url}")
+        if will_publish and tournament_url:
+            print(f"\n  Tournament: {tournament_url}")
+
+    if failed:
+        print()
+        for exc in errors:
+            msg = str(exc)
+            if len(msg) > 200:
+                msg = msg[:200] + "..."
+            print(f"  ❌ {type(exc).__name__}: {msg}")
+
+    print(banner)
+    print()
 
 
 ######################## FINAL RUN #########################
 if __name__ == "__main__":
-    if USE_EXAMPLE_QUESTIONS:
-        open_question_id_post_id = EXAMPLE_QUESTIONS
-    else:
-        open_question_id_post_id = get_open_question_ids_from_tournament()
+    check_environment(strict=True)
+
+    active_tournament_id = BOT_TESTING_AREA_ID if USE_EXAMPLE_QUESTIONS else TOURNAMENT_ID
+    # Banner footer link. Constructable from string slugs (e.g. "bot-testing-area");
+    # left blank for numeric tournament IDs since we don't have the slug.
+    active_tournament_url = (
+        f"https://www.metaculus.com/tournament/{active_tournament_id}/"
+        if isinstance(active_tournament_id, str)
+        else None
+    )
+
+    publish = "publish=yes" if SUBMIT_PREDICTION else "publish=no (dry run)"
+    print(f"🤖  no-framework bot, tournament={active_tournament_id}, {publish}\n")
+
+    open_question_id_post_id = get_open_question_ids_from_tournament(active_tournament_id)
 
     asyncio.run(
         forecast_questions(
@@ -1545,5 +1643,6 @@ if __name__ == "__main__":
             SUBMIT_PREDICTION,
             NUM_RUNS_PER_QUESTION,
             SKIP_PREVIOUSLY_FORECASTED_QUESTIONS,
+            tournament_url=active_tournament_url,
         )
     )
