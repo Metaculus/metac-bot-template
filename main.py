@@ -1,7 +1,9 @@
 import argparse
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 import dotenv
 from typing import Literal
 
@@ -30,6 +32,8 @@ from forecasting_tools import (
     clean_indents,
     structure_output,
 )
+
+from scripts.export_template_runs import export_from_forecast_report
 
 dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
@@ -725,4 +729,15 @@ if __name__ == "__main__":
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(questions, return_exceptions=True)
         )
+    output_dir = os.environ.get("PSYCHOHISTORY_OUTPUT_DIR", "").strip()
+    if output_dir:
+        out_path = Path(output_dir)
+        exported = 0
+        for report in forecast_reports:
+            if isinstance(report, Exception):
+                continue
+            if export_from_forecast_report(report, out_path) is not None:
+                exported += 1
+        logger.info("Exported %s forecast rows to %s", exported, out_path)
+
     template_bot.log_report_summary(forecast_reports)

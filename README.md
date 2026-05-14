@@ -169,6 +169,18 @@ These tags are likely useful for extracting the pieces that you need for your pi
 
 ## Integrations
 
+### Psychohistory Harness (optional)
+
+Set `PSYCHOHISTORY_OUTPUT_DIR` in your `.env` to automatically export forecast
+runs as JSONL for ingestion into the psychohistory memory harness:
+
+```bash
+PSYCHOHISTORY_OUTPUT_DIR=/path/to/psychohistory/data/template-runs
+```
+
+Runs are written to `$PSYCHOHISTORY_OUTPUT_DIR/runs-YYYY-MM-DD.jsonl`.
+See `docs/psychohistory-bootstrap.md` for the full sync flow.
+
 The **[integrations/](integrations/)** folder contains example scripts that integrate third-party tools with the bot template. 
 
 See the [integrations README](integrations/README.md) for available integrations and how to add your own.
