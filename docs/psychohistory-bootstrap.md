@@ -54,7 +54,12 @@ This writes `EpisodicRecord`s into `JsonlMemoryStore` idempotently.
 
 Run sync again after outcomes appear in exported rows (when `resolved_outcome` is present), or enrich outcome fields before sync. The sync script calls `resolve_market()` and writes Brier scores idempotently.
 
-## 6) GitHub Actions (recommended)
+## 6) Known limitations
+- Current psychohistory harness runner path is binary-first (`final_p_yes` scalar).
+- Summer/FutureEval includes numeric, discrete, and multiple-choice question types.
+- For launch, run binary-capable flows first (e.g., bot testing area / MiniBench subsets), then extend posting adapters for non-binary output shapes.
+
+## 7) GitHub Actions (recommended)
 - Fork this repo to your account.
 - Add secrets in GitHub Actions settings:
   - `METACULUS_TOKEN`
