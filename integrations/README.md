@@ -22,7 +22,7 @@ The output is an exportable dataset you can use to benchmark LLMs, or train on t
 
 Data generation pipelines are fully customizable: including date ranges, question format (e.g. binary, multiple choice), and custom instructions to shape the output. 
 
-The Metaculus community gets **$100 in free credits** with code `METACULUS100`. Create an account at [lightningrod.ai](https://lightningrod.ai/) and explore the [SDK examples](https://github.com/lightning-rod-labs/lightningrod-python-sdk/tree/main/notebooks) to get started.
+Create an account at [lightningrod.ai](https://lightningrod.ai/) and explore the [SDK examples](https://github.com/lightning-rod-labs/lightningrod-python-sdk/tree/main/notebooks) to get started. Check the LightningRod site or reach out to them for any promotions available to the Metaculus community.
 
 1. Get a `LIGHTNINGROD_API_KEY` at [dashboard.lightningrod.ai](https://dashboard.lightningrod.ai)
 2. Add it to your `.env` file

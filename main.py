@@ -2,9 +2,19 @@ import argparse
 import asyncio
 import logging
 from datetime import datetime, timezone
-import dotenv
 from typing import Literal
 
+import dotenv
+
+# Runtime helpers (env validation, banners, dependency-warning suppression).
+from bot_helpers import (
+    check_environment,
+    print_run_summary_banner,
+    print_startup_banner,
+    silence_noisy_dependencies,
+)
+
+silence_noisy_dependencies()
 
 from forecasting_tools import (
     AskNewsSearcher,
@@ -35,9 +45,9 @@ dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class SpringTemplateBot2026(ForecastBot):
+class SummerTemplateBot2026(ForecastBot):
     """
-    This is the template bot for Spring 2026 Metaculus AI Tournament.
+    This is the template bot for Summer 2026 Metaculus AI Tournament.
     This is a copy of what is used by Metaculus to run the Metac Bots in our benchmark, provided as a template for new bot makers.
     This template is given as-is, and is use-at-your-own-risk.
     We have covered most test cases in forecasting-tools it may be worth double checking key components locally.
@@ -46,7 +56,7 @@ class SpringTemplateBot2026(ForecastBot):
     Main changes since Fall:
     - Additional prompting has been added to numeric questions to emphasize putting pecentile values in the correct order.
     - Support for conditional and date questions has been added
-    - Note: Spring AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
+    - Note: Summer AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
 
     The main entry point of this bot is `bot.forecast_on_tournament(tournament_id)` in the parent class.
     See the script at the bottom of the file for more details on how to run the bot.
@@ -642,40 +652,35 @@ if __name__ == "__main__":
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    # Suppress LiteLLM logging
-    litellm_logger = logging.getLogger("LiteLLM")
-    litellm_logger.setLevel(logging.WARNING)
-    litellm_logger.propagate = False
-
-    parser = argparse.ArgumentParser(
-        description="Run the TemplateBot forecasting system"
-    )
+    parser = argparse.ArgumentParser(description="Run the template forecasting bot")
     parser.add_argument(
         "--mode",
         type=str,
         choices=["tournament", "metaculus_cup", "test_questions"],
         default="tournament",
-        help="Specify the run mode (default: tournament)",
+        help="What to forecast on (default: tournament)",
     )
     args = parser.parse_args()
     run_mode: Literal["tournament", "metaculus_cup", "test_questions"] = args.mode
-    assert run_mode in [
-        "tournament",
-        "metaculus_cup",
-        "test_questions",
-    ], "Invalid run mode"
 
-    template_bot = SpringTemplateBot2026(
+    check_environment(strict=True)
+    publish_to_metaculus = True
+    print_startup_banner(run_mode, will_publish=publish_to_metaculus)
+
+    # Configure the bot. The `llms=` block below is commented out to use
+    # whichever default models forecasting-tools picks based on your env vars;
+    # uncomment and edit to pin specific models.
+    template_bot = SummerTemplateBot2026(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
-        publish_reports_to_metaculus=True,
+        publish_reports_to_metaculus=publish_to_metaculus,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
         extra_metadata_in_explanation=True,
-        # llms={  # choose your model names or GeneralLlm llms here, otherwise defaults will be chosen for you
+        # llms={
         #     "default": GeneralLlm(
-        #         model="openrouter/openai/gpt-4o", # "anthropic/claude-sonnet-4-20250514", etc (see docs for litellm)
+        #         model="openrouter/openai/gpt-4o",
         #         temperature=0.3,
         #         timeout=40,
         #         allowed_tries=2,
@@ -686,9 +691,20 @@ if __name__ == "__main__":
         # },
     )
 
+    # Per-mode tournament URL shown in the summary banner footer. These
+    # piggyback on the forecasting_tools SDK constants and need updating
+    # whenever those rotate seasons.
+    TOURNAMENT_URLS = {
+        "tournament": "https://www.metaculus.com/tournament/summer-futureeval-2026/",
+        "metaculus_cup": "https://www.metaculus.com/tournament/metaculus-cup-summer-2025/",
+        "test_questions": "https://www.metaculus.com/tournament/bot-testing-area/",
+    }
+
+    # Dispatch on mode. Each branch produces a list of ForecastReport (or
+    # exceptions, since return_exceptions=True) which then flows into the
+    # summary printers below.
     client = MetaculusClient()
     if run_mode == "tournament":
-        # You may want to change this to the specific tournament ID you want to forecast on
         seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 client.CURRENT_AI_COMPETITION_ID, return_exceptions=True
@@ -701,8 +717,9 @@ if __name__ == "__main__":
         )
         forecast_reports = seasonal_tournament_reports + minibench_reports
     elif run_mode == "metaculus_cup":
-        # The Metaculus cup is a good way to test the bot's performance on regularly open questions. You can also use AXC_2025_TOURNAMENT_ID = 32564 or AI_2027_TOURNAMENT_ID = "ai-2027"
-        # The Metaculus cup may not be initialized near the beginning of a season (i.e. January, May, September)
+        # The Metaculus Cup may be uninitialized near the start of a season
+        # (Jan/May/Sep). AXC_2025_TOURNAMENT_ID = 32564 and
+        # AI_2027_TOURNAMENT_ID = "ai-2027" are also valid targets here.
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
@@ -710,19 +727,19 @@ if __name__ == "__main__":
             )
         )
     elif run_mode == "test_questions":
-        # Example questions are a good way to test the bot's performance on a single question
-        EXAMPLE_QUESTIONS = [
-            "https://www.metaculus.com/questions/578/human-extinction-by-2100/",  # Human Extinction - Binary
-            "https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/",  # Age of Oldest Human - Numeric
-            "https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/",  # Number of New Leading AI Labs - Multiple Choice
-            "https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/",  # Number of US Labor Strikes Due to AI in 2029 - Discrete
-        ]
+        # The bot-testing-area tournament contains all question types and is
+        # the recommended target for smoke-testing your bot.
+        # https://www.metaculus.com/tournament/bot-testing-area/
         template_bot.skip_previously_forecasted_questions = False
-        questions = [
-            client.get_question_by_url(question_url)
-            for question_url in EXAMPLE_QUESTIONS
-        ]
         forecast_reports = asyncio.run(
-            template_bot.forecast_questions(questions, return_exceptions=True)
+            template_bot.forecast_on_tournament(
+                "bot-testing-area", return_exceptions=True
+            )
         )
+
     template_bot.log_report_summary(forecast_reports)
+    print_run_summary_banner(
+        forecast_reports,
+        will_publish=publish_to_metaculus,
+        tournament_url=TOURNAMENT_URLS.get(run_mode),
+    )
