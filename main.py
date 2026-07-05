@@ -536,7 +536,7 @@ if __name__ == "__main__":
 
     research_reports_per_question = _env_int("BOT_RESEARCH_REPORTS_PER_QUESTION", 1)
     predictions_per_research_report = _env_int(
-        "BOT_PREDICTIONS_PER_RESEARCH_REPORT", 3
+        "BOT_PREDICTIONS_PER_RESEARCH_REPORT", 1
     )
     if research_reports_per_question <= 0:
         raise SystemExit("BOT_RESEARCH_REPORTS_PER_QUESTION must be >= 1")

@@ -6,7 +6,11 @@ from bot.search_telemetry import (
     reset_search_provider_telemetry,
     snapshot_search_provider_telemetry,
 )
-from bot.tavily_searcher import TavilySearcher
+from bot.tavily_searcher import (
+    TavilySearcher,
+    TavilySearchResult,
+    TavilySmartSearcher,
+)
 
 
 class _FakeResponse:
@@ -36,7 +40,9 @@ class _FakeSession:
         self._response = response
         self.post_calls: list[tuple[str, dict, dict]] = []
 
-    def post(self, url: str, *, json: dict, headers: dict):  # noqa: A002 - matches aiohttp signature
+    def post(
+        self, url: str, *, json: dict, headers: dict
+    ):  # noqa: A002 - matches aiohttp signature
         self.post_calls.append((url, json, headers))
         return self._response
 
@@ -149,3 +155,99 @@ class TestTavilySearcher(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(telemetry["tavily"]["failures"], 1)
         self.assertEqual(telemetry["tavily"]["estimated_credits"], 2)
         self.assertEqual(telemetry["tavily"]["advanced_requests"], 1)
+
+
+class _FakeWebPageParser:
+    instances = []
+
+    def __init__(self, *, limits, user_agent=None) -> None:
+        self.limits = limits
+        self.user_agent = user_agent
+        self.urls = []
+        self.closed = False
+        _FakeWebPageParser.instances.append(self)
+
+    async def get_clean_text(self, url: str) -> str:
+        self.urls.append(url)
+        return f"Extracted article body for {url}. " * 5
+
+    async def close(self) -> None:
+        self.closed = True
+
+
+def _smart_searcher_for_extract(
+    *,
+    enabled: bool = True,
+    min_chars: int = 50,
+    max_urls: int = 1,
+) -> TavilySmartSearcher:
+    searcher = object.__new__(TavilySmartSearcher)
+    searcher._extract_missing_content_enabled = enabled
+    searcher._extract_min_content_chars = min_chars
+    searcher._extract_max_urls = max_urls
+    searcher._extract_timeout_seconds = 1
+    searcher._per_result_char_budget = 200
+    return searcher
+
+
+class TestTavilySearchToExtract(unittest.IsolatedAsyncioTestCase):
+    async def test_augments_only_limited_thin_results(self) -> None:
+        _FakeWebPageParser.instances.clear()
+        results = [
+            TavilySearchResult(
+                query="q",
+                title="thin",
+                url="https://example.com/thin",
+                content="short",
+                raw_content=None,
+                score=0.9,
+            ),
+            TavilySearchResult(
+                query="q",
+                title="enough",
+                url="https://example.com/enough",
+                content="x" * 100,
+                raw_content=None,
+                score=0.8,
+            ),
+            TavilySearchResult(
+                query="q",
+                title="second thin",
+                url="https://example.com/second-thin",
+                content="small",
+                raw_content=None,
+                score=0.7,
+            ),
+        ]
+
+        with patch("local_web_crawl.PlaywrightWebPageParser", _FakeWebPageParser):
+            updated = await _smart_searcher_for_extract(
+                max_urls=1
+            )._extract_missing_content(results)
+
+        self.assertEqual(len(_FakeWebPageParser.instances), 1)
+        parser = _FakeWebPageParser.instances[0]
+        self.assertEqual(parser.urls, ["https://example.com/thin"])
+        self.assertTrue(parser.closed)
+        self.assertIn("Extracted article body", updated[0].raw_content or "")
+        self.assertIsNone(updated[1].raw_content)
+        self.assertIsNone(updated[2].raw_content)
+
+    async def test_returns_original_results_when_disabled(self) -> None:
+        results = [
+            TavilySearchResult(
+                query="q",
+                title="thin",
+                url="https://example.com/thin",
+                content="short",
+                raw_content=None,
+                score=0.9,
+            )
+        ]
+
+        with patch("local_web_crawl.PlaywrightWebPageParser", _FakeWebPageParser):
+            updated = await _smart_searcher_for_extract(
+                enabled=False
+            )._extract_missing_content(results)
+
+        self.assertIs(updated, results)

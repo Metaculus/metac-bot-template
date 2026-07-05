@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 import aiohttp
@@ -136,6 +136,10 @@ class TavilySmartSearcher:
         per_result_char_budget: int = 1200,
         total_context_char_budget: int = 12000,
         timeout_seconds: float = 30,
+        extract_missing_content: bool = False,
+        extract_min_content_chars: int = 500,
+        extract_max_urls: int = 2,
+        extract_timeout_seconds: float = 20,
     ) -> None:
         if temperature is not None and not (0 <= temperature <= 1):
             raise ValueError("temperature must be between 0 and 1")
@@ -143,6 +147,10 @@ class TavilySmartSearcher:
         self._num_sites_per_search = max(1, int(num_sites_per_search))
         self._per_result_char_budget = max(200, int(per_result_char_budget))
         self._total_context_char_budget = max(1000, int(total_context_char_budget))
+        self._extract_missing_content_enabled = bool(extract_missing_content)
+        self._extract_min_content_chars = max(0, int(extract_min_content_chars))
+        self._extract_max_urls = max(0, int(extract_max_urls))
+        self._extract_timeout_seconds = max(1, int(extract_timeout_seconds))
 
         self._llm = (
             model
@@ -164,6 +172,7 @@ class TavilySmartSearcher:
 
         search_terms = await self._come_up_with_search_queries(prompt)
         results = await self._search(search_terms)
+        results = await self._extract_missing_content(results)
         logger.info(
             "TavilySmartSearcher completed searches: searches=%s deduped_results=%s",
             len(search_terms),
@@ -213,6 +222,94 @@ class TavilySmartSearcher:
             seen.add(url)
             deduped.append(item)
         return deduped
+
+    async def _extract_missing_content(
+        self, results: list[TavilySearchResult]
+    ) -> list[TavilySearchResult]:
+        if (
+            not self._extract_missing_content_enabled
+            or self._extract_max_urls <= 0
+            or self._extract_min_content_chars <= 0
+            or not results
+        ):
+            return results
+
+        candidates: list[tuple[int, TavilySearchResult]] = []
+        for idx, item in enumerate(results):
+            url = (item.url or "").strip()
+            if not (url.startswith("http://") or url.startswith("https://")):
+                continue
+            body = (item.raw_content or item.content or "").strip()
+            if len(body) >= self._extract_min_content_chars:
+                continue
+            candidates.append((idx, item))
+            if len(candidates) >= self._extract_max_urls:
+                break
+
+        if not candidates:
+            return results
+
+        try:
+            from local_web_crawl import LocalCrawlLimits, PlaywrightWebPageParser
+        except Exception as e:
+            logger.info("Tavily Search-to-Extract unavailable: %s", e)
+            return results
+
+        per_url_budget = max(
+            self._per_result_char_budget, self._extract_min_content_chars
+        )
+        limits = LocalCrawlLimits(
+            max_urls=len(candidates),
+            max_concurrency=min(2, len(candidates)),
+            navigation_timeout_seconds=self._extract_timeout_seconds,
+            network_idle_timeout_seconds=max(
+                1, min(5, self._extract_timeout_seconds)
+            ),
+            total_char_budget=per_url_budget * len(candidates),
+            per_url_char_budget=per_url_budget,
+        )
+        user_agent = os.getenv("BOT_LOCAL_CRAWL_USER_AGENT", "").strip() or None
+        parser = PlaywrightWebPageParser(limits=limits, user_agent=user_agent)
+
+        async def fetch_one(
+            idx: int, item: TavilySearchResult
+        ) -> tuple[int, str | None]:
+            url = (item.url or "").strip()
+            try:
+                return idx, await parser.get_clean_text(url)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.info("Tavily Search-to-Extract failed for %s: %s", url, e)
+                return idx, None
+
+        try:
+            fetched = await asyncio.gather(
+                *[fetch_one(idx, item) for idx, item in candidates]
+            )
+        finally:
+            await parser.close()
+
+        updated = list(results)
+        extracted_count = 0
+        for idx, extracted in fetched:
+            extracted = (extracted or "").strip()
+            if not extracted:
+                continue
+            existing = (updated[idx].raw_content or updated[idx].content or "").strip()
+            if len(extracted) <= len(existing):
+                continue
+            updated[idx] = replace(updated[idx], raw_content=extracted)
+            extracted_count += 1
+
+        if extracted_count:
+            logger.info(
+                "Tavily Search-to-Extract augmented %s/%s thin results",
+                extracted_count,
+                len(candidates),
+            )
+
+        return updated
 
     async def _compile_report(
         self, results: list[TavilySearchResult], original_instructions: str

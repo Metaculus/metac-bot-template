@@ -105,6 +105,17 @@ _FORECAST_PROBABILITY_PERCENT_RE = re.compile(
 )
 
 
+def _tavily_extract_options() -> dict[str, Any]:
+    return {
+        "extract_missing_content": _env_bool("TAVILY_EXTRACT_MISSING_CONTENT", True),
+        "extract_min_content_chars": _env_int("TAVILY_EXTRACT_MIN_CONTENT_CHARS", 500),
+        "extract_max_urls": _env_int("TAVILY_EXTRACT_MAX_URLS", 2),
+        "extract_timeout_seconds": _env_float(
+            "TAVILY_EXTRACT_TIMEOUT_SECONDS", 20.0
+        ),
+    }
+
+
 class AzureResponsesLlm:
     """Small OpenAI-compatible Azure Responses API wrapper for forecast calls."""
 
@@ -3430,6 +3441,7 @@ class MetaculusBot(
                             time_range=tavily_time_range,
                             include_raw_content=tavily_include_raw,
                             timeout_seconds=tavily_timeout,
+                            **_tavily_extract_options(),
                         )
                         try:
                             research = await searcher.invoke(prompt)
@@ -3715,6 +3727,7 @@ class MetaculusBot(
                                 time_range=tavily_time_range,
                                 include_raw_content=tavily_include_raw,
                                 timeout_seconds=tavily_timeout,
+                                **_tavily_extract_options(),
                             ).invoke(prompt)
                         except Exception as e:
                             logger.warning(
@@ -3863,6 +3876,7 @@ class MetaculusBot(
                                         time_range=tavily_time_range,
                                         include_raw_content=tavily_include_raw,
                                         timeout_seconds=tavily_timeout,
+                                        **_tavily_extract_options(),
                                     ).invoke(prompt)
                                     self._tavily_searcher_consecutive_failures = 0
                                 except Exception as e:

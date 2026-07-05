@@ -190,6 +190,10 @@ def research_cache_options_from_env() -> dict[str, Any]:
         "TAVILY_TOPIC",
         "TAVILY_TIME_RANGE",
         "TAVILY_INCLUDE_RAW_CONTENT",
+        "TAVILY_EXTRACT_MISSING_CONTENT",
+        "TAVILY_EXTRACT_MIN_CONTENT_CHARS",
+        "TAVILY_EXTRACT_MAX_URLS",
+        "TAVILY_EXTRACT_TIMEOUT_SECONDS",
         "BOT_OFFICIAL_TOTAL_CHAR_BUDGET",
     ]
     return {name: os.getenv(name, "") for name in names}

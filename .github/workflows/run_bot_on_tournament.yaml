@@ -158,6 +158,10 @@ jobs:
           TAVILY_TIME_RANGE: ${{ vars.TAVILY_TIME_RANGE }}
           TAVILY_INCLUDE_RAW_CONTENT: ${{ vars.TAVILY_INCLUDE_RAW_CONTENT || 'false' }}
           TAVILY_TIMEOUT_SECONDS: ${{ vars.TAVILY_TIMEOUT_SECONDS || '30' }}
+          TAVILY_EXTRACT_MISSING_CONTENT: ${{ vars.TAVILY_EXTRACT_MISSING_CONTENT || 'true' }}
+          TAVILY_EXTRACT_MIN_CONTENT_CHARS: ${{ vars.TAVILY_EXTRACT_MIN_CONTENT_CHARS || '500' }}
+          TAVILY_EXTRACT_MAX_URLS: ${{ vars.TAVILY_EXTRACT_MAX_URLS || '2' }}
+          TAVILY_EXTRACT_TIMEOUT_SECONDS: ${{ vars.TAVILY_EXTRACT_TIMEOUT_SECONDS || '20' }}
           EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
@@ -188,6 +192,8 @@ jobs:
           BOT_CHEAP_REASONING_EFFORT: ${{ vars.BOT_CHEAP_REASONING_EFFORT }}
           BOT_HIGH_VALUE_REASONING_EFFORT: ${{ vars.BOT_HIGH_VALUE_REASONING_EFFORT }}
           BOT_HIGH_VALUE_FORECAST_MODE: ${{ vars.BOT_HIGH_VALUE_FORECAST_MODE }}
+          BOT_RESEARCH_REPORTS_PER_QUESTION: ${{ vars.BOT_RESEARCH_REPORTS_PER_QUESTION || '1' }}
+          BOT_PREDICTIONS_PER_RESEARCH_REPORT: ${{ vars.BOT_PREDICTIONS_PER_RESEARCH_REPORT || '1' }}
           # KIconnect TLS:
           # Prefer fixing the server certificate chain (fullchain / intermediate CA).
           # If you still see SSL/certificate errors, set SSL_VERIFY to a CA bundle path
