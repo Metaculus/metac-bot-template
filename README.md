@@ -21,13 +21,13 @@ If you run into trouble, reach out to `ben [at] metaculus [.com]`
 ## Quick start -> Fork and use Github Actions
 The easiest way to use this repo is to fork it, paste in two API keys, and click "Run workflow". After that, the bot will keep forecasting on new questions automatically every 20 minutes — no local setup needed.
 
-1) **Fork the repository** — go to the [repository](https://github.com/Metaculus/metac-bot-template) and click **Fork** in the top right.
-2) **Add your two API keys as repository secrets** — in your fork, go to `Settings → Secrets and variables → Actions → New repository secret`. Add these two (names must match exactly, all caps):
+1) **Fork the repository**: go to the [repository](https://github.com/Metaculus/metac-bot-template) and click **Fork** in the top right.
+2) **Add your two API keys as repository secrets**: in your fork, go to `Settings → Secrets and variables → Actions → New repository secret`. Add these two (names must match exactly, all caps):
    - **`METACULUS_TOKEN`** — create one at https://www.metaculus.com/futureeval/participate/ (see the [resources page](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#creating-your-bot-account-and-metaculus-token) if you get stuck).
    - **`OPENROUTER_API_KEY`** — get free credits via [this form](https://forms.gle/aQdYMq9Pisrf1v7d8), or make your own key on [OpenRouter](https://openrouter.ai/). You can also use `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `ASKNEWS_SECRET`, etc. — these all work out of the box if you set them.
-3) **Enable Actions** — click the `Actions` tab, then click `I understand my workflows, go ahead and enable them`.
-4) **Run the test workflow to confirm everything works** — go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), check your bot's profile on Metaculus to confirm the forecasts landed.
-5) **You're done!** The `Forecast on new AI tournament questions` workflow is already enabled and will run every 20 minutes, picking up any new tournament questions and skipping ones it has already forecast on.
+3) **Enable Actions**: click the `Actions` tab, then click `I understand my workflows, go ahead and enable them`.
+4) **Run the test workflow to confirm everything works**: go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), check your bot's profile on Metaculus to confirm the forecasts landed.
+5) **You're done! (and participation form)**: The `Forecast on new AI tournament questions` workflow is already enabled and will run every 20 minutes, picking up any new tournament questions and skipping ones it has already forecast on. Before you start submitting forecasts, all participants are required to fill out the first section of our [participation](https://forms.gle/aQdYMq9Pisrf1v7d8) form. There are only 3 required questions, so it should be pretty quick. This form is used to help us learn about the demographics and motivations of our community in FutureEval, amplify individual projects/research, and also to collect applications for LLM credits.
 
 To pause your bot, go to `Actions → Forecast on new AI tournament questions → ... (top right) → Disable workflow`.
 
