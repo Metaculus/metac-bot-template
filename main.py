@@ -696,7 +696,7 @@ if __name__ == "__main__":
     # whenever those rotate seasons.
     TOURNAMENT_URLS = {
         "tournament": "https://www.metaculus.com/tournament/summer-futureeval-2026/",
-        "metaculus_cup": "https://www.metaculus.com/tournament/metaculus-cup-summer-2025/",
+        "metaculus_cup": "https://www.metaculus.com/tournament/metaculus-cup-fall-2026/",
         "test_questions": "https://www.metaculus.com/tournament/bot-testing-area/",
     }
 
@@ -718,8 +718,9 @@ if __name__ == "__main__":
         forecast_reports = seasonal_tournament_reports + minibench_reports
     elif run_mode == "metaculus_cup":
         # The Metaculus Cup may be uninitialized near the start of a season
-        # (Jan/May/Sep). AXC_2025_TOURNAMENT_ID = 32564 and
-        # AI_2027_TOURNAMENT_ID = "ai-2027" are also valid targets here.
+        # (Jan/May/Sep). MetaculusClient.ACX_2025_TOURNAMENT = 32564 and
+        # MetaculusClient.AI_2027_TOURNAMENT_ID = "ai-2027" are also valid
+        # targets here.
         template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(

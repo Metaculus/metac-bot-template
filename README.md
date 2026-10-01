@@ -7,6 +7,8 @@ In this project are 2 files:
 - **main.py**: Our recommended template option that uses the [forecasting-tools](https://github.com/Metaculus/forecasting-tools) package to handle a lot of stuff in the background for you (such as API calls). We will update the package, thus allowing you to gain new features with minimal changes to your code.
 - **main_with_no_framework.py**: A copy of main.py but implemented with minimal dependencies. Useful if you want a more custom approach.
 
+> **Want a stronger starting point than this template?** This repo is deliberately simple. Several community bots that have out-performed it in past tournaments are open source, and you can fork one of those instead. See the **[Open Source Bots](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots)** section of the resources page — each entry links to the bot's repo and shows where it placed. The setup below (API keys, GitHub Actions) largely carries over since most of them are built on this template or the same `forecasting-tools` package.
+
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
@@ -61,7 +63,7 @@ To run a different script under the same workflows, edit the `poetry run python 
 **To run `main_with_no_framework.py` via GitHub Actions instead of `main.py`:** open the workflow file you want and change `poetry run python main.py` to `poetry run python main_with_no_framework.py`. That's the only change required.
 
 ## Editing in GitHub UI
-Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. Whether you develop locally or not, when making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord, see [other bot's self-descriptions](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#what-are-other-bots-doing), or read bot's [open source code](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots).
+Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. Whether you develop locally or not, when making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord, see [other bot's self-descriptions](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#what-are-other-bots-doing), or read bot's [open source code](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots). Remember you don't have to build on this template at all — forking one of the higher-ranked [open source bots](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots) is a perfectly good way to start.
 
 ## Run/Edit the bot locally
 Local development is optional — most new users can run the bot entirely from GitHub Actions (see [Quick start](#quick-start--fork-and-use-github-actions)). Set up locally only if you want faster iteration on your prompts/code.
