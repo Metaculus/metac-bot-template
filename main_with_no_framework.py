@@ -73,6 +73,7 @@ Q1_2025_AI_BENCHMARKING_ID = 32627
 FALL_2025_AI_BENCHMARKING_ID = "fall-aib-2025"
 SPRING_2026_AI_BENCHMARKING_ID = "spring-aib-2026"
 SUMMER_2026_AI_BENCHMARKING_ID = 33022  # https://www.metaculus.com/tournament/summer-futureeval-2026/
+FALL_2026_AI_BENCHMARKING_ID = 33121  # https://www.metaculus.com/tournament/fall-futureeval-2026/
 
 CURRENT_MINIBENCH_ID = "minibench"
 
@@ -87,7 +88,7 @@ AI_2027_TOURNAMENT_ID = "ai-2027"
 # https://www.metaculus.com/tournament/bot-testing-area/
 BOT_TESTING_AREA_ID = "bot-testing-area"
 
-TOURNAMENT_ID = SUMMER_2026_AI_BENCHMARKING_ID
+TOURNAMENT_ID = FALL_2026_AI_BENCHMARKING_ID
 
 
 ######################### HELPER FUNCTIONS #########################
