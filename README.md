@@ -117,7 +117,7 @@ poetry run python main_with_no_framework.py
 This file has no `--mode` flag; it's controlled by the constants at the top of the file (`SUBMIT_PREDICTION`, `USE_EXAMPLE_QUESTIONS`, `TOURNAMENT_ID`, etc.). Flip `USE_EXAMPLE_QUESTIONS = True` to point it at the bot-testing-area tournament instead of the live AIB.
 
 To stop publishing forecasts (dry-run mode):
-- `main.py`: set `publish_reports_to_metaculus=False` in the `SummerTemplateBot2026(...)` constructor near the bottom.
+- `main.py`: set `publish_reports_to_metaculus=False` in the `FallTemplateBot2026(...)` constructor near the bottom.
 - `main_with_no_framework.py`: set `SUBMIT_PREDICTION = False` at the top.
 
 ## Reviewing how your bot did

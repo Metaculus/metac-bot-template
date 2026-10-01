@@ -45,18 +45,15 @@ dotenv.load_dotenv()
 logger = logging.getLogger(__name__)
 
 
-class SummerTemplateBot2026(ForecastBot):
+class FallTemplateBot2026(ForecastBot):
     """
-    This is the template bot for Summer 2026 Metaculus AI Tournament.
+    This is the template bot for the Fall 2026 FutureEval Bot Tournament.
     This is a copy of what is used by Metaculus to run the Metac Bots in our benchmark, provided as a template for new bot makers.
     This template is given as-is, and is use-at-your-own-risk.
     We have covered most test cases in forecasting-tools it may be worth double checking key components locally.
     So far our track record has been 1 mentionable bug per season (affecting forecasts for 1-2% of total questions)
 
-    Main changes since Fall:
-    - Additional prompting has been added to numeric questions to emphasize putting pecentile values in the correct order.
-    - Support for conditional and date questions has been added
-    - Note: Summer AIB will not use date/conditional questions, so these are only for forecasting on the main site as you wish.
+    This bot is identical to SummerTemplateBot2026.
 
     The main entry point of this bot is `bot.forecast_on_tournament(tournament_id)` in the parent class.
     See the script at the bottom of the file for more details on how to run the bot.
@@ -102,7 +99,7 @@ class SummerTemplateBot2026(ForecastBot):
 
     Then you can access the model in custom functions like this:
     ```python
-    research_strategy = self.get_llm("researcher", "model_name"
+    research_strategy = self.get_llm("researcher", "model_name")
     if research_strategy == "asknews/news-summaries":
         ...
     # OR
@@ -136,22 +133,7 @@ class SummerTemplateBot2026(ForecastBot):
             research = ""
             researcher = self.get_llm("researcher")
 
-            prompt = clean_indents(
-                f"""
-                You are an assistant to a superforecaster.
-                The superforecaster will give you a question they intend to forecast on.
-                To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
-                You do not produce forecasts yourself.
-
-                Question:
-                {question.question_text}
-
-                This question's outcome will be determined by the specific criteria below:
-                {question.resolution_criteria}
-
-                {question.fine_print}
-                """
-            )
+            prompt = self._get_research_prompt(question, researcher)
 
             if isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
@@ -180,6 +162,31 @@ class SummerTemplateBot2026(ForecastBot):
                 research = await self.get_llm("researcher", "llm").invoke(prompt)
             logger.info(f"Found Research for URL {question.page_url}:\n{research}")
             return research
+
+    @staticmethod
+    def _get_research_prompt(
+        question: MetaculusQuestion, researcher: str | GeneralLlm
+    ) -> str:
+        if GeneralLlm.to_model_name(researcher) == "asknews/news-summaries":
+            return question.question_text
+
+        prompt = clean_indents(
+            f"""
+            You are an assistant to a superforecaster.
+            The superforecaster will give you a question they intend to forecast on.
+            To be a great assistant, you generate a concise but detailed rundown of the most relevant news, including if the question would resolve Yes or No based on current information.
+            You do not produce forecasts yourself.
+
+            Question:
+            {question.question_text}
+
+            This question's outcome will be determined by the specific criteria below:
+            {question.resolution_criteria}
+
+            {question.fine_print}
+            """
+        )
+        return prompt
 
     ##################################### BINARY QUESTIONS #####################################
 
@@ -230,11 +237,18 @@ class SummerTemplateBot2026(ForecastBot):
     ) -> ReasonedPrediction[float]:
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
         logger.info(f"Reasoning for URL {question.page_url}: {reasoning}")
+        parsing_instructions = clean_indents(
+            f"""
+            The text given to you is trying to give a probability forecast for a binary question.
+            {self._create_resolved_question_parsing_message()}
+            """
+        )
         binary_prediction: BinaryPrediction = await structure_output(
             reasoning,
             BinaryPrediction,
             model=self.get_llm("parser", "llm"),
             num_validation_samples=self._structure_output_validation_samples,
+            additional_instructions=parsing_instructions,
         )
         decimal_pred = max(0.01, min(0.99, binary_prediction.prediction_in_decimal))
 
@@ -274,7 +288,7 @@ class SummerTemplateBot2026(ForecastBot):
             Before answering you write:
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
-            (c) A description of an scenario that results in an unexpected outcome.
+            (c) A description of a scenario that results in an unexpected outcome.
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
@@ -300,6 +314,7 @@ class SummerTemplateBot2026(ForecastBot):
 
             The text you are parsing may prepend these options with some variation of "Option" which you should remove if not part of the option names I just gave you.
             Additionally, you may sometimes need to parse a 0% probability. Please do not skip options with 0% but rather make it an entry in your final list with 0% probability.
+            {self._create_resolved_question_parsing_message()}
             """
         )
         reasoning = await self.get_llm("default", "llm").invoke(prompt)
@@ -391,6 +406,8 @@ class SummerTemplateBot2026(ForecastBot):
             f"""
             The text given to you is trying to give a forecast distribution for a numeric question.
             - This text is trying to answer the numeric question: "{question.question_text}".
+            {self._create_single_distribution_parsing_message(question)}
+            {self._create_resolved_question_parsing_message()}
             - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
             - The units for the forecast are: {question.unit_of_measure}
             - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
@@ -445,7 +462,7 @@ class SummerTemplateBot2026(ForecastBot):
 
             Formatting Instructions:
             - This is a date question, and as such, the answer must be expressed in terms of dates.
-            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ.No other formatting is allowed.
+            - The dates must be written in the format of YYYY-MM-DD. If hours matter, please append the date with the hour in UTC and military time: YYYY-MM-DDTHH:MM:SSZ. No other formatting is allowed.
             - Always start with a lower date chronologically and then increase from there.
             - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
 
@@ -485,6 +502,8 @@ class SummerTemplateBot2026(ForecastBot):
             f"""
             The text given to you is trying to give a forecast distribution for a date question.
             - This text is trying to answer the question: "{question.question_text}".
+            {self._create_single_distribution_parsing_message(question)}
+            {self._create_resolved_question_parsing_message()}
             - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
@@ -510,6 +529,24 @@ class SummerTemplateBot2026(ForecastBot):
             f"Forecasted URL {question.page_url} with prediction: {prediction.declared_percentiles}."
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    def _create_resolved_question_parsing_message(self) -> str:
+        return "- If the text concludes that the question has already resolved *in the past* (i.e. it treats the question as decided rather than something to forecast), please DO NOT return a parsed output, even if a final forecast is also given. Instead indicate that the answer is not explicitly given in the text.\n"
+
+    def _create_single_distribution_parsing_message(
+        self, question: NumericQuestion | DateQuestion
+    ) -> str:
+        message = (
+            "- The text may contain multiple percentile distributions (e.g. forecasts for several related questions/entities, or intermediate drafts before a final answer). You must return exactly ONE distribution: the single final distribution that answers the question stated above.\n"
+            "- Never merge or concatenate percentile lists that refer to different entities, options, or scenarios. Each percentile should appear at most once in your output.\n"
+            "- If there are multiple final distributions and you cannot tell which one answers the question stated above, do not guess or combine them. Instead indicate that the answer is not explicitly given in the text."
+        )
+        if question.group_question_option is not None:
+            message += (
+                f'\n- This question is specifically about "{question.group_question_option}" (one subquestion within a group of related questions). '
+                f'If the text gives distributions for multiple subjects, return only the distribution for "{question.group_question_option}".'
+            )
+        return message
 
     def _create_upper_and_lower_bound_messages(
         self, question: NumericQuestion | DateQuestion
@@ -670,7 +707,7 @@ if __name__ == "__main__":
     # Configure the bot. The `llms=` block below is commented out to use
     # whichever default models forecasting-tools picks based on your env vars;
     # uncomment and edit to pin specific models.
-    template_bot = SummerTemplateBot2026(
+    template_bot = FallTemplateBot2026(
         research_reports_per_question=1,
         predictions_per_research_report=5,
         use_research_summary_to_forecast=False,
@@ -695,8 +732,8 @@ if __name__ == "__main__":
     # piggyback on the forecasting_tools SDK constants and need updating
     # whenever those rotate seasons.
     TOURNAMENT_URLS = {
-        "tournament": "https://www.metaculus.com/tournament/summer-futureeval-2026/",
-        "metaculus_cup": "https://www.metaculus.com/tournament/metaculus-cup-summer-2025/",
+        "tournament": "https://www.metaculus.com/tournament/fall-futureeval-2026/",
+        "metaculus_cup": "https://www.metaculus.com/tournament/metaculus-cup-fall-2026/",
         "test_questions": "https://www.metaculus.com/tournament/bot-testing-area/",
     }
 
