@@ -7,6 +7,8 @@ In this project are 2 files:
 - **main.py**: Our recommended template option that uses the [forecasting-tools](https://github.com/Metaculus/forecasting-tools) package to handle a lot of stuff in the background for you (such as API calls). We will update the package, thus allowing you to gain new features with minimal changes to your code.
 - **main_with_no_framework.py**: A copy of main.py but implemented with minimal dependencies. Useful if you want a more custom approach.
 
+> **Want a stronger starting point than this template?** This repo is deliberately simple. Several community bots that have out-performed it in past tournaments are open source, and you can fork one of those instead. See the **[Open Source Bots](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots)** section of the resources page — each entry links to the bot's repo and shows where it placed. The setup below (API keys, GitHub Actions) largely carries over since most of them are built on this template or the same `forecasting-tools` package.
+
 
 Join the conversation about bot creation, get support, and follow updates on the [Metaculus Discord](https://discord.com/invite/NJgCC2nDfh) 'build a forecasting bot' channel.
 
@@ -26,10 +28,19 @@ The easiest way to use this repo is to fork it, paste in two API keys, and click
    - **`METACULUS_TOKEN`** — create one at https://www.metaculus.com/futureeval/participate/ (see the [resources page](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#creating-your-bot-account-and-metaculus-token) if you get stuck).
    - **`OPENROUTER_API_KEY`** — get free credits via [this form](https://forms.gle/aQdYMq9Pisrf1v7d8), or make your own key on [OpenRouter](https://openrouter.ai/). You can also use `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `ASKNEWS_SECRET`, etc. — these all work out of the box if you set them.
 3) **Enable Actions**: click the `Actions` tab, then click `I understand my workflows, go ahead and enable them`.
-4) **Run the test workflow to confirm everything works**: go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), check your bot's profile on Metaculus to confirm the forecasts landed.
+4) **Run the test workflow to confirm everything works**: go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), [switch to your bot account](#seeing-your-bots-forecasts) on Metaculus to check that the forecasts landed. They won't show up on your human account.
 5) **You're done! (and participation form)**: The `Forecast on new AI tournament questions` workflow is already enabled and will run every 20 minutes, picking up any new tournament questions and skipping ones it has already forecast on. Before you start submitting forecasts, all participants are required to fill out the first section of our [participation](https://forms.gle/aQdYMq9Pisrf1v7d8) form. There are only 3 required questions, so it should be pretty quick. This form is used to help us learn about the demographics and motivations of our community in FutureEval, amplify individual projects/research, and also to collect applications for LLM credits.
 
 To pause your bot, go to `Actions → Forecast on new AI tournament questions → ... (top right) → Disable workflow`.
+
+### Seeing your bot's forecasts
+Your bot's forecasts belong to the bot account, so they won't show up under your own predictions. To see them:
+1. Log in to Metaculus with your human account.
+2. Click your username (top right) and go to `Settings → My Forecasting Bots`.
+3. Click `Switch to bot account` next to your bot.
+4. Open a question your bot forecasted on. The end of each run's log (in GitHub Actions or your terminal) links to every question it forecasted. The bot's forecast is on the graph, and its reasoning is in the `Private` comments tab.
+
+See the [resources page](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#how-to-view-your-bots-comments-and-forecasts) for more details.
 
 ### Testing your changes against the GitHub Actions workflow
 You can run any workflow against any branch — no need to merge to `main` first, and no need to fork if you have push access to this repo.
@@ -52,7 +63,7 @@ To run a different script under the same workflows, edit the `poetry run python 
 **To run `main_with_no_framework.py` via GitHub Actions instead of `main.py`:** open the workflow file you want and change `poetry run python main.py` to `poetry run python main_with_no_framework.py`. That's the only change required.
 
 ## Editing in GitHub UI
-Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. Whether you develop locally or not, when making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord, see [other bot's self-descriptions](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#what-are-other-bots-doing), or read bot's [open source code](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots).
+Remember that you can edit a bot non locally by clicking on a file in Github, and then clicking the 'Edit this file' button. Whether you develop locally or not, when making edits, attempt to do things that you think others have not tried, as this will help further innovation in the field more than doing something that has already been done. Feel free to ask about what has or has not been tried in the Discord, see [other bot's self-descriptions](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#what-are-other-bots-doing), or read bot's [open source code](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots). Remember you don't have to build on this template at all — forking one of the higher-ranked [open source bots](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#open-source-bots) is a perfectly good way to start.
 
 ## Run/Edit the bot locally
 Local development is optional — most new users can run the bot entirely from GitHub Actions (see [Quick start](#quick-start--fork-and-use-github-actions)). Set up locally only if you want faster iteration on your prompts/code.
@@ -98,7 +109,7 @@ Then open `.env` in any text editor and replace each `REPLACE_ME` with your real
 ```bash
 poetry run python main.py --mode test_questions
 ```
-You'll see a one-line startup banner, forecasting progress logs, then a `🎉 Bot submitted N forecast(s)` banner with direct links to each forecast on Metaculus.
+You'll see a one-line startup banner, forecasting progress logs, then a `🎉 Bot submitted N forecast(s)` banner with direct links to each forecast on Metaculus. To see the bot's forecast on those pages, [switch to your bot account](#seeing-your-bots-forecasts).
 
 **Forecast on live AIB tournament + MiniBench:**
 ```bash
