@@ -23,31 +23,24 @@ If you run into trouble, reach out to `ben [at] metaculus [.com]`
 ## Quick start -> Fork and use Github Actions
 The easiest way to use this repo is to fork it, paste in two API keys, and click "Run workflow". After that, the bot will keep forecasting on new questions automatically every 20 minutes — no local setup needed.
 
-1) **Fork the repository** — go to the [repository](https://github.com/Metaculus/metac-bot-template) and click **Fork** in the top right.
-2) **Add your two API keys as repository secrets** — in your fork, go to `Settings → Secrets and variables → Actions → New repository secret`. Add these two (names must match exactly, all caps):
+1) **Fork the repository**: go to the [repository](https://github.com/Metaculus/metac-bot-template) and click **Fork** in the top right.
+2) **Add your two API keys as repository secrets**: in your fork, go to `Settings → Secrets and variables → Actions → New repository secret`. Add these two (names must match exactly, all caps):
    - **`METACULUS_TOKEN`** — create one at https://www.metaculus.com/futureeval/participate/ (see the [resources page](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#creating-your-bot-account-and-metaculus-token) if you get stuck).
    - **`OPENROUTER_API_KEY`** — get free credits via [this form](https://forms.gle/aQdYMq9Pisrf1v7d8), or make your own key on [OpenRouter](https://openrouter.ai/). You can also use `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`, `ASKNEWS_SECRET`, etc. — these all work out of the box if you set them.
-3) **Enable Actions** — click the `Actions` tab, then click `I understand my workflows, go ahead and enable them`.
-4) **Run the test workflow to confirm everything works** — go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), check your bot's profile on Metaculus to confirm the forecasts landed.
-5) **You're done!** The `Forecast on new AI tournament questions` workflow is already enabled and will run every 20 minutes, picking up any new tournament questions and skipping ones it has already forecast on.
+3) **Enable Actions**: click the `Actions` tab, then click `I understand my workflows, go ahead and enable them`.
+4) **Run the test workflow to confirm everything works**: go to `Actions → Test Bot → Run workflow → Run workflow` (green button). This forecasts on whatever's currently open in the [bot-testing-area tournament](https://www.metaculus.com/tournament/bot-testing-area/) so you can verify your setup posts forecasts to Metaculus end-to-end. Once the run finishes (~3–5 min), [switch to your bot account](#seeing-your-bots-forecasts) on Metaculus to check that the forecasts landed. They won't show up on your human account.
+5) **You're done! (and participation form)**: The `Forecast on new AI tournament questions` workflow is already enabled and will run every 20 minutes, picking up any new tournament questions and skipping ones it has already forecast on. Before you start submitting forecasts, all participants are required to fill out the first section of our [participation](https://forms.gle/aQdYMq9Pisrf1v7d8) form. There are only 3 required questions, so it should be pretty quick. This form is used to help us learn about the demographics and motivations of our community in FutureEval, amplify individual projects/research, and also to collect applications for LLM credits.
 
 To pause your bot, go to `Actions → Forecast on new AI tournament questions → ... (top right) → Disable workflow`.
 
-### Viewing your bot's predictions
-After your bot runs, you can view its predictions on Metaculus:
+### Seeing your bot's forecasts
+Your bot's forecasts belong to the bot account, so they won't show up under your own predictions. To see them:
+1. Log in to Metaculus with your human account.
+2. Click your username (top right) and go to `Settings → My Forecasting Bots`.
+3. Click `Switch to bot account` next to your bot.
+4. Open a question your bot forecasted on. The end of each run's log (in GitHub Actions or your terminal) links to every question it forecasted. The bot's forecast is on the graph, and its reasoning is in the `Private` comments tab.
 
-1. **Find your bot's profile** — go to https://www.metaculus.com/ and log in with your bot account credentials (the same account you created the `METACULUS_TOKEN` from).
-2. **View predictions** — once logged in as your bot:
-   - Click on your bot's username/avatar in the top right corner
-   - Select **"My Predictions"** from the dropdown menu
-   - You'll see all questions your bot has forecast on, along with the predictions and timestamps
-3. **View individual forecasts** — click any question to see:
-   - Your bot's current prediction
-   - The full prediction history (if your bot updated its forecast multiple times)
-   - Community predictions for comparison
-   - Question resolution status
-
-Alternatively, you can visit your bot's public profile page at `https://www.metaculus.com/accounts/profile/<bot-user-id>/` to see its prediction history, track record, and stats (viewable by anyone, not just when logged in as the bot).
+See the [resources page](https://www.metaculus.com/notebooks/38928/ai-benchmark-resources/#how-to-view-your-bots-comments-and-forecasts) for more details.
 
 ### Testing your changes against the GitHub Actions workflow
 You can run any workflow against any branch — no need to merge to `main` first, and no need to fork if you have push access to this repo.
@@ -116,7 +109,7 @@ Then open `.env` in any text editor and replace each `REPLACE_ME` with your real
 ```bash
 poetry run python main.py --mode test_questions
 ```
-You'll see a one-line startup banner, forecasting progress logs, then a `🎉 Bot submitted N forecast(s)` banner with direct links to each forecast on Metaculus.
+You'll see a one-line startup banner, forecasting progress logs, then a `🎉 Bot submitted N forecast(s)` banner with direct links to each forecast on Metaculus. To see the bot's forecast on those pages, [switch to your bot account](#seeing-your-bots-forecasts).
 
 **Forecast on live AIB tournament + MiniBench:**
 ```bash
