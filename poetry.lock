@@ -232,6 +232,37 @@ files = [
 ]
 
 [[package]]
+name = "anthropic"
+version = "1.14.0"
+description = "The official Python library for the anthropic API"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "anthropic-1.14.0-py3-none-any.whl", hash = "sha256:abd787048378abfabeebbad917ae0f9eae1eb4dfaa0a754096b5eea02dcf8c12"},
+    {file = "anthropic-1.14.0.tar.gz", hash = "sha256:d9284895864a8457ed87f0accc51fd488ad9743952e597c814e7dc9d78ac8e38"},
+]
+
+[package.dependencies]
+anyio = ">=4.1.0,<5"
+docstring-parser = ">=0.15,<1"
+httpx2 = ">=2.0.0,<3"
+jiter = ">=0.4.0,<1"
+opentelemetry-api = ">=1.1.0,<2"
+pydantic = ">=1.10.0,<3"
+sniffio = ">=1,<2"
+typing-extensions = ">=4.14,<5"
+
+[package.extras]
+aiohttp = ["aiohttp (>=3.10.0,<4)"]
+aws = ["boto3 (>=1.28.57,<2)", "botocore (>=1.31.57,<2)"]
+bedrock = ["boto3 (>=1.28.57,<2)", "botocore (>=1.31.57,<2)"]
+google-cloud = ["google-auth[requests] (>=2,<3)"]
+mcp = ["mcp (>=1.0,<3) ; python_version >= \"3.10\""]
+vertex = ["google-auth[requests] (>=2,<3)"]
+webhooks = ["standardwebhooks (>=1.0.1,<2)"]
+
+[[package]]
 name = "anyio"
 version = "4.12.0"
 description = "High-level concurrency and networking framework on top of asyncio or Trio"
@@ -792,6 +823,23 @@ doq = ["aioquic (>=1.2.0)"]
 idna = ["idna (>=3.10)"]
 trio = ["trio (>=0.30)"]
 wmi = ["wmi (>=1.5.1) ; platform_system == \"Windows\""]
+
+[[package]]
+name = "docstring-parser"
+version = "0.18.0"
+description = "Parse Python docstrings in reST, Google and Numpydoc format"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "docstring_parser-0.18.0-py3-none-any.whl", hash = "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b"},
+    {file = "docstring_parser-0.18.0.tar.gz", hash = "sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015"},
+]
+
+[package.extras]
+dev = ["pre-commit (>=2.16.0) ; python_version >= \"3.9\"", "pydoctor (>=25.4.0)", "pytest"]
+docs = ["pydoctor (>=25.4.0)"]
+test = ["pytest"]
 
 [[package]]
 name = "email-validator"
@@ -1448,6 +1496,28 @@ socks = ["socksio (==1.*)"]
 trio = ["trio (>=0.22.0,<1.0)"]
 
 [[package]]
+name = "httpcore2"
+version = "2.3.0"
+description = "A minimal low-level HTTP client."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "httpcore2-2.3.0-py3-none-any.whl", hash = "sha256:477e9e334f74e5240dcac002e890580f36a57d40ff0fb14cc9655731d23b8415"},
+    {file = "httpcore2-2.3.0.tar.gz", hash = "sha256:07327e251560960eea8e969d92d4c6a325feb13cca39e25340731336c3baf924"},
+]
+
+[package.dependencies]
+h11 = ">=0.16"
+truststore = ">=0.10"
+
+[package.extras]
+asyncio = ["anyio (>=4.5.0,<5.0)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (==1.*)"]
+trio = ["trio (>=0.22.0,<1.0)"]
+
+[[package]]
 name = "httpx"
 version = "0.28.1"
 description = "The next generation HTTP client."
@@ -1483,6 +1553,31 @@ files = [
     {file = "httpx_sse-0.4.3-py3-none-any.whl", hash = "sha256:0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc"},
     {file = "httpx_sse-0.4.3.tar.gz", hash = "sha256:9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d"},
 ]
+
+[[package]]
+name = "httpx2"
+version = "2.3.0"
+description = "The next generation HTTP client."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "httpx2-2.3.0-py3-none-any.whl", hash = "sha256:6f393663bdf6dbe7fe90118e3eb5b2bd024a675cae0390ac08cec9198812d8b7"},
+    {file = "httpx2-2.3.0.tar.gz", hash = "sha256:227e7c41d95a76d4077a52640564132777215fc3394e07b66a3116c33d668fa9"},
+]
+
+[package.dependencies]
+anyio = "*"
+httpcore2 = "2.3.0"
+idna = "*"
+truststore = ">=0.10"
+
+[package.extras]
+brotli = ["brotli ; platform_python_implementation == \"CPython\"", "brotlicffi ; platform_python_implementation != \"CPython\""]
+cli = ["click (==8.*)", "pygments (==2.*)", "rich (>=10,<15)"]
+http2 = ["h2 (>=3,<5)"]
+socks = ["socksio (==1.*)"]
+zstd = ["zstandard (>=0.18.0) ; python_version <= \"3.13\""]
 
 [[package]]
 name = "huggingface-hub"
@@ -2498,6 +2593,21 @@ redis = ["redis (>=7)"]
 sqlalchemy = ["asyncpg (>=0.29.0)", "sqlalchemy (>=2.0)"]
 viz = ["graphviz (>=0.17)"]
 voice = ["numpy (>=2.2.0,<3) ; python_version >= \"3.10\"", "websockets (>=15.0,<16)"]
+
+[[package]]
+name = "opentelemetry-api"
+version = "1.45.1"
+description = "OpenTelemetry Python API"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "opentelemetry_api-1.45.1-py3-none-any.whl", hash = "sha256:b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb"},
+    {file = "opentelemetry_api-1.45.1.tar.gz", hash = "sha256:aa38ed19bcc084ba42782a73255b3582283eced7ad6dddbd6695189e69adfb75"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.5.0"
 
 [[package]]
 name = "orjson"
@@ -4616,6 +4726,18 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.2)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
+name = "truststore"
+version = "0.10.5"
+description = "Verify certificates using native system trust stores"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "truststore-0.10.5-py3-none-any.whl", hash = "sha256:9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c"},
+    {file = "truststore-0.10.5.tar.gz", hash = "sha256:30d36967ccaded5cbb38d602c433f53600036c79d502f4533a49b60a03bbefcd"},
+]
+
+[[package]]
 name = "typeguard"
 version = "4.4.4"
 description = "Run-time type checker for Python"
@@ -4978,4 +5100,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "42234d3c6e0925cbc10be978498a8e4a70e5b12fefbc1c9e65075eef971107a1"
+content-hash = "00eef8ebb9d9716c7f98fb91d038edfd2e94987eb95e0fa6f222373e8b902e35"
