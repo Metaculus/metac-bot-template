@@ -6,6 +6,7 @@ from typing import Literal
 
 import dotenv
 
+import claude_research
 import forecast_guards
 
 # Runtime helpers (env validation, banners, dependency-warning suppression).
@@ -236,7 +237,23 @@ class SummerTemplateBot2026(ForecastBot):
                 """
             )
 
-            if isinstance(researcher, GeneralLlm):
+            # Live web search through the Anthropic API when its key is set;
+            # any failure falls through to the researcher below, so the cost
+            # of an outage or an exhausted balance is research quality on
+            # this question, never the forecast. See claude_research.
+            if claude_research.enabled():
+                try:
+                    research = await claude_research.research(prompt)
+                except Exception as exc:  # noqa: BLE001 - fall back, never fail
+                    logger.warning(
+                        "claude_research_failed reason=%s falling_back=true",
+                        type(exc).__name__,
+                    )
+                    research = ""
+
+            if research:
+                pass
+            elif isinstance(researcher, GeneralLlm):
                 research = await researcher.invoke(prompt)
             elif (
                 researcher == "asknews/news-summaries"
