@@ -34,7 +34,7 @@ MODEL = "claude-sonnet-5-5"
 #: Research is reading and summarising, not the judgement the score depends
 #: on; medium keeps the search loop focused and the spend predictable.
 EFFORT = "medium"
-MAX_SEARCHES = 6
+MAX_SEARCHES = 10
 MAX_TOKENS = 16000
 #: A long server-side search loop pauses after ~10 iterations; each resume is
 #: another request. Bounded so a stuck loop cannot spend without limit.
