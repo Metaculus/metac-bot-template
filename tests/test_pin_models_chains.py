@@ -480,3 +480,45 @@ class DriftTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ForecasterReasoningTests(unittest.TestCase):
+    """The forecast call asks Opus for high reasoning effort, and only it."""
+
+    PRODUCTION = dict(OPENROUTER_API_KEY="o", GEMINI_API_KEY="g", GROQ_API_KEY="q")
+
+    def _role_entry(self, block, role, next_role):
+        return block[block.index('"{0}"'.format(role)):block.index('"{0}"'.format(next_role))]
+
+    def test_opus_forecasts_with_high_effort_and_a_longer_timeout(self):
+        pm = load(**self.PRODUCTION)
+        default = self._role_entry(pm.build_block(pm.DEFAULTS), "default", "summarizer")
+        opus_line = next(l for l in default.splitlines() if OPUS in l)
+        self.assertIn('extra_body={"reasoning": {"effort": "high"}}', opus_line)
+        self.assertIn("timeout={0}".format(pm.FORECASTER_TIMEOUT_SECONDS), opus_line)
+
+    def test_the_fallbacks_and_other_roles_are_unchanged(self):
+        pm = load(**self.PRODUCTION)
+        block = pm.build_block(pm.DEFAULTS)
+        default = self._role_entry(block, "default", "summarizer")
+        for line in default.splitlines():
+            if "GeneralLlm(" in line and OPUS not in line:
+                self.assertNotIn("extra_body", line)
+        rest = block[block.index('"summarizer"'):]
+        self.assertNotIn("extra_body", rest)
+
+    def test_without_fallback_keys_opus_still_gets_it(self):
+        pm = load()
+        default = self._role_entry(pm.build_block(pm.DEFAULTS), "default", "summarizer")
+        self.assertIn('"effort": "high"', default)
+
+    def test_never_litellms_reasoning_effort(self):
+        """litellm 1.80.10 raises UnsupportedParamsError for reasoning_effort on
+        openrouter/ models, which would fail every Opus call over to Haiku."""
+        pm = load(**self.PRODUCTION)
+        self.assertNotIn("reasoning_effort", pm.build_block(pm.DEFAULTS))
+
+    def test_the_generated_block_still_parses(self):
+        pm = load(**self.PRODUCTION)
+        block = pm.build_block(pm.DEFAULTS).strip().rstrip(",")
+        ast.parse("x = " + block[len("llms="):])

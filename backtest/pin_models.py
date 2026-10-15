@@ -411,9 +411,36 @@ TRIES_IN_CHAIN = 1
 TRIES_STANDALONE = 3
 
 
-def _backend_expr(model: str, allowed_tries: int = TRIES_STANDALONE) -> str:
+# MORE REASONING FOR THE FORECAST CALL -- 2026-10-15.
+#
+# Opus 5.5 thinks adaptively and defaults to effort "medium". Metaculus'
+# Spring 2026 survey found the high-reasoning variant beating the standard
+# one in 8 of 8 model pairs, and the forecast is the call the score depends
+# on. So the forecaster role asks for "high" -- through OpenRouter's own
+# `reasoning: {effort}` request field -- on the models listed here only.
+#
+# Sent as extra_body, NOT litellm's reasoning_effort: litellm 1.80.10 (the
+# locked version) raises UnsupportedParamsError for reasoning_effort on any
+# openrouter/ model, which would have failed every Opus call over to Haiku.
+# extra_body reaches the request verbatim (checked against a local stand-in
+# for the OpenRouter endpoint). The cheap fallbacks and the other roles are left
+# as they were. Thinking takes longer, hence the larger timeout.
+FORECASTER_REASONING = {"openrouter/anthropic/claude-opus-5.5": "high"}
+FORECASTER_TIMEOUT_SECONDS = 420
+
+
+def _backend_expr(
+    model: str, allowed_tries: int = TRIES_STANDALONE, role: str | None = None
+) -> str:
     """One GeneralLlm(...) call, single line, for use inside a FallbackLlm list
     or standalone."""
+    effort = FORECASTER_REASONING.get(model) if role == "default" else None
+    if effort:
+        return (
+            f'GeneralLlm(model="{model}", temperature=0.3, '
+            f"timeout={FORECASTER_TIMEOUT_SECONDS}, allowed_tries={allowed_tries}, "
+            f'extra_body={{"reasoning": {{"effort": "{effort}"}}}})'
+        )
     return (
         f'GeneralLlm(model="{model}", temperature=0.3, '
         f"timeout={TIMEOUT_SECONDS}, allowed_tries={allowed_tries})"
@@ -536,7 +563,7 @@ def _ensemble_expr(model: str) -> str:
     non_voting = [fb for fb, _env in ACTIVE_FALLBACKS if fb not in primaries]
     for primary in primaries:
         others = [m for m in primaries if m != primary] + non_voting
-        chains.append(_chain_expr(primary, others, indent=16))
+        chains.append(_chain_expr(primary, others, indent=16, role="default"))
     joined = ",\n                ".join(chains)
     keys = ", ".join(f'"{p}"' for p in primaries)
     return f"BalancedLlm([\n                {joined},\n            ], [{keys}])"
@@ -563,7 +590,9 @@ def _chain_models(model: str, fallbacks: list[str]) -> list[str]:
     return list(dict.fromkeys([model, *fallbacks]))
 
 
-def _chain_expr(model: str, fallbacks: list[str], indent: int = 12) -> str:
+def _chain_expr(
+    model: str, fallbacks: list[str], indent: int = 12, role: str | None = None
+) -> str:
     """One FallbackLlm, in the production order OpenRouter -> Gemini -> Groq.
 
     The ORDER is never altered -- balancing chooses between whole chains, it
@@ -571,7 +600,7 @@ def _chain_expr(model: str, fallbacks: list[str], indent: int = 12) -> str:
     _chain_models.
     """
     ordered = _chain_models(model, fallbacks)
-    backends = [_backend_expr(m, TRIES_IN_CHAIN) for m in ordered]
+    backends = [_backend_expr(m, TRIES_IN_CHAIN, role) for m in ordered]
     # A chain nested inside BalancedLlm sits one level deeper, hence `indent`.
     inner = " " * (indent + 4)
     outer = " " * indent
@@ -590,7 +619,7 @@ def _role_expr(role: str, model: str) -> str:
     ensemble note above _ensemble_primaries.
     """
     if role not in REASONING_ROLES:
-        return _backend_expr(model)
+        return _backend_expr(model, role=role)
     fallbacks = _fallbacks_for(role)
     if role == "researcher" and ACTIVE_ASKNEWS:
         # AskNews leads and the configured LLM researcher becomes the first
@@ -599,11 +628,11 @@ def _role_expr(role: str, model: str) -> str:
         # return below. See the AskNews note above ACTIVE_ASKNEWS.
         return _chain_expr(ASKNEWS_MODEL, [model, *fallbacks])
     if not fallbacks:
-        return _backend_expr(model)
+        return _backend_expr(model, role=role)
 
     if role == "default" and len(_ensemble_primaries(model)) > 1:
         return _ensemble_expr(model)
-    return _chain_expr(model, fallbacks)
+    return _chain_expr(model, fallbacks, role=role)
 
 
 def _runtime_chain(role: str, model: str) -> list[str]:
