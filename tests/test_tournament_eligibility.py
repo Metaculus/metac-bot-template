@@ -76,24 +76,25 @@ class NoReforecastTests(unittest.TestCase):
         self.assertIn("skip_previously_forecasted_questions=True", read("main.py"))
 
     def test_the_only_override_is_the_practice_area(self):
-        """Two branches set it False: the unscored bot-testing-area, and
-        Market Pulse, whose market_pulse.select already did the skipping
-        (new questions plus a refresh before its spot-scored close). The Cup
-        used to be one, until production started running it on a schedule
-        (2026-10-01); it now forecasts each question once."""
+        """Three branches set it False: the unscored bot-testing-area; Market
+        Pulse, whose market_pulse.select already did the skipping (new
+        questions plus a refresh before its spot-scored close); and the Cup,
+        whose market_pulse.select_stale did (new questions plus week-old
+        forecasts). Never the scored FutureEval/MiniBench branch."""
         src = read("main.py")
         overrides = [
             i for i, line in enumerate(src.splitlines())
             if "skip_previously_forecasted_questions = False" in line
         ]
-        self.assertEqual(len(overrides), 2, "unexpected number of overrides")
+        self.assertEqual(len(overrides), 3, "unexpected number of overrides")
         lines = src.splitlines()
         for index in overrides:
             context = "\n".join(lines[max(0, index - 12):index + 3])
             self.assertTrue(
                 'run_mode == "test_questions"' in context
-                or 'run_mode == "market_pulse"' in context,
-                "an override sits outside test_questions and market_pulse",
+                or 'run_mode == "market_pulse"' in context
+                or 'run_mode == "metaculus_cup"' in context,
+                "an override sits outside test_questions, market_pulse and the Cup",
             )
 
     def test_the_tournament_branch_does_not_disable_dedup(self):

@@ -103,6 +103,34 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(market_pulse.select([refresh, new], NOW), [new, refresh])
 
 
+class StaleSelectionTests(unittest.TestCase):
+    """The Cup's weekly refresh: new questions plus week-old forecasts."""
+
+    def test_new_questions_are_selected(self):
+        q = Q(False)
+        self.assertEqual(market_pulse.select_stale([q], NOW), [q])
+
+    def test_a_forecast_younger_than_a_week_is_left_alone(self):
+        q = Q(True, close_time=ahead(2), timestamp_of_my_last_forecast=ago(24 * 6))
+        self.assertEqual(market_pulse.select_stale([q], NOW), [])
+
+    def test_a_week_old_forecast_is_refreshed_whatever_the_close(self):
+        far = Q(True, close_time=ahead(24 * 60), timestamp_of_my_last_forecast=ago(24 * 7))
+        self.assertEqual(market_pulse.select_stale([far], NOW), [far])
+
+    def test_unknown_last_forecast_is_left_alone(self):
+        q = Q(True, close_time=ahead(5), timestamp_of_my_last_forecast=None)
+        self.assertEqual(market_pulse.select_stale([q], NOW), [])
+
+    def test_new_come_before_stale(self):
+        stale = Q(True, timestamp_of_my_last_forecast=ago(24 * 30))
+        new = Q(False)
+        self.assertEqual(market_pulse.select_stale([stale, new], NOW), [new, stale])
+
+    def test_the_default_age_is_a_week(self):
+        self.assertEqual(market_pulse.CUP_MAX_AGE.days, 7)
+
+
 class WiringTests(unittest.TestCase):
     STEP = "Forecast Market Pulse questions (prize)"
 

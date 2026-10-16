@@ -66,3 +66,36 @@ def select(questions: Sequence[Any], now: datetime) -> list[Any]:
         len(questions), len(new), len(refresh),
     )
     return new + refresh
+
+
+#: The Metaculus Cup is scored against the human crowd over each question's
+#: life, so a forecast left untouched for weeks loses ground as news arrives
+#: (Metaculus flagged 9 of the bot's Cup forecasts "might be stale" on
+#: 2026-10-16). A week is the refresh age: the Cup opens a batch weekly and
+#: pays bots nothing, so more often is spend without a prize behind it.
+CUP_MAX_AGE = timedelta(days=7)
+
+
+def select_stale(
+    questions: Sequence[Any], now: datetime, max_age: timedelta = CUP_MAX_AGE
+) -> list[Any]:
+    """New questions, plus those whose latest forecast is ``max_age`` old.
+
+    Unlike :func:`select` this ignores close time: every open question is
+    refreshed on the same cadence. Unknown forecast times are left alone.
+    """
+    now = _utc(now)
+    new: list[Any] = []
+    stale: list[Any] = []
+    for question in questions:
+        if not question.already_forecasted:
+            new.append(question)
+            continue
+        last = _last_forecast(question)
+        if last is not None and now - last >= max_age:
+            stale.append(question)
+    logger.info(
+        "stale_selection open=%d new=%d stale=%d max_age_days=%.1f",
+        len(questions), len(new), len(stale), max_age.total_seconds() / 86400,
+    )
+    return new + stale
