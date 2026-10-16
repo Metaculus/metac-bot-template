@@ -75,7 +75,7 @@ class PinnedTargetsTests(unittest.TestCase):
 
     def test_the_cup_mode_targets_the_pinned_cup(self):
         src = code_lines(read("main.py"))
-        self.assertIn("forecast_on_tournament(\n                tournaments.METACULUS_CUP.id", src)
+        self.assertIn("tournaments.METACULUS_CUP.id", src)
 
     def test_the_research_lab_counts_the_live_season(self):
         """Coverage for the season being played must be measurable without

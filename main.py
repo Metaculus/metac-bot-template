@@ -873,16 +873,22 @@ if __name__ == "__main__":
         forecast_reports = seasonal_tournament_reports + minibench_reports
     elif run_mode == "metaculus_cup":
         # Practice against the human crowd: the Cup ranks bots but pays none.
-        # Production runs this after every scheduled poll window, so each Cup
-        # question is forecast once, when it is first seen, and never again
-        # (skip_previously_forecasted_questions stays True from the
-        # constructor). Re-forecasting every open question on every run would
-        # multiply LLM spend for an unpaid tournament.
+        # Scored over each question's life, so a forecast is refreshed once
+        # it is a week old (market_pulse.select_stale), not left standing
+        # until close; new questions are forecast when first seen. The
+        # selection does the skipping, so the bot's own skip is lifted here.
         # AI_2027_TOURNAMENT_ID = "ai-2027" is another unpaid target with a
         # good mix of question types (FutureEval resources page).
+        template_bot.skip_previously_forecasted_questions = False
         forecast_reports = asyncio.run(
-            template_bot.forecast_on_tournament(
-                tournaments.METACULUS_CUP.id, return_exceptions=True
+            template_bot.forecast_questions(
+                market_pulse.select_stale(
+                    client.get_all_open_questions_from_tournament(
+                        tournaments.METACULUS_CUP.id
+                    ),
+                    datetime.now(timezone.utc),
+                ),
+                return_exceptions=True,
             )
         )
     elif run_mode == "market_pulse":

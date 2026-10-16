@@ -438,10 +438,11 @@ class WorkflowInvariants(unittest.TestCase):
         self.assertEqual(cup_env, expected)
         self.assertNotIn("GEMINI2_API_KEY", cup_env)
 
-    def test_cup_mode_never_reforecasts(self):
-        """Production runs the Cup ~6 times a day; re-forecasting every open
+    def test_cup_mode_refreshes_only_through_the_weekly_selection(self):
+        """Production runs the Cup every 30 minutes; re-forecasting every open
         question each time would multiply spend on an unpaid tournament. The
-        practice-area mode is the one that may still re-forecast."""
+        bot's own skip is lifted only because market_pulse.select_stale
+        already chose new questions plus week-old forecasts."""
         src = read("main.py")
         start = src.index('elif run_mode == "metaculus_cup":')
         end = src.index('elif run_mode == "market_pulse":')
@@ -449,11 +450,9 @@ class WorkflowInvariants(unittest.TestCase):
             line for line in src[start:end].splitlines()
             if not line.strip().startswith("#")
         )
-        self.assertNotIn("skip_previously_forecasted_questions", cup_branch)
-        self.assertIn(
-            "skip_previously_forecasted_questions=True", src,
-            "the constructor default the Cup relies on",
-        )
+        self.assertIn("market_pulse.select_stale(", cup_branch)
+        self.assertIn("forecast_questions(", cup_branch)
+        self.assertNotIn("forecast_on_tournament(", cup_branch)
 
     def test_the_manual_cup_workflow_shares_the_production_concurrency_group(self):
         """Two processes deciding "not forecast yet" at the same moment would

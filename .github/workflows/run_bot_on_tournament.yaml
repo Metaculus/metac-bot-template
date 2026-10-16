@@ -324,10 +324,10 @@ jobs:
       # counts open questions, and the Cup almost always has some, so adding
       # it to the loop would keep every run alive for the full 40 minutes.
       #
-      # Cost: main.py keeps skip_previously_forecasted_questions=True in this
-      # mode, so each Cup question is forecast once, when first seen. The Cup
-      # opens 4-5 questions a week; a run with nothing new costs one discovery
-      # call. The first run forecasts the backlog, hence the timeout.
+      # Cost: each Cup question is forecast when first seen and refreshed once
+      # its latest forecast is a week old (market_pulse.select_stale), so
+      # ~25 open questions cost ~25 forecasts a week. A run with nothing due
+      # costs one discovery call. A backlog can be large, hence the timeout.
       - name: Forecast new Metaculus Cup questions (practice)
         timeout-minutes: 90
         run: poetry run python main.py --mode metaculus_cup
