@@ -91,18 +91,29 @@ class MarketTests(unittest.TestCase):
                 {"question": "Democrats win House?", "outcomes": '["Yes","No"]',
                  "outcomePrices": '["0.8","0.2"]'}]}]},
             "https://api.manifold.markets/": [
-                {"question": "Dems take the House?", "probability": 0.91,
+                {"question": "Will Democrats win the House?", "probability": 0.91,
                  "uniqueBettorCount": 40, "isResolved": False}],
         })
         out = lc.prediction_markets(q("Will Democrats win the House in 2026?"), web)
         self.assertIn('Polymarket "Democrats win House?": Yes 80%, No 20%', out)
-        self.assertIn('Manifold "Dems take the House?": 91% (40 traders)', out)
+        self.assertIn('Manifold "Will Democrats win the House?": 91% (40 traders)', out)
+
+    def test_unrelated_markets_are_dropped(self):
+        web = FakeWeb({
+            "https://gamma-api.polymarket.com/": {"events": [{"markets": [
+                {"question": "Will Josh Allen average 22.0+ PPR fantasy points?",
+                 "outcomes": '["Yes","No"]', "outcomePrices": '["0.5","0.5"]'}]}]},
+            "https://api.manifold.markets/": [],
+        })
+        self.assertEqual(lc.prediction_markets(
+            q("Will the winner of the 2026 Tour de France be from Australia?"), web), "")
 
     def test_one_market_failing_keeps_the_other(self):
         web = FakeWeb({"https://gamma-api.polymarket.com/": OSError("ssl"),
                        "https://api.manifold.markets/": [
-                           {"question": "Q?", "probability": 0.5, "isResolved": False}]})
-        self.assertIn("Manifold", lc.prediction_markets(q("Will it happen?"), web))
+                           {"question": "Will the comet happen visible?", "probability": 0.5,
+                            "isResolved": False}]})
+        self.assertIn("Manifold", lc.prediction_markets(q("Will the comet become visible?"), web))
 
 
 class SourceTests(unittest.TestCase):

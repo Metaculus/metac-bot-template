@@ -173,10 +173,26 @@ def _query(question: Any) -> str:
     return " ".join([w for w in words if w.lower() not in STOP][:8])
 
 
+def _content_words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9$]+", text.lower()) if len(w) >= 4 and w not in STOP}
+
+
+#: Shared content words a market title needs with the question to be shown.
+#: Polymarket's search returns loosely related events (an NFL fantasy market
+#: for a Tour de France question in Test Bot run 39079742977); the forecaster
+#: discarded them, but they cost tokens and invite a wrong anchor.
+MIN_OVERLAP = 2
+
+
+def _related(question_words: set[str], title: str) -> bool:
+    return len(question_words & _content_words(title)) >= MIN_OVERLAP
+
+
 def prediction_markets(question: Any, fetch: Fetch) -> str:
     q = _query(question)
     if not q:
         return ""
+    qwords = _content_words(str(getattr(question, "question_text", "") or ""))
     lines = []
     try:
         data = _json(fetch, "https://gamma-api.polymarket.com/public-search?"
@@ -187,7 +203,7 @@ def prediction_markets(question: Any, fetch: Fetch) -> str:
                 prices = json.loads(prices) if isinstance(prices, str) else prices
                 outcomes = m.get("outcomes")
                 outcomes = json.loads(outcomes) if isinstance(outcomes, str) else outcomes
-                if prices and outcomes:
+                if prices and outcomes and _related(qwords, m.get("question", "")):
                     shown = ", ".join(f"{o} {float(p):.0%}" for o, p in zip(outcomes, prices))
                     lines.append(f"- Polymarket \"{m.get('question', '')[:140]}\": {shown}")
     except Exception:  # noqa: BLE001
@@ -196,7 +212,8 @@ def prediction_markets(question: Any, fetch: Fetch) -> str:
         data = _json(fetch, "https://api.manifold.markets/v0/search-markets?"
                      + urllib.parse.urlencode({"term": q, "limit": 3}))
         for m in data[:3]:
-            if m.get("probability") is not None and not m.get("isResolved"):
+            if (m.get("probability") is not None and not m.get("isResolved")
+                    and _related(qwords, m.get("question", ""))):
                 lines.append(f"- Manifold \"{m.get('question', '')[:140]}\": "
                              f"{m['probability']:.0%} ({m.get('uniqueBettorCount', '?')} traders)")
     except Exception:  # noqa: BLE001
