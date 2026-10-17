@@ -27,6 +27,7 @@ class StandingTests(unittest.TestCase):
             entry(None, 900, name="metac-autocast", excluded=True),
             entry(1, 783.2), entry(2, 700),
             entry(3, 66.94, uid=wr.BOT_USER_ID, name=wr.BOT_USERNAME),
+            entry(None, -5),  # listed but unranked: not a position
         ]}
         self.assertEqual(wr.standing_from(payload), {"rank": 3, "total": 3, "score": 66.9})
 

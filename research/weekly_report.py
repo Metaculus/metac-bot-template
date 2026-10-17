@@ -105,7 +105,11 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     if not isinstance(payload, dict):
         return None
     entries = payload.get("entries") or payload.get("results") or []
-    ranked = [e for e in entries if isinstance(e, dict) and not e.get("excluded")]
+    # The total is the last numbered position, as the page shows it: the
+    # entries list also carries unranked and excluded rows (236 entries
+    # against 136 positions on minibench-2026-09-21).
+    ranks = [e.get("rank") for e in entries
+             if isinstance(e, dict) and not e.get("excluded") and isinstance(e.get("rank"), int)]
     mine = None
     for e in entries:
         uid, name = _entry_user(e) if isinstance(e, dict) else (None, None)
@@ -119,7 +123,7 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     score = mine.get("score")
     return {
         "rank": int(mine["rank"]),
-        "total": len(ranked) or None,
+        "total": max(ranks) if ranks else None,
         "score": round(float(score), 1) if score is not None else None,
     }
 
