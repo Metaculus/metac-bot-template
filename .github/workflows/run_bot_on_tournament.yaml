@@ -141,30 +141,6 @@ jobs:
           ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-      # notifications/state.json is the ONLY thing the WhatsApp notifier
-      # needs to survive between runs (which events were already sent -- see
-      # notifications/state.py's module docstring for why that is the sole
-      # piece of state that cannot be recovered from Metaculus). This uses
-      # actions/cache rather than a git commit-back so this workflow's
-      # `permissions: contents: read` (identical to every other workflow in
-      # this repository) does not need to change.
-      #
-      # Documented limitation, accepted deliberately: a cache entry can be
-      # evicted after 7 days unused, or once the repo's 10GB cache cap is
-      # hit. Either failure mode means, AT WORST, one already-sent WhatsApp
-      # event gets re-sent once after the loss -- never a duplicate silently
-      # hidden, never anything touching forecasting, scoring or publication.
-      # The exact-key match first (this run's own retry, if any) then the
-      # `restore-keys` prefix match (the most recent previous run) is the
-      # standard evolving-cache pattern; cache keys are immutable, so saving
-      # is keyed per run and restoring is what finds the latest one.
-      - name: Restore notification state
-        uses: actions/cache/restore@v4
-        with:
-          path: notifications/state.json
-          key: notification-state-${{ github.run_id }}
-          restore-keys: |
-            notification-state-
       # POLLING LOOP, not a single shot. R8 follow-up.
       #
       # docs/cadence.md measured `*/5` delivering 32 min median gaps (14% of
@@ -305,9 +281,8 @@ jobs:
           # on purpose.
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          # WhatsApp status notifications (notifications/ + scripts/notify.py).
-          # Absent secrets simply mean handle_run()'s send() call fails and
-          # main.py logs and continues -- see notifications/integration.py.
+          # Kept for the failure alert below; per-question alerts were retired
+          # (2026-10-17) in favour of the Monday report (weekly_report.yaml).
           CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
           CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}
       # PRACTICE, NOT PRIZES. Metaculus Cup Fall 2026 (tournaments.METACULUS_CUP)
@@ -373,24 +348,6 @@ jobs:
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      # Runs whether "Run bot" succeeded or failed, so a partial run's
-      # already-sent events are still remembered. actions/cache/save is a
-      # no-op (not an error) if this exact key was already saved earlier in
-      # the same run_id (a retry after a later step failed).
-      - name: Save notification state
-        if: always()
-        # Verified against actions/cache's own source (saveImpl.ts): a
-        # missing path or an already-existing key are both logged as
-        # warnings, never core.setFailed() -- this step should not be able
-        # to fail the job on its own either way. continue-on-error is
-        # defense in depth against whatever that source-reading did not
-        # cover (a genuine GitHub cache-service outage), so a cache hiccup
-        # can never be mistaken for "the bot failed" by the next step.
-        continue-on-error: true
-        uses: actions/cache/save@v4
-        with:
-          path: notifications/state.json
-          key: notification-state-${{ github.run_id }}
       # Separate from the in-process notifier: this fires only when a STEP
       # in this job failed outright (including one earlier than "Run bot"),
       # which main.py's own try/except around handle_run() cannot see at all

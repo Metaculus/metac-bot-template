@@ -928,23 +928,6 @@ if __name__ == "__main__":
         tournament_url=TOURNAMENT_URLS.get(run_mode),
     )
 
-    # WhatsApp status notifications (notifications/). Only in "tournament"
-    # mode: that is the one branch with skip_previously_forecasted_questions
-    # =True, which is what makes "this question_id is in forecast_reports"
-    # mean "new to Metaculus" -- see notifications/state.py's docstring.
-    # Wrapped defensively even though handle_run() already catches everything
-    # internally: a notification system must never be the reason a
-    # successful forecasting run reports failure.
-    if run_mode == "tournament":
-        try:
-            from notifications.integration import handle_run
-
-            notification_result = handle_run(
-                forecast_reports=forecast_reports,
-                client=client,
-                tournament_label="AI Tournament + MiniBench",
-            )
-            if notification_result.error:
-                logger.info("notification_skipped reason=%s", notification_result.error)
-        except Exception as exc:  # noqa: BLE001 - see comment above
-            logger.info("notification_skipped reason=%s", type(exc).__name__)
+    # Per-question WhatsApp alerts were retired on 2026-10-17: the owner gets
+    # one Monday summary instead (research/weekly_report.py, dispatched by
+    # Dagu). Workflow failures still alert from the workflow itself.

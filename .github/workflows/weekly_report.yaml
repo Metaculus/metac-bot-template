@@ -1,0 +1,72 @@
+name: Weekly report (WhatsApp)
+
+# READ-ONLY. Sends the Monday WhatsApp summary: leaderboard position and
+# points per tournament, compared with the previous week in positions and
+# points. Never forecasts and never publishes to Metaculus: it does not
+# install forecasting-tools, and research/weekly_report.py reads through
+# MetaculusReadClient, which raises on any verb but GET.
+#
+# No schedule here on purpose. GitHub's cron arrives hours late (see
+# docs/cadence.md), so Dagu on gl65 dispatches this at 09:00 Madrid every
+# Monday (~/.config/dagu/dags/metaculus-informe-semanal.yaml).
+#
+# Last week's numbers live in the Actions cache (weekly_state.json). A dry
+# run prints the message and leaves both the cache and WhatsApp alone.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print the message (no WhatsApp, no state update)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore last week's numbers
+        uses: actions/cache/restore@v4
+        with:
+          path: weekly_state.json
+          key: weekly-report-${{ github.run_id }}
+          restore-keys: |
+            weekly-report-
+
+      - name: Build the report
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          flags=""
+          if [ "${DRY_RUN}" = "true" ]; then flags="--dry-run"; fi
+          python research/weekly_report.py --state weekly_state.json --out message.txt $flags
+
+      - name: Send on WhatsApp
+        if: ${{ inputs.dry_run != true }}
+        env:
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}
+        run: python scripts/notify.py whatsapp < message.txt
+
+      - name: Save this week's numbers
+        if: ${{ inputs.dry_run != true }}
+        uses: actions/cache/save@v4
+        with:
+          path: weekly_state.json
+          key: weekly-report-${{ github.run_id }}
