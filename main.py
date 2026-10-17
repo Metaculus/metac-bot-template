@@ -7,6 +7,7 @@ from typing import Literal
 import dotenv
 
 import claude_research
+import live_context
 import forecast_guards
 
 # Runtime helpers (env validation, banners, dependency-warning suppression).
@@ -278,6 +279,13 @@ class SummerTemplateBot2026(ForecastBot):
                 research = ""
             else:
                 research = await self.get_llm("researcher", "llm").invoke(prompt)
+            # Live numbers the research cannot be trusted to find: prices,
+            # linked Metaculus community predictions, prediction markets and
+            # the resolution-source pages. Free sources, never raises; see
+            # live_context. Blocking I/O, so off the event loop.
+            live = await asyncio.to_thread(live_context.build, question)
+            if live:
+                research = f"{research}\n\n{live}" if research else live
             log_forecast_content(
                 logger, f"Found Research for URL {question.page_url}", research
             )
@@ -310,11 +318,15 @@ class SummerTemplateBot2026(ForecastBot):
 
             {self._timing(question)}
 
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
             Before answering you write:
+            (a0) Before using the research: a reference class of similar past situations and how often they ended each way (the base rate), stated as a number.
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A brief description of a scenario that results in a No outcome.
             (d) A brief description of a scenario that results in a Yes outcome.
+            (e) Pre-mortem: assume your forecast turns out badly wrong. What is the most likely reason? Adjust if that reason is more plausible than you first allowed.
+            Then move from the base rate in (a0) only as far as the specific evidence justifies.
 
             You write your rationale remembering that good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time.
             {self._get_conditional_disclaimer_if_necessary(question)}
@@ -379,10 +391,13 @@ class SummerTemplateBot2026(ForecastBot):
 
             {self._timing(question)}
 
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
             Before answering you write:
+            (a0) Before using the research: a reference class of similar past situations and how often they ended each way (the base rate), stated as a number.
             (a) The time left until the outcome to the question is known.
             (b) The status quo outcome if nothing changed.
             (c) A description of an scenario that results in an unexpected outcome.
+            (d) Pre-mortem: assume the option you favour does not happen. Which option most likely wins instead, and why? Keep real probability on it.
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You write your rationale remembering that (1) good forecasters put extra weight on the status quo outcome since the world changes slowly most of the time, and (2) good forecasters leave some moderate probability on most options to account for unexpected outcomes.
@@ -483,13 +498,16 @@ class SummerTemplateBot2026(ForecastBot):
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there. The value for percentile 10 should always be less than the value for percentile 20, and so on.
 
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
             Before answering you write:
+            (a0) Before using the research: the current value of the quantity (prefer a "Live data" figure) and how much it has typically moved over a period as long as the time left.
             (a) The time left until the outcome to the question is known.
             (b) The outcome if nothing changed.
             (c) The outcome if the current trend continued.
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+            (g) Pre-mortem: assume the outcome lands outside your 10-90 range. Which side is likelier, and is that tail wide enough?
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
@@ -580,13 +598,16 @@ class SummerTemplateBot2026(ForecastBot):
             - Always start with a lower date chronologically and then increase from there.
             - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
 
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
             Before answering you write:
+            (a0) Before using the research: the current value of the quantity (prefer a "Live data" figure) and how much it has typically moved over a period as long as the time left.
             (a) The time left until the outcome to the question is known.
             (b) The outcome if nothing changed.
             (c) The outcome if the current trend continued.
             (d) The expectations of experts and markets.
             (e) A brief description of an unexpected scenario that results in a low outcome.
             (f) A brief description of an unexpected scenario that results in a high outcome.
+            (g) Pre-mortem: assume the outcome lands outside your 10-90 range. Which side is likelier, and is that tail wide enough?
 
             {self._get_conditional_disclaimer_if_necessary(question)}
             You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
