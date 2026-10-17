@@ -95,10 +95,21 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     excludes from prizes (its own reference bots) do not count towards the
     total, matching what the page shows as numbered ranks.
     """
+    if isinstance(payload, list):
+        # The endpoint answers with every leaderboard of the project (seen
+        # 2026-10-17: a one-element list); the primary one is what the page
+        # shows.
+        boards = [b for b in payload if isinstance(b, dict)]
+        payload = next((b for b in boards if b.get("is_primary_leaderboard")),
+                       boards[0] if boards else None)
     if not isinstance(payload, dict):
         return None
     entries = payload.get("entries") or payload.get("results") or []
-    ranked = [e for e in entries if isinstance(e, dict) and not e.get("excluded")]
+    # The total is the last numbered position, as the page shows it: the
+    # entries list also carries unranked and excluded rows (236 entries
+    # against 136 positions on minibench-2026-09-21).
+    ranks = [e.get("rank") for e in entries
+             if isinstance(e, dict) and not e.get("excluded") and isinstance(e.get("rank"), int)]
     mine = None
     for e in entries:
         uid, name = _entry_user(e) if isinstance(e, dict) else (None, None)
@@ -112,7 +123,7 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     score = mine.get("score")
     return {
         "rank": int(mine["rank"]),
-        "total": len(ranked) or None,
+        "total": max(ranks) if ranks else None,
         "score": round(float(score), 1) if score is not None else None,
     }
 
@@ -240,6 +251,20 @@ def build(client: MetaculusReadClient, today: date,
     since = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
     posts = client.get_posts_forecasted_by(BOT_USER_ID)
     log(f"posts_forecasted_by_bot={len(posts)}")
+    # The listing carries resolutions but not the bot's own forecasts
+    # (my_forecasts is null there); those come only from /posts/<id>/. Fetch
+    # just the posts that can hold a forecast made this week: still open, or
+    # closed since the week began.
+    detailed = 0
+    for i, post in enumerate(posts):
+        closed = _parse(post.get("actual_close_time"))
+        if post.get("status") == "open" or (closed and closed >= since):
+            try:
+                posts[i] = client.get_json(f"/posts/{post['id']}/")
+                detailed += 1
+            except MetaculusReadError:
+                pass
+    log(f"posts_detailed={detailed}")
     rows = []
     for t in targets(today):
         standing, note = fetch_standing(client, t.project)
@@ -253,6 +278,43 @@ def build(client: MetaculusReadClient, today: date,
     return rows, week_start, week_end
 
 
+def _shape(value: Any, depth: int = 0) -> Any:
+    """Keys and types only, two levels deep, plus list lengths: enough to
+    see how a payload is laid out without dumping it."""
+    if depth > 2:
+        return type(value).__name__
+    if isinstance(value, dict):
+        return {k: _shape(v, depth + 1) for k, v in list(value.items())[:40]}
+    if isinstance(value, list):
+        return [f"len={len(value)}", _shape(value[0], depth + 1)] if value else ["len=0"]
+    return type(value).__name__
+
+
+def probe(client: MetaculusReadClient, today: date) -> None:
+    """Print the layout of the payloads this report reads (dry runs only)."""
+    for t in targets(today):
+        pid = project_id(client, t.project)
+        print(f"PROBE project {t.project} -> id {pid}")
+        if pid is None:
+            continue
+        try:
+            payload = client.get_json(f"/leaderboards/project/{pid}/")
+        except MetaculusReadError as exc:
+            print(f"PROBE leaderboard {pid}: error status={getattr(exc, 'status', None)}")
+            continue
+        print(f"PROBE leaderboard {pid} shape: {json.dumps(_shape(payload))[:1500]}")
+        entries = (payload.get("entries") or payload.get("results") or []) if isinstance(payload, dict) else []
+        mine = [e for e in entries if BOT_USERNAME in json.dumps(e)]
+        print(f"PROBE leaderboard {pid} bot rows: {json.dumps(mine)[:600]}")
+    posts = client.get_posts_forecasted_by(BOT_USER_ID)
+    if posts:
+        print(f"PROBE post shape: {json.dumps(_shape(posts[0]))[:2500]}")
+        q = (_questions(posts[0]) or [{}])[0]
+        print(f"PROBE question keys: {sorted(q.keys())}")
+        print(f"PROBE my_forecasts: {json.dumps(q.get('my_forecasts'))[:400]}")
+        print(f"PROBE projects: {json.dumps(posts[0].get('projects'))[:600]}")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--state", required=True, help="last week's JSON; rewritten unless --dry-run")
@@ -263,6 +325,8 @@ def main(argv: list[str] | None = None) -> int:
     token = os.environ.get("METACULUS_TOKEN", "")
     client = MetaculusReadClient(token)
     today = datetime.now(timezone.utc).date()
+    if args.dry_run:
+        probe(client, today)
     rows, week_start, week_end = build(client, today)
 
     previous = None
