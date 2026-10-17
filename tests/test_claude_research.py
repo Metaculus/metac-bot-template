@@ -71,7 +71,7 @@ class ResearchLoopTests(unittest.TestCase):
         call = fake.calls[0]
         self.assertEqual(call["model"], cr.MODEL)
         self.assertEqual(call["tools"][0]["type"], "web_search_20260209")
-        self.assertEqual(call["tools"][0]["max_uses"], cr.MAX_SEARCHES)
+        self.assertEqual(call["tools"][0]["max_uses"], cr.ROUND1_SEARCHES)
         self.assertEqual(call["output_config"], {"effort": cr.EFFORT})
         self.assertEqual(call["fallbacks"], "default")
         self.assertIn("server-side-fallback-2026-07-01", call["betas"])
@@ -110,6 +110,47 @@ class ResearchLoopTests(unittest.TestCase):
         self.assertIn("searches=4", line)
         self.assertIn("est_cost_usd=0.1700", line)  # 0.10 + 0.03 + 0.04
         self.assertNotIn("SECRET-RUNDOWN", line)
+
+
+class SecondRoundTests(unittest.TestCase):
+    def test_named_gaps_get_a_second_targeted_round(self):
+        first = response(text="BTC at $81k.\nGAPS: ETF flows last week; options expiry date")
+        with FakeAnthropic(first, response(text="ETF flows: +$1.2B (2026-10-16).\nGAPS: none")) as fake:
+            out = run(cr.research("q"))
+        self.assertEqual(len(fake.calls), 2)
+        self.assertEqual(fake.calls[1]["tools"][0]["max_uses"], cr.ROUND2_SEARCHES)
+        roles = [m["role"] for m in fake.calls[1]["messages"]]
+        self.assertEqual(roles, ["user", "assistant", "user"])
+        self.assertIn("GAPS:", fake.calls[1]["messages"][2]["content"])
+        self.assertIn("Follow-up on the gaps", out)
+        self.assertIn("+$1.2B", out)
+
+    def test_no_gaps_means_one_round(self):
+        with FakeAnthropic(response(text="All found.\nGAPS: none")) as fake:
+            run(cr.research("q"))
+        self.assertEqual(len(fake.calls), 1)
+
+    def test_an_expensive_first_round_skips_the_second(self):
+        pricey = response(text="x\nGAPS: something", tin=200_000)  # $0.40 of input
+        with FakeAnthropic(pricey) as fake:
+            run(cr.research("q"))
+        self.assertEqual(len(fake.calls), 1)
+
+    def test_a_failed_second_round_keeps_the_first(self):
+        first = response(text="Round one facts.\nGAPS: one thing")
+        fake = FakeAnthropic(first)  # second create() pops from an empty list -> IndexError
+        with fake:
+            out = run(cr.research("q"))
+        self.assertIn("Round one facts.", out)
+
+    def test_the_total_search_budget_is_unchanged(self):
+        self.assertEqual(cr.MAX_SEARCHES, 10)
+        self.assertEqual(cr.ROUND1_SEARCHES + cr.ROUND2_SEARCHES, cr.MAX_SEARCHES)
+
+    def test_gaps_parsing(self):
+        self.assertEqual(cr._gaps("a\nGAPS: x; y"), "x; y")
+        self.assertEqual(cr._gaps("a\nGAPS: none."), "")
+        self.assertEqual(cr._gaps("no line"), "")
 
 
 class EnabledTests(unittest.TestCase):
