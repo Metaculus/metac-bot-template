@@ -138,6 +138,29 @@ ROUTES = [
         "litellm_model": "openrouter/openai/gpt-4o-mini",
         "litellm_extra": {},
     },
+    # Candidate forecast VOTERS (pin_models.FORECAST_VOTERS), 2026-10-18.
+    # Same sponsored key and endpoint as the entry above; each is one tiny
+    # completion. Picked from the key's own catalogue (run 39073781573) at
+    # no more than Opus 5.5's price: GPT-5.6 Sol $4/$20, Gemini 3.1 Pro
+    # $2/$12 per million tokens (openrouter.ai/api/v1/models).
+    {
+        "label": "OpenRouter GPT-5.6 Sol (sponsored key)",
+        "env_candidates": ["OPENROUTER_API_KEY"],
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "auth_scheme": "Bearer",
+        "http_model": "openai/gpt-5.6-sol",
+        "litellm_model": "openrouter/openai/gpt-5.6-sol",
+        "litellm_extra": {},
+    },
+    {
+        "label": "OpenRouter Gemini 3.1 Pro (sponsored key)",
+        "env_candidates": ["OPENROUTER_API_KEY"],
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "auth_scheme": "Bearer",
+        "http_model": "google/gemini-3.1-pro-preview",
+        "litellm_model": "openrouter/google/gemini-3.1-pro-preview",
+        "litellm_extra": {},
+    },
     {
         # NOT a litellm provider. Verified: "metaculus" is absent from litellm's
         # LlmProviders enum, so `model="metaculus/..."` is NOT invocable.
