@@ -95,6 +95,13 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     excludes from prizes (its own reference bots) do not count towards the
     total, matching what the page shows as numbered ranks.
     """
+    if isinstance(payload, list):
+        # The endpoint answers with every leaderboard of the project (seen
+        # 2026-10-17: a one-element list); the primary one is what the page
+        # shows.
+        boards = [b for b in payload if isinstance(b, dict)]
+        payload = next((b for b in boards if b.get("is_primary_leaderboard")),
+                       boards[0] if boards else None)
     if not isinstance(payload, dict):
         return None
     entries = payload.get("entries") or payload.get("results") or []
@@ -240,6 +247,20 @@ def build(client: MetaculusReadClient, today: date,
     since = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
     posts = client.get_posts_forecasted_by(BOT_USER_ID)
     log(f"posts_forecasted_by_bot={len(posts)}")
+    # The listing carries resolutions but not the bot's own forecasts
+    # (my_forecasts is null there); those come only from /posts/<id>/. Fetch
+    # just the posts that can hold a forecast made this week: still open, or
+    # closed since the week began.
+    detailed = 0
+    for i, post in enumerate(posts):
+        closed = _parse(post.get("actual_close_time"))
+        if post.get("status") == "open" or (closed and closed >= since):
+            try:
+                posts[i] = client.get_json(f"/posts/{post['id']}/")
+                detailed += 1
+            except MetaculusReadError:
+                pass
+    log(f"posts_detailed={detailed}")
     rows = []
     for t in targets(today):
         standing, note = fetch_standing(client, t.project)

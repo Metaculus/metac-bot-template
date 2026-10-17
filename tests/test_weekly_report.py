@@ -38,6 +38,18 @@ class StandingTests(unittest.TestCase):
         payload = {"entries": [entry(1, 10)], "userEntry": {"rank": 59, "score": 67}}
         self.assertEqual(wr.standing_from(payload)["rank"], 59)
 
+    def test_a_list_of_leaderboards_uses_the_primary_one(self):
+        """The real endpoint answers with a list (seen 2026-10-17)."""
+        payload = [
+            {"is_primary_leaderboard": False, "entries": [entry(9, 1, uid=wr.BOT_USER_ID)]},
+            {"is_primary_leaderboard": True, "entries": [entry(1, 783), entry(2, 700)],
+             "userEntry": {"rank": 59, "score": 67.2, "user": {"id": wr.BOT_USER_ID}}},
+        ]
+        self.assertEqual(wr.standing_from(payload), {"rank": 59, "total": 2, "score": 67.2})
+
+    def test_an_empty_leaderboard_is_none(self):
+        self.assertIsNone(wr.standing_from([{"is_primary_leaderboard": True, "entries": []}]))
+
     def test_absent_or_unranked_is_none(self):
         self.assertIsNone(wr.standing_from({"entries": [entry(1, 10)]}))
         self.assertIsNone(wr.standing_from(None))
