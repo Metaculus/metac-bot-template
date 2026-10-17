@@ -120,6 +120,8 @@ DEFAULT_LIMITS: dict[str, ProviderLimits] = {
     # models.txt override back to it keeps a registered bucket key.
     "openrouter/anthropic/claude-opus-5.5": ProviderLimits(),
     "openrouter/anthropic/claude-haiku-4.5": ProviderLimits(),
+    # Second-vendor forecast voter (pin_models.FORECAST_VOTERS), 2026-10-18.
+    "openrouter/openai/gpt-5.6-sol": ProviderLimits(),
     # The researcher's first link when an AskNews credential is present (see
     # pin_models.ACTIVE_ASKNEWS). Not an LLM: forecasting_tools' GeneralLlm
     # routes this model string to AskNewsSearcher, which paces its own two

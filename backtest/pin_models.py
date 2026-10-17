@@ -374,6 +374,7 @@ RATE_LIMITED_MODELS = frozenset(
         "openrouter/anthropic/claude-opus-5.5",
         "openrouter/nvidia/nemotron-3.5-lightning:free",
         "openrouter/openai/gpt-4o-mini",
+        "openrouter/openai/gpt-5.6-sol",
     }
 )
 
@@ -425,7 +426,10 @@ TRIES_STANDALONE = 3
 # extra_body reaches the request verbatim (checked against a local stand-in
 # for the OpenRouter endpoint). The cheap fallbacks and the other roles are left
 # as they were. Thinking takes longer, hence the larger timeout.
-FORECASTER_REASONING = {"openrouter/anthropic/claude-opus-5.5": "high"}
+FORECASTER_REASONING = {
+    "openrouter/anthropic/claude-opus-5.5": "high",
+    "openrouter/openai/gpt-5.6-sol": "high",
+}
 FORECASTER_TIMEOUT_SECONDS = 420
 
 
@@ -533,6 +537,26 @@ def _fallbacks_for(role: str) -> list[str]:
 FORECAST_GRADE: frozenset[str] = frozenset()
 
 
+# SECOND-VENDOR FORECAST VOTERS -- 2026-10-18.
+#
+# Voters that are NOT fallbacks: they join the forecaster ensemble only, so the
+# once-per-question roles (researcher, summarizer, parser) keep exactly the
+# chains they had. Every top-10 respondent in Metaculus' Spring 2026 survey had
+# a GPT-5.x model in the ensemble, and the open top bots (nostreambot, Ora)
+# mix vendors; five Opus samples over one shared research text make the same
+# mistakes together.
+#
+# GPT-5.6 Sol: smoke-tested on the sponsored key (run 39073967369: http,
+# litellm and structured output all OK), and priced like Opus 5.5 ($4/$20 per
+# M tokens, openrouter.ai/api/v1/models) -- splitting the five calls between
+# them costs what five Opus calls did. Gemini 3.1 Pro was tried in the same
+# run and failed with an upstream Google quota error, so it is not here.
+FORECAST_VOTERS = [
+    ("openrouter/openai/gpt-5.6-sol", "OPENROUTER_API_KEY"),
+]
+ACTIVE_VOTERS = [(m, e) for m, e in FORECAST_VOTERS if os.getenv(e)]
+
+
 def _ensemble_primaries(model: str) -> list[str]:
     """The distinct primary models the forecaster ensembles over.
 
@@ -545,6 +569,9 @@ def _ensemble_primaries(model: str) -> list[str]:
     for fb_model, _env in ACTIVE_FALLBACKS:
         if fb_model in FORECAST_GRADE and fb_model not in primaries:
             primaries.append(fb_model)
+    for voter, _env in ACTIVE_VOTERS:
+        if voter not in primaries:
+            primaries.append(voter)
     return primaries
 
 
@@ -627,11 +654,10 @@ def _role_expr(role: str, model: str) -> str:
         # with no fallback key, which is why this precedes the bare-backend
         # return below. See the AskNews note above ACTIVE_ASKNEWS.
         return _chain_expr(ASKNEWS_MODEL, [model, *fallbacks])
-    if not fallbacks:
-        return _backend_expr(model, role=role)
-
     if role == "default" and len(_ensemble_primaries(model)) > 1:
         return _ensemble_expr(model)
+    if not fallbacks:
+        return _backend_expr(model, role=role)
     return _chain_expr(model, fallbacks, role=role)
 
 
@@ -650,6 +676,10 @@ def _runtime_chain(role: str, model: str) -> list[str]:
     fallbacks = _fallbacks_for(role)
     if role == "researcher" and ACTIVE_ASKNEWS:
         return _chain_models(ASKNEWS_MODEL, [model, *fallbacks])
+    if role == "default":
+        # The voters run on every question too, so --check must prove they
+        # answer: first chain's order, primaries then non-voting fallbacks.
+        return _chain_models(model, [*_ensemble_primaries(model)[1:], *fallbacks])
     return _chain_models(model, fallbacks)
 
 
@@ -873,7 +903,13 @@ def _eval_llms_dict(generated: str, active_fallbacks: list, models: dict[str, st
         # Wrapped exactly when the generator wraps: a fallback behind the
         # primary, or AskNews in front of the researcher (which wraps even
         # with no fallback key at all).
-        wrapped = bool(expected_fallbacks) or (role == "researcher" and ACTIVE_ASKNEWS)
+        # The forecaster also wraps whenever it ensembles: a FORECAST_VOTERS
+        # entry is active on its own key even when no fallback is.
+        wrapped = (
+            bool(expected_fallbacks)
+            or (role == "researcher" and ACTIVE_ASKNEWS)
+            or (role == "default" and len(_ensemble_primaries(primary)) > 1)
+        )
         if role == "researcher" and ACTIVE_ASKNEWS:
             assert expected_chain[0] == ASKNEWS_MODEL
             # Unless models.txt itself names AskNews as the researcher, in
@@ -905,9 +941,17 @@ def _eval_llms_dict(generated: str, active_fallbacks: list, models: dict[str, st
                     assert served[0] == primary, (
                         f"{role}: chain leads with {served[0]}, expected {primary}"
                     )
-                    assert sorted(served) == sorted(primaries), (
+                    assert sorted(served[:len(primaries)]) == sorted(primaries), (
                         f"{role}: chain {served} does not cover every primary "
                         f"{primaries}; a saturated lead would lose the call"
+                    )
+                    # Behind the voters come the non-voting fallbacks, in
+                    # production order, so a voter that fails degrades just as
+                    # the single-chain forecaster would.
+                    expected_tail = [m for m in _fallbacks_for(role) if m not in primaries]
+                    assert served[len(primaries):] == expected_tail, (
+                        f"{role}: chain tail {served[len(primaries):]} != "
+                        f"non-voting fallbacks {expected_tail}"
                     )
                 # An unregistered limiter key resolves to an UNTHROTTLED
                 # limiter, which would silently disable Groq's measured 8000

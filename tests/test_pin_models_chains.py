@@ -174,6 +174,7 @@ GPT_4O_MINI = "openrouter/openai/gpt-4o-mini"
 GEMINI = "gemini/gemini-3.5-flash-lite"
 GROQ_OSS = "groq/openai/gpt-oss-120b"
 GROQ_QWEN = "groq/qwen/qwen3.8-27b"
+GPT_SOL = "openrouter/openai/gpt-5.6-sol"
 
 
 def chains_by_role(pm, models):
@@ -249,16 +250,36 @@ class ChainsNameEachBackendOnceTests(unittest.TestCase):
         self.assertEqual(chains["summarizer"], [[HAIKU, GEMINI, GROQ_OSS]])
         self.assertEqual(
             chains["parser"], [[GPT_4O_MINI, HAIKU, GEMINI, GROQ_QWEN]])
-        # The forecaster: Opus answers all five calls; the cheap models only
-        # catch a failure. They used to be ensemble voters, which put three
-        # or four of every five forecasts on them (see FORECAST_GRADE).
-        self.assertEqual(chains["default"], [[OPUS, HAIKU, GEMINI, GROQ_OSS]])
+        # The forecaster: Opus and GPT-5.6 Sol share the five calls (one chain
+        # each, see FORECAST_VOTERS); the cheap models only catch a failure.
+        # They used to be ensemble voters, which put three or four of every
+        # five forecasts on them (see FORECAST_GRADE).
+        self.assertEqual(chains["default"], [
+            [OPUS, GPT_SOL, HAIKU, GEMINI, GROQ_OSS],
+            [GPT_SOL, OPUS, HAIKU, GEMINI, GROQ_OSS],
+        ])
 
     def test_cheap_fallbacks_never_vote_in_the_forecaster_ensemble(self):
         pm = load(**self.PRODUCTION)
-        self.assertEqual(pm._ensemble_primaries(pm.DEFAULTS["default"]), [OPUS])
+        self.assertEqual(pm._ensemble_primaries(pm.DEFAULTS["default"]), [OPUS, GPT_SOL])
         for cheap in (HAIKU, GEMINI, GROQ_OSS):
             self.assertNotIn(cheap, pm.FORECAST_GRADE)
+            self.assertNotIn(cheap, [m for m, _ in pm.FORECAST_VOTERS])
+
+    def test_voters_were_smoke_tested_and_cost_no_more_than_opus(self):
+        """Provenance, like test_fallback_llm's verified set: a voter answers
+        every question, so it must have passed a real completion first."""
+        import backtest.pin_models as pin
+        verified = {GPT_SOL}  # smoke-test run 39073967369: http/litellm/structured OK
+        for model, _env in pin.FORECAST_VOTERS:
+            self.assertIn(model, verified, model + " was never smoke-tested")
+
+    def test_voters_reach_only_the_forecaster(self):
+        pm = load(**self.PRODUCTION)
+        chains = chains_by_role(pm, pm.DEFAULTS)
+        for role in ("researcher", "summarizer", "parser"):
+            for chain in chains[role]:
+                self.assertNotIn(GPT_SOL, chain, role)
 
     def test_a_forecast_grade_fallback_gets_its_own_chain(self):
         """How a second frontier voter would be wired: one chain per primary,
@@ -267,8 +288,9 @@ class ChainsNameEachBackendOnceTests(unittest.TestCase):
         pm.FORECAST_GRADE = frozenset({GEMINI})
         chains = chains_by_role(pm, pm.DEFAULTS)
         self.assertEqual(chains["default"], [
-            [OPUS, GEMINI, HAIKU, GROQ_OSS],
-            [GEMINI, OPUS, HAIKU, GROQ_OSS],
+            [OPUS, GEMINI, GPT_SOL, HAIKU, GROQ_OSS],
+            [GEMINI, OPUS, GPT_SOL, HAIKU, GROQ_OSS],
+            [GPT_SOL, OPUS, GEMINI, HAIKU, GROQ_OSS],
         ])
 
     def test_an_override_naming_a_fallback_model_does_not_repeat_it(self):
@@ -502,8 +524,10 @@ class ForecasterReasoningTests(unittest.TestCase):
         block = pm.build_block(pm.DEFAULTS)
         default = self._role_entry(block, "default", "summarizer")
         for line in default.splitlines():
-            if "GeneralLlm(" in line and OPUS not in line:
+            if "GeneralLlm(" in line and OPUS not in line and GPT_SOL not in line:
                 self.assertNotIn("extra_body", line)
+        gpt_line = next(l for l in default.splitlines() if GPT_SOL in l)
+        self.assertIn('"effort": "high"', gpt_line)
         rest = block[block.index('"summarizer"'):]
         self.assertNotIn("extra_body", rest)
 
