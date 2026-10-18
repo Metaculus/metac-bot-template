@@ -27,32 +27,75 @@ from __future__ import annotations
 
 import logging
 import os
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-sonnet-5-5"
+
+@dataclass(frozen=True)
+class Engine:
+    model: str
+    web_search: str          # tool type this model accepts
+    price_in: float          # USD per input token (logged estimate only)
+    price_out: float
+    fallbacks: bool          # server-side refusal fallback available
+
+
+#: Sonnet 5.5 takes the dynamic-filtering web search; Haiku 5.5 only the basic
+#: variant and has no server-side refusal fallback. Haiku 5.5 is ~20x cheaper
+#: per token ($0.10/$0.50 vs $2/$10 per M), so the same money buys more
+#: searches; which reads better is decided by an A/B on Test Bot, not assumed.
+ENGINES = {
+    "sonnet": Engine("claude-sonnet-5-5", "web_search_20260209", 2.0 / 1e6, 10.0 / 1e6, True),
+    "haiku": Engine("claude-haiku-5-5", "web_search_20250305", 0.10 / 1e6, 0.50 / 1e6, False),
+}
+#: Haiku since 2026-10-18. A/B on the same nine practice questions (Test Bot
+#: runs 39091393405 vs 39091407899): Sonnet $0.243/question, 5-13 searches,
+#: several "could not read the figures"; Haiku $0.172/question, 11-20
+#: searches over three gap-driven rounds, 3-4x the dated facts (e.g. DDHQ,
+#: Poliwave and Kalshi odds with dates where Sonnet had none). Cheaper and
+#: better, so it is the default; Sonnet stays one variable away.
+DEFAULT_ENGINE = "haiku"
+
+#: Searches per round, by depth. "full" is for prize tournaments (FutureEval,
+#: MiniBench, Market Pulse); "light" for the unpaid Cup, whose weekly
+#: refreshes otherwise take a large share of the ~EUR100/month Claude-API
+#: budget (the Max-plan credit; hard limit). A round after the first runs only
+#: when the previous one named gaps and the question's spend is under
+#: ROUND_MAX_PRIOR_COST.
+ROUNDS = {
+    ("sonnet", "full"): (8, 5),
+    ("sonnet", "light"): (4,),
+    ("haiku", "full"): (10, 6, 4),
+    ("haiku", "light"): (6,),
+    # One targeted pass on what the forecasters disagreed about
+    # (disagreement.py); runs only on the questions where they did.
+    ("sonnet", "crux"): (4,),
+    ("haiku", "crux"): (6,),
+}
+ROUND_MAX_PRIOR_COST = 0.22
+
+#: Kept for callers and tests that read the defaults.
+MODEL = ENGINES[DEFAULT_ENGINE].model
+ROUND1_SEARCHES = ROUNDS[(DEFAULT_ENGINE, "full")][0]
+ROUND2_SEARCHES = ROUNDS[(DEFAULT_ENGINE, "full")][1]
+MAX_SEARCHES = sum(ROUNDS[(DEFAULT_ENGINE, "full")])
+ROUND2_MAX_PRIOR_COST = ROUND_MAX_PRIOR_COST
 #: Research is reading and summarising, not the judgement the score depends
 #: on; medium keeps the search loop focused and the spend predictable.
 EFFORT = "medium"
-#: Two rounds, same total as the single round they replace (10 searches):
-#: round one surveys the question, round two goes after the specific facts
-#: round one reports missing ("GAPS:"). The top MiniBench bots iterate on
-#: what is missing (FutureSearch: "dozens of searches"; Ora and nostreambot:
-#: gap-fill passes); a second round aimed at named gaps buys that with no
-#: more searches than before, so the spend stays where it was.
-ROUND1_SEARCHES = 6
-ROUND2_SEARCHES = 4
-MAX_SEARCHES = ROUND1_SEARCHES + ROUND2_SEARCHES
-#: Round two runs only while round one stayed under this many dollars: the
-#: Claude-API budget is a hard ~EUR100/month (the Max-plan API credit).
-ROUND2_MAX_PRIOR_COST = 0.20
 MAX_TOKENS = 16000
 #: A long server-side search loop pauses after ~10 iterations; each resume is
 #: another request. Bounded so a stuck loop cannot spend without limit.
 MAX_RESUMES = 3
+PRICE_SEARCH = 10.0 / 1000
+PRICE_IN, PRICE_OUT = ENGINES[DEFAULT_ENGINE].price_in, ENGINES[DEFAULT_ENGINE].price_out
 
-#: USD, for the logged estimate only. Search priced per 1,000 requests.
-PRICE_IN, PRICE_OUT, PRICE_SEARCH = 2.0 / 1e6, 10.0 / 1e6, 10.0 / 1000
+
+def engine_name() -> str:
+    name = os.environ.get("CLAUDE_RESEARCH_ENGINE", "").strip().lower() or DEFAULT_ENGINE
+    return name if name in ENGINES else DEFAULT_ENGINE
+
 
 SYSTEM = (
     "You research forecasting questions for a professional forecaster. Search "
@@ -92,24 +135,26 @@ def _gaps(text: str) -> str:
     return ""
 
 
-async def _round(client, messages: list[dict], max_searches: int) -> tuple:
+async def _round(client, engine: Engine, messages: list[dict], max_searches: int) -> tuple:
     """One research round: (final response, tokens_in, tokens_out, searches)."""
-    tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": max_searches}]
+    tools = [{"type": engine.web_search, "name": "web_search", "max_uses": max_searches}]
+    extra: dict = {}
+    if engine.fallbacks:
+        # A policy decline is re-run on a fallback model inside the same call
+        # instead of returning nothing.
+        extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
     tokens_in = tokens_out = searches = 0
     response = None
     first_user = messages
     for _ in range(MAX_RESUMES + 1):
         response = await client.beta.messages.create(
-            model=MODEL,
+            model=engine.model,
             max_tokens=MAX_TOKENS,
             system=SYSTEM,
             messages=messages,
             tools=tools,
             output_config={"effort": EFFORT},
-            # A policy decline is re-run on a fallback model inside the same
-            # call instead of returning nothing.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
+            **extra,
         )
         usage = response.usage
         tokens_in += (usage.input_tokens or 0) + (usage.cache_read_input_tokens or 0) \
@@ -124,44 +169,57 @@ async def _round(client, messages: list[dict], max_searches: int) -> tuple:
     return response, tokens_in, tokens_out, searches
 
 
-def _cost(tokens_in: int, tokens_out: int, searches: int) -> float:
-    return tokens_in * PRICE_IN + tokens_out * PRICE_OUT + searches * PRICE_SEARCH
+def _cost(engine: Engine, tokens_in: int, tokens_out: int, searches: int) -> float:
+    return tokens_in * engine.price_in + tokens_out * engine.price_out + searches * PRICE_SEARCH
 
 
-async def research(prompt: str) -> str:
-    """One research rundown for ``prompt``, using live web search."""
+async def research(prompt: str, depth: str = "full", engine_key: str | None = None) -> str:
+    """One research rundown for ``prompt``, using live web search.
+
+    Round one surveys the question and ends with a GAPS line; each later round
+    (as many as ROUNDS allows for this engine and depth) searches only the
+    gaps the previous round named, while the spend stays under
+    ROUND_MAX_PRIOR_COST.
+    """
     import anthropic
 
+    key = engine_key or engine_name()
+    engine = ENGINES[key]
+    plan = ROUNDS.get((key, depth)) or ROUNDS[(key, "full")]
     client = anthropic.AsyncAnthropic()
     first = [{"role": "user", "content": prompt}]
-    response, t_in, t_out, searches = await _round(client, first, ROUND1_SEARCHES)
+    response, t_in, t_out, searches = await _round(client, engine, first, plan[0])
     if response.stop_reason == "refusal":
         raise RuntimeError("claude_research refused")
     text = _text(response.content)
     rounds = 1
 
-    gaps = _gaps(text)
-    if text and gaps and _cost(t_in, t_out, searches) < ROUND2_MAX_PRIOR_COST:
+    for budget in plan[1:]:
+        gaps = _gaps(text)
+        if not (text and gaps) or _cost(engine, t_in, t_out, searches) >= ROUND_MAX_PRIOR_COST:
+            break
         follow = [
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": text},
             {"role": "user", "content": ROUND2},
         ]
         try:
-            r2, i2, o2, s2 = await _round(client, follow, ROUND2_SEARCHES)
-            t_in, t_out, searches = t_in + i2, t_out + o2, searches + s2
-            extra = _text(r2.content) if r2.stop_reason != "refusal" else ""
-            if extra:
-                text = f"{text}\n\n## Follow-up on the gaps\n{extra}"
-                rounds = 2
-        except Exception as exc:  # noqa: BLE001 - round one already stands
-            logger.warning("claude_research_round2_failed reason=%s", type(exc).__name__)
+            rn, i2, o2, s2 = await _round(client, engine, follow, budget)
+        except Exception as exc:  # noqa: BLE001 - earlier rounds already stand
+            logger.warning("claude_research_round%d_failed reason=%s", rounds + 1, type(exc).__name__)
+            break
+        t_in, t_out, searches = t_in + i2, t_out + o2, searches + s2
+        extra_text = _text(rn.content) if rn.stop_reason != "refusal" else ""
+        if not extra_text:
+            break
+        rounds += 1
+        text = f"{text}\n\n## Follow-up on the gaps (round {rounds})\n{extra_text}"
 
     logger.info(
-        "claude_research model=%s stop=%s rounds=%d searches=%d tokens_in=%d "
-        "tokens_out=%d est_cost_usd=%.4f",
-        response.model, response.stop_reason, rounds, searches, t_in, t_out,
-        _cost(t_in, t_out, searches),
+        "claude_research engine=%s depth=%s model=%s stop=%s rounds=%d searches=%d "
+        "tokens_in=%d tokens_out=%d est_cost_usd=%.4f",
+        key, depth, response.model, response.stop_reason, rounds, searches, t_in, t_out,
+        _cost(engine, t_in, t_out, searches),
     )
     if not text:
         raise RuntimeError(f"claude_research returned no text (stop={response.stop_reason})")

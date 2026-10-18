@@ -7,6 +7,7 @@ from typing import Literal
 import dotenv
 
 import claude_research
+import disagreement
 import live_context
 import forecast_guards
 
@@ -26,6 +27,8 @@ import tournaments
 
 silence_noisy_dependencies()
 
+from forecasting_tools.data_models.data_organizer import DataOrganizer
+from forecasting_tools.data_models.forecast_report import ResearchWithPredictions
 from forecasting_tools import (
     AskNewsSearcher,
     BinaryQuestion,
@@ -199,6 +202,70 @@ class SummerTemplateBot2026(ForecastBot):
 
     _structure_output_validation_samples = 2
 
+    #: "full" for prize tournaments; main sets "light" for the unpaid Cup so
+    #: its weekly refreshes do not eat the ~EUR100/month Claude-API budget.
+    research_depth = "full"
+
+    ############################## DISAGREEMENT FOLLOW-UP ##############################
+
+    async def _research_and_make_predictions(self, question: MetaculusQuestion):
+        """The SDK's research-then-five-forecasts, plus one targeted research
+        pass and a fresh set of forecasts when the five disagree widely
+        (disagreement.SPREAD_THRESHOLD). See disagreement.py for why."""
+        result = await super()._research_and_make_predictions(question)
+        values = [p.prediction_value for p in result.predictions]
+        if not (claude_research.enabled() and disagreement.needs_crux(values)):
+            return result
+        pair = disagreement.extremes(result.predictions)
+        if pair is None:
+            return result
+        logger.info("crux_triggered spread=%.2f question=%s",
+                    disagreement.spread(values), question.page_url)
+        try:
+            extra = await claude_research.research(
+                disagreement.crux_prompt(question.question_text, self._timing(question),
+                                         pair[0].reasoning, pair[1].reasoning),
+                depth="crux",
+            )
+        except Exception as exc:  # noqa: BLE001 - keep the first forecasts
+            logger.warning("crux_research_failed reason=%s", type(exc).__name__)
+            return result
+        research = f"{result.research_report}\n\n## Follow-up on the forecasters' disagreement\n{extra}"
+        valid, errors, _group = await self._gather_results_and_exceptions(
+            [self._make_prediction(question, research)
+             for _ in range(self.predictions_per_research_report)]
+        )
+        if not valid:
+            return result
+        logger.info("crux_resolved spread_before=%.2f spread_after=%.2f",
+                    disagreement.spread(values),
+                    disagreement.spread([p.prediction_value for p in valid]))
+        return ResearchWithPredictions(
+            research_report=research,
+            summary_report=result.summary_report,
+            errors=[*result.errors, *errors],
+            predictions=valid,
+        )
+
+    def _create_comment(self, question, research_prediction_collections,
+                        aggregated_prediction, final_cost, time_spent_in_minutes) -> str:
+        """Short public comment: forecast, research summary, and the reasoning
+        closest to the final answer; no model names. See
+        disagreement.short_comment."""
+        report_type = DataOrganizer.get_report_type_for_question_type(type(question))
+        predictions = [p for c in research_prediction_collections for p in c.predictions]
+        values = [p.prediction_value for p in predictions]
+        summary = next((c.summary_report for c in research_prediction_collections
+                        if c.summary_report), "")
+        idx = disagreement.closest_to(values, aggregated_prediction)
+        return disagreement.short_comment(
+            question.question_text,
+            report_type.make_readable_prediction(aggregated_prediction),
+            [report_type.make_readable_prediction(v) for v in values],
+            summary,
+            predictions[idx].reasoning if predictions else "",
+        )
+
     def _timing(self, question: MetaculusQuestion) -> str:
         """Today, close and resolution dates, and the stale-knowledge warning,
         for every prompt; see forecast_guards.timing_context."""
@@ -244,7 +311,9 @@ class SummerTemplateBot2026(ForecastBot):
             # this question, never the forecast. See claude_research.
             if claude_research.enabled():
                 try:
-                    research = await claude_research.research(prompt)
+                    research = await claude_research.research(
+                        prompt, depth=self.research_depth
+                    )
                 except Exception as exc:  # noqa: BLE001 - fall back, never fail
                     logger.warning(
                         "claude_research_failed reason=%s falling_back=true",
@@ -853,7 +922,7 @@ if __name__ == "__main__":
         publish_reports_to_metaculus=publish_to_metaculus,
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
-        extra_metadata_in_explanation=True,
+        extra_metadata_in_explanation=False,
         # llms={
         #     "default": GeneralLlm(
         #         model="openrouter/openai/gpt-4o",
@@ -901,6 +970,7 @@ if __name__ == "__main__":
         # AI_2027_TOURNAMENT_ID = "ai-2027" is another unpaid target with a
         # good mix of question types (FutureEval resources page).
         template_bot.skip_previously_forecasted_questions = False
+        template_bot.research_depth = "light"
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select_stale(
