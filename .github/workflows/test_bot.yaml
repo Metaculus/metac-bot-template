@@ -5,11 +5,11 @@ on:
     inputs:
       research_engine:
         # A/B for claude_research: same unscored practice questions, research
-        # by Sonnet 5.5 (production default) or Haiku 5.5. Compare the
+        # by Haiku 5.5 (production default since 2026-10-18) or Sonnet 5.5. Compare the
         # "claude_research engine=..." log lines and the research text.
-        description: "Claude research engine (sonnet | haiku)"
+        description: "Claude research engine (haiku = production default | sonnet)"
         required: false
-        default: "sonnet"
+        default: "haiku"
         type: choice
         options: ["sonnet", "haiku"]
 

@@ -49,7 +49,13 @@ ENGINES = {
     "sonnet": Engine("claude-sonnet-5-5", "web_search_20260209", 2.0 / 1e6, 10.0 / 1e6, True),
     "haiku": Engine("claude-haiku-5-5", "web_search_20250305", 0.10 / 1e6, 0.50 / 1e6, False),
 }
-DEFAULT_ENGINE = "sonnet"
+#: Haiku since 2026-10-18. A/B on the same nine practice questions (Test Bot
+#: runs 39091393405 vs 39091407899): Sonnet $0.243/question, 5-13 searches,
+#: several "could not read the figures"; Haiku $0.172/question, 11-20
+#: searches over three gap-driven rounds, 3-4x the dated facts (e.g. DDHQ,
+#: Poliwave and Kalshi odds with dates where Sonnet had none). Cheaper and
+#: better, so it is the default; Sonnet stays one variable away.
+DEFAULT_ENGINE = "haiku"
 
 #: Searches per round, by depth. "full" is for prize tournaments (FutureEval,
 #: MiniBench, Market Pulse); "light" for the unpaid Cup, whose weekly
@@ -71,8 +77,9 @@ ROUND_MAX_PRIOR_COST = 0.22
 
 #: Kept for callers and tests that read the defaults.
 MODEL = ENGINES[DEFAULT_ENGINE].model
-ROUND1_SEARCHES, ROUND2_SEARCHES = ROUNDS[(DEFAULT_ENGINE, "full")]
-MAX_SEARCHES = ROUND1_SEARCHES + ROUND2_SEARCHES
+ROUND1_SEARCHES = ROUNDS[(DEFAULT_ENGINE, "full")][0]
+ROUND2_SEARCHES = ROUNDS[(DEFAULT_ENGINE, "full")][1]
+MAX_SEARCHES = sum(ROUNDS[(DEFAULT_ENGINE, "full")])
 ROUND2_MAX_PRIOR_COST = ROUND_MAX_PRIOR_COST
 #: Research is reading and summarising, not the judgement the score depends
 #: on; medium keeps the search loop focused and the spend predictable.

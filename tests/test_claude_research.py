@@ -66,12 +66,12 @@ def run(coro):
 class ResearchLoopTests(unittest.TestCase):
     def test_returns_the_text_and_requests_web_search(self):
         with FakeAnthropic(response(text="BTC was $61,200 on 2026-10-14.")) as fake:
-            out = run(cr.research("What will BTC close at?"))
+            out = run(cr.research("What will BTC close at?", engine_key="sonnet"))
         self.assertEqual(out, "BTC was $61,200 on 2026-10-14.")
         call = fake.calls[0]
-        self.assertEqual(call["model"], cr.MODEL)
+        self.assertEqual(call["model"], "claude-sonnet-5-5")
         self.assertEqual(call["tools"][0]["type"], "web_search_20260209")
-        self.assertEqual(call["tools"][0]["max_uses"], cr.ROUND1_SEARCHES)
+        self.assertEqual(call["tools"][0]["max_uses"], cr.ROUNDS[("sonnet", "full")][0])
         self.assertEqual(call["output_config"], {"effort": cr.EFFORT})
         self.assertEqual(call["fallbacks"], "default")
         self.assertIn("server-side-fallback-2026-07-01", call["betas"])
@@ -105,7 +105,7 @@ class ResearchLoopTests(unittest.TestCase):
     def test_cost_is_logged_without_content(self):
         with FakeAnthropic(response(text="SECRET-RUNDOWN", searches=4, tin=50_000, tout=3_000)):
             with self.assertLogs("claude_research", level=logging.INFO) as logs:
-                run(cr.research("q"))
+                run(cr.research("q", engine_key="sonnet"))
         line = "\n".join(logs.output)
         self.assertIn("searches=4", line)
         self.assertIn("est_cost_usd=0.1700", line)  # 0.10 + 0.03 + 0.04
@@ -119,6 +119,7 @@ class SecondRoundTests(unittest.TestCase):
             out = run(cr.research("q"))
         self.assertEqual(len(fake.calls), 2)
         self.assertEqual(fake.calls[1]["tools"][0]["max_uses"], cr.ROUND2_SEARCHES)
+        self.assertEqual(fake.calls[0]["model"], cr.MODEL)
         roles = [m["role"] for m in fake.calls[1]["messages"]]
         self.assertEqual(roles, ["user", "assistant", "user"])
         self.assertIn("GAPS:", fake.calls[1]["messages"][2]["content"])
@@ -131,9 +132,9 @@ class SecondRoundTests(unittest.TestCase):
         self.assertEqual(len(fake.calls), 1)
 
     def test_an_expensive_first_round_skips_the_second(self):
-        pricey = response(text="x\nGAPS: something", tin=200_000)  # $0.40 of input
+        pricey = response(text="x\nGAPS: something", tin=200_000)  # $0.40 of Sonnet input
         with FakeAnthropic(pricey) as fake:
-            run(cr.research("q"))
+            run(cr.research("q", engine_key="sonnet"))
         self.assertEqual(len(fake.calls), 1)
 
     def test_a_failed_second_round_keeps_the_first(self):
@@ -144,8 +145,8 @@ class SecondRoundTests(unittest.TestCase):
         self.assertIn("Round one facts.", out)
 
     def test_prize_questions_get_more_searches_than_the_cup(self):
-        full = sum(cr.ROUNDS[("sonnet", "full")])
-        light = sum(cr.ROUNDS[("sonnet", "light")])
+        full = sum(cr.ROUNDS[(cr.DEFAULT_ENGINE, "full")])
+        light = sum(cr.ROUNDS[(cr.DEFAULT_ENGINE, "light")])
         self.assertEqual(cr.MAX_SEARCHES, full)
         self.assertGreater(full, light)
 
@@ -153,7 +154,8 @@ class SecondRoundTests(unittest.TestCase):
         with FakeAnthropic(response(text="x\nGAPS: something")) as fake:
             run(cr.research("q", depth="light"))
         self.assertEqual(len(fake.calls), 1)
-        self.assertEqual(fake.calls[0]["tools"][0]["max_uses"], cr.ROUNDS[("sonnet", "light")][0])
+        self.assertEqual(fake.calls[0]["tools"][0]["max_uses"],
+                         cr.ROUNDS[(cr.DEFAULT_ENGINE, "light")][0])
 
     def test_haiku_engine_uses_the_basic_search_and_no_fallbacks(self):
         with FakeAnthropic(response(text="x\nGAPS: none")) as fake:
@@ -172,6 +174,10 @@ class SecondRoundTests(unittest.TestCase):
         self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls],
                          list(cr.ROUNDS[("haiku", "full")]))
         self.assertIn("(round 3)", out)
+
+    def test_haiku_is_the_production_default(self):
+        self.assertEqual(cr.DEFAULT_ENGINE, "haiku")
+        self.assertEqual(cr.MODEL, "claude-haiku-5-5")
 
     def test_engine_comes_from_the_environment(self):
         with mock.patch.dict(os.environ, {"CLAUDE_RESEARCH_ENGINE": "haiku"}):
