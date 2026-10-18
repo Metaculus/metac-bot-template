@@ -16,7 +16,7 @@ What it adds, all free, keyless or the bot's own token, GET only:
     prediction (bot token, the same read the SDK already does);
   * crypto spot prices (CoinGecko) and stock/index closes with a one-month
     range (Yahoo chart API), for assets the question names;
-  * possibly related prediction markets (Polymarket, Manifold), labelled as
+  * possibly related prediction markets (Polymarket, Kalshi, Manifold), labelled as
     such: the forecaster must judge whether they match the question;
   * the text of up to three pages linked from the resolution criteria.
 
@@ -218,7 +218,22 @@ def prediction_markets(question: Any, fetch: Fetch) -> str:
                              f"{m['probability']:.0%} ({m.get('uniqueBettorCount', '?')} traders)")
     except Exception:  # noqa: BLE001
         pass
-    return "\n".join(lines[:6])
+    try:
+        data = _json(fetch, "https://api.elections.kalshi.com/v1/search/series?"
+                     + urllib.parse.urlencode({"query": q, "page_size": 3}))
+        for ev in (data.get("current_page") or [])[:3]:
+            title = ev.get("event_title") or ev.get("series_title") or ""
+            if not _related(qwords, title):
+                continue
+            markets = sorted((ev.get("markets") or []),
+                             key=lambda m: -float(m.get("last_price_dollars") or 0))[:4]
+            shown = ", ".join(f"{m.get('yes_subtitle') or m.get('ticker')} "
+                              f"{float(m.get('last_price_dollars') or 0):.0%}" for m in markets)
+            if shown:
+                lines.append(f"- Kalshi \"{title[:140]}\": {shown}")
+    except Exception:  # noqa: BLE001
+        pass
+    return "\n".join(lines[:8])
 
 
 # ---------------------------------------------------------- resolution sources

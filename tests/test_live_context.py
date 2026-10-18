@@ -90,6 +90,10 @@ class MarketTests(unittest.TestCase):
             "https://gamma-api.polymarket.com/": {"events": [{"markets": [
                 {"question": "Democrats win House?", "outcomes": '["Yes","No"]',
                  "outcomePrices": '["0.8","0.2"]'}]}]},
+            "https://api.elections.kalshi.com/": {"current_page": [
+                {"event_title": "Which party will Democrats win the House?",
+                 "markets": [{"yes_subtitle": "Democratic Party", "last_price_dollars": "0.9010"},
+                             {"yes_subtitle": "Republican Party", "last_price_dollars": "0.1000"}]}]},
             "https://api.manifold.markets/": [
                 {"question": "Will Democrats win the House?", "probability": 0.91,
                  "uniqueBettorCount": 40, "isResolved": False}],
@@ -97,6 +101,8 @@ class MarketTests(unittest.TestCase):
         out = lc.prediction_markets(q("Will Democrats win the House in 2026?"), web)
         self.assertIn('Polymarket "Democrats win House?": Yes 80%, No 20%', out)
         self.assertIn('Manifold "Will Democrats win the House?": 91% (40 traders)', out)
+        self.assertIn("Kalshi", out)
+        self.assertIn("Democratic Party 90%", out)
 
     def test_unrelated_markets_are_dropped(self):
         web = FakeWeb({

@@ -143,9 +143,41 @@ class SecondRoundTests(unittest.TestCase):
             out = run(cr.research("q"))
         self.assertIn("Round one facts.", out)
 
-    def test_the_total_search_budget_is_unchanged(self):
-        self.assertEqual(cr.MAX_SEARCHES, 10)
-        self.assertEqual(cr.ROUND1_SEARCHES + cr.ROUND2_SEARCHES, cr.MAX_SEARCHES)
+    def test_prize_questions_get_more_searches_than_the_cup(self):
+        full = sum(cr.ROUNDS[("sonnet", "full")])
+        light = sum(cr.ROUNDS[("sonnet", "light")])
+        self.assertEqual(cr.MAX_SEARCHES, full)
+        self.assertGreater(full, light)
+
+    def test_light_depth_is_one_round_even_with_gaps(self):
+        with FakeAnthropic(response(text="x\nGAPS: something")) as fake:
+            run(cr.research("q", depth="light"))
+        self.assertEqual(len(fake.calls), 1)
+        self.assertEqual(fake.calls[0]["tools"][0]["max_uses"], cr.ROUNDS[("sonnet", "light")][0])
+
+    def test_haiku_engine_uses_the_basic_search_and_no_fallbacks(self):
+        with FakeAnthropic(response(text="x\nGAPS: none")) as fake:
+            run(cr.research("q", engine_key="haiku"))
+        call = fake.calls[0]
+        self.assertEqual(call["model"], "claude-haiku-5-5")
+        self.assertEqual(call["tools"][0]["type"], "web_search_20250305")
+        self.assertNotIn("fallbacks", call)
+        self.assertNotIn("betas", call)
+
+    def test_haiku_can_run_three_targeted_rounds(self):
+        script = [response(text="a\nGAPS: one", tin=1000), response(text="b\nGAPS: two", tin=1000),
+                  response(text="c\nGAPS: none", tin=1000)]
+        with FakeAnthropic(*script) as fake:
+            out = run(cr.research("q", engine_key="haiku"))
+        self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls],
+                         list(cr.ROUNDS[("haiku", "full")]))
+        self.assertIn("(round 3)", out)
+
+    def test_engine_comes_from_the_environment(self):
+        with mock.patch.dict(os.environ, {"CLAUDE_RESEARCH_ENGINE": "haiku"}):
+            self.assertEqual(cr.engine_name(), "haiku")
+        with mock.patch.dict(os.environ, {"CLAUDE_RESEARCH_ENGINE": "nonsense"}):
+            self.assertEqual(cr.engine_name(), cr.DEFAULT_ENGINE)
 
     def test_gaps_parsing(self):
         self.assertEqual(cr._gaps("a\nGAPS: x; y"), "x; y")
@@ -172,7 +204,7 @@ class WiringTests(unittest.TestCase):
     def test_research_tries_claude_first_and_falls_back(self):
         start = self.src.index("async def run_research")
         body = self.src[start:self.src.index("return research", start)]
-        self.assertLess(body.index("claude_research.research(prompt)"),
+        self.assertLess(body.index("claude_research.research("),
                         body.index("researcher.invoke(prompt)"))
         self.assertIn("except Exception", body)
 

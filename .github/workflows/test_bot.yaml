@@ -2,6 +2,16 @@ name: Test Bot
 
 on:
   workflow_dispatch:
+    inputs:
+      research_engine:
+        # A/B for claude_research: same unscored practice questions, research
+        # by Sonnet 5.5 (production default) or Haiku 5.5. Compare the
+        # "claude_research engine=..." log lines and the research text.
+        description: "Claude research engine (sonnet | haiku)"
+        required: false
+        default: "sonnet"
+        type: choice
+        options: ["sonnet", "haiku"]
 
 # Least privilege: this job calls external APIs and never writes to the
 # repository, opens a PR or publishes a package. Without this it inherits
@@ -63,6 +73,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_RESEARCH_ENGINE: ${{ inputs.research_engine }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
