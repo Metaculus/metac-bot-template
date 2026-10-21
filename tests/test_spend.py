@@ -338,6 +338,13 @@ class MessageTests(LedgerCase):
         self.assertIsNone(spend.projection(5.0, start + timedelta(hours=12), start))
         self.assertAlmostEqual(spend.projection(10.0, start + timedelta(days=10), start), 31.0)
 
+    def test_the_breakdown_groups_by_provider_phase_and_model(self):
+        self.week()
+        text = spend.breakdown(spend.load())
+        self.assertIn("anthropic research claude-haiku-5-5: 11 calls", text)
+        self.assertIn("openrouter forecast anthropic/claude-opus-5-5: 10 calls", text)
+        self.assertEqual(spend.breakdown([]), "no calls recorded")
+
     def test_money_uses_spanish_separators(self):
         self.assertEqual(spend.money(1234.5), "1.234,50")
         self.assertEqual(spend.money(0.284), "0,28")

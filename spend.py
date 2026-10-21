@@ -155,16 +155,19 @@ def record(*, provider: str, model: str, usd: float, tokens_in: int = 0,
 
 
 def _response_cost(response: Any) -> float:
+    """The larger of litellm's two prices for a response, as forecasting_tools'
+    LitellmCostTracker takes them: the cost litellm stored on the response,
+    and the one it computes from the response's model and usage. Either can
+    be missing for a model the cost map lacks; an unpriced call records $0."""
     hidden = getattr(response, "_hidden_params", None) or {}
-    cost = hidden.get("response_cost") if isinstance(hidden, dict) else None
-    if cost is None:
-        try:
-            import litellm
+    stored = hidden.get("response_cost") if isinstance(hidden, dict) else None
+    try:
+        import litellm
 
-            cost = litellm.completion_cost(completion_response=response)
-        except Exception:  # noqa: BLE001 - an unpriced model records $0
-            cost = 0.0
-    return float(cost or 0.0)
+        computed = litellm.completion_cost(completion_response=response)
+    except Exception:  # noqa: BLE001
+        computed = None
+    return float(max(stored or 0.0, computed or 0.0))
 
 
 def _record_response(model: Any, response: Any) -> None:
@@ -172,6 +175,8 @@ def _record_response(model: Any, response: Any) -> None:
         name = str(model or "unknown")
         provider, _, rest = name.partition("/")
         usage = getattr(response, "usage", None)
+        if not _logged_first_call:
+            _note_first_call(name)
         record(
             provider=provider if rest else "litellm",
             model=rest or name,
@@ -181,6 +186,15 @@ def _record_response(model: Any, response: Any) -> None:
         )
     except Exception as exc:  # noqa: BLE001
         _warn_once("litellm", exc)
+
+
+_logged_first_call = False
+
+
+def _note_first_call(model: str) -> None:
+    global _logged_first_call
+    _logged_first_call = True
+    logger.info("spend_first_llm_call model=%s", model)
 
 
 def _recorded(call):
@@ -209,10 +223,13 @@ def install_litellm_recorder() -> None:
     try:
         from forecasting_tools.ai_models import general_llm
 
+        wrapped = []
         for name in ("acompletion", "aresponses"):
             call = getattr(general_llm, name, None)
             if call is not None and not getattr(call, "_spend_recorded", False):
                 setattr(general_llm, name, _recorded(call))
+                wrapped.append(name)
+        logger.info("spend_recorder_installed wrapped=%s", ",".join(wrapped) or "none")
     except Exception as exc:  # noqa: BLE001
         _warn_once("install", exc)
 
@@ -467,6 +484,21 @@ def after_run(now: datetime | None = None, send=_send) -> bool:
     return changed
 
 
+def breakdown(lines: list[dict]) -> str:
+    """Calls, tokens and dollars per provider, phase and model -- for Test
+    Bot's log, where the question is whether every path is recorded."""
+    rows: dict[tuple, list] = defaultdict(lambda: [0, 0, 0, 0.0])
+    for line in calls(lines):
+        row = rows[(line.get("provider"), line.get("phase"), line.get("model"))]
+        row[0] += 1
+        row[1] += line.get("in", 0)
+        row[2] += line.get("out", 0)
+        row[3] += line.get("usd", 0.0)
+    out = [f"{p} {ph} {m}: {n} calls, {i} in, {o} out, ${usd:.4f}"
+           for (p, ph, m), (n, i, o, usd) in sorted(rows.items(), key=lambda kv: -kv[1][3])]
+    return "\n".join(out) or "no calls recorded"
+
+
 def main(argv: list[str]) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     command = argv[1] if len(argv) > 1 else ""
@@ -479,8 +511,10 @@ def main(argv: list[str]) -> int:
                     handle.write(f"changed={'true' if changed else 'false'}\n")
         elif command == "weekly":
             print(weekly_message(load(), datetime.now(timezone.utc)))
+        elif command == "breakdown":
+            print(breakdown(load()))
         else:
-            print("usage: python spend.py after-run|weekly", file=sys.stderr)
+            print("usage: python spend.py after-run|weekly|breakdown", file=sys.stderr)
             return 2
     except Exception as exc:  # noqa: BLE001 - never fail the job
         logger.warning("spend_%s_failed reason=%s", command or "cli", type(exc).__name__)

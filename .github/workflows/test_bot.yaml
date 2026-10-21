@@ -91,4 +91,5 @@ jobs:
         continue-on-error: true
         run: |
           python spend.py after-run
+          python spend.py breakdown
           python spend.py weekly
