@@ -135,16 +135,19 @@ class RecordTests(LedgerCase):
         no network). Test Bot run 39570809053 recorded none of its 132
         OpenRouter calls through a litellm success callback; this is the
         path that replaced it."""
+        from tests._real_forecasting_tools import real_forecasting_tools
+
         try:
-            from forecasting_tools import GeneralLlm
-            from forecasting_tools.ai_models import general_llm
+            with real_forecasting_tools():
+                from forecasting_tools.ai_models import general_llm
         except ImportError:
             self.skipTest("forecasting_tools not installed")
         saved = general_llm.acompletion, getattr(general_llm, "aresponses", None)
         try:
-            with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test"}):
+            with real_forecasting_tools(), mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test"}):
                 spend.install_litellm_recorder()
-                llm = GeneralLlm(model="openrouter/openai/gpt-4o-mini", mock_response="ok " * 10)
+                llm = general_llm.GeneralLlm(model="openrouter/openai/gpt-4o-mini",
+                                             mock_response="ok " * 10)
 
                 async def two():
                     async def one(post, label):
