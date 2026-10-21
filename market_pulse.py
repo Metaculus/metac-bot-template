@@ -30,6 +30,17 @@ logger = logging.getLogger(__name__)
 REFRESH_WINDOW = timedelta(hours=36)
 MIN_AGE = timedelta(hours=18)
 
+#: Forecasts made before this moment were produced without the group option
+#: in the prompt (main._question_text), so a group subquestion was forecast
+#: as the generic group question -- e.g. Meta's EPS forecast as some other
+#: company's. Each is redone once, whatever its age or close.
+REFORECAST_BEFORE = datetime(2026, 10, 21, 8, 0, tzinfo=timezone.utc)
+
+
+def _predates_label_fix(question: Any, last: datetime | None) -> bool:
+    return bool(getattr(question, "group_question_option", None)) and last is not None \
+        and last < REFORECAST_BEFORE
+
 
 def _utc(moment: datetime | None) -> datetime | None:
     """The SDK parses API dates with pendulum (aware, UTC); a naive value is
@@ -57,6 +68,9 @@ def select(questions: Sequence[Any], now: datetime) -> list[Any]:
             continue
         close = _utc(question.close_time)
         last = _last_forecast(question)
+        if _predates_label_fix(question, last):
+            refresh.append(question)
+            continue
         if close is None or last is None:
             continue
         if close - now <= REFRESH_WINDOW and now - last >= MIN_AGE:
@@ -92,7 +106,7 @@ def select_stale(
             new.append(question)
             continue
         last = _last_forecast(question)
-        if last is not None and now - last >= max_age:
+        if _predates_label_fix(question, last) or (last is not None and now - last >= max_age):
             stale.append(question)
     logger.info(
         "stale_selection open=%d new=%d stale=%d max_age_days=%.1f",
