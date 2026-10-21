@@ -26,6 +26,11 @@ concurrency:
 jobs:
   forecast_job:
     runs-on: ubuntu-latest
+    # This run's API spend, recorded as production records it (spend.py) but
+    # in a ledger of its own: nothing here restores or saves the production
+    # ledger, so test runs do not count towards the month.
+    env:
+      SPEND_LEDGER_PATH: spend_ledger.jsonl
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -79,3 +84,11 @@ jobs:
           ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+      # Breakdown of what this test run cost, in the log and the step summary.
+      # No WhatsApp credentials reach this step, so it can never alert.
+      - name: Spend of this run
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          python spend.py after-run
+          python spend.py weekly

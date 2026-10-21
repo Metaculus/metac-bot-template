@@ -206,16 +206,32 @@ class PromptCachingTests(unittest.TestCase):
 
     def test_cached_tokens_are_priced_as_billed(self):
         e = cr.ENGINES["sonnet"]
-        t = cr.Tally(uncached=10_000, cache_write=20_000, cache_read=100_000, out=1_000, searches=3)
-        expected = (10_000 + 1.25 * 20_000 + 0.10 * 100_000) * e.price_in + 1_000 * e.price_out + 0.03
-        self.assertAlmostEqual(t.cost(e), expected)
-        self.assertEqual(t.tokens_in, 130_000)
+        t = cr.Tally(e)
+        t.add(response(tin=10_000, cwrite=20_000, cread=60_000, tout=1_000, searches=3).usage)
+        # Sonnet 5.5 cache hits are 0.05x, writes 1.25x (pricing page, 2026-10-21).
+        expected = (10_000 + 1.25 * 20_000 + 0.05 * 60_000) * e.price_in + 1_000 * e.price_out + 0.03
+        self.assertAlmostEqual(t.usd, expected)
+        self.assertEqual(t.tokens_in, 90_000)
 
     def test_reads_make_the_same_tokens_cheaper(self):
         e = cr.ENGINES["haiku"]
-        cold = cr.Tally(uncached=200_000)
-        warm = cr.Tally(uncached=20_000, cache_write=30_000, cache_read=150_000)
-        self.assertLess(warm.cost(e), cold.cost(e) * 0.5)
+        cold = cr.request_cost(e, 90_000, 0, 0, 0, 0)
+        warm = cr.request_cost(e, 10_000, 20_000, 60_000, 0, 0)
+        self.assertLess(warm, cold * 0.5)
+
+    def test_long_haiku_prompts_pay_the_long_context_price(self):
+        # Haiku 5.5: $0.10/$0.50 per M up to 100,000 prompt tokens, $0.50/$2.50
+        # above, counting cache reads and writes; each request on its own.
+        e = cr.ENGINES["haiku"]
+        short = cr.request_cost(e, 10_000, 0, 90_000, 1_000, 0)
+        long = cr.request_cost(e, 10_000, 0, 91_000, 1_000, 0)
+        self.assertAlmostEqual(short, (10_000 + 0.1 * 90_000) * 0.10e-6 + 1_000 * 0.50e-6)
+        self.assertAlmostEqual(long, ((10_000 + 0.1 * 91_000) * 0.10e-6 + 1_000 * 0.50e-6) * 5)
+        self.assertAlmostEqual(cr.request_cost(e, 0, 0, 0, 0, 4), 0.04)
+        t = cr.Tally(e)
+        for _ in range(3):
+            t.add(response(tin=40_000, tout=0, searches=0).usage)
+        self.assertAlmostEqual(t.usd, 3 * 40_000 * 0.10e-6)
 
     def test_cache_counts_are_logged(self):
         with FakeAnthropic(response(text="x\nGAPS: none", cread=5000, cwrite=800)):

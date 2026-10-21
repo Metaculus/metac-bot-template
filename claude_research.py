@@ -29,6 +29,8 @@ import logging
 import os
 from dataclasses import dataclass
 
+import spend
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,18 +38,29 @@ logger = logging.getLogger(__name__)
 class Engine:
     model: str
     web_search: str          # tool type this model accepts
-    price_in: float          # USD per input token (logged estimate only)
+    price_in: float          # USD per input token
     price_out: float
     fallbacks: bool          # server-side refusal fallback available
+    cache_read: float = 0.10  # cache hit, as a multiple of price_in
+    #: A request whose prompt (uncached + cache writes + cache reads) exceeds
+    #: long_prompt tokens pays long_factor times every token price.
+    long_prompt: int | None = None
+    long_factor: float = 1.0
 
 
 #: Sonnet 5.5 takes the dynamic-filtering web search; Haiku 5.5 only the basic
 #: variant and has no server-side refusal fallback. Haiku 5.5 is ~20x cheaper
 #: per token ($0.10/$0.50 vs $2/$10 per M), so the same money buys more
 #: searches; which reads better is decided by an A/B on Test Bot, not assumed.
+#: Prices as published on platform.claude.com/docs/en/about-claude/pricing
+#: (read 2026-10-21): cache hits are 0.05x on Sonnet 5.5 and 0.1x on Haiku
+#: 5.5, and Haiku 5.5 prompts over 100,000 tokens pay $0.50/$2.50 (5x) -- a
+#: long search loop reaches that, so each request is priced on its own size.
 ENGINES = {
-    "sonnet": Engine("claude-sonnet-5-5", "web_search_20260209", 2.0 / 1e6, 10.0 / 1e6, True),
-    "haiku": Engine("claude-haiku-5-5", "web_search_20250305", 0.10 / 1e6, 0.50 / 1e6, False),
+    "sonnet": Engine("claude-sonnet-5-5", "web_search_20260209", 2.0 / 1e6, 10.0 / 1e6, True,
+                     cache_read=0.05),
+    "haiku": Engine("claude-haiku-5-5", "web_search_20250305", 0.10 / 1e6, 0.50 / 1e6, False,
+                    long_prompt=100_000, long_factor=5.0),
 }
 #: Haiku since 2026-10-18. A/B on the same nine practice questions (Test Bot
 #: runs 39091393405 vs 39091407899): Sonnet $0.243/question, 5-13 searches,
@@ -88,6 +101,8 @@ MAX_TOKENS = 16000
 #: A long server-side search loop pauses after ~10 iterations; each resume is
 #: another request. Bounded so a stuck loop cannot spend without limit.
 MAX_RESUMES = 3
+#: "$10 per 1,000 searches, plus standard token costs for search-generated
+#: content"; a search that errors is not billed (pricing page, 2026-10-21).
 PRICE_SEARCH = 10.0 / 1000
 PRICE_IN, PRICE_OUT = ENGINES[DEFAULT_ENGINE].price_in, ENGINES[DEFAULT_ENGINE].price_out
 
@@ -140,42 +155,55 @@ def _gaps(text: str) -> str:
 #: writes a cache entry after each batch of search results, so every later
 #: step of the same request -- and each pause_turn resume and follow-up round,
 #: which repeat the system prompt and question -- re-reads that context at
-#: 0.1x instead of the full input price. Writes cost 1.25x, reads 0.1x.
+#: a fraction of the full input price (Engine.cache_read). Writes cost 1.25x.
 #: Minimum cacheable prefix on Haiku 5.5 / Sonnet 5.5 is 512 tokens; the
 #: prompt alone is above that.
 CACHE = {"type": "ephemeral"}
-CACHE_WRITE, CACHE_READ = 1.25, 0.10
+CACHE_WRITE = 1.25
+
+
+def request_cost(engine: Engine, uncached: int, cache_write: int, cache_read: int,
+                 out: int, searches: int) -> float:
+    """USD for one API request, as billed."""
+    factor = 1.0
+    if engine.long_prompt is not None and uncached + cache_write + cache_read > engine.long_prompt:
+        factor = engine.long_factor
+    tokens = ((uncached + CACHE_WRITE * cache_write + engine.cache_read * cache_read) * engine.price_in
+              + out * engine.price_out)
+    return tokens * factor + searches * PRICE_SEARCH
 
 
 @dataclass
 class Tally:
-    """Token and search counts across every request of one research call."""
+    """Token and search counts, and their price, across every request of one
+    research call."""
 
+    engine: Engine
     uncached: int = 0
     cache_write: int = 0
     cache_read: int = 0
     out: int = 0
     searches: int = 0
+    usd: float = 0.0
 
     def add(self, usage) -> None:
-        self.uncached += usage.input_tokens or 0
-        self.cache_write += usage.cache_creation_input_tokens or 0
-        self.cache_read += usage.cache_read_input_tokens or 0
-        self.out += usage.output_tokens or 0
+        uncached = usage.input_tokens or 0
+        write = usage.cache_creation_input_tokens or 0
+        read = usage.cache_read_input_tokens or 0
+        out = usage.output_tokens or 0
+        searches = 0
         if usage.server_tool_use is not None:
-            self.searches += usage.server_tool_use.web_search_requests or 0
+            searches = usage.server_tool_use.web_search_requests or 0
+        self.uncached += uncached
+        self.cache_write += write
+        self.cache_read += read
+        self.out += out
+        self.searches += searches
+        self.usd += request_cost(self.engine, uncached, write, read, out, searches)
 
     @property
     def tokens_in(self) -> int:
         return self.uncached + self.cache_write + self.cache_read
-
-    def cost(self, engine: "Engine") -> float:
-        return (
-            (self.uncached + CACHE_WRITE * self.cache_write + CACHE_READ * self.cache_read)
-            * engine.price_in
-            + self.out * engine.price_out
-            + self.searches * PRICE_SEARCH
-        )
 
 
 async def _round(client, engine: Engine, messages: list[dict], max_searches: int,
@@ -222,8 +250,20 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
     engine = ENGINES[key]
     plan = ROUNDS.get((key, depth)) or ROUNDS[(key, "full")]
     client = anthropic.AsyncAnthropic()
+    tally = Tally(engine)
+    try:
+        return await _research(client, key, engine, plan, depth, prompt, tally)
+    finally:
+        # Recorded even when the call fails: the requests already made are billed.
+        if tally.usd:
+            spend.record(provider="anthropic", model=engine.model, usd=tally.usd,
+                         tokens_in=tally.tokens_in, tokens_out=tally.out,
+                         searches=tally.searches)
+
+
+async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
+                    prompt: str, tally: Tally) -> str:
     first = [{"role": "user", "content": prompt}]
-    tally = Tally()
     response = await _round(client, engine, first, plan[0], tally)
     if response.stop_reason == "refusal":
         raise RuntimeError("claude_research refused")
@@ -232,7 +272,7 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
 
     for budget in plan[1:]:
         gaps = _gaps(text)
-        if not (text and gaps) or tally.cost(engine) >= ROUND_MAX_PRIOR_COST:
+        if not (text and gaps) or tally.usd >= ROUND_MAX_PRIOR_COST:
             break
         follow = [
             {"role": "user", "content": prompt},
@@ -254,7 +294,7 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
         "claude_research engine=%s depth=%s model=%s stop=%s rounds=%d searches=%d "
         "tokens_in=%d cache_read=%d cache_write=%d tokens_out=%d est_cost_usd=%.4f",
         key, depth, response.model, response.stop_reason, rounds, tally.searches,
-        tally.tokens_in, tally.cache_read, tally.cache_write, tally.out, tally.cost(engine),
+        tally.tokens_in, tally.cache_read, tally.cache_write, tally.out, tally.usd,
     )
     if not text:
         raise RuntimeError(f"claude_research returned no text (stop={response.stop_reason})")
