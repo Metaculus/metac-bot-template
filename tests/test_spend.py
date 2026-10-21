@@ -44,7 +44,6 @@ class LedgerCase(unittest.TestCase):
         })
         self.env.start()
         spend.set_tournament(None)
-        spend._seen_calls.clear()
 
     def tearDown(self):
         self.env.stop()
@@ -99,30 +98,69 @@ class RecordTests(LedgerCase):
         with mock.patch.dict(os.environ, {"SPEND_LEDGER_PATH": os.path.join(self.path, "x", "y")}):
             spend.record(provider="anthropic", model="m", usd=1.0)
 
-    def test_litellm_calls_are_recorded_once_with_their_price(self):
-        kwargs = {"litellm_call_id": "c1", "custom_llm_provider": "openrouter",
-                  "model": "openai/gpt-5.6-sol", "response_cost": 0.021}
-        response = NS(usage=NS(prompt_tokens=900, completion_tokens=300))
-        spend._record_litellm(kwargs, response)
-        spend._record_litellm(kwargs, response)
-        [line] = spend.load()
-        self.assertEqual((line["provider"], line["model"], line["usd"], line["in"], line["out"]),
+    def test_litellm_responses_are_recorded_with_their_price(self):
+        response = NS(_hidden_params={"response_cost": 0.021},
+                      usage=NS(prompt_tokens=900, completion_tokens=300))
+        spend._record_response("openrouter/openai/gpt-5.6-sol", response)
+        responses_api = NS(_hidden_params={"response_cost": 0.004},
+                           usage=NS(input_tokens=50, output_tokens=10))
+        spend._record_response("openrouter/openai/gpt-4o-mini", responses_api)
+        first, second = spend.load()
+        self.assertEqual((first["provider"], first["model"], first["usd"], first["in"], first["out"]),
                          ("openrouter", "openai/gpt-5.6-sol", 0.021, 900, 300))
+        self.assertEqual((second["in"], second["out"], second["usd"]), (50, 10, 0.004))
 
-    def test_the_recorder_is_installed_once(self):
-        class CustomLogger:
-            pass
+    def test_the_sdk_calls_are_wrapped_once_and_still_return_the_response(self):
+        module = types.ModuleType("forecasting_tools.ai_models.general_llm")
 
-        fake = types.ModuleType("litellm")
-        fake.callbacks = []
-        integrations = types.ModuleType("litellm.integrations")
-        custom = types.ModuleType("litellm.integrations.custom_logger")
-        custom.CustomLogger = CustomLogger
-        with mock.patch.dict(sys.modules, {"litellm": fake, "litellm.integrations": integrations,
-                                           "litellm.integrations.custom_logger": custom}):
+        async def acompletion(**kwargs):
+            return NS(_hidden_params={"response_cost": 0.5}, usage=NS(prompt_tokens=1, completion_tokens=2))
+
+        module.acompletion = acompletion
+        package = types.ModuleType("forecasting_tools.ai_models")
+        package.general_llm = module
+        with mock.patch.dict(sys.modules, {"forecasting_tools.ai_models": package,
+                                           "forecasting_tools.ai_models.general_llm": module}):
             spend.install_litellm_recorder()
             spend.install_litellm_recorder()
-        self.assertEqual([type(cb).__name__ for cb in fake.callbacks], ["SpendRecorder"])
+            with spend.phase("summary"):
+                response = asyncio.run(module.acompletion(model="openrouter/anthropic/claude-haiku-4.5"))
+        self.assertEqual(response.usage.completion_tokens, 2)
+        [line] = spend.load()
+        self.assertEqual((line["phase"], line["model"], line["usd"]),
+                         ("summary", "anthropic/claude-haiku-4.5", 0.5))
+
+    def test_the_real_general_llm_is_recorded_in_the_callers_context(self):
+        """End to end through forecasting_tools and litellm (mock response,
+        no network). Test Bot run 39570809053 recorded none of its 132
+        OpenRouter calls through a litellm success callback; this is the
+        path that replaced it."""
+        try:
+            from forecasting_tools import GeneralLlm
+            from forecasting_tools.ai_models import general_llm
+        except ImportError:
+            self.skipTest("forecasting_tools not installed")
+        saved = general_llm.acompletion, getattr(general_llm, "aresponses", None)
+        try:
+            with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test"}):
+                spend.install_litellm_recorder()
+                llm = GeneralLlm(model="openrouter/openai/gpt-4o-mini", mock_response="ok " * 10)
+
+                async def two():
+                    async def one(post, label):
+                        with spend.question(NS(id_of_post=post)), spend.phase(label):
+                            await llm.invoke("hi")
+                    await asyncio.gather(one(1, "forecast"), one(2, "parser"))
+
+                asyncio.run(two())
+        finally:
+            general_llm.acompletion = saved[0]
+            if saved[1] is not None:
+                general_llm.aresponses = saved[1]
+        lines = sorted(spend.load(), key=lambda l: l["q"])
+        self.assertEqual([(l["q"], l["phase"], l["provider"]) for l in lines],
+                         [(1, "forecast", "openrouter"), (2, "parser", "openrouter")])
+        self.assertTrue(all(l["usd"] > 0 for l in lines))
 
 
 class ResearchRecordingTests(LedgerCase):

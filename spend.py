@@ -19,8 +19,8 @@ repository is public and so are its cache and step summaries.
 
 Recording is off unless SPEND_LEDGER_PATH is set (the production workflow
 sets it), so tests and local runs write nothing. Nothing here may fail a run:
-every entry point swallows its own errors. Standard library only; litellm is
-imported inside install_litellm_recorder.
+every entry point swallows its own errors. Standard library only;
+forecasting_tools and litellm are imported inside the functions that use them.
 
     python spend.py after-run   # end of each production job: alerts, summary
     python spend.py weekly      # Monday message, printed to stdout
@@ -60,7 +60,6 @@ NOTIFY_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "script
 _question: contextvars.ContextVar[int | None] = contextvars.ContextVar("spend_question", default=None)
 _phase: contextvars.ContextVar[str | None] = contextvars.ContextVar("spend_phase", default=None)
 _tournament: str | None = None
-_seen_calls: set[str] = set()
 _warned = False
 
 
@@ -155,46 +154,65 @@ def record(*, provider: str, model: str, usd: float, tokens_in: int = 0,
         _warn_once("record", exc)
 
 
-def _record_litellm(kwargs: dict, response_obj: Any) -> None:
+def _response_cost(response: Any) -> float:
+    hidden = getattr(response, "_hidden_params", None) or {}
+    cost = hidden.get("response_cost") if isinstance(hidden, dict) else None
+    if cost is None:
+        try:
+            import litellm
+
+            cost = litellm.completion_cost(completion_response=response)
+        except Exception:  # noqa: BLE001 - an unpriced model records $0
+            cost = 0.0
+    return float(cost or 0.0)
+
+
+def _record_response(model: Any, response: Any) -> None:
     try:
-        call_id = kwargs.get("litellm_call_id")
-        if call_id:
-            if call_id in _seen_calls:
-                return
-            _seen_calls.add(call_id)
-        usage = getattr(response_obj, "usage", None)
+        name = str(model or "unknown")
+        provider, _, rest = name.partition("/")
+        usage = getattr(response, "usage", None)
         record(
-            provider=kwargs.get("custom_llm_provider") or "litellm",
-            model=str(kwargs.get("model") or "unknown"),
-            usd=kwargs.get("response_cost") or 0.0,
-            tokens_in=getattr(usage, "prompt_tokens", 0) or 0,
-            tokens_out=getattr(usage, "completion_tokens", 0) or 0,
+            provider=provider if rest else "litellm",
+            model=rest or name,
+            usd=_response_cost(response),
+            tokens_in=getattr(usage, "prompt_tokens", None) or getattr(usage, "input_tokens", 0) or 0,
+            tokens_out=getattr(usage, "completion_tokens", None) or getattr(usage, "output_tokens", 0) or 0,
         )
     except Exception as exc:  # noqa: BLE001
         _warn_once("litellm", exc)
 
 
+def _recorded(call):
+    async def wrapper(*args, **kwargs):
+        response = await call(*args, **kwargs)
+        _record_response(kwargs.get("model"), response)
+        return response
+
+    wrapper._spend_recorded = True
+    return wrapper
+
+
 def install_litellm_recorder() -> None:
-    """Record every litellm call the bot makes (forecasts, parser, summary,
-    fallback research), priced by litellm as the SDK's final_cost is. Async
-    calls only fire the async hook, inside the caller's context, so the
-    question and phase set around the call reach it (checked against litellm
-    1.80.10 with mock responses)."""
+    """Record every call forecasting_tools' GeneralLlm makes through litellm
+    (forecasts, parser, summary, fallback research), priced as the SDK prices
+    its own final_cost (the response's ``response_cost``).
+
+    Wraps the two litellm functions general_llm.py imports instead of adding
+    a litellm success callback: litellm 1.80 runs async callbacks on a
+    background logging worker, and on Test Bot run 39570809053 not one of the
+    132 OpenRouter calls reached it. The wrapper records in the caller's own
+    task, so the question and phase set around the call are the ones seen.
+    """
     if ledger_path() is None:
         return
     try:
-        import litellm
-        from litellm.integrations.custom_logger import CustomLogger
+        from forecasting_tools.ai_models import general_llm
 
-        class SpendRecorder(CustomLogger):
-            def log_success_event(self, kwargs, response_obj, start_time, end_time):
-                _record_litellm(kwargs, response_obj)
-
-            async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
-                _record_litellm(kwargs, response_obj)
-
-        if not any(type(cb).__name__ == "SpendRecorder" for cb in litellm.callbacks):
-            litellm.callbacks.append(SpendRecorder())
+        for name in ("acompletion", "aresponses"):
+            call = getattr(general_llm, name, None)
+            if call is not None and not getattr(call, "_spend_recorded", False):
+                setattr(general_llm, name, _recorded(call))
     except Exception as exc:  # noqa: BLE001
         _warn_once("install", exc)
 
