@@ -135,15 +135,58 @@ def _gaps(text: str) -> str:
     return ""
 
 
-async def _round(client, engine: Engine, messages: list[dict], max_searches: int) -> tuple:
-    """One research round: (final response, tokens_in, tokens_out, searches)."""
+#: Prompt caching (2026-10-21, after Anthropic flagged a low cache-hit rate
+#: on this org). With caching on the request, the server-side web search loop
+#: writes a cache entry after each batch of search results, so every later
+#: step of the same request -- and each pause_turn resume and follow-up round,
+#: which repeat the system prompt and question -- re-reads that context at
+#: 0.1x instead of the full input price. Writes cost 1.25x, reads 0.1x.
+#: Minimum cacheable prefix on Haiku 5.5 / Sonnet 5.5 is 512 tokens; the
+#: prompt alone is above that.
+CACHE = {"type": "ephemeral"}
+CACHE_WRITE, CACHE_READ = 1.25, 0.10
+
+
+@dataclass
+class Tally:
+    """Token and search counts across every request of one research call."""
+
+    uncached: int = 0
+    cache_write: int = 0
+    cache_read: int = 0
+    out: int = 0
+    searches: int = 0
+
+    def add(self, usage) -> None:
+        self.uncached += usage.input_tokens or 0
+        self.cache_write += usage.cache_creation_input_tokens or 0
+        self.cache_read += usage.cache_read_input_tokens or 0
+        self.out += usage.output_tokens or 0
+        if usage.server_tool_use is not None:
+            self.searches += usage.server_tool_use.web_search_requests or 0
+
+    @property
+    def tokens_in(self) -> int:
+        return self.uncached + self.cache_write + self.cache_read
+
+    def cost(self, engine: "Engine") -> float:
+        return (
+            (self.uncached + CACHE_WRITE * self.cache_write + CACHE_READ * self.cache_read)
+            * engine.price_in
+            + self.out * engine.price_out
+            + self.searches * PRICE_SEARCH
+        )
+
+
+async def _round(client, engine: Engine, messages: list[dict], max_searches: int,
+                 tally: Tally):
+    """One research round; adds its usage to ``tally`` and returns the final response."""
     tools = [{"type": engine.web_search, "name": "web_search", "max_uses": max_searches}]
     extra: dict = {}
     if engine.fallbacks:
         # A policy decline is re-run on a fallback model inside the same call
         # instead of returning nothing.
         extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
-    tokens_in = tokens_out = searches = 0
     response = None
     first_user = messages
     for _ in range(MAX_RESUMES + 1):
@@ -154,23 +197,15 @@ async def _round(client, engine: Engine, messages: list[dict], max_searches: int
             messages=messages,
             tools=tools,
             output_config={"effort": EFFORT},
+            cache_control=CACHE,
             **extra,
         )
-        usage = response.usage
-        tokens_in += (usage.input_tokens or 0) + (usage.cache_read_input_tokens or 0) \
-            + (usage.cache_creation_input_tokens or 0)
-        tokens_out += usage.output_tokens or 0
-        if usage.server_tool_use is not None:
-            searches += usage.server_tool_use.web_search_requests or 0
+        tally.add(response.usage)
         if response.stop_reason != "pause_turn":
             break
         # Resume: the server continues from the trailing server_tool_use block.
         messages = [*first_user, {"role": "assistant", "content": response.content}]
-    return response, tokens_in, tokens_out, searches
-
-
-def _cost(engine: Engine, tokens_in: int, tokens_out: int, searches: int) -> float:
-    return tokens_in * engine.price_in + tokens_out * engine.price_out + searches * PRICE_SEARCH
+    return response
 
 
 async def research(prompt: str, depth: str = "full", engine_key: str | None = None) -> str:
@@ -188,7 +223,8 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
     plan = ROUNDS.get((key, depth)) or ROUNDS[(key, "full")]
     client = anthropic.AsyncAnthropic()
     first = [{"role": "user", "content": prompt}]
-    response, t_in, t_out, searches = await _round(client, engine, first, plan[0])
+    tally = Tally()
+    response = await _round(client, engine, first, plan[0], tally)
     if response.stop_reason == "refusal":
         raise RuntimeError("claude_research refused")
     text = _text(response.content)
@@ -196,7 +232,7 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
 
     for budget in plan[1:]:
         gaps = _gaps(text)
-        if not (text and gaps) or _cost(engine, t_in, t_out, searches) >= ROUND_MAX_PRIOR_COST:
+        if not (text and gaps) or tally.cost(engine) >= ROUND_MAX_PRIOR_COST:
             break
         follow = [
             {"role": "user", "content": prompt},
@@ -204,11 +240,10 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
             {"role": "user", "content": ROUND2},
         ]
         try:
-            rn, i2, o2, s2 = await _round(client, engine, follow, budget)
+            rn = await _round(client, engine, follow, budget, tally)
         except Exception as exc:  # noqa: BLE001 - earlier rounds already stand
             logger.warning("claude_research_round%d_failed reason=%s", rounds + 1, type(exc).__name__)
             break
-        t_in, t_out, searches = t_in + i2, t_out + o2, searches + s2
         extra_text = _text(rn.content) if rn.stop_reason != "refusal" else ""
         if not extra_text:
             break
@@ -217,9 +252,9 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
 
     logger.info(
         "claude_research engine=%s depth=%s model=%s stop=%s rounds=%d searches=%d "
-        "tokens_in=%d tokens_out=%d est_cost_usd=%.4f",
-        key, depth, response.model, response.stop_reason, rounds, searches, t_in, t_out,
-        _cost(engine, t_in, t_out, searches),
+        "tokens_in=%d cache_read=%d cache_write=%d tokens_out=%d est_cost_usd=%.4f",
+        key, depth, response.model, response.stop_reason, rounds, tally.searches,
+        tally.tokens_in, tally.cache_read, tally.cache_write, tally.out, tally.cost(engine),
     )
     if not text:
         raise RuntimeError(f"claude_research returned no text (stop={response.stop_reason})")

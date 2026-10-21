@@ -22,10 +22,10 @@ import claude_research as cr
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def response(stop="end_turn", text="rundown", searches=2, tin=1000, tout=200):
+def response(stop="end_turn", text="rundown", searches=2, tin=1000, tout=200, cread=0, cwrite=0):
     content = [NS(type="server_tool_use"), NS(type="text", text=text)] if text else []
-    usage = NS(input_tokens=tin, output_tokens=tout, cache_read_input_tokens=0,
-               cache_creation_input_tokens=0,
+    usage = NS(input_tokens=tin, output_tokens=tout, cache_read_input_tokens=cread,
+               cache_creation_input_tokens=cwrite,
                server_tool_use=NS(web_search_requests=searches))
     return NS(stop_reason=stop, content=content, usage=usage, model=cr.MODEL)
 
@@ -189,6 +189,41 @@ class SecondRoundTests(unittest.TestCase):
         self.assertEqual(cr._gaps("a\nGAPS: x; y"), "x; y")
         self.assertEqual(cr._gaps("a\nGAPS: none."), "")
         self.assertEqual(cr._gaps("no line"), "")
+
+
+class PromptCachingTests(unittest.TestCase):
+    """Anthropic flagged a low cache-hit rate (2026-10-21); every research
+    request now asks for automatic caching, and the logged cost prices cache
+    writes and reads as billed."""
+
+    def test_every_request_asks_for_caching(self):
+        script = [response(stop="pause_turn"), response(text="a\nGAPS: x"), response(text="b")]
+        with FakeAnthropic(*script) as fake:
+            run(cr.research("q"))
+        self.assertGreaterEqual(len(fake.calls), 3)
+        for call in fake.calls:
+            self.assertEqual(call["cache_control"], {"type": "ephemeral"})
+
+    def test_cached_tokens_are_priced_as_billed(self):
+        e = cr.ENGINES["sonnet"]
+        t = cr.Tally(uncached=10_000, cache_write=20_000, cache_read=100_000, out=1_000, searches=3)
+        expected = (10_000 + 1.25 * 20_000 + 0.10 * 100_000) * e.price_in + 1_000 * e.price_out + 0.03
+        self.assertAlmostEqual(t.cost(e), expected)
+        self.assertEqual(t.tokens_in, 130_000)
+
+    def test_reads_make_the_same_tokens_cheaper(self):
+        e = cr.ENGINES["haiku"]
+        cold = cr.Tally(uncached=200_000)
+        warm = cr.Tally(uncached=20_000, cache_write=30_000, cache_read=150_000)
+        self.assertLess(warm.cost(e), cold.cost(e) * 0.5)
+
+    def test_cache_counts_are_logged(self):
+        with FakeAnthropic(response(text="x\nGAPS: none", cread=5000, cwrite=800)):
+            with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                run(cr.research("q"))
+        line = "\n".join(logs.output)
+        self.assertIn("cache_read=5000", line)
+        self.assertIn("cache_write=800", line)
 
 
 class EnabledTests(unittest.TestCase):
