@@ -117,3 +117,43 @@ class WiringTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PercentileReaderTests(unittest.TestCase):
+    LINES = ("Percentile 10: {}\nPercentile 20: {}\nPercentile 40: {}\n"
+             "Percentile 60: {}\nPercentile 80: {}\nPercentile 90: {}")
+
+    def read(self, *values, before=""):
+        return fg.read_percentiles(before + self.LINES.format(*values))
+
+    def test_question_46224_is_read_as_written(self):
+        # gpt-4o-mini turned these into 7840 ... 8400, outside a 4M-10M range.
+        out = self.read(7840000, 7945000, 8060000, 8140000, 8265000, 8400000)
+        self.assertEqual(out[0], (0.1, 7840000.0))
+        self.assertEqual(out[-1], (0.9, 8400000.0))
+        self.assertEqual([p for p, _ in out], [0.1, 0.2, 0.4, 0.6, 0.8, 0.9])
+
+    def test_thousands_commas_markdown_and_signs(self):
+        self.assertEqual(self.read("7,550,000", "7,750,000", "8,000,000", "8,220,000",
+                                   "8,550,000", "8,900,000")[0], (0.1, 7550000.0))
+        text = ("**Percentile 10:** $-1.5  \n**Percentile 20:** -1\n- Percentile 40: 0\n"
+                "Percentile 60: 4.25\nPercentile 80: 5%\nPercentile 90: 6")
+        self.assertEqual([v for _, v in fg.read_percentiles(text)], [-1.5, -1, 0, 4.25, 5, 6])
+
+    def test_the_last_block_wins(self):
+        draft = self.LINES.format(1, 2, 3, 4, 5, 6) + "\n\nOn reflection:\n"
+        self.assertEqual(self.read(10, 20, 30, 40, 50, 60, before=draft)[0], (0.1, 10.0))
+
+    def test_anything_ambiguous_goes_to_the_parser(self):
+        self.assertIsNone(self.read("7.8 trillion", 8, 9, 10, 11, 12))
+        self.assertIsNone(self.read("0,5", 1, 2, 3, 4, 5))
+        self.assertIsNone(self.read("XX (lowest number value)", 1, 2, 3, 4, 5))
+        self.assertIsNone(self.read(5, 4, 6, 7, 8, 9))
+        self.assertIsNone(fg.read_percentiles("Percentile 10: 1\nPercentile 20: 2"))
+
+    def test_main_tries_the_verbatim_lines_before_the_parser(self):
+        with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as h:
+            src = h.read()
+        start = src.index("async def _numeric_prompt_to_forecast")
+        body = src[start:src.index("def _verbatim_numeric", start)]
+        self.assertLess(body.index("self._verbatim_numeric("), body.index("self._parse_numeric("))

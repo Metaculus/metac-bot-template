@@ -621,6 +621,40 @@ class SummerTemplateBot2026(ForecastBot):
         log_forecast_content(
             logger, f"Reasoning for URL {question.page_url}", reasoning
         )
+        prediction = self._verbatim_numeric(reasoning, question)
+        if prediction is None:
+            prediction = await self._parse_numeric(reasoning, question)
+        log_forecast_content(
+            logger,
+            f"Forecasted URL {question.page_url} with prediction",
+            prediction.declared_percentiles,
+        )
+        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+
+    @staticmethod
+    def _verbatim_numeric(
+        reasoning: str, question: NumericQuestion
+    ) -> NumericDistribution | None:
+        """The forecaster's own percentile lines, when they are plain numbers
+        the question accepts; see forecast_guards.read_percentiles."""
+        verbatim = forecast_guards.read_percentiles(reasoning)
+        if verbatim is None:
+            logger.info("numeric_parse source=llm reason=no_plain_lines url=%s", question.page_url)
+            return None
+        try:
+            prediction = NumericDistribution.from_question(
+                [Percentile(percentile=p, value=v) for p, v in verbatim], question
+            )
+        except ValueError as error:
+            logger.info("numeric_parse source=llm reason=rejected url=%s error=%s",
+                        question.page_url, " ".join(str(error).split())[:200])
+            return None
+        logger.info("numeric_parse source=verbatim url=%s", question.page_url)
+        return prediction
+
+    async def _parse_numeric(
+        self, reasoning: str, question: NumericQuestion
+    ) -> NumericDistribution:
         parsing_instructions = clean_indents(
             f"""
             The text given to you is trying to give a forecast distribution for a numeric question.
@@ -641,13 +675,7 @@ class SummerTemplateBot2026(ForecastBot):
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
-        prediction = NumericDistribution.from_question(percentile_list, question)
-        log_forecast_content(
-            logger,
-            f"Forecasted URL {question.page_url} with prediction",
-            prediction.declared_percentiles,
-        )
-        return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
+        return NumericDistribution.from_question(percentile_list, question)
 
     ##################################### DATE QUESTIONS #####################################
 
