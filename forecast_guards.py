@@ -22,6 +22,7 @@ SDK.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 #: Binary forecasts stay inside [BINARY_MIN, 1 - BINARY_MIN]. At 3%, a miss
@@ -32,6 +33,16 @@ BINARY_MIN = 0.03
 #: Every multiple-choice option keeps at least this much. Giving 1% to an
 #: option the field puts at 15% costs -271 when it wins; 2.5% costs -179.
 OPTION_FLOOR = 0.025
+
+#: The percentiles every numeric prompt asks for, one "Percentile N: value"
+#: line each.
+PERCENTILES = (10, 20, 40, 60, 80, 90)
+
+_NUMBER = r"-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?"
+_PERCENTILE_LINE = re.compile(
+    rf"^[ \t*_>-]*Percentile[ \t]+(\d+)[ \t*_]*:[ \t*_]*\$?[ \t]*({_NUMBER})[ \t]*%?[ \t*_\r]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def clip_binary(probability: float) -> float:
@@ -61,6 +72,29 @@ def floor_options(probabilities: list[float], floor: float = OPTION_FLOOR) -> li
     out = [floor + scale * p / total for p in probabilities]
     out[-1] += 1.0 - sum(out)
     return out
+
+
+def read_percentiles(text: str) -> list[tuple[float, float]] | None:
+    """The six "Percentile N: value" lines, read verbatim, as (0.1, value)...
+
+    The forecasters already write their percentiles in the question's units,
+    as the prompt asks. Handing them to the gpt-4o-mini parser added a step
+    that can only get them wrong: on question 46224 (2026-10-21, units of
+    millions) it turned 7840000 into 7840 for three of five forecasters, every
+    value fell outside the range and the question was lost. None, so the
+    caller falls back to that parser, unless all six lines hold a plain
+    number (thousands commas, "$" or "%" allowed; no "million" or "7.8B") and
+    the values increase. The last line for each percentile wins.
+    """
+    found: dict[int, float] = {}
+    for match in _PERCENTILE_LINE.finditer(text):
+        found[int(match.group(1))] = float(match.group(2).replace(",", ""))
+    if not set(PERCENTILES) <= set(found):
+        return None
+    values = [found[p] for p in PERCENTILES]
+    if any(later <= earlier for earlier, later in zip(values, values[1:])):
+        return None
+    return [(p / 100, v) for p, v in zip(PERCENTILES, values)]
 
 
 def _date(moment: datetime | None) -> str | None:
