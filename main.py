@@ -223,7 +223,7 @@ class SummerTemplateBot2026(ForecastBot):
                     disagreement.spread(values), question.page_url)
         try:
             extra = await claude_research.research(
-                disagreement.crux_prompt(question.question_text, self._timing(question),
+                disagreement.crux_prompt(self._question_text(question), self._timing(question),
                                          pair[0].reasoning, pair[1].reasoning),
                 depth="crux",
             )
@@ -259,12 +259,30 @@ class SummerTemplateBot2026(ForecastBot):
                         if c.summary_report), "")
         idx = disagreement.closest_to(values, aggregated_prediction)
         return disagreement.short_comment(
-            question.question_text,
+            self._question_text(question),
             report_type.make_readable_prediction(aggregated_prediction),
             [report_type.make_readable_prediction(v) for v in values],
             summary,
             predictions[idx].reasoning if predictions else "",
         )
+
+    @staticmethod
+    def _question_text(question: MetaculusQuestion) -> str:
+        """The question as the models must read it.
+
+        A group post (Market Pulse, many Cup questions) is unpacked into one
+        question per option, but the SDK takes each one's text from the
+        group's title -- "What will Q4 2026 EPS be for these companies?" --
+        and keeps the option ("Meta") only in group_question_option. Without
+        it the models forecast some other company: on 2026-10-20 three of
+        five Meta forecasts landed at $2.8-4.7 against a $5.3-7.3 range and
+        were rejected, failing the Market Pulse step (run 39453516101).
+        """
+        option = getattr(question, "group_question_option", None)
+        if option:
+            return (f"{question.question_text}\n"
+                    f"This question is ONLY about: {option} (one option of a group question).")
+        return question.question_text
 
     def _timing(self, question: MetaculusQuestion) -> str:
         """Today, close and resolution dates, and the stale-knowledge warning,
@@ -293,7 +311,7 @@ class SummerTemplateBot2026(ForecastBot):
                 {self._timing(question)}
 
                 Question:
-                {question.question_text}
+                {self._question_text(question)}
 
                 Background:
                 {question.background_info}
@@ -370,7 +388,7 @@ class SummerTemplateBot2026(ForecastBot):
             You are a professional forecaster interviewing for a job.
 
             Your interview question is:
-            {question.question_text}
+            {self._question_text(question)}
 
             Question background:
             {question.background_info}
@@ -442,7 +460,7 @@ class SummerTemplateBot2026(ForecastBot):
             You are a professional forecaster interviewing for a job.
 
             Your interview question is:
-            {question.question_text}
+            {self._question_text(question)}
 
             The options are: {question.options}
 
@@ -543,7 +561,7 @@ class SummerTemplateBot2026(ForecastBot):
             You are a professional forecaster interviewing for a job.
 
             Your interview question is:
-            {question.question_text}
+            {self._question_text(question)}
 
             Background:
             {question.background_info}
@@ -606,7 +624,7 @@ class SummerTemplateBot2026(ForecastBot):
         parsing_instructions = clean_indents(
             f"""
             The text given to you is trying to give a forecast distribution for a numeric question.
-            - This text is trying to answer the numeric question: "{question.question_text}".
+            - This text is trying to answer the numeric question: "{self._question_text(question)}".
             - When parsing the text, please make sure to give the values (the ones assigned to percentiles) in terms of the correct units.
             - The units for the forecast are: {question.unit_of_measure}
             - Your work will be shown publicly with these units stated verbatim after the numbers your parse.
@@ -644,7 +662,7 @@ class SummerTemplateBot2026(ForecastBot):
             You are a professional forecaster interviewing for a job.
 
             Your interview question is:
-            {question.question_text}
+            {self._question_text(question)}
 
             Background:
             {question.background_info}
@@ -707,7 +725,7 @@ class SummerTemplateBot2026(ForecastBot):
         parsing_instructions = clean_indents(
             f"""
             The text given to you is trying to give a forecast distribution for a date question.
-            - This text is trying to answer the question: "{question.question_text}".
+            - This text is trying to answer the question: "{self._question_text(question)}".
             - As an example, someone else guessed that the answer will be between {question.lower_bound} and {question.upper_bound}, so the numbers parsed from an answer like this would be verbatim "{question.lower_bound}" and "{question.upper_bound}".
             - The output is given as dates/times please format it into a valid datetime parsable string. Assume midnight UTC if no hour is given.
             - If percentiles are not explicitly given (e.g. only a single value is given) please don't return a parsed output, but rather indicate that the answer is not explicitly given in the text.
@@ -1011,7 +1029,16 @@ if __name__ == "__main__":
             )
         )
 
-    template_bot.log_report_summary(forecast_reports)
+    # The SDK's summary raises if any question failed, which failed a whole
+    # step (and sent the failure WhatsApp) over one bad question. Raise only
+    # when nothing succeeded, so a real breakage still alerts.
+    try:
+        template_bot.log_report_summary(forecast_reports)
+    except RuntimeError:
+        if forecast_reports and all(isinstance(r, BaseException) for r in forecast_reports):
+            raise
+        failed = sum(isinstance(r, BaseException) for r in forecast_reports)
+        logger.warning("partial_failure failed=%d of=%d", failed, len(forecast_reports))
     print_publication_report(client)
     print_run_summary_banner(
         forecast_reports,

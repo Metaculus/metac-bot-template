@@ -179,3 +179,31 @@ class WiringTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LabelFixRefreshTests(unittest.TestCase):
+    """Group subquestions forecast before the group option reached the
+    prompts (main._question_text) are redone once, then left alone."""
+
+    def q(self, last, option="Meta", close_days=60):
+        return Q(True, close_time=ahead(24 * close_days),
+                 timestamp_of_my_last_forecast=last) if option is None else \
+            type("G", (), {"already_forecasted": True, "close_time": ahead(24 * close_days),
+                           "timestamp_of_my_last_forecast": last,
+                           "group_question_option": option})()
+
+    def test_market_pulse_redoes_a_pre_fix_group_forecast_far_from_close(self):
+        old = self.q(market_pulse.REFORECAST_BEFORE - timedelta(days=3))
+        self.assertEqual(market_pulse.select([old], NOW + timedelta(days=30)), [old])
+
+    def test_a_post_fix_forecast_is_not_redone(self):
+        new = self.q(market_pulse.REFORECAST_BEFORE + timedelta(hours=1))
+        self.assertEqual(market_pulse.select([new], NOW + timedelta(days=30)), [])
+
+    def test_plain_questions_are_unaffected(self):
+        plain = self.q(market_pulse.REFORECAST_BEFORE - timedelta(days=3), option=None)
+        self.assertEqual(market_pulse.select([plain], NOW + timedelta(days=30)), [])
+
+    def test_the_cup_redoes_pre_fix_group_forecasts_too(self):
+        old = self.q(market_pulse.REFORECAST_BEFORE - timedelta(days=1))
+        self.assertEqual(market_pulse.select_stale([old], market_pulse.REFORECAST_BEFORE), [old])

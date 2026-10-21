@@ -60,7 +60,8 @@ def _json(fetch: Fetch, url: str, headers: dict | None = None) -> Any:
 def _text_of(question: Any) -> str:
     return "\n".join(
         str(getattr(question, a, "") or "")
-        for a in ("question_text", "background_info", "resolution_criteria", "fine_print")
+        for a in ("question_text", "group_question_option", "background_info",
+                  "resolution_criteria", "fine_print")
     )
 
 
@@ -169,7 +170,8 @@ STOP = set("will the a an of in on at to by for be is are was were what how many
 
 
 def _query(question: Any) -> str:
-    words = re.findall(r"[A-Za-z0-9$&.-]+", str(getattr(question, "question_text", "") or ""))
+    text = " ".join(str(getattr(question, a, "") or "") for a in ("group_question_option", "question_text"))
+    words = re.findall(r"[A-Za-z0-9$&.-]+", text)
     return " ".join([w for w in words if w.lower() not in STOP][:8])
 
 
