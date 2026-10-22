@@ -79,7 +79,11 @@ DEFAULT_ENGINE = "haiku"
 ROUNDS = {
     ("sonnet", "full"): (8, 5),
     ("sonnet", "light"): (4,),
-    ("haiku", "full"): (10, 6, 4),
+    # (10, 6, 4) until 2026-10-22: 102 production calls averaged 12 searches
+    # and $0.145, nearly always three rounds, and full research was 96% of
+    # the Claude spend -- November was heading for $75-120 against the
+    # $100 credit. Two rounds and 12 searches at most.
+    ("haiku", "full"): (8, 4),
     ("haiku", "light"): (6,),
     # One targeted pass on what the forecasters disagreed about
     # (disagreement.py); runs only on the questions where they did.
