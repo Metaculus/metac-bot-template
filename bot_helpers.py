@@ -71,8 +71,16 @@ def silence_noisy_dependencies() -> None:
 # cost-calculation error inside its logging callback. Measured by reading the
 # installed code, not assumed (general_llm.py, model_tracker.py,
 # litellm_logging.py::_response_cost_calculator).
+#
+# The other three were added on 2026-10-22 (same API): the spend ledger
+# (spend.py) showed GPT-5.6 Sol, Haiku 4.5 and gpt-4o-mini priced at $0 on
+# Test Bot run 39578224912 -- 97 of the run's 128 OpenRouter calls -- and the
+# SDK's own per-question cost with them.
 KNOWN_MODEL_PRICES_PER_MTOK = {
     "openrouter/anthropic/claude-opus-5.5": (4.0, 20.0),
+    "openrouter/openai/gpt-5.6-sol": (4.0, 20.0),
+    "openrouter/anthropic/claude-haiku-4.5": (1.0, 5.0),
+    "openrouter/openai/gpt-4o-mini": (0.15, 0.6),
 }
 
 
@@ -81,7 +89,7 @@ def register_model_prices() -> list[str]:
 
     Fills gaps only. A model litellm already prices is left alone, so a newer
     downloaded map always wins over this table and a price change upstream is
-    never masked by it. Returns the model ids registered, for the log line.
+    never masked by it; an entry with no input price counts as a gap. Returns the model ids registered, for the log line.
     Must run before any GeneralLlm is built: ModelTracker decides whether to
     warn in GeneralLlm.__init__.
     """
@@ -89,7 +97,7 @@ def register_model_prices() -> list[str]:
 
     registered = []
     for model, (input_per_mtok, output_per_mtok) in KNOWN_MODEL_PRICES_PER_MTOK.items():
-        if model in litellm.model_cost:
+        if (litellm.model_cost.get(model) or {}).get("input_cost_per_token"):
             continue
         litellm.register_model(
             {

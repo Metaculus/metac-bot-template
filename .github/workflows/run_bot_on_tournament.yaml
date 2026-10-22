@@ -59,6 +59,15 @@ concurrency:
 jobs:
   forecast_job:
     runs-on: ubuntu-latest # determines the machine that will run the job - keep as is
+    # API spend ledger (spend.py). Every paid call of every main.py run below
+    # appends one line -- ids, phase, model, tokens, dollars; never a forecast.
+    # The budget and thresholds are repository variables (Settings -> Secrets
+    # and variables -> Actions -> Variables) with these defaults.
+    env:
+      SPEND_LEDGER_PATH: spend_ledger.jsonl
+      CLAUDE_BUDGET_USD: ${{ vars.CLAUDE_BUDGET_USD || '100' }}
+      SPEND_ALERT_THRESHOLDS: ${{ vars.SPEND_ALERT_THRESHOLDS || '0.8,1.0' }}
+      SPEND_THROTTLE_AT: ${{ vars.SPEND_THROTTLE_AT || '1.0' }}
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
       - name: Check out repository
@@ -81,6 +90,18 @@ jobs:
       #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
+      # The month so far. The Actions cache needs no write permission on the
+      # repository (it uses the runner's own token), so the job stays
+      # contents: read. A miss starts a new history; the messages then say
+      # from which day the month is counted.
+      - name: Restore the spend ledger
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: spend_ledger.jsonl
+          key: spend-ledger-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            spend-ledger-
       # forecasting-tools assigns the researcher role to a model OpenRouter no
       # longer serves, which 404s every question. This activates the pinned llms
       # block in main.py so the run uses models that actually exist.
@@ -348,6 +369,28 @@ jobs:
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      # One WhatsApp alert the first time a month crosses each threshold of
+      # the Claude-API budget, and this run's spend in the step summary. Never
+      # fails the job (spend.py swallows its own errors; continue-on-error is
+      # the second layer).
+      - name: Spend alerts and run summary
+        id: spend
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python spend.py after-run
+        env:
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}
+      # Saved only when something was recorded (most runs find nothing to
+      # forecast), or when the step above could not tell.
+      - name: Save the spend ledger
+        if: ${{ !cancelled() && steps.spend.outputs.changed != 'false' && hashFiles('spend_ledger.jsonl') != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: spend_ledger.jsonl
+          key: spend-ledger-${{ github.run_id }}-${{ github.run_attempt }}
       # Separate from the in-process notifier: this fires only when a STEP
       # in this job failed outright (including one earlier than "Run bot"),
       # which main.py's own try/except around handle_run() cannot see at all

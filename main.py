@@ -23,6 +23,7 @@ from bot_helpers import (
 )
 from publication import PublishingClient, print_publication_report
 import market_pulse
+import spend
 import tournaments
 
 silence_noisy_dependencies()
@@ -52,7 +53,7 @@ from forecasting_tools import (
     ReasonedPrediction,
     SmartSearcher,
     clean_indents,
-    structure_output,
+    structure_output as _sdk_structure_output,
 )
 
 dotenv.load_dotenv()
@@ -64,6 +65,12 @@ logger = logging.getLogger(__name__)
 # per-question cost in the logs cannot silently read $0. See bot_helpers.
 for _model in register_model_prices():
     logger.info("model_price_registered model=%s", _model)
+
+
+async def structure_output(*args, **kwargs):
+    """The SDK's parser call, labelled "parser" in the spend ledger."""
+    with spend.phase("parser"):
+        return await _sdk_structure_output(*args, **kwargs)
 
 
 class SummerTemplateBot2026(ForecastBot):
@@ -206,6 +213,21 @@ class SummerTemplateBot2026(ForecastBot):
     #: its weekly refreshes do not eat the ~EUR100/month Claude-API budget.
     research_depth = "full"
 
+    ############################## SPEND LABELS ##############################
+    # Which question and phase each paid call belongs to; see spend.py.
+
+    async def _run_individual_question(self, question: MetaculusQuestion):
+        with spend.question(question):
+            return await super()._run_individual_question(question)
+
+    async def summarize_research(self, question: MetaculusQuestion, research: str) -> str:
+        with spend.phase("summary"):
+            return await super().summarize_research(question, research)
+
+    async def _make_prediction(self, question: MetaculusQuestion, research: str):
+        with spend.phase("forecast"):
+            return await super()._make_prediction(question, research)
+
     ############################## DISAGREEMENT FOLLOW-UP ##############################
 
     async def _research_and_make_predictions(self, question: MetaculusQuestion):
@@ -221,6 +243,10 @@ class SummerTemplateBot2026(ForecastBot):
             return result
         logger.info("crux_triggered spread=%.2f question=%s",
                     disagreement.spread(values), question.page_url)
+        with spend.phase(spend.CRUX):
+            return await self._resolve_crux(question, result, values, pair)
+
+    async def _resolve_crux(self, question, result, values, pair):
         try:
             extra = await claude_research.research(
                 disagreement.crux_prompt(self._question_text(question), self._timing(question),
@@ -296,6 +322,10 @@ class SummerTemplateBot2026(ForecastBot):
     ##################################### RESEARCH #####################################
 
     async def run_research(self, question: MetaculusQuestion) -> str:
+        with spend.phase("research"):
+            return await self._run_research(question)
+
+    async def _run_research(self, question: MetaculusQuestion) -> str:
         async with self._concurrency_limiter:
             research = ""
             researcher = self.get_llm("researcher")
@@ -941,6 +971,8 @@ if __name__ == "__main__":
     # matters for both the private-comment rule and the no-preview rule.
     # Skipped for test_questions, which targets the unscored practice area.
     install_forecast_redaction(run_mode)
+    # API spend ledger; a no-op unless SPEND_LEDGER_PATH is set. See spend.py.
+    spend.install_litellm_recorder()
     publish_to_metaculus = True
     print_startup_banner(run_mode, will_publish=publish_to_metaculus)
     # A pinned season that is over keeps "working": discovery returns zero
@@ -982,6 +1014,12 @@ if __name__ == "__main__":
         # },
     )
 
+    # Once this month's Claude-API spend reaches the budget, every mode runs
+    # light research until the month ends (spend.after_run sends the alert).
+    if spend.over_budget():
+        template_bot.research_depth = "light"
+        logger.info("spend_budget_reached research_depth=light")
+
     # Per-mode tournament URL shown in the summary banner footer. The ids and
     # URLs are pinned in tournaments.py, not taken from the SDK's CURRENT_*
     # constants; see that module's docstring for why.
@@ -996,11 +1034,13 @@ if __name__ == "__main__":
     # exceptions, since return_exceptions=True) which then flows into the
     # summary printers below.
     if run_mode == "tournament":
+        spend.set_tournament("futureeval")
         seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.FUTUREEVAL.id, return_exceptions=True
             )
         )
+        spend.set_tournament("minibench")
         minibench_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.MINIBENCH.id, return_exceptions=True
@@ -1017,6 +1057,7 @@ if __name__ == "__main__":
         # good mix of question types (FutureEval resources page).
         template_bot.skip_previously_forecasted_questions = False
         template_bot.research_depth = "light"
+        spend.set_tournament("cup")
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select_stale(
@@ -1035,6 +1076,7 @@ if __name__ == "__main__":
         # (new questions, plus a refresh shortly before close), so the bot's
         # own skip is lifted for this mode only.
         template_bot.skip_previously_forecasted_questions = False
+        spend.set_tournament("market_pulse")
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select(
@@ -1051,6 +1093,7 @@ if __name__ == "__main__":
         # the recommended target for smoke-testing your bot.
         # https://www.metaculus.com/tournament/bot-testing-area/
         template_bot.skip_previously_forecasted_questions = False
+        spend.set_tournament("test")
         forecast_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 "bot-testing-area", return_exceptions=True

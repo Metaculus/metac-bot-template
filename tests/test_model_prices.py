@@ -62,8 +62,22 @@ class RegisterModelPricesTests(unittest.TestCase):
 
     def test_registration_is_idempotent(self):
         litellm.model_cost.pop(OPUS, None)
-        self.assertEqual(bot_helpers.register_model_prices(), [OPUS])
+        self.assertIn(OPUS, bot_helpers.register_model_prices())
         self.assertEqual(bot_helpers.register_model_prices(), [])
+
+    def test_an_entry_without_a_price_is_a_gap(self):
+        sol = "openrouter/openai/gpt-5.6-sol"
+        litellm.model_cost[sol] = {"litellm_provider": "openrouter", "mode": "chat"}
+        self.assertIn(sol, bot_helpers.register_model_prices())
+        cost = litellm.cost_per_token(model=sol, prompt_tokens=1_000_000, completion_tokens=1_000_000)
+        self.assertAlmostEqual(sum(cost), 24.0, places=6)
+
+    def test_every_model_the_pinned_chains_call_is_priced(self):
+        """The spend ledger found three of them at $0 (Test Bot run
+        39578224912)."""
+        for model in ("openrouter/openai/gpt-5.6-sol", "openrouter/anthropic/claude-haiku-4.5",
+                      "openrouter/openai/gpt-4o-mini"):
+            self.assertIn(model, bot_helpers.KNOWN_MODEL_PRICES_PER_MTOK)
 
     def test_the_registered_price_is_what_litellm_then_charges(self):
         """Through litellm's own calculator, not by reading the dict back:
