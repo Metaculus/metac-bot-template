@@ -165,7 +165,14 @@ DEFAULTS = {
     "default": "openrouter/anthropic/claude-opus-5.5",
     "researcher": "openrouter/anthropic/claude-haiku-4.5",
     "summarizer": "openrouter/anthropic/claude-haiku-4.5",
-    "parser": "openrouter/openai/gpt-4o-mini",
+    # Claude since 2026-10-22. gpt-4o-mini led the parser until it lost
+    # question 46224 (three of five numeric answers parsed as 1/1000 of what
+    # the forecasters wrote, Test Bot run 39565436454) and one of five
+    # forecasts on question 46191 (run 39596139823); every other model answered
+    # all 379 calls of the 60 runs before it. Haiku 4.5 was already the
+    # parser's verified fallback. gpt-4o-mini stays behind it, for outages
+    # only (PARSER_EXTRA_CHAIN).
+    "parser": "openrouter/anthropic/claude-haiku-4.5",
 }
 
 # Fallback chain behind each role's own model, tried in order only on
@@ -251,6 +258,10 @@ STRUCTURED_OUTPUT_CAPABLE = {
 # false of the provider. One measurement of one model had been carried forward
 # as if it settled the question.
 PARSER_EXTRA_CHAIN = [
+    # The parser's primary until 2026-10-22 (see DEFAULTS); behind Haiku now,
+    # so an OpenRouter-side Anthropic outage still has a JSON backend on the
+    # same key.
+    ("openrouter/openai/gpt-4o-mini", "OPENROUTER_API_KEY"),
     # Qualified during the OpenRouter outage and kept afterwards: it is the one
     # Groq model that emits schema-constrained JSON, and a third reachable
     # parser backend is exactly what was missing when five questions were lost

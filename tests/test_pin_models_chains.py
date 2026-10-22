@@ -248,8 +248,9 @@ class ChainsNameEachBackendOnceTests(unittest.TestCase):
         chains = chains_by_role(pm, pm.DEFAULTS)
         self.assertEqual(chains["researcher"], [[HAIKU, GEMINI, GROQ_OSS]])
         self.assertEqual(chains["summarizer"], [[HAIKU, GEMINI, GROQ_OSS]])
+        # Claude parses since 2026-10-22; gpt-4o-mini only catches an outage.
         self.assertEqual(
-            chains["parser"], [[GPT_4O_MINI, HAIKU, GEMINI, GROQ_QWEN]])
+            chains["parser"], [[HAIKU, GEMINI, GPT_4O_MINI, GROQ_QWEN]])
         # The forecaster: Opus and GPT-5.6 Sol share the five calls (one chain
         # each, see FORECAST_VOTERS); the cheap models only catch a failure.
         # They used to be ensemble voters, which put three or four of every
@@ -302,8 +303,8 @@ class ChainsNameEachBackendOnceTests(unittest.TestCase):
         # The parser excluded DEFAULTS["parser"] rather than the configured
         # primary, so overriding it with a model that is also a fallback
         # repeated that model.
-        chains = chains_by_role(pm, dict(pm.DEFAULTS, parser=HAIKU))
-        self.assertEqual(chains["parser"], [[HAIKU, GEMINI, GROQ_QWEN]])
+        chains = chains_by_role(pm, dict(pm.DEFAULTS, parser=GPT_4O_MINI))
+        self.assertEqual(chains["parser"], [[GPT_4O_MINI, GEMINI, GROQ_QWEN]])
 
 
 class ImportWiringTests(unittest.TestCase):
