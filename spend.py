@@ -70,8 +70,19 @@ def _float_env(name: str, default: float) -> float:
         return default
 
 
-def budget_usd() -> float:
-    return _float_env("CLAUDE_BUDGET_USD", DEFAULT_BUDGET_USD)
+def budget_usd(now: datetime | None = None) -> float:
+    """CLAUDE_BUDGET_USD, in dollars. "60@2026-10" applies 60 to October 2026
+    only and the default to every other month: the ledger started on
+    2026-10-22, after ~$40 of October had been spent, and a plain 60 would
+    have had to be removed by hand on 1 November."""
+    raw = os.environ.get("CLAUDE_BUDGET_USD", "").strip()
+    amount, _, month = raw.partition("@")
+    if month and month.strip() != _month(now or datetime.now(timezone.utc)):
+        return DEFAULT_BUDGET_USD
+    try:
+        return float(amount) if amount.strip() else DEFAULT_BUDGET_USD
+    except ValueError:
+        return DEFAULT_BUDGET_USD
 
 
 def thresholds() -> tuple[float, ...]:
@@ -322,7 +333,7 @@ def over_budget(now: datetime | None = None) -> bool:
     the budget; main.py then runs light research. False on any error."""
     try:
         now = now or datetime.now(timezone.utc)
-        return month_spend(load(), now) >= budget_usd() * throttle_at()
+        return month_spend(load(), now) >= budget_usd(now) * throttle_at()
     except Exception as exc:  # noqa: BLE001
         _warn_once("budget", exc)
         return False
@@ -365,7 +376,7 @@ def forecasts(lines: Iterable[dict]) -> int:
 
 def month_line(lines: list[dict], now: datetime) -> str:
     spent = month_spend(lines, now)
-    budget = budget_usd()
+    budget = budget_usd(now)
     since = counted_since(lines, now)
     text = f"mes {money(spent)} $ de {money(budget)} $ ({spent / budget:.0%})".replace("%", " %")
     projected = projection(spent, now, since)
@@ -407,7 +418,7 @@ def run_line(lines: list[dict], run_id: str | None, now: datetime) -> str:
 
 
 def alert_message(spent: float, level: float, now: datetime, lines: list[dict]) -> str:
-    budget = budget_usd()
+    budget = budget_usd(now)
     head = "🛑" if level >= 1 else "⚠️"
     text = (f"{head} METACULUS BOT · gasto Claude este mes: {money(spent)} $ de "
             f"{money(budget)} $ ({spent / budget:.0%}), pasado el umbral del {level:.0%}.").replace("%", " %")
@@ -425,7 +436,7 @@ def due_alert(lines: list[dict], now: datetime) -> tuple[float, list[float]] | N
     spent = month_spend(lines, now)
     month = _month(now)
     sent = {l.get("threshold") for l in lines if l.get("kind") == "alert" and l.get("month") == month}
-    crossed = [t for t in thresholds() if spent >= budget_usd() * t and t not in sent]
+    crossed = [t for t in thresholds() if spent >= budget_usd(now) * t and t not in sent]
     return (max(crossed), crossed) if crossed else None
 
 

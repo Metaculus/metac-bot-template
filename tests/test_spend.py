@@ -195,6 +195,17 @@ class BudgetTests(LedgerCase):
         with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_USD": "200"}):
             self.assertFalse(spend.over_budget(NOW))
 
+    def test_a_budget_can_be_scoped_to_one_month(self):
+        with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_USD": "60@2026-10"}):
+            self.assertEqual(spend.budget_usd(NOW), 60.0)
+            self.assertEqual(spend.budget_usd(datetime(2026, 11, 1, tzinfo=timezone.utc)), 100.0)
+            self.write(call(NOW - timedelta(days=1), 61.0))
+            self.assertTrue(spend.over_budget(NOW))
+            self.assertIn("de 60,00 $", spend.month_line(spend.load(), NOW))
+        for raw in ("", "lots", "x@2026-10"):
+            with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_USD": raw}):
+                self.assertEqual(spend.budget_usd(NOW), 100.0)
+
     def test_a_missing_or_corrupt_ledger_never_throttles(self):
         self.assertFalse(spend.over_budget(NOW))
         with open(self.path, "w") as h:

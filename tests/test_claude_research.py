@@ -166,14 +166,17 @@ class SecondRoundTests(unittest.TestCase):
         self.assertNotIn("fallbacks", call)
         self.assertNotIn("betas", call)
 
-    def test_haiku_can_run_three_targeted_rounds(self):
-        script = [response(text="a\nGAPS: one", tin=1000), response(text="b\nGAPS: two", tin=1000),
-                  response(text="c\nGAPS: none", tin=1000)]
+    def test_haiku_runs_every_planned_targeted_round(self):
+        plan = cr.ROUNDS[("haiku", "full")]
+        script = [response(text=f"r{i}\nGAPS: more", tin=1000) for i in range(len(plan))]
         with FakeAnthropic(*script) as fake:
             out = run(cr.research("q", engine_key="haiku"))
-        self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls],
-                         list(cr.ROUNDS[("haiku", "full")]))
-        self.assertIn("(round 3)", out)
+        self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls], list(plan))
+        self.assertIn(f"(round {len(plan)})", out)
+
+    def test_full_research_is_capped_at_twelve_searches(self):
+        # The Claude budget (2026-10-22): searches are two thirds of the bill.
+        self.assertLessEqual(sum(cr.ROUNDS[("haiku", "full")]), 12)
 
     def test_haiku_is_the_production_default(self):
         self.assertEqual(cr.DEFAULT_ENGINE, "haiku")
