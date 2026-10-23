@@ -88,7 +88,10 @@ def _entry_user(entry: dict[str, Any]) -> tuple[Any, Any]:
 
 
 def standing_from(payload: Any) -> dict[str, Any] | None:
-    """{rank, total, score} for the bot, or None when it is not listed.
+    """{rank, total, score} for the bot, or None when it is not listed, plus
+    "prize" (the dollars the bot's row would take if the tournament ended now)
+    when it has one and "paid_ranks" (the last position with a prize) when
+    anyone does -- both read from the rows' own "prize" field.
 
     Defensive about shape: the entries list may sit under "entries" or
     "results", the bot may also be echoed as "userEntry", and rows Metaculus
@@ -121,11 +124,20 @@ def standing_from(payload: Any) -> dict[str, Any] | None:
     if mine is None or mine.get("rank") is None:
         return None
     score = mine.get("score")
-    return {
+    out = {
         "rank": int(mine["rank"]),
         "total": max(ranks) if ranks else None,
         "score": round(float(score), 1) if score is not None else None,
     }
+    prize = mine.get("prize")
+    if isinstance(prize, (int, float)) and prize > 0:
+        out["prize"] = round(prize)
+    paid = [e["rank"] for e in entries
+            if isinstance(e, dict) and not e.get("excluded") and isinstance(e.get("rank"), int)
+            and isinstance(e.get("prize"), (int, float)) and e["prize"] > 0]
+    if paid:
+        out["paid_ranks"] = max(paid)
+    return out
 
 
 def fetch_standing(client: MetaculusReadClient, project: str) -> tuple[dict | None, str]:
@@ -217,6 +229,14 @@ def _fmt_score(score: float | None) -> str:
     return "?" if score is None else f"{score:+g} pts"
 
 
+def _fmt_prize(standing: dict[str, Any]) -> str:
+    if standing.get("prize"):
+        return f" · 💰 {standing['prize']} $ si acabara hoy"
+    if standing.get("paid_ranks"):
+        return f" · sin premio (cobran hasta el {standing['paid_ranks']})"
+    return ""
+
+
 def render(week_start: date, week_end: date, rows: list[dict[str, Any]],
            previous: dict[str, Any] | None) -> str:
     prev = (previous or {}).get("standings", {})
@@ -230,6 +250,7 @@ def render(week_start: date, week_end: date, rows: list[dict[str, Any]],
                 f"• {row['label']}: puesto {s['rank']}{total}"
                 f"{_delta_rank(s['rank'], p.get('rank'))} · "
                 f"{_fmt_score(s.get('score'))}{_delta_score(s.get('score'), p.get('score'))}"
+                f"{_fmt_prize(s)}"
             )
         else:
             lines.append(f"• {row['label']}: sin clasificación aún")
