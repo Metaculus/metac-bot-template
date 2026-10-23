@@ -443,6 +443,32 @@ FORECASTER_REASONING = {
 }
 FORECASTER_TIMEOUT_SECONDS = 420
 
+# IS OPUS ACTUALLY REASONING? -- 2026-10-23.
+#
+# At "high" the median Opus forecast call takes 14.7 s and costs ~$0.058,
+# which leaves room for only ~300-500 hidden reasoning tokens. spend.py now
+# records the reasoning tokens each call bills; FORECASTER_REASONING_OPUS lets
+# a Test Bot run ask for another effort (test_bot.yaml's opus_reasoning input)
+# without a commit, so "high" and "xhigh" can be compared on the same
+# questions. Unset -- as in every production workflow -- means no change.
+#
+# Effort NAMES only. A token budget (reasoning.max_tokens) returns 400 on
+# Opus 5.5, which would fail every Opus call over to Sol or Haiku without an
+# error anywhere, so anything outside this list is ignored with a warning.
+# Read once, at import time, for the reason ACTIVE_FALLBACKS is.
+OPUS_FORECASTER = "openrouter/anthropic/claude-opus-5.5"
+OPUS_EFFORTS = ("low", "medium", "high", "xhigh")
+_OPUS_EFFORT_OVERRIDE = os.environ.get("FORECASTER_REASONING_OPUS", "").strip().lower()
+if _OPUS_EFFORT_OVERRIDE in OPUS_EFFORTS:
+    FORECASTER_REASONING[OPUS_FORECASTER] = _OPUS_EFFORT_OVERRIDE
+elif _OPUS_EFFORT_OVERRIDE:
+    print(
+        "::warning::FORECASTER_REASONING_OPUS={0!r} is not one of {1}; Opus keeps "
+        "effort {2!r}".format(_OPUS_EFFORT_OVERRIDE[:20], ", ".join(OPUS_EFFORTS),
+                              FORECASTER_REASONING[OPUS_FORECASTER]),
+        file=sys.stderr,
+    )
+
 
 def _backend_expr(
     model: str, allowed_tries: int = TRIES_STANDALONE, role: str | None = None
@@ -1254,6 +1280,9 @@ def main() -> int:
         for role in ("default", "researcher", "summarizer", "parser"):
             mark = " (from models.txt)" if role in overrides else ""
             print(f"  {role:<11} {models[role]}{mark}")
+        if _OPUS_EFFORT_OVERRIDE in OPUS_EFFORTS:
+            print(f"  opus forecaster reasoning effort {FORECASTER_REASONING[OPUS_FORECASTER]}"
+                  " (FORECASTER_REASONING_OPUS)")
 
     # Deliberately outside the branch above: an already-patched tree still has to
     # prove its models answer, otherwise --check silently passes on a rerun.

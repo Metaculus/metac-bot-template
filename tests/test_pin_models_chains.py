@@ -22,6 +22,9 @@ MANAGED_ENV = (
     "GEMINI_API_KEY", "GEMINI2_API_KEY", "GEMINI3_API_KEY", "GEMINI4_API_KEY",
     "GROQ_API_KEY", "OPENROUTER_API_KEY",
     "ASKNEWS_API_KEY", "ASKNEWS_CLIENT_ID", "ASKNEWS_SECRET",
+    # Not a credential, but read at import time the same way: a developer's
+    # own setting must not change the effort a test believes it generates.
+    "FORECASTER_REASONING_OPUS",
 )
 
 
@@ -547,3 +550,73 @@ class ForecasterReasoningTests(unittest.TestCase):
         pm = load(**self.PRODUCTION)
         block = pm.build_block(pm.DEFAULTS).strip().rstrip(",")
         ast.parse("x = " + block[len("llms="):])
+
+
+class OpusEffortOverrideTests(unittest.TestCase):
+    """FORECASTER_REASONING_OPUS (2026-10-23): one Test Bot run may ask Opus
+    for another effort, to measure whether it reasons more. Production never
+    sets it, so the default must not move."""
+
+    PRODUCTION = ForecasterReasoningTests.PRODUCTION
+
+    def tearDown(self):
+        # load() leaves the module as the last reload made it; an xhigh left
+        # behind would leak into any later test that builds a block.
+        load()
+
+    def _lines(self, pm):
+        block = pm.build_block(pm.DEFAULTS)
+        default = block[block.index('"default"'):block.index('"summarizer"')]
+        opus = next(l for l in default.splitlines() if OPUS in l)
+        sol = next(l for l in default.splitlines() if GPT_SOL in l)
+        return opus, sol
+
+    def test_unset_keeps_high(self):
+        opus, _sol = self._lines(load(**self.PRODUCTION))
+        self.assertIn('"effort": "high"', opus)
+
+    def test_xhigh_reaches_opus_only(self):
+        pm = load(FORECASTER_REASONING_OPUS="xhigh", **self.PRODUCTION)
+        opus, sol = self._lines(pm)
+        self.assertIn('extra_body={"reasoning": {"effort": "xhigh"}}', opus)
+        self.assertIn('"effort": "high"', sol)
+        self.assertNotIn("max_tokens", pm.build_block(pm.DEFAULTS))
+
+    def test_anything_but_an_effort_name_is_ignored(self):
+        """A token budget returns 400 on Opus 5.5 and would fail every Opus
+        call over to Sol or Haiku in silence."""
+        import io
+
+        for value in ("4000", "max", "high; drop", "XHIGH "):
+            warned = io.StringIO()
+            with contextlib.redirect_stderr(warned):
+                opus, _sol = self._lines(load(FORECASTER_REASONING_OPUS=value, **self.PRODUCTION))
+            expected = "xhigh" if value.strip().lower() == "xhigh" else "high"
+            self.assertIn('"effort": "{0}"'.format(expected), opus, value)
+            self.assertEqual("::warning::" in warned.getvalue(), expected == "high", value)
+
+    def test_the_override_names_the_production_forecaster(self):
+        pm = load(**self.PRODUCTION)
+        self.assertEqual(pm.OPUS_FORECASTER, pm.DEFAULTS["default"])
+        self.assertIn(pm.OPUS_FORECASTER, pm.FORECASTER_REASONING)
+
+    def test_only_test_bot_sets_it(self):
+        import yaml
+
+        workflows = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                 ".github", "workflows")
+        for name in sorted(os.listdir(workflows)):
+            if not name.endswith((".yaml", ".yml")):
+                continue
+            with open(os.path.join(workflows, name), encoding="utf-8") as handle:
+                text = handle.read()
+            if name != "test_bot.yaml":
+                self.assertNotIn("FORECASTER_REASONING_OPUS", text, name)
+                continue
+            flow = yaml.safe_load(text)
+            # PyYAML reads the bare key `on:` as True.
+            choice = (flow.get("on") or flow.get(True))["workflow_dispatch"]["inputs"]["opus_reasoning"]
+            self.assertEqual((choice["default"], choice["options"]), ("high", ["high", "xhigh"]))
+            steps = flow["jobs"]["forecast_job"]["steps"]
+            setters = [s.get("name") for s in steps if "FORECASTER_REASONING_OPUS" in (s.get("env") or {})]
+            self.assertEqual(setters, ["Pin and verify LLM models"])

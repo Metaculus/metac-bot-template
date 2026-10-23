@@ -17,6 +17,14 @@ the phase, the provider, the model, tokens, searches and dollars -- never a
 forecast, a rationale or anything else that says what the bot predicted. The
 repository is public and so are its cache and step summaries.
 
+A litellm call also records how many hidden reasoning tokens it billed
+("reasoning", a count, present only when the provider reports one). Added
+2026-10-23 to answer whether Opus 5.5 actually reasons at effort "high": its
+p50 forecast call takes 14.7 s and costs ~$0.058, which leaves room for only
+~300-500 reasoning tokens. `python spend.py breakdown` prints the mean per
+model, so one Test Bot run at "high" and one at "xhigh" (pin_models'
+FORECASTER_REASONING_OPUS) can be compared.
+
 Recording is off unless SPEND_LEDGER_PATH is set (the production workflow
 sets it), so tests and local runs write nothing. Nothing here may fail a run:
 every entry point swallows its own errors. Standard library only;
@@ -24,6 +32,7 @@ forecasting_tools and litellm are imported inside the functions that use them.
 
     python spend.py after-run   # end of each production job: alerts, summary
     python spend.py weekly      # Monday message, printed to stdout
+    python spend.py breakdown   # Test Bot: calls, tokens, dollars, reasoning
 """
 
 from __future__ import annotations
@@ -140,8 +149,11 @@ def _warn_once(what: str, exc: BaseException) -> None:
 
 
 def record(*, provider: str, model: str, usd: float, tokens_in: int = 0,
-           tokens_out: int = 0, searches: int = 0) -> None:
-    """Append one paid call to the ledger. Never raises."""
+           tokens_out: int = 0, searches: int = 0,
+           reasoning_tokens: int | None = None) -> None:
+    """Append one paid call to the ledger. Never raises. ``reasoning_tokens``
+    is written only when the provider reported it, so a 0 means "reported
+    none" and an absent key means "not reported"."""
     path = ledger_path()
     if path is None:
         return
@@ -159,6 +171,8 @@ def record(*, provider: str, model: str, usd: float, tokens_in: int = 0,
             "searches": int(searches or 0),
             "usd": round(float(usd or 0.0), 6),
         }
+        if reasoning_tokens is not None:
+            line["reasoning"] = int(reasoning_tokens)
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(json.dumps(line) + "\n")
     except Exception as exc:  # noqa: BLE001 - spend tracking never fails a run
@@ -181,6 +195,24 @@ def _response_cost(response: Any) -> float:
     return float(max(stored or 0.0, computed or 0.0))
 
 
+def _field(obj: Any, name: str) -> Any:
+    if isinstance(obj, dict):
+        return obj.get(name)
+    return getattr(obj, name, None)
+
+
+def reasoning_tokens(usage: Any) -> int | None:
+    """The hidden reasoning tokens a response billed, as a count: litellm's
+    ``usage.completion_tokens_details.reasoning_tokens`` (chat completions),
+    or ``usage.output_tokens_details.reasoning_tokens`` (responses API).
+    None when the provider did not report it."""
+    for details_name in ("completion_tokens_details", "output_tokens_details"):
+        value = _field(_field(usage, details_name), "reasoning_tokens")
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
+            return int(value)
+    return None
+
+
 def _record_response(model: Any, response: Any) -> None:
     try:
         name = str(model or "unknown")
@@ -194,6 +226,7 @@ def _record_response(model: Any, response: Any) -> None:
             usd=_response_cost(response),
             tokens_in=getattr(usage, "prompt_tokens", None) or getattr(usage, "input_tokens", 0) or 0,
             tokens_out=getattr(usage, "completion_tokens", None) or getattr(usage, "output_tokens", 0) or 0,
+            reasoning_tokens=reasoning_tokens(usage),
         )
     except Exception as exc:  # noqa: BLE001
         _warn_once("litellm", exc)
@@ -497,16 +530,23 @@ def after_run(now: datetime | None = None, send=_send) -> bool:
 
 def breakdown(lines: list[dict]) -> str:
     """Calls, tokens and dollars per provider, phase and model -- for Test
-    Bot's log, where the question is whether every path is recorded."""
+    Bot's log, where the question is whether every path is recorded -- then
+    the mean reasoning tokens per model, over the calls that reported them."""
     rows: dict[tuple, list] = defaultdict(lambda: [0, 0, 0, 0.0])
+    thinking: dict[str, list[int]] = defaultdict(list)
     for line in calls(lines):
         row = rows[(line.get("provider"), line.get("phase"), line.get("model"))]
         row[0] += 1
         row[1] += line.get("in", 0)
         row[2] += line.get("out", 0)
         row[3] += line.get("usd", 0.0)
+        if isinstance(line.get("reasoning"), int):
+            thinking[f"{line.get('provider')}/{line.get('model')}"].append(line["reasoning"])
     out = [f"{p} {ph} {m}: {n} calls, {i} in, {o} out, ${usd:.4f}"
            for (p, ph, m), (n, i, o, usd) in sorted(rows.items(), key=lambda kv: -kv[1][3])]
+    for model, counts in sorted(thinking.items()):
+        out.append(f"reasoning {model}: mean {sum(counts) / len(counts):.0f} tokens "
+                   f"over {len(counts)} calls, max {max(counts)}")
     return "\n".join(out) or "no calls recorded"
 
 
