@@ -384,6 +384,43 @@ class OutOfRangeTests(RealSdkTestCase):
         with self.assertRaises(ValueError):
             build(self.BELOW, q)
 
+    def test_a_fat_tail_past_twice_the_range_is_brought_inside_it(self):
+        """Roadmap A3, "always keep values within +/-1.9R": an open-range set
+        with values in range but p10 more than 2 ranges below it was refused
+        whole, on the verbatim and the parser path alike."""
+        q = numeric(5.345, 7.345)  # R = 2: the SDK refuses values below 1.345
+        fat = [1.2, 4.0, 5.6, 6.0, 6.4, 6.8]
+        with self.assertRaises(ValueError):
+            NumericDistribution.from_question(percentiles(fat), q)
+        out, moved = ns.shape(percentiles(fat), q)
+        self.assertTrue(moved)
+        declared = [p.value for p in out if p.percentile in LEVELS]
+        self.assertAlmostEqual(declared[0], 5.345 - ns.OPEN_TAIL_LIMIT * 2)
+        self.assertEqual(declared[1:], fat[1:])
+        with self.assertLogs(ns.logger, level="INFO") as logs:
+            prediction = build(fat, q)
+        self.assertIn(f"INFO:numeric_shape:numeric_clamped=1 url={URL}", logs.output)
+        self.assertGreater(heights(prediction)[0], 0.15)
+
+    def test_a_far_value_on_either_side_keeps_the_order(self):
+        q = numeric(10.0, 14.0)  # 2x limit: 2 and 22
+        for values in ([0.5, 1.5, 11.0, 12.0, 13.0, 14.0], [10.5, 11.0, 12.0, 13.0, 23.0, 30.0]):
+            with self.subTest(values=values):
+                out, moved = ns.shape(percentiles(values), q)
+                self.assertTrue(moved)
+                declared = [p.value for p in out if p.percentile in LEVELS]
+                self.assertTrue(all(b > a for a, b in zip(declared, declared[1:])))
+                self.assertTrue(all(10.0 - 2 * 4 <= v <= 14.0 + 2 * 4 for v in declared))
+                build(values, q).get_cdf()
+
+    def test_a_far_value_past_a_closed_bound_is_left_alone(self):
+        q = numeric(5.345, 7.345, open_lower=False)
+        fat = [1.2, 4.0, 5.6, 6.0, 6.4, 6.8]
+        _out, moved = ns.shape(percentiles(fat), q)
+        self.assertFalse(moved)
+        with self.assertRaises(ValueError):
+            build(fat, q)
+
     def test_a_unit_error_is_left_for_the_parser(self):
         """Values past the SDK's own 2x limit are a unit error, not a
         forecast outside the range: still rejected, so main.py falls back to

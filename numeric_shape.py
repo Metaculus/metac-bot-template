@@ -66,10 +66,16 @@ What it does
   One of the first six Market Pulse resolutions landed outside its range. A
   set the SDK would reject for exactly that reason has its open-side values
   moved to ``CLAMP_WINDOW`` ranges past the bound, kept in order, so the mass
-  stays on the side the forecaster put it. A set the SDK already accepts
-  keeps its declared values exactly as written, and so does a set with a
-  value beyond the SDK's own 2x limit (a unit error, which the parser
-  fallback is there for) or one past a closed bound.
+  stays on the side the forecaster put it. A set the SDK would reject only
+  for an open-side value more than 2 ranges past the bound, with other
+  values in its window, has that value brought to ``OPEN_TAIL_LIMIT`` ranges
+  past the bound, as the roadmap's "always keep values within +/-1.9R"
+  asks: it is a fat tail, and as written it lost the whole set on both the
+  verbatim and the parser path, which reads the same text. Any other set
+  the SDK accepts keeps its declared values exactly as written, and so does
+  a set wholly outside the window with a value beyond the 2x limit (a unit
+  error, which the parser fallback is there for) or one past a closed
+  bound. Either move is logged as ``numeric_clamped=1``.
 
 :func:`mean_of_cdfs` -- the aggregate: the mean of the forecasters' CDFs on
 the question's grid (a linear pool, which is how Metaculus aggregates and
@@ -284,13 +290,42 @@ def _inside_sdk_window(values: Sequence[float], scale: _Scale) -> bool:
     return any(scale.lb - margin <= v <= scale.ub + margin for v in values)
 
 
+def _ordered_with_eps(out: list[float], eps: float) -> list[float]:
+    for i in range(1, len(out)):
+        if out[i] <= out[i - 1]:
+            out[i] = out[i - 1] + eps
+    return out
+
+
+def _clip_far_tail(values: list[float], question: Any,
+                   scale: _Scale) -> tuple[list[float], bool]:
+    """Open-side values past the SDK's 2x limit, in a set with values in its
+    window, brought to OPEN_TAIL_LIMIT ranges past the bound, kept in order."""
+    lb, ub, width = scale.lb, scale.ub, scale.width
+    eps = width * 1e-6
+    n = len(values)
+    out = list(values)
+    if question.open_lower_bound:
+        edge = lb - OPEN_TAIL_LIMIT * width
+        if scale.zero is None or edge > scale.zero:
+            out = [edge + i * eps if v < lb - SDK_FAR * width else v for i, v in enumerate(out)]
+    if question.open_upper_bound:
+        edge = ub + OPEN_TAIL_LIMIT * width
+        out = [edge - (n - 1 - i) * eps if v > ub + SDK_FAR * width else v
+               for i, v in enumerate(out)]
+    if out == values:
+        return values, False
+    return _ordered_with_eps(out, eps), True
+
+
 def _rescue_out_of_range(values: list[float], question: Any,
                          scale: _Scale) -> tuple[list[float], bool]:
     """Move open-side values into the SDK's window, only when it would
-    otherwise reject the set for having none there."""
+    otherwise reject the set for having none there; or, when it has some
+    there, bring an open-side value past the SDK's 2x limit back inside it."""
     lb, ub, width = scale.lb, scale.ub, scale.width
     if _inside_sdk_window(values, scale):
-        return values, False
+        return _clip_far_tail(values, question, scale)
     if any(v < lb - SDK_FAR * width or v > ub + SDK_FAR * width for v in values):
         return values, False
     out = list(values)
@@ -305,10 +340,7 @@ def _rescue_out_of_range(values: list[float], question: Any,
         out = [edge - (n - 1 - i) * eps if v > edge else v for i, v in enumerate(out)]
     if out == values:
         return values, False
-    for i in range(1, n):
-        if out[i] <= out[i - 1]:
-            out[i] = out[i - 1] + eps
-    return out, True
+    return _ordered_with_eps(out, eps), True
 
 
 def shape(percentiles: Sequence[Any], question: Any) -> tuple[list[Any], bool]:
