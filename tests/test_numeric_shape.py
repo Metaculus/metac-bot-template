@@ -215,6 +215,18 @@ class TailTests(RealSdkTestCase):
                                ns.TAIL_C * (math.log(out[0.9]) - log50))
         self.assertGreater(out[0.025], 0)
 
+    def test_a_log_scaled_tail_too_far_out_to_be_a_number_is_left_out(self):
+        """exp() of the fitted location underflows to the zero point itself:
+        that side is left to the SDK instead of failing the whole shaping."""
+        q = numeric(10, 1000, zero_point=0.0)
+        values = [1e-200, 1.0, 50.0, 100.0, 200.0, 400.0]
+        out, moved = ns.shape(percentiles(values), q)
+        self.assertFalse(moved)
+        self.assertTrue(all(p.value > 0 for p in out))
+        self.assertEqual(min(p.percentile for p in out), 0.1)
+        with self.assertNoLogs(ns.logger, level="WARNING"):
+            build(values, q).get_cdf()
+
     def test_an_open_bound_tail_stays_inside_the_sdk_limit(self):
         out = self.shaped(numeric(99, 101), [96.0, 99.7, 99.9, 100.1, 100.3, 103.0])
         self.assertLessEqual(out[0.975], 101 + ns.OPEN_TAIL_LIMIT * 2)

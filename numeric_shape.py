@@ -254,30 +254,56 @@ def _past(mid: float, edge: float, edge_level: float, tail: float,
     return _inside_tail(mid, edge, edge_level, tail, cap)
 
 
+def _value(scale: _Scale, loc: float) -> float | None:
+    """The nominal value at ``loc``, or None where it cannot be one: past
+    the float range, or at or below a log scale's zero point."""
+    try:
+        value = scale.value(loc)
+    except OverflowError:
+        return None
+    if not math.isfinite(value) or (scale.zero is not None and not value > scale.zero):
+        return None
+    return value
+
+
+def _side(scale: _Scale, points: list[tuple[float, float | None]], bound: float,
+          mirror: bool) -> list[Point]:
+    """(level, value) for one side's points from _past, in increasing order;
+    empty when any of them has no value."""
+    out = []
+    for level, x in points:
+        value = bound if x is None else _value(scale, 1.0 - x if mirror else x)
+        if value is None:
+            return []
+        out.append((1.0 - level, value) if mirror else (level, value))
+    return out[::-1] if mirror else out
+
+
 def _tails(levels: list[float], values: list[float], question: Any,
            scale: _Scale) -> tuple[list[Point], list[Point]]:
     """The (level, value) points to declare below p10 and above p90, each
-    side in increasing order; empty for a side left to the SDK."""
+    side in increasing order; empty for a side left to the SDK. Worked out
+    in the question's own [0, 1] locations, so a tail far out on a log scale
+    never has to be a number first."""
     if not (math.isclose(levels[0], FIT_LEVELS[0]) and math.isclose(levels[-1], FIT_LEVELS[1])):
         return [], []
     locs = [scale.loc(v) for v in values]
     mid = _interp(levels, locs, 0.5)
-    low = scale.value(mid - TAIL_C * (mid - locs[0]))
-    high = scale.value(mid + TAIL_C * (locs[-1] - mid))
-    buffer = scale.sdk_buffer
-    if question.open_lower_bound:
-        low = max(low, scale.lb - OPEN_TAIL_LIMIT * scale.width)
+    t_low = mid - TAIL_C * (mid - locs[0])
+    t_high = mid + TAIL_C * (locs[-1] - mid)
+    reach = OPEN_TAIL_LIMIT * scale.width
     if question.open_upper_bound:
-        high = min(high, scale.ub + OPEN_TAIL_LIMIT * scale.width)
-    t_high, t_low = scale.loc(high), scale.loc(low)
-    upper = [(level, high if x == t_high else scale.ub if x is None else scale.value(x))
-             for level, x in _past(mid, locs[-1], levels[-1], t_high,
-                                   question.open_upper_bound, high < scale.ub - buffer)]
-    lower = [(1.0 - level, low if x == 1.0 - t_low else scale.lb if x is None
-              else scale.value(1.0 - x))
-             for level, x in _past(1.0 - mid, 1.0 - locs[0], 1.0 - levels[0], 1.0 - t_low,
-                                   question.open_lower_bound, low > scale.lb + buffer)]
-    return lower[::-1], upper
+        t_high = min(t_high, scale.loc(scale.ub + reach))
+    if question.open_lower_bound and (scale.zero is None or scale.lb - reach > scale.zero):
+        t_low = max(t_low, scale.loc(scale.lb - reach))
+    high, low = _value(scale, t_high), _value(scale, t_low)
+    buffer = scale.sdk_buffer
+    upper = _past(mid, locs[-1], levels[-1], t_high, question.open_upper_bound,
+                  high is not None and high < scale.ub - buffer)
+    lower = _past(1.0 - mid, 1.0 - locs[0], 1.0 - levels[0], 1.0 - t_low,
+                  question.open_lower_bound, low is not None and low > scale.lb + buffer)
+    return (_side(scale, lower, scale.lb, mirror=True),
+            _side(scale, upper, scale.ub, mirror=False))
 
 
 def _ordered(points: Sequence[Point]) -> bool:
