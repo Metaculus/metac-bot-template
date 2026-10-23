@@ -78,9 +78,12 @@ def option_floor(n: int, floor: float | None = None) -> float:
     """The floor ``floor_options`` puts under each of ``n`` options.
 
     OPTION_FLOOR up to four options, OPTION_FLOOR_MANY from five, unless
-    ``floor`` is given. Then at most 0.5/n, so the floors never reserve more
-    than half the mass, and never below the SDK's own 1% clamp; at 100
-    options or more that leaves no room, and the caller gets uniform.
+    ``floor`` is given. Then at most 0.5/n, so that up to 50 options the
+    floors reserve at most half the mass -- except that it never goes below
+    the SDK's own 1% clamp, so from 51 options the floors reserve more than
+    half the mass (70% at 70 options; the roadmap's "keep the 0.5/n cap" gives
+    way to the clamp here), and from 100 options up there is no room left and
+    the caller gets uniform.
     """
     if floor is None:
         floor = OPTION_FLOOR if n <= 4 else OPTION_FLOOR_MANY

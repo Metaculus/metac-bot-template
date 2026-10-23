@@ -81,6 +81,14 @@ class OptionFloorTests(unittest.TestCase):
         self.assertEqual(fg.option_floor(70), 0.01)
         _sdk_validator(fg.floor_options([1.0] + [0.0] * 69))
 
+    def test_the_half_mass_cap_holds_up_to_fifty_options_only(self):
+        """What option_floor's docstring promises: n * floor <= 0.5 up to 50
+        options; past that the 1% clamp wins (70% of the mass at 70)."""
+        for n in range(2, 51):
+            self.assertLessEqual(n * fg.option_floor(n), 0.5 + 1e-12, n)
+        self.assertAlmostEqual(70 * fg.option_floor(70), 0.7)
+        self.assertIn("from 51 options the floors reserve more than", fg.option_floor.__doc__.replace("\n    ", " "))
+
     def test_with_no_room_for_the_floor_it_is_uniform(self):
         out = fg.floor_options([1.0] + [0.0] * 119)
         self.assertAlmostEqual(sum(out), 1.0, places=12)
