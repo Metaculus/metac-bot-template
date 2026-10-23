@@ -1115,7 +1115,15 @@ if __name__ == "__main__":
         template_bot.log_report_summary(forecast_reports)
     except RuntimeError:
         if forecast_reports and all(isinstance(r, BaseException) for r in forecast_reports):
-            raise
+            # Exit 1 (the step fails and the WhatsApp alert fires) without
+            # re-raising: the SDK's message lists every forecaster's error, a
+            # numeric validation error quotes the declared percentiles, and an
+            # uncaught exception is printed by Python's default traceback,
+            # past the logging redaction, into the public Actions log. That
+            # published forecasts on open questions in runs 39453516101
+            # (Market Pulse, 2026-10-20) and 39965881683 (Cup, 2026-10-23).
+            logger.error("all_failed count=%d", len(forecast_reports))
+            raise SystemExit(1)
         failed = sum(isinstance(r, BaseException) for r in forecast_reports)
         logger.warning("partial_failure failed=%d of=%d", failed, len(forecast_reports))
     print_publication_report(client)

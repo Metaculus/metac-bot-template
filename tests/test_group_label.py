@@ -56,3 +56,15 @@ class PartialFailureTests(unittest.TestCase):
         src = main_src()
         self.assertIn("all(isinstance(r, BaseException) for r in forecast_reports)", src)
         self.assertIn("partial_failure failed=", src)
+
+    def test_a_step_where_everything_failed_exits_without_printing_the_errors(self):
+        """The SDK's RuntimeError quotes each forecaster's error, numeric
+        percentiles included; re-raised, Python's default traceback printed it
+        past the log redaction into the public Actions log (runs 39453516101
+        and 39965881683). The step must still fail, with a count only."""
+        src = main_src()
+        start = src.index("template_bot.log_report_summary(forecast_reports)")
+        block = src[start:src.index("partial_failure failed=", start)]
+        self.assertIn("raise SystemExit(1)", block)
+        self.assertIn('logger.error("all_failed count=%d"', block)
+        self.assertNotRegex(block, r"\n\s*raise\s*\n")
