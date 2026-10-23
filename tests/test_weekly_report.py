@@ -48,6 +48,19 @@ class StandingTests(unittest.TestCase):
         ]
         self.assertEqual(wr.standing_from(payload), {"rank": 59, "total": 2, "score": 67.2})
 
+    def test_prize_money_is_read_from_the_rows(self):
+        rows = [dict(entry(1, 10), prize=500), dict(entry(2, 11), prize=120),
+                dict(entry(3, 5, uid=wr.BOT_USER_ID), prize=0), entry(4, 1)]
+        s = wr.standing_from({"entries": rows})
+        self.assertEqual((s["rank"], s.get("prize"), s["paid_ranks"]), (3, None, 2))
+        self.assertEqual(s["paid_score"], 11.0)
+        self.assertIn("sin premio (cobran hasta el 2, a 6.0 pts)", wr._fmt_prize(s))
+        rows[2]["prize"] = 37.6
+        s = wr.standing_from({"entries": rows})
+        self.assertEqual(s["prize"], 38)
+        self.assertIn("💰 38 $", wr._fmt_prize(s))
+        self.assertEqual(wr._fmt_prize({"rank": 1}), "")
+
     def test_an_empty_leaderboard_is_none(self):
         self.assertIsNone(wr.standing_from([{"is_primary_leaderboard": True, "entries": []}]))
 
