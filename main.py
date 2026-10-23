@@ -10,6 +10,7 @@ import claude_research
 import disagreement
 import live_context
 import forecast_guards
+import numeric_shape
 
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
@@ -272,6 +273,24 @@ class SummerTemplateBot2026(ForecastBot):
             errors=[*result.errors, *errors],
             predictions=valid,
         )
+
+    ############################## AGGREGATION ##############################
+
+    async def _aggregate_predictions(self, predictions, question):
+        """Numeric, discrete and date questions: the mean of the forecasters'
+        CDFs instead of the SDK's pointwise median (numeric_shape.mean_of_cdfs),
+        falling back to that median on any error; binary and multiple choice
+        as the SDK does."""
+        aggregate = None
+        if predictions and isinstance(question, (NumericQuestion, DateQuestion)):
+            try:
+                aggregate = numeric_shape.mean_of_cdfs(predictions, question)
+            except Exception as exc:  # noqa: BLE001 - the SDK median still works
+                logger.warning("numeric_mean_failed reason=%s falling_back=median",
+                               type(exc).__name__)
+        if aggregate is None:
+            aggregate = await super()._aggregate_predictions(predictions, question)
+        return aggregate
 
     def _create_comment(self, question, research_prediction_collections,
                         aggregated_prediction, final_cost, time_spent_in_minutes) -> str:
@@ -666,13 +685,16 @@ class SummerTemplateBot2026(ForecastBot):
         reasoning: str, question: NumericQuestion
     ) -> NumericDistribution | None:
         """The forecaster's own percentile lines, when they are plain numbers
-        the question accepts; see forecast_guards.read_percentiles."""
+        the question accepts; see forecast_guards.read_percentiles. Built
+        with synthesized tails, and an out-of-range set moved into the range
+        rather than rejected; see numeric_shape."""
         verbatim = forecast_guards.read_percentiles(reasoning)
         if verbatim is None:
             logger.info("numeric_parse source=llm reason=no_plain_lines url=%s", question.page_url)
             return None
         try:
-            prediction = NumericDistribution.from_question(
+            prediction = numeric_shape.build(
+                NumericDistribution,
                 [Percentile(percentile=p, value=v) for p, v in verbatim], question
             )
         except ValueError as error:
@@ -705,7 +727,7 @@ class SummerTemplateBot2026(ForecastBot):
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
-        return NumericDistribution.from_question(percentile_list, question)
+        return numeric_shape.build(NumericDistribution, percentile_list, question)
 
     ##################################### DATE QUESTIONS #####################################
 
@@ -804,7 +826,7 @@ class SummerTemplateBot2026(ForecastBot):
             )
             for percentile in date_percentile_list
         ]
-        prediction = NumericDistribution.from_question(percentile_list, question)
+        prediction = numeric_shape.build(NumericDistribution, percentile_list, question)
         log_forecast_content(
             logger,
             f"Forecasted URL {question.page_url} with prediction",
