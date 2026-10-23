@@ -446,13 +446,32 @@ def _wikipedia(url: str, question: Any, fetch: Fetch) -> str:
     words = _content_words(_own_text(question))
     scored = [(len(words & _content_words(p)), i) for i, p in enumerate(paragraphs)]
     chosen = [i for overlap, i in sorted(scored, key=lambda s: (-s[0], s[1])) if overlap >= MIN_OVERLAP]
-    picked, size = [], 0
+    # The budget is filled in relevance order and only then put back in page
+    # order, so the joined text never runs past what resolution_sources
+    # shows: filling first and cutting the joined text afterwards cut the
+    # best match whenever a weaker paragraph came before it on the page.
+    budget = MAX_SECTION // 2
+    picked: dict[int, str] = {}
+    room = budget
     for i in chosen or range(len(paragraphs)):
-        if size >= MAX_SECTION // 2:
+        text = paragraphs[i] if len(paragraphs[i]) <= room else _trim(paragraphs[i], room)
+        if text:
+            picked[i] = text
+            room -= len(text) + 1
+        if room <= 0 or text != paragraphs[i]:
             break
-        picked.append(i)
-        size += len(paragraphs[i]) + 1
-    return " ".join(paragraphs[i] for i in sorted(picked))
+    return " ".join(picked[i] for i in sorted(picked))
+
+
+def _trim(text: str, room: int) -> str:
+    """``text`` cut to at most ``room`` characters, at the last sentence end
+    when one leaves at least half of it; "" when the room is too small to be
+    worth a fragment."""
+    if room < 80:
+        return ""
+    cut = text[:room]
+    end = max(cut.rfind(". "), cut.rfind("? "), cut.rfind("! "))
+    return cut[:end + 1] if end >= room // 2 else cut.rstrip()
 
 
 def _source_text(url: str, question: Any, fetch: Fetch) -> str:

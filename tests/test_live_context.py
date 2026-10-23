@@ -301,6 +301,27 @@ class SourceTests(unittest.TestCase):
         self.assertNotIn("first organised in 1903", out)
         self.assertNotIn("== History ==", out)
 
+    def test_wikipedia_never_cuts_the_best_match_for_a_weaker_one(self):
+        """The budget is filled most relevant first, then put in page order:
+        a weaker paragraph earlier on the page used to push the best match
+        past the cut resolution_sources makes."""
+        filler = "Unrelated history of the region and its geography. " * 16
+        mild = "The Zorbian parliament building was renovated in 1990 and hosts tours. " * 11
+        key = ("The turnip subsidy bill passed its second reading in the Zorbian "
+               "parliament; the final vote is scheduled. ") * 8
+        extract = "\n".join([filler, mild, filler, key.strip()])
+        web = FakeWeb({self.WIKI_API: {"query": {"pages": [{"pageid": 1, "extract": extract}]}}})
+        question = q("Will the Zorbian parliament pass the turnip subsidy bill before 2027?",
+                     criteria="Per https://en.wikipedia.org/wiki/Zorbian_parliament.")
+        out = lc.resolution_sources(question, web)
+        body = out.split("\n", 1)[1]
+        self.assertLessEqual(len(body), lc.MAX_SECTION // 2)
+        self.assertIn(key.strip(), body)
+        self.assertNotIn("Unrelated history", body)
+        # What is left of the weaker paragraph still comes first, as on the page.
+        self.assertTrue(body.startswith("The Zorbian parliament building"))
+        self.assertTrue(body.endswith("is scheduled."))
+
     def test_wikipedia_api_failure_falls_back_to_the_page(self):
         page = b"<p>Plain page text about the race.</p>" + b" pad" * 80
         web = FakeWeb({self.WIKI_API: OSError("api down"), "https://en.wikipedia.org/wiki/": page})
