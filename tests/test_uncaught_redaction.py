@@ -101,10 +101,11 @@ class SummariseReportsTests(RestoreRedactionMixin, unittest.TestCase):
         self.assertEqual(len(logs), 1)
         self.assertIn("partial_failure failed=1 of=2", logs[0])
 
-    def test_the_unscored_practice_mode_still_raises(self):
+    def test_the_unscored_practice_mode_exits_the_same_way(self):
         bot_helpers.install_forecast_redaction("test_questions")
-        with self.assertRaises(RuntimeError):
-            self.main.summarise_reports(FakeBot(), [ValueError(VALIDATION)])
+        code, stderr, _logs = self.summarise([ValueError(VALIDATION)])
+        self.assertEqual(code, 1)
+        self.assertNotIn(SECRET, stderr)
 
     def test_main_calls_it_instead_of_the_sdk_summary(self):
         with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as handle:

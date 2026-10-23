@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import re
-import sys
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -18,7 +17,6 @@ import numeric_shape
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
     check_environment,
-    forecast_content_is_withheld,
     install_forecast_redaction,
     log_forecast_content,
     print_run_summary_banner,
@@ -1079,18 +1077,16 @@ def summarise_reports(bot: ForecastBot, reports: list) -> None:
     exception straight to stderr, past the log redaction, and that message
     quotes each failed forecaster's ValidationError -- declared percentiles
     and all. It put open questions' forecasts in the public logs of runs
-    39453516101 and 39965881683. The unscored test_questions mode still
-    raises, for the full traceback.
+    39453516101 and 39965881683. Every mode exits the same way (as the
+    hotfix on main does): the SDK has already logged each question's error.
     """
     try:
         bot.log_report_summary(reports)
     except RuntimeError:
         failed = sum(isinstance(r, BaseException) for r in reports)
         if reports and failed == len(reports):
-            if not forecast_content_is_withheld():
-                raise
             logger.error("all_failed count=%d", failed)
-            sys.exit(1)
+            raise SystemExit(1)
         logger.warning("partial_failure failed=%d of=%d", failed, len(reports))
 
 
