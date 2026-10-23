@@ -30,9 +30,26 @@ from datetime import datetime, timezone
 #: a correct call gives up 100*ln(0.97/0.99) = -2. The SDK's own clamp is 1%.
 BINARY_MIN = 0.03
 
-#: Every multiple-choice option keeps at least this much. Giving 1% to an
-#: option the field puts at 15% costs -271 when it wins; 2.5% costs -179.
+#: Every multiple-choice option keeps at least this much, on questions with
+#: up to four options. Giving 1% to an option the field puts at 15% costs
+#: -271 when it wins; 2.5% costs -179, 2% costs -201.
 OPTION_FLOOR = 0.025
+
+#: The floor from five options up. Five or more floors at 2.5% reserve
+#: 12.5% or more of the mass, which a confident favourite pays for: on
+#: FutureEval 46191 (closed, six options) the bot field held the favourite
+#: near 93% and each outsider at 1.4-2%, while the old mixture (see
+#: floor_options) posted all five of our forecasts at 82-83%, as it maps
+#: 95%/1%x5 to 0.83/0.033x5. Lifting to 2% gives 0.90/0.02x5 instead
+#: (2026-10-23). That loses only if the outsiders together win more than
+#: about 13% of the time the model says 95%, and costs about 50 more points
+#: when one of them does.
+OPTION_FLOOR_MANY = 0.02
+
+#: The SDK's PredictedOptionList clamps every option into [0.01, 0.99], so a
+#: floor below 1% is moved there anyway (and rejected if that shifts the
+#: favourite by more than 0.05).
+_SDK_OPTION_MIN = 0.01
 
 #: The percentiles every numeric prompt asks for, one "Percentile N: value"
 #: line each.
@@ -57,28 +74,60 @@ def clip_binary(probability: float) -> float:
     return max(BINARY_MIN, min(1 - BINARY_MIN, probability))
 
 
-def floor_options(probabilities: list[float], floor: float = OPTION_FLOOR) -> list[float]:
-    """Mix the forecast with a floor on every option, keeping the sum at 1.
+def option_floor(n: int, floor: float | None = None) -> float:
+    """The floor ``floor_options`` puts under each of ``n`` options.
 
-    ``p' = f + (1 - n*f) * p / sum(p)`` rather than clamp-then-renormalise:
-    dividing after clamping can push an option back under the floor. The
-    mixture keeps the ranking and sums to exactly 1, which matters because
-    the SDK's PredictedOptionList validator renormalises whatever it is given
-    and rejects the result if that moved any option by more than 0.05; an
-    input that already sums to 1 inside [0.01, 0.99] passes it unchanged.
-    The floor shrinks for questions with so many options that it would
-    otherwise eat half the mass.
+    OPTION_FLOOR up to four options, OPTION_FLOOR_MANY from five, unless
+    ``floor`` is given. Then at most 0.5/n, so the floors never reserve more
+    than half the mass, and never below the SDK's own 1% clamp; at 100
+    options or more that leaves no room, and the caller gets uniform.
+    """
+    if floor is None:
+        floor = OPTION_FLOOR if n <= 4 else OPTION_FLOOR_MANY
+    return max(min(floor, 0.5 / max(n, 1)), _SDK_OPTION_MIN)
+
+
+def floor_options(probabilities: list[float], floor: float | None = None) -> list[float]:
+    """Lift every option to the floor, paid for by the options above it.
+
+    Options under the floor (``option_floor``) go up to it, and the total
+    shortfall comes off the options above it in proportion to how far above
+    they are, ``p - floor``. So the favourite pays most, nothing ends below
+    the floor, the ranking is kept (options at or under the floor tie) and a
+    forecast that already clears the floor comes back unchanged. Until
+    2026-10-23 this was the mixture ``f + (1 - n*f) * p``, which taxed every
+    option, the favourite most, even when nothing was under the floor:
+    95%/1%x5 became 0.83/0.033x5 where the bot field had about 0.93 and
+    1.4-2% per outsider (see OPTION_FLOOR_MANY); lifting gives 0.90/0.02x5.
+
+    The input is renormalised first and the result sums to exactly 1 inside
+    [0.01, 0.99], which matters because the SDK's PredictedOptionList
+    validator clamps to that range, renormalises, and rejects the result if
+    that moved any option by more than 0.05; a list like this passes it
+    unchanged. Negative inputs count as 0, and all-zero input is uniform.
     """
     n = len(probabilities)
     if n == 0:
         return []
-    total = sum(probabilities)
-    if total <= 0:
-        return [1.0 / n] * n
-    floor = min(floor, 0.5 / n)
-    scale = 1 - n * floor
-    out = [floor + scale * p / total for p in probabilities]
-    out[-1] += 1.0 - sum(out)
+    clean = [max(0.0, p) for p in probabilities]
+    total = sum(clean)
+    floor = option_floor(n, floor)
+    if total <= 0 or n * floor >= 1:
+        out = [1.0 / n] * n
+    else:
+        p = [x / total for x in clean]
+        short = sum(floor - x for x in p if x < floor)
+        # excess - short = sum(p - floor) = 1 - n*floor > 0, so the mass
+        # above the floor always covers the shortfall, and every option
+        # above it keeps (1 - short/excess) > 0 of its distance to the floor.
+        excess = sum(x - floor for x in p if x > floor)
+        out = p if short <= 0 else [
+            floor if x <= floor else x - short * (x - floor) / excess for x in p
+        ]
+    # Rounding goes on the favourite, the one option it cannot push under
+    # the floor.
+    top = max(range(n), key=out.__getitem__)
+    out[top] += 1.0 - sum(out)
     return out
 
 

@@ -7,6 +7,7 @@ and its prompts never said when a question closes.
 from __future__ import annotations
 
 import io
+import itertools
 import math
 import os.path
 import unittest
@@ -31,45 +32,166 @@ class BinaryClipTests(unittest.TestCase):
         self.assertGreater(fg.BINARY_MIN, 0.01)
 
 
+def _sdk_validator(probabilities):
+    """What PredictedOptionList's validator does to a list (SDK 0.2.90),
+    copied so this module stays stdlib-only: refuse a sum outside
+    [0.99, 1.01], clamp to [0.01, 0.99], renormalise with the rounding on the
+    last option, and refuse any option that moved by more than 0.05."""
+    total = sum(probabilities)
+    if not 0.99 <= total <= 1.01:
+        raise ValueError(f"sum {total}")
+    clamped = [max(min(p, 0.99), 0.01) for p in probabilities]
+    out = [p / sum(clamped) for p in clamped]
+    out[-1] += 1.0 - sum(out)
+    for before, after in zip(probabilities, out):
+        if abs(after - before) > 0.05:
+            raise ValueError(f"{before} -> {after}")
+    return out
+
+
+#: Synthetic forecasts of every shape the floor has to handle.
+SHAPES = (
+    [1.0, 0.0], [0.9, 0.1, 0.0], [0.97, 0.03, 0.0, 0.0], [0.97, 0.01, 0.01, 0.01],
+    [0.95] + [0.01] * 5, [0.5, 0.3, 0.15, 0.05, 0.0], [0.2] * 5, [0.0, 0.0, 1.0],
+    [0.4, 0.4, 0.1, 0.05, 0.03, 0.01, 0.01, 0.0], [0.6, 0.3, 0.1, 0.0],
+    [1.0] + [0.0] * 39, [0.7, 0.2] + [0.1 / 58] * 58,
+)
+
+
 class OptionFloorTests(unittest.TestCase):
-    def test_every_option_reaches_the_floor_and_the_sum_is_one(self):
-        out = fg.floor_options([0.97, 0.03, 0.0, 0.0])
-        self.assertAlmostEqual(sum(out), 1.0)
+    def test_the_floor_is_two_and_a_half_percent_up_to_four_options(self):
+        for n in (2, 3, 4):
+            self.assertEqual(fg.option_floor(n), fg.OPTION_FLOOR)
+        self.assertEqual(fg.OPTION_FLOOR, 0.025)
+
+    def test_the_floor_is_two_percent_from_five_options(self):
+        for n in (5, 6, 10, 25):
+            self.assertEqual(fg.option_floor(n), fg.OPTION_FLOOR_MANY)
+        self.assertEqual(fg.OPTION_FLOOR_MANY, 0.02)
+
+    def test_many_options_shrink_the_floor_to_half_the_mass(self):
+        self.assertAlmostEqual(fg.option_floor(40), 0.5 / 40)
+        out = fg.floor_options([1.0] + [0.0] * 39)
+        self.assertAlmostEqual(sum(out), 1.0, places=12)
+        self.assertAlmostEqual(out[0], 0.5 + 0.5 / 40)
+
+    def test_but_never_below_the_sdks_one_percent_clamp(self):
+        """At 0.5/70 the validator would lift each outsider to 1% itself and
+        pull the favourite down by more than 0.05, so it refused the list."""
+        self.assertEqual(fg.option_floor(70), 0.01)
+        _sdk_validator(fg.floor_options([1.0] + [0.0] * 69))
+
+    def test_with_no_room_for_the_floor_it_is_uniform(self):
+        out = fg.floor_options([1.0] + [0.0] * 119)
+        self.assertAlmostEqual(sum(out), 1.0, places=12)
         for p in out:
-            self.assertGreaterEqual(p, fg.OPTION_FLOOR - 1e-12)
+            self.assertAlmostEqual(p, 1 / 120)
+        _sdk_validator(out)
+
+    def test_ninety_five_and_five_ones_becomes_ninety_and_five_twos(self):
+        """FutureEval 46191's shape. The old mixture gave 0.83/0.033x5."""
+        out = fg.floor_options([0.95] + [0.01] * 5)
+        self.assertAlmostEqual(out[0], 0.90, places=12)
+        for p in out[1:]:
+            self.assertAlmostEqual(p, 0.02, places=12)
+
+    def test_every_option_reaches_the_floor_and_the_sum_is_exactly_one(self):
+        for before in SHAPES:
+            after = fg.floor_options(before)
+            floor = fg.option_floor(len(before))
+            self.assertEqual(len(after), len(before))
+            self.assertAlmostEqual(sum(after), 1.0, places=12)
+            for p in after:
+                self.assertGreaterEqual(p, floor - 1e-12, (before, after))
 
     def test_the_ranking_is_kept(self):
-        before = [0.5, 0.3, 0.15, 0.05, 0.0]
+        """Options above the floor keep their strict order; the ones lifted
+        to it tie, and none of them passes an option that was above it."""
+        for before in SHAPES:
+            after = fg.floor_options(before)
+            floor = fg.option_floor(len(before))
+            for i, j in itertools.permutations(range(len(before)), 2):
+                if before[i] > before[j]:
+                    self.assertGreaterEqual(after[i], after[j] - 1e-12)
+                if before[i] > before[j] and before[j] > floor:
+                    self.assertGreater(after[i], after[j])
+
+    def test_the_shortfall_comes_from_the_options_above_in_proportion(self):
+        before = [0.6, 0.3, 0.1, 0.0]
         after = fg.floor_options(before)
-        self.assertEqual(sorted(range(5), key=lambda i: -before[i])[:4],
-                         sorted(range(5), key=lambda i: -after[i])[:4])
+        floor = fg.option_floor(4)
+        self.assertEqual(after[3], floor)
+        kept = [(a - floor) / (b - floor) for a, b in zip(after[:3], before[:3])]
+        for share in kept:
+            self.assertAlmostEqual(share, kept[0], places=12)
+        self.assertAlmostEqual(kept[0], 1 - 0.025 / 0.925, places=12)
+        self.assertEqual(max(range(3), key=lambda i: before[i] - after[i]), 0)
+
+    def test_a_forecast_that_clears_the_floor_is_left_alone(self):
+        for before in ([0.2] * 5, [0.5, 0.3, 0.2], [0.9, 0.025, 0.025, 0.05]):
+            for a, b in zip(fg.floor_options(before), before):
+                self.assertAlmostEqual(a, b, places=12)
+
+    def test_input_that_does_not_sum_to_one_is_renormalised_first(self):
+        out = fg.floor_options([1.9] + [0.02] * 5)
+        self.assertAlmostEqual(out[0], 0.90, places=12)
+        self.assertAlmostEqual(sum(out), 1.0, places=12)
 
     def test_the_sdk_validator_would_leave_the_result_unchanged(self):
         """PredictedOptionList clamps to [0.01, 0.99], renormalises, and
         rejects the result if that moved an option by more than 0.05 from
         what it was GIVEN. A floored list sums to 1 inside that range, so
         the validator's own pass is a no-op."""
-        for before in ([1.0, 0.0], [0.9, 0.1, 0.0], [0.97, 0.01, 0.01, 0.01],
-                       [0.2] * 5, [0.0, 0.0, 1.0]):
+        for before in SHAPES:
             after = fg.floor_options(before)
-            self.assertAlmostEqual(sum(after), 1.0, places=12)
             for p in after:
                 self.assertTrue(0.01 <= p <= 0.99, (before, after))
+            for a, b in zip(_sdk_validator(after), after):
+                self.assertAlmostEqual(a, b, places=12)
 
-    def test_many_options_shrink_the_floor(self):
-        out = fg.floor_options([1.0] + [0.0] * 39)
-        self.assertAlmostEqual(sum(out), 1.0)
-        self.assertGreater(out[0], 0.5)
+    def test_the_mean_of_floored_forecasts_still_clears_the_floor(self):
+        """The SDK averages the five floored lists option by option."""
+        five = [fg.floor_options(p) for p in (
+            [0.95, 0.01, 0.01, 0.01, 0.01, 0.01], [0.8, 0.2, 0, 0, 0, 0],
+            [0.5, 0.1, 0.1, 0.1, 0.1, 0.1], [1, 0, 0, 0, 0, 0], [0.6, 0, 0.4, 0, 0, 0])]
+        mean = [sum(column) / 5 for column in zip(*five)]
+        self.assertAlmostEqual(sum(mean), 1.0, places=12)
+        for p in mean:
+            self.assertGreaterEqual(p, fg.OPTION_FLOOR_MANY - 1e-12)
+
+    def test_an_explicit_floor_is_still_capped(self):
+        self.assertEqual(fg.option_floor(3, 0.05), 0.05)
+        self.assertAlmostEqual(fg.option_floor(20, 0.05), 0.025)
+        out = fg.floor_options([1.0, 0.0, 0.0], floor=0.05)
+        self.assertAlmostEqual(out[1], 0.05, places=12)
+        self.assertAlmostEqual(out[0], 0.90, places=12)
 
     def test_degenerate_input(self):
         self.assertEqual(fg.floor_options([]), [])
         self.assertEqual(fg.floor_options([0.0, 0.0]), [0.5, 0.5])
+        out = fg.floor_options([-0.1, 0.6, 0.5])
+        self.assertEqual(out[0], fg.OPTION_FLOOR)
+        self.assertAlmostEqual(sum(out), 1.0, places=12)
 
     def test_the_loss_it_bounds(self):
-        """The arithmetic in the module docstring: 1% vs 2.5% on an option
-        the field holds at 15%."""
+        """The arithmetic in the constants' comments: 1% vs 2.5% vs 2% on an
+        option the field holds at 15%."""
         self.assertAlmostEqual(100 * math.log(0.01 / 0.15), -270.8, places=1)
         self.assertAlmostEqual(100 * math.log(0.025 / 0.15), -179.2, places=1)
+        self.assertAlmostEqual(100 * math.log(0.02 / 0.15), -201.5, places=1)
+
+    def test_the_break_even_against_the_old_mixture(self):
+        """OPTION_FLOOR_MANY's comment: on 95%/1%x5 the lift beats the old
+        mixture unless the outsiders together win more than about 13% of the
+        time, and an outsider winning costs about 50 points more."""
+        old_top = 0.025 + (1 - 6 * 0.025) * 0.95
+        old_out = 0.025 + (1 - 6 * 0.025) * 0.01
+        self.assertAlmostEqual(old_top, 0.8325)
+        new = fg.floor_options([0.95] + [0.01] * 5)
+        gain = math.log(new[0] / old_top)
+        loss = math.log(old_out / new[1])
+        self.assertAlmostEqual(gain / (gain + loss), 0.13, places=2)
+        self.assertAlmostEqual(100 * math.log(new[1] / old_out), -51.6, places=1)
 
 
 class TimingContextTests(unittest.TestCase):
