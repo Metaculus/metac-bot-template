@@ -399,6 +399,96 @@ def main_src() -> str:
         return handle.read()
 
 
+class DetailFallbackTests(RealSdkTestCase):
+    """Roadmap A1: a listing without a usable CP is followed by GET
+    /api/posts/{id_of_post}/. Whether the listing carries the 201 values of a
+    numeric subquestion is unverified, and without the fallback the pool
+    would silently never apply."""
+
+    class FakeClient:
+        """get_question_by_post_id, as MetaculusClient has it."""
+
+        def __init__(self, post=None, error=None):
+            self.post, self.error, self.calls = post, error, []
+
+        def get_question_by_post_id(self, post_id, group_question_mode="exclude"):
+            self.calls.append((post_id, group_question_mode))
+            if self.error:
+                raise self.error
+            with real_forecasting_tools():
+                return MetaculusClient._unpack_group_question(copy.deepcopy(self.post))
+
+    def case(self, listing_latest):
+        """(question as listed, our aggregate, the post a fresh read returns)."""
+        full, ours, cp = numeric_case()
+        listed = unpack(numeric_sub(listing_latest))
+        return listed, ours, group_post(numeric_sub(latest(cp))), full
+
+    def logged(self, aggregate, question, fetch):
+        with self.assertLogs(cp_pool.logger, level="INFO") as logs:
+            out = cp_pool.apply(aggregate, question, 0.6, AFTER, fetch=fetch)
+        return out, [r.getMessage() for r in logs.records]
+
+    def test_a_listing_without_the_cp_reads_the_post(self):
+        listed, ours, post, full = self.case(None)
+        client = self.FakeClient(post)
+        pooled, messages = self.logged(ours, listed, cp_pool.detail_fetcher(client))
+        self.assertEqual(messages, [f"cp_pool applied=1 reason=ok_detail url={URL}"])
+        self.assertEqual(client.calls, [(900046, "unpack_subquestions")])
+        expected = cp_pool.apply(ours, full, 0.6, AFTER)
+        self.assertEqual(heights(pooled), heights(expected))
+
+    def test_a_cp_of_the_wrong_length_reads_the_post(self):
+        listed, ours, post, _full = self.case(latest([0.5, 1.0]))
+        _pooled, messages = self.logged(ours, listed, cp_pool.detail_fetcher(self.FakeClient(post)))
+        self.assertEqual(messages, [f"cp_pool applied=1 reason=ok_detail url={URL}"])
+
+    def test_a_post_is_read_once_per_run(self):
+        listed, ours, post, _full = self.case(None)
+        client = self.FakeClient(post)
+        fetch = cp_pool.detail_fetcher(client)
+        for _ in range(3):
+            self.logged(ours, listed, fetch)
+        self.assertEqual(len(client.calls), 1)
+        failing = self.FakeClient(error=OSError("synthetic"))
+        fetch = cp_pool.detail_fetcher(failing)
+        for _ in range(3):
+            with self.assertLogs(cp_pool.logger, level="WARNING") as logs:
+                self.assertIs(cp_pool.apply(ours, listed, 0.6, AFTER, fetch=fetch), ours)
+            self.assertEqual(logs.records[0].getMessage(),
+                             f"cp_pool applied=0 reason=error:OSError url={URL}")
+        self.assertEqual(len(failing.calls), 1)
+
+    def test_a_post_still_without_a_cp_keeps_our_forecast(self):
+        listed, ours, _post, _full = self.case(None)
+        client = self.FakeClient(group_post(numeric_sub(None)))
+        out, messages = self.logged(ours, listed, cp_pool.detail_fetcher(client))
+        self.assertIs(out, ours)
+        self.assertEqual(messages, [f"cp_pool applied=0 reason=no_cp_detail url={URL}"])
+
+    def test_other_reasons_are_not_refetched(self):
+        question, ours, cp = numeric_case()
+        set_latest(question, latest(cp, forecaster_count=3))
+        client = self.FakeClient(error=AssertionError("must not be called"))
+        out, messages = self.logged(ours, question, cp_pool.detail_fetcher(client))
+        self.assertIs(out, ours)
+        self.assertEqual(messages, [f"cp_pool applied=0 reason=few_forecasters url={URL}"])
+        self.assertEqual(client.calls, [])
+        # Without a fetcher (any mode but Market Pulse) the listing is all.
+        _out, messages = self.logged(ours, unpack(numeric_sub(None)), None)
+        self.assertEqual(messages, [f"cp_pool applied=0 reason=no_cp url={URL}"])
+
+    def test_main_reads_posts_through_its_own_client_in_market_pulse_only(self):
+        src = main_src()
+        self.assertIn("    cp_pool_fetch = None\n", src)
+        start = src.index('elif run_mode == "market_pulse":')
+        end = src.index('elif run_mode == "test_questions":')
+        self.assertIn("template_bot.cp_pool_fetch = cp_pool.detail_fetcher(client)", src[start:end])
+        self.assertEqual(src.count("= cp_pool.detail_fetcher("), 1)
+        body = src[src.index("async def _aggregate_predictions"):src.index("def _create_comment")]
+        self.assertIn("fetch=self.cp_pool_fetch", body)
+
+
 class MainWiringTests(RealSdkTestCase):
     def test_off_by_default_and_set_only_in_market_pulse(self):
         src = main_src()

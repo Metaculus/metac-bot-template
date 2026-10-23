@@ -223,6 +223,9 @@ class SummerTemplateBot2026(ForecastBot):
     #: market_pulse only, the one tournament whose CP is human and visible
     #: before the scored close.
     cp_pool_weight = 0.0
+    #: cp_pool.detail_fetcher(client) in --mode market_pulse: re-reads a post
+    #: whose listing carried no usable CP. None: the listing alone.
+    cp_pool_fetch = None
 
     ############################## SPEND LABELS ##############################
     # Which question and phase each paid call belongs to; see spend.py.
@@ -310,7 +313,7 @@ class SummerTemplateBot2026(ForecastBot):
             aggregate = await super()._aggregate_predictions(predictions, question)
         if self.cp_pool_weight > 0:
             aggregate = cp_pool.apply(aggregate, question, self.cp_pool_weight,
-                                      datetime.now(timezone.utc))
+                                      datetime.now(timezone.utc), fetch=self.cp_pool_fetch)
         return aggregate
 
     def _create_comment(self, question, research_prediction_collections,
@@ -1233,6 +1236,8 @@ if __name__ == "__main__":
         # prediction (cp_pool.py), at the weight in MP_CP_POOL_WEIGHT; unset
         # or 0 leaves it off.
         template_bot.cp_pool_weight = cp_pool.weight_from_env()
+        # A listing without the CP is followed by GET /posts/{id}/ (cp_pool).
+        template_bot.cp_pool_fetch = cp_pool.detail_fetcher(client)
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select(
