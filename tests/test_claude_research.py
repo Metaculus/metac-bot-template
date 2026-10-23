@@ -80,11 +80,65 @@ class ResearchLoopTests(unittest.TestCase):
         paused = response(stop="pause_turn", text="partial")
         with FakeAnthropic(paused, response(text="final")) as fake:
             out = run(cr.research("q"))
-        self.assertEqual(out, "final")
+        # Text written before the pause is part of the rundown (it was lost
+        # until 2026-10-23, when only the last response's text was kept).
+        self.assertEqual(out, "partial\n\nfinal")
         self.assertEqual(len(fake.calls), 2)
         resumed = fake.calls[1]["messages"]
         self.assertEqual([m["role"] for m in resumed], ["user", "assistant"])
-        self.assertIs(resumed[1]["content"], paused.content)
+        self.assertEqual(resumed[1]["content"], paused.content)
+        for block, sent in zip(paused.content, resumed[1]["content"]):
+            self.assertIs(sent, block)  # sent back unchanged
+
+    def test_a_second_resume_sends_back_the_whole_turn(self):
+        """Each response carries only what it added, so a second resume must
+        send both paused parts; it used to send only the latest."""
+        one = response(stop="pause_turn", text="part one")
+        two = response(stop="pause_turn", text="part two")
+        with FakeAnthropic(one, two, response(text="part three")) as fake:
+            out = run(cr.research("q"))
+        self.assertEqual(len(fake.calls), 3)
+        second = fake.calls[1]["messages"]
+        third = fake.calls[2]["messages"]
+        self.assertEqual(second[1]["content"], one.content)
+        self.assertEqual([m["role"] for m in third], ["user", "assistant"])
+        self.assertEqual(third[1]["content"], [*one.content, *two.content])
+        self.assertEqual(out, "part one\n\npart two\n\npart three")
+
+    def test_follow_up_rounds_keep_their_paused_parts_too(self):
+        script = [response(text="r1\nGAPS: x"), response(stop="pause_turn", text="early"),
+                  response(text="late\nGAPS: none")]
+        with FakeAnthropic(*script) as fake:
+            out = run(cr.research("q"))
+        resumed = fake.calls[2]["messages"]
+        self.assertEqual([m["role"] for m in resumed], ["user", "assistant", "user", "assistant"])
+        self.assertEqual(resumed[3]["content"], script[1].content)
+        self.assertIn("early\n\nlate", out)
+
+    def test_resumes_are_logged(self):
+        script = [response(stop="pause_turn"), response(stop="pause_turn"), response(text="x")]
+        with FakeAnthropic(*script):
+            with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                run(cr.research("q", depth="light"))
+        self.assertIn("resumes=2", "\n".join(logs.output))
+        with FakeAnthropic(response(text="x")):
+            with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                run(cr.research("q", depth="light"))
+        self.assertIn("resumes=0", "\n".join(logs.output))
+
+    def test_resumed_requests_are_all_billed_and_cached(self):
+        script = [response(stop="pause_turn", tin=1000, tout=100, searches=3),
+                  response(tin=2000, tout=300, searches=1, cread=500)]
+        with FakeAnthropic(*script) as fake:
+            with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                run(cr.research("q", engine_key="sonnet", depth="light"))
+        for call in fake.calls:
+            self.assertEqual(call["cache_control"], {"type": "ephemeral"})
+        e = cr.ENGINES["sonnet"]
+        usd = (cr.request_cost(e, 1000, 0, 0, 100, 3) + cr.request_cost(e, 2000, 0, 500, 300, 1))
+        line = "\n".join(logs.output)
+        self.assertIn("searches=4", line)
+        self.assertIn(f"est_cost_usd={usd:.4f}", line)
 
     def test_resumes_are_bounded(self):
         script = [response(stop="pause_turn")] * (cr.MAX_RESUMES + 5)
@@ -201,6 +255,122 @@ class SecondRoundTests(unittest.TestCase):
         self.assertEqual(cr._gaps("a\nGAPS: x; y"), "x; y")
         self.assertEqual(cr._gaps("a\nGAPS: none."), "")
         self.assertEqual(cr._gaps("no line"), "")
+
+
+def text(value, *cites):
+    return NS(type="text", text=value, citations=list(cites) or None)
+
+
+def cite(url, title):
+    return NS(type="web_search_result_location", url=url, title=title,
+              encrypted_index="x", cited_text="...")
+
+
+def results(*pages):
+    """A web_search_tool_result block; each page is (url, title, page_age)."""
+    return NS(type="web_search_tool_result", tool_use_id="srvtoolu_1",
+              content=[NS(type="web_search_result", url=u, title=t, page_age=a,
+                          encrypted_content="x") for u, t, a in pages])
+
+
+def blocks_response(content, stop="end_turn"):
+    usage = NS(input_tokens=1000, output_tokens=200, cache_read_input_tokens=0,
+               cache_creation_input_tokens=0, server_tool_use=NS(web_search_requests=1))
+    return NS(stop_reason=stop, content=content, usage=usage, model=cr.MODEL)
+
+
+class TextFidelityTests(unittest.TestCase):
+    """Synthetic pages and facts only (example.org): no real question's
+    research goes in a fixture."""
+
+    def test_citation_split_blocks_are_one_sentence(self):
+        content = [
+            text("I will look this up."),
+            NS(type="server_tool_use", id="srvtoolu_1"),
+            results(("https://example.org/a", "A", "May 2, 2026")),
+            text("The widget index stood at "),
+            text("412.5 on 2026-05-01", cite("https://example.org/a", "A")),
+            text(", up from 400.\nGAPS: none"),
+        ]
+        self.assertEqual(
+            cr._text(content),
+            "I will look this up.\n\nThe widget index stood at 412.5 on 2026-05-01, up from 400.\n"
+            "GAPS: none",
+        )
+
+    def test_sources_list_cited_pages_first_with_their_dates(self):
+        content = [
+            NS(type="server_tool_use", id="srvtoolu_1"),
+            results(("https://example.org/a", "Page A", "May 2, 2026"),
+                    ("https://example.org/b", "Page  B\n", None),
+                    ("https://example.org/c", "Page C", "3 days ago")),
+            text("Fact one", cite("https://example.org/c", "Page C")),
+            text(" and fact two.", cite("https://example.org/c", "Page C"),
+                 cite("https://example.org/d", "Page D")),
+        ]
+        section, n = cr._sources(content)
+        self.assertEqual(n, 4)
+        lines = section.splitlines()
+        self.assertIn("first 2 are cited above", lines[0])
+        self.assertEqual(lines[1:], [
+            "- Page C (3 days ago) https://example.org/c",
+            "- Page D https://example.org/d",
+            "- Page A (May 2, 2026) https://example.org/a",
+            "- Page B https://example.org/b",
+        ])
+
+    def test_sources_are_capped_and_skip_search_errors(self):
+        many = [(f"https://example.org/{i}", "T" * 300, None) for i in range(cr.MAX_SOURCES + 5)]
+        error = NS(type="web_search_tool_result", tool_use_id="srvtoolu_2",
+                   content=NS(type="web_search_tool_result_error", error_code="max_uses_exceeded"))
+        section, n = cr._sources([error, results(*many), NS(type="text", text="x")])
+        self.assertEqual(n, cr.MAX_SOURCES)
+        self.assertEqual(len(section.splitlines()), cr.MAX_SOURCES + 1)
+        self.assertIn("(search results;", section.splitlines()[0])
+        self.assertLess(max(len(line) for line in section.splitlines()), 200)
+        self.assertEqual(cr._sources([text("no search at all")]), ("", 0))
+
+    def test_the_rundown_ends_with_its_sources_and_round_two_does_not_see_them(self):
+        first = blocks_response([
+            results(("https://example.org/a", "Page A", "May 2, 2026")),
+            text("Index at 412.5", cite("https://example.org/a", "Page A")),
+            text(".\nGAPS: last week's figure"),
+        ])
+        second = blocks_response([
+            results(("https://example.org/b", "Page B", "May 9, 2026")),
+            text("Last week: 409.", cite("https://example.org/b", "Page B")),
+            text("\nGAPS: none"),
+        ])
+        with FakeAnthropic(first, second) as fake:
+            with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                out = run(cr.research("q"))
+        self.assertIn("Index at 412.5.\nGAPS:", out)
+        body, sources = out.split("\n\n## Sources", 1)
+        self.assertIn("## Follow-up on the gaps (round 2)\nLast week: 409.", body)
+        self.assertIn("- Page A (May 2, 2026) https://example.org/a", sources)
+        self.assertIn("- Page B (May 9, 2026) https://example.org/b", sources)
+        prior = fake.calls[1]["messages"][1]["content"]
+        self.assertNotIn("Sources", prior)
+        self.assertNotIn("example.org", prior)
+        line = "\n".join(logs.output)
+        self.assertIn("sources=2", line)
+        self.assertNotIn("example.org", line)
+
+    def test_a_dropped_round_lends_no_sources(self):
+        first = blocks_response([text("Round one.\nGAPS: one thing")])
+        refused = blocks_response([results(("https://example.org/z", "Z", None)),
+                                   text("nope")], stop="refusal")
+        with FakeAnthropic(first, refused):
+            out = run(cr.research("q"))
+        self.assertEqual(out, "Round one.\nGAPS: one thing")
+
+    def test_a_broken_source_list_keeps_the_rundown(self):
+        with FakeAnthropic(response(text="Facts.\nGAPS: none")):
+            with mock.patch.object(cr, "_sources", side_effect=ValueError("boom")):
+                with self.assertLogs("claude_research", level=logging.INFO) as logs:
+                    out = run(cr.research("q"))
+        self.assertEqual(out, "Facts.\nGAPS: none")
+        self.assertIn("claude_research_sources_failed reason=ValueError", "\n".join(logs.output))
 
 
 class PromptCachingTests(unittest.TestCase):
