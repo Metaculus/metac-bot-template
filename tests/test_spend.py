@@ -23,6 +23,8 @@ import spend
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NOW = datetime(2026, 10, 26, 9, 0, tzinfo=timezone.utc)  # a Monday
 ALLOWED_KEYS = {"t", "run", "tour", "q", "phase", "provider", "model", "in", "out", "searches", "usd"}
+#: Written only when the provider reports it: a count, never content.
+OPTIONAL_KEYS = {"reasoning"}
 
 
 def call(t, usd, provider="anthropic", q=1, run="r1", tour="minibench", phase="research",
@@ -109,6 +111,35 @@ class RecordTests(LedgerCase):
         self.assertEqual((first["provider"], first["model"], first["usd"], first["in"], first["out"]),
                          ("openrouter", "openai/gpt-5.6-sol", 0.021, 900, 300))
         self.assertEqual((second["in"], second["out"], second["usd"]), (50, 10, 0.004))
+
+    def test_reasoning_tokens_are_recorded_as_a_count_when_reported(self):
+        """C1 (2026-10-23): is Opus reasoning at effort "high"? Chat
+        completions report it under completion_tokens_details, the responses
+        API under output_tokens_details; litellm hands either over as an
+        object or a dict."""
+        chat = NS(_hidden_params={"response_cost": 0.05},
+                  usage=NS(prompt_tokens=900, completion_tokens=700,
+                           completion_tokens_details=NS(reasoning_tokens=412)))
+        spend._record_response("openrouter/anthropic/claude-opus-5.5", chat)
+        responses_api = NS(_hidden_params={"response_cost": 0.01},
+                           usage=NS(input_tokens=50, output_tokens=60,
+                                    output_tokens_details={"reasoning_tokens": 0}))
+        spend._record_response("openrouter/openai/gpt-5.6-sol", responses_api)
+        silent = NS(_hidden_params={"response_cost": 0.001},
+                    usage=NS(prompt_tokens=5, completion_tokens=5, completion_tokens_details=None))
+        spend._record_response("openrouter/anthropic/claude-haiku-4.5", silent)
+        opus, sol, haiku = spend.load()
+        self.assertEqual(opus["reasoning"], 412)
+        self.assertEqual(sol["reasoning"], 0, "a reported zero is kept: it is the answer")
+        self.assertNotIn("reasoning", haiku, "not reported is not zero")
+        for line in (opus, sol, haiku):
+            self.assertLessEqual(set(line), ALLOWED_KEYS | OPTIONAL_KEYS)
+
+    def test_a_malformed_reasoning_count_is_left_out(self):
+        for value in (None, "412", True, -3):
+            usage = NS(completion_tokens_details=NS(reasoning_tokens=value))
+            self.assertIsNone(spend.reasoning_tokens(usage), value)
+        self.assertIsNone(spend.reasoning_tokens(None))
 
     def test_the_sdk_calls_are_wrapped_once_and_still_return_the_response(self):
         module = types.ModuleType("forecasting_tools.ai_models.general_llm")
@@ -354,7 +385,25 @@ class MessageTests(LedgerCase):
         text = spend.breakdown(spend.load())
         self.assertIn("anthropic research claude-haiku-5-5: 11 calls", text)
         self.assertIn("openrouter forecast anthropic/claude-opus-5-5: 10 calls", text)
+        self.assertNotIn("reasoning", text, "no call reported reasoning tokens")
         self.assertEqual(spend.breakdown([]), "no calls recorded")
+
+    def test_the_breakdown_shows_mean_reasoning_tokens_per_model(self):
+        for tokens in (300, 500, None):
+            line = call(NOW, 0.05, provider="openrouter", phase="forecast",
+                        model="anthropic/claude-opus-5.5")
+            if tokens is not None:
+                line["reasoning"] = tokens
+            self.write(line)
+        self.write(dict(call(NOW, 0.05, provider="openrouter", phase="crux",
+                             model="anthropic/claude-opus-5.5"), reasoning=1000),
+                   dict(call(NOW, 0.01, provider="openrouter", phase="parser",
+                             model="anthropic/claude-haiku-4.5"), reasoning=0))
+        text = spend.breakdown(spend.load())
+        self.assertIn("reasoning openrouter/anthropic/claude-opus-5.5: mean 600 tokens over 3 calls, max 1000",
+                      text)
+        self.assertIn("reasoning openrouter/anthropic/claude-haiku-4.5: mean 0 tokens over 1 calls, max 0",
+                      text)
 
     def test_money_uses_spanish_separators(self):
         self.assertEqual(spend.money(1234.5), "1.234,50")
@@ -391,7 +440,9 @@ class WiringTests(unittest.TestCase):
 
         src = self.read(".github", "workflows", "run_bot_on_tournament.yaml")
         flow = yaml.safe_load(src)
-        self.assertEqual(flow["permissions"], {"contents": "read"})
+        # actions: read is the health check's (it lists this workflow's own
+        # runs); still nothing that writes.
+        self.assertEqual(flow["permissions"], {"contents": "read", "actions": "read"})
         job = flow["jobs"]["forecast_job"]
         self.assertEqual(job["env"]["SPEND_LEDGER_PATH"], "spend_ledger.jsonl")
         names = [s.get("name") for s in job["steps"]]
