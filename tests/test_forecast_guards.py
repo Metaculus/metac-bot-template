@@ -90,8 +90,12 @@ class TimingContextTests(unittest.TestCase):
         self.assertIn("(1.0 days from now)", text)
 
     def test_it_warns_against_stale_knowledge(self):
-        self.assertIn("never assume the question has already resolved",
-                      fg.timing_context(NOW, None, None))
+        # 2026-10-23: was "never assume the question has already resolved",
+        # which told the model to ignore a dated source showing the outcome
+        # had already happened between writing and opening.
+        text = fg.timing_context(NOW, None, None)
+        self.assertIn("never assume an outcome without a dated, primary source showing it", text)
+        self.assertNotIn("never assume the question has already resolved", text)
 
 
 class WiringTests(unittest.TestCase):
@@ -157,3 +161,47 @@ class PercentileReaderTests(unittest.TestCase):
         start = src.index("async def _numeric_prompt_to_forecast")
         body = src[start:src.index("def _verbatim_numeric", start)]
         self.assertLess(body.index("self._verbatim_numeric("), body.index("self._parse_numeric("))
+
+
+class ProbabilityReaderTests(unittest.TestCase):
+    def test_the_mandated_last_line_is_read_as_written(self):
+        self.assertAlmostEqual(fg.read_probability("(a) 22 days.\nProbability: 15%"), 0.15)
+        self.assertAlmostEqual(fg.read_probability("Probability: 15.5 %"), 0.155)
+
+    def test_markdown_quotes_and_case(self):
+        for text in ("**Probability:** 15%", "**Probability**: 15%", "### Probability: 15%",
+                     '"Probability: 15%"', "- Probability: 15%", "> probability: 15%",
+                     "Probability: 15%.", "Probability: 15%\r\n"):
+            self.assertAlmostEqual(fg.read_probability(text), 0.15, msg=text)
+
+    def test_the_whole_scale_is_accepted_and_nothing_beyond(self):
+        self.assertEqual(fg.read_probability("Probability: 0%"), 0.0)
+        self.assertEqual(fg.read_probability("Probability: 100%"), 1.0)
+        self.assertIsNone(fg.read_probability("Probability: 101%"))
+
+    def test_the_last_labelled_line_wins(self):
+        text = "Probability: 20%\n\nOn reflection the base rate is lower.\nProbability: 12%"
+        self.assertAlmostEqual(fg.read_probability(text), 0.12)
+
+    def test_ranges_go_to_the_parser(self):
+        for text in ("Probability: 35-40%", "Probability: 35% - 40%", "Probability: 35% to 40%",
+                     "Probability: 35%/40%", "Probability: 35 – 40%"):
+            self.assertIsNone(fg.read_probability(text), text)
+
+    def test_a_final_range_is_not_replaced_by_an_earlier_value(self):
+        """Falling back to an earlier "Probability:" line would publish a
+        draft the forecaster then revised."""
+        self.assertIsNone(fg.read_probability("Probability: 20%\nProbability: 30-35%"))
+
+    def test_anything_else_unclear_goes_to_the_parser(self):
+        for text in ("", "No probability here.", 'Probability: ZZ%', "Probability: 0.35",
+                     "Probability: ~15%", "Probability:\n15%", "Final probability: 15%",
+                     "Probability of Yes: 15%"):
+            self.assertIsNone(fg.read_probability(text), text)
+
+    def test_main_tries_the_verbatim_line_before_the_parser(self):
+        with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as h:
+            src = h.read()
+        start = src.index("async def _binary_prompt_to_forecast")
+        body = src[start:src.index("def _verbatim_probability", start)]
+        self.assertLess(body.index("self._verbatim_probability("), body.index("structure_output("))

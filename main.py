@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -263,14 +264,21 @@ class SummerTemplateBot2026(ForecastBot):
         )
         if not valid:
             return result
-        logger.info("crux_resolved spread_before=%.2f spread_after=%.2f",
+        logger.info("crux_resolved spread_before=%.2f spread_after=%.2f pooled=%d",
                     disagreement.spread(values),
-                    disagreement.spread([p.prediction_value for p in valid]))
+                    disagreement.spread([p.prediction_value for p in valid]),
+                    len(result.predictions) + len(valid))
+        # Pool both sets rather than replacing the first. The crux pass fired
+        # three times in its first five days (to 2026-10-23) and widened the
+        # spread every time (0.25->0.32, 0.29->0.36, 0.28->0.38), so nothing
+        # says the second five are better than the first; both are paid for,
+        # and the SDK's median (binary) or mean (multiple choice) over ten is
+        # steadier than over five.
         return ResearchWithPredictions(
             research_report=research,
             summary_report=result.summary_report,
             errors=[*result.errors, *errors],
-            predictions=valid,
+            predictions=[*result.predictions, *valid],
         )
 
     def _create_comment(self, question, research_prediction_collections,
@@ -424,7 +432,7 @@ class SummerTemplateBot2026(ForecastBot):
             {question.background_info}
 
 
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            This question's outcome will be determined by the specific criteria below. These criteria had not been satisfied when the question was written:
             {question.resolution_criteria}
 
             {question.fine_print}
@@ -463,15 +471,18 @@ class SummerTemplateBot2026(ForecastBot):
         log_forecast_content(
             logger, f"Reasoning for URL {question.page_url}", reasoning
         )
-        binary_prediction: BinaryPrediction = await structure_output(
-            reasoning,
-            BinaryPrediction,
-            model=self.get_llm("parser", "llm"),
-            num_validation_samples=self._structure_output_validation_samples,
-        )
+        probability = self._verbatim_probability(reasoning, question)
+        if probability is None:
+            binary_prediction: BinaryPrediction = await structure_output(
+                reasoning,
+                BinaryPrediction,
+                model=self.get_llm("parser", "llm"),
+                num_validation_samples=self._structure_output_validation_samples,
+            )
+            probability = binary_prediction.prediction_in_decimal
         # 3%/97%, not the SDK's 1%/99%: see forecast_guards for the peer-score
         # arithmetic behind the cap.
-        decimal_pred = forecast_guards.clip_binary(binary_prediction.prediction_in_decimal)
+        decimal_pred = forecast_guards.clip_binary(probability)
 
         log_forecast_content(
             logger,
@@ -479,6 +490,20 @@ class SummerTemplateBot2026(ForecastBot):
             decimal_pred,
         )
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
+
+    @staticmethod
+    def _verbatim_probability(reasoning: str, question: BinaryQuestion) -> float | None:
+        """The forecaster's own "Probability: NN%" line, when it is one plain
+        percentage; see forecast_guards.read_probability. Logs the source
+        only, never the value: the repo is public."""
+        try:
+            probability = forecast_guards.read_probability(reasoning)
+        except Exception as exc:  # noqa: BLE001 - the parser is the old path
+            logger.warning("binary_parse_verbatim_failed reason=%s", type(exc).__name__)
+            probability = None
+        logger.info("binary_parse source=%s url=%s",
+                    "llm" if probability is None else "verbatim", question.page_url)
+        return probability
 
     ##################################### MULTIPLE CHOICE QUESTIONS #####################################
 
@@ -580,12 +605,71 @@ class SummerTemplateBot2026(ForecastBot):
 
     ##################################### NUMERIC QUESTIONS #####################################
 
+    #: The width line every numeric prompt has carried since the template.
+    _WIDE_INTERVALS = (
+        "You remind yourself that good forecasters are humble and set wide 90/10 "
+        "confidence intervals to account for unknown unknowns."
+    )
+
+    #: Market Pulse EPS questions resolve on diluted EPS "in conformity with US
+    #: GAAP" as first reported, but the consensus the research brings back is
+    #: the street's, which is usually non-GAAP. Tesla resolved at 0.22 against
+    #: a 0.451 consensus, and Meta's GAAP figure fell below the question's
+    #: whole range (2026-10-20; 1 of the first 6 resolved subquestions). The
+    #: note asks for the company's own reconciliation rather than a fixed
+    #: shift, because the gap swings with investment gains for some companies.
+    _GAAP_EPS_NOTE = (
+        "This resolves on GAAP diluted EPS as first reported. Street/consensus EPS is "
+        "usually non-GAAP. Before forecasting, estimate the GAAP-minus-non-GAAP gap from "
+        "the company's latest reconciliation (stock-based compensation, amortization of "
+        "acquired intangibles, gains/losses on investments, one-off tax items) and centre "
+        "on consensus plus that gap."
+    )
+
+    #: Replaces _WIDE_INTERVALS on those questions only. The consensus is fixed
+    #: hours before the release, so a generically wide range costs density
+    #: where the outcome lands; but out-of-range outcomes do happen (Meta), and
+    #: the mass beyond the range scores as one bucket, so some stays there.
+    _GAAP_EPS_WIDTH = (
+        "You remind yourself to set the width from the historical size of GAAP surprises "
+        "for this company, and to keep some mass beyond the question's range on the side "
+        "a one-off item would push."
+    )
+
+    _GAAP = re.compile(r"(?<![Nn]on-)(?<![Nn]on )\bGAAP\b")
+    _EARNINGS_PER_SHARE = re.compile(r"earnings[ -]per[ -]share", re.IGNORECASE)
+
+    @classmethod
+    def _gaap_eps_market_pulse(cls, question: MetaculusQuestion) -> bool:
+        """A Market Pulse question resolving on GAAP earnings per share.
+
+        Read from the question rather than the run mode: the posts API lists
+        each post's tournaments, group subquestions included, so a FutureEval
+        or MiniBench question can never qualify whatever its criteria say.
+        Any error reads as False, which is the prompt as it was.
+        """
+        try:
+            slugs = {str(s) for s in (getattr(question, "tournament_slugs", None) or [])}
+            if str(tournaments.MARKET_PULSE.id) not in slugs:
+                return False
+            criteria = getattr(question, "resolution_criteria", None) or ""
+            return bool(cls._GAAP.search(criteria) and cls._EARNINGS_PER_SHARE.search(criteria))
+        except Exception as exc:  # noqa: BLE001 - optional prompt text, never fail
+            logger.warning("gaap_eps_check_failed reason=%s", type(exc).__name__)
+            return False
+
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
         upper_bound_message, lower_bound_message = (
             self._create_upper_and_lower_bound_messages(question)
         )
+        # Every other question gets the prompt exactly as before.
+        gaap_eps = self._gaap_eps_market_pulse(question)
+        gaap_note = f"{self._GAAP_EPS_NOTE}\n" if gaap_eps else ""
+        width_line = self._GAAP_EPS_WIDTH if gaap_eps else self._WIDE_INTERVALS
+        if gaap_eps:
+            logger.info("numeric_prompt gaap_eps=1 url=%s", question.page_url)
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
@@ -627,7 +711,7 @@ class SummerTemplateBot2026(ForecastBot):
             (g) Pre-mortem: assume the outcome lands outside your 10-90 range. Which side is likelier, and is that tail wide enough?
 
             {self._get_conditional_disclaimer_if_necessary(question)}
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            {gaap_note}{width_line}
 
             The last thing you write is your final answer as:
             "

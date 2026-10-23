@@ -45,6 +45,14 @@ _PERCENTILE_LINE = re.compile(
 )
 
 
+#: A line that starts with the "Probability:" label every binary prompt ends
+#: on, and the one plain percentage that must follow it.
+_PROBABILITY_LABEL = re.compile(
+    r"^[ \t*_>#\"-]*Probability[ \t*_]*:(.*)$", re.IGNORECASE | re.MULTILINE
+)
+_PROBABILITY_VALUE = re.compile(r"[ \t*_]*([0-9]+(?:\.[0-9]+)?)[ \t]*%(.*)")
+
+
 def clip_binary(probability: float) -> float:
     return max(BINARY_MIN, min(1 - BINARY_MIN, probability))
 
@@ -97,6 +105,35 @@ def read_percentiles(text: str) -> list[tuple[float, float]] | None:
     return [(p / 100, v) for p, v in zip(PERCENTILES, values)]
 
 
+def read_probability(text: str) -> float | None:
+    """The forecaster's last "Probability: NN%" line, read verbatim, as 0-1.
+
+    The binary twin of read_percentiles. Every binary prompt ends on that
+    line, yet each of the five rationales still went to the Haiku parser with
+    two validation samples: ten parser calls a question for a number that is
+    already written plainly, and a question lost whenever two samples
+    disagreed. The numeric verbatim path went 10/10 in production (to
+    2026-10-23).
+
+    Only the last line that starts with the label counts, so a draft answer
+    followed by a revised one reads as the revision. None, so the caller
+    falls back to that parser, unless that line holds exactly one plain
+    percentage from 0 to 100: a range ("35-40%", "35% to 40%"), a second
+    number, a value without "%" or a "Probability:" with the number on the
+    next line all go to the parser.
+    """
+    labelled = list(_PROBABILITY_LABEL.finditer(text))
+    if not labelled:
+        return None
+    match = _PROBABILITY_VALUE.match(labelled[-1].group(1))
+    if match is None or re.search(r"[0-9]", match.group(2)):
+        return None
+    value = float(match.group(1))
+    if not 0 <= value <= 100:
+        return None
+    return value / 100
+
+
 def _date(moment: datetime | None) -> str | None:
     if moment is None:
         return None
@@ -133,6 +170,7 @@ def timing_context(
     lines.append(
         "Your training data ends well before today. Treat any event in the "
         "question window as unknown unless the research gives a dated source "
-        "for it, and never assume the question has already resolved."
+        "for it, and never assume an outcome without a dated, primary source "
+        "showing it."
     )
     return "\n".join(lines)
