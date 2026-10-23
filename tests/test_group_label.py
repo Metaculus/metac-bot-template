@@ -53,6 +53,8 @@ class LiveContextTests(unittest.TestCase):
 
 class PartialFailureTests(unittest.TestCase):
     def test_one_failed_question_no_longer_fails_the_step(self):
+        # Behaviour is tested in test_uncaught_redaction; this pins the wiring.
         src = main_src()
-        self.assertIn("all(isinstance(r, BaseException) for r in forecast_reports)", src)
+        self.assertIn("summarise_reports(template_bot, forecast_reports)", src)
+        self.assertIn("if reports and failed == len(reports):", src)
         self.assertIn("partial_failure failed=", src)

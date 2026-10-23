@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import re
+import sys
 from datetime import datetime, timezone
 from typing import Literal
 
@@ -17,6 +18,7 @@ import numeric_shape
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
     check_environment,
+    forecast_content_is_withheld,
     install_forecast_redaction,
     log_forecast_content,
     print_run_summary_banner,
@@ -1064,6 +1066,31 @@ class SummerTemplateBot2026(ForecastBot):
         )
 
 
+def summarise_reports(bot: ForecastBot, reports: list) -> None:
+    """The SDK's report summary, without failing a step over one question.
+
+    log_report_summary raises if any question failed, which failed a whole
+    step (and sent the failure WhatsApp) over one bad question, so only a
+    step where nothing succeeded fails. And it fails by exiting 1, never by
+    letting the SDK's RuntimeError escape: Python prints an uncaught
+    exception straight to stderr, past the log redaction, and that message
+    quotes each failed forecaster's ValidationError -- declared percentiles
+    and all. It put open questions' forecasts in the public logs of runs
+    39453516101 and 39965881683. The unscored test_questions mode still
+    raises, for the full traceback.
+    """
+    try:
+        bot.log_report_summary(reports)
+    except RuntimeError:
+        failed = sum(isinstance(r, BaseException) for r in reports)
+        if reports and failed == len(reports):
+            if not forecast_content_is_withheld():
+                raise
+            logger.error("all_failed count=%d", failed)
+            sys.exit(1)
+        logger.warning("partial_failure failed=%d of=%d", failed, len(reports))
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
@@ -1229,16 +1256,7 @@ if __name__ == "__main__":
             )
         )
 
-    # The SDK's summary raises if any question failed, which failed a whole
-    # step (and sent the failure WhatsApp) over one bad question. Raise only
-    # when nothing succeeded, so a real breakage still alerts.
-    try:
-        template_bot.log_report_summary(forecast_reports)
-    except RuntimeError:
-        if forecast_reports and all(isinstance(r, BaseException) for r in forecast_reports):
-            raise
-        failed = sum(isinstance(r, BaseException) for r in forecast_reports)
-        logger.warning("partial_failure failed=%d of=%d", failed, len(forecast_reports))
+    summarise_reports(template_bot, forecast_reports)
     print_publication_report(client)
     print_run_summary_banner(
         forecast_reports,
