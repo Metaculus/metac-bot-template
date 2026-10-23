@@ -53,7 +53,8 @@ class StandingTests(unittest.TestCase):
                 dict(entry(3, 5, uid=wr.BOT_USER_ID), prize=0), entry(4, 1)]
         s = wr.standing_from({"entries": rows})
         self.assertEqual((s["rank"], s.get("prize"), s["paid_ranks"]), (3, None, 2))
-        self.assertIn("sin premio (cobran hasta el 2)", wr._fmt_prize(s))
+        self.assertEqual(s["paid_score"], 11.0)
+        self.assertIn("sin premio (cobran hasta el 2, a 6.0 pts)", wr._fmt_prize(s))
         rows[2]["prize"] = 37.6
         s = wr.standing_from({"entries": rows})
         self.assertEqual(s["prize"], 38)
