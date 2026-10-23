@@ -7,6 +7,7 @@ from typing import Literal
 import dotenv
 
 import claude_research
+import cp_pool
 import disagreement
 import live_context
 import forecast_guards
@@ -214,6 +215,12 @@ class SummerTemplateBot2026(ForecastBot):
     #: Cup; set per tournament at the bottom of this file.
     research_depth = "full"
 
+    #: Weight of the revealed human community prediction in the published
+    #: forecast (cp_pool.py). 0 is off; set from MP_CP_POOL_WEIGHT in --mode
+    #: market_pulse only, the one tournament whose CP is human and visible
+    #: before the scored close.
+    cp_pool_weight = 0.0
+
     ############################## SPEND LABELS ##############################
     # Which question and phase each paid call belongs to; see spend.py.
 
@@ -278,9 +285,10 @@ class SummerTemplateBot2026(ForecastBot):
 
     async def _aggregate_predictions(self, predictions, question):
         """Numeric, discrete and date questions: the mean of the forecasters'
-        CDFs instead of the SDK's pointwise median (numeric_shape.mean_of_cdfs),
-        falling back to that median on any error; binary and multiple choice
-        as the SDK does."""
+        CDFs instead of the SDK's pointwise median (numeric_shape.mean_of_cdfs);
+        binary and multiple choice as the SDK does. Then, in Market Pulse with
+        a weight set, the pool with the revealed community prediction
+        (cp_pool.apply). Each step keeps what came before it on any error."""
         aggregate = None
         if predictions and isinstance(question, (NumericQuestion, DateQuestion)):
             try:
@@ -290,6 +298,9 @@ class SummerTemplateBot2026(ForecastBot):
                                type(exc).__name__)
         if aggregate is None:
             aggregate = await super()._aggregate_predictions(predictions, question)
+        if self.cp_pool_weight > 0:
+            aggregate = cp_pool.apply(aggregate, question, self.cp_pool_weight,
+                                      datetime.now(timezone.utc))
         return aggregate
 
     def _create_comment(self, question, research_prediction_collections,
@@ -1107,6 +1118,10 @@ if __name__ == "__main__":
         # own skip is lifted for this mode only.
         template_bot.skip_previously_forecasted_questions = False
         spend.set_tournament("market_pulse")
+        # The final forecast pooled with the revealed human community
+        # prediction (cp_pool.py), at the weight in MP_CP_POOL_WEIGHT; unset
+        # or 0 leaves it off.
+        template_bot.cp_pool_weight = cp_pool.weight_from_env()
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select(
