@@ -55,6 +55,19 @@ class SelectionTests(unittest.TestCase):
         q = Q(True, close_time=ahead(20), timestamp_of_my_last_forecast=ago(4))
         self.assertEqual(market_pulse.select([q], NOW), [])
 
+    def test_a_last_forecast_is_made_just_before_close(self):
+        q = Q(True, close_time=ahead(5), timestamp_of_my_last_forecast=ago(4))
+        self.assertEqual(market_pulse.select([q], NOW), [q])
+
+    def test_the_last_forecast_is_not_repeated_hourly(self):
+        q = Q(True, close_time=ahead(5), timestamp_of_my_last_forecast=ago(2))
+        self.assertEqual(market_pulse.select([q], NOW), [])
+
+    def test_the_final_window_edges_are_inclusive(self):
+        q = Q(True, close_time=NOW + market_pulse.FINAL_WINDOW,
+              timestamp_of_my_last_forecast=NOW - market_pulse.FINAL_MIN_AGE)
+        self.assertEqual(market_pulse.select([q], NOW), [q])
+
     def test_the_window_edges_are_inclusive(self):
         q = Q(
             True,

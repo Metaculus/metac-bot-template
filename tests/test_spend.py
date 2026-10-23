@@ -378,7 +378,8 @@ class WiringTests(unittest.TestCase):
     def test_main_goes_light_over_budget(self):
         src = self.read("main.py")
         start = src.index("if spend.over_budget():")
-        self.assertIn('template_bot.research_depth = "light"', src[start:start + 200])
+        self.assertIn('prize_depth = "light"', src[start:start + 120])
+        self.assertIn("template_bot.research_depth = prize_depth", src[start:start + 300])
 
     def test_the_parser_wrapper_is_what_the_bot_calls(self):
         src = self.read("main.py")

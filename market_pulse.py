@@ -29,6 +29,15 @@ logger = logging.getLogger(__name__)
 
 REFRESH_WINDOW = timedelta(hours=36)
 MIN_AGE = timedelta(hours=18)
+#: One more forecast just before close (owner, 2026-10-23: Market Pulse is
+#: one of the two tournaments the budget goes to). With MIN_AGE alone the
+#: forecast standing at close could be 18 hours old -- a long time for share
+#: prices and earnings expectations. Dagu launches a run every 30 minutes and
+#: skips while one is still going, so runs arrive about hourly: a question
+#: closing within FINAL_WINDOW whose forecast is FINAL_MIN_AGE old is redone,
+#: which leaves the scored forecast at most ~6 hours old.
+FINAL_WINDOW = timedelta(hours=6)
+FINAL_MIN_AGE = timedelta(hours=3)
 
 #: Forecasts made before this moment were produced without the group option
 #: in the prompt (main._question_text), so a group subquestion was forecast
@@ -73,7 +82,8 @@ def select(questions: Sequence[Any], now: datetime) -> list[Any]:
             continue
         if close is None or last is None:
             continue
-        if close - now <= REFRESH_WINDOW and now - last >= MIN_AGE:
+        left, age = close - now, now - last
+        if (left <= REFRESH_WINDOW and age >= MIN_AGE) or (left <= FINAL_WINDOW and age >= FINAL_MIN_AGE):
             refresh.append(question)
     logger.info(
         "market_pulse_selection open=%d new=%d refresh=%d",

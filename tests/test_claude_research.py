@@ -174,9 +174,18 @@ class SecondRoundTests(unittest.TestCase):
         self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls], list(plan))
         self.assertIn(f"(round {len(plan)})", out)
 
-    def test_full_research_is_capped_at_twelve_searches(self):
-        # The Claude budget (2026-10-22): searches are two thirds of the bill.
-        self.assertLessEqual(sum(cr.ROUNDS[("haiku", "full")]), 12)
+    def test_prize_tournaments_get_full_research_and_the_rest_light(self):
+        """The owner put the budget on FutureEval and Market Pulse
+        (2026-10-23); MiniBench and the Cup run light."""
+        with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as handle:
+            src = handle.read()
+        fe = src.index('spend.set_tournament("futureeval")')
+        mb = src.index('spend.set_tournament("minibench")')
+        self.assertIn("template_bot.research_depth = prize_depth", src[fe:mb])
+        self.assertIn('template_bot.research_depth = "light"', src[mb:mb + 200])
+        cup = src.index('spend.set_tournament("cup")')
+        self.assertIn('template_bot.research_depth = "light"', src[cup - 200:cup])
+        self.assertGreater(sum(cr.ROUNDS[("haiku", "full")]), sum(cr.ROUNDS[("haiku", "light")]))
 
     def test_haiku_is_the_production_default(self):
         self.assertEqual(cr.DEFAULT_ENGINE, "haiku")

@@ -70,20 +70,20 @@ ENGINES = {
 #: better, so it is the default; Sonnet stays one variable away.
 DEFAULT_ENGINE = "haiku"
 
-#: Searches per round, by depth. "full" is for prize tournaments (FutureEval,
-#: MiniBench, Market Pulse); "light" for the unpaid Cup, whose weekly
-#: refreshes otherwise take a large share of the ~EUR100/month Claude-API
-#: budget (the Max-plan credit; hard limit). A round after the first runs only
+#: Searches per round, by depth. "full" is for the tournaments the bot can win
+#: money in (FutureEval, Market Pulse); "light" for MiniBench and the unpaid
+#: Cup, so the ~EUR100/month Claude-API budget (the Max-plan credit; hard
+#: limit) goes where the prizes are. A round after the first runs only
 #: when the previous one named gaps and the question's spend is under
 #: ROUND_MAX_PRIOR_COST.
 ROUNDS = {
     ("sonnet", "full"): (8, 5),
     ("sonnet", "light"): (4,),
-    # (10, 6, 4) until 2026-10-22: 102 production calls averaged 12 searches
-    # and $0.145, nearly always three rounds, and full research was 96% of
-    # the Claude spend -- November was heading for $75-120 against the
-    # $100 credit. Two rounds and 12 searches at most.
-    ("haiku", "full"): (8, 4),
+    # Full is for FutureEval and Market Pulse only since 2026-10-23 (MiniBench
+    # went light, which paid for it); 102 production calls at this plan
+    # averaged 12 searches and $0.145. It was cut to (8, 4) for a day while
+    # MiniBench still ran full.
+    ("haiku", "full"): (10, 6, 4),
     ("haiku", "light"): (6,),
     # One targeted pass on what the forecasters disagreed about
     # (disagreement.py); runs only on the questions where they did.
