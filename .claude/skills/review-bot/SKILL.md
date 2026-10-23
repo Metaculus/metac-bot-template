@@ -19,11 +19,11 @@ is read-only Metaculus API traffic. No forecasting, no publishing, no API spend.
 
 ## 1. Build the data
 
-`bot-review` comes from the optional `metaculus-bot-review` package. If it is not installed,
-run `poetry install --with integrations` first.
+`bot-review` comes from the optional `metaculus-bot-review` package. `uv run --group integrations`
+installs it on first use.
 
 ```bash
-poetry run bot-review review --tournament <slug-or-id> \
+uv run --group integrations bot-review review --tournament <slug-or-id> \
     --output review.json --summary review-summary.md
 ```
 
@@ -71,7 +71,7 @@ spread that landed badly points at aggregation; one model alone and right is wor
 it rather than reading:
 
 ```bash
-poetry run bot-review show <POST_ID> --comment <COMMENT_ID> \
+uv run --group integrations bot-review show <POST_ID> --comment <COMMENT_ID> \
     --section research | grep -niE "<the deciding fact>" | head
 ```
 
@@ -80,7 +80,7 @@ Found → the research had it and the forecasters underused it. Absent → likel
 **c. One or two rationales** — the outlier, or one from the cluster if they all agreed.
 
 ```bash
-poetry run bot-review show <POST_ID> --comment <COMMENT_ID> --forecaster R1:F3
+uv run --group integrations bot-review show <POST_ID> --comment <COMMENT_ID> --forecaster R1:F3
 ```
 
 **d. The whole research section** — last resort, when the searches came up empty and you need

@@ -22,24 +22,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.0
         with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-      # Adding the below will make the workflow faster, but will mean you don't automatically get updates from forecasting-tools and other packages
-      # - name: Load cached venv
-      #   id: cached-poetry-dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: .venv
-      #     key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          version: "0.13.1"
       - name: Install dependencies
-        run: poetry install --no-interaction --no-root
+        run: uv sync --locked
       - name: Run bot
         run: |
-          poetry run python main.py
+          uv run python main.py
         # this reads the environment variables from the github repository.
         # Store under Settings --> Secrets and variables --> Actions
         env:

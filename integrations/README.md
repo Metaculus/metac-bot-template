@@ -4,11 +4,7 @@ This folder contains example scripts that integrate third-party tools and SDKs w
 
 ## Install
 
-Integration dependencies are in an optional poetry group. Install them with:
-
-```bash
-poetry install --with integrations
-```
+Integration dependencies are in an optional uv dependency group. Passing `--group integrations` to `uv run` (as in the commands below) installs them on first use.
 
 ## Available integrations
 
@@ -29,7 +25,7 @@ Create an account at [lightningrod.ai](https://lightningrod.ai/) and explore the
 3. Run:
 
 ```bash
-poetry run python integrations/main_lightningrod_eval.py
+uv run --group integrations python integrations/main_lightningrod_eval.py
 ```
 
 ### Bot Review
@@ -39,9 +35,8 @@ poetry run python integrations/main_lightningrod_eval.py
 It reads the reports your bot published as Metaculus comments, so there is nothing to set up beyond the `METACULUS_TOKEN` you already have. No LLM spend is incurred.
 
 ```bash
-poetry install --with integrations
-poetry run bot-review review --tournament <slug-or-id> --output review.json --summary review.md
-poetry run bot-review review --resolved-since 30    # anything that resolved recently
+uv run --group integrations bot-review review --tournament <slug-or-id> --output review.json --summary review.md
+uv run --group integrations bot-review review --resolved-since 30    # anything that resolved recently
 ```
 
 `review.md` gives your rank, how many questions were scored, and the best and worst questions on whichever score the leaderboard uses. `review.json` adds per-question detail, including every forecaster's prediction on every run.
@@ -49,8 +44,8 @@ poetry run bot-review review --resolved-since 30    # anything that resolved rec
 Reasoning text is not in the table. Pull it a piece at a time:
 
 ```bash
-poetry run bot-review show <POST_ID> --section research
-poetry run bot-review show <POST_ID> --forecaster R1:F3
+uv run --group integrations bot-review show <POST_ID> --section research
+uv run --group integrations bot-review show <POST_ID> --forecaster R1:F3
 ```
 
 Two extras ship with this template:
