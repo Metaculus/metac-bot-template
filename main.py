@@ -209,8 +209,8 @@ class SummerTemplateBot2026(ForecastBot):
 
     _structure_output_validation_samples = 2
 
-    #: "full" for prize tournaments; main sets "light" for the unpaid Cup so
-    #: its weekly refreshes do not eat the ~EUR100/month Claude-API budget.
+    #: "full" for FutureEval and Market Pulse, "light" for MiniBench and the
+    #: Cup; set per tournament at the bottom of this file.
     research_depth = "full"
 
     ############################## SPEND LABELS ##############################
@@ -1014,11 +1014,17 @@ if __name__ == "__main__":
         # },
     )
 
-    # Once this month's Claude-API spend reaches the budget, every mode runs
-    # light research until the month ends (spend.after_run sends the alert).
+    # Where the Claude-API budget goes (owner, 2026-10-23): full research for
+    # the two tournaments the bot can win money in now -- FutureEval, 1.5
+    # points from the paid ranks, and Market Pulse, 6.1 -- and light research
+    # for MiniBench (its largest volume: 58 forecasts in the week to 22 Oct)
+    # and the unpaid Cup. Once this month's spend reaches the budget, every
+    # mode runs light until the month ends (spend.after_run sends the alert).
+    prize_depth = "full"
     if spend.over_budget():
-        template_bot.research_depth = "light"
+        prize_depth = "light"
         logger.info("spend_budget_reached research_depth=light")
+    template_bot.research_depth = prize_depth
 
     # Per-mode tournament URL shown in the summary banner footer. The ids and
     # URLs are pinned in tournaments.py, not taken from the SDK's CURRENT_*
@@ -1035,12 +1041,14 @@ if __name__ == "__main__":
     # summary printers below.
     if run_mode == "tournament":
         spend.set_tournament("futureeval")
+        template_bot.research_depth = prize_depth
         seasonal_tournament_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.FUTUREEVAL.id, return_exceptions=True
             )
         )
         spend.set_tournament("minibench")
+        template_bot.research_depth = "light"
         minibench_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.MINIBENCH.id, return_exceptions=True
