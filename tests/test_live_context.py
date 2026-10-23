@@ -10,6 +10,7 @@ import io
 import json
 import os
 import unittest
+from datetime import datetime, timezone
 from types import SimpleNamespace as Q
 from unittest import mock
 
@@ -64,6 +65,125 @@ class PriceTests(unittest.TestCase):
         web = FakeWeb({"https://api.coingecko.com/": {"bitcoin": {"usd": 81157, "usd_24h_change": -0.5}}})
         out = lc.crypto_prices(q("Will Bitcoin close above $80,000?"), web)
         self.assertIn("bitcoin: $81,157 (24h -0.5%)", out)
+
+
+class LiveDataHygieneTests(unittest.TestCase):
+    """The noise Test Bot run 39813843358 put in the Live data block."""
+
+    COINS = {"https://api.coingecko.com/": {"dogecoin": {"usd": 0.2}, "solana": {"usd": 150}}}
+
+    def test_a_coin_in_the_background_only_is_not_fetched(self):
+        web = FakeWeb(self.COINS)
+        out = lc.crypto_prices(q("Will federal outlays fall in FY2026?",
+                                 background="DOGE (Department of Government Efficiency) promised cuts."), web)
+        self.assertEqual(out, "")
+        self.assertEqual(web.calls, [])
+
+    def test_bare_doge_and_sol_need_a_price_question(self):
+        web = FakeWeb(self.COINS)
+        self.assertEqual(lc.crypto_prices(q("Will DOGE cut 100,000 federal jobs?"), web), "")
+        self.assertEqual(lc.crypto_prices(q("Will the Sol model top the leaderboard?"), web), "")
+        self.assertEqual(web.calls, [])
+        self.assertIn("dogecoin", lc.crypto_prices(q("Will the DOGE price close above $1?"), web))
+        self.assertIn("dogecoin", lc.crypto_prices(q("Will Dogecoin be in the top 10 coins?"), web))
+
+    def test_the_group_option_names_the_coin(self):
+        web = FakeWeb(self.COINS)
+        question = Q(question_text="What will these coins be worth on Dec 31?", group_question_option="Solana",
+                     background_info="", resolution_criteria="", fine_print="")
+        self.assertIn("solana", lc.crypto_prices(question, web))
+
+    def test_earnings_per_share_is_not_a_share_price(self):
+        web = FakeWeb({"https://query1.finance.yahoo.com/": YAHOO})
+        for text in ("What will Intel (INTC) report as diluted earnings per share?",
+                     "What will Intel (INTC) report as net income per share?",
+                     "What dividends per share will Intel (INTC) declare?"):
+            self.assertEqual(lc.stock_prices(q(text), web), "")
+        self.assertEqual(web.calls, [])
+        self.assertIn("INTC", lc.stock_prices(q("Will Intel (INTC) shares close above $30?"), web))
+
+    @staticmethod
+    def polymarket(**market):
+        return {"https://gamma-api.polymarket.com/": {"events": [{"markets": [dict(
+            {"question": "Will Democrats win the House?", "outcomes": '["Yes","No"]',
+             "outcomePrices": '["0.6","0.4"]'}, **market)]}]},
+            "https://api.manifold.markets/": [], "https://api.elections.kalshi.com/": {}}
+
+    def test_resolved_polymarket_markets_are_dropped(self):
+        question = q("Will Democrats win the House in 2026?")
+        for flags in ({"closed": True}, {"active": False}, {"archived": True},
+                      {"outcomePrices": '["1","0"]', "endDate": "2023-05-31T00:00:00Z"},
+                      {"outcomePrices": '["0.0005","0.9995"]', "endDate": "2025-01-01T00:00:00Z"}):
+            self.assertEqual(lc.prediction_markets(question, FakeWeb(self.polymarket(**flags))), "", flags)
+
+    def test_live_polymarket_markets_stay_even_when_lopsided(self):
+        question = q("Will Democrats win the House in 2026?")
+        self.assertIn("Yes 60%", lc.prediction_markets(question, FakeWeb(self.polymarket(
+            closed=False, active=True, endDate="2099-11-03T00:00:00Z"))))
+        self.assertIn("Yes 100%", lc.prediction_markets(question, FakeWeb(self.polymarket(
+            outcomePrices='["0.996","0.004"]', endDate="2099-11-03T00:00:00Z"))))
+
+    def test_settled_kalshi_events_are_dropped(self):
+        def kalshi(markets):
+            return FakeWeb({"https://gamma-api.polymarket.com/": {}, "https://api.manifold.markets/": [],
+                            "https://api.elections.kalshi.com/": {"current_page": [
+                                {"event_title": "Which party will win the House?", "markets": markets}]}})
+        question = q("Which party will win the House in 2026?")
+        settled = [{"yes_subtitle": "Democratic Party", "last_price_dollars": "1.0000"},
+                   {"yes_subtitle": "Republican Party", "last_price_dollars": "0.0000"}]
+        self.assertEqual(lc.prediction_markets(question, kalshi(settled)), "")
+        resolved = [{"yes_subtitle": "Democratic Party", "last_price_dollars": "0.6", "result": "yes"}]
+        self.assertEqual(lc.prediction_markets(question, kalshi(resolved)), "")
+        live = [{"yes_subtitle": "Democratic Party", "last_price_dollars": "0.6000", "result": ""},
+                {"yes_subtitle": "Republican Party", "last_price_dollars": "0.0000", "result": ""}]
+        self.assertIn("Democratic Party 60%", lc.prediction_markets(question, kalshi(live)))
+
+
+class LinkedNumericTests(unittest.TestCase):
+    """Linked continuous questions in real units, never "internal scale"."""
+
+    @staticmethod
+    def post(kind, scaling, latest, **extra):
+        return {"title": "Linked", "question": dict(
+            {"type": kind, "scaling": scaling,
+             "aggregations": {"recency_weighted": {"latest": latest}}}, **extra)}
+
+    def shown(self, post):
+        web = FakeWeb({"https://www.metaculus.com/api/posts/77/": post})
+        with mock.patch.dict(os.environ, {"METACULUS_TOKEN": "t"}):
+            return lc.metaculus_links(q("See metaculus.com/questions/77 for the related forecast."), web)
+
+    def test_linear_numeric(self):
+        out = self.shown(self.post("numeric", {"range_min": 0, "range_max": 200, "zero_point": None},
+                                   {"centers": [0.25], "interval_lower_bounds": [0.2],
+                                    "interval_upper_bounds": [0.3]}, unit="GW"))
+        self.assertIn("median 50 GW (middle 50%: 40 GW to 60 GW)", out)
+        self.assertNotIn("internal scale", out)
+
+    def test_log_scaled_numeric(self):
+        out = self.shown(self.post("numeric", {"range_min": 1, "range_max": 1000, "zero_point": 0},
+                                   {"centers": [0.5]}))
+        self.assertIn("median 31.62", out)
+
+    def test_large_values_and_dates(self):
+        out = self.shown(self.post("discrete", {"range_min": 0, "range_max": 1e6, "zero_point": None},
+                                   {"centers": [0.5]}))
+        self.assertIn("median 500,000", out)
+        start = datetime(2026, 1, 1, tzinfo=timezone.utc).timestamp()
+        end = datetime(2027, 1, 1, tzinfo=timezone.utc).timestamp()
+        out = self.shown(self.post("date", {"range_min": start, "range_max": end, "zero_point": None},
+                                   {"centers": [0.5]}))
+        self.assertIn("median 2026-07-02", out)
+
+    def test_without_scaling_it_is_dropped(self):
+        self.assertEqual(self.shown(self.post("numeric", {}, {"centers": [0.4]})), "")
+
+    def test_multiple_choice_names_its_options(self):
+        out = self.shown(self.post("multiple_choice", {}, {"forecast_values": [0.2, 0.7, 0.1]},
+                                   options=["A", "B", "C"]))
+        self.assertIn("B 70%, A 20%, C 10%", out)
+        self.assertEqual(self.shown(self.post("multiple_choice", {}, {"forecast_values": [0.5, 0.5]},
+                                              options=["A", "B", "C"])), "")
 
 
 class MetaculusTests(unittest.TestCase):
@@ -136,6 +256,58 @@ class SourceTests(unittest.TestCase):
         lc.resolution_sources(q("Q?", criteria="https://www.metaculus.com/questions/5/"), web)
         self.assertEqual(web.calls, [])
 
+    def test_wayback_root_pages_are_skipped_and_snapshots_read_raw(self):
+        page = b"<p>Archived count: 77 as of March</p>" + b" pad" * 80
+        web = FakeWeb({"https://web.archive.org/web/20250301000000id_/": page})
+        out = lc.resolution_sources(q("Q?", criteria=(
+            "See the Wayback Machine (https://web.archive.org/) or https://web.archive.org/web/*/example.org "
+            "and https://web.archive.org/web/20250301000000/https://example.org/stats.")), web)
+        self.assertEqual([u for u, _ in web.calls],
+                         ["https://web.archive.org/web/20250301000000id_/https://example.org/stats"])
+        self.assertIn("Archived count: 77", out)
+
+    def test_main_content_wins_over_page_chrome(self):
+        chrome = b"<div>Menu Home About Subscribe Cookie settings Accept all</div>" * 30
+        page = (b"<html><body>" + chrome + b"<main><h1>Report</h1><p>Cases reported: 1,482 as of Oct 10."
+                + b" detail" * 40 + b"</p></main>" + chrome + b"</body></html>")
+        out = lc.resolution_sources(q("Q?", criteria="https://www.cdc.gov/data"), FakeWeb({"https://www.cdc.gov/": page}))
+        self.assertIn("Cases reported: 1,482", out)
+        self.assertNotIn("Cookie settings", out)
+
+    def test_longest_article_when_there_is_no_main(self):
+        page = (b"<nav>Menu</nav><article>Teaser</article><div>Sidebar " + b"x " * 300 + b"</div>"
+                + b"<article><p>The agency counted 512 cases this week." + b" more" * 60 + b"</p></article>")
+        out = lc.resolution_sources(q("Q?", criteria="https://a.example/p"), FakeWeb({"https://a.example/": page}))
+        self.assertTrue(out.split("\n", 1)[1].startswith("The agency counted 512 cases"))
+
+    WIKI_API = "https://en.wikipedia.org/w/api.php?"
+
+    def test_wikipedia_keeps_the_paragraphs_about_the_question(self):
+        extract = "\n".join([
+            "The Grand Tour is a cycling race held every July in France." + " filler" * 20,
+            "", "== History ==",
+            "The race was first organised in 1903 by a newspaper." + " filler" * 20,
+            "== Winners ==",
+            "Australian riders have finished on the podium twice; no Australian winner since Cadel Evans."
+            + " filler" * 20,
+        ])
+        web = FakeWeb({self.WIKI_API: {"query": {"pages": [{"pageid": 1, "title": "Grand Tour",
+                                                           "extract": extract}]}}})
+        out = lc.resolution_sources(q("Will the Grand Tour winner be Australian?",
+                                      criteria="Per https://en.wikipedia.org/wiki/Grand_Tour."), web)
+        self.assertTrue(web.calls[0][0].startswith(self.WIKI_API))
+        self.assertIn("explaintext=1", web.calls[0][0])
+        self.assertIn("Australian riders", out)
+        self.assertNotIn("first organised in 1903", out)
+        self.assertNotIn("== History ==", out)
+
+    def test_wikipedia_api_failure_falls_back_to_the_page(self):
+        page = b"<p>Plain page text about the race.</p>" + b" pad" * 80
+        web = FakeWeb({self.WIKI_API: OSError("api down"), "https://en.wikipedia.org/wiki/": page})
+        with self.assertLogs("live_context", level="WARNING"):
+            out = lc.resolution_sources(q("Q?", criteria="https://en.wikipedia.org/wiki/Race"), web)
+        self.assertIn("Plain page text", out)
+
 
 class BuildTests(unittest.TestCase):
     def test_nothing_applicable_is_empty(self):
@@ -145,6 +317,26 @@ class BuildTests(unittest.TestCase):
         def explode(url, headers):
             raise RuntimeError("down")
         self.assertEqual(lc.build(q("Will Bitcoin (BTC) price close above 1?"), explode), "")
+
+    def test_eps_section_is_in_the_block_and_the_sources_line(self):
+        question = q("What will Q3 2026 EPS be for these companies?",
+                     criteria="Diluted earnings per share in conformity with US GAAP.")
+        with mock.patch("market_quant.section", return_value="- synthetic line") as section, \
+                self.assertLogs("live_context", level="INFO") as logs:
+            out = lc.build(question, FakeWeb({}))
+        self.assertIn("### GAAP diluted EPS against the analyst consensus", out)
+        self.assertIn("- synthetic line", out)
+        self.assertIn("eps_gaap", "\n".join(logs.output))
+        self.assertIsNotNone(section.call_args.args[1])
+
+    def test_the_real_fetch_hands_market_quant_its_own_session(self):
+        question = q("Q?")
+        with mock.patch("market_quant.section", return_value="") as section:
+            lc.eps_gaap(question, lc._http)
+            self.assertIsNone(section.call_args.args[1])
+            web = FakeWeb({})
+            lc.eps_gaap(question, web)
+            self.assertIs(section.call_args.args[1], web)
 
     def test_output_is_capped(self):
         page = b"<p>" + b"word " * 20000 + b"</p>"
