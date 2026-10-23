@@ -445,6 +445,23 @@ class OutOfRangeTests(RealSdkTestCase):
                 with self.assertRaises(ValueError):
                     build(values, below_range_question())
 
+    def test_a_unit_error_on_a_wide_range_is_not_rescued(self):
+        """Question 46224's shape on made-up numbers: values a thousandth of
+        a 4M-10M range sit under two ranges below it, so only the factor
+        test keeps them from becoming a confident "below the range"."""
+        question = numeric(4_000_000.0, 10_000_000.0)
+        values = [7.0e3, 7.2e3, 7.5e3, 7.7e3, 8.0e3, 8.3e3]
+        _out, moved = ns.shape(percentiles(values), question)
+        self.assertFalse(moved)
+        with self.assertRaises(ValueError):
+            build(values, question)
+        # The Meta shape -- wholly below the range, by far less than the
+        # factor -- is still a forecast and still rescued.
+        meta_question = numeric(5.345, 7.345)
+        meta = [2.8, 3.2, 3.6, 4.0, 4.4, 4.7]
+        self.assertFalse(ns._looks_like_unit_error(meta, ns._Scale(meta_question)))
+        self.assertTrue(ns.shape(percentiles(meta), meta_question)[1])
+
 
 class MeanOfCdfsTests(RealSdkTestCase):
     def preds(self, *rows):

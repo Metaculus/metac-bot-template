@@ -123,6 +123,13 @@ MIN_STEP = 1e-3
 CLAMP_WINDOW = 0.2
 SDK_WIGGLE = 0.25
 SDK_FAR = 2.0
+#: A set lying wholly beyond one bound, by this factor or more against that
+#: bound, is a unit error (thousands written for millions), not a forecast.
+#: The 2x rule alone misses it on a wide range: question 46224's parser wrote
+#: 7,840 for 7,840,000 against a 4M-10M range, which is under two ranges
+#: below the lower bound, and the rescue would have posted 90% "below the
+#: range" (2026-10-23 review). Left for the SDK to reject, as before.
+UNIT_ERROR_FACTOR = 20.0
 OUTLIER_IQRS = 3.0
 MIN_KEPT = 4
 
@@ -344,6 +351,15 @@ def _clip_far_tail(values: list[float], question: Any,
     return _ordered_with_eps(out, eps), True
 
 
+def _looks_like_unit_error(values: Sequence[float], scale: _Scale) -> bool:
+    """Every value beyond one positive bound by UNIT_ERROR_FACTOR or more."""
+    if scale.lb > 0 and all(v < scale.lb for v in values):
+        return max(values) * UNIT_ERROR_FACTOR <= scale.lb
+    if scale.ub > 0 and all(v > scale.ub for v in values):
+        return min(values) >= scale.ub * UNIT_ERROR_FACTOR
+    return False
+
+
 def _rescue_out_of_range(values: list[float], question: Any,
                          scale: _Scale) -> tuple[list[float], bool]:
     """Move open-side values into the SDK's window, only when it would
@@ -353,6 +369,8 @@ def _rescue_out_of_range(values: list[float], question: Any,
     if _inside_sdk_window(values, scale):
         return _clip_far_tail(values, question, scale)
     if any(v < lb - SDK_FAR * width or v > ub + SDK_FAR * width for v in values):
+        return values, False
+    if _looks_like_unit_error(values, scale):
         return values, False
     out = list(values)
     eps = width * 1e-6
