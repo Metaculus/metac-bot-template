@@ -11,6 +11,9 @@ resolution-markers = [
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P7D"
 
+[options.exclude-newer-package]
+forecasting-tools = false
+
 [[package]]
 name = "aiofiles"
 version = "25.1.0"
@@ -812,7 +815,7 @@ wheels = [
 
 [[package]]
 name = "forecasting-tools"
-version = "0.3.4"
+version = "0.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -836,9 +839,9 @@ dependencies = [
     { name = "typeguard" },
     { name = "unidecode" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/48/7f3d1a2f7a24dfba61d701cddd6305f75b1e3037e85bee54e35bcdb2c047/forecasting_tools-0.3.4.tar.gz", hash = "sha256:23e524fe1c2b0c051823fbdedf6c557a6d16d15ce332eb9be89544c92b1e98d6", size = 1751590, upload-time = "2026-10-05T02:47:52.624Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/c5/07e7be8f94140f6a11d783cf956f17f42095970e932736099ecac79516b9/forecasting_tools-0.3.5.tar.gz", hash = "sha256:865196647c0b9f69f5d15f835c7357abc0031004e32d1e3238fc490c185bc9c4", size = 1753550, upload-time = "2026-10-23T04:03:14.735Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/b9/09849d6b265fe1b80402fbfb58ee015f63d34ab642b38ea826991adaa017/forecasting_tools-0.3.4-py3-none-any.whl", hash = "sha256:3519393b3666ba1105779074451d8b392485dd669c17459eca99082f00d36e1b", size = 1885401, upload-time = "2026-10-05T02:47:54.867Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/97/ec35fa7b8694343ad3c04d48f6dc9b6b5e4d108bdbba2f63104d838cdcdc/forecasting_tools-0.3.5-py3-none-any.whl", hash = "sha256:824d84b2609747573f837607c4c154655790f9162732e0ef248a526972848c67", size = 1887425, upload-time = "2026-10-23T04:03:16.652Z" },
 ]
 
 [[package]]
