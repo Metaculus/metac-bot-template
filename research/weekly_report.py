@@ -10,7 +10,11 @@ What it reports, per tournament the bot plays:
     in positions and points -- never as a percentage: scores go negative,
     and -10 -> +5 as "-150%" would read as a collapse;
   * when Metaculus has no leaderboard yet, what can be measured instead:
-    questions forecast and resolved this week.
+    questions forecast and resolved this week;
+  * coverage for FutureEval, MiniBench (current and previous round) and
+    Market Pulse: questions whose scheduled close fell in the week, and how
+    many of them carry no forecast of the bot's (roadmap A12; the same
+    audit research/health_check.py runs daily, over the week here).
 
 Read-only by construction: everything goes through MetaculusReadClient
 (GET only, raises on any other verb) with the bot's own token. The previous
@@ -42,6 +46,9 @@ BOT_USERNAME = "seergiii-bot"
 #: renamed to "minibench-YYYY-MM-DD"; the live one is just "minibench".
 MINIBENCH_EPOCH = date(2026, 8, 10)
 MINIBENCH_DAYS = 14
+#: Targets whose week of coverage is audited: the tournaments the bot plays
+#: for prizes (the Cup is practice; its selection skips on purpose).
+COVERAGE_KEYS = ("futureeval", "minibench", "minibench_prev", "market_pulse")
 
 
 @dataclass(frozen=True)
@@ -264,6 +271,11 @@ def render(week_start: date, week_end: date, rows: list[dict[str, Any]],
         if act:
             lines.append(f"   esta semana: {act.get('forecast', 0)} pronosticadas, "
                          f"{act.get('resolved', 0)} resueltas")
+        cov = row.get("coverage")
+        if cov:
+            unchecked = f" ({cov['unchecked']} sin comprobar)" if cov.get("unchecked") else ""
+            lines.append(f"   cobertura 7 días: {cov['closed']} cerradas, "
+                         f"{cov['missing']} sin pronóstico{unchecked}")
     if not previous:
         lines += ["", "(primera semana: sin comparativa todavía)"]
     return "\n".join(lines)
@@ -272,11 +284,22 @@ def render(week_start: date, week_end: date, rows: list[dict[str, Any]],
 # -------------------------------------------------------------------- main
 
 
+def coverage(client: MetaculusReadClient, project: str, since: datetime,
+             until: datetime) -> dict[str, int]:
+    """Questions of one tournament whose scheduled close fell in (since,
+    until], and how many carry no forecast of the bot's: counts only."""
+    from research import health_check  # it imports this module
+
+    result = health_check.audit(client, project, until, since)
+    return {"closed": result.closed, "missing": result.missing, "unchecked": result.unchecked}
+
+
 def build(client: MetaculusReadClient, today: date,
           log: Callable[[str], None] = print) -> tuple[list[dict[str, Any]], date, date]:
     week_end = today - timedelta(days=1)
     week_start = today - timedelta(days=7)
     since = datetime.combine(week_start, datetime.min.time(), tzinfo=timezone.utc)
+    until = datetime.combine(today, datetime.min.time(), tzinfo=timezone.utc)
     posts = client.get_posts_forecasted_by(BOT_USER_ID)
     log(f"posts_forecasted_by_bot={len(posts)}")
     # The listing carries resolutions but not the bot's own forecasts
@@ -301,8 +324,16 @@ def build(client: MetaculusReadClient, today: date,
         if pid is not None:
             keys.add(str(pid))
         act = activity(posts, keys, since)
-        log(f"target={t.key} project={t.project} standing={standing} note={note} activity={act}")
-        rows.append({"key": t.key, "label": t.label, "standing": standing, "activity": act})
+        cov = None
+        if t.key in COVERAGE_KEYS:
+            try:
+                cov = coverage(client, t.project, since, until)
+            except Exception as exc:  # noqa: BLE001 - the rest of the report still goes
+                log(f"coverage_failed target={t.key} reason={type(exc).__name__}")
+        log(f"target={t.key} project={t.project} standing={standing} note={note} "
+            f"activity={act} coverage={cov}")
+        rows.append({"key": t.key, "label": t.label, "standing": standing, "activity": act,
+                     "coverage": cov})
     return rows, week_start, week_end
 
 

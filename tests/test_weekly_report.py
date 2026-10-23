@@ -10,6 +10,7 @@ import io
 import os
 import unittest
 from datetime import date, datetime, timezone
+from unittest import mock
 
 from research import weekly_report as wr
 
@@ -127,6 +128,65 @@ class MessageTests(unittest.TestCase):
         self.assertIn("Market Pulse ($7,5k): sin clasificación aún", msg)
         self.assertIn("esta semana: 7 pronosticadas, 2 resueltas", msg)
         self.assertIn("primera semana", msg)
+
+
+class CoverageTests(unittest.TestCase):
+    """Roadmap A12: the week's coverage per prize tournament, from the same
+    audit the daily health check runs. Synthetic posts (ids in the 900000s)."""
+
+    TODAY = date(2026, 10, 26)
+
+    class Client:
+        """iter_posts and get_json, as MetaculusReadClient has them."""
+
+        def __init__(self):
+            self.params = []
+
+        def iter_posts(self, params, max_pages=200):
+            self.params.append(params["tournaments"])
+            closes = datetime(2026, 10, 22, 12, tzinfo=timezone.utc)
+            old = datetime(2026, 10, 18, 12, tzinfo=timezone.utc)
+            q = lambda qid, when: {"id": qid, "status": "closed", "my_forecasts": None,
+                                   "scheduled_close_time": when.isoformat(),
+                                   "actual_close_time": when.isoformat()}
+            return iter([{"id": 900501, "status": "closed", "question": q(501, closes)},
+                         {"id": 900502, "status": "closed", "question": q(502, closes)},
+                         {"id": 900503, "status": "closed", "question": q(503, old)}])
+
+        def get_json(self, path, params=None):
+            post_id = int(path.strip("/").split("/")[-1])
+            mine = {"latest": None, "history": []} if post_id == 900501 else \
+                {"latest": {"start_time": 1}, "history": [{}]}
+            return {"id": post_id, "question": {"id": post_id - 900000, "my_forecasts": mine}}
+
+    def test_the_week_is_audited_for_each_prize_tournament(self):
+        client = self.Client()
+        since = datetime(2026, 10, 19, tzinfo=timezone.utc)
+        until = datetime(2026, 10, 26, tzinfo=timezone.utc)
+        self.assertEqual(wr.coverage(client, "33121", since, until),
+                         {"closed": 2, "missing": 1, "unchecked": 0})
+
+    def test_the_report_carries_one_line_per_audited_tournament(self):
+        rows = [{"key": "futureeval", "label": "FutureEval ($50k)", "standing": None,
+                 "activity": {}, "coverage": {"closed": 23, "missing": 2, "unchecked": 0}},
+                {"key": "market_pulse", "label": "Market Pulse ($7,5k)", "standing": None,
+                 "activity": {}, "coverage": {"closed": 9, "missing": 0, "unchecked": 3}},
+                {"key": "cup", "label": "Metaculus Cup", "standing": None, "activity": {},
+                 "coverage": None}]
+        msg = wr.render(date(2026, 10, 19), date(2026, 10, 25), rows, None)
+        self.assertIn("   cobertura 7 días: 23 cerradas, 2 sin pronóstico", msg)
+        self.assertIn("   cobertura 7 días: 9 cerradas, 0 sin pronóstico (3 sin comprobar)", msg)
+        self.assertEqual(msg.count("cobertura 7 días"), 2)
+
+    def test_build_audits_the_prize_tournaments_only(self):
+        client = self.Client()
+        client.get_posts_forecasted_by = lambda user_id: []
+        with mock.patch.object(wr, "fetch_standing", return_value=(None, "stub")), \
+                mock.patch.object(wr, "project_id", return_value=None):
+            rows, _start, _end = wr.build(client, self.TODAY, log=lambda _line: None)
+        audited = {r["key"] for r in rows if r["coverage"] is not None}
+        self.assertEqual(audited, set(wr.COVERAGE_KEYS))
+        self.assertEqual(len(client.params), len(wr.COVERAGE_KEYS))
 
 
 class TargetTests(unittest.TestCase):
