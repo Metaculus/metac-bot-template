@@ -440,7 +440,9 @@ class WiringTests(unittest.TestCase):
 
         src = self.read(".github", "workflows", "run_bot_on_tournament.yaml")
         flow = yaml.safe_load(src)
-        self.assertEqual(flow["permissions"], {"contents": "read"})
+        # actions: read is the health check's (it lists this workflow's own
+        # runs); still nothing that writes.
+        self.assertEqual(flow["permissions"], {"contents": "read", "actions": "read"})
         job = flow["jobs"]["forecast_job"]
         self.assertEqual(job["env"]["SPEND_LEDGER_PATH"], "spend_ledger.jsonl")
         names = [s.get("name") for s in job["steps"]]
