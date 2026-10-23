@@ -5,8 +5,7 @@ Demonstrates the full evaluation pipeline:
   news collection -> question generation -> labeling -> multi-model evaluation -> metrics
 
 Usage:
-    poetry install --with integrations
-    poetry run python integrations/main_lightningrod_eval.py
+    uv run --group integrations python integrations/main_lightningrod_eval.py
 
 Requires LIGHTNINGROD_API_KEY in your .env file.
 Sign up at https://dashboard.lightningrod.ai to get your API key and $50 of free credits.
