@@ -185,7 +185,7 @@ class SdkValidationTests(ValidCdfMixin, RealSdkTestCase):
                 preds.append(ns.build(NumericDistribution, percentiles(values), q))
             with self.subTest(open_lower=open_lower, open_upper=open_upper):
                 if open_lower and open_upper:
-                    self.assertTrue(all(len(p.declared_percentiles) == 8 for p in preds))
+                    self.assertTrue(all(len(p.declared_percentiles) > 6 for p in preds))
                 self.assertValidCdf(ns.mean_of_cdfs(preds, q), q)
 
 
@@ -198,7 +198,7 @@ class TailTests(RealSdkTestCase):
         return {round(p.percentile, 4): p.value for p in out}
 
     def test_p2_5_and_p97_5_follow_a_t3_fit_to_each_side(self):
-        out = self.shaped(numeric(0, 300))
+        out = self.shaped(numeric(0, 300, False, False))
         p50 = (out[0.4] + out[0.6]) / 2
         self.assertAlmostEqual(out[0.975], p50 + ns.TAIL_C * (out[0.9] - p50))
         self.assertAlmostEqual(out[0.025], p50 - ns.TAIL_C * (p50 - out[0.1]))
@@ -209,14 +209,14 @@ class TailTests(RealSdkTestCase):
 
     def test_a_log_scaled_question_fits_the_tails_in_log_space(self):
         values = [100 * math.exp(0.3 * z) for z in Z]
-        out = self.shaped(numeric(10, 1000, zero_point=0.0), values)
+        out = self.shaped(numeric(10, 1000, False, False, zero_point=0.0), values)
         log50 = (math.log(out[0.4]) + math.log(out[0.6])) / 2
         self.assertAlmostEqual(math.log(out[0.975]) - log50,
                                ns.TAIL_C * (math.log(out[0.9]) - log50))
         self.assertGreater(out[0.025], 0)
 
     def test_an_open_bound_tail_stays_inside_the_sdk_limit(self):
-        out = self.shaped(numeric(99, 101), [99.5, 99.7, 99.9, 100.1, 100.3, 103.0])
+        out = self.shaped(numeric(99, 101), [96.0, 99.7, 99.9, 100.1, 100.3, 103.0])
         self.assertLessEqual(out[0.975], 101 + ns.OPEN_TAIL_LIMIT * 2)
         self.assertGreaterEqual(out[0.025], 99 - ns.OPEN_TAIL_LIMIT * 2)
 
@@ -252,6 +252,80 @@ class TailTests(RealSdkTestCase):
                 self.assertGreaterEqual(ratio(build(values, q)), 0.2)
         sdk = NumericDistribution.from_question(percentiles(values), numeric(0, 300))
         self.assertLess(ratio(sdk), 0.1)
+
+
+class BoundMassTests(RealSdkTestCase):
+    """The tails past an open bound never leave less mass beyond it than the
+    SDK's own construction on the six declared percentiles, and the density
+    never rises towards a bound (2026-10-23 review: a bare p97.5 inside an
+    open range cut the mass past the bound from 5% to 1.3% and put a bump
+    against it; one just inside a closed bound piled 2.5% against it)."""
+
+    def beyond(self, distribution):
+        h = heights(distribution)
+        return h[0], 1 - h[-1]
+
+    def cases(self):
+        rnd = random.Random(20261024)
+        for _ in range(60):
+            centre, sigma = rnd.uniform(1.2, 2.8), rnd.uniform(0.02, 0.6)
+            yield numeric(1.0, 3.0), normal_set(centre, sigma, rnd.uniform(0.6, 1.6))
+        for vals in ([1.85, 1.90, 1.97, 2.03, 2.10, 2.15], [1.70, 1.80, 1.94, 2.06, 2.20, 2.30],
+                     [1.40, 1.60, 1.88, 2.12, 2.40, 2.60], [1.5, 1.7, 1.95, 2.05, 2.3, 2.5]):
+            yield numeric(1.0, 3.0), vals
+        for _ in range(10):
+            centre, sigma = math.exp(rnd.uniform(2, 4)), rnd.uniform(0.05, 0.5)
+            yield (numeric(5.0, 200.0, zero_point=0.0),
+                   [centre * math.exp(sigma * z) for z in Z])
+
+    def test_an_open_bound_keeps_at_least_the_sdks_mass_past_it(self):
+        for i, (q, vals) in enumerate(self.cases()):
+            with self.subTest(case=i):
+                old = NumericDistribution.from_question(percentiles(vals), q)
+                new = build(vals, q)
+                (old_low, old_high), (new_low, new_high) = self.beyond(old), self.beyond(new)
+                self.assertGreaterEqual(new_low, old_low - 1e-9)
+                self.assertGreaterEqual(new_high, old_high - 1e-9)
+
+    def test_a_date_question_keeps_its_mass_after_the_upper_bound(self):
+        start = datetime(2026, 11, 1, tzinfo=timezone.utc)
+        q = DateQuestion(question_text="synthetic", id_of_post=1, id_of_question=2,
+                         lower_bound=start, upper_bound=start + timedelta(days=425),
+                         open_lower_bound=False, open_upper_bound=True)
+        centre = start + timedelta(days=120)
+        vals = [(centre + timedelta(days=d)).timestamp() for d in (-60, -30, -5, 10, 40, 80)]
+        old = NumericDistribution.from_question(percentiles(vals), q)
+        new = ns.build(NumericDistribution, percentiles(vals), q)
+        self.assertGreaterEqual(1 - heights(new)[-1], 1 - heights(old)[-1] - 1e-9)
+
+    def assertFallsTowardsTheBound(self, distribution, start, upper=True):
+        """Per-bin mass from ``start`` to the bound never rises."""
+        cdf = distribution.get_cdf()
+        pmf = [(b.value, b.percentile - a.percentile) for a, b in zip(cdf, cdf[1:])]
+        tail = [m for x, m in pmf if x > start] if upper else [m for x, m in pmf if x < start][::-1]
+        for a, b in zip(tail, tail[1:]):
+            self.assertLessEqual(b, a + 1e-9)
+
+    def test_no_bump_against_an_open_bound(self):
+        vals = [1.5, 1.7, 1.95, 2.05, 2.3, 2.5]
+        prediction = build(vals, numeric(1.0, 3.0))
+        self.assertFallsTowardsTheBound(prediction, 2.5 + 0.02)
+        self.assertFallsTowardsTheBound(prediction, 1.5 - 0.02, upper=False)
+
+    def test_no_mass_piled_against_a_closed_bound(self):
+        q = numeric(0.0, 100.0, False, False)
+        for vals in ([40, 50, 58, 64, 72, 80], [50, 56, 61, 65, 75, 80]):
+            with self.subTest(vals=vals):
+                out, _moved = ns.shape(percentiles(vals), q)
+                self.assertNotIn(0.975, [round(p.percentile, 4) for p in out])
+                self.assertFallsTowardsTheBound(build(vals, q), 80 + 0.5)
+
+    def test_the_tail_inside_an_open_range_is_a_rescaled_t3(self):
+        out, _moved = ns.shape(percentiles(normal_set(100, 10)), numeric(0, 300))
+        top = [(p.percentile, p.value) for p in out if p.percentile > 0.9]
+        self.assertEqual(top[-1], (0.95, 300.0))
+        self.assertTrue(all(b[0] > a[0] and b[1] > a[1] for a, b in zip(top, top[1:])))
+        self.assertTrue(all(v < 300 for _lvl, v in top[:-1]))
 
 
 class OutOfRangeTests(RealSdkTestCase):
@@ -357,8 +431,12 @@ class MeanOfCdfsTests(RealSdkTestCase):
             aggregate = ns.mean_of_cdfs(preds, numeric(0, 300))
         self.assertIn("INFO:numeric_shape:numeric_aggregate method=mean forecasts=5 dropped=1",
                       logs.output)
-        self.assertLess(cdf_at(aggregate, 150), 0.99)
-        self.assertGreater(cdf_at(aggregate, 150), 0.95)
+        expected = [sum(col) / 4 for col in zip(*(heights(p) for p in preds[:4]))]
+        declared = [p.percentile for p in aggregate.declared_percentiles]
+        for a, b in zip(declared, expected):
+            self.assertAlmostEqual(a, b, places=9)
+        # With the far forecast kept, a fifth of the mass would sit past 150.
+        self.assertGreater(cdf_at(aggregate, 150), 0.9)
 
     def test_nothing_is_dropped_from_three(self):
         preds = self.preds(normal_set(100, 8), normal_set(101, 8), normal_set(250, 8))

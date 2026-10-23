@@ -33,16 +33,32 @@ What it does
 * Tails (roadmap A2): adds p2.5 and p97.5 from a Student-t with 3 degrees of
   freedom fitted to each side, ``p97.5 = p50 + TAIL_C * (p90 - p50)`` and its
   mirror, computed in the question's own scale (log space when the question
-  has a ``zero_point``). On an open bound the tail may go past the bound but
-  stays within ``OPEN_TAIL_LIMIT`` ranges of it, inside the SDK's 2x "far
-  exceeding the bounds" rejection. On a closed bound it is used only when it
-  lands strictly inside the range: when the t(3) tail would cross the bound,
-  the SDK's own uniform 10% between p10 and the bound is already fatter than
-  that tail, so that side is left as it is. (The roadmap's alternative, a
-  tail at the midpoint between the bound and p10, halves the density right
-  at the bound: about 35 points, 50*ln 2, lost on a discrete question that
-  resolves at its bound.) The tails never decide whether the SDK accepts a
-  set.
+  has a ``zero_point``). What happens next depends on the bound:
+
+  - Open bound, tail past it: kept, within ``OPEN_TAIL_LIMIT`` ranges of the
+    bound (inside the SDK's 2x "far exceeding the bounds" rejection), as long
+    as it leaves at least the SDK's own mass past the bound.
+  - Open bound, tail inside the range (the usual case), or past it but too
+    close to leave that mass: the SDK pins the level halfway between the top
+    declared level and 1 at the bound, so a bare p97.5 inside the range
+    would cut the mass past the bound from the SDK's 5% to 1.25% and pile
+    1.25% into the strip between p97.5 and the bound. Outcomes past the
+    range are not rare (1 of the first 6 Market Pulse resolutions), so the
+    t(3) is instead drawn inside the range at ``INSIDE_LEVELS`` and scaled to
+    reach exactly the SDK's 95% (5%) at the bound, which is declared
+    explicitly: the mass past the bound is never below what the SDK gave,
+    and the density never rises towards the bound.
+  - Closed bound: used only when it lands strictly inside the range and the
+    2.5% the SDK then puts between it and the bound is no denser than the
+    tail itself; otherwise that side is left as the SDK builds it. When the
+    t(3) tail would cross the bound, the SDK's own uniform 10% between p90
+    and the bound is already fatter than that tail, and a tail just short of
+    it would pile the last 2.5% against the bound. (The roadmap's
+    alternative, a tail at the midpoint between the bound and p90, halves
+    the density right at the bound: about 35 points, 50*ln 2, lost on a
+    discrete question that resolves at its bound.)
+
+  The tails never decide whether the SDK accepts a set.
 * Out-of-range sets (roadmap A3): on 2026-10-20 (run 39453516101) three of
   five Meta EPS forecasts, at 2.8-4.7 on an open 5.345-7.345 range, were
   rejected because no percentile lay within the range +/- 25%; the question
@@ -89,6 +105,13 @@ FIT_LEVELS = (0.1, 0.9)
 #: On an open bound a tail stays within this many ranges past the bound; the
 #: SDK rejects any value more than 2 ranges out.
 OPEN_TAIL_LIMIT = 1.9
+#: Levels of the t(3) drawn inside an open range when a bare p97.5 would
+#: leave less than the SDK's mass past the bound; rescaled before use (see
+#: _inside_tail). Dense near p90, where the density is highest.
+INSIDE_LEVELS = (0.925, 0.95, 0.975, 0.99)
+#: Declared levels closer than this are not added: the SDK refuses steps
+#: under 5e-05.
+MIN_STEP = 1e-3
 #: Out-of-range rescue: open-side values are moved to this many ranges past
 #: the bound, inside the SDK's 25% window.
 CLAMP_WINDOW = 0.2
@@ -146,6 +169,9 @@ class _Scale:
 # ------------------------------------------------------------------- shape
 
 
+Point = tuple[float, float]
+
+
 def _interp(levels: Sequence[float], locs: Sequence[float], level: float) -> float:
     for (l0, x0), (l1, x1) in zip(zip(levels, locs), zip(levels[1:], locs[1:])):
         if l0 <= level <= l1:
@@ -153,11 +179,81 @@ def _interp(levels: Sequence[float], locs: Sequence[float], level: float) -> flo
     raise ValueError("level outside the declared percentiles")
 
 
+def _t3_cdf(z: float) -> float:
+    """The Student-t CDF with 3 degrees of freedom (closed form)."""
+    x = z / math.sqrt(3.0)
+    return 0.5 + (math.atan(x) + x / (1.0 + x * x)) / math.pi
+
+
+def _t3_quantile(p: float) -> float:
+    lo, hi = 0.0, 1e3
+    for _ in range(200):
+        m = (lo + hi) / 2
+        lo, hi = (m, hi) if _t3_cdf(m) < p else (lo, m)
+    return (lo + hi) / 2
+
+
+#: TAIL_C is the ratio of the t(3)'s 97.5% and 90% quantiles, 3.182 / 1.638.
+_T3_Q975 = _t3_quantile(TAIL_LEVELS[1])
+_INSIDE_Q = tuple(_t3_quantile(p) for p in INSIDE_LEVELS)
+
+
+def _inside_tail(mid: float, edge: float, edge_level: float, tail: float,
+                 cap: float) -> list[tuple[float, float | None]]:
+    """The t(3) whose 97.5% point is ``tail``, drawn at INSIDE_LEVELS inside
+    the range and rescaled to run from ``edge_level`` at the declared extreme
+    to ``cap`` at the bound, which is declared too (location None). A t(3)
+    beyond its median is concave, so the density falls all the way to the
+    bound."""
+    spread = (tail - mid) / _T3_Q975
+    f_edge = _t3_cdf((edge - mid) / spread)
+    share = (cap - edge_level) / (_t3_cdf((1.0 - mid) / spread) - f_edge)
+    points: list[tuple[float, float | None]] = []
+    last = edge_level
+    for q in _INSIDE_Q:
+        x = mid + spread * q
+        if not edge < x < 1.0:
+            continue
+        level = edge_level + (_t3_cdf(q) - f_edge) * share
+        if level - last >= MIN_STEP and cap - level >= MIN_STEP:
+            points.append((level, x))
+            last = level
+    return points + [(cap, None)]
+
+
+def _past(mid: float, edge: float, edge_level: float, tail: float,
+          open_bound: bool, clear: bool) -> list[tuple[float, float | None]]:
+    """(level, location) of the points to declare past one declared extreme,
+    the location None for the bound itself. In the upper side's frame:
+    locations grow towards the bound at 1, levels towards 1; the lower side
+    is mirrored into it. See the module docstring for the cases."""
+    top = TAIL_LEVELS[1]
+    if not (edge > mid and tail > edge):
+        return []
+    if not open_bound:
+        if not clear:
+            return []
+        # The SDK runs straight from the tail to the bound at level 1.
+        if (1.0 - tail) / (1.0 - top) < (tail - edge) / (top - edge_level):
+            return []
+        return [(top, tail)]
+    if edge >= 1.0:
+        return [(top, tail)]  # past the bound already: nothing in range changes
+    # The level the SDK pins at an open bound past the declared extreme.
+    cap = 1.0 - 0.5 * (1.0 - edge_level)
+    if tail > 1.0:
+        at_bound = edge_level + (top - edge_level) * (1.0 - edge) / (tail - edge)
+        if at_bound <= cap:
+            return [(top, tail)]
+    return _inside_tail(mid, edge, edge_level, tail, cap)
+
+
 def _tails(levels: list[float], values: list[float], question: Any,
-           scale: _Scale) -> tuple[float | None, float | None]:
-    """(p2.5, p97.5) from the declared values, or None for a side left alone."""
+           scale: _Scale) -> tuple[list[Point], list[Point]]:
+    """The (level, value) points to declare below p10 and above p90, each
+    side in increasing order; empty for a side left to the SDK."""
     if not (math.isclose(levels[0], FIT_LEVELS[0]) and math.isclose(levels[-1], FIT_LEVELS[1])):
-        return None, None
+        return [], []
     locs = [scale.loc(v) for v in values]
     mid = _interp(levels, locs, 0.5)
     low = scale.value(mid - TAIL_C * (mid - locs[0]))
@@ -165,17 +261,21 @@ def _tails(levels: list[float], values: list[float], question: Any,
     buffer = scale.sdk_buffer
     if question.open_lower_bound:
         low = max(low, scale.lb - OPEN_TAIL_LIMIT * scale.width)
-    elif not low > scale.lb + buffer:
-        low = None
     if question.open_upper_bound:
         high = min(high, scale.ub + OPEN_TAIL_LIMIT * scale.width)
-    elif not high < scale.ub - buffer:
-        high = None
-    if low is not None and not low < values[0]:
-        low = None
-    if high is not None and not high > values[-1]:
-        high = None
-    return low, high
+    t_high, t_low = scale.loc(high), scale.loc(low)
+    upper = [(level, high if x == t_high else scale.ub if x is None else scale.value(x))
+             for level, x in _past(mid, locs[-1], levels[-1], t_high,
+                                   question.open_upper_bound, high < scale.ub - buffer)]
+    lower = [(1.0 - level, low if x == 1.0 - t_low else scale.lb if x is None
+              else scale.value(1.0 - x))
+             for level, x in _past(1.0 - mid, 1.0 - locs[0], 1.0 - levels[0], 1.0 - t_low,
+                                   question.open_lower_bound, low > scale.lb + buffer)]
+    return lower[::-1], upper
+
+
+def _ordered(points: Sequence[Point]) -> bool:
+    return all(b[0] > a[0] and b[1] > a[1] for a, b in zip(points, points[1:]))
 
 
 def _inside_sdk_window(values: Sequence[float], scale: _Scale) -> bool:
@@ -223,17 +323,21 @@ def shape(percentiles: Sequence[Any], question: Any) -> tuple[list[Any], bool]:
     make = type(ps[0])
     levels = [float(p.percentile) for p in ps]
     declared = [float(p.value) for p in ps]
-    low, high = _tails(levels, declared, question, scale)
+    lower, upper = _tails(levels, declared, question, scale)
     values, moved = _rescue_out_of_range(declared, question, scale)
     out = [make(percentile=lvl, value=v) for lvl, v in zip(levels, values)]
     if not _inside_sdk_window(values, scale):
         # Still a set the SDK rejects (a closed bound, or a unit error): the
         # tails must not be what makes it pass.
         return out, moved
-    if low is not None and low < values[0]:
-        out.insert(0, make(percentile=TAIL_LEVELS[0], value=low))
-    if high is not None and high > values[-1]:
-        out.append(make(percentile=TAIL_LEVELS[1], value=high))
+    # A rescued set has moved away from the values the tails were fitted
+    # to: a point that would now sit among the declared ones is left out.
+    lower = [(lvl, v) for lvl, v in lower if v < values[0]]
+    upper = [(lvl, v) for lvl, v in upper if v > values[-1]]
+    if lower and _ordered(lower + [(levels[0], values[0])]):
+        out = [make(percentile=lvl, value=v) for lvl, v in lower] + out
+    if upper and _ordered([(levels[-1], values[-1])] + upper):
+        out += [make(percentile=lvl, value=v) for lvl, v in upper]
     return out, moved
 
 
