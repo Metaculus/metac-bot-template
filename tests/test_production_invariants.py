@@ -506,8 +506,8 @@ class WorkflowInvariants(unittest.TestCase):
         env = self._production()["jobs"]["forecast_job"]["env"]
         self.assertEqual(env["MP_CP_POOL_WEIGHT"], "${{ vars.MP_CP_POOL_WEIGHT || '0' }}")
 
-    HEALTH_STEPS = ("Restore the health-check marker", "Health check",
-                    "Save the health-check marker")
+    HEALTH_STEPS = ("Restore the health-check marker", "Restore the Dagu-alert marker",
+                    "Health check", "Save the health-check marker", "Save the Dagu-alert marker")
 
     def test_the_health_check_runs_after_the_spend_step_and_cannot_fail_the_job(self):
         steps = self._production_steps()
@@ -531,13 +531,30 @@ class WorkflowInvariants(unittest.TestCase):
         self.assertEqual(restore["with"]["path"], save["with"]["path"])
         self.assertIn('f"daily_key=health-{today}', read("research", "health_check.py"))
 
+    def test_the_dagu_alert_is_marked_only_once_it_went_out(self):
+        """dagu-alerted-<dispatch id>, from the step output the check writes
+        only after a successful send, so a failed one is retried."""
+        steps = self._production_steps()
+        restore = steps["Restore the Dagu-alert marker"][1]
+        save = steps["Save the Dagu-alert marker"][1]
+        self.assertEqual(restore["uses"], "actions/cache/restore@v4")
+        self.assertEqual(restore["with"]["restore-keys"].strip(), "dagu-alerted-")
+        self.assertEqual(save["uses"], "actions/cache/save@v4")
+        self.assertEqual(save["with"]["key"], "${{ steps.health.outputs.dagu_key }}")
+        self.assertIn("steps.health.outputs.dagu_key != ''", save["if"])
+        self.assertEqual(restore["with"]["path"], save["with"]["path"])
+        self.assertIn('f"dagu_key=dagu-alerted-{reported}"', read("research", "health_check.py"))
+
     def test_the_health_check_never_runs_the_bot(self):
         """Plain python, not poetry: research/health_check.py is standard
         library only and reads Metaculus through the GET-only client. It gets
         no provider key, so it could not forecast even by mistake."""
         step = self._production_steps()["Health check"][1]
+        steps = self._production_steps()
         self.assertEqual(step["run"].strip(), "python research/health_check.py --marker "
-                         + self._production_steps()["Restore the health-check marker"][1]["with"]["path"])
+                         + steps["Restore the health-check marker"][1]["with"]["path"]
+                         + " --dagu-marker "
+                         + steps["Restore the Dagu-alert marker"][1]["with"]["path"])
         self.assertEqual(set(step["env"]), {"METACULUS_TOKEN", "GITHUB_TOKEN",
                                             "CALLMEBOT_APIKEY", "CALLMEBOT_PHONE_NUMBER"})
         self.assertIn("timeout-minutes", step)

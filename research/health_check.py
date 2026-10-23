@@ -18,8 +18,8 @@ FutureEval's 3-hour questions.
 Three checks, and a WhatsApp only when one of them finds something:
 
   coverage  (daily) questions of FutureEval, MiniBench and Market Pulse whose
-            scheduled close fell in the last 24 h and that carry no forecast
-            of the bot's.
+            scheduled close fell since the last completed audit (24 h on the
+            first, at most 72 h) and that carry no forecast of the bot's.
   idle      (daily) FutureEval with no open question for more than 36 h: a
             stale tournament id, as 33022 was, or the season change on
             6 Jan 2027. 36 and not 24: FutureEval opens ~3.3 questions a
@@ -28,8 +28,19 @@ Three checks, and a WhatsApp only when one of them finds something:
 
 The daily pair runs when --marker holds an earlier day than today (UTC), or
 with --daily; the workflow keeps the marker in the Actions cache as
-health-YYYY-MM-DD. The Dagu check cannot be daily: once Dagu stops, cron runs
-are the only ones left, and the first of them is the one that has to say so.
+health-YYYY-MM-DD. The marker also holds the instant the last audit covered,
+and the next audit starts there, so consecutive audits chain without overlap
+or gap however late in the day each one runs: a fixed "last 24 h" from
+whenever the day's first run happened to finish re-alerted a miss two days
+running after a late check, and never audited what closed between an early
+check and a later one the next day -- in a Dagu outage, when misses happen.
+
+The Dagu check cannot be daily: once Dagu stops, cron runs are the only ones
+left, and the first of them is the one that has to say so. It alerts once
+per silence, for the last dispatch before it: --dagu-marker holds the id of
+the dispatch already reported (the workflow keeps it in the cache as
+dagu-alerted-<id>), written only when the WhatsApp went out, so a failed
+send or a cancelled run is retried by the next cron run.
 
 Logs carry ids and counts only -- never a forecast, a community prediction or
 anything else a question's page shows: the repository is public.
@@ -45,7 +56,7 @@ research/. Never fails the job: each check catches its own errors, and the CLI
 exits 0 whatever the checks find or fail on (the workflow step is
 continue-on-error as a second layer).
 
-    python research/health_check.py --marker health_check.done
+    python research/health_check.py --marker health_check.done --dagu-marker dagu_alert.done
 """
 
 from __future__ import annotations
@@ -66,8 +77,10 @@ if __package__ in (None, ""):
 from research.metaculus_read_api import MetaculusReadClient, MetaculusReadError  # noqa: E402
 from research.weekly_report import _parse, _questions  # noqa: E402
 
-#: Questions whose scheduled close falls this far back are audited each day.
+#: The first audit (no marker) looks this far back; later ones start where
+#: the last completed audit ended, at most MAX_WINDOW back.
 WINDOW = timedelta(hours=24)
+MAX_WINDOW = timedelta(hours=72)
 FUTUREEVAL_IDLE_HOURS = 36
 #: Dagu ticks every 30 minutes and skips a tick while a run is active or one
 #: started under 25 minutes ago (all 408 ticks of 15-23 Oct are explained by
@@ -126,9 +139,11 @@ class Audit:
         return text + (f" unchecked={self.unchecked}" if self.unchecked else "")
 
 
-def audit(client: MetaculusReadClient, tournament: str | int, now: datetime) -> Audit:
-    """Questions of one tournament that closed in the last 24 h, and how many
-    of them the bot never forecast.
+def audit(client: MetaculusReadClient, tournament: str | int, now: datetime,
+          since: datetime | None = None) -> Audit:
+    """Questions of one tournament whose scheduled close fell in (since, now]
+    -- the last 24 h when ``since`` is None -- and how many of them the bot
+    never forecast.
 
     Per question, not per post: a Market Pulse group stays open while its
     subquestions close one earnings day at a time, which is why open posts
@@ -150,7 +165,7 @@ def audit(client: MetaculusReadClient, tournament: str | int, now: datetime) -> 
             if ended is not None and ended <= now and (result.last_closed is None or ended > result.last_closed):
                 result.last_closed = ended
             closes = _parse(question.get("scheduled_close_time")) or ended
-            if closes is None or not (now - WINDOW <= closes <= now):
+            if closes is None or not _in_window(closes, now, since):
                 continue
             result.closed += 1
             if forecast_state(question) is not True and isinstance(post.get("id"), int):
@@ -181,6 +196,12 @@ def audit(client: MetaculusReadClient, tournament: str | int, now: datetime) -> 
     return result
 
 
+def _in_window(moment: datetime, now: datetime, since: datetime | None) -> bool:
+    if since is None:
+        return now - WINDOW <= moment <= now
+    return since < moment <= now
+
+
 def idle_hours(futureeval: Audit, now: datetime) -> float | None:
     """Hours since FutureEval last had an open question; 0 while one is
     open, None when the tournament shows no question at all."""
@@ -197,12 +218,12 @@ def _ids(posts: list[int]) -> str:
 
 
 def daily_message(audits: list[tuple[str, Audit]], futureeval_id: Any,
-                  idle: float | None, idle_alert: bool) -> str | None:
+                  idle: float | None, idle_alert: bool, hours: int = 24) -> str | None:
     """The WhatsApp for the daily pair, or None when there is nothing to say."""
     lines = []
     gaps = [(label, a) for label, a in audits if a.missing]
     if gaps:
-        lines.append("Cerradas en las últimas 24 h sin pronóstico del bot:")
+        lines.append(f"Cerradas en las últimas {hours} h sin pronóstico del bot:")
         lines += [f"• {label}: {a.missing} de {a.closed} (post {_ids(a.missing_posts)})" for label, a in gaps]
     if idle_alert:
         if idle is None:
@@ -221,12 +242,16 @@ def _reason(exc: BaseException) -> str:
 
 
 def daily(client: MetaculusReadClient, now: datetime, send: Callable[[str], bool],
-          log: Callable[[str], None]) -> bool:
-    """The coverage audit and the FutureEval idle check. True when the day
-    can be marked done: every tournament was read and nothing was due, or
-    the alert went out (a partial read that already alerted is not retried,
-    so a flaky tournament cannot repeat the message on every run)."""
+          log: Callable[[str], None], since: datetime | None = None) -> bool:
+    """The coverage audit of (since, now] and the FutureEval idle check. True
+    when the day can be marked done: every tournament was read and nothing
+    was due, or the alert went out (a partial read that already alerted is
+    not retried, so a flaky tournament cannot repeat the message on every
+    run)."""
     import tournaments
+
+    hours = round(((now - since) if since is not None else WINDOW).total_seconds() / 3600)
+    log(f"coverage_window hours={hours}")
 
     targets = ((tournaments.FUTUREEVAL, "FutureEval"), (tournaments.MINIBENCH, "MiniBench"),
                (tournaments.MARKET_PULSE, "Market Pulse"))
@@ -235,7 +260,7 @@ def daily(client: MetaculusReadClient, now: datetime, send: Callable[[str], bool
     complete = True
     for project, label in targets:
         try:
-            result = audit(client, project.id, now)
+            result = audit(client, project.id, now, since)
         except Exception as exc:  # noqa: BLE001 - one tournament must not stop the rest
             complete = False
             log(f"health_check_failed part=coverage tournament={project.id} reason={_reason(exc)}")
@@ -250,7 +275,7 @@ def daily(client: MetaculusReadClient, now: datetime, send: Callable[[str], bool
         idle_alert = idle is None or idle > FUTUREEVAL_IDLE_HOURS
         shown = "none" if idle is None else str(int(idle))
         log(f"futureeval_idle hours={shown} alert={int(idle_alert)}")
-    message = daily_message(audits, tournaments.FUTUREEVAL.id, idle, idle_alert)
+    message = daily_message(audits, tournaments.FUTUREEVAL.id, idle, idle_alert, hours)
     if message is None:
         return complete
     sent = send(message)
@@ -269,6 +294,34 @@ def _times(run: dict[str, Any]) -> tuple[datetime | None, datetime | None, datet
     return created, started, ended
 
 
+def _since_dispatch(runs: list[dict[str, Any]], current_id: int
+                    ) -> tuple[dict, dict, list[dict]] | None:
+    """(this run, the last workflow_dispatch run before it, the runs in
+    between), or None when the listing does not hold them."""
+    current = next((r for r in runs if r.get("id") == current_id), None)
+    if current is None:
+        return None
+    created, started, _ended = _times(current)
+    if created is None or started is None:
+        return None
+    earlier = [r for r in runs if r.get("id") != current_id
+               and _times(r)[0] is not None and _times(r)[0] <= created]
+    earlier.sort(key=lambda r: _times(r)[0], reverse=True)
+    between = []
+    for run in earlier:
+        if run.get("event") == "workflow_dispatch":
+            if _times(run)[2] is None:
+                return None
+            return current, run, between
+        between.append(run)
+    return None
+
+
+def last_dispatch_id(runs: list[dict[str, Any]], current_id: int) -> int | None:
+    found = _since_dispatch(runs, current_id)
+    return found[1].get("id") if found else None
+
+
 def dagu_silence(runs: list[dict[str, Any]], current_id: int) -> tuple[float, float] | None:
     """(idle minutes at this run's start, idle minutes at the previous run's
     start), counted from the end of the last workflow_dispatch run; None when
@@ -284,24 +337,11 @@ def dagu_silence(runs: list[dict[str, Any]], current_id: int) -> tuple[float, fl
     the dispatch itself, and above the threshold once an earlier cron run has
     already alerted.
     """
-    current = next((r for r in runs if r.get("id") == current_id), None)
-    if current is None:
+    found = _since_dispatch(runs, current_id)
+    if found is None:
         return None
-    created, started, _ended = _times(current)
-    if created is None or started is None:
-        return None
-    earlier = [r for r in runs if r.get("id") != current_id
-               and _times(r)[0] is not None and _times(r)[0] <= created]
-    earlier.sort(key=lambda r: _times(r)[0], reverse=True)
-    since_dispatch = []
-    dispatch = None
-    for run in earlier:
-        if run.get("event") == "workflow_dispatch":
-            dispatch = run
-            break
-        since_dispatch.append(run)
-    if dispatch is None or _times(dispatch)[2] is None:
-        return None
+    current, dispatch, since_dispatch = found
+    created = _times(current)[0]
     busy_until = _times(dispatch)[2]
     idle = before = 0.0
     for run in sorted(since_dispatch, key=lambda r: _times(r)[1] or created) + [current]:
@@ -335,24 +375,43 @@ def dagu_message(minutes: float) -> str:
             f"solo quedan los eventos de cron de GitHub. Revísalo: {DAGU_URL}")
 
 
+_UNSET = object()
+
+
 def dagu(environ: Any, fetch: Callable[[str, str], list[dict]], send: Callable[[str], bool],
-         log: Callable[[str], None]) -> None:
+         log: Callable[[str], None], alerted: Any = _UNSET) -> int | None:
+    """The Dagu-silence check. Returns the id of the dispatch this run
+    reported a silence after, when the WhatsApp went out, else None.
+
+    ``alerted`` is the dispatch id already reported (from --dagu-marker;
+    None when the marker holds none): the check then alerts while the
+    silence lasts until a send succeeds. Left unset, the check alerts on the
+    first cron run past the threshold only, whether or not the send works.
+    """
     token = environ.get("GITHUB_TOKEN", "")
     repo = environ.get("GITHUB_REPOSITORY", "")
     run_id = environ.get("GITHUB_RUN_ID", "")
     if not (token and repo and run_id.isdigit()):
         log("dagu_check skipped reason=no_github_context")
-        return
-    silence = dagu_silence(fetch(repo, token), int(run_id))
+        return None
+    runs = fetch(repo, token)
+    silence = dagu_silence(runs, int(run_id))
     if silence is None:
         log("dagu_check skipped reason=no_dispatch_or_run_listed")
-        return
+        return None
     minutes, before = silence
-    alert = minutes > DAGU_SILENT_MINUTES >= before
+    dispatch = last_dispatch_id(runs, int(run_id))
+    if alerted is _UNSET:
+        alert = minutes > DAGU_SILENT_MINUTES >= before
+    else:
+        alert = minutes > DAGU_SILENT_MINUTES and str(dispatch) != str(alerted)
     log(f"dagu_check idle_minutes={int(minutes)} alert={int(alert)}")
-    if alert:
-        log(f"dagu_silent minutes={int(minutes)}")
-        log(f"dagu_alert sent={int(send(dagu_message(minutes)))}")
+    if not alert:
+        return None
+    log(f"dagu_silent minutes={int(minutes)}")
+    sent = send(dagu_message(minutes))
+    log(f"dagu_alert sent={int(sent)}")
+    return dispatch if sent else None
 
 
 ############################## CLI ##############################
@@ -367,7 +426,7 @@ def _send(text: str) -> bool:
         return False
 
 
-def _marker_day(path: str | None) -> str | None:
+def _read(path: str | None) -> str | None:
     if not path or not os.path.exists(path):
         return None
     try:
@@ -375,6 +434,37 @@ def _marker_day(path: str | None) -> str | None:
             return handle.read().strip() or None
     except OSError:
         return None
+
+
+def _marker(path: str | None) -> tuple[str | None, datetime | None]:
+    """(day, instant audited to) from the daily marker: "YYYY-MM-DD" or,
+    since 2026-10-24, "YYYY-MM-DD <ISO instant>"."""
+    text = _read(path)
+    if not text:
+        return None, None
+    day, _sep, instant = text.partition(" ")
+    return day, _parse(instant.strip()) if instant.strip() else None
+
+
+def _since(audited_to: datetime | None, now: datetime) -> datetime | None:
+    """Where the next audit starts: the last completed one's end, at most
+    MAX_WINDOW back; None (the last 24 h) without one."""
+    if audited_to is None or audited_to.tzinfo is None or not audited_to < now:
+        return None
+    return max(audited_to, now - MAX_WINDOW)
+
+
+def _write(path: str, text: str, environ: Any, key: str, log: Callable[[str], None]) -> None:
+    """The marker file, and the cache key the workflow saves it under."""
+    try:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text + "\n")
+        output = environ.get("GITHUB_OUTPUT")
+        if output:
+            with open(output, "a", encoding="utf-8") as handle:
+                handle.write(key + "\n")
+    except OSError as exc:
+        log(f"health_check_failed part=marker reason={_reason(exc)}")
 
 
 def _log(text: str) -> None:
@@ -389,12 +479,14 @@ def run(argv: list[str] | None = None, *, now: datetime | None = None,
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--marker", help="file holding the last UTC day the daily checks ran")
     ap.add_argument("--daily", action="store_true", help="run the daily checks whatever the marker says")
+    ap.add_argument("--dagu-marker", help="file holding the id of the dispatch whose silence was reported")
     args = ap.parse_args(argv)
     environ = os.environ if environ is None else environ
     now = now or datetime.now(timezone.utc)
     today = now.date().isoformat()
 
-    if args.daily or (args.marker and _marker_day(args.marker) != today):
+    marker_day, audited_to = _marker(args.marker)
+    if args.daily or (args.marker and marker_day != today):
         token = environ.get("METACULUS_TOKEN", "")
         done = False
         if client is None and not token.strip():
@@ -402,25 +494,24 @@ def run(argv: list[str] | None = None, *, now: datetime | None = None,
         else:
             try:
                 done = daily(client or MetaculusReadClient(token, timeout=30, max_retries=3),
-                             now, send, log)
+                             now, send, log, _since(audited_to, now))
             except Exception as exc:  # noqa: BLE001
                 log(f"health_check_failed part=daily reason={_reason(exc)}")
         if done and args.marker:
-            try:
-                with open(args.marker, "w", encoding="utf-8") as handle:
-                    handle.write(today + "\n")
-                output = environ.get("GITHUB_OUTPUT")
-                if output:
-                    with open(output, "a", encoding="utf-8") as handle:
-                        handle.write(f"daily_key=health-{today}\n")
-            except OSError as exc:
-                log(f"health_check_failed part=marker reason={_reason(exc)}")
+            stamp = now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            _write(args.marker, f"{today} {stamp}", environ, f"daily_key=health-{today}", log)
     else:
         log("health_check daily=skipped reason=already_ran_today")
 
     if environ.get("GITHUB_EVENT_NAME") == "schedule":
         try:
-            dagu(environ, fetch, send, log)
+            if args.dagu_marker:
+                reported = dagu(environ, fetch, send, log, alerted=_read(args.dagu_marker))
+                if reported is not None:
+                    _write(args.dagu_marker, str(reported), environ,
+                           f"dagu_key=dagu-alerted-{reported}", log)
+            else:
+                dagu(environ, fetch, send, log)
         except Exception as exc:  # noqa: BLE001
             log(f"health_check_failed part=dagu reason={_reason(exc)}")
     return 0

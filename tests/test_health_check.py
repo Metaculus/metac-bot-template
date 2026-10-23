@@ -388,7 +388,7 @@ class RunTests(unittest.TestCase):
         code, logs, _sent = self.go(marker_day="2026-10-22")
         self.assertEqual(code, 0)
         with open(self.marker) as handle:
-            self.assertEqual(handle.read().strip(), "2026-10-23")
+            self.assertEqual(handle.read().strip(), "2026-10-23 2026-10-23T12:00:00Z")
         self.assertEqual(self.output_text(), "daily_key=health-2026-10-23\n")
 
     def test_the_daily_checks_run_once_a_day(self):
@@ -436,6 +436,149 @@ class RunTests(unittest.TestCase):
                                     fetch=broken)
         self.assertEqual(code, 0)
         self.assertIn("health_check_failed part=dagu reason=OSError", logs)
+
+
+class WindowTests(unittest.TestCase):
+    """Each audit starts where the last completed one ended, so audits chain
+    however late each day's runs: with a fixed "last 24 h", a miss was
+    reported two days running after a late check, and one that closed between
+    an early check and a late one the next day was never audited
+    (2026-10-23 review)."""
+
+    D = datetime(2026, 10, 24, tzinfo=timezone.utc)
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.marker = os.path.join(self.dir.name, "health_check.done")
+
+    def client(self, closes):
+        listing = {33121: [post(900300, question(300, closes=closes)),
+                           post(900301, question(301, status="open", closes=closes + timedelta(days=9)))]}
+        return FakeClient(listing, {900300: post(900300, question(300, closes=closes, mine=False))})
+
+    def day(self, now, closes):
+        sent, logs = [], []
+        hc.run(["--marker", self.marker], now=now, client=self.client(closes),
+               send=lambda text: sent.append(text) or True, environ={"METACULUS_TOKEN": "x"},
+               log=logs.append)
+        return sent, logs
+
+    def test_a_miss_is_reported_once_after_a_late_check(self):
+        closes = self.D + timedelta(hours=2)
+        first, _ = self.day(self.D + timedelta(hours=5), closes)
+        second, _ = self.day(self.D + timedelta(days=1, minutes=5), closes)
+        self.assertEqual((len(first), len(second)), (1, 0))
+
+    def test_a_miss_between_an_early_and_a_late_check_is_reported(self):
+        closes = self.D + timedelta(hours=3)
+        first, _ = self.day(self.D + timedelta(minutes=5), closes)
+        second, logs = self.day(self.D + timedelta(days=1, hours=6), closes)
+        self.assertEqual((len(first), len(second)), (0, 1))
+        self.assertIn("coverage_window hours=30", logs)
+        self.assertIn("Cerradas en las últimas 30 h", second[0])
+
+    def test_the_window_reaches_back_at_most_72_hours(self):
+        with open(self.marker, "w") as handle:
+            handle.write("2026-10-14 2026-10-14T06:00:00Z\n")
+        missed_long_ago = self.D - timedelta(hours=80)
+        sent, logs = self.day(self.D + timedelta(hours=1), missed_long_ago)
+        self.assertEqual(sent, [])
+        self.assertIn("coverage_window hours=72", logs)
+        sent, _ = self.day(self.D + timedelta(days=1, hours=1), self.D - timedelta(hours=60))
+        self.assertEqual(sent, [], "already inside the previous audit")
+
+    def test_a_marker_without_an_instant_means_the_last_24_hours(self):
+        with open(self.marker, "w") as handle:
+            handle.write("2026-10-23\n")
+        sent, logs = self.day(self.D + timedelta(hours=12), self.D - timedelta(hours=10))
+        self.assertIn("coverage_window hours=24", logs)
+        self.assertEqual(len(sent), 1)
+        with open(self.marker) as handle:
+            self.assertEqual(handle.read().strip(), "2026-10-24 2026-10-24T12:00:00Z")
+
+    def test_a_failed_audit_keeps_the_start_for_the_next_run(self):
+        with open(self.marker, "w") as handle:
+            handle.write("2026-10-23 2026-10-23T08:00:00Z\n")
+        failing = FakeClient({}, fail_listing={33121})
+        hc.run(["--marker", self.marker], now=self.D + timedelta(hours=1), client=failing,
+               send=lambda text: True, environ={"METACULUS_TOKEN": "x"}, log=lambda _: None)
+        sent, logs = self.day(self.D + timedelta(hours=9), self.D)
+        self.assertIn("coverage_window hours=25", logs)
+        self.assertEqual(len(sent), 1)
+
+
+class DaguRetryTests(unittest.TestCase):
+    """--dagu-marker: one WhatsApp per silence, retried until one goes out.
+    Judged on the run order alone, a failed send or a cancelled run left the
+    rest of an outage silent (2026-10-23 review)."""
+
+    T = DaguSilenceTests.T
+    ENV = dict(DaguCheckTests.ENV, GITHUB_EVENT_NAME="schedule")
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.dir.cleanup)
+        self.dagu_marker = os.path.join(self.dir.name, "dagu_alert.done")
+        self.output = os.path.join(self.dir.name, "output")
+        self.marker = os.path.join(self.dir.name, "health_check.done")
+        with open(self.marker, "w") as handle:  # the daily pair already ran today
+            handle.write(self.T.date().isoformat() + "\n")
+
+    def runs(self, current, minutes, dispatch=1):
+        """This cron run ``minutes`` after a dispatch ended, with an earlier
+        cron run already past the threshold in between."""
+        end = self.T + timedelta(minutes=7)
+        return [run_entry(current, "schedule", end + timedelta(minutes=minutes)),
+                run_entry(current - 1, "schedule", end + timedelta(minutes=95)),
+                run_entry(dispatch, "workflow_dispatch", self.T, ended=end)]
+
+    def cron(self, current, minutes, ok=True, dispatch=1):
+        sent, logs = [], []
+        env = dict(self.ENV, GITHUB_RUN_ID=str(current), GITHUB_OUTPUT=self.output)
+        hc.run(["--marker", self.marker, "--dagu-marker", self.dagu_marker],
+               now=self.T, client=FakeClient({}), environ=env, log=logs.append,
+               fetch=lambda repo, token: self.runs(current, minutes, dispatch),
+               send=lambda text: sent.append(text) or ok)
+        return sent, logs
+
+    def output_text(self):
+        if not os.path.exists(self.output):
+            return ""
+        with open(self.output) as handle:
+            return handle.read()
+
+    def test_a_failed_send_is_retried_by_the_next_cron_run(self):
+        sent, logs = self.cron(3, 120, ok=False)
+        self.assertEqual(len(sent), 1)
+        self.assertIn("dagu_alert sent=0", logs)
+        self.assertFalse(os.path.exists(self.dagu_marker))
+        self.assertNotIn("dagu_key", self.output_text())
+        sent, _ = self.cron(4, 180)
+        self.assertEqual(len(sent), 1, "the old rule saw before > 90 and stayed silent")
+        with open(self.dagu_marker) as handle:
+            self.assertEqual(handle.read().strip(), "1")
+        self.assertIn("dagu_key=dagu-alerted-1\n", self.output_text())
+
+    def test_once_it_went_out_the_same_silence_is_not_reported_again(self):
+        with open(self.dagu_marker, "w") as handle:
+            handle.write("1\n")
+        sent, logs = self.cron(5, 240)
+        self.assertEqual(sent, [])
+        self.assertIn("dagu_check idle_minutes=240 alert=0", logs)
+
+    def test_a_new_silence_after_a_new_dispatch_is_reported(self):
+        with open(self.dagu_marker, "w") as handle:
+            handle.write("1\n")
+        sent, _ = self.cron(9, 120, dispatch=7)
+        self.assertEqual(len(sent), 1)
+        with open(self.dagu_marker) as handle:
+            self.assertEqual(handle.read().strip(), "7")
+
+    def test_a_healthy_dagu_writes_nothing(self):
+        sent, _ = self.cron(3, 20)
+        self.assertEqual(sent, [])
+        self.assertFalse(os.path.exists(self.dagu_marker))
 
 
 class ReadOnlyTests(unittest.TestCase):

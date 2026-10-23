@@ -419,9 +419,12 @@ jobs:
       # wrong; the log carries ids and counts, never a forecast.
       #
       # "Once a day" is a marker in the Actions cache: the newest health-*
-      # entry (restore-keys takes the most recent) holds the last day checked,
-      # and a completed daily check saves health-YYYY-MM-DD for today. Like
-      # the spend steps, nothing here can fail the job.
+      # entry (restore-keys takes the most recent) holds the last day checked
+      # and the instant that audit covered up to, and a completed daily check
+      # saves health-YYYY-MM-DD for today. The Dagu alert has its own marker,
+      # dagu-alerted-<dispatch id>, saved only once the WhatsApp went out, so
+      # a failed send is retried by the next cron run. Like the spend steps,
+      # nothing here can fail the job.
       - name: Restore the health-check marker
         if: ${{ !cancelled() }}
         continue-on-error: true
@@ -431,12 +434,21 @@ jobs:
           key: health-${{ github.run_id }}
           restore-keys: |
             health-
+      - name: Restore the Dagu-alert marker
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: dagu_alert.done
+          key: dagu-alerted-${{ github.run_id }}
+          restore-keys: |
+            dagu-alerted-
       - name: Health check
         id: health
         if: ${{ !cancelled() }}
         continue-on-error: true
         timeout-minutes: 10
-        run: python research/health_check.py --marker health_check.done
+        run: python research/health_check.py --marker health_check.done --dagu-marker dagu_alert.done
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           # The job's own token, for one GET of this workflow's recent runs
@@ -451,6 +463,13 @@ jobs:
         with:
           path: health_check.done
           key: ${{ steps.health.outputs.daily_key }}
+      - name: Save the Dagu-alert marker
+        if: ${{ !cancelled() && steps.health.outputs.dagu_key != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: dagu_alert.done
+          key: ${{ steps.health.outputs.dagu_key }}
       # Separate from the in-process notifier: this fires only when a STEP
       # in this job failed outright (including one earlier than "Run bot"),
       # which main.py's own try/except around handle_run() cannot see at all
