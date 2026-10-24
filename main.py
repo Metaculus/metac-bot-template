@@ -1168,6 +1168,13 @@ if __name__ == "__main__":
         prize_depth = "light"
         logger.info("spend_budget_reached research_depth=light")
     template_bot.research_depth = prize_depth
+    # Until the credit renews (RESEARCH_BOOST_UNTIL), what is left of it buys
+    # full research for MiniBench and the Cup too, and Cup refreshes every two
+    # days; never while over budget. See spend.boost_active.
+    boost = prize_depth == "full" and spend.boost_active()
+    other_depth = "full" if boost else "light"
+    if boost:
+        logger.info("research_boost active=1")
 
     # Per-mode tournament URL shown in the summary banner footer. The ids and
     # URLs are pinned in tournaments.py, not taken from the SDK's CURRENT_*
@@ -1191,7 +1198,7 @@ if __name__ == "__main__":
             )
         )
         spend.set_tournament("minibench")
-        template_bot.research_depth = "light"
+        template_bot.research_depth = other_depth
         minibench_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.MINIBENCH.id, return_exceptions=True
@@ -1207,7 +1214,7 @@ if __name__ == "__main__":
         # AI_2027_TOURNAMENT_ID = "ai-2027" is another unpaid target with a
         # good mix of question types (FutureEval resources page).
         template_bot.skip_previously_forecasted_questions = False
-        template_bot.research_depth = "light"
+        template_bot.research_depth = other_depth
         spend.set_tournament("cup")
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
@@ -1216,6 +1223,7 @@ if __name__ == "__main__":
                         tournaments.METACULUS_CUP.id
                     ),
                     datetime.now(timezone.utc),
+                    market_pulse.CUP_BOOST_MAX_AGE if boost else market_pulse.CUP_MAX_AGE,
                 ),
                 return_exceptions=True,
             )

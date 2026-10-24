@@ -98,6 +98,9 @@ def select(questions: Sequence[Any], now: datetime) -> list[Any]:
 #: 2026-10-16). A week is the refresh age: the Cup opens a batch weekly and
 #: pays bots nothing, so more often is spend without a prize behind it.
 CUP_MAX_AGE = timedelta(days=7)
+#: The refresh age while spend.boost_active(): the credit left before it
+#: renews buys fresher Cup forecasts (owner, 2026-10-24).
+CUP_BOOST_MAX_AGE = timedelta(days=2)
 
 
 def select_stale(

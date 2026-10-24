@@ -237,6 +237,37 @@ class BudgetTests(LedgerCase):
             with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_USD": raw}):
                 self.assertEqual(spend.budget_usd(NOW), 100.0)
 
+    def test_the_budget_cycle_can_start_on_the_28th(self):
+        with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_CYCLE_DAY": "28"}):
+            self.assertEqual(spend.month_start(NOW), datetime(2026, 9, 28, tzinfo=timezone.utc))
+            renewal = datetime(2026, 10, 28, 0, 0, tzinfo=timezone.utc)
+            self.assertEqual(spend.month_start(renewal), renewal)
+            self.assertEqual(spend.cycle_end(NOW), renewal)
+            jan = datetime(2027, 1, 5, tzinfo=timezone.utc)
+            self.assertEqual(spend.month_start(jan), datetime(2026, 12, 28, tzinfo=timezone.utc))
+            self.write(call(datetime(2026, 9, 29, tzinfo=timezone.utc), 30.0),
+                       call(NOW - timedelta(days=1), 10.0),
+                       call(renewal + timedelta(hours=1), 5.0))
+            self.assertAlmostEqual(spend.month_spend(spend.load(), NOW), 40.0)
+            self.assertAlmostEqual(spend.month_spend(spend.load(), renewal + timedelta(hours=2)), 5.0)
+        for raw in ("", "0", "31", "x"):
+            with mock.patch.dict(os.environ, {"CLAUDE_BUDGET_CYCLE_DAY": raw}):
+                self.assertEqual(spend.cycle_day(), 1)
+
+    def test_a_budget_can_be_scoped_to_one_cycle(self):
+        env = {"CLAUDE_BUDGET_CYCLE_DAY": "28", "CLAUDE_BUDGET_USD": "56@2026-09-28"}
+        with mock.patch.dict(os.environ, env):
+            self.assertEqual(spend.budget_usd(NOW), 56.0)
+            self.assertEqual(spend.budget_usd(datetime(2026, 10, 28, 1, tzinfo=timezone.utc)), 100.0)
+
+    def test_the_research_boost_ends_on_its_date(self):
+        with mock.patch.dict(os.environ, {"RESEARCH_BOOST_UNTIL": "2026-10-28"}):
+            self.assertTrue(spend.boost_active(datetime(2026, 10, 27, 23, 59, tzinfo=timezone.utc)))
+            self.assertFalse(spend.boost_active(datetime(2026, 10, 28, 0, 0, tzinfo=timezone.utc)))
+        for raw in ("", "soon"):
+            with mock.patch.dict(os.environ, {"RESEARCH_BOOST_UNTIL": raw}):
+                self.assertFalse(spend.boost_active(NOW))
+
     def test_a_missing_or_corrupt_ledger_never_throttles(self):
         self.assertFalse(spend.over_budget(NOW))
         with open(self.path, "w") as h:

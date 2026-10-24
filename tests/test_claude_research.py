@@ -230,15 +230,19 @@ class SecondRoundTests(unittest.TestCase):
 
     def test_prize_tournaments_get_full_research_and_the_rest_light(self):
         """The owner put the budget on FutureEval and Market Pulse
-        (2026-10-23); MiniBench and the Cup run light."""
+        (2026-10-23); MiniBench and the Cup run light, except during a
+        research boost before the credit renews (2026-10-24), never while
+        over budget."""
         with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as handle:
             src = handle.read()
         fe = src.index('spend.set_tournament("futureeval")')
         mb = src.index('spend.set_tournament("minibench")')
         self.assertIn("template_bot.research_depth = prize_depth", src[fe:mb])
-        self.assertIn('template_bot.research_depth = "light"', src[mb:mb + 200])
+        self.assertIn("template_bot.research_depth = other_depth", src[mb:mb + 200])
         cup = src.index('spend.set_tournament("cup")')
-        self.assertIn('template_bot.research_depth = "light"', src[cup - 200:cup])
+        self.assertIn("template_bot.research_depth = other_depth", src[cup - 200:cup])
+        self.assertIn('boost = prize_depth == "full" and spend.boost_active()', src)
+        self.assertIn('other_depth = "full" if boost else "light"', src)
         self.assertGreater(sum(cr.ROUNDS[("haiku", "full")]), sum(cr.ROUNDS[("haiku", "light")]))
 
     def test_haiku_is_the_production_default(self):
