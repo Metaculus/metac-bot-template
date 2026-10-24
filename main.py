@@ -9,6 +9,7 @@ import dotenv
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
     check_environment,
+    has_asknews_keys,
     print_run_summary_banner,
     print_startup_banner,
     silence_noisy_dependencies,
@@ -90,9 +91,9 @@ class FallTemplateBot2026(ForecastBot):
                 timeout=40,
                 allowed_tries=2,
             ),
-            "summarizer": "openai/gpt-4o-mini",
+            "summarizer": "openrouter/openai/gpt-4o-mini",
             "researcher": "asknews/news-summaries",
-            "parser": "openai/gpt-4o-mini",
+            "parser": "openrouter/openai/gpt-4o-mini",
         },
     )
     ```
@@ -704,9 +705,15 @@ if __name__ == "__main__":
     publish_to_metaculus = True
     print_startup_banner(run_mode, will_publish=publish_to_metaculus)
 
-    # Configure the bot. The `llms=` block below is commented out to use
-    # whichever default models forecasting-tools picks based on your env vars;
-    # uncomment and edit to pin specific models.
+    # All four purposes are pinned to OpenRouter models: any purpose left out
+    # falls back to forecasting-tools' env-var-based defaults, which can pick
+    # models or hosts that no longer exist.
+    if has_asknews_keys():
+        researcher: str | GeneralLlm = "asknews/news-summaries"
+    else:
+        researcher = GeneralLlm(model="openrouter/perplexity/sonar", temperature=0.1)
+    logger.info(f"Research provider: {GeneralLlm.to_model_name(researcher)}")
+
     template_bot = FallTemplateBot2026(
         research_reports_per_question=1,
         predictions_per_research_report=5,
@@ -715,17 +722,17 @@ if __name__ == "__main__":
         folder_to_save_reports_to=None,
         skip_previously_forecasted_questions=True,
         extra_metadata_in_explanation=True,
-        # llms={
-        #     "default": GeneralLlm(
-        #         model="openrouter/openai/gpt-4o",
-        #         temperature=0.3,
-        #         timeout=40,
-        #         allowed_tries=2,
-        #     ),
-        #     "summarizer": "openai/gpt-4o-mini",
-        #     "researcher": "asknews/news-summaries",
-        #     "parser": "openai/gpt-4o-mini",
-        # },
+        llms={
+            "default": GeneralLlm(
+                model="openrouter/openai/gpt-4o",
+                temperature=0.3,
+                timeout=40,
+                allowed_tries=2,
+            ),
+            "summarizer": "openrouter/openai/gpt-4o-mini",
+            "researcher": researcher,
+            "parser": "openrouter/openai/gpt-4o-mini",
+        },
     )
 
     # Per-mode tournament URL shown in the summary banner footer. These
