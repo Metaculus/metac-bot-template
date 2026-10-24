@@ -24,7 +24,7 @@ This file provides a simple forecasting bot built from the ground up.
 We provide this for people who want to dissect
 it to build their own bot without using forecasting-tools.
 
-This template makes its LLM calls through OpenRouter, so you need an OpenRouter API key
+This template assumes you are using a OpenAI model and have an OpenAI API key
 You will also need a Metaculus API key, for posting questions to Metaculus
 and a Perplexity or AskNews API key for online research
 
@@ -63,7 +63,6 @@ PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
 ASKNEWS_CLIENT_ID = os.getenv("ASKNEWS_CLIENT_ID")
 ASKNEWS_SECRET = os.getenv("ASKNEWS_SECRET")
 EXA_API_KEY = os.getenv("EXA_API_KEY")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENAI_API_KEY = os.getenv(
     "OPENAI_API_KEY"
 )  # You'll also need the OpenAI API Key if you want to use the Exa Smart Searcher
@@ -247,17 +246,15 @@ CONCURRENT_REQUESTS_LIMIT = 5
 llm_rate_limiter = asyncio.Semaphore(CONCURRENT_REQUESTS_LIMIT)
 
 
-async def call_llm(prompt: str, model: str = "openai/gpt-4o", temperature: float = 0.3) -> str:
+async def call_llm(prompt: str, model: str = "gpt-4o", temperature: float = 0.3) -> str:
     """
-    Makes a completion request to OpenRouter (an OpenAI-compatible API) with concurrent request limiting.
+    Makes a streaming completion request to OpenAI's API with concurrent request limiting.
     """
 
-    # Remove the base_url and api_key parameters to call the OpenAI API directly with OPENAI_API_KEY
+    # Remove the base_url parameter to call the OpenAI API directly
     # Also checkout the package 'litellm' for one function that can call any model from any provider
-    client = AsyncOpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=OPENROUTER_API_KEY,
-    )
+    # Also checkout OpenRouter for allowing one API key for many providers (especially powerful if combined with litellm)
+    client = AsyncOpenAI()
 
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
@@ -1556,12 +1553,10 @@ def check_environment(strict: bool = True) -> None:
             "METACULUS_TOKEN missing/placeholder. "
             "Get one at https://www.metaculus.com/futureeval/participate/"
         )
-    if not _is_real_env("OPENROUTER_API_KEY"):
+    if not _is_real_env("OPENAI_API_KEY"):
         problems.append(
-            "OPENROUTER_API_KEY missing/placeholder. This file makes its LLM calls "
-            "through OpenRouter. Apply for free credits at "
-            "https://forms.gle/aQdYMq9Pisrf1v7d8 or create a key at "
-            "https://openrouter.ai/keys"
+            "OPENAI_API_KEY missing/placeholder. This file calls the OpenAI API "
+            "directly; either set the key, or use main.py instead."
         )
 
     if not any(_is_real_env(k) for k in ("PERPLEXITY_API_KEY", "ASKNEWS_SECRET", "EXA_API_KEY")):

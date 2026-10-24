@@ -55,15 +55,9 @@ def silence_noisy_dependencies() -> None:
     litellm_logger.propagate = False
 
 
-def has_asknews_keys() -> bool:
-    return _is_real_env("ASKNEWS_API_KEY") or (
-        _is_real_env("ASKNEWS_CLIENT_ID") and _is_real_env("ASKNEWS_SECRET")
-    )
-
-
 def check_environment(strict: bool = True) -> None:
     """
-    Verify METACULUS_TOKEN and OPENROUTER_API_KEY are set. On failure with
+    Verify METACULUS_TOKEN and at least one LLM key are set. On failure with
     strict=True, exits the process with a non-zero status.
     """
     problems: list[str] = []
@@ -74,12 +68,16 @@ def check_environment(strict: bool = True) -> None:
             "Get one at https://www.metaculus.com/futureeval/participate/"
         )
 
-    if not _is_real_env("OPENROUTER_API_KEY"):
+    has_llm_key = any(
+        _is_real_env(k)
+        for k in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY")
+    )
+    if not has_llm_key:
         problems.append(
-            "OPENROUTER_API_KEY is missing or still a placeholder. The bot makes "
-            "all its LLM calls through OpenRouter. Apply for free credits at "
-            "https://forms.gle/aQdYMq9Pisrf1v7d8 or create a key at "
-            "https://openrouter.ai/keys"
+            "No LLM key set. Set OPENROUTER_API_KEY, OPENAI_API_KEY or "
+            "ANTHROPIC_API_KEY (free OpenRouter credits: "
+            "https://forms.gle/aQdYMq9Pisrf1v7d8). The Metaculus LLM proxy that "
+            "the bot used to fall back to is no longer available."
         )
 
     if problems:
