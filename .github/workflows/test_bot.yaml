@@ -12,6 +12,17 @@ on:
         default: "haiku"
         type: choice
         options: ["sonnet", "haiku"]
+      opus_reasoning:
+        # The Opus forecaster's effort for this run only (2026-10-23). The
+        # default is production's, "xhigh" since 2026-10-24; "high" is the
+        # old one, to compare the "reasoning ..." lines of the spend
+        # breakdown below. Effort names only: a token budget returns 400 on
+        # Opus 5.5 (see backtest/pin_models.py).
+        description: "Opus forecaster reasoning effort (xhigh = production | high)"
+        required: false
+        default: "xhigh"
+        type: choice
+        options: ["xhigh", "high"]
 
 # Least privilege: this job calls external APIs and never writes to the
 # repository, opens a PR or publishes a package. Without this it inherits
@@ -68,6 +79,9 @@ jobs:
           ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
           ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
           ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+          # Read at PATCH time, like the keys above: it is written into the
+          # generated llms= block, so the Run bot step needs nothing.
+          FORECASTER_REASONING_OPUS: ${{ inputs.opus_reasoning }}
       - name: Run bot
         run: |
           poetry run python main.py --mode test_questions

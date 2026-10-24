@@ -467,6 +467,97 @@ class WorkflowInvariants(unittest.TestCase):
 
     def test_production_is_least_privilege(self):
         self.assertIn("permissions:\n  contents: read", read(*self.PRODUCTION))
+        # actions: read since 2026-10-23, for the health check's look at this
+        # workflow's own runs. Nothing more, and no job widens it.
+        production = self._production()
+        self.assertEqual(production["permissions"], {"contents": "read", "actions": "read"})
+        for name, job in production["jobs"].items():
+            self.assertNotIn("permissions", job, name)
+
+    def test_only_production_reads_the_actions_api(self):
+        """The health check is the one reader; every other workflow keeps
+        contents: read alone."""
+        import yaml
+
+        for name in sorted(os.listdir(os.path.join(ROOT, ".github", "workflows"))):
+            if not name.endswith((".yaml", ".yml")) or name == self.PRODUCTION[-1]:
+                continue
+            flow = yaml.safe_load(read(".github", "workflows", name))
+            grants = [flow.get("permissions") or {}]
+            grants += [job.get("permissions") or {} for job in (flow.get("jobs") or {}).values()]
+            for grant in grants:
+                if isinstance(grant, dict):
+                    self.assertNotIn("actions", grant, name)
+
+    # ------------------------------------------- after the poll window
+
+    MARKET_PULSE_STEP = "Forecast Market Pulse questions (prize)"
+
+    def test_market_pulse_runs_before_the_cup_and_neither_skips_the_other(self):
+        """The step that pays goes first (2026-10-23; Cup steps took up to
+        13.5 min), and `!cancelled()` on both keeps a failed poll window or
+        a failed step of either kind from skipping the other."""
+        steps = self._production_steps()
+        self.assertLess(steps[self.MARKET_PULSE_STEP][0], steps[self.CUP_STEP][0])
+        for name in (self.MARKET_PULSE_STEP, self.CUP_STEP):
+            self.assertEqual(steps[name][1].get("if"), "${{ !cancelled() }}", name)
+
+    def test_the_cp_pool_weight_is_a_variable_that_defaults_to_off(self):
+        env = self._production()["jobs"]["forecast_job"]["env"]
+        self.assertEqual(env["MP_CP_POOL_WEIGHT"], "${{ vars.MP_CP_POOL_WEIGHT || '0' }}")
+
+    HEALTH_STEPS = ("Restore the health-check marker", "Restore the Dagu-alert marker",
+                    "Health check", "Save the health-check marker", "Save the Dagu-alert marker")
+
+    def test_the_health_check_runs_after_the_spend_step_and_cannot_fail_the_job(self):
+        steps = self._production_steps()
+        indexes = [steps[name][0] for name in self.HEALTH_STEPS]
+        self.assertEqual(indexes, sorted(indexes))
+        self.assertLess(steps["Spend alerts and run summary"][0], indexes[0])
+        for name in self.HEALTH_STEPS:
+            step = steps[name][1]
+            self.assertTrue(step.get("continue-on-error"), name)
+            self.assertIn("!cancelled()", step.get("if", ""), name)
+
+    def test_the_health_check_is_daily_through_a_dated_cache_key(self):
+        steps = self._production_steps()
+        restore = steps["Restore the health-check marker"][1]
+        save = steps["Save the health-check marker"][1]
+        self.assertEqual(restore["uses"], "actions/cache/restore@v4")
+        self.assertEqual(restore["with"]["restore-keys"].strip(), "health-")
+        self.assertEqual(save["uses"], "actions/cache/save@v4")
+        self.assertEqual(save["with"]["key"], "${{ steps.health.outputs.daily_key }}")
+        self.assertIn("steps.health.outputs.daily_key != ''", save["if"])
+        self.assertEqual(restore["with"]["path"], save["with"]["path"])
+        self.assertIn('f"daily_key=health-{today}', read("research", "health_check.py"))
+
+    def test_the_dagu_alert_is_marked_only_once_it_went_out(self):
+        """dagu-alerted-<dispatch id>, from the step output the check writes
+        only after a successful send, so a failed one is retried."""
+        steps = self._production_steps()
+        restore = steps["Restore the Dagu-alert marker"][1]
+        save = steps["Save the Dagu-alert marker"][1]
+        self.assertEqual(restore["uses"], "actions/cache/restore@v4")
+        self.assertEqual(restore["with"]["restore-keys"].strip(), "dagu-alerted-")
+        self.assertEqual(save["uses"], "actions/cache/save@v4")
+        self.assertEqual(save["with"]["key"], "${{ steps.health.outputs.dagu_key }}")
+        self.assertIn("steps.health.outputs.dagu_key != ''", save["if"])
+        self.assertEqual(restore["with"]["path"], save["with"]["path"])
+        self.assertIn('f"dagu_key=dagu-alerted-{reported}"', read("research", "health_check.py"))
+
+    def test_the_health_check_never_runs_the_bot(self):
+        """Plain python, not poetry: research/health_check.py is standard
+        library only and reads Metaculus through the GET-only client. It gets
+        no provider key, so it could not forecast even by mistake."""
+        step = self._production_steps()["Health check"][1]
+        steps = self._production_steps()
+        self.assertEqual(step["run"].strip(), "python research/health_check.py --marker "
+                         + steps["Restore the health-check marker"][1]["with"]["path"]
+                         + " --dagu-marker "
+                         + steps["Restore the Dagu-alert marker"][1]["with"]["path"])
+        self.assertEqual(set(step["env"]), {"METACULUS_TOKEN", "GITHUB_TOKEN",
+                                            "CALLMEBOT_APIKEY", "CALLMEBOT_PHONE_NUMBER"})
+        self.assertIn("timeout-minutes", step)
 
     def test_production_serialises_itself(self):
         src = read(*self.PRODUCTION)

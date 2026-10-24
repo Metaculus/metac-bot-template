@@ -21,6 +21,26 @@ quality on that question, never the forecast.
 Cost, logged per call so it can be read off the Actions log: Sonnet 5.5 at
 $2 / $10 per million input / output tokens plus web search requests. The
 per-call cap on searches is MAX_SEARCHES.
+
+What the forecasters get (2026-10-23)
+-------------------------------------
+A web-search answer comes back cut into a text block at every citation
+boundary, often mid-sentence. Until 2026-10-23 the blocks were joined with
+a newline, so the forecasters read sentences broken mid-clause (Test Bot
+run 39813843358: "Treasury's own FY2025 figure is" / "$7,010.0 billion"),
+and every URL, title and page date the search returned was thrown away,
+although the forecasting prompts tell them to weigh facts by how recent
+they are. Now adjacent text blocks are joined as one passage (_text), and
+the rundown ends with up to MAX_SOURCES "## Sources" lines: title, the
+date the search gives for the page, URL (_sources).
+
+A turn paused by the server (pause_turn) is resumed by sending everything
+it produced so far back as the assistant turn; each response carries only
+what it added. _round used to resend only the latest response, so a second
+resume dropped the first part from the conversation, and only the last
+response's text reached the rundown. The 155 calls logged 19-23 Oct all
+ended on end_turn, but intermediate pauses were not logged; the log line's
+resumes=N counts them now.
 """
 
 from __future__ import annotations
@@ -105,6 +125,10 @@ MAX_TOKENS = 16000
 #: A long server-side search loop pauses after ~10 iterations; each resume is
 #: another request. Bounded so a stuck loop cannot spend without limit.
 MAX_RESUMES = 3
+#: Source lines at the end of a rundown, about 600 tokens of forecaster
+#: prompt (sponsored OpenRouter key). Pages the rundown cites come first.
+MAX_SOURCES = 15
+SOURCE_TITLE_CHARS = 120
 #: "$10 per 1,000 searches, plus standard token costs for search-generated
 #: content"; a search that errors is not billed (pricing page, 2026-10-21).
 PRICE_SEARCH = 10.0 / 1000
@@ -142,7 +166,83 @@ def enabled() -> bool:
 
 
 def _text(content) -> str:
-    return "\n".join(b.text for b in content if getattr(b, "type", None) == "text").strip()
+    """The prose of a turn. Adjacent text blocks are one passage cut at its
+    citations, so they are joined with nothing between them; a search call,
+    its results or any other block between two text blocks ends a passage,
+    and passages are separated by a blank line."""
+    passages: list[str] = []
+    run: list[str] = []
+    for block in content:
+        if getattr(block, "type", None) == "text":
+            run.append(block.text or "")
+        elif run:
+            passages.append("".join(run))
+            run = []
+    if run:
+        passages.append("".join(run))
+    return "\n\n".join(p.strip() for p in passages if p.strip())
+
+
+def _clean(value) -> str:
+    return " ".join(str(value).split()) if value else ""
+
+
+def _sources(content) -> tuple[str, int]:
+    """A "## Sources" section for the pages behind ``content``, and how many
+    lines it has ("" and 0 when there are none).
+
+    One line per unique URL: the pages the text cites, in citation order,
+    then the other search results in the order they came back, up to
+    MAX_SOURCES. Citations carry the URL and title; the date (page_age, when
+    the page was last updated) is only on the search results.
+    """
+    pages: dict[str, dict] = {}
+    cited: dict[str, None] = {}   # insertion-ordered sets
+    found: dict[str, None] = {}
+
+    def page(url, title, age=None) -> str:
+        url = _clean(url)
+        if url:
+            entry = pages.setdefault(url, {"title": "", "age": ""})
+            entry["title"] = entry["title"] or _clean(title)
+            entry["age"] = entry["age"] or _clean(age)
+        return url
+
+    for block in content:
+        kind = getattr(block, "type", None)
+        if kind == "text":
+            for citation in getattr(block, "citations", None) or ():
+                url = page(getattr(citation, "url", None), getattr(citation, "title", None))
+                if url:
+                    cited[url] = None
+        elif kind == "web_search_tool_result":
+            results = getattr(block, "content", None)
+            if not isinstance(results, list):  # a search error is one object, not a list
+                continue
+            for result in results:
+                url = page(getattr(result, "url", None), getattr(result, "title", None),
+                           getattr(result, "page_age", None))
+                if url:
+                    found[url] = None
+
+    order = [*cited, *(u for u in found if u not in cited)][:MAX_SOURCES]
+    if not order:
+        return "", 0
+    n_cited = sum(1 for u in order if u in cited)
+    if n_cited == len(order):
+        head = "cited above"
+    elif n_cited == 0:
+        head = "search results"
+    else:
+        head = f"the first {n_cited} are cited above, the rest are other search results"
+    lines = [f"## Sources ({head}; dates are when each page was last updated)"]
+    for url in order:
+        title = pages[url]["title"]
+        if len(title) > SOURCE_TITLE_CHARS:
+            title = title[:SOURCE_TITLE_CHARS - 3].rstrip() + "..."
+        age = pages[url]["age"]
+        lines.append("- " + " ".join(x for x in (title, f"({age})" if age else "", url) if x))
+    return "\n".join(lines), len(order)
 
 
 def _gaps(text: str) -> str:
@@ -189,6 +289,7 @@ class Tally:
     out: int = 0
     searches: int = 0
     usd: float = 0.0
+    resumes: int = 0   # requests that continued a paused turn
 
     def add(self, usage) -> None:
         uncached = usage.input_tokens or 0
@@ -210,34 +311,51 @@ class Tally:
         return self.uncached + self.cache_write + self.cache_read
 
 
+@dataclass(frozen=True)
+class Turn:
+    """One round's assistant turn: the blocks of every request it took, in
+    order, and the last request's stop reason and model."""
+
+    stop_reason: str
+    model: str
+    content: list
+
+
 async def _round(client, engine: Engine, messages: list[dict], max_searches: int,
-                 tally: Tally):
-    """One research round; adds its usage to ``tally`` and returns the final response."""
+                 tally: Tally) -> Turn:
+    """One research round, resumed while the server pauses it; adds every
+    request's usage to ``tally`` and returns the whole turn."""
     tools = [{"type": engine.web_search, "name": "web_search", "max_uses": max_searches}]
     extra: dict = {}
     if engine.fallbacks:
         # A policy decline is re-run on a fallback model inside the same call
         # instead of returning nothing.
         extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
+    content: list = []
     response = None
-    first_user = messages
-    for _ in range(MAX_RESUMES + 1):
+    for attempt in range(MAX_RESUMES + 1):
+        if attempt:
+            # Resume: everything the turn has produced goes back unchanged as
+            # the assistant turn, and the server continues from its trailing
+            # server_tool_use block. Append-only, so the cache written by the
+            # previous request is this one's prefix.
+            tally.resumes += 1
         response = await client.beta.messages.create(
             model=engine.model,
             max_tokens=MAX_TOKENS,
             system=SYSTEM,
-            messages=messages,
+            messages=[*messages, {"role": "assistant", "content": content}] if content else messages,
             tools=tools,
             output_config={"effort": EFFORT},
             cache_control=CACHE,
             **extra,
         )
         tally.add(response.usage)
+        # A continued turn's response holds only the blocks it added.
+        content = [*content, *response.content]
         if response.stop_reason != "pause_turn":
             break
-        # Resume: the server continues from the trailing server_tool_use block.
-        messages = [*first_user, {"role": "assistant", "content": response.content}]
-    return response
+    return Turn(response.stop_reason, response.model, content)
 
 
 async def research(prompt: str, depth: str = "full", engine_key: str | None = None) -> str:
@@ -246,7 +364,7 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
     Round one surveys the question and ends with a GAPS line; each later round
     (as many as ROUNDS allows for this engine and depth) searches only the
     gaps the previous round named, while the spend stays under
-    ROUND_MAX_PRIOR_COST.
+    ROUND_MAX_PRIOR_COST. The rundown ends with the pages behind it (_sources).
     """
     import anthropic
 
@@ -272,6 +390,7 @@ async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
     if response.stop_reason == "refusal":
         raise RuntimeError("claude_research refused")
     text = _text(response.content)
+    used = list(response.content)  # the blocks behind the text, for its sources
     rounds = 1
 
     for budget in plan[1:]:
@@ -292,14 +411,25 @@ async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
         if not extra_text:
             break
         rounds += 1
+        used.extend(rn.content)
         text = f"{text}\n\n## Follow-up on the gaps (round {rounds})\n{extra_text}"
 
+    # Optional: a failure here costs the source list, never the rundown.
+    sources, n_sources = "", 0
+    if text:
+        try:
+            sources, n_sources = _sources(used)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("claude_research_sources_failed reason=%s", type(exc).__name__)
+
     logger.info(
-        "claude_research engine=%s depth=%s model=%s stop=%s rounds=%d searches=%d "
-        "tokens_in=%d cache_read=%d cache_write=%d tokens_out=%d est_cost_usd=%.4f",
-        key, depth, response.model, response.stop_reason, rounds, tally.searches,
-        tally.tokens_in, tally.cache_read, tally.cache_write, tally.out, tally.usd,
+        "claude_research engine=%s depth=%s model=%s stop=%s rounds=%d resumes=%d "
+        "searches=%d sources=%d tokens_in=%d cache_read=%d cache_write=%d tokens_out=%d "
+        "est_cost_usd=%.4f",
+        key, depth, response.model, response.stop_reason, rounds, tally.resumes,
+        tally.searches, n_sources, tally.tokens_in, tally.cache_read, tally.cache_write,
+        tally.out, tally.usd,
     )
     if not text:
         raise RuntimeError(f"claude_research returned no text (stop={response.stop_reason})")
-    return text
+    return f"{text}\n\n{sources}" if sources else text

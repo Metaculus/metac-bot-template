@@ -46,8 +46,14 @@ on:
 # never writes to the repository, opens a PR or publishes a package. The
 # research workflows already declare this; without it the job inherits the
 # repository-wide default, which is broader than anything here needs.
+#
+# actions: read is for the health check's Dagu-silence test (2026-10-23): it
+# lists this workflow's own recent runs through the GitHub API to see when
+# Dagu last dispatched one. Read only; nothing here can start, cancel or
+# re-run a workflow.
 permissions:
   contents: read
+  actions: read
 
 # Add concurrency group to prevent parallel runs
 concurrency:
@@ -68,6 +74,17 @@ jobs:
       CLAUDE_BUDGET_USD: ${{ vars.CLAUDE_BUDGET_USD || '100' }}
       SPEND_ALERT_THRESHOLDS: ${{ vars.SPEND_ALERT_THRESHOLDS || '0.8,1.0' }}
       SPEND_THROTTLE_AT: ${{ vars.SPEND_THROTTLE_AT || '1.0' }}
+      # The day the Claude credit renews (the owner's renews on the 28th), and
+      # an optional ISO date before which what is left of it buys full
+      # research everywhere (spend.boost_active). Both repository variables.
+      CLAUDE_BUDGET_CYCLE_DAY: ${{ vars.CLAUDE_BUDGET_CYCLE_DAY || '1' }}
+      RESEARCH_BOOST_UNTIL: ${{ vars.RESEARCH_BOOST_UNTIL || '' }}
+      # Market Pulse only: the weight of the revealed human community
+      # prediction in the published forecast (cp_pool.py). '0' leaves the
+      # bot's own forecast untouched; the roadmap's 0.6 is set as a
+      # repository variable, so it can be tuned or switched off without a
+      # commit.
+      MP_CP_POOL_WEIGHT: ${{ vars.MP_CP_POOL_WEIGHT || '0' }}
     steps: # sets up the steps that will be run in order
       # setup repository with all necessary dependencies - keep as is
       - name: Check out repository
@@ -306,6 +323,36 @@ jobs:
           # (2026-10-17) in favour of the Monday report (weekly_report.yaml).
           CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
           CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}
+      # PRIZES. Market Pulse Challenge 26Q4 (tournaments.MARKET_PULSE): $7,500,
+      # bot-eligible, ~65 numeric group subquestions on earnings and markets.
+      # Outside the poll window for the same reason as the Cup below: it
+      # always has open questions, which would defeat the window's early exit.
+      #
+      # Spot scored at each close, so the market_pulse mode forecasts new
+      # questions AND refreshes those closing within 36h whose last forecast is
+      # 18h+ old (market_pulse.py). At ~6 delivered runs a day that is one or
+      # two refreshes per question; a run with nothing due costs one discovery.
+      #
+      # BEFORE the Cup since 2026-10-23: the step that pays no longer waits
+      # behind the one that does not (Cup steps took up to 13.5 min). Both
+      # carry `!cancelled()`, so a failed poll window or a failed step of
+      # either kind never skips the other.
+      - name: Forecast Market Pulse questions (prize)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 90
+        run: poetry run python main.py --mode market_pulse
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
+          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
+          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       # PRACTICE, NOT PRIZES. Metaculus Cup Fall 2026 (tournaments.METACULUS_CUP)
       # ranks bots against the human crowd but pays none; the FutureEval
       # resources page recommends it for measuring a bot on diverse questions.
@@ -325,38 +372,13 @@ jobs:
       # ~25 open questions cost ~25 forecasts a week. A run with nothing due
       # costs one discovery call. A backlog can be large, hence the timeout.
       - name: Forecast new Metaculus Cup questions (practice)
+        if: ${{ !cancelled() }}
         timeout-minutes: 90
         run: poetry run python main.py --mode metaculus_cup
         # The same credentials as "Run bot" minus the poll settings and
         # WhatsApp (handle_run only reports tournament mode). A key missing
         # here would silently shorten the fallback chain for the Cup only;
         # test_production_invariants compares the two blocks.
-        env:
-          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ASKNEWS_API_KEY: ${{ secrets.ASKNEWS_API_KEY }}
-          ASKNEWS_CLIENT_ID: ${{ secrets.ASKNEWS_CLIENT_ID }}
-          ASKNEWS_SECRET: ${{ secrets.ASKNEWS_SECRET }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      # PRIZES. Market Pulse Challenge 26Q4 (tournaments.MARKET_PULSE): $7,500,
-      # bot-eligible, ~65 numeric group subquestions on earnings and markets.
-      # Outside the poll window for the same reason as the Cup: it always has
-      # open questions, which would defeat the window's early exit.
-      #
-      # Spot scored at each close, so the market_pulse mode forecasts new
-      # questions AND refreshes those closing within 36h whose last forecast is
-      # 18h+ old (market_pulse.py). At ~6 delivered runs a day that is one or
-      # two refreshes per question; a run with nothing due costs one discovery.
-      # A failed Cup run (practice) must not cost a prize-scored refresh.
-      - name: Forecast Market Pulse questions (prize)
-        if: ${{ !cancelled() }}
-        timeout-minutes: 90
-        run: poetry run python main.py --mode market_pulse
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
@@ -391,6 +413,68 @@ jobs:
         with:
           path: spend_ledger.jsonl
           key: spend-ledger-${{ github.run_id }}-${{ github.run_attempt }}
+      # HEALTH CHECK (research/health_check.py, 2026-10-23). Every coverage
+      # loss so far was the bot not running, never a post that failed: 20 of
+      # the first 65 FutureEval questions went unforecast, in silence, before
+      # Dagu started dispatching on 14 Oct -- and since then that one home
+      # server is the whole coverage. Once per UTC day this counts questions
+      # that closed in the last 24 h without a forecast of the bot's and checks
+      # that FutureEval still opens questions; on every cron-triggered run it
+      # checks that Dagu still dispatches. One WhatsApp only when something is
+      # wrong; the log carries ids and counts, never a forecast.
+      #
+      # "Once a day" is a marker in the Actions cache: the newest health-*
+      # entry (restore-keys takes the most recent) holds the last day checked
+      # and the instant that audit covered up to, and a completed daily check
+      # saves health-YYYY-MM-DD for today. The Dagu alert has its own marker,
+      # dagu-alerted-<dispatch id>, saved only once the WhatsApp went out, so
+      # a failed send is retried by the next cron run. Like the spend steps,
+      # nothing here can fail the job.
+      - name: Restore the health-check marker
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: health_check.done
+          key: health-${{ github.run_id }}
+          restore-keys: |
+            health-
+      - name: Restore the Dagu-alert marker
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: dagu_alert.done
+          key: dagu-alerted-${{ github.run_id }}
+          restore-keys: |
+            dagu-alerted-
+      - name: Health check
+        id: health
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python research/health_check.py --marker health_check.done --dagu-marker dagu_alert.done
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          # The job's own token, for one GET of this workflow's recent runs
+          # (permissions: actions: read, above).
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
+          CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}
+      - name: Save the health-check marker
+        if: ${{ !cancelled() && steps.health.outputs.daily_key != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: health_check.done
+          key: ${{ steps.health.outputs.daily_key }}
+      - name: Save the Dagu-alert marker
+        if: ${{ !cancelled() && steps.health.outputs.dagu_key != '' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: dagu_alert.done
+          key: ${{ steps.health.outputs.dagu_key }}
       # Separate from the in-process notifier: this fires only when a STEP
       # in this job failed outright (including one earlier than "Run bot"),
       # which main.py's own try/except around handle_run() cannot see at all

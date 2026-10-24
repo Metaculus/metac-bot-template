@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import sys
+import threading
 import traceback
 import unicodedata
 import warnings
@@ -257,6 +258,50 @@ def scrub(text: object, limit: int = _ERROR_TEXT_LIMIT) -> str:
     return rendered
 
 
+def sanitise_traceback(rendered: str) -> str:
+    """A formatted traceback with every line that could carry a runtime value
+    scrubbed: the `File "...", line N, in func` locators and the structural
+    markers are kept verbatim, exception lines keep their type, and the rest
+    goes through :func:`scrub`. See RedactForecastContent._sanitise_attached_traceback."""
+    safe_lines = []
+    for line in rendered.splitlines():
+        if _TRACEBACK_LOCATOR.match(line) or line.startswith(
+            ("Traceback", "During handling", "The above exception")
+        ):
+            safe_lines.append(line)
+        else:
+            safe_lines.append(_scrub_exception_line(line))
+    return "\n".join(safe_lines)
+
+
+def _redacting_excepthook(exc_type: Any, exc: Any, tb: Any) -> None:
+    """``sys.excepthook`` on scored runs: an uncaught exception's traceback
+    goes through the same scrub as a logged one.
+
+    Python prints an uncaught exception straight to stderr, past every
+    logging filter. That is how the RuntimeError the SDK raises when every
+    question of a step failed printed each forecaster's declared percentiles
+    in a public Actions log (runs 39453516101 and 39965881683): its message
+    quotes the pydantic ValidationError, values and all.
+    """
+    try:
+        rendered = "".join(traceback.format_exception(exc_type, exc, tb))
+    except Exception:  # noqa: BLE001 - the hook must print something
+        rendered = f"{getattr(exc_type, '__name__', 'Exception')}: [exception could not be formatted]"
+    try:
+        sys.stderr.write(sanitise_traceback(rendered) + "\n")
+        sys.stderr.flush()
+    except Exception:  # noqa: BLE001 - nothing left to report to
+        pass
+
+
+def _redacting_thread_excepthook(args: Any) -> None:
+    """``threading.excepthook`` counterpart of :func:`_redacting_excepthook`."""
+    if args.exc_type is SystemExit:
+        return
+    _redacting_excepthook(args.exc_type, args.exc_value, args.exc_traceback)
+
+
 class RedactForecastContent(logging.Filter):
     """Keep forecast reasoning out of the process's log stream.
 
@@ -365,18 +410,10 @@ class RedactForecastContent(logging.Filter):
         if not rendered:
             return
 
-        safe_lines = []
-        for line in rendered.splitlines():
-            if _TRACEBACK_LOCATOR.match(line) or line.startswith(
-                ("Traceback", "During handling", "The above exception")
-            ):
-                safe_lines.append(line)
-            else:
-                safe_lines.append(_scrub_exception_line(line))
         # exc_info must be cleared: Formatter only uses exc_text when
         # exc_info is falsy or exc_text is already set, and leaving the live
         # exception around invites a second formatter re-rendering it raw.
-        record.exc_text = "\n".join(safe_lines)
+        record.exc_text = sanitise_traceback(rendered)
         record.exc_info = None
 
     @staticmethod
@@ -413,8 +450,15 @@ def install_forecast_redaction(run_mode: str) -> bool:
     if run_mode == "test_questions":
         # bot-testing-area is unscored; full output is what makes it useful.
         _withhold_forecast_content = False
+        if sys.excepthook is _redacting_excepthook:
+            sys.excepthook = sys.__excepthook__
+        if threading.excepthook is _redacting_thread_excepthook:
+            threading.excepthook = threading.__excepthook__
         return False
     _withhold_forecast_content = True
+    # Uncaught exceptions never reach logging: they get the same scrub here.
+    sys.excepthook = _redacting_excepthook
+    threading.excepthook = _redacting_thread_excepthook
     root = logging.getLogger()
     _add_filter_once(root)
     # Filters on the root logger are not consulted for records emitted by child

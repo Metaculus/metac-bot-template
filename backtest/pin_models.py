@@ -438,10 +438,44 @@ TRIES_STANDALONE = 3
 # for the OpenRouter endpoint). The cheap fallbacks and the other roles are left
 # as they were. Thinking takes longer, hence the larger timeout.
 FORECASTER_REASONING = {
-    "openrouter/anthropic/claude-opus-5.5": "high",
+    # "xhigh" since 2026-10-24: see "IS OPUS ACTUALLY REASONING?" below.
+    "openrouter/anthropic/claude-opus-5.5": "xhigh",
     "openrouter/openai/gpt-5.6-sol": "high",
 }
 FORECASTER_TIMEOUT_SECONDS = 420
+
+# IS OPUS ACTUALLY REASONING? -- 2026-10-23.
+#
+# At "high" the median Opus forecast call takes 14.7 s and costs ~$0.058,
+# which leaves room for only ~300-500 hidden reasoning tokens. spend.py now
+# records the reasoning tokens each call bills; FORECASTER_REASONING_OPUS lets
+# a Test Bot run ask for another effort (test_bot.yaml's opus_reasoning input)
+# without a commit, so "high" and "xhigh" can be compared on the same
+# questions. Unset -- as in every production workflow -- means no change.
+#
+# Measured on Test Bot, same ten practice questions (2026-10-23/24): at
+# "high" Opus billed 368 reasoning tokens a forecast on average (max 998),
+# GPT-5.6 Sol 1,891; at "xhigh" Opus billed 1,457 (max 5,740), with no
+# fallback or balanced_chain_failed line, all ten posted, for ~$0.10 more a
+# question on the sponsored key (runs 39987594129, 40119884437). So Opus
+# forecasts at "xhigh" now.
+#
+# Effort NAMES only. A token budget (reasoning.max_tokens) returns 400 on
+# Opus 5.5, which would fail every Opus call over to Sol or Haiku without an
+# error anywhere, so anything outside this list is ignored with a warning.
+# Read once, at import time, for the reason ACTIVE_FALLBACKS is.
+OPUS_FORECASTER = "openrouter/anthropic/claude-opus-5.5"
+OPUS_EFFORTS = ("low", "medium", "high", "xhigh")
+_OPUS_EFFORT_OVERRIDE = os.environ.get("FORECASTER_REASONING_OPUS", "").strip().lower()
+if _OPUS_EFFORT_OVERRIDE in OPUS_EFFORTS:
+    FORECASTER_REASONING[OPUS_FORECASTER] = _OPUS_EFFORT_OVERRIDE
+elif _OPUS_EFFORT_OVERRIDE:
+    print(
+        "::warning::FORECASTER_REASONING_OPUS={0!r} is not one of {1}; Opus keeps "
+        "effort {2!r}".format(_OPUS_EFFORT_OVERRIDE[:20], ", ".join(OPUS_EFFORTS),
+                              FORECASTER_REASONING[OPUS_FORECASTER]),
+        file=sys.stderr,
+    )
 
 
 def _backend_expr(
@@ -1254,6 +1288,9 @@ def main() -> int:
         for role in ("default", "researcher", "summarizer", "parser"):
             mark = " (from models.txt)" if role in overrides else ""
             print(f"  {role:<11} {models[role]}{mark}")
+        if _OPUS_EFFORT_OVERRIDE in OPUS_EFFORTS:
+            print(f"  opus forecaster reasoning effort {FORECASTER_REASONING[OPUS_FORECASTER]}"
+                  " (FORECASTER_REASONING_OPUS)")
 
     # Deliberately outside the branch above: an already-patched tree still has to
     # prove its models answer, otherwise --check silently passes on a rerun.

@@ -228,12 +228,13 @@ class TestsNeverPublishTests(unittest.TestCase):
 class ProductionTargetTests(unittest.TestCase):
     def test_the_tournament_workflow_runs_the_unmodified_entry_point(self):
         """The scored poll loop uses the default mode. The only --mode flags
-        in the file are the steps after the loop: the Cup (practice) and
-        Market Pulse (prize, refreshed before close)."""
+        in the file are the steps after the loop: Market Pulse (prize,
+        refreshed before close) and then, since 2026-10-23, the Cup
+        (practice)."""
         src = read(".github", "workflows", "run_bot_on_tournament.yaml")
         self.assertIn("poetry run python main.py 2>&1 | tee", src)
         self.assertEqual(
-            re.findall(r"--mode\s+(\S+)", src), ["metaculus_cup", "market_pulse"],
+            re.findall(r"--mode\s+(\S+)", src), ["market_pulse", "metaculus_cup"],
             "production must use the default mode for the scored tournament",
         )
 

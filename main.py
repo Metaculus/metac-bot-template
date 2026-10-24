@@ -1,15 +1,18 @@
 import argparse
 import asyncio
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Literal
 
 import dotenv
 
 import claude_research
+import cp_pool
 import disagreement
 import live_context
 import forecast_guards
+import numeric_shape
 
 # Runtime helpers (env validation, banners, dependency-warning suppression).
 from bot_helpers import (
@@ -213,6 +216,15 @@ class SummerTemplateBot2026(ForecastBot):
     #: Cup; set per tournament at the bottom of this file.
     research_depth = "full"
 
+    #: Weight of the revealed human community prediction in the published
+    #: forecast (cp_pool.py). 0 is off; set from MP_CP_POOL_WEIGHT in --mode
+    #: market_pulse only, the one tournament whose CP is human and visible
+    #: before the scored close.
+    cp_pool_weight = 0.0
+    #: cp_pool.detail_fetcher(client) in --mode market_pulse: re-reads a post
+    #: whose listing carried no usable CP. None: the listing alone.
+    cp_pool_fetch = None
+
     ############################## SPEND LABELS ##############################
     # Which question and phase each paid call belongs to; see spend.py.
 
@@ -263,15 +275,44 @@ class SummerTemplateBot2026(ForecastBot):
         )
         if not valid:
             return result
-        logger.info("crux_resolved spread_before=%.2f spread_after=%.2f",
+        logger.info("crux_resolved spread_before=%.2f spread_after=%.2f pooled=%d",
                     disagreement.spread(values),
-                    disagreement.spread([p.prediction_value for p in valid]))
+                    disagreement.spread([p.prediction_value for p in valid]),
+                    len(result.predictions) + len(valid))
+        # Pool both sets rather than replacing the first. The crux pass fired
+        # three times in its first five days (to 2026-10-23) and widened the
+        # spread every time (0.25->0.32, 0.29->0.36, 0.28->0.38), so nothing
+        # says the second five are better than the first; both are paid for,
+        # and the SDK's median (binary) or mean (multiple choice) over ten is
+        # steadier than over five.
         return ResearchWithPredictions(
             research_report=research,
             summary_report=result.summary_report,
             errors=[*result.errors, *errors],
-            predictions=valid,
+            predictions=[*result.predictions, *valid],
         )
+
+    ############################## AGGREGATION ##############################
+
+    async def _aggregate_predictions(self, predictions, question):
+        """Numeric, discrete and date questions: the mean of the forecasters'
+        CDFs instead of the SDK's pointwise median (numeric_shape.mean_of_cdfs);
+        binary and multiple choice as the SDK does. Then, in Market Pulse with
+        a weight set, the pool with the revealed community prediction
+        (cp_pool.apply). Each step keeps what came before it on any error."""
+        aggregate = None
+        if predictions and isinstance(question, (NumericQuestion, DateQuestion)):
+            try:
+                aggregate = numeric_shape.mean_of_cdfs(predictions, question)
+            except Exception as exc:  # noqa: BLE001 - the SDK median still works
+                logger.warning("numeric_mean_failed reason=%s falling_back=median",
+                               type(exc).__name__)
+        if aggregate is None:
+            aggregate = await super()._aggregate_predictions(predictions, question)
+        if self.cp_pool_weight > 0:
+            aggregate = cp_pool.apply(aggregate, question, self.cp_pool_weight,
+                                      datetime.now(timezone.utc), fetch=self.cp_pool_fetch)
+        return aggregate
 
     def _create_comment(self, question, research_prediction_collections,
                         aggregated_prediction, final_cost, time_spent_in_minutes) -> str:
@@ -424,7 +465,7 @@ class SummerTemplateBot2026(ForecastBot):
             {question.background_info}
 
 
-            This question's outcome will be determined by the specific criteria below. These criteria have not yet been satisfied:
+            This question's outcome will be determined by the specific criteria below. These criteria had not been satisfied when the question was written:
             {question.resolution_criteria}
 
             {question.fine_print}
@@ -463,15 +504,18 @@ class SummerTemplateBot2026(ForecastBot):
         log_forecast_content(
             logger, f"Reasoning for URL {question.page_url}", reasoning
         )
-        binary_prediction: BinaryPrediction = await structure_output(
-            reasoning,
-            BinaryPrediction,
-            model=self.get_llm("parser", "llm"),
-            num_validation_samples=self._structure_output_validation_samples,
-        )
+        probability = self._verbatim_probability(reasoning, question)
+        if probability is None:
+            binary_prediction: BinaryPrediction = await structure_output(
+                reasoning,
+                BinaryPrediction,
+                model=self.get_llm("parser", "llm"),
+                num_validation_samples=self._structure_output_validation_samples,
+            )
+            probability = binary_prediction.prediction_in_decimal
         # 3%/97%, not the SDK's 1%/99%: see forecast_guards for the peer-score
         # arithmetic behind the cap.
-        decimal_pred = forecast_guards.clip_binary(binary_prediction.prediction_in_decimal)
+        decimal_pred = forecast_guards.clip_binary(probability)
 
         log_forecast_content(
             logger,
@@ -479,6 +523,20 @@ class SummerTemplateBot2026(ForecastBot):
             decimal_pred,
         )
         return ReasonedPrediction(prediction_value=decimal_pred, reasoning=reasoning)
+
+    @staticmethod
+    def _verbatim_probability(reasoning: str, question: BinaryQuestion) -> float | None:
+        """The forecaster's own "Probability: NN%" line, when it is one plain
+        percentage; see forecast_guards.read_probability. Logs the source
+        only, never the value: the repo is public."""
+        try:
+            probability = forecast_guards.read_probability(reasoning)
+        except Exception as exc:  # noqa: BLE001 - the parser is the old path
+            logger.warning("binary_parse_verbatim_failed reason=%s", type(exc).__name__)
+            probability = None
+        logger.info("binary_parse source=%s url=%s",
+                    "llm" if probability is None else "verbatim", question.page_url)
+        return probability
 
     ##################################### MULTIPLE CHOICE QUESTIONS #####################################
 
@@ -580,12 +638,71 @@ class SummerTemplateBot2026(ForecastBot):
 
     ##################################### NUMERIC QUESTIONS #####################################
 
+    #: The width line every numeric prompt has carried since the template.
+    _WIDE_INTERVALS = (
+        "You remind yourself that good forecasters are humble and set wide 90/10 "
+        "confidence intervals to account for unknown unknowns."
+    )
+
+    #: Market Pulse EPS questions resolve on diluted EPS "in conformity with US
+    #: GAAP" as first reported, but the consensus the research brings back is
+    #: the street's, which is usually non-GAAP. Tesla resolved at 0.22 against
+    #: a 0.451 consensus, and Meta's GAAP figure fell below the question's
+    #: whole range (2026-10-20; 1 of the first 6 resolved subquestions). The
+    #: note asks for the company's own reconciliation rather than a fixed
+    #: shift, because the gap swings with investment gains for some companies.
+    _GAAP_EPS_NOTE = (
+        "This resolves on GAAP diluted EPS as first reported. Street/consensus EPS is "
+        "usually non-GAAP. Before forecasting, estimate the GAAP-minus-non-GAAP gap from "
+        "the company's latest reconciliation (stock-based compensation, amortization of "
+        "acquired intangibles, gains/losses on investments, one-off tax items) and centre "
+        "on consensus plus that gap."
+    )
+
+    #: Replaces _WIDE_INTERVALS on those questions only. The consensus is fixed
+    #: hours before the release, so a generically wide range costs density
+    #: where the outcome lands; but out-of-range outcomes do happen (Meta), and
+    #: the mass beyond the range scores as one bucket, so some stays there.
+    _GAAP_EPS_WIDTH = (
+        "You remind yourself to set the width from the historical size of GAAP surprises "
+        "for this company, and to keep some mass beyond the question's range on the side "
+        "a one-off item would push."
+    )
+
+    _GAAP = re.compile(r"(?<![Nn]on-)(?<![Nn]on )\bGAAP\b")
+    _EARNINGS_PER_SHARE = re.compile(r"earnings[ -]per[ -]share", re.IGNORECASE)
+
+    @classmethod
+    def _gaap_eps_market_pulse(cls, question: MetaculusQuestion) -> bool:
+        """A Market Pulse question resolving on GAAP earnings per share.
+
+        Read from the question rather than the run mode: the posts API lists
+        each post's tournaments, group subquestions included, so a FutureEval
+        or MiniBench question can never qualify whatever its criteria say.
+        Any error reads as False, which is the prompt as it was.
+        """
+        try:
+            slugs = {str(s) for s in (getattr(question, "tournament_slugs", None) or [])}
+            if str(tournaments.MARKET_PULSE.id) not in slugs:
+                return False
+            criteria = getattr(question, "resolution_criteria", None) or ""
+            return bool(cls._GAAP.search(criteria) and cls._EARNINGS_PER_SHARE.search(criteria))
+        except Exception as exc:  # noqa: BLE001 - optional prompt text, never fail
+            logger.warning("gaap_eps_check_failed reason=%s", type(exc).__name__)
+            return False
+
     async def _run_forecast_on_numeric(
         self, question: NumericQuestion, research: str
     ) -> ReasonedPrediction[NumericDistribution]:
         upper_bound_message, lower_bound_message = (
             self._create_upper_and_lower_bound_messages(question)
         )
+        # Every other question gets the prompt exactly as before.
+        gaap_eps = self._gaap_eps_market_pulse(question)
+        gaap_note = f"{self._GAAP_EPS_NOTE}\n" if gaap_eps else ""
+        width_line = self._GAAP_EPS_WIDTH if gaap_eps else self._WIDE_INTERVALS
+        if gaap_eps:
+            logger.info("numeric_prompt gaap_eps=1 url=%s", question.page_url)
         prompt = clean_indents(
             f"""
             You are a professional forecaster interviewing for a job.
@@ -627,7 +744,7 @@ class SummerTemplateBot2026(ForecastBot):
             (g) Pre-mortem: assume the outcome lands outside your 10-90 range. Which side is likelier, and is that tail wide enough?
 
             {self._get_conditional_disclaimer_if_necessary(question)}
-            You remind yourself that good forecasters are humble and set wide 90/10 confidence intervals to account for unknown unknowns.
+            {gaap_note}{width_line}
 
             The last thing you write is your final answer as:
             "
@@ -666,13 +783,16 @@ class SummerTemplateBot2026(ForecastBot):
         reasoning: str, question: NumericQuestion
     ) -> NumericDistribution | None:
         """The forecaster's own percentile lines, when they are plain numbers
-        the question accepts; see forecast_guards.read_percentiles."""
+        the question accepts; see forecast_guards.read_percentiles. Built
+        with synthesized tails, and an out-of-range set moved into the range
+        rather than rejected; see numeric_shape."""
         verbatim = forecast_guards.read_percentiles(reasoning)
         if verbatim is None:
             logger.info("numeric_parse source=llm reason=no_plain_lines url=%s", question.page_url)
             return None
         try:
-            prediction = NumericDistribution.from_question(
+            prediction = numeric_shape.build(
+                NumericDistribution,
                 [Percentile(percentile=p, value=v) for p, v in verbatim], question
             )
         except ValueError as error:
@@ -705,7 +825,7 @@ class SummerTemplateBot2026(ForecastBot):
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
-        return NumericDistribution.from_question(percentile_list, question)
+        return numeric_shape.build(NumericDistribution, percentile_list, question)
 
     ##################################### DATE QUESTIONS #####################################
 
@@ -804,7 +924,7 @@ class SummerTemplateBot2026(ForecastBot):
             )
             for percentile in date_percentile_list
         ]
-        prediction = NumericDistribution.from_question(percentile_list, question)
+        prediction = numeric_shape.build(NumericDistribution, percentile_list, question)
         log_forecast_content(
             logger,
             f"Forecasted URL {question.page_url} with prediction",
@@ -947,6 +1067,29 @@ class SummerTemplateBot2026(ForecastBot):
         )
 
 
+def summarise_reports(bot: ForecastBot, reports: list) -> None:
+    """The SDK's report summary, without failing a step over one question.
+
+    log_report_summary raises if any question failed, which failed a whole
+    step (and sent the failure WhatsApp) over one bad question, so only a
+    step where nothing succeeded fails. And it fails by exiting 1, never by
+    letting the SDK's RuntimeError escape: Python prints an uncaught
+    exception straight to stderr, past the log redaction, and that message
+    quotes each failed forecaster's ValidationError -- declared percentiles
+    and all. It put open questions' forecasts in the public logs of runs
+    39453516101 and 39965881683. Every mode exits the same way (as the
+    hotfix on main does): the SDK has already logged each question's error.
+    """
+    try:
+        bot.log_report_summary(reports)
+    except RuntimeError:
+        failed = sum(isinstance(r, BaseException) for r in reports)
+        if reports and failed == len(reports):
+            logger.error("all_failed count=%d", failed)
+            raise SystemExit(1)
+        logger.warning("partial_failure failed=%d of=%d", failed, len(reports))
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
@@ -1025,6 +1168,13 @@ if __name__ == "__main__":
         prize_depth = "light"
         logger.info("spend_budget_reached research_depth=light")
     template_bot.research_depth = prize_depth
+    # Until the credit renews (RESEARCH_BOOST_UNTIL), what is left of it buys
+    # full research for MiniBench and the Cup too, and Cup refreshes every two
+    # days; never while over budget. See spend.boost_active.
+    boost = prize_depth == "full" and spend.boost_active()
+    other_depth = "full" if boost else "light"
+    if boost:
+        logger.info("research_boost active=1")
 
     # Per-mode tournament URL shown in the summary banner footer. The ids and
     # URLs are pinned in tournaments.py, not taken from the SDK's CURRENT_*
@@ -1048,7 +1198,7 @@ if __name__ == "__main__":
             )
         )
         spend.set_tournament("minibench")
-        template_bot.research_depth = "light"
+        template_bot.research_depth = other_depth
         minibench_reports = asyncio.run(
             template_bot.forecast_on_tournament(
                 tournaments.MINIBENCH.id, return_exceptions=True
@@ -1064,7 +1214,7 @@ if __name__ == "__main__":
         # AI_2027_TOURNAMENT_ID = "ai-2027" is another unpaid target with a
         # good mix of question types (FutureEval resources page).
         template_bot.skip_previously_forecasted_questions = False
-        template_bot.research_depth = "light"
+        template_bot.research_depth = other_depth
         spend.set_tournament("cup")
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
@@ -1073,6 +1223,7 @@ if __name__ == "__main__":
                         tournaments.METACULUS_CUP.id
                     ),
                     datetime.now(timezone.utc),
+                    market_pulse.CUP_BOOST_MAX_AGE if boost else market_pulse.CUP_MAX_AGE,
                 ),
                 return_exceptions=True,
             )
@@ -1085,6 +1236,12 @@ if __name__ == "__main__":
         # own skip is lifted for this mode only.
         template_bot.skip_previously_forecasted_questions = False
         spend.set_tournament("market_pulse")
+        # The final forecast pooled with the revealed human community
+        # prediction (cp_pool.py), at the weight in MP_CP_POOL_WEIGHT; unset
+        # or 0 leaves it off.
+        template_bot.cp_pool_weight = cp_pool.weight_from_env()
+        # A listing without the CP is followed by GET /posts/{id}/ (cp_pool).
+        template_bot.cp_pool_fetch = cp_pool.detail_fetcher(client)
         forecast_reports = asyncio.run(
             template_bot.forecast_questions(
                 market_pulse.select(
@@ -1108,24 +1265,7 @@ if __name__ == "__main__":
             )
         )
 
-    # The SDK's summary raises if any question failed, which failed a whole
-    # step (and sent the failure WhatsApp) over one bad question. Raise only
-    # when nothing succeeded, so a real breakage still alerts.
-    try:
-        template_bot.log_report_summary(forecast_reports)
-    except RuntimeError:
-        if forecast_reports and all(isinstance(r, BaseException) for r in forecast_reports):
-            # Exit 1 (the step fails and the WhatsApp alert fires) without
-            # re-raising: the SDK's message lists every forecaster's error, a
-            # numeric validation error quotes the declared percentiles, and an
-            # uncaught exception is printed by Python's default traceback,
-            # past the logging redaction, into the public Actions log. That
-            # published forecasts on open questions in runs 39453516101
-            # (Market Pulse, 2026-10-20) and 39965881683 (Cup, 2026-10-23).
-            logger.error("all_failed count=%d", len(forecast_reports))
-            raise SystemExit(1)
-        failed = sum(isinstance(r, BaseException) for r in forecast_reports)
-        logger.warning("partial_failure failed=%d of=%d", failed, len(forecast_reports))
+    summarise_reports(template_bot, forecast_reports)
     print_publication_report(client)
     print_run_summary_banner(
         forecast_reports,

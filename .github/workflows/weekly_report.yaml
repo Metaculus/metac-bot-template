@@ -83,6 +83,7 @@ jobs:
           SPEND_LEDGER_PATH: spend_ledger.jsonl
           CLAUDE_BUDGET_USD: ${{ vars.CLAUDE_BUDGET_USD || '100' }}
           SPEND_THROTTLE_AT: ${{ vars.SPEND_THROTTLE_AT || '1.0' }}
+          CLAUDE_BUDGET_CYCLE_DAY: ${{ vars.CLAUDE_BUDGET_CYCLE_DAY || '1' }}
           DRY_RUN: ${{ inputs.dry_run }}
           CALLMEBOT_APIKEY: ${{ secrets.CALLMEBOT_APIKEY }}
           CALLMEBOT_PHONE_NUMBER: ${{ secrets.CALLMEBOT_PHONE_NUMBER }}

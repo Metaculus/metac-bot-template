@@ -167,11 +167,16 @@ class WiringTests(unittest.TestCase):
         self.assertEqual(step["run"].strip(), "poetry run python main.py --mode market_pulse")
         self.assertIn("timeout-minutes", step)
 
-    def test_a_failed_cup_step_does_not_skip_the_prize_step(self):
+    def test_the_prize_step_runs_before_the_cup_and_neither_skips_the_other(self):
+        """Since 2026-10-23 the step that pays goes first (Cup steps took up
+        to 13.5 min). Before that it ran after the Cup, and this test pinned
+        that order; `!cancelled()` on both keeps a failure of either -- or of
+        the poll window -- from skipping the other."""
         steps = self._steps()
-        self.assertLess(steps["Forecast new Metaculus Cup questions (practice)"][0],
-                        steps[self.STEP][0])
+        cup = "Forecast new Metaculus Cup questions (practice)"
+        self.assertLess(steps[self.STEP][0], steps[cup][0])
         self.assertEqual(steps[self.STEP][1].get("if"), "${{ !cancelled() }}")
+        self.assertEqual(steps[cup][1].get("if"), "${{ !cancelled() }}")
 
     def test_market_pulse_gets_the_same_credentials_as_run_bot(self):
         steps = self._steps()

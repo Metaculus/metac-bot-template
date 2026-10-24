@@ -53,8 +53,10 @@ class LiveContextTests(unittest.TestCase):
 
 class PartialFailureTests(unittest.TestCase):
     def test_one_failed_question_no_longer_fails_the_step(self):
+        # Behaviour is tested in test_uncaught_redaction; this pins the wiring.
         src = main_src()
-        self.assertIn("all(isinstance(r, BaseException) for r in forecast_reports)", src)
+        self.assertIn("summarise_reports(template_bot, forecast_reports)", src)
+        self.assertIn("if reports and failed == len(reports):", src)
         self.assertIn("partial_failure failed=", src)
 
     def test_a_step_where_everything_failed_exits_without_printing_the_errors(self):
@@ -63,8 +65,8 @@ class PartialFailureTests(unittest.TestCase):
         past the log redaction into the public Actions log (runs 39453516101
         and 39965881683). The step must still fail, with a count only."""
         src = main_src()
-        start = src.index("template_bot.log_report_summary(forecast_reports)")
-        block = src[start:src.index("partial_failure failed=", start)]
+        start = src.index("def summarise_reports(")
+        block = src[src.index("bot.log_report_summary(reports)", start):src.index("partial_failure failed=", start)]
         self.assertIn("raise SystemExit(1)", block)
         self.assertIn('logger.error("all_failed count=%d"', block)
         self.assertNotRegex(block, r"\n\s*raise\s*\n")

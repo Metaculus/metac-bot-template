@@ -85,4 +85,6 @@ class WiringTests(unittest.TestCase):
     def test_the_cup_gets_light_research(self):
         start = self.src.index('elif run_mode == "metaculus_cup":')
         end = self.src.index('elif run_mode == "market_pulse":')
-        self.assertIn('template_bot.research_depth = "light"', self.src[start:end])
+        # Light outside a research boost (spend.boost_active).
+        self.assertIn("template_bot.research_depth = other_depth", self.src[start:end])
+        self.assertIn('other_depth = "full" if boost else "light"', self.src)
