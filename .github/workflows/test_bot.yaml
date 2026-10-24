@@ -13,16 +13,16 @@ on:
         type: choice
         options: ["sonnet", "haiku"]
       opus_reasoning:
-        # Is Opus actually reasoning? (2026-10-23) The forecaster's effort for
-        # this run only; production stays at "high". Compare the "reasoning
-        # ..." lines of the spend breakdown below, and check the log has no
-        # fallback or balanced_chain_failed lines. Effort names only: a token
-        # budget returns 400 on Opus 5.5 (see backtest/pin_models.py).
-        description: "Opus forecaster reasoning effort (high = production | xhigh)"
+        # The Opus forecaster's effort for this run only (2026-10-23). The
+        # default is production's, "xhigh" since 2026-10-24; "high" is the
+        # old one, to compare the "reasoning ..." lines of the spend
+        # breakdown below. Effort names only: a token budget returns 400 on
+        # Opus 5.5 (see backtest/pin_models.py).
+        description: "Opus forecaster reasoning effort (xhigh = production | high)"
         required: false
-        default: "high"
+        default: "xhigh"
         type: choice
-        options: ["high", "xhigh"]
+        options: ["xhigh", "high"]
 
 # Least privilege: this job calls external APIs and never writes to the
 # repository, opens a PR or publishes a package. Without this it inherits

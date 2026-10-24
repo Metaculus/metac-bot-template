@@ -438,7 +438,8 @@ TRIES_STANDALONE = 3
 # for the OpenRouter endpoint). The cheap fallbacks and the other roles are left
 # as they were. Thinking takes longer, hence the larger timeout.
 FORECASTER_REASONING = {
-    "openrouter/anthropic/claude-opus-5.5": "high",
+    # "xhigh" since 2026-10-24: see "IS OPUS ACTUALLY REASONING?" below.
+    "openrouter/anthropic/claude-opus-5.5": "xhigh",
     "openrouter/openai/gpt-5.6-sol": "high",
 }
 FORECASTER_TIMEOUT_SECONDS = 420
@@ -451,6 +452,13 @@ FORECASTER_TIMEOUT_SECONDS = 420
 # a Test Bot run ask for another effort (test_bot.yaml's opus_reasoning input)
 # without a commit, so "high" and "xhigh" can be compared on the same
 # questions. Unset -- as in every production workflow -- means no change.
+#
+# Measured on Test Bot, same ten practice questions (2026-10-23/24): at
+# "high" Opus billed 368 reasoning tokens a forecast on average (max 998),
+# GPT-5.6 Sol 1,891; at "xhigh" Opus billed 1,457 (max 5,740), with no
+# fallback or balanced_chain_failed line, all ten posted, for ~$0.10 more a
+# question on the sponsored key (runs 39987594129, 40119884437). So Opus
+# forecasts at "xhigh" now.
 #
 # Effort NAMES only. A token budget (reasoning.max_tokens) returns 400 on
 # Opus 5.5, which would fail every Opus call over to Sol or Haiku without an

@@ -516,11 +516,11 @@ class ForecasterReasoningTests(unittest.TestCase):
     def _role_entry(self, block, role, next_role):
         return block[block.index('"{0}"'.format(role)):block.index('"{0}"'.format(next_role))]
 
-    def test_opus_forecasts_with_high_effort_and_a_longer_timeout(self):
+    def test_opus_forecasts_with_xhigh_effort_and_a_longer_timeout(self):
         pm = load(**self.PRODUCTION)
         default = self._role_entry(pm.build_block(pm.DEFAULTS), "default", "summarizer")
         opus_line = next(l for l in default.splitlines() if OPUS in l)
-        self.assertIn('extra_body={"reasoning": {"effort": "high"}}', opus_line)
+        self.assertIn('extra_body={"reasoning": {"effort": "xhigh"}}', opus_line)
         self.assertIn("timeout={0}".format(pm.FORECASTER_TIMEOUT_SECONDS), opus_line)
 
     def test_the_fallbacks_and_other_roles_are_unchanged(self):
@@ -538,7 +538,7 @@ class ForecasterReasoningTests(unittest.TestCase):
     def test_without_fallback_keys_opus_still_gets_it(self):
         pm = load()
         default = self._role_entry(pm.build_block(pm.DEFAULTS), "default", "summarizer")
-        self.assertIn('"effort": "high"', default)
+        self.assertIn('"effort": "xhigh"', default)
 
     def test_never_litellms_reasoning_effort(self):
         """litellm 1.80.10 raises UnsupportedParamsError for reasoning_effort on
@@ -571,14 +571,14 @@ class OpusEffortOverrideTests(unittest.TestCase):
         sol = next(l for l in default.splitlines() if GPT_SOL in l)
         return opus, sol
 
-    def test_unset_keeps_high(self):
+    def test_unset_keeps_the_production_effort(self):
         opus, _sol = self._lines(load(**self.PRODUCTION))
-        self.assertIn('"effort": "high"', opus)
+        self.assertIn('"effort": "xhigh"', opus)
 
-    def test_xhigh_reaches_opus_only(self):
-        pm = load(FORECASTER_REASONING_OPUS="xhigh", **self.PRODUCTION)
+    def test_the_override_reaches_opus_only(self):
+        pm = load(FORECASTER_REASONING_OPUS="high", **self.PRODUCTION)
         opus, sol = self._lines(pm)
-        self.assertIn('extra_body={"reasoning": {"effort": "xhigh"}}', opus)
+        self.assertIn('extra_body={"reasoning": {"effort": "high"}}', opus)
         self.assertIn('"effort": "high"', sol)
         self.assertNotIn("max_tokens", pm.build_block(pm.DEFAULTS))
 
@@ -591,9 +591,11 @@ class OpusEffortOverrideTests(unittest.TestCase):
             warned = io.StringIO()
             with contextlib.redirect_stderr(warned):
                 opus, _sol = self._lines(load(FORECASTER_REASONING_OPUS=value, **self.PRODUCTION))
-            expected = "xhigh" if value.strip().lower() == "xhigh" else "high"
-            self.assertIn('"effort": "{0}"'.format(expected), opus, value)
-            self.assertEqual("::warning::" in warned.getvalue(), expected == "high", value)
+            # Every one of these keeps (or names) the production "xhigh";
+            # only the invalid ones warn.
+            self.assertIn('"effort": "xhigh"', opus, value)
+            invalid = value.strip().lower() not in ("low", "medium", "high", "xhigh")
+            self.assertEqual("::warning::" in warned.getvalue(), invalid, value)
 
     def test_the_override_names_the_production_forecaster(self):
         pm = load(**self.PRODUCTION)
@@ -616,7 +618,7 @@ class OpusEffortOverrideTests(unittest.TestCase):
             flow = yaml.safe_load(text)
             # PyYAML reads the bare key `on:` as True.
             choice = (flow.get("on") or flow.get(True))["workflow_dispatch"]["inputs"]["opus_reasoning"]
-            self.assertEqual((choice["default"], choice["options"]), ("high", ["high", "xhigh"]))
+            self.assertEqual((choice["default"], choice["options"]), ("xhigh", ["xhigh", "high"]))
             steps = flow["jobs"]["forecast_job"]["steps"]
             setters = [s.get("name") for s in steps if "FORECASTER_REASONING_OPUS" in (s.get("env") or {})]
             self.assertEqual(setters, ["Pin and verify LLM models"])
