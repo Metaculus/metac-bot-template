@@ -428,6 +428,28 @@ class PromptCachingTests(unittest.TestCase):
         self.assertIn("cache_write=800", line)
 
 
+class DossierOptionTests(unittest.TestCase):
+    """mp_dossier.py runs Opus with its own effort and round cap, and needs
+    each call's cost even when the call fails (2026-10-25)."""
+
+    def test_effort_and_the_round_cap_reach_the_requests(self):
+        first = response(text="a\nGAPS: one", tin=300_000, tout=5_000)
+        with FakeAnthropic(first, response(text="b\nGAPS: none")) as fake:
+            run(cr.research("q", depth="dossier", engine_key="opus", max_prior_cost=5.0,
+                            effort="high"))
+        self.assertEqual([c["output_config"]["effort"] for c in fake.calls], ["high", "high"])
+        self.assertEqual([c["tools"][0]["max_uses"] for c in fake.calls], list(cr.ROUNDS[("opus", "dossier")]))
+        self.assertEqual(fake.calls[0]["model"], "claude-opus-5-5")
+
+    def test_on_cost_gets_the_dollars_even_when_the_call_fails(self):
+        got = []
+        with FakeAnthropic(response(stop="refusal", searches=2, tin=10_000, tout=100)):
+            with self.assertRaises(RuntimeError):
+                run(cr.research("q", depth="dossier", engine_key="opus", on_cost=got.append))
+        self.assertEqual(len(got), 1)
+        self.assertAlmostEqual(got[0], 10_000 * 4e-6 + 100 * 20e-6 + 0.02)
+
+
 class EnabledTests(unittest.TestCase):
     def test_off_without_the_key(self):
         with mock.patch.dict(os.environ, {}, clear=False):

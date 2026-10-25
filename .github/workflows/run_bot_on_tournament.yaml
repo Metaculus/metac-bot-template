@@ -79,6 +79,9 @@ jobs:
       # research everywhere (spend.boost_active). Both repository variables.
       CLAUDE_BUDGET_CYCLE_DAY: ${{ vars.CLAUDE_BUDGET_CYCLE_DAY || '1' }}
       RESEARCH_BOOST_UNTIL: ${{ vars.RESEARCH_BOOST_UNTIL || '' }}
+      # Market Pulse earnings dossiers (mp_dossier.py), restored from the
+      # Actions cache below; only Market Pulse questions read them.
+      MP_DOSSIERS_PATH: mp_dossiers.json
       # Market Pulse only: the weight of the revealed human community
       # prediction in the published forecast (cp_pool.py). '0' leaves the
       # bot's own forecast untouched; the roadmap's 0.6 is set as a
@@ -119,6 +122,16 @@ jobs:
           key: spend-ledger-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             spend-ledger-
+      # The Market Pulse earnings dossiers mp_dossiers.yaml researched ahead
+      # of the closes (mp_dossier.py). A miss leaves the research as before.
+      - name: Restore the Market Pulse dossiers
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: mp_dossiers.json
+          key: mp-dossiers-${{ github.run_id }}
+          restore-keys: |
+            mp-dossiers-
       # forecasting-tools assigns the researcher role to a model OpenRouter no
       # longer serves, which 404s every question. This activates the pinned llms
       # block in main.py so the run uses models that actually exist.

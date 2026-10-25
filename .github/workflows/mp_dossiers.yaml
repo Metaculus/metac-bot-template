@@ -1,0 +1,66 @@
+name: Market Pulse dossiers
+
+# MANUAL. Researches one earnings dossier per company with an open Market
+# Pulse question (mp_dossier.py: Opus 5.5 with web search, facts only, never
+# a forecast) and leaves it in the Actions cache, where the production run's
+# Market Pulse step picks it up. Read-only on Metaculus: it lists questions
+# and never forecasts or comments. Spends the Claude API credit, hard-capped
+# by the budget input. Run it on main, so production can restore the cache.
+#
+# The dossiers never reach the repository or the log: the log carries counts
+# and dollars only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_usd:
+        description: "Hard cap on Claude API spend, USD"
+        required: true
+        default: "18"
+      dry_run:
+        description: "Only list the companies (no research, no spend)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mp-dossiers
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Research the dossiers
+        env:
+          METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BUDGET: ${{ inputs.budget_usd }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          flags=""
+          if [ "${DRY_RUN}" = "true" ]; then flags="--dry-run"; fi
+          poetry run python mp_dossier.py build --budget "$BUDGET" --out mp_dossiers.json $flags
+      - name: Save the dossiers
+        if: ${{ inputs.dry_run != true && hashFiles('mp_dossiers.json') != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: mp_dossiers.json
+          key: mp-dossiers-${{ github.run_id }}
