@@ -81,6 +81,10 @@ ENGINES = {
                      cache_read=0.05),
     "haiku": Engine("claude-haiku-5-5", "web_search_20250305", 0.10 / 1e6, 0.50 / 1e6, False,
                     long_prompt=100_000, long_factor=5.0),
+    # Market Pulse earnings dossiers only (mp_dossier.py, 2026-10-25): $4/$20
+    # per M, cache hits 0.05x (same pricing page).
+    "opus": Engine("claude-opus-5-5", "web_search_20260209", 4.0 / 1e6, 20.0 / 1e6, False,
+                   cache_read=0.05),
 }
 #: Haiku since 2026-10-18. A/B on the same nine practice questions (Test Bot
 #: runs 39091393405 vs 39091407899): Sonnet $0.243/question, 5-13 searches,
@@ -109,6 +113,8 @@ ROUNDS = {
     # (disagreement.py); runs only on the questions where they did.
     ("sonnet", "crux"): (4,),
     ("haiku", "crux"): (6,),
+    # A company's earnings dossier for Market Pulse (mp_dossier.py).
+    ("opus", "dossier"): (12, 8),
 }
 ROUND_MAX_PRIOR_COST = 0.22
 
@@ -322,7 +328,7 @@ class Turn:
 
 
 async def _round(client, engine: Engine, messages: list[dict], max_searches: int,
-                 tally: Tally) -> Turn:
+                 tally: Tally, effort: str = EFFORT) -> Turn:
     """One research round, resumed while the server pauses it; adds every
     request's usage to ``tally`` and returns the whole turn."""
     tools = [{"type": engine.web_search, "name": "web_search", "max_uses": max_searches}]
@@ -346,7 +352,7 @@ async def _round(client, engine: Engine, messages: list[dict], max_searches: int
             system=SYSTEM,
             messages=[*messages, {"role": "assistant", "content": content}] if content else messages,
             tools=tools,
-            output_config={"effort": EFFORT},
+            output_config={"effort": effort},
             cache_control=CACHE,
             **extra,
         )
@@ -358,13 +364,17 @@ async def _round(client, engine: Engine, messages: list[dict], max_searches: int
     return Turn(response.stop_reason, response.model, content)
 
 
-async def research(prompt: str, depth: str = "full", engine_key: str | None = None) -> str:
+async def research(prompt: str, depth: str = "full", engine_key: str | None = None,
+                   *, max_prior_cost: float = ROUND_MAX_PRIOR_COST, effort: str = EFFORT,
+                   on_cost=None) -> str:
     """One research rundown for ``prompt``, using live web search.
 
     Round one surveys the question and ends with a GAPS line; each later round
     (as many as ROUNDS allows for this engine and depth) searches only the
     gaps the previous round named, while the spend stays under
-    ROUND_MAX_PRIOR_COST. The rundown ends with the pages behind it (_sources).
+    ROUND_MAX_PRIOR_COST (or ``max_prior_cost``). The rundown ends with the
+    pages behind it (_sources). ``on_cost``, if given, receives the call's
+    dollars once it ends, failed or not.
     """
     import anthropic
 
@@ -374,19 +384,23 @@ async def research(prompt: str, depth: str = "full", engine_key: str | None = No
     client = anthropic.AsyncAnthropic()
     tally = Tally(engine)
     try:
-        return await _research(client, key, engine, plan, depth, prompt, tally)
+        return await _research(client, key, engine, plan, depth, prompt, tally,
+                               max_prior_cost, effort)
     finally:
         # Recorded even when the call fails: the requests already made are billed.
         if tally.usd:
             spend.record(provider="anthropic", model=engine.model, usd=tally.usd,
                          tokens_in=tally.tokens_in, tokens_out=tally.out,
                          searches=tally.searches)
+        if on_cost is not None:
+            on_cost(tally.usd)
 
 
 async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
-                    prompt: str, tally: Tally) -> str:
+                    prompt: str, tally: Tally, max_prior_cost: float = ROUND_MAX_PRIOR_COST,
+                    effort: str = EFFORT) -> str:
     first = [{"role": "user", "content": prompt}]
-    response = await _round(client, engine, first, plan[0], tally)
+    response = await _round(client, engine, first, plan[0], tally, effort)
     if response.stop_reason == "refusal":
         raise RuntimeError("claude_research refused")
     text = _text(response.content)
@@ -395,7 +409,7 @@ async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
 
     for budget in plan[1:]:
         gaps = _gaps(text)
-        if not (text and gaps) or tally.usd >= ROUND_MAX_PRIOR_COST:
+        if not (text and gaps) or tally.usd >= max_prior_cost:
             break
         follow = [
             {"role": "user", "content": prompt},
@@ -403,7 +417,7 @@ async def _research(client, key: str, engine: Engine, plan: tuple, depth: str,
             {"role": "user", "content": ROUND2},
         ]
         try:
-            rn = await _round(client, engine, follow, budget, tally)
+            rn = await _round(client, engine, follow, budget, tally, effort)
         except Exception as exc:  # noqa: BLE001 - earlier rounds already stand
             logger.warning("claude_research_round%d_failed reason=%s", rounds + 1, type(exc).__name__)
             break

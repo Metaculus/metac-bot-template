@@ -26,6 +26,7 @@ from bot_helpers import (
 )
 from publication import PublishingClient, print_publication_report
 import market_pulse
+import mp_dossier
 import spend
 import tournaments
 
@@ -444,6 +445,11 @@ class SummerTemplateBot2026(ForecastBot):
             live = await asyncio.to_thread(live_context.build, question)
             if live:
                 research = f"{research}\n\n{live}" if research else live
+            # A Market Pulse company's earnings dossier, researched ahead of
+            # the closes (mp_dossier.py); "" for anything else. Never raises.
+            dossier = mp_dossier.section(question)
+            if dossier:
+                research = f"{research}\n\n{dossier}" if research else dossier
             log_forecast_content(
                 logger, f"Found Research for URL {question.page_url}", research
             )
