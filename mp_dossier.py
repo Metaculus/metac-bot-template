@@ -47,6 +47,11 @@ logger = logging.getLogger(__name__)
 
 ENGINE = "opus"
 DEPTH = "dossier"
+#: A second Opus call checks every figure, date and claim of the dossier
+#: against current sources and returns it corrected, with what it could not
+#: confirm marked: a wrong consensus or date in the research is worse than
+#: none. The first run (2026-10-25) cost ~$1 a dossier, which left room.
+VERIFY_DEPTH = "verify"
 EFFORT = "high"
 #: A second round runs while the first cost less than this (claude_research's
 #: own cap is sized for Haiku's ~$0.15 calls).
@@ -112,9 +117,27 @@ def plan(questions: Sequence[Any]) -> dict[str, dict]:
     return out
 
 
+def _label(key: str, entry: dict) -> str:
+    return entry["name"] if entry["name"] == key else f"{entry['name']} ({key})"
+
+
+def verify_prompt(key: str, entry: dict, dossier: str, today: datetime) -> str:
+    return (
+        f"Today is {today:%Y-%m-%d}. Below is a research dossier on {_label(key, entry)} ahead "
+        "of its next quarterly earnings release. Check every number, date and claim in it "
+        "against current primary sources (company filings and releases, the exchange, "
+        "reputable financial press): search for each one you have not seen confirmed.\n\n"
+        "Return the whole dossier again, in the same structure, with: what checks out kept "
+        "as it is; what is wrong corrected and marked '(corrected: <source, date>)'; what you "
+        "could not confirm marked '(unverified)'. Add nothing that is not sourced. Facts only: "
+        "do not forecast, give a range of your own or say what the result will be.\n\n"
+        f"DOSSIER:\n{dossier}"
+    )
+
+
 def prompt(key: str, entry: dict, today: datetime) -> str:
     asked = "; ".join(entry["metrics"])
-    label = entry["name"] if entry["name"] == key else f"{entry['name']} ({key})"
+    label = _label(key, entry)
     return (
         f"Today is {today:%Y-%m-%d}. Build a research dossier on {label} ahead of its next "
         f"quarterly earnings release, for a forecaster who must predict: {asked}.\n\n"
@@ -165,9 +188,19 @@ async def build(questions: Sequence[Any], budget_usd: float, today: datetime,
         except Exception as exc:  # noqa: BLE001 - the next company still gets its dossier
             logger.warning("mp_dossier_failed company=%s reason=%s", key, type(exc).__name__)
             continue
+        verified = False
+        try:
+            checked = await research(verify_prompt(key, entry, text, today), depth=VERIFY_DEPTH,
+                                     engine_key=ENGINE, max_prior_cost=MAX_PRIOR_COST,
+                                     effort=EFFORT, on_cost=add)
+            if checked and len(checked) > len(text) // 3:
+                text, verified = checked, True
+        except Exception as exc:  # noqa: BLE001 - the unchecked dossier still stands
+            logger.warning("mp_dossier_verify_failed company=%s reason=%s", key, type(exc).__name__)
         dossiers[key] = {"t": today.isoformat(timespec="seconds"), "name": entry["name"],
-                         "metrics": entry["metrics"], "text": text}
-        logger.info("mp_dossier_built company=%s chars=%d spent=%.2f", key, len(text), spent)
+                         "metrics": entry["metrics"], "text": text, "verified": verified}
+        logger.info("mp_dossier_built company=%s chars=%d verified=%d spent=%.2f",
+                    key, len(text), verified, spent)
     return dossiers, spent
 
 
@@ -244,4 +277,11 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # os._exit, not sys.exit: on run 40198525175 the build finished at 14:00
+    # (five dossiers, $5.07) and the process then hung on a non-daemon thread
+    # left by the SDK imports until the job's 120-minute timeout cancelled
+    # it, before the cache was saved.
+    code = main()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)

@@ -115,6 +115,8 @@ ROUNDS = {
     ("haiku", "crux"): (6,),
     # A company's earnings dossier for Market Pulse (mp_dossier.py).
     ("opus", "dossier"): (12, 8),
+    # The fact check of that dossier: one round re-reading its sources.
+    ("opus", "verify"): (12,),
 }
 ROUND_MAX_PRIOR_COST = 0.22
 
