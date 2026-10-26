@@ -265,6 +265,60 @@ def stock_prices(question: Any, fetch: Fetch) -> str:
     return "\n".join(lines)
 
 
+def _own_question_json(question: Any, fetch: Fetch) -> dict | None:
+    """This question's JSON with a current aggregation: the listing's, or a
+    fresh read of its post (a group's subquestion found by id)."""
+    api = getattr(question, "api_json", None) or {}
+    q = api.get("question") if isinstance(api, dict) else None
+    latest = (((q or {}).get("aggregations") or {}).get("recency_weighted") or {}).get("latest")
+    if isinstance(latest, dict) and (latest.get("centers") or latest.get("forecast_values")):
+        return api
+    post_id, token = getattr(question, "id_of_post", None), os.environ.get("METACULUS_TOKEN", "")
+    if not isinstance(post_id, int) or not token:
+        return None
+    post = _json(fetch, f"https://www.metaculus.com/api/posts/{post_id}/",
+                 {"Authorization": f"Token {token}"})
+    wanted = getattr(question, "id_of_question", None)
+    if isinstance(post.get("question"), dict):
+        return post
+    for sub in ((post.get("group_of_questions") or {}).get("questions") or []):
+        if isinstance(sub, dict) and sub.get("id") == wanted:
+            return {"question": sub}
+    return None
+
+
+def own_community(question: Any, fetch: Fetch, now: datetime | None = None) -> str:
+    """The Metaculus community's current forecast on this very question, once
+    Metaculus reveals it (Market Pulse, the Cup; never in the bots-only
+    tournaments), with at least cp_pool.MIN_FORECASTERS forecasters.
+
+    Metaculus' answer to the owner (2026-10-26): the CP may be used in any
+    way short of copying it, since the crowd's wisdom needs each
+    forecaster's own reasoning, and is best given to the model as an input
+    rather than blended in. On the first six resolved Market Pulse
+    subquestions it beat the field by +31 to +37 a question.
+    """
+    import cp_pool
+
+    reveal = getattr(question, "cp_reveal_time", None)
+    now = now or datetime.now(timezone.utc)
+    if reveal is None or now < (reveal if reveal.tzinfo else reveal.replace(tzinfo=timezone.utc)):
+        return ""
+    api = _own_question_json(question, fetch)
+    if not api:
+        return ""
+    try:
+        latest = cp_pool.latest_cp(question, now, api)
+    except Exception:  # noqa: BLE001 - not revealed, stale, too few forecasters
+        return ""
+    shown = _community(api.get("question") or {}, latest)
+    if not shown:
+        return ""
+    count = latest.get("forecaster_count")
+    return (f"- {count} forecasters, now: {shown}. Form your own view from the evidence first; "
+            "this is one input to weigh, not an answer to copy.")
+
+
 def eps_gaap(question: Any, fetch: Fetch) -> str:
     """GAAP diluted EPS history against the analyst consensus; see market_quant.
 
@@ -502,6 +556,8 @@ def resolution_sources(question: Any, fetch: Fetch) -> str:
 # ------------------------------------------------------------------- assemble
 
 SECTIONS = (
+    ("Metaculus community forecast on this question (revealed; an input, not an answer)",
+     own_community),
     ("Linked Metaculus questions", metaculus_links),
     ("Current crypto prices", crypto_prices),
     ("Current stock/index prices", stock_prices),
