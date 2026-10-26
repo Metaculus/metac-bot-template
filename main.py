@@ -482,7 +482,7 @@ class SummerTemplateBot2026(ForecastBot):
 
             {self._timing(question)}
 
-            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question. A Metaculus community forecast on this very question, when shown, is one input to weigh after forming your own view from the evidence, never an answer to copy.
             Before answering you write:
             (a0) Before using the research: a reference class of similar past situations and how often they ended each way (the base rate), stated as a number.
             (a) The time left until the outcome to the question is known.
@@ -572,7 +572,7 @@ class SummerTemplateBot2026(ForecastBot):
 
             {self._timing(question)}
 
-            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question. A Metaculus community forecast on this very question, when shown, is one input to weigh after forming your own view from the evidence, never an answer to copy.
             Before answering you write:
             (a0) Before using the research: a reference class of similar past situations and how often they ended each way (the base rate), stated as a number.
             (a) The time left until the outcome to the question is known.
@@ -738,7 +738,7 @@ class SummerTemplateBot2026(ForecastBot):
             - Never use scientific notation.
             - Always start with a smaller number (more negative if negative) and then increase from there. The value for percentile 10 should always be less than the value for percentile 20, and so on.
 
-            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question. A Metaculus community forecast on this very question, when shown, is one input to weigh after forming your own view from the evidence, never an answer to copy.
             Before answering you write:
             (a0) Before using the research: the current value of the quantity (prefer a "Live data" figure) and how much it has typically moved over a period as long as the time left.
             (a) The time left until the outcome to the question is known.
@@ -869,7 +869,7 @@ class SummerTemplateBot2026(ForecastBot):
             - Always start with a lower date chronologically and then increase from there.
             - Do NOT forget this. The dates must be written in chronological order starting at the earliest time at percentile 10 and increasing from there.
 
-            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question.
+            If the research ends with a "Live data" section, those numbers were fetched just now and outrank older figures in the research; prediction markets listed there count only if they ask the same question. A Metaculus community forecast on this very question, when shown, is one input to weigh after forming your own view from the evidence, never an answer to copy.
             Before answering you write:
             (a0) Before using the research: the current value of the quantity (prefer a "Live data" figure) and how much it has typically moved over a period as long as the time left.
             (a) The time left until the outcome to the question is known.

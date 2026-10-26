@@ -49,9 +49,13 @@ floor sits at it too), and it keeps the SDK's own "too concentrated" check,
 which ``standardize_cdf=False`` skips. The 0.2 per-bin cap is checked again
 here before anything is returned.
 
-Off by default (weight 0): the weight is a repo variable, so it can be tuned
-after each group closes (roadmap C7) without a code change; 0.6-0.7 is the
-defensible range. The log carries only ``cp_pool applied=0|1 reason=...``:
+Off by default (weight 0) and to stay off: asked whether a bot may use the
+revealed CP, Metaculus answered (2026-10-26) that the CP may be used in any
+way short of copying it -- the wisdom of the crowd needs each forecaster's
+own reasoning -- and recommended giving it to the model as an input rather
+than weighting with it. live_context.own_community does that; this module
+remains only as the CP reader (latest_cp). The weight is still a repo
+variable (MP_CP_POOL_WEIGHT), and 0 is the only value to use. The log carries only ``cp_pool applied=0|1 reason=...``:
 the repository is public, so no CP or forecast value ever reaches it.
 
 Standard library only; the SDK objects are duck-typed, as in numeric_shape.

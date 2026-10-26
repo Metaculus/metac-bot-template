@@ -379,3 +379,51 @@ class BuildTests(unittest.TestCase):
         start = src.index("async def run_research")
         body = src[start:src.index("return research", start)]
         self.assertIn("asyncio.to_thread(live_context.build, question)", body)
+
+
+class OwnCommunityTests(unittest.TestCase):
+    """The revealed community forecast on the question itself, as data for
+    the prompt (Metaculus' advice, 2026-10-26: use it, never copy it, and
+    prefer it as an input to weighting with it). Synthetic numbers."""
+
+    NOW = __import__("datetime").datetime(2026, 10, 27, 12, 0, tzinfo=__import__("datetime").timezone.utc)
+
+    def question(self, latest=None, revealed_hours_ago=5, qtype="numeric", post=1, qid=11):
+        from datetime import timedelta
+        api = {"question": {"type": qtype, "unit": "B $",
+                            "scaling": {"range_min": 100, "range_max": 200, "zero_point": None},
+                            "aggregations": {"recency_weighted": {"latest": latest}}}}
+        return Q(question_text="What will revenue be?", id_of_post=post, id_of_question=qid,
+                 api_json=api, cp_reveal_time=self.NOW - timedelta(hours=revealed_hours_ago),
+                 resolution_criteria="", fine_print="", background_info="")
+
+    LATEST = {"centers": [0.5], "interval_lower_bounds": [0.4], "interval_upper_bounds": [0.6],
+              "forecaster_count": 25, "end_time": None}
+
+    def test_a_revealed_cp_is_shown_in_real_units_as_an_input(self):
+        out = lc.own_community(self.question(dict(self.LATEST)), FakeWeb({}), self.NOW)
+        self.assertIn("25 forecasters", out)
+        self.assertIn("median 150 B $ (middle 50%: 140 B $ to 160 B $)", out)
+        self.assertIn("not an answer to copy", out)
+
+    def test_hidden_thin_or_missing_cps_add_nothing(self):
+        self.assertEqual(lc.own_community(self.question(dict(self.LATEST), revealed_hours_ago=-5),
+                                          FakeWeb({}), self.NOW), "")
+        few = dict(self.LATEST, forecaster_count=4)
+        self.assertEqual(lc.own_community(self.question(few), FakeWeb({}), self.NOW), "")
+        with mock.patch.dict(os.environ, {"METACULUS_TOKEN": ""}):
+            self.assertEqual(lc.own_community(self.question(None), FakeWeb({}), self.NOW), "")
+
+    def test_a_group_subquestion_is_read_from_its_post_when_the_listing_lacks_it(self):
+        sub = {"id": 11, "type": "numeric", "unit": "B $",
+               "scaling": {"range_min": 100, "range_max": 200, "zero_point": None},
+               "aggregations": {"recency_weighted": {"latest": dict(self.LATEST)}}}
+        web = FakeWeb({"https://www.metaculus.com/api/posts/7/": {
+            "group_of_questions": {"questions": [dict(sub, id=10), sub]}}})
+        with mock.patch.dict(os.environ, {"METACULUS_TOKEN": "t"}):
+            out = lc.own_community(self.question(None, post=7, qid=11), web, self.NOW)
+        self.assertIn("median 150 B $", out)
+
+    def test_every_prompt_says_to_weigh_it_not_copy_it(self):
+        with io.open(os.path.join(ROOT, "main.py"), encoding="utf-8") as h:
+            self.assertEqual(h.read().count("never an answer to copy"), 4)
