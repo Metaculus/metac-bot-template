@@ -55,32 +55,53 @@ class PlanTests(unittest.TestCase):
 
 
 class BuildTests(unittest.TestCase):
-    def run_build(self, questions, budget, costs, fail=()):
+    def run_build(self, questions, budget, costs, fail=(), fail_verify=()):
         calls = []
 
         async def research(prompt, depth, engine_key, max_prior_cost, effort, on_cost):
             calls.append((depth, engine_key, effort))
             name = prompt.split(" on ", 1)[1].split(" ahead", 1)[0]
             on_cost(costs.pop(0))
-            if any(f in name for f in fail):
+            bad = fail_verify if depth == md.VERIFY_DEPTH else fail
+            if any(f in name for f in bad):
                 raise RuntimeError("down")
-            return f"dossier for {name}"
+            return f"{depth} for {name}"
 
         dossiers, spent = asyncio.run(md.build(questions, budget, NOW, research=research))
         return dossiers, spent, calls
 
-    def test_soonest_close_first_and_stops_before_the_budget(self):
+    def test_soonest_close_first_checked_and_stops_before_the_budget(self):
         questions = [q(EPS, "Amazon", 4), q(EPS, "Microsoft", 2), q(EPS, "Apple", 8)]
-        dossiers, spent, calls = self.run_build(questions, 5.5, [2.0, 2.0, 2.0])
+        dossiers, spent, calls = self.run_build(questions, 5.5, [1.0] * 6)
         self.assertEqual(list(dossiers), ["MSFT", "AMZN"])
         self.assertAlmostEqual(spent, 4.0)
-        self.assertEqual(calls[0], ("dossier", "opus", "high"))
+        self.assertEqual(calls[:2], [("dossier", "opus", "high"), ("verify", "opus", "high")])
+        self.assertTrue(dossiers["MSFT"]["verified"])
+        self.assertTrue(dossiers["MSFT"]["text"].startswith("verify for"))
 
     def test_a_failed_company_still_counts_its_cost_and_the_rest_go_on(self):
         questions = [q(EPS, "Microsoft", 2), q(EPS, "Amazon", 4)]
-        dossiers, spent, _ = self.run_build(questions, 20, [1.5, 1.0], fail=("MSFT",))
+        dossiers, spent, _ = self.run_build(questions, 20, [1.5, 1.0, 0.5], fail=("MSFT",))
         self.assertEqual(list(dossiers), ["AMZN"])
-        self.assertAlmostEqual(spent, 2.5)
+        self.assertAlmostEqual(spent, 3.0)
+
+    def test_a_failed_check_keeps_the_unchecked_dossier(self):
+        dossiers, _, _ = self.run_build([q(EPS, "Microsoft", 2)], 20, [1.0, 1.0], fail_verify=("MSFT",))
+        self.assertFalse(dossiers["MSFT"]["verified"])
+        self.assertTrue(dossiers["MSFT"]["text"].startswith("dossier for"))
+
+    def test_the_check_asks_for_corrections_never_a_forecast(self):
+        text = md.verify_prompt("MSFT", {"name": "Microsoft", "metrics": []}, "body", NOW)
+        self.assertIn("(corrected:", text)
+        self.assertIn("(unverified)", text)
+        self.assertIn("do not forecast", text)
+        self.assertTrue(text.endswith("body"))
+
+    def test_the_cli_exits_hard_after_saving(self):
+        """Run 40198525175 hung after its last dossier until the job timed out."""
+        with io.open(os.path.join(ROOT, "mp_dossier.py"), encoding="utf-8") as h:
+            src = h.read()
+        self.assertIn("os._exit(code)", src[src.index('if __name__ == "__main__":'):])
 
 
 class SectionTests(unittest.TestCase):

@@ -49,6 +49,8 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
       - name: Research the dossiers
+        # Ten Opus calls took 22 minutes on run 40198525175.
+        timeout-minutes: 75
         env:
           METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
