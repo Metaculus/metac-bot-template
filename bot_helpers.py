@@ -57,8 +57,8 @@ def silence_noisy_dependencies() -> None:
 
 def check_environment(strict: bool = True) -> None:
     """
-    Verify METACULUS_TOKEN is set; warn if no LLM key is configured. On
-    failure with strict=True, exits the process with a non-zero status.
+    Verify METACULUS_TOKEN and at least one LLM key are set. On failure with
+    strict=True, exits the process with a non-zero status.
     """
     problems: list[str] = []
 
@@ -73,10 +73,11 @@ def check_environment(strict: bool = True) -> None:
         for k in ("OPENROUTER_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY")
     )
     if not has_llm_key:
-        print(
-            "⚠️  No LLM key set (OPENROUTER/OPENAI/ANTHROPIC). The bot will fall back\n"
-            "    to the Metaculus LLM proxy. Free OpenRouter credits: "
-            "https://forms.gle/aQdYMq9Pisrf1v7d8\n"
+        problems.append(
+            "No LLM key set. Set OPENROUTER_API_KEY, OPENAI_API_KEY or "
+            "ANTHROPIC_API_KEY (free OpenRouter credits: "
+            "https://forms.gle/aQdYMq9Pisrf1v7d8). The Metaculus LLM proxy that "
+            "the bot used to fall back to is no longer available."
         )
 
     if problems:
