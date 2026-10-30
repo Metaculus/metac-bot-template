@@ -267,11 +267,13 @@ class TailTests(RealSdkTestCase):
 
 
 class BoundMassTests(RealSdkTestCase):
-    """The tails past an open bound never leave less mass beyond it than the
-    SDK's own construction on the six declared percentiles, and the density
+    """Past an open bound the tails leave the forecaster's own t(3) mass,
+    kept between PAST_BOUND_MIN and the SDK's 5% (2026-10-30: futuresearch
+    leaves 1-2% and only 2.6% of their outcomes landed past a bound), except
+    on dates and Market Pulse GAAP EPS, which keep the SDK's; and the density
     never rises towards a bound (2026-10-23 review: a bare p97.5 inside an
-    open range cut the mass past the bound from 5% to 1.3% and put a bump
-    against it; one just inside a closed bound piled 2.5% against it)."""
+    open range put a bump against it; one just inside a closed bound piled
+    2.5% against it)."""
 
     def beyond(self, distribution):
         h = heights(distribution)
@@ -290,11 +292,48 @@ class BoundMassTests(RealSdkTestCase):
             yield (numeric(5.0, 200.0, zero_point=0.0),
                    [centre * math.exp(sigma * z) for z in Z])
 
-    def test_an_open_bound_keeps_at_least_the_sdks_mass_past_it(self):
+    #: The least the SDK leaves past an open bound once the shape declares
+    #: PAST_BOUND_MIN there: its minimum density rescales F to 0.988 F + 0.001.
+    FLOOR = 0.988 * ns.PAST_BOUND_MIN + 0.001
+
+    def test_an_open_bound_keeps_between_the_floor_and_the_sdks_mass_past_it(self):
         for i, (q, vals) in enumerate(self.cases()):
             with self.subTest(case=i):
                 old = NumericDistribution.from_question(percentiles(vals), q)
                 new = build(vals, q)
+                (old_low, old_high), (new_low, new_high) = self.beyond(old), self.beyond(new)
+                self.assertGreaterEqual(new_low, min(old_low, self.FLOOR) - 1e-9)
+                self.assertGreaterEqual(new_high, min(old_high, self.FLOOR) - 1e-9)
+                # Never more than the construction before 2026-10-30, which a
+                # fat t(3) tail past the bound could already take above 5%.
+                wide = ns.build(NumericDistribution, percentiles(vals), q, wide_past_bound=True)
+                wide_low, wide_high = self.beyond(wide)
+                self.assertLessEqual(new_low, wide_low + 1e-9)
+                self.assertLessEqual(new_high, wide_high + 1e-9)
+
+    def test_a_typical_set_leaves_the_floor_not_five_percent(self):
+        q = numeric(0, 300)
+        low, high = self.beyond(build(normal_set(150, 20), q))
+        self.assertAlmostEqual(low, self.FLOOR, places=3)
+        self.assertAlmostEqual(high, self.FLOOR, places=3)
+        sdk_low, sdk_high = self.beyond(NumericDistribution.from_question(
+            percentiles(normal_set(150, 20)), q))
+        self.assertGreater(sdk_low, 0.045)
+        self.assertGreater(sdk_high, 0.045)
+
+    def test_a_tail_near_the_bound_keeps_its_own_mass(self):
+        """p90 close to the bound: the t(3) leaves more than the floor past
+        it, and that is what is kept, not the floor."""
+        # p50 200, p90 251: the t(3)'s p97.5 lands just inside 300.
+        _low, high = self.beyond(build([150, 165, 190, 210, 235, 251], numeric(0, 300)))
+        self.assertGreater(high, self.FLOOR + 0.003)
+        self.assertLess(high, 0.05)
+
+    def test_wide_past_bound_keeps_at_least_the_sdks_mass(self):
+        for i, (q, vals) in enumerate(self.cases()):
+            with self.subTest(case=i):
+                old = NumericDistribution.from_question(percentiles(vals), q)
+                new = ns.build(NumericDistribution, percentiles(vals), q, wide_past_bound=True)
                 (old_low, old_high), (new_low, new_high) = self.beyond(old), self.beyond(new)
                 self.assertGreaterEqual(new_low, old_low - 1e-9)
                 self.assertGreaterEqual(new_high, old_high - 1e-9)
@@ -335,7 +374,7 @@ class BoundMassTests(RealSdkTestCase):
     def test_the_tail_inside_an_open_range_is_a_rescaled_t3(self):
         out, _moved = ns.shape(percentiles(normal_set(100, 10)), numeric(0, 300))
         top = [(p.percentile, p.value) for p in out if p.percentile > 0.9]
-        self.assertEqual(top[-1], (0.95, 300.0))
+        self.assertEqual(top[-1], (1 - ns.PAST_BOUND_MIN, 300.0))
         self.assertTrue(all(b[0] > a[0] and b[1] > a[1] for a, b in zip(top, top[1:])))
         self.assertTrue(all(v < 300 for _lvl, v in top[:-1]))
 
@@ -560,6 +599,13 @@ class MainWiringTests(RealSdkTestCase):
                 body = method_body(src, name)
                 self.assertIn("numeric_shape.build(NumericDistribution,", "".join(body.split()))
                 self.assertNotIn("NumericDistribution.from_question(", body)
+
+    def test_market_pulse_gaap_eps_keeps_the_sdks_mass_past_the_bound(self):
+        src = main_src()
+        for name, owner in (("_verbatim_numeric", "cls"), ("_parse_numeric", "self")):
+            with self.subTest(method=name):
+                self.assertIn(f"wide_past_bound={owner}._gaap_eps_market_pulse(question)",
+                              method_body(src, name))
 
     def test_numeric_questions_aggregate_by_the_mean(self):
         q = numeric(0, 300)

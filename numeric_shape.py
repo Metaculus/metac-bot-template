@@ -37,17 +37,23 @@ What it does
 
   - Open bound, tail past it: kept, within ``OPEN_TAIL_LIMIT`` ranges of the
     bound (inside the SDK's 2x "far exceeding the bounds" rejection), as long
-    as it leaves at least the SDK's own mass past the bound.
+    as it leaves at least the mass the next case would leave past the bound.
   - Open bound, tail inside the range (the usual case), or past it but too
     close to leave that mass: the SDK pins the level halfway between the top
     declared level and 1 at the bound, so a bare p97.5 inside the range
-    would cut the mass past the bound from the SDK's 5% to 1.25% and pile
-    1.25% into the strip between p97.5 and the bound. Outcomes past the
-    range are not rare (1 of the first 6 Market Pulse resolutions), so the
-    t(3) is instead drawn inside the range at ``INSIDE_LEVELS`` and scaled to
-    reach exactly the SDK's 95% (5%) at the bound, which is declared
-    explicitly: the mass past the bound is never below what the SDK gave,
-    and the density never rises towards the bound.
+    would pile mass into the strip between p97.5 and the bound. The t(3) is
+    instead drawn inside the range at ``INSIDE_LEVELS`` and scaled to reach
+    the bound, which is declared explicitly, at the level that leaves the
+    t(3)'s own mass past it, kept between ``PAST_BOUND_MIN`` and the SDK's
+    5%; the density never rises towards the bound. Until 2026-10-30 it was
+    always the SDK's 5%, on every open side of nearly every forecast. Across
+    futuresearch's 608 resolved numeric questions only 2.6% landed past
+    either bound (1 of our 101), and their forecasts leave 1-2% there, so 5%
+    cost about 0.04-0.05 nats (some 2 points) per open-bounded question
+    while saving about 0.03 when the outcome did land outside. Two kinds
+    keep the SDK's 5%: date questions, whose upper bound is often "not yet
+    by then", and Market Pulse GAAP EPS (``wide_past_bound``), where one-off
+    items push the outcome out of the range (Meta, 2026-10-20).
   - Closed bound: used only when it lands strictly inside the range and the
     2.5% the SDK then puts between it and the bound is no denser than the
     tail itself; otherwise that side is left as the SDK builds it. When the
@@ -111,6 +117,9 @@ FIT_LEVELS = (0.1, 0.9)
 #: On an open bound a tail stays within this many ranges past the bound; the
 #: SDK rejects any value more than 2 ranges out.
 OPEN_TAIL_LIMIT = 1.9
+#: The least mass left past an open bound when the forecaster's own t(3)
+#: leaves less: futuresearch's 1-2%, against the SDK's 5% (module docstring).
+PAST_BOUND_MIN = 0.02
 #: Levels of the t(3) drawn inside an open range when a bare p97.5 would
 #: leave less than the SDK's mass past the bound; rescaled before use (see
 #: _inside_tail). Dense near p90, where the density is highest.
@@ -235,7 +244,8 @@ def _inside_tail(mid: float, edge: float, edge_level: float, tail: float,
 
 
 def _past(mid: float, edge: float, edge_level: float, tail: float,
-          open_bound: bool, clear: bool) -> list[tuple[float, float | None]]:
+          open_bound: bool, clear: bool,
+          sdk_mass: bool = False) -> list[tuple[float, float | None]]:
     """(level, location) of the points to declare past one declared extreme,
     the location None for the bound itself. In the upper side's frame:
     locations grow towards the bound at 1, levels towards 1; the lower side
@@ -252,8 +262,15 @@ def _past(mid: float, edge: float, edge_level: float, tail: float,
         return [(top, tail)]
     if edge >= 1.0:
         return [(top, tail)]  # past the bound already: nothing in range changes
-    # The level the SDK pins at an open bound past the declared extreme.
-    cap = 1.0 - 0.5 * (1.0 - edge_level)
+    # The SDK pins the level halfway between the declared extreme and 1 at
+    # an open bound; unless asked to keep that, leave the t(3)'s own mass
+    # past the bound, at least PAST_BOUND_MIN and never more than the SDK's.
+    most = 0.5 * (1.0 - edge_level)
+    if sdk_mass:
+        cap = 1.0 - most
+    else:
+        own = 1.0 - _t3_cdf((1.0 - mid) * _T3_Q975 / (tail - mid))
+        cap = 1.0 - min(most, max(PAST_BOUND_MIN, own))
     if tail > 1.0:
         at_bound = edge_level + (top - edge_level) * (1.0 - edge) / (tail - edge)
         if at_bound <= cap:
@@ -287,7 +304,7 @@ def _side(scale: _Scale, points: list[tuple[float, float | None]], bound: float,
 
 
 def _tails(levels: list[float], values: list[float], question: Any,
-           scale: _Scale) -> tuple[list[Point], list[Point]]:
+           scale: _Scale, sdk_mass: bool = False) -> tuple[list[Point], list[Point]]:
     """The (level, value) points to declare below p10 and above p90, each
     side in increasing order; empty for a side left to the SDK. Worked out
     in the question's own [0, 1] locations, so a tail far out on a log scale
@@ -306,9 +323,10 @@ def _tails(levels: list[float], values: list[float], question: Any,
     high, low = _value(scale, t_high), _value(scale, t_low)
     buffer = scale.sdk_buffer
     upper = _past(mid, locs[-1], levels[-1], t_high, question.open_upper_bound,
-                  high is not None and high < scale.ub - buffer)
+                  high is not None and high < scale.ub - buffer, sdk_mass)
     lower = _past(1.0 - mid, 1.0 - locs[0], 1.0 - levels[0], 1.0 - t_low,
-                  question.open_lower_bound, low is not None and low > scale.lb + buffer)
+                  question.open_lower_bound, low is not None and low > scale.lb + buffer,
+                  sdk_mass)
     return (_side(scale, lower, scale.lb, mirror=True),
             _side(scale, upper, scale.ub, mirror=False))
 
@@ -387,11 +405,13 @@ def _rescue_out_of_range(values: list[float], question: Any,
     return _ordered_with_eps(out, eps), True
 
 
-def shape(percentiles: Sequence[Any], question: Any) -> tuple[list[Any], bool]:
+def shape(percentiles: Sequence[Any], question: Any,
+          wide_past_bound: bool = False) -> tuple[list[Any], bool]:
     """The percentiles to build one forecaster's distribution from, and
     whether an out-of-range set was moved into the range (see the module
     docstring). The tails are fitted to the values as declared, before any
-    move, so a rescued set keeps the forecaster's own tail."""
+    move, so a rescued set keeps the forecaster's own tail. A date question,
+    or ``wide_past_bound``, keeps the SDK's 5% past each open bound."""
     ps = sorted(percentiles, key=lambda p: p.percentile)
     if len(ps) < 2:
         return list(ps), False
@@ -399,7 +419,8 @@ def shape(percentiles: Sequence[Any], question: Any) -> tuple[list[Any], bool]:
     make = type(ps[0])
     levels = [float(p.percentile) for p in ps]
     declared = [float(p.value) for p in ps]
-    lower, upper = _tails(levels, declared, question, scale)
+    sdk_mass = wide_past_bound or hasattr(question.upper_bound, "timestamp")
+    lower, upper = _tails(levels, declared, question, scale, sdk_mass)
     values, moved = _rescue_out_of_range(declared, question, scale)
     out = [make(percentile=lvl, value=v) for lvl, v in zip(levels, values)]
     if not _inside_sdk_window(values, scale):
@@ -417,7 +438,8 @@ def shape(percentiles: Sequence[Any], question: Any) -> tuple[list[Any], bool]:
     return out, moved
 
 
-def build(distribution: Any, percentiles: Sequence[Any], question: Any) -> Any:
+def build(distribution: Any, percentiles: Sequence[Any], question: Any,
+          wide_past_bound: bool = False) -> Any:
     """``distribution.from_question`` on :func:`shape` of the percentiles.
 
     Any failure of the shaping falls back to the percentiles exactly as
@@ -428,7 +450,7 @@ def build(distribution: Any, percentiles: Sequence[Any], question: Any) -> Any:
     """
     url = getattr(question, "page_url", None)
     try:
-        shaped, moved = shape(percentiles, question)
+        shaped, moved = shape(percentiles, question, wide_past_bound)
         prediction = distribution.from_question(shaped, question)
         prediction.get_cdf()  # validate now, not at publication
     except Exception as exc:  # noqa: BLE001 - the unshaped set is the old behaviour

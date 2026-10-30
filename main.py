@@ -784,14 +784,15 @@ class SummerTemplateBot2026(ForecastBot):
         )
         return ReasonedPrediction(prediction_value=prediction, reasoning=reasoning)
 
-    @staticmethod
+    @classmethod
     def _verbatim_numeric(
-        reasoning: str, question: NumericQuestion
+        cls, reasoning: str, question: NumericQuestion
     ) -> NumericDistribution | None:
         """The forecaster's own percentile lines, when they are plain numbers
         the question accepts; see forecast_guards.read_percentiles. Built
         with synthesized tails, and an out-of-range set moved into the range
-        rather than rejected; see numeric_shape."""
+        rather than rejected; see numeric_shape. Market Pulse GAAP EPS keeps
+        the SDK's 5% past each open bound, which its outcomes do leave."""
         verbatim = forecast_guards.read_percentiles(reasoning)
         if verbatim is None:
             logger.info("numeric_parse source=llm reason=no_plain_lines url=%s", question.page_url)
@@ -799,7 +800,8 @@ class SummerTemplateBot2026(ForecastBot):
         try:
             prediction = numeric_shape.build(
                 NumericDistribution,
-                [Percentile(percentile=p, value=v) for p, v in verbatim], question
+                [Percentile(percentile=p, value=v) for p, v in verbatim], question,
+                wide_past_bound=cls._gaap_eps_market_pulse(question),
             )
         except ValueError as error:
             logger.info("numeric_parse source=llm reason=rejected url=%s error=%s",
@@ -831,7 +833,10 @@ class SummerTemplateBot2026(ForecastBot):
             additional_instructions=parsing_instructions,
             num_validation_samples=self._structure_output_validation_samples,
         )
-        return numeric_shape.build(NumericDistribution, percentile_list, question)
+        return numeric_shape.build(
+            NumericDistribution, percentile_list, question,
+            wide_past_bound=self._gaap_eps_market_pulse(question),
+        )
 
     ##################################### DATE QUESTIONS #####################################
 
