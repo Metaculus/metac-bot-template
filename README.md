@@ -83,7 +83,7 @@ Confirm it is on your `PATH`:
 uv --version
 ```
 
-You don't need to install Python separately: if you don't have Python 3.11 or newer, uv downloads one in the next step.
+You don't need to install Python separately: if you don't have Python 3.11, 3.12 or 3.13, uv downloads one in the next step. Python 3.14 isn't supported yet because `forecasting-tools` relies on `nest_asyncio`, which breaks on 3.14.
 
 ### 3. Install dependencies
 From inside the cloned repository:
